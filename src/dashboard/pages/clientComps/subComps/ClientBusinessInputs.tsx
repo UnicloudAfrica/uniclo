@@ -3,20 +3,67 @@ import { Loader2 } from "lucide-react";
 import { useVerifyBusiness } from "../../../../hooks/businessHooks";
 import ToastUtils from "../../../../utils/toastUtil";
 
+type SelectOption = {
+  id?: string | number;
+  name?: string;
+  [key: string]: unknown;
+};
+
+type IndustryOption = {
+  name?: string;
+  [key: string]: unknown;
+};
+
+type FormChangeEvent =
+  | React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  | {
+      target: {
+        id: string;
+        value: unknown;
+      };
+    };
+
+type ClientBusinessFormData = {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  password: string;
+  password_confirmation: string;
+  tenant_id: string | number;
+  country_id: string | number;
+  state_id: string | number;
+  city_id: string | number;
+  city: string;
+  address: string;
+  zip_code: string;
+  business_name: string;
+  company_type: string;
+  industry: string;
+  registration_number: string;
+  tin_number: string;
+  website: string;
+  force_password_reset?: boolean;
+  verified?: boolean;
+  verification_token?: string;
+};
+
+type ClientBusinessErrors = Partial<Record<keyof ClientBusinessFormData, string>>;
+
 interface ClientBusinessInputsProps {
-  formData: any;
-  handleInputChange: (e: any) => void;
-  errors: any;
-  industries: any[];
+  formData: ClientBusinessFormData;
+  handleInputChange: (e: FormChangeEvent) => void;
+  errors: ClientBusinessErrors;
+  industries: IndustryOption[];
   isIndustriesFetching: boolean;
   target?: string;
-  updateFormData?: (field: string, value: any) => void;
-  tenants?: any[];
+  updateFormData?: (field: string, value: unknown) => void;
+  tenants?: SelectOption[];
   tenantName?: string;
-  countries?: any[];
-  states?: any[];
-  cities?: any[];
-  handleSelectChange?: (field: string, value: any, optionsList?: any[]) => void;
+  countries?: SelectOption[];
+  states?: SelectOption[];
+  cities?: SelectOption[];
+  handleSelectChange?: (field: string, value: unknown, optionsList?: SelectOption[]) => void;
   isTenantsFetching?: boolean;
   isCountriesFetching?: boolean;
   isStatesFetching?: boolean;
@@ -62,7 +109,7 @@ const ClientBusinessInputs: React.FC<ClientBusinessInputsProps> = ({
     };
 
     verifyBusiness(verificationData, {
-      onSuccess: (data: any) => {
+      onSuccess: (data: { verification_token?: string }) => {
         setIsBusinessVerified(true);
         ToastUtils.success("Business verified successfully!");
         if (data?.verification_token) {
@@ -90,7 +137,7 @@ const ClientBusinessInputs: React.FC<ClientBusinessInputsProps> = ({
     handleInputChange({ target: { id: field, value } });
   };
 
-  const handleSelect = (field: string, value: any, optionsList?: any[]) => {
+  const handleSelect = (field: string, value: unknown, optionsList?: SelectOption[]) => {
     if (handleSelectChange) {
       handleSelectChange(field, value, optionsList);
       return;
@@ -251,9 +298,9 @@ const ClientBusinessInputs: React.FC<ClientBusinessInputsProps> = ({
                 disabled={isTenantsFetching}
               >
                 <option value="">Select tenant (optional)</option>
-                {(tenants || []).map((tenant: any) => (
-                  <option key={tenant.id} value={tenant.id}>
-                    {tenant.name}
+                {(tenants || []).map((tenant, idx) => (
+                  <option key={tenant.id ?? tenant.name ?? `tenant-${idx}`} value={tenant.id ?? ""}>
+                    {tenant.name ?? "Unnamed tenant"}
                   </option>
                 ))}
               </select>
@@ -286,9 +333,12 @@ const ClientBusinessInputs: React.FC<ClientBusinessInputsProps> = ({
               disabled={isCountriesFetching || !showCountrySelect}
             >
               <option value="">{isCountriesFetching ? "Loading..." : "Select country"}</option>
-              {(countries || []).map((country: any) => (
-                <option key={country.id} value={country.id}>
-                  {country.name}
+              {(countries || []).map((country, idx) => (
+                <option
+                  key={country.id ?? country.name ?? `country-${idx}`}
+                  value={country.id ?? ""}
+                >
+                  {country.name ?? "Unnamed country"}
                 </option>
               ))}
             </select>
@@ -306,9 +356,9 @@ const ClientBusinessInputs: React.FC<ClientBusinessInputsProps> = ({
               disabled={isStatesFetching || !showStateSelect}
             >
               <option value="">{isStatesFetching ? "Loading..." : "Select state"}</option>
-              {(states || []).map((state: any) => (
-                <option key={state.id} value={state.id}>
-                  {state.name}
+              {(states || []).map((state, idx) => (
+                <option key={state.id ?? state.name ?? `state-${idx}`} value={state.id ?? ""}>
+                  {state.name ?? "Unnamed state"}
                 </option>
               ))}
             </select>
@@ -327,9 +377,9 @@ const ClientBusinessInputs: React.FC<ClientBusinessInputsProps> = ({
                 disabled={isCitiesFetching}
               >
                 <option value="">{isCitiesFetching ? "Loading..." : "Select city"}</option>
-                {(cities || []).map((city: any) => (
-                  <option key={city.id} value={city.id}>
-                    {city.name}
+                {(cities || []).map((city, idx) => (
+                  <option key={city.id ?? city.name ?? `city-${idx}`} value={city.id ?? ""}>
+                    {city.name ?? "Unnamed city"}
                   </option>
                 ))}
               </select>
@@ -472,9 +522,9 @@ const ClientBusinessInputs: React.FC<ClientBusinessInputsProps> = ({
                   disabled={isIndustriesFetching || isPending || isBusinessVerified}
                 >
                   <option value="">Select an industry</option>
-                  {industries.map((industry) => (
-                    <option key={industry.name} value={industry.name}>
-                      {industry.name}
+                  {industries.map((industry, idx) => (
+                    <option key={industry.name ?? `industry-${idx}`} value={industry.name ?? ""}>
+                      {industry.name ?? "Unnamed industry"}
                     </option>
                   ))}
                 </select>
@@ -548,7 +598,7 @@ const ClientBusinessInputs: React.FC<ClientBusinessInputsProps> = ({
             type="button"
             onClick={handleVerifyBusiness}
             disabled={isPending || isBusinessVerified}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-[#288DD1] hover:bg-[#6db1df] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-[var(--theme-color)] hover:bg-[rgb(var(--theme-color-400))] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isPending ? (
               <div className="flex items-center">

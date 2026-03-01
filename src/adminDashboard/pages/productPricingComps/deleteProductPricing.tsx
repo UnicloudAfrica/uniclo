@@ -1,5 +1,3 @@
-// @ts-nocheck
-import React from "react";
 import { Loader2, Trash2, X } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useDeleteProductPricing } from "../../../hooks/adminHooks/adminproductPricingHook";

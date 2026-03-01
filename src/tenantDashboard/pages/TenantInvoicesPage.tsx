@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState } from "react";
 import {
   FileText,
@@ -18,7 +17,12 @@ import {
   useInvoices,
   useEnforcementSummary,
   usePaySettlements,
+  type InvoiceItem,
+  type EnforcementSummary,
 } from "../../hooks/useTenantBilling";
+
+type InvoiceStatus = "paid" | "pending" | "overdue" | "void";
+type PaymentMethod = "wallet" | "bank_transfer" | "card";
 
 const formatCurrency = (amount: number, currency = "NGN") => {
   return new Intl.NumberFormat("en-NG", {
@@ -28,41 +32,47 @@ const formatCurrency = (amount: number, currency = "NGN") => {
   }).format(amount);
 };
 
-const getStatusBadge = (status: string) => {
-  const badges = {
+const getStatusBadge = (status: string | null | undefined) => {
+  const badges: Record<
+    InvoiceStatus,
+    { bg: string; text: string; icon: typeof CheckCircle; label: string }
+  > = {
     paid: { bg: "bg-green-100", text: "text-green-700", icon: CheckCircle, label: "Paid" },
     pending: { bg: "bg-yellow-100", text: "text-yellow-700", icon: Clock, label: "Pending" },
     overdue: { bg: "bg-red-100", text: "text-red-700", icon: AlertTriangle, label: "Overdue" },
     void: { bg: "bg-gray-100", text: "text-gray-700", icon: XCircle, label: "Void" },
   };
-  return badges[status] || badges.pending;
+  const resolvedStatus = status && status in badges ? (status as InvoiceStatus) : "pending";
+  return badges[resolvedStatus];
 };
 
 const TenantInvoicesPage: React.FC = () => {
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "all">("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("bank_transfer");
   const [paymentReference, setPaymentReference] = useState("");
 
-  const { data: invoiceData, isLoading: isLoadingInvoices } = useInvoices({
+  const { data: invoiceDataRaw, isLoading: isLoadingInvoices } = useInvoices({
     status: statusFilter !== "all" ? statusFilter : undefined,
     page: currentPage,
   });
 
-  const { data: enforcementData, isLoading: isLoadingEnforcement } = useEnforcementSummary();
+  const { data: enforcementDataRaw } = useEnforcementSummary();
   const paySettlementsMutation = usePaySettlements();
 
-  const invoices = invoiceData?.invoices || [];
-  const pagination = invoiceData?.meta || { current_page: 1, last_page: 1 };
+  const invoices: InvoiceItem[] = invoiceDataRaw ?? [];
+  const enforcementData: EnforcementSummary | null = enforcementDataRaw ?? null;
+  const overdueCount = enforcementData?.overdue_count ?? enforcementData?.overdue_invoices ?? 0;
+  const pagination = { current_page: currentPage, last_page: 1 };
 
-  const handleDownloadPdf = async (invoiceId: number, invoiceNumber: string) => {
+  const handleDownloadPdf = async (invoiceId: number) => {
     try {
       // Open PDF in new tab (backend returns PDF download)
       const apiUrl = import.meta.env.VITE_API_BASE_URL || "";
-      window.open(`${apiUrl}/api/tenant/v1/invoices/${invoiceId}/pdf`, "_blank");
+      globalThis.window.open(`${apiUrl}/api/tenant/v1/invoices/${invoiceId}/pdf`, "_blank");
     } catch (error) {
       console.error("Failed to download PDF:", error);
     }
@@ -108,8 +118,7 @@ const TenantInvoicesPage: React.FC = () => {
                   >
                     Total Outstanding:{" "}
                     {formatCurrency(enforcementData.total_outstanding_cents / 100)}
-                    {enforcementData.overdue_count > 0 &&
-                      ` (${enforcementData.overdue_count} overdue)`}
+                    {overdueCount > 0 && ` (${overdueCount} overdue)`}
                   </p>
                 </div>
               </div>
@@ -215,7 +224,7 @@ const TenantInvoicesPage: React.FC = () => {
                         <td className="px-6 py-4">
                           <div className="flex items-center justify-end gap-2">
                             <button
-                              onClick={() => handleDownloadPdf(invoice.id, invoice.invoice_number)}
+                              onClick={() => handleDownloadPdf(invoice.id)}
                               className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                               title="Download PDF"
                             >
@@ -310,7 +319,7 @@ const TenantInvoicesPage: React.FC = () => {
                 </label>
                 <select
                   value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="bank_transfer">Bank Transfer</option>

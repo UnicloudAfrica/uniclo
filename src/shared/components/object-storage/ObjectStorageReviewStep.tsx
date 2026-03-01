@@ -15,7 +15,6 @@ export interface ObjectStorageReviewStepProps {
   isSubmitting?: boolean;
   gatewayFees?: number;
   grandTotalWithFees?: number;
-  dashboardContext: "admin" | "tenant" | "client";
 
   // Handlers
   onSubmit: () => void;
@@ -63,7 +62,7 @@ export const ObjectStorageReviewStep: React.FC<ObjectStorageReviewStepProps> = (
         )}
 
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <ModernButton variant="outline" onClick={onBack} isDisabled={isSubmitting}>
+          <ModernButton variant="outline" onClick={onBack} isDisabled={isSubmitting ?? false}>
             Back
           </ModernButton>
 
@@ -71,7 +70,7 @@ export const ObjectStorageReviewStep: React.FC<ObjectStorageReviewStepProps> = (
             <ModernButton
               variant="outline"
               onClick={onGeneratePaymentOptions}
-              isDisabled={isSubmitting || !hasProfiles}
+              isDisabled={(isSubmitting ?? false) || !hasProfiles}
             >
               Generate payment options
             </ModernButton>
@@ -79,8 +78,8 @@ export const ObjectStorageReviewStep: React.FC<ObjectStorageReviewStepProps> = (
 
           <ModernButton
             onClick={onSubmit}
-            isLoading={isSubmitting}
-            isDisabled={isSubmitting || !hasProfiles || !canSubmit}
+            isLoading={isSubmitting ?? false}
+            isDisabled={(isSubmitting ?? false) || !hasProfiles || !canSubmit}
           >
             {isFastTrack ? "Provision now" : "Confirm & provision"}
           </ModernButton>

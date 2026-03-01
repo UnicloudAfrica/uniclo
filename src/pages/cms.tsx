@@ -97,7 +97,7 @@ const Cms = () => {
     <>
       <div
         id="overlay"
-        className="-translate-x-[100%] md:-translate-x-0 transition-all duration-500 w-[80%] md:w-[10%] lg:w-[20%] h-[100vh] py-3 px-3 md:px-5 fixed top-0 left-0 bg-[#f1f1f1] md:bg-transparent z-[999]"
+        className="-translate-x-[100%] md:-translate-x-0 transition-all duration-500 w-[80%] md:w-[10%] lg:w-[20%] h-[100vh] py-3 px-3 md:px-5 fixed top-0 left-0 bg-[var(--theme-surface-alt)] md:bg-transparent z-[999]"
       >
         <Sidebar />
       </div>
@@ -113,7 +113,7 @@ const Cms = () => {
           id="General"
           className=" md:left-[10%] lg:left-[20%] top-[80px] w-full md:w-[90%] lg:w-[80%] absolute py-6 px-3 md:px-6 "
         >
-          <p className=" font-Outfit text-xl md:text-3xl  font-medium text-[#666] -mt-3 mb-3">
+          <p className=" font-Outfit text-xl md:text-3xl  font-medium text-[var(--theme-text-color)] -mt-3 mb-3">
             {page}
           </p>
           <General />
@@ -122,7 +122,7 @@ const Cms = () => {
           id="Blog"
           className=" md:left-[10%] lg:left-[20%] top-[80px] w-full md:w-[90%] lg:w-[80%] absolute py-6 px-3 md:px-6 "
         >
-          <p className=" font-Outfit text-xl md:text-3xl  font-medium text-[#666] -mt-3 mb-3">
+          <p className=" font-Outfit text-xl md:text-3xl  font-medium text-[var(--theme-text-color)] -mt-3 mb-3">
             {page}
           </p>
           <BlogAdmin />
@@ -131,7 +131,7 @@ const Cms = () => {
           id="Events"
           className=" md:left-[10%] lg:left-[20%] top-[80px] w-full md:w-[90%] lg:w-[80%] absolute py-6 px-3 md:px-6 "
         >
-          <p className=" font-Outfit text-xl md:text-3xl  font-medium text-[#666] -mt-3 mb-3">
+          <p className=" font-Outfit text-xl md:text-3xl  font-medium text-[var(--theme-text-color)] -mt-3 mb-3">
             {page}
           </p>
           <EventsAdmin />
@@ -140,7 +140,7 @@ const Cms = () => {
           id="Resources"
           className=" md:left-[10%] lg:left-[20%] top-[80px] w-full md:w-[90%] lg:w-[80%] absolute py-6 px-3 md:px-6 "
         >
-          <p className=" font-Outfit text-xl md:text-3xl  font-medium text-[#666] -mt-3 mb-3">
+          <p className=" font-Outfit text-xl md:text-3xl  font-medium text-[var(--theme-text-color)] -mt-3 mb-3">
             {page}
           </p>
           <ResoucesAdmin />
@@ -149,7 +149,7 @@ const Cms = () => {
           id="Solutions"
           className=" md:left-[10%] lg:left-[20%] top-[80px] w-full md:w-[90%] lg:w-[80%] absolute py-6 px-3 md:px-6 "
         >
-          <p className=" font-Outfit text-xl md:text-3xl  font-medium text-[#666] -mt-3 mb-3">
+          <p className=" font-Outfit text-xl md:text-3xl  font-medium text-[var(--theme-text-color)] -mt-3 mb-3">
             {page}
           </p>
           <SolutionsAdmin />
@@ -158,7 +158,7 @@ const Cms = () => {
           id="Use-Cases"
           className=" md:left-[10%] lg:left-[20%] top-[80px] w-full md:w-[90%] lg:w-[80%] absolute py-6 px-3 md:px-6 "
         >
-          <p className=" font-Outfit text-xl md:text-3xl  font-medium text-[#666] -mt-3 mb-3">
+          <p className=" font-Outfit text-xl md:text-3xl  font-medium text-[var(--theme-text-color)] -mt-3 mb-3">
             {page}
           </p>
           <Cases />
@@ -167,7 +167,7 @@ const Cms = () => {
           id="Advisory-Board"
           className=" md:left-[10%] lg:left-[20%] top-[80px] w-full md:w-[90%] lg:w-[80%] absolute py-6 px-3 md:px-6 "
         >
-          <p className=" font-Outfit text-xl md:text-3xl  font-medium text-[#666] -mt-3 mb-3">
+          <p className=" font-Outfit text-xl md:text-3xl  font-medium text-[var(--theme-text-color)] -mt-3 mb-3">
             {page}
           </p>
           <Board />
@@ -176,7 +176,7 @@ const Cms = () => {
           id="Career"
           className=" md:left-[10%] lg:left-[20%] top-[80px] w-full md:w-[90%] lg:w-[80%] absolute py-6 px-3 md:px-6 "
         >
-          <p className=" font-Outfit text-xl md:text-3xl  font-medium text-[#666] -mt-3 mb-3">
+          <p className=" font-Outfit text-xl md:text-3xl  font-medium text-[var(--theme-text-color)] -mt-3 mb-3">
             {page}
           </p>
           <Career />

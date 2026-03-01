@@ -1,14 +1,6 @@
 import React, { useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import {
-  Plus,
-  Trash2,
-  RefreshCw,
-  ArrowLeft,
-  Shield,
-  ArrowDownToLine,
-  ArrowUpFromLine,
-} from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { Plus, Trash2, RefreshCw, Shield, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import AdminPageShell from "../../components/AdminPageShell";
 import ModernButton from "../../../shared/components/ui/ModernButton";
 import ModernCard from "../../../shared/components/ui/ModernCard";
@@ -45,7 +37,6 @@ const COMMON_PORTS = [
 
 const AdminSecurityGroupRules: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const projectId = searchParams.get("project") || "";
   const region = searchParams.get("region") || "";
   const securityGroupId = searchParams.get("sg") || "";
@@ -57,7 +48,6 @@ const AdminSecurityGroupRules: React.FC = () => {
   const [portMin, setPortMin] = useState("");
   const [portMax, setPortMax] = useState("");
   const [cidr, setCidr] = useState("0.0.0.0/0");
-  const [description, setDescription] = useState("");
 
   const {
     data: rulesData,
@@ -71,18 +61,25 @@ const AdminSecurityGroupRules: React.FC = () => {
   const egressRules = rulesData?.egress_rules || [];
 
   const handleAddRule = () => {
+    const payload: {
+      direction: "egress" | "ingress";
+      protocol: string;
+      port_range_min?: number;
+      port_range_max?: number;
+      cidr?: string;
+    } = { direction, protocol };
+    const parsedMin = portMin ? parseInt(portMin) : undefined;
+    const parsedMax = portMax ? parseInt(portMax) : undefined;
+    if (parsedMin !== undefined) payload.port_range_min = parsedMin;
+    if (parsedMax !== undefined) payload.port_range_max = parsedMax;
+    if (cidr) payload.cidr = cidr;
+
     addRule(
       {
         projectId,
         region,
         securityGroupId,
-        payload: {
-          direction,
-          protocol,
-          port_range_min: portMin ? parseInt(portMin) : undefined,
-          port_range_max: portMax ? parseInt(portMax) : undefined,
-          cidr: cidr || undefined,
-        },
+        payload,
       },
       {
         onSuccess: () => {
@@ -95,17 +92,23 @@ const AdminSecurityGroupRules: React.FC = () => {
 
   const handleRemoveRule = (rule: SecurityGroupRule, direction: "ingress" | "egress") => {
     if (confirm("Are you sure you want to remove this rule?")) {
+      const payload: {
+        direction: "egress" | "ingress";
+        protocol: string;
+        port_range_min?: number;
+        port_range_max?: number;
+        cidr?: string;
+      } = { direction, protocol: rule.ip_protocol };
+      if (rule.from_port !== undefined) payload.port_range_min = rule.from_port;
+      if (rule.to_port !== undefined) payload.port_range_max = rule.to_port;
+      const ruleCidr = rule.ip_ranges?.[0]?.cidr_ip;
+      if (ruleCidr) payload.cidr = ruleCidr;
+
       removeRule({
         projectId,
         region,
         securityGroupId,
-        payload: {
-          direction,
-          protocol: rule.ip_protocol,
-          port_range_min: rule.from_port,
-          port_range_max: rule.to_port,
-          cidr: rule.ip_ranges?.[0]?.cidr_ip,
-        },
+        payload,
       });
     }
   };
@@ -116,7 +119,6 @@ const AdminSecurityGroupRules: React.FC = () => {
     setPortMin("");
     setPortMax("");
     setCidr("0.0.0.0/0");
-    setDescription("");
   };
 
   const handleQuickPort = (port: number) => {
@@ -333,7 +335,7 @@ const AdminSecurityGroupRules: React.FC = () => {
                     onChange={(e) => setProtocol(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
                   >
-                    {COMMON_PROTOCOLS.map((p) => (
+                    {COMMON_PROTOCOLS.map((p: any) => (
                       <option key={p.value} value={p.value}>
                         {p.label}
                       </option>
@@ -348,7 +350,7 @@ const AdminSecurityGroupRules: React.FC = () => {
                         Quick Select Port
                       </label>
                       <div className="flex flex-wrap gap-2">
-                        {COMMON_PORTS.map((p) => (
+                        {COMMON_PORTS.map((p: any) => (
                           <button
                             key={p.port}
                             onClick={() => handleQuickPort(p.port)}

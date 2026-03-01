@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
 import adminApi from "../../index/admin/api";
 import clientSilentApi from "../../index/client/silent";
 import silentTenantApi from "../../index/tenant/silentTenant";
@@ -17,13 +16,15 @@ export interface UserProfile {
   role?: string;
 }
 
+type ApiResponse<T = unknown> = { data?: T } & Record<string, unknown>;
+
 interface NormalizedProfile {
   email: string;
   firstName: string;
   lastName: string;
   fullName: string;
   initials: string;
-  avatar?: string;
+  avatar?: string | undefined;
 }
 
 /**
@@ -37,16 +38,16 @@ const fetchProfile = async (dashboardType: DashboardType): Promise<UserProfile> 
   switch (dashboardType) {
     case "admin": {
       // adminApi is function-based: adminApi(method, uri)
-      const res = await adminApi("GET", "/profile");
-      return res.data || res;
+      const res = await adminApi<ApiResponse<UserProfile>>("GET", "/profile");
+      return res.data || (res as unknown as UserProfile);
     }
     case "tenant": {
-      const res = await silentTenantApi("GET", "/admin/user-profile");
-      return res.data;
+      const res = await silentTenantApi<ApiResponse<UserProfile>>("GET", "/admin/user-profile");
+      return res.data || ({} as UserProfile);
     }
     case "client": {
-      const res = await clientSilentApi("GET", "/business/profile");
-      return res.data;
+      const res = await clientSilentApi<ApiResponse<UserProfile>>("GET", "/business/profile");
+      return res.data || ({} as UserProfile);
     }
     default:
       throw new Error(`Unknown dashboard type: ${dashboardType}`);
@@ -87,12 +88,20 @@ const normalizeProfile = (data: UserProfile | undefined): NormalizedProfile => {
 /**
  * Unified hook to fetch user profile for any dashboard type
  */
-export const useDashboardProfile = (dashboardType: DashboardType, options: any = {}) => {
+export type DashboardProfileOptions = Omit<
+  UseQueryOptions<UserProfile, Error>,
+  "queryKey" | "queryFn"
+>;
+
+export const useDashboardProfile = (
+  dashboardType: DashboardType,
+  options: DashboardProfileOptions = {}
+) => {
   const queryClient = useQueryClient();
   const queryKey = ["profile", dashboardType];
   const profileQueryState = queryClient.getQueryState(queryKey);
 
-  const shouldEnable = !profileQueryState || profileQueryState.status !== "error";
+  const shouldEnable = profileQueryState?.status !== "error";
 
   const query = useQuery({
     queryKey,

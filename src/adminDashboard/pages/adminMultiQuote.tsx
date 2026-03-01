@@ -1,12 +1,8 @@
-// @ts-nocheck
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, Loader2 } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useCreateMultiQuotes } from "../../hooks/adminHooks/calculatorOptionHooks";
 import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
-import { useFetchTenants } from "../../hooks/adminHooks/tenantHooks";
-import { useFetchClients } from "../../hooks/adminHooks/clientHooks";
-import { useSharedClients } from "../../hooks/sharedCalculatorHooks";
 import { useFetchProductPricing } from "../../hooks/resource";
 import { useCustomerContext } from "../../hooks/adminHooks/useCustomerContext";
 import CustomerContextSelector from "../../shared/components/common/CustomerContextSelector";
@@ -16,19 +12,50 @@ import QuoteResourceStep from "./quoteComps/quoteResourceStep";
 import QuoteBreakdownStep from "./quoteComps/quoteBreakdownStep";
 import ProductSummaryStep from "./quoteComps/quoteProductSummaryStep";
 import QuoteFinalReviewStep from "./quoteComps/quoteFinalReviewStep";
+import type {
+  MultiQuoteFormData,
+  MultiQuoteFormErrors,
+  UpdateFormData,
+} from "./quoteComps/quoteTypes";
 // import QuoteLivePreview from "./quoteComps/quoteLivePreview"; // Removed
 import ToastUtils from "../../utils/toastUtil";
-import AdminPageShell from "../components/AdminPageShell.tsx";
+import AdminPageShell from "../components/AdminPageShell";
 import { ModernCard } from "../../shared/components/ui";
 import { ModernButton } from "../../shared/components/ui";
 import StatusPill from "../../shared/components/ui/StatusPill";
+
+type MultiQuotePayload = {
+  subject: string;
+  email: string;
+  emails: string[];
+  notes: string;
+  bill_to_name: string;
+  pricing_requests: Array<Record<string, unknown>>;
+  object_storage_items: Array<Record<string, unknown>>;
+  tenant_id?: string;
+  client_id?: string;
+  total_discount?: {
+    type: string;
+    value: number;
+    label: string | null;
+  };
+  create_lead?: true;
+  lead_info?: {
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone: string | null;
+    company: string | null;
+    country: string | null;
+  };
+};
 
 const AdminMultiQuote = () => {
   const navigate = useNavigate();
 
   const [currentStep, setCurrentStep] = useState(0);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<MultiQuoteFormData>({
     // Step 1
     subject: "",
     email: "",
@@ -61,6 +88,7 @@ const AdminMultiQuote = () => {
     bandwidth_count: 0,
     floating_ip_id: null,
     floating_ip_count: 0,
+    cross_connect_id: null,
     // Silo Storage fields
     object_storage_region: "",
     object_storage_product_id: null,
@@ -68,10 +96,10 @@ const AdminMultiQuote = () => {
     object_storage_months: 1,
   });
 
-  const [pricingRequests, setPricingRequests] = useState([]);
-  const [objectStorageRequests, setObjectStorageRequests] = useState([]);
-  const [errors, setErrors] = useState({});
-  const [apiResponse, setApiResponse] = useState(null);
+  const [pricingRequests, setPricingRequests] = useState<any[]>([]);
+  const [objectStorageRequests, setObjectStorageRequests] = useState<any[]>([]);
+  const [errors, setErrors] = useState<MultiQuoteFormErrors>({});
+  const [apiResponse, setApiResponse] = useState<any>(null);
 
   // Assignment system (Admin only)
   // const [assignType, setAssignType] = useState(''); // '', 'tenant', 'user'
@@ -100,74 +128,81 @@ const AdminMultiQuote = () => {
   // const { data: adminClients = [] } = useFetchClients(); // Direct admin clients
   // const { data: tenantClients = [] } = useSharedClients(selectedTenantId, { enabled: !!selectedTenantId }); // Tenant clients
 
-  const { data: computerInstances, isFetching: isComputerInstancesFetching } =
+  const { data: computerInstancesData, isFetching: isComputerInstancesFetching } =
     useFetchProductPricing(formData.region, "compute_instance", {
       enabled: !!formData.region,
     });
-  const { data: osImages, isFetching: isOsImagesFetching } = useFetchProductPricing(
+  const { data: osImagesData, isFetching: isOsImagesFetching } = useFetchProductPricing(
     formData.region,
     "os_image",
     {
       enabled: !!formData.region,
     }
   );
-  const { data: ebsVolumes, isFetching: isEbsVolumesFetching } = useFetchProductPricing(
+  const { data: ebsVolumesData, isFetching: isEbsVolumesFetching } = useFetchProductPricing(
     formData.region,
     "volume_type",
     {
       enabled: !!formData.region,
     }
   );
-  const { data: bandwidths, isFetching: isBandwidthsFetching } = useFetchProductPricing(
+  const { data: bandwidthsData, isFetching: isBandwidthsFetching } = useFetchProductPricing(
     formData.region,
     "bandwidth",
     {
       enabled: !!formData.region,
     }
   );
-  const { data: floatingIps, isFetching: isFloatingIpsFetching } = useFetchProductPricing(
+  const { data: floatingIpsData, isFetching: isFloatingIpsFetching } = useFetchProductPricing(
     formData.region,
     "ip",
     {
       enabled: !!formData.region,
     }
   );
-  const { data: crossConnects, isFetching: isCrossConnectsFetching } = useFetchProductPricing(
+  const { data: crossConnectsData, isFetching: isCrossConnectsFetching } = useFetchProductPricing(
     formData.region,
     "cross_connect",
     {
       enabled: !!formData.region,
     }
   );
-  const { data: objectStorageProducts, isFetching: isObjectStorageProductsFetching } =
+  const { data: objectStorageProductsData, isFetching: isObjectStorageProductsFetching } =
     useFetchProductPricing(formData.object_storage_region, "object_storage", {
       enabled: !!formData.object_storage_region,
     });
 
+  const regionOptions = Array.isArray(regions) ? regions : [];
+  const computerInstances = Array.isArray(computerInstancesData) ? computerInstancesData : [];
+  const osImages = Array.isArray(osImagesData) ? osImagesData : [];
+  const ebsVolumes = Array.isArray(ebsVolumesData) ? ebsVolumesData : [];
+  const bandwidths = Array.isArray(bandwidthsData) ? bandwidthsData : [];
+  const floatingIps = Array.isArray(floatingIpsData) ? floatingIpsData : [];
+  const crossConnects = Array.isArray(crossConnectsData) ? crossConnectsData : [];
+  const objectStorageProducts = Array.isArray(objectStorageProductsData)
+    ? objectStorageProductsData
+    : [];
+
   const steps = ["Quote Info", "Add Items", "Product Summary", "Final Review", "Confirmation"];
-  const stepDescriptions = [
-    "Capture who the quote is for and define billing context.",
-    "Add compute, storage, and optional services for the quote.",
-    "Review the items selected and adjust quantities as needed.",
-    "Confirm delivery settings, discounts, and lead capture options.",
-    "Share, download, or continue collaborating on this quote.",
-  ];
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    globalThis.window.scrollTo({ top: 0, behavior: "smooth" });
   }, [currentStep]);
 
-  const stepDescription = stepDescriptions[currentStep] || stepDescriptions[0];
-
-  const updateFormData = (field: any, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: null }));
+  const toInt = (value: string | number | null | undefined) => {
+    const parsed = Number.parseInt(String(value ?? ""), 10);
+    return Number.isNaN(parsed) ? 0 : parsed;
   };
-  const handleSelectChange = (field: any, value: any) => {
-    updateFormData(field, value);
+
+  const updateFormData: UpdateFormData = (
+    field: keyof MultiQuoteFormData,
+    value: MultiQuoteFormData[keyof MultiQuoteFormData]
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
   const validateStep = (step = currentStep) => {
-    const newErrors = {};
+    const newErrors: MultiQuoteFormErrors = {};
     if (step === 0) {
       if (!formData.subject) newErrors.subject = "Subject is required.";
       if (!formData.email) newErrors.email = "Primary email is required.";
@@ -194,7 +229,7 @@ const AdminMultiQuote = () => {
     return Object.keys(newErrors).length === 0;
   };
   const validateItem = () => {
-    const newErrors = {};
+    const newErrors: MultiQuoteFormErrors = {};
     if (!formData.region) newErrors.region = "Region is required.";
     if (!formData.compute_instance_id)
       newErrors.compute_instance_id = "Compute instance is required.";
@@ -204,7 +239,8 @@ const AdminMultiQuote = () => {
     if (!formData.number_of_instances || formData.number_of_instances < 1)
       newErrors.number_of_instances = "At least 1 instance is required.";
     if (!formData.volume_type_id) newErrors.volume_type_id = "Volume type is required.";
-    if (!formData.storage_size_gb || formData.storage_size_gb < 1)
+    const storageSize = Number(formData.storage_size_gb);
+    if (!formData.storage_size_gb || Number.isNaN(storageSize) || storageSize < 1)
       newErrors.storage_size_gb = "Storage size must be at least 1 GB.";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -212,24 +248,24 @@ const AdminMultiQuote = () => {
   const addPricingRequest = () => {
     if (validateItem()) {
       const computeName =
-        computerInstances?.find(
-          (c) => c.product.productable_id === parseInt(formData.compute_instance_id)
+        computerInstances.find(
+          (c: any) => c.product.productable_id === toInt(formData.compute_instance_id)
         )?.product.name || "N/A";
       const osName =
-        osImages?.find((o) => o.product.productable_id === parseInt(formData.os_image_id))?.product
+        osImages.find((o: any) => o.product.productable_id === toInt(formData.os_image_id))?.product
           .name || "N/A";
 
       const newRequest = {
         region: formData.region,
-        compute_instance_id: parseInt(formData.compute_instance_id),
-        os_image_id: parseInt(formData.os_image_id),
+        compute_instance_id: toInt(formData.compute_instance_id),
+        os_image_id: toInt(formData.os_image_id),
 
-        months: parseInt(formData.months),
-        number_of_instances: parseInt(formData.number_of_instances),
+        months: toInt(formData.months),
+        number_of_instances: toInt(formData.number_of_instances),
         volume_types: [
           {
-            volume_type_id: parseInt(formData.volume_type_id),
-            storage_size_gb: parseInt(formData.storage_size_gb),
+            volume_type_id: toInt(formData.volume_type_id),
+            storage_size_gb: toInt(formData.storage_size_gb),
           },
         ],
         // ... other fields
@@ -257,7 +293,7 @@ const AdminMultiQuote = () => {
     }
   };
   const validateObjectStorageItem = () => {
-    const newErrors = {};
+    const newErrors: MultiQuoteFormErrors = {};
     if (!formData.object_storage_region) newErrors.object_storage_region = "Region is required.";
     if (!formData.object_storage_product_id)
       newErrors.object_storage_product_id = "Storage tier is required.";
@@ -271,15 +307,15 @@ const AdminMultiQuote = () => {
   const addObjectStorageRequest = () => {
     if (validateObjectStorageItem()) {
       const productName =
-        objectStorageProducts?.find(
-          (p) => p.product.productable_id === parseInt(formData.object_storage_product_id)
+        objectStorageProducts.find(
+          (p: any) => p.product.productable_id === toInt(formData.object_storage_product_id)
         )?.product.name || "Silo Storage";
 
       const newRequest = {
         region: formData.object_storage_region,
-        productable_id: parseInt(formData.object_storage_product_id),
-        quantity: parseInt(formData.object_storage_quantity),
-        months: parseInt(formData.object_storage_months),
+        productable_id: toInt(formData.object_storage_product_id),
+        quantity: toInt(formData.object_storage_quantity),
+        months: toInt(formData.object_storage_months),
         _display: {
           name: productName,
           quantity: `${formData.object_storage_quantity} GB`,
@@ -319,7 +355,7 @@ const AdminMultiQuote = () => {
       return;
     }
 
-    const payload = {
+    const payload: MultiQuotePayload = {
       subject: formData.subject,
       email: formData.email,
       emails: formData.emails.trim()
@@ -331,11 +367,11 @@ const AdminMultiQuote = () => {
       notes: formData.notes,
       bill_to_name: formData.bill_to_name,
       pricing_requests: pricingRequests.map((req: any) => {
-        const { _display, ...rest } = req;
+        const { _display, ...rest } = req as Record<string, unknown>;
         return rest;
       }),
       object_storage_items: objectStorageRequests.map((req: any) => {
-        const { _display, ...rest } = req;
+        const { _display, ...rest } = req as Record<string, unknown>;
         return rest;
       }),
     };
@@ -379,7 +415,9 @@ const AdminMultiQuote = () => {
       },
     });
   };
-  const selectedTenant = tenants?.find((tenant) => String(tenant.id) === String(selectedTenantId));
+  const selectedTenant = tenants?.find(
+    (tenant: any) => String(tenant.id) === String(selectedTenantId)
+  );
   // const userPool = selectedTenantId ? tenantClients : adminClients;
   const selectedUser = userPool?.find((user) => String(user.id) === String(selectedUserId));
   const assignmentDetails = {
@@ -399,7 +437,7 @@ const AdminMultiQuote = () => {
             formData={formData}
             errors={errors}
             updateFormData={updateFormData}
-            regions={regions}
+            regions={regionOptions}
             isRegionsFetching={isRegionsFetching}
             computerInstances={computerInstances}
             isComputerInstancesFetching={isComputerInstancesFetching}
@@ -407,11 +445,11 @@ const AdminMultiQuote = () => {
             isEbsVolumesFetching={isEbsVolumesFetching}
             osImages={osImages}
             isOsImagesFetching={isOsImagesFetching}
-            bandwidths={bandwidths}
+            bandwidths={bandwidths as any[]}
             isBandwidthsFetching={isBandwidthsFetching}
-            floatingIps={floatingIps}
+            floatingIps={floatingIps as any[]}
             isFloatingIpsFetching={isFloatingIpsFetching}
-            crossConnects={crossConnects}
+            crossConnects={crossConnects as any[]}
             isCrossConnectsFetching={isCrossConnectsFetching}
             onAddRequest={addPricingRequest}
             pricingRequests={pricingRequests}
@@ -512,131 +550,6 @@ const AdminMultiQuote = () => {
       </ModernButton>
     </div>
   );
-
-  const quoteMetadata = [
-    formData.subject && { label: "Subject", value: formData.subject },
-    formData.bill_to_name && { label: "Bill To", value: formData.bill_to_name },
-    formData.email && { label: "Primary Email", value: formData.email },
-    formData.emails && { label: "CC", value: formData.emails },
-  ].filter(Boolean);
-
-  const assignmentMetadata = [
-    contextType
-      ? {
-          label: "Assignment Type",
-          value: contextType.charAt(0).toUpperCase() + contextType.slice(1),
-        }
-      : null,
-    contextType !== "" && selectedTenant
-      ? {
-          label: "Tenant",
-          value: selectedTenant.name || selectedTenant.company_name || selectedTenant.id,
-        }
-      : null,
-    contextType === "user" && selectedUser
-      ? {
-          label: "User",
-          value:
-            selectedUser.business_name ||
-            `${selectedUser.first_name || ""} ${selectedUser.last_name || ""}`.trim() ||
-            selectedUser.email ||
-            selectedUser.id,
-        }
-      : null,
-  ].filter(Boolean);
-  const hasAssignmentData = assignmentMetadata.length > 0;
-  const assignmentStatus =
-    contextType === "unassigned"
-      ? { label: "Unassigned", tone: "info" }
-      : contextType === "tenant" && !selectedTenant
-        ? { label: "Select tenant", tone: "warning" }
-        : contextType === "user" && !selectedUser
-          ? { label: "Select user", tone: "warning" }
-          : { label: "Configured", tone: "success" };
-
-  const totalInstancesSelected = pricingRequests.reduce(
-    (sum, item) => sum + (item.number_of_instances || 0),
-    0
-  );
-  const uniqueRegions = Array.from(
-    new Set(
-      [
-        ...pricingRequests.map((item: any) => item.region),
-        ...objectStorageRequests.map((item: any) => item.region),
-      ].filter(Boolean)
-    )
-  );
-
-  const itemsMetadata = [
-    {
-      label: "Total Items",
-      value: (pricingRequests.length + objectStorageRequests.length).toString() || "0",
-    },
-    totalInstancesSelected
-      ? { label: "Instances", value: totalInstancesSelected.toString() }
-      : null,
-    uniqueRegions.length ? { label: "Regions", value: uniqueRegions.join(", ") } : null,
-  ].filter(Boolean);
-  const hasQuoteItems = pricingRequests.length > 0 || objectStorageRequests.length > 0;
-
-  const discountMetadata =
-    formData.apply_total_discount && formData.total_discount_value
-      ? [
-          {
-            label: "Discount",
-            value:
-              formData.total_discount_type === "percent"
-                ? `${formData.total_discount_value}%`
-                : `$${formData.total_discount_value}`,
-          },
-          formData.total_discount_label
-            ? { label: "Label", value: formData.total_discount_label }
-            : null,
-        ].filter(Boolean)
-      : [];
-
-  const summaryCards = [
-    quoteMetadata.length
-      ? {
-          key: "quote-metadata",
-          title: "Quote Snapshot",
-          subtitle: "Primary context",
-          metadata: quoteMetadata,
-        }
-      : null,
-    hasAssignmentData
-      ? {
-          key: "assignment",
-          title: "Assignment",
-          subtitle: "Delivery owner",
-          metadata: assignmentMetadata,
-          statuses: assignmentStatus ? [assignmentStatus] : undefined,
-        }
-      : null,
-    hasQuoteItems
-      ? {
-          key: "items",
-          title: "Quote Items",
-          subtitle: "Resources captured",
-          metadata: itemsMetadata,
-          statuses: [
-            {
-              label: "In Progress",
-              tone: "info",
-            },
-          ],
-        }
-      : null,
-    discountMetadata.length
-      ? {
-          key: "discount",
-          title: "Discount",
-          subtitle: "Order adjustments",
-          metadata: discountMetadata,
-          statuses: [{ label: "Applied", tone: "info" }],
-        }
-      : null,
-  ].filter(Boolean);
 
   const stepCtas = [
     "Continue to Items",

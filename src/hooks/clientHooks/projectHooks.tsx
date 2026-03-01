@@ -8,6 +8,8 @@ export interface Project {
   name: string;
   uuid?: string;
   status?: string;
+  identifier?: string;
+  created_at?: string;
   [key: string]: unknown;
 }
 
@@ -71,14 +73,22 @@ const fetchClientProjectMembershipSuggestions = async (params: Record<string, st
   return res.data;
 };
 
+export interface StatusResponse {
+  data?: unknown;
+  project?: unknown;
+  summary?: unknown[];
+  provisioning_progress?: unknown[];
+  [key: string]: unknown;
+}
+
+export interface NetworkStatusResponse {
+  data?: any;
+  network?: any;
+}
+
 // GET: Fetch project status (provisioning + infrastructure checklist)
 const fetchClientProjectStatus = async (id: string | number) => {
   const encodedId = encodeURIComponent(String(id));
-  interface StatusResponse {
-    data?: unknown;
-    project?: unknown;
-    [key: string]: unknown;
-  }
   const res = await clientSilentApi<StatusResponse>(
     "GET",
     `/business/projects/${encodedId}/status`
@@ -92,7 +102,7 @@ const fetchClientProjectStatus = async (id: string | number) => {
 // GET: Fetch project network status
 const fetchClientProjectNetworkStatus = async (id: string | number) => {
   const encodedId = encodeURIComponent(String(id));
-  const res = await clientSilentApi<{ data?: unknown }>(
+  const res = await clientSilentApi<NetworkStatusResponse>(
     "GET",
     `/business/projects/${encodedId}/network/status`
   );

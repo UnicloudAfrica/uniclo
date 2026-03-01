@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { RefreshCw, Plus } from "lucide-react";
@@ -123,7 +122,7 @@ const RouteTables: React.FC<RouteTablesProps> = ({ projectId = "", region = "" }
         value: totalRoutes,
         tone: totalRoutes ? "info" : "neutral",
       },
-    ] as any[];
+    ] as unknown;
     if (mainTablesCount) {
       summary.push({
         label: "Main Tables",
@@ -307,7 +306,7 @@ const RouteTables: React.FC<RouteTablesProps> = ({ projectId = "", region = "" }
                 tone: (isMainTable ? "primary" : "neutral") as "primary" | "neutral",
               });
             } else if (isMainTable) {
-              statuses.push({ label: "Main Table", tone: "primary" as "primary" });
+              statuses.push({ label: "Main Table", tone: "primary" as const });
             }
 
             return (

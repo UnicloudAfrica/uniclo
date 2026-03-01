@@ -31,11 +31,11 @@ interface ProjectFormData {
 }
 
 interface FormErrors {
-  name?: string;
-  description?: string;
-  region?: string;
-  type?: string;
-  member_user_ids?: string;
+  name?: string | undefined;
+  description?: string | undefined;
+  region?: string | undefined;
+  type?: string | undefined;
+  member_user_ids?: string | undefined;
   [key: string]: string | undefined;
 }
 
@@ -103,14 +103,14 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
       return null;
     }
     const p = payload as Record<string, unknown>;
-    if (p.identifier) return p.identifier as string | number;
-    if (p.project_identifier) return p.project_identifier as string | number;
-    if (p.projectId) return p.projectId as string | number;
-    if (p.id) return p.id as string | number;
-    if (p.project) return resolveProjectIdentifier(p.project);
-    if (p.data) return resolveProjectIdentifier(p.data);
-    if (p.message && typeof p.message === "object") {
-      return resolveProjectIdentifier(p.message);
+    if (p["identifier"]) return p["identifier"] as string | number;
+    if (p["project_identifier"]) return p["project_identifier"] as string | number;
+    if (p["projectId"]) return p["projectId"] as string | number;
+    if (p["id"]) return p["id"] as string | number;
+    if (p["project"]) return resolveProjectIdentifier(p["project"]);
+    if (p["data"]) return resolveProjectIdentifier(p["data"]);
+    if (p["message"] && typeof p["message"] === "object") {
+      return resolveProjectIdentifier(p["message"]);
     }
     return null;
   };
@@ -348,11 +348,13 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
               <option value="" disabled>
                 {isRegionsFetching ? "Loading regions..." : "Select a region"}
               </option>
-              {regions?.map((region: { region: string; label: string }) => (
-                <option key={region.region} value={region.region}>
-                  {region.label}
-                </option>
-              ))}
+              {(regions as Array<{ region: string; label: string }> | undefined)?.map(
+                (region: { region: string; label: string }) => (
+                  <option key={region.region} value={region.region}>
+                    {region.label}
+                  </option>
+                )
+              )}
             </select>
             {errors.region && <p className="text-red-500 text-xs mt-1">{errors.region}</p>}
           </div>

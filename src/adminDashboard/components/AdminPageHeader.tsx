@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import SubheaderBlock from "../../shared/components/SubheaderBlock";
 
@@ -13,6 +12,7 @@ interface AdminPageHeaderProps {
   description?: React.ReactNode;
   actions?: React.ReactNode;
   subHeaderContent?: React.ReactNode;
+  icon?: React.ReactNode;
   onOpenMobileMenu?: () => void;
 }
 
@@ -22,18 +22,20 @@ const AdminPageHeader: React.FC<AdminPageHeaderProps> = ({
   description,
   actions,
   subHeaderContent,
+  icon,
   onOpenMobileMenu,
 }) => {
-  return (
-    <SubheaderBlock
-      breadcrumbs={breadcrumbs}
-      title={title}
-      description={description}
-      actions={actions}
-      subHeaderContent={subHeaderContent}
-      onOpenMobileMenu={onOpenMobileMenu}
-    />
-  );
+  const subheaderProps = {
+    breadcrumbs,
+    title,
+    description,
+    actions,
+    subHeaderContent,
+    icon,
+    ...(onOpenMobileMenu ? { onOpenMobileMenu } : {}),
+  };
+
+  return <SubheaderBlock {...subheaderProps} />;
 };
 
 export default AdminPageHeader;

@@ -1,0 +1,74 @@
+[
+  {
+    "id": "partner-zadara",
+    "name": "Zadara",
+    "url": "/partners/unicloud-africa-zadara.png",
+    "order": 1
+  },
+  {
+    "id": "partner-touchnet",
+    "name": "TouchNet",
+    "url": "/partners/unicloud-africa-touchnet.png",
+    "order": 2
+  },
+  {
+    "id": "partner-oadc",
+    "name": "Open Access Data Centres",
+    "url": "/partners/unicloud-africa-oadc.png",
+    "order": 3
+  },
+  {
+    "id": "partner-cedarview",
+    "name": "Cedarview",
+    "url": "/partners/unicloud-africa-cedarview.png",
+    "order": 4
+  },
+  {
+    "id": "partner-hyperia",
+    "name": "Hyperia",
+    "url": "/partners/unicloud-africa-hyperia.png",
+    "order": 5
+  },
+  {
+    "id": "partner-ipnx",
+    "name": "ipNX",
+    "url": "/partners/unicloud-africa-ipnx.png",
+    "order": 6
+  },
+  {
+    "id": "partner-ixpn",
+    "name": "IXPN",
+    "url": "/partners/unicloud-africa-ixpn.png",
+    "order": 7
+  },
+  {
+    "id": "partner-norden",
+    "name": "Norden",
+    "url": "/partners/unicloud-africa-norden.png",
+    "order": 8
+  },
+  {
+    "id": "partner-wiocc",
+    "name": "WIOCC",
+    "url": "/partners/unicloud-africa-wiocc.png",
+    "order": 9
+  },
+  {
+    "id": "partner-scryai",
+    "name": "SCRYAI",
+    "url": "/partners/unicloud-africa-scryai.png",
+    "order": 10
+  },
+  {
+    "id": "partner-deca",
+    "name": "DECA",
+    "url": "/partners/unicloud-africa-deca.png",
+    "order": 11
+  },
+  {
+    "id": "partner-megamore",
+    "name": "MegaMore",
+    "url": "/partners/unicloud-africa-megamore.png",
+    "order": 12
+  }
+]

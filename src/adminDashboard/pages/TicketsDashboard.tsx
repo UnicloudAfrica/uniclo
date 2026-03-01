@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import AdminPageShell from "../components/AdminPageShell";
 import { SupportThreadsPanel } from "../../shared/components/support";

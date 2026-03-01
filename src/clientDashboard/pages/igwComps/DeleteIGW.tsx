@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import { X, Trash2 } from "lucide-react";
 

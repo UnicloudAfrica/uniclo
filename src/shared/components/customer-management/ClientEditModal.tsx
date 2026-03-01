@@ -1,15 +1,44 @@
-// @ts-nocheck
 import React, { useEffect, useMemo, useState } from "react";
 import { useUpdateClient as useAdminUpdateClient } from "../../../hooks/adminHooks/clientHooks";
 import { useUpdateClient as useTenantUpdateClient } from "../../../hooks/clientHooks";
 import { useFetchCountries } from "../../../hooks/resource";
 import ToastUtils from "../../../utils/toastUtil";
-import FormLayout, { formAccent, getAccentRgba } from "../../../adminDashboard/components/FormLayout";
+import FormLayout, {
+  formAccent,
+  getAccentRgba,
+} from "../../../adminDashboard/components/FormLayout";
+import { Client } from "../../../types/client";
 
-const resolveClientId = (client) => client?.identifier || client?.id || client?.uuid || "";
+interface ClientEditModalProps {
+  context?: "admin" | "tenant";
+  client: Client | null;
+  onClose: () => void;
+  onClientUpdated?: (client: Client) => void;
+}
 
-const ClientEditModal = ({ context = "admin", client, onClose, onClientUpdated }) => {
-  const [formData, setFormData] = useState({
+interface FormData {
+  first_name: string;
+  middle_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  zip: string;
+  country: string;
+  city: string;
+  state: string;
+}
+
+const resolveClientId = (client: Client | null): string | number =>
+  client?.identifier || client?.id || client?.uuid || "";
+
+const ClientEditModal: React.FC<ClientEditModalProps> = ({
+  context = "admin",
+  client,
+  onClose,
+  onClientUpdated,
+}) => {
+  const [formData, setFormData] = useState<FormData>({
     first_name: "",
     middle_name: "",
     last_name: "",
@@ -21,12 +50,14 @@ const ClientEditModal = ({ context = "admin", client, onClose, onClientUpdated }
     city: "",
     state: "",
   });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string | null>>>({});
 
   const adminMutation = useAdminUpdateClient();
   const tenantMutation = useTenantUpdateClient();
-  const { mutate: updateClient, isPending } =
-    context === "tenant" ? tenantMutation : adminMutation;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { mutate: updateClient, isPending } = (
+    context === "tenant" ? tenantMutation : adminMutation
+  ) as any;
 
   const { data: countries } = useFetchCountries();
 
@@ -48,13 +79,13 @@ const ClientEditModal = ({ context = "admin", client, onClose, onClientUpdated }
     setErrors({});
   }, [client]);
 
-  const updateFormData = (field, value) => {
+  const updateFormData = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors: Partial<Record<keyof FormData, string>> = {};
     if (!formData.first_name.trim()) newErrors.first_name = "First Name is required";
     if (!formData.last_name.trim()) newErrors.last_name = "Last Name is required";
     if (!formData.email.trim()) newErrors.email = "Email is required";
@@ -69,7 +100,8 @@ const ClientEditModal = ({ context = "admin", client, onClose, onClientUpdated }
   const handleSubmit = () => {
     if (!validateForm()) return;
 
-    const selectedCountry = countries?.find(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const selectedCountry = (countries as any[])?.find(
       (countryOption) => countryOption.name === formData.country
     );
     const countryId = selectedCountry ? selectedCountry.id : null;
@@ -93,9 +125,12 @@ const ClientEditModal = ({ context = "admin", client, onClose, onClientUpdated }
     updateClient(
       { id: clientId, clientData: payload },
       {
-        onSuccess: (updatedData) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onSuccess: (updatedData: any) => {
           ToastUtils.success("Client updated successfully!");
-          onClientUpdated?.({ ...client, ...updatedData });
+          if (client) {
+            onClientUpdated?.({ ...client, ...updatedData });
+          }
           onClose();
         },
         onError: () => {
@@ -117,45 +152,32 @@ const ClientEditModal = ({ context = "admin", client, onClose, onClientUpdated }
     .filter(Boolean)
     .join(", ");
 
-  const summarySections = useMemo(
-    () => [
-      {
-        title: "Personal",
-        items: [
-          { label: "First name", value: formData.first_name || "—" },
-          { label: "Last name", value: formData.last_name || "—" },
-          { label: "Phone", value: formData.phone || "—" },
-        ],
-      },
-      {
-        title: "Address",
-        items: [
-          { label: "Street", value: formData.address || "—" },
-          { label: "City", value: formData.city || "—" },
-          { label: "State", value: formData.state || "—" },
-        ],
-      },
-      {
-        title: "Compliance",
-        items: [
-          { label: "ZIP", value: formData.zip || "—" },
-          { label: "Country", value: formData.country || "—" },
-          { label: "Email", value: formData.email || "Not provided" },
-        ],
-      },
-    ],
-    [
-      formData.first_name,
-      formData.last_name,
-      formData.phone,
-      formData.address,
-      formData.city,
-      formData.state,
-      formData.zip,
-      formData.country,
-      formData.email,
-    ]
-  );
+  const summarySections = [
+    {
+      title: "Personal",
+      items: [
+        { label: "First name", value: formData.first_name || "—" },
+        { label: "Last name", value: formData.last_name || "—" },
+        { label: "Phone", value: formData.phone || "—" },
+      ],
+    },
+    {
+      title: "Address",
+      items: [
+        { label: "Street", value: formData.address || "—" },
+        { label: "City", value: formData.city || "—" },
+        { label: "State", value: formData.state || "—" },
+      ],
+    },
+    {
+      title: "Compliance",
+      items: [
+        { label: "ZIP", value: formData.zip || "—" },
+        { label: "Country", value: formData.country || "—" },
+        { label: "Email", value: formData.email || "Not provided" },
+      ],
+    },
+  ];
 
   const guidanceItems = [
     "Keep personal details aligned with the client's identification.",
@@ -236,22 +258,47 @@ const ClientEditModal = ({ context = "admin", client, onClose, onClientUpdated }
     </>
   );
 
+  const footer = (
+    <div className="flex justify-end gap-3">
+      <button
+        type="button"
+        onClick={onClose}
+        disabled={isPending}
+        className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-800"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        onClick={handleSubmit}
+        disabled={isPending}
+        className="px-4 py-2 text-sm font-medium text-white rounded-lg bg-[var(--theme-color)] hover:opacity-90 transition-opacity"
+      >
+        {isPending ? "Updating..." : "Update client"}
+      </button>
+    </div>
+  );
+
   return (
     <FormLayout
       title="Edit client"
       description="Update the contact record and keep details current across the workspace."
-      meta={[
-        { label: "Client", value: contactName || client?.first_name || "Unnamed" },
-        { label: "Country", value: formData.country || client?.country || "Not set" },
-        { label: "Verified", value: client?.verified ? "Yes" : "No" },
-      ]}
-      formId={formId}
+      meta={
+        [
+          { label: "Client", value: contactName || client?.first_name || "Unnamed" },
+          { label: "Country", value: formData.country || client?.country || "Not set" },
+          { label: "Verified", value: client?.verified ? "Yes" : "No" },
+        ] as any
+      }
       aside={asideContent}
-      accent={accent}
-      onCancel={onClose}
-      onSubmit={handleSubmit}
-      isSubmitting={isPending}
-      submitLabel="Update client"
+      accentGradient={accent.gradient}
+      accentColor={accent.color}
+      onClose={onClose}
+      isProcessing={isPending}
+      footer={footer}
+      kicker={undefined}
+      headerBadge={undefined}
+      headerActions={undefined}
     >
       <form id={formId} className="space-y-6" onSubmit={(e) => e.preventDefault()}>
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -264,9 +311,7 @@ const ClientEditModal = ({ context = "admin", client, onClose, onClientUpdated }
                 errors.first_name ? "border-red-500" : "border-gray-300"
               }`}
             />
-            {errors.first_name && (
-              <p className="text-red-500 text-xs mt-1">{errors.first_name}</p>
-            )}
+            {errors.first_name && <p className="text-red-500 text-xs mt-1">{errors.first_name}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Middle name</label>
@@ -285,9 +330,7 @@ const ClientEditModal = ({ context = "admin", client, onClose, onClientUpdated }
                 errors.last_name ? "border-red-500" : "border-gray-300"
               }`}
             />
-            {errors.last_name && (
-              <p className="text-red-500 text-xs mt-1">{errors.last_name}</p>
-            )}
+            {errors.last_name && <p className="text-red-500 text-xs mt-1">{errors.last_name}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>

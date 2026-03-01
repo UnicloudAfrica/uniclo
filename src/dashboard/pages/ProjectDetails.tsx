@@ -1,5 +1,7 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { Layers, Lock, Network, Zap, GitMerge } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import TenantPageShell from "../components/TenantPageShell";
 import { ModernButton } from "../../shared/components/ui";
 import {
@@ -11,13 +13,17 @@ import {
 } from "../../hooks/tenantHooks/projectHooks";
 import InfrastructureSetupWizard from "../../adminDashboard/components/provisioning/InfrastructureSetupWizard";
 import { useTenantProjectInfrastructureStatus } from "../../hooks/tenantHooks/projectInfrastructureHooks";
-import { useFetchTenantProjectEdgeConfig } from "../../hooks/tenantHooks/edgeHooks";
-import ProjectDetailsOverview from "../../shared/components/projects/details/ProjectDetailsOverview";
+import {
+  useFetchTenantIpPools,
+  useFetchTenantProjectEdgeConfig,
+} from "../../hooks/tenantHooks/edgeHooks";
+import ProjectDetailsLayout from "../../shared/components/projects/details/ProjectDetailsLayout";
+import ProjectDetailsResourcePlaceholder from "../../shared/components/projects/details/ProjectDetailsResourcePlaceholder";
+import { useProjectDetailsAdapter } from "../../shared/components/projects/details/ProjectDetailsView";
+import { normalizeListResponse } from "../../shared/components/projects/details/projectDetailsUtils";
 import TenantAssignEdgeConfigModal from "./projectComps/TenantAssignEdgeConfigModal";
-import KeyPairs from "./infraComps/keyPairs";
 import SecurityGroup from "./infraComps/securityGroup";
 import VPCs from "./infraComps/vpcs";
-import Networks from "./infraComps/networks";
 import Subnets from "./infraComps/subnet";
 import IGWs from "./infraComps/igws";
 import RouteTables from "./infraComps/routetable";
@@ -26,12 +32,18 @@ import EIPs from "./infraComps/elasticIP";
 import ToastUtils from "../../utils/toastUtil";
 import ProvisioningFullScreen from "../../shared/components/provisioning/ProvisioningFullScreen";
 import api from "../../index/tenant/tenantApi";
+import { useFetchTenantInstances } from "../../hooks/tenantHooks/instancesHook";
+import {
+  useFetchKeyPairs,
+  useSyncKeyPairs,
+  useDeleteKeyPair,
+} from "../../hooks/tenantHooks/keyPairsHook";
+import type { KeyPairHooks } from "../../shared/components/infrastructure/containers/KeyPairsContainer";
 
-// Interfaces
 interface User {
   id: number | string;
   name?: string;
-  email: string;
+  email?: string;
   role?: string;
 }
 
@@ -44,11 +56,23 @@ interface Project {
   status: string;
   created_at: string;
   type: string;
-  summary?: any[];
+  summary?: unknown[];
   users?: User[];
-  instances?: any[];
+  instances?: unknown[];
   vpc_enabled?: boolean;
   provisioning_status?: string;
+}
+
+interface InfraComponent {
+  count?: number;
+}
+
+interface InfraStatusData {
+  data?: {
+    components?: Record<string, InfraComponent>;
+    counts?: Record<string, number | null>;
+    completion_percentage?: number;
+  };
 }
 
 const ProjectDetails: React.FC = () => {
@@ -61,14 +85,14 @@ const ProjectDetails: React.FC = () => {
     if (!rawProjectId) return undefined;
     try {
       return atob(rawProjectId);
-    } catch (e) {
+    } catch {
       return rawProjectId;
     }
   }, [rawProjectId]);
 
   const [isAssignEdgeModalOpen, setAssignEdgeModalOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState("vpcs");
-  const [isInProvisioningMode, setIsInProvisioningMode] = useState(false);
+  const [isSyncingResources, setIsSyncingResources] = useState(false);
+  const [forceHideProvisioning, setForceHideProvisioning] = useState(false);
 
   const { data: projectResponse, refetch: refetchProject } = useFetchTenantProjectById(projectId);
   const project = (projectResponse?.data || projectResponse?.project || {}) as Project;
@@ -78,8 +102,26 @@ const ProjectDetails: React.FC = () => {
     isFetching: isStatusFetching,
     refetch: refetchStatus,
   } = useTenantProjectStatus(projectId);
-  const projectStatus = statusData?.project || statusData;
   const setupMutation = useSetupInfrastructure();
+
+  const { data: infraStatusData, refetch: refetchInfraStatus } =
+    useTenantProjectInfrastructureStatus(projectId) as {
+      data: InfraStatusData | undefined;
+      refetch: () => void;
+    };
+  const { data: edgeConfig } = useFetchTenantProjectEdgeConfig(projectId, project?.region);
+  const edgePayload = edgeConfig?.data ?? edgeConfig;
+  const edgeNetworkId = edgePayload?.edge_network_id;
+  const { data: ipPools } = useFetchTenantIpPools(projectId, project?.region, edgeNetworkId, {
+    enabled: Boolean(projectId && project?.region && edgeNetworkId),
+  });
+  const { data: networkStatusData, refetch: refetchNetworkStatus } = useTenantProjectNetworkStatus(
+    projectId,
+    { enabled: Boolean(projectId) }
+  );
+
+  const { mutateAsync: enableInternet, isPending: isEnablingInternet } =
+    useTenantEnableInternetAccess();
 
   const handleGenericAction = async ({
     method,
@@ -88,10 +130,14 @@ const ProjectDetails: React.FC = () => {
     payload = {},
   }: {
     method: string;
-    endpoint: string;
+    endpoint?: string;
     label: string;
-    payload?: any;
+    payload?: Record<string, unknown>;
   }) => {
+    if (!endpoint) {
+      ToastUtils.error("Missing action endpoint.");
+      return null;
+    }
     try {
       ToastUtils.info(`Executing ${label}...`);
       const res = await api(method.toUpperCase(), endpoint, payload || {});
@@ -104,30 +150,6 @@ const ProjectDetails: React.FC = () => {
       throw error;
     }
   };
-  const { data: infraStatusData, refetch: refetchInfraStatus } =
-    useTenantProjectInfrastructureStatus(projectId) as {
-      data: any;
-      refetch: () => void;
-    };
-  const { data: edgeConfig } = useFetchTenantProjectEdgeConfig(projectId, project?.region);
-  const { data: networkStatusData, refetch: refetchNetworkStatus } =
-    useTenantProjectNetworkStatus(projectId, { enabled: Boolean(projectId) });
-
-  const networkData = useMemo(() => {
-    if (!networkStatusData) return undefined;
-    return networkStatusData.network || networkStatusData?.data?.network || networkStatusData;
-  }, [networkStatusData]);
-
-  const { mutateAsync: enableInternet, isPending: isEnablingInternet } =
-    useTenantEnableInternetAccess();
-
-  const [isSyncingResources, setIsSyncingResources] = useState(false);
-
-  const requiredActions = useMemo(() => {
-    const summary = projectStatus?.summary;
-    if (!Array.isArray(summary)) return [];
-    return summary.filter((item: any) => !item?.completed && item?.action);
-  }, [projectStatus?.summary]);
 
   const handleBack = () => navigate("/dashboard/projects");
 
@@ -135,10 +157,6 @@ const ProjectDetails: React.FC = () => {
     setAssignEdgeModalOpen(false);
     ToastUtils.success("Edge configuration assigned successfully.");
     refetchProject();
-  };
-
-  const handleSectionClick = (key: string) => {
-    setActiveSection(key);
   };
 
   const handleSyncResources = async () => {
@@ -154,13 +172,14 @@ const ProjectDetails: React.FC = () => {
         refetchInfraStatus?.(),
         refetchNetworkStatus?.(),
       ]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to sync resources:", error);
       ToastUtils.error(error?.message || "Failed to sync resources.");
     } finally {
       setIsSyncingResources(false);
     }
   };
+
   const handleEnableInternet = async () => {
     if (!projectId) return;
     try {
@@ -177,80 +196,25 @@ const ProjectDetails: React.FC = () => {
         refetchProject(),
         refetchInfraStatus?.(),
       ]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Enable internet error:", error);
       ToastUtils.error(error?.message || "Failed to enable internet access");
     }
   };
 
+  const renderNetworkingContent = (resourceId: string): React.ReactNode => {
+    const renderPlaceholder = (title: string, description: string, Icon: LucideIcon) => (
+      <ProjectDetailsResourcePlaceholder
+        title={title}
+        description={description}
+        icon={Icon}
+        message="This resource is not available in the tenant console yet."
+      />
+    );
 
-  const renderSectionContent = () => {
-    switch (activeSection) {
-      case "user-provisioning":
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium text-gray-900">Team Access</h3>
-              <ModernButton size="sm" variant="outline" disabled>
-                Manage Team
-              </ModernButton>
-            </div>
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Role
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {project?.users && project.users.length > 0 ? (
-                    project.users.map((user) => (
-                      <tr key={user.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {user.name || "Unknown"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {user.email}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {user.role || "Member"}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">
-                        No team members found.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
+    switch (resourceId) {
       case "vpcs":
         return <VPCs projectId={projectId} region={project?.region} />;
-      case "networks":
-        return <Networks projectId={projectId} region={project?.region} onStatsUpdate={() => {}} />;
-      case "keypairs":
-        return <KeyPairs projectId={projectId} region={project?.region} onStatsUpdate={() => {}} />;
-      case "security-groups":
-        return <SecurityGroup projectId={projectId} region={project?.region} />;
-      case "edge":
-        return (
-          <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-600">
-            Edge Network configuration is managed via "Assign Edge Config".
-          </div>
-        );
       case "subnets":
         return (
           <Subnets
@@ -261,9 +225,9 @@ const ProjectDetails: React.FC = () => {
             onStatsUpdate={() => {}}
           />
         );
-      case "igws":
+      case "routes":
         return (
-          <IGWs
+          <RouteTables
             projectId={projectId}
             region={project?.region}
             actionRequest={null}
@@ -271,9 +235,11 @@ const ProjectDetails: React.FC = () => {
             onStatsUpdate={() => {}}
           />
         );
-      case "route-tables":
+      case "sgs":
+        return <SecurityGroup projectId={projectId} region={project?.region} />;
+      case "igw":
         return (
-          <RouteTables
+          <IGWs
             projectId={projectId}
             region={project?.region}
             actionRequest={null}
@@ -301,101 +267,106 @@ const ProjectDetails: React.FC = () => {
             onStatsUpdate={() => {}}
           />
         );
+      case "nat":
+        return renderPlaceholder("NAT Gateways", "Outbound access for private subnets", Zap);
+      case "peering":
+        return renderPlaceholder("VPC Peering", "Private connectivity across VPCs", GitMerge);
+      case "lbs":
+        return renderPlaceholder("Load Balancers", "Distribute traffic across instances", Layers);
+      case "acls":
+        return renderPlaceholder("Network ACLs", "Subnet-level stateless filters", Lock);
       default:
-        return null;
+        return renderPlaceholder(
+          "Networking",
+          "Select a resource to manage its configuration.",
+          Network
+        );
     }
   };
 
-  // Instance Stats Calculation
-  const projectInstances = useMemo(() => {
-    return Array.isArray(project?.instances) ? project.instances : [];
-  }, [project]);
-
-  const instanceStats = useMemo(() => {
-    const base = { total: projectInstances.length, running: 0, provisioning: 0, paymentPending: 0 };
-    projectInstances.forEach((instance: any) => {
-      const normalized = (instance.status || "").toLowerCase();
-      if (["running", "active", "ready"].includes(normalized)) base.running += 1;
-      else if (
-        ["pending", "processing", "provisioning", "initializing", "creating"].some((token) =>
-          normalized.includes(token)
-        )
-      )
-        base.provisioning += 1;
-      else if (
-        ["payment_pending", "awaiting_payment", "payment_required"].some((token) =>
-          normalized.includes(token)
-        )
-      )
-        base.paymentPending += 1;
-    });
-    return base;
-  }, [projectInstances]);
-
-  const resourceCounts = useMemo(() => {
-    const counts = infraStatusData?.data?.counts || {};
-    const components = infraStatusData?.data?.components || {};
+  const useTenantInstances = (params: { project_id?: string }, options?: { enabled?: boolean }) => {
+    const query = useFetchTenantInstances(params, options);
     return {
-      vpcs: counts.vpcs ?? components?.vpc?.count ?? 0,
-      subnets: counts.subnets ?? components?.subnets?.count ?? 0,
-      security_groups: counts.security_groups ?? components?.security_groups?.count ?? 0,
-      key_pairs: counts.keypairs ?? components?.keypairs?.count ?? 0,
-      route_tables: counts.route_tables ?? components?.route_tables?.count ?? 0,
-      elastic_ips: counts.elastic_ips ?? components?.elastic_ips?.count ?? 0,
-      network_interfaces: counts.network_interfaces ?? components?.network_interfaces?.count ?? 0,
-      internet_gateways: counts.internet_gateways ?? components?.internet_gateways?.count ?? 0,
-      users: project?.users?.length ?? 0,
+      data: normalizeListResponse<unknown>(query.data),
+      isFetching: query.isFetching,
+      refetch: query.refetch,
     };
-  }, [infraStatusData, project?.users?.length]);
+  };
 
-  const canCreateInstances = project?.status === "active";
+  const tenantKeyPairHooks: KeyPairHooks = {
+    useList: (projectIdValue, regionValue, options) => {
+      const query = useFetchKeyPairs(projectIdValue, regionValue, options);
+      return {
+        data: Array.isArray(query.data) ? query.data : [],
+        isFetching: query.isFetching ?? false,
+        refetch: query.refetch,
+      };
+    },
+    useSync: useSyncKeyPairs,
+    useDelete: useDeleteKeyPair,
+  };
 
-  const edgePayload = edgeConfig?.data ?? edgeConfig;
-  const edgeNetworkConnected = Boolean(edgePayload?.edge_network_id);
-  const edgeNetworkName = edgePayload?.edge_network_name;
+  const projectDetails = useProjectDetailsAdapter({
+    project,
+    projectId,
+    projectStatus: statusData,
+    infraStatusData,
+    networkStatusData,
+    edgeConfig,
+    ipPools,
+    setupProgressPercent: infraStatusData?.data?.completion_percentage ?? 0,
+    isStatusFetching,
+    isSyncing: isSyncingResources,
+    isEnablingInternet,
+    onAddInstance: () =>
+      navigate(
+        `/dashboard/create-instance?project=${encodeURIComponent(
+          project?.identifier || projectId || ""
+        )}`
+      ),
+    onEnableInternet: handleEnableInternet,
+    onSyncResources: handleSyncResources,
+    onRequiredAction: (action) =>
+      handleGenericAction({
+        method: action?.method || "POST",
+        endpoint: action?.endpoint,
+        label: action?.label,
+      }),
+    computeTab: {
+      hierarchy: "tenant",
+      useInstances: useTenantInstances,
+      keyPairHooks: tenantKeyPairHooks,
+      onProvisionInstance: () =>
+        navigate(
+          `/dashboard/create-instance?project=${encodeURIComponent(
+            project?.identifier || projectId || ""
+          )}`
+        ),
+    },
+    networkingTab: {
+      navTitle: "Networking Resources",
+      renderContent: renderNetworkingContent,
+    },
+  });
 
-  // Compute setupSteps for provisioning screen
-  const setupSteps = useMemo(() => {
-    if (Array.isArray(projectStatus?.provisioning_progress)) {
-      return projectStatus.provisioning_progress.map((step: any) => ({
-        id: step.id || step.label?.toLowerCase()?.replace(/\s+/g, "_") || "step",
-        label: step.label || "Step",
-        status: step.status as any,
-        description: step.status === "completed" ? "Completed" : "Action in progress",
-        updated_at: step.updated_at,
-      }));
-    }
-    return [];
-  }, [projectStatus?.provisioning_progress]);
-
-  // Sticky provisioning mode
-  const allStepsComplete =
-    setupSteps.length > 0 && setupSteps.every((s: any) => s.status === "completed");
-
-  useEffect(() => {
-    if (project?.status === "provisioning" && !isInProvisioningMode) {
-      setIsInProvisioningMode(true);
-    }
-    if (isInProvisioningMode && (project?.status === "active" || allStepsComplete)) {
-      const timer = setTimeout(() => {
-        setIsInProvisioningMode(false);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [project?.status, allStepsComplete, isInProvisioningMode]);
-
-  // Phase 8: Dedicated Provisioning Screen
-  if (isInProvisioningMode || project?.status === "provisioning") {
+  if (projectDetails.shouldShowProvisioning && !forceHideProvisioning) {
     return (
       <ProvisioningFullScreen
         project={project}
-        setupSteps={setupSteps}
+        setupSteps={projectDetails.setupSteps}
         onRefresh={() => refetchStatus()}
+        onViewProject={() => {
+          setForceHideProvisioning(true);
+          // Clear the "new=true" from URL to escape provisioning view
+          navigate(`/dashboard/projects/details?id=${rawProjectId}`, { replace: true });
+          refetchProject();
+          refetchStatus();
+        }}
       />
     );
   }
 
-  if (project?.status === "created" || project?.provisioning_status === "created") {
+  if (projectDetails.shouldShowSetupWizard) {
     return (
       <TenantPageShell
         title="Infrastructure Setup"
@@ -422,72 +393,16 @@ const ProjectDetails: React.FC = () => {
           </ModernButton>
         </div>
       }
+      disableContentPadding={true}
+      contentClassName=""
     >
-      <div className="space-y-6 animate-in fade-in duration-500">
-        <ProjectDetailsOverview
-          requiredActions={requiredActions}
-          onRequiredAction={(action) =>
-            handleGenericAction({
-              method: action?.method || "POST",
-              endpoint: action?.endpoint,
-              label: action?.label,
-            })
-          }
-          unifiedViewProps={{
-            project: {
-              id: project?.id || projectId || "",
-              identifier: project?.identifier || projectId || "",
-              name: project?.name || "Project",
-              status: project?.status || "unknown",
-              region: project?.region,
-              region_name: project?.region_name,
-              provider: project?.provider,
-              created_at: project?.created_at,
-            },
-            instanceStats: {
-              total: instanceStats.total,
-              running: instanceStats.running,
-              stopped: instanceStats.total - instanceStats.running - instanceStats.provisioning,
-              provisioning: instanceStats.provisioning,
-            },
-            resourceCounts,
-            canCreateInstances,
-            networkStatus: networkData,
-            setupSteps,
-            setupProgressPercent: infraStatusData?.data?.completion_percentage ?? 0,
-            edgeNetworkConnected,
-            edgeNetworkName,
-            instances: projectInstances,
-            onAddInstance: () =>
-              navigate(
-                `/dashboard/create-instance?project=${encodeURIComponent(
-                  project?.identifier || projectId || ""
-                )}`
-              ),
-            onEnableInternet: handleEnableInternet,
-            onManageMembers: () => handleSectionClick("user-provisioning"),
-            onSyncResources: handleSyncResources,
-            onViewNetworkDetails: () => handleSectionClick("networks"),
-            onViewAllResources: () => handleSectionClick("vpcs"),
-            onViewKeyPairs: () => handleSectionClick("keypairs"),
-            onViewRouteTables: () => handleSectionClick("route-tables"),
-            onViewElasticIps: () => handleSectionClick("eips"),
-            onViewNetworkInterfaces: () => handleSectionClick("enis"),
-            onViewVpcs: () => handleSectionClick("vpcs"),
-            onViewSubnets: () => handleSectionClick("subnets"),
-            onViewSecurityGroups: () => handleSectionClick("security-groups"),
-            onViewInternetGateways: () => handleSectionClick("igws"),
-            onViewUsers: () => handleSectionClick("user-provisioning"),
-            isEnablingInternet,
-            isSyncing: isSyncingResources,
-            isProvisioning: isStatusFetching,
-            showMemberManagement: true,
-            showSyncButton: true,
-          }}
-        >
-          {renderSectionContent()}
-        </ProjectDetailsOverview>
-      </div>
+      <ProjectDetailsLayout
+        project={projectDetails.projectForLayout}
+        resourceStats={projectDetails.resourceHeaderStats}
+        tabs={projectDetails.tabs}
+        activeTab={projectDetails.activeTab}
+        onTabChange={projectDetails.setActiveTab}
+      />
 
       <TenantAssignEdgeConfigModal
         isOpen={isAssignEdgeModalOpen}

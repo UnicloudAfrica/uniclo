@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   DollarSign,
@@ -11,15 +10,66 @@ import {
   Calculator,
   Download,
 } from "lucide-react";
+import config from "../../config";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
-import tenantApi from "../../services/tenantRegionApi";
+import tenantApi from "../../index/tenant/silentTenant";
+
+type ApiEnvelope<T> = { data?: T };
+
+interface SettlementSummary {
+  as_payer?: {
+    outstanding?: number;
+    total_paid?: number;
+  };
+  as_receiver?: {
+    outstanding?: number;
+  };
+}
+
+interface OwnDiscount {
+  has_discount?: boolean;
+  data?: {
+    discount_type?: "percent" | "fixed" | string;
+    value?: number;
+  };
+}
+
+interface ClientDiscount {
+  id: number | string;
+  discount_type?: "percent" | "fixed" | string;
+  value?: number;
+  ends_at?: string | null;
+  applies_to?: {
+    first_name?: string;
+    last_name?: string;
+  };
+  applies_to_id?: string | number | null;
+}
+
+interface MarginPreview {
+  base_amount: number;
+  tenant_discount_percent: number;
+  proposed_client_discount_percent: number;
+  client_pays: number;
+  tenant_owes: number;
+  is_profitable?: boolean;
+  is_loss?: boolean;
+  margin: number;
+  margin_percent: number;
+}
+
+type MarginPreviewInput = {
+  baseAmount: number;
+  discountPercent: number;
+};
 
 // Helper
-const formatCurrency = (amount) => {
+const formatCurrency = (amount: number) => {
+  const safeAmount = Number.isFinite(amount) ? amount : 0;
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-  }).format(amount);
+  }).format(safeAmount);
 };
 
 // API hooks
@@ -27,8 +77,10 @@ const useTenantSettlementSummary = () => {
   return useQuery({
     queryKey: ["tenant-settlements", "summary"],
     queryFn: async () => {
-      const response = await tenantApi.get("/admin/settlements/summary");
-      return response.data.data;
+      const response = await tenantApi.get<ApiEnvelope<ApiEnvelope<SettlementSummary>>>(
+        "/admin/settlements/summary"
+      );
+      return response.data?.data ?? null;
     },
   });
 };
@@ -37,8 +89,10 @@ const useOwnDiscount = () => {
   return useQuery({
     queryKey: ["tenant-own-discount"],
     queryFn: async () => {
-      const response = await tenantApi.get("/admin/settlements/own-discount");
-      return response.data;
+      const response = await tenantApi.get<ApiEnvelope<OwnDiscount>>(
+        "/admin/settlements/own-discount"
+      );
+      return response.data ?? null;
     },
   });
 };
@@ -47,18 +101,26 @@ const useClientDiscounts = () => {
   return useQuery({
     queryKey: ["tenant-client-discounts"],
     queryFn: async () => {
-      const response = await tenantApi.get("/admin/client-discounts");
-      return response.data.data;
+      const response =
+        await tenantApi.get<ApiEnvelope<ApiEnvelope<ClientDiscount[]>>>("/admin/client-discounts");
+      return response.data?.data ?? [];
     },
   });
 };
 
 const useMarginPreview = () => {
-  return useMutation({
+  return useMutation<MarginPreview, Error, MarginPreviewInput>({
     mutationFn: async (data) => {
-      const response = await tenantApi.get("/admin/settlements/margin-preview", {
-        params: { base_amount: data.baseAmount, discount_percent: data.discountPercent },
-      });
+      const query = new URLSearchParams({
+        base_amount: String(data.baseAmount),
+        discount_percent: String(data.discountPercent),
+      }).toString();
+      const response = await tenantApi.get<ApiEnvelope<ApiEnvelope<MarginPreview>>>(
+        `/admin/settlements/margin-preview?${query}`
+      );
+      if (!response.data?.data) {
+        throw new Error("Failed to fetch margin preview");
+      }
       return response.data.data;
     },
   });
@@ -66,9 +128,11 @@ const useMarginPreview = () => {
 
 const useRemoveClientDiscount = () => {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<unknown, Error, string | number>({
     mutationFn: async (userId) => {
-      const response = await tenantApi.delete("/admin/client-discounts/" + userId);
+      const response = await tenantApi.delete<ApiEnvelope<unknown>>(
+        `/admin/client-discounts/${userId}`
+      );
       return response.data;
     },
     onSuccess: () => {
@@ -101,14 +165,14 @@ const MarginCalculator = () => {
         Margin Calculator
       </h3>
 
-      {ownDiscount && ownDiscount.has_discount && (
+      {ownDiscount?.has_discount && (
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-sm text-blue-700">
             Your discount from admin:{" "}
             <span className="font-bold">
-              {ownDiscount.data.discount_type === "percent"
-                ? ownDiscount.data.value + "%"
-                : "$" + ownDiscount.data.value}
+              {ownDiscount.data?.discount_type === "percent"
+                ? `${ownDiscount.data?.value ?? 0}%`
+                : `$${ownDiscount.data?.value ?? 0}`}
             </span>
           </p>
         </div>
@@ -245,7 +309,9 @@ const ClientDiscountsList = () => {
               {discount.applies_to?.first_name} {discount.applies_to?.last_name}
             </p>
             <p className="text-sm text-gray-500">
-              {discount.discount_type === "percent" ? discount.value + "%" : "$" + discount.value}{" "}
+              {discount.discount_type === "percent"
+                ? `${discount.value ?? 0}%`
+                : `$${discount.value ?? 0}`}{" "}
               discount
               {discount.ends_at
                 ? " - Expires " + new Date(discount.ends_at).toLocaleDateString()
@@ -254,8 +320,10 @@ const ClientDiscountsList = () => {
           </div>
           <button
             onClick={() => {
-              if (window.confirm("Remove this discount?")) {
-                removeDiscount.mutate(discount.applies_to_id);
+              if (globalThis.window.confirm("Remove this discount?")) {
+                if (discount.applies_to_id !== null && discount.applies_to_id !== undefined) {
+                  removeDiscount.mutate(discount.applies_to_id);
+                }
               }
             }}
             disabled={removeDiscount.isPending}
@@ -275,8 +343,8 @@ const TenantDiscountManager = () => {
 
   const handleExport = () => {
     // Open export URL in new tab (will download CSV)
-    const baseUrl = tenantApi.defaults.baseURL || "";
-    window.open(baseUrl + "/admin/settlements/export", "_blank");
+    const baseUrl = config.tenantURL || "";
+    globalThis.window.open(`${baseUrl}/admin/settlements/export`, "_blank");
   };
 
   const ExportButton = (

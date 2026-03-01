@@ -1,4 +1,3 @@
-import React from "react";
 import { designTokens } from "../../../styles/designTokens";
 
 const ProductSideMenu = ({ items = [], activeTab, onTabChange, className = "" }: any) => {

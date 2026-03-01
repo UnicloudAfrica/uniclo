@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
@@ -13,10 +12,8 @@ import {
   Users,
 } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
-import { ModernCard } from "../../shared/components/ui";
-import { ModernButton } from "../../shared/components/ui";
-import ModernTable from "../../shared/components/ui/ModernTable";
-import StatusPill from "../../shared/components/ui/StatusPill";
+import { ModernCard, ModernButton, ModernTable, StatusPill } from "../../shared/components/ui";
+import type { StatusTone } from "../../shared/components/ui/StatusPill";
 import ToastUtils from "../../utils/toastUtil";
 import { useFetchTenants } from "../../hooks/adminHooks/tenantHooks";
 import { useFetchClients } from "../../hooks/adminHooks/clientHooks";
@@ -28,6 +25,12 @@ import {
 } from "../../hooks/adminHooks/onboardingReviewHooks";
 import { getStepsForTarget } from "../../dashboard/onboarding/stepConfig";
 import { STATUS_LABELS, STATUS_TONES, STATUS_OPTIONS } from "../../shared/constants/onboarding";
+import {
+  type QueueEntry,
+  type SubmissionThread,
+  type SubmissionData,
+  type SubmissionDocument,
+} from "../../shared/types/onboarding";
 
 // --- Interfaces ---
 
@@ -45,78 +48,26 @@ interface Step {
   description?: string;
 }
 
-interface QueueEntry {
-  key: string;
-  persona: string;
-  target: "tenant" | "client";
-  tenant_id?: string;
-  user_id?: string;
-  stepId?: string;
-  label: string;
-  subtitle?: string;
-  email?: string;
-  tenant_name?: string;
-  queued_since?: string;
-  last_activity_at?: string;
-  total_pending?: number;
-  awaiting_steps?: Array<{
+// QueueEntry, SubmissionThread, SubmissionDocument, Founder, and SubmissionData moved to shared/types/onboarding.ts
+
+interface EnrichedQueueEntry extends QueueEntry {
+  id: string;
+  _personaLabel: string;
+  _secondaryLine: string | null;
+  _queuedSince: string;
+  _lastActivity: string;
+  _awaitingSteps: Array<{
     id: string;
     label: string;
     status: string;
   }>;
+  _isActive: boolean;
 }
 
-interface SubmissionThread {
+interface PayloadEntry {
   id: string;
-  created_at: string;
-  message: string;
-  action?: string;
-  author?: {
-    name?: string;
-    type?: string;
-  };
-  attachments?: Array<{
-    name?: string;
-    url: string;
-  }>;
-}
-
-interface SubmissionDocument {
-  id: string;
-  url?: string;
-  path?: string;
-  category?: string;
-  created_at?: string;
-  version?: string;
-}
-
-interface Founder {
-  id?: string;
-  name?: string;
-  role?: string;
-  ownership?: string;
-  nationality?: string;
-  identifier?: string;
-  is_board_director?: boolean | string;
-  national_id_type?: string;
-  national_id_number?: string;
-  address?: string;
-  utility_bill?: SubmissionDocument;
-  supporting_id?: SubmissionDocument;
-}
-
-interface SubmissionPayload {
-  founders?: Founder[];
-  [key: string]: any;
-}
-
-interface SubmissionData {
-  status: string;
-  submitted_at?: string;
-  reviewed_at?: string;
-  payload?: SubmissionPayload;
-  documents?: SubmissionDocument[];
-  threads?: SubmissionThread[];
+  fieldName: string;
+  fieldValue: unknown;
 }
 
 interface StepSummary {
@@ -127,14 +78,50 @@ interface StepSummary {
 
 interface OnboardingReviewPageProps {
   personaOptions?: PersonaOption[];
-  useQueueHook?: any;
-  fetchSubmissionFn?: any;
-  useSubmissionHook?: any;
-  useUpdateStatusHook?: any;
+  useQueueHook?: (params?: Record<string, unknown>, options?: Record<string, unknown>) => any;
+  fetchSubmissionFn?: (args: {
+    target: string;
+    tenantId?: string | number | null;
+    userId?: string | number | null;
+    step: string;
+  }) => Promise<{ submission: SubmissionData | null; meta: Record<string, unknown> }>;
+  useSubmissionHook?: (
+    args: {
+      target: string;
+      tenantId?: string | number | null;
+      userId?: string | number | null;
+      step: string | null;
+    },
+    options?: Record<string, unknown>
+  ) => any;
+  useUpdateStatusHook?: () => {
+    mutate: (
+      args: {
+        target: string;
+        tenantId?: string | number | null;
+        userId?: string | number | null;
+        step: string;
+        status: string;
+        message?: string;
+        meta?: Record<string, unknown>;
+      },
+      options?: Record<string, unknown>
+    ) => void;
+    isPending: boolean;
+  };
   title?: string;
   description?: string;
   queueRefreshMs?: number;
 }
+
+type TenantOptionItem = Record<string, unknown> & {
+  id?: string;
+  name?: string;
+  company_name?: string;
+  identifier?: string;
+  slug?: string;
+  email?: string;
+};
 
 // --- Constants ---
 
@@ -181,7 +168,7 @@ const DEFAULT_QUERY_ARGS = {
 const formatDateTime = (value: string | null | undefined) =>
   value ? new Date(value).toLocaleString() : "—";
 
-const flattenPayload = (payload: any, prefix = ""): [string, any][] => {
+const flattenPayload = (payload: Record<string, unknown>, prefix = ""): [string, unknown][] => {
   if (!payload || typeof payload !== "object") {
     return [];
   }
@@ -190,14 +177,14 @@ const flattenPayload = (payload: any, prefix = ""): [string, any][] => {
     const path = prefix ? `${prefix}.${key}` : key;
 
     if (value && typeof value === "object" && !Array.isArray(value) && !("document_id" in value)) {
-      return flattenPayload(value, path);
+      return flattenPayload(value as Record<string, unknown>, path);
     }
 
     return [[path, value]];
   });
 };
 
-const renderValue = (value: any): React.ReactNode => {
+const renderValue = (value: unknown): React.ReactNode => {
   if (value === null || value === undefined || value === "") {
     return <span className="text-gray-400">—</span>;
   }
@@ -225,11 +212,12 @@ const renderValue = (value: any): React.ReactNode => {
     );
   }
 
-  if (typeof value === "object") {
-    if (value.document_id) {
+  if (typeof value === "object" && value !== null) {
+    const obj = value as Record<string, unknown>;
+    if (obj["document_id"]) {
       return (
         <a
-          href={value.url}
+          href={String(obj["url"] || "#")}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:underline"
@@ -248,6 +236,23 @@ const renderValue = (value: any): React.ReactNode => {
   }
 
   return String(value);
+};
+
+const resolveStatusTone = (
+  status: string | undefined,
+  fallback: StatusTone = "neutral"
+): StatusTone => {
+  const tone = status ? STATUS_TONES[status] : undefined;
+  if (
+    tone === "success" ||
+    tone === "warning" ||
+    tone === "danger" ||
+    tone === "info" ||
+    tone === "neutral"
+  ) {
+    return tone;
+  }
+  return fallback;
 };
 
 const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
@@ -272,16 +277,23 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
 
   const queueSelectionRef = useRef<QueueEntry | null>(null);
 
-  const { data: tenants = [], isFetching: isTenantsLoading } = useFetchTenants();
+  const { data: tenantsData = [], isFetching: isTenantsLoading } = useFetchTenants();
   const { data: clients = [], isFetching: isClientsLoading } = useFetchClients();
-  const queueQueryOptions = useMemo(() => ({ refetchInterval: queueRefreshMs }), [queueRefreshMs]);
+  const tenants = useMemo<TenantOptionItem[]>(
+    () => (Array.isArray(tenantsData) ? (tenantsData as TenantOptionItem[]) : []),
+    [tenantsData]
+  );
+  const queueQueryOptions = useMemo<Record<string, unknown>>(
+    () => ({ refetchInterval: queueRefreshMs }),
+    [queueRefreshMs]
+  );
   const { data: reviewQueue = [], isFetching: isQueueLoading } = useQueueHook(
-    null,
+    undefined,
     queueQueryOptions
   );
   const personaOptionMap = useMemo(() => {
     const map = new Map<string, PersonaOption>();
-    personaOptions.forEach((option: any) => {
+    personaOptions.forEach((option: PersonaOption) => {
       map.set(option.value, option);
     });
     return map;
@@ -295,8 +307,9 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
       return;
     }
 
-    if (persona && !personaOptions.some((option) => option.value === persona)) {
-      setPersona(personaOptions[0].value);
+    const fallbackPersona = personaOptions[0]?.value ?? null;
+    if (persona && fallbackPersona && !personaOptions.some((option) => option.value === persona)) {
+      setPersona(fallbackPersona);
     }
   }, [personaOptions, persona]);
 
@@ -315,25 +328,26 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
 
   const subjectSelected = Boolean(target === "tenant" ? tenantId : userId);
 
-  const stepIds = useMemo(() => steps.map((step: any) => step.id), [steps]);
+  const stepIds = useMemo(() => steps.map((step) => step.id), [steps]);
 
   const tenantsOptions = useMemo(() => {
-    return tenants.map((tenant: any) => ({
-      value: tenant.id,
+    return tenants.map((tenant) => ({
+      value: tenant.id ?? "",
       label:
         tenant.name ||
         tenant.company_name ||
         tenant.identifier ||
         tenant.slug ||
         tenant.email ||
-        tenant.id,
+        tenant.id ||
+        "Unknown tenant",
     }));
   }, [tenants]);
 
   const filteredClients = useMemo(() => {
     const items = Array.isArray(clients) ? clients : [];
     return items
-      .filter((client: any) => {
+      .filter((client) => {
         if (!client) return false;
         const entity = (client.entity || "").toLowerCase();
         const hasTenant = Boolean(client.tenant_id);
@@ -349,7 +363,7 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
             return true;
         }
       })
-      .map((client: any) => {
+      .map((client) => {
         const nameCandidate =
           client.company_name ||
           client.full_name ||
@@ -449,13 +463,13 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
 
           return {
             stepId: step.id,
-            status: submission?.status ?? meta?.status ?? "not_started",
+            status: submission?.status ?? (meta?.["status"] as string) ?? "not_started",
             submitted_at: submission?.submitted_at ?? null,
             reviewed_at: submission?.reviewed_at ?? null,
           };
         })
       );
-      const summaryMap = results.reduce((acc: any, item) => {
+      const summaryMap = results.reduce((acc: Record<string, StepSummary>, item) => {
         acc[item.stepId] = {
           status: item.status,
           submitted_at: item.submitted_at,
@@ -500,7 +514,7 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
     isLoading: isSubmissionLoading,
     isFetching: isSubmissionFetching,
     refetch: refetchSubmission,
-  } = useSubmissionHook(detailArgs ?? DEFAULT_QUERY_ARGS, {
+  } = useSubmissionHook(detailArgs ?? (DEFAULT_QUERY_ARGS as any), {
     enabled: Boolean(detailArgs),
   });
 
@@ -511,7 +525,8 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
 
   const submission: SubmissionData | null = submissionResponse?.submission ?? null;
   const submissionMeta = submissionResponse?.meta ?? {};
-  const currentStatus = submission?.status ?? submissionMeta?.status ?? "not_started";
+  const currentStatus =
+    submission?.status ?? (submissionMeta?.["status"] as string) ?? "not_started";
 
   useEffect(() => {
     if (!activeStep) return;
@@ -570,7 +585,7 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
     return entries.filter(([key]) => !key.startsWith("founders"));
   }, [submission, founders]);
   const documents = submission?.documents ?? [];
-  const threads = submission?.threads ?? [];
+  const threads = useMemo(() => submission?.threads ?? [], [submission]);
 
   const handleQueueSelection = useCallback(
     (entry: QueueEntry) => {
@@ -578,21 +593,21 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
         return;
       }
 
-      const primaryStep =
-        entry.awaiting_steps?.[0]?.id ??
-        (Array.isArray(entry.awaiting_steps) && entry.awaiting_steps.length > 0
-          ? entry.awaiting_steps[0].id
-          : null);
+      const primaryStep = entry.awaiting_steps?.[0]?.id ?? null;
 
-      queueSelectionRef.current = {
+      const nextSelection: QueueEntry = {
         key: entry.key,
         persona: entry.persona,
         target: entry.target,
         tenant_id: entry.tenant_id ?? "",
         user_id: entry.user_id ?? "",
-        stepId: primaryStep || undefined,
         label: entry.label,
       };
+      if (primaryStep) {
+        nextSelection.stepId = primaryStep;
+      }
+
+      queueSelectionRef.current = nextSelection;
       if (persona !== entry.persona) {
         setPersona(entry.persona);
         return;
@@ -704,6 +719,59 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
     return steps.findIndex((step) => step.id === activeStep);
   }, [steps, activeStep]);
 
+  const renderStepList = () => {
+    if (!subjectSelected) {
+      return (
+        <p className="text-sm text-gray-500">
+          Select a {subjectType === "tenant" ? "tenant" : "client"} above to load onboarding steps.
+        </p>
+      );
+    }
+
+    if (loadingSummaries) {
+      return (
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Loading submissions…
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-3">
+        {steps.map((step: any) => {
+          const isActive = activeStep === step.id;
+          return (
+            <button
+              key={step.id}
+              onClick={() => setActiveStep(step.id)}
+              className={`w-full rounded-xl border px-4 py-3 text-left transition ${
+                isActive
+                  ? "border-blue-500 bg-blue-50 shadow-sm"
+                  : "border-gray-200 hover:bg-gray-50"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">{step.label}</p>
+                  {step.description && (
+                    <p className="mt-1 text-xs text-gray-500">{step.description}</p>
+                  )}
+                </div>
+                <ChevronRight
+                  className={`h-4 w-4 text-gray-400 transition ${
+                    isActive ? "translate-x-1 text-blue-500" : ""
+                  }`}
+                />
+              </div>
+              <div className="mt-3">{renderStepStatus(step.id)}</div>
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
   const heroSubjectTitle = subjectSelected ? subjectLabel : "No record selected";
   const heroSubtitle = subjectSelected
     ? "Review the submitted onboarding data and keep the conversation moving."
@@ -757,8 +825,10 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
           loadStepSummaries();
           refetchSubmission();
         },
-        onError: (error: any) => {
-          ToastUtils.error(error?.message ?? "Unable to update submission status.");
+        onError: (error: unknown) => {
+          const msg =
+            error instanceof Error ? error.message : "Unable to update submission status.";
+          ToastUtils.error(msg);
         },
       }
     );
@@ -797,7 +867,7 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
       submitted_at: null,
       reviewed_at: null,
     };
-    const tone = STATUS_TONES[summary.status] ?? "neutral";
+    const tone = resolveStatusTone(summary.status, "neutral");
     const label = STATUS_LABELS[summary.status] ?? summary.status;
 
     return (
@@ -838,7 +908,7 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
       </a>
     );
   };
-  const formatBoolean = (value: any) => {
+  const formatBoolean = (value: boolean | string | number | null | undefined) => {
     if (value === null || value === undefined || value === "") {
       return "—";
     }
@@ -868,7 +938,7 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
       full = false,
     }: {
       label: string;
-      value: any;
+      value: string | number | boolean | null | undefined;
       full?: boolean;
     }) => (
       <div className={full ? "sm:col-span-2" : ""}>
@@ -940,7 +1010,7 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
 
     return (
       <div className="space-y-3">
-        {documents.map((document: any) => (
+        {documents.map((document) => (
           <div
             key={document.id}
             className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 px-4 py-3 text-sm"
@@ -976,7 +1046,7 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
 
     return (
       <div className="max-h-64 space-y-3 overflow-y-auto pr-2">
-        {threads.map((thread: any) => (
+        {threads.map((thread: SubmissionThread) => (
           <div key={thread.id} className="rounded-lg border border-gray-200 bg-white p-4 text-sm">
             <div className="flex items-center justify-between">
               <div className="font-medium text-gray-900">
@@ -989,18 +1059,23 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
             <p className="mt-2 whitespace-pre-line text-gray-700">{thread.message || "—"}</p>
             {thread.attachments?.length ? (
               <div className="mt-2 space-y-1">
-                {thread.attachments.map((attachment, index) => (
-                  <a
-                    key={index}
-                    href={attachment.url}
-                    className="flex items-center gap-2 text-xs text-blue-600 hover:underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <FileDown size={14} />
-                    {attachment.name ?? attachment.url}
-                  </a>
-                ))}
+                {thread.attachments.map(
+                  (
+                    attachment: NonNullable<SubmissionThread["attachments"]>[number],
+                    index: number
+                  ) => (
+                    <a
+                      key={index}
+                      href={attachment.url}
+                      className="flex items-center gap-2 text-xs text-blue-600 hover:underline"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <FileDown size={14} />
+                      {attachment.name ?? attachment.url}
+                    </a>
+                  )
+                )}
               </div>
             ) : null}
             {thread.action === "request_changes" && (
@@ -1013,686 +1088,633 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
       </div>
     );
   };
-  return (
-    <>
-      <AdminPageShell
-        title={title}
-        description={description}
-        contentClassName="space-y-8"
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <StatusPill label={personaConfig?.label ?? "Persona"} tone="info" />
-            {subjectSelected && <StatusPill label={subjectLabel} tone="neutral" />}
+
+  const renderSubmissionDetail = () => {
+    if (!subjectSelected) {
+      return (
+        <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-6 text-sm text-gray-500">
+          Select a persona and {subjectType === "tenant" ? "tenant" : "client"} to start reviewing
+          submissions.
+        </div>
+      );
+    }
+
+    if (!activeStep) {
+      return (
+        <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-6 text-sm text-gray-500">
+          Choose a step from the list to view submission details.
+        </div>
+      );
+    }
+
+    if (isDetailLoading) {
+      return (
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Loading submission detail…
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusPill
+            label={STATUS_LABELS[currentStatus] ?? currentStatus}
+            tone={resolveStatusTone(currentStatus, "neutral")}
+          />
+          <div className="text-xs text-gray-500">
+            <div className="flex items-center gap-1">
+              <Clock size={12} />
+              Submitted: {formatDateTime(submission?.submitted_at)}
+            </div>
+            <div className="flex items-center gap-1">
+              <ClipboardList size={12} />
+              Reviewed: {formatDateTime(submission?.reviewed_at)}
+            </div>
           </div>
-        }
-      >
-        <div className="space-y-6">
-          <div className="brand-hero rounded-[32px] text-white shadow-2xl">
-            <div className="relative p-6 sm:p-8 lg:p-10">
-              <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
-                <div className="max-w-3xl space-y-6">
-                  <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-white/70">
-                    <span className="rounded-full bg-white/15 px-3 py-1">Onboarding Review</span>
-                    {personaConfig?.label ? (
-                      <span className="rounded-full bg-white/10 px-3 py-1">
-                        {personaConfig.label}
-                      </span>
-                    ) : null}
-                  </div>
-                  <div className="space-y-2">
-                    <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                      {heroSubjectTitle}
-                    </h1>
-                    <p className="text-sm text-white/80 sm:text-base">{heroSubtitle}</p>
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="rounded-3xl bg-white/10 p-4 backdrop-blur">
-                      <p className="text-xs font-medium uppercase tracking-wide text-white/70">
-                        Active Step
-                      </p>
-                      <div className="mt-2 flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-semibold text-white">
-                            {selectedStepDefinition?.label ?? "Select a step"}
-                          </p>
-                          <p className="mt-1 text-xs text-white/70">
-                            {selectedStepDefinition?.description ??
-                              "Pick a submission step from the list to view details."}
-                          </p>
-                        </div>
-                        {activeStepIndex >= 0 && (
-                          <span className="inline-flex items-center rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white">
-                            Step {activeStepIndex + 1} of {steps.length}
-                          </span>
-                        )}
-                      </div>
-                      {subjectSelected && activeStep && (
-                        <div className="mt-3 inline-flex items-center gap-2">
-                          <StatusPill
-                            label={STATUS_LABELS[currentStatus] ?? currentStatus}
-                            tone={STATUS_TONES[currentStatus] ?? "neutral"}
-                          />
-                          <span className="text-[11px] text-white/70">
-                            Updated {formatDateTime(submission?.reviewed_at)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="rounded-3xl bg-white/10 p-4 backdrop-blur">
-                      <p className="text-xs font-medium uppercase tracking-wide text-white/70">
-                        Review Progress
-                      </p>
-                      <div className="mt-2 flex items-end justify-between">
-                        <p className="text-3xl font-semibold">{progressSnapshot.percent}%</p>
-                        <p className="text-xs text-white/70">
-                          {progressSnapshot.completed} / {steps.length} steps approved
-                        </p>
-                      </div>
-                      <div className="mt-3 h-2 rounded-full bg-white/20">
-                        <div
-                          className="h-full rounded-full bg-white transition-all"
-                          style={{ width: `${progressSnapshot.percent}%` }}
-                        />
-                      </div>
-                      <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                        <div>
-                          <p className="text-[10px] uppercase tracking-wide text-white/70">
-                            Approved
-                          </p>
-                          <p className="text-sm font-semibold">{progressSnapshot.completed}</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] uppercase tracking-wide text-white/70">
-                            In Motion
-                          </p>
-                          <p className="text-sm font-semibold">{progressSnapshot.inFlight}</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] uppercase tracking-wide text-white/70">
-                            Pending
-                          </p>
-                          <p className="text-sm font-semibold">{progressSnapshot.pending}</p>
-                        </div>
-                      </div>
-                      {subjectSelected && (
-                        <div className="mt-4 space-y-3">
-                          <div>
-                            <p className="text-[10px] uppercase tracking-wide text-white/70">
-                              Awaiting Review ({awaitingReviewSteps.length})
-                            </p>
-                            {awaitingReviewSteps.length ? (
-                              <div className="mt-2 flex flex-wrap gap-2">
-                                {awaitingReviewSteps.map((step: any) => (
-                                  <button
-                                    key={step.id}
-                                    onClick={() => setActiveStep(step.id)}
-                                    className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/15 px-3 py-1 text-xs font-medium text-white transition hover:bg-white/25"
-                                  >
-                                    <span>{step.label}</span>
-                                    <StatusPill
-                                      label={STATUS_LABELS[step.status] ?? step.status}
-                                      tone={STATUS_TONES[step.status] ?? "info"}
-                                    />
-                                  </button>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-xs text-white/70">
-                                Nothing is queued for review right now.
-                              </p>
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-[10px] uppercase tracking-wide text-white/70">
-                              Not Started ({pendingSteps.length})
-                            </p>
-                            {pendingSteps.length ? (
-                              <div className="mt-2 flex flex-wrap gap-2">
-                                {pendingSteps.map((step: any) => (
-                                  <button
-                                    key={step.id}
-                                    onClick={() => setActiveStep(step.id)}
-                                    className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-medium text-white transition hover:bg-white/20"
-                                  >
-                                    <span>{step.label}</span>
-                                    <StatusPill
-                                      label={STATUS_LABELS[step.status] ?? step.status}
-                                      tone={STATUS_TONES[step.status] ?? "neutral"}
-                                    />
-                                  </button>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-xs text-white/70">
-                                All steps have been initiated.
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="w-full max-w-sm space-y-4 rounded-[28px] bg-white/10 p-5 backdrop-blur">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-white/70">
-                      Collaboration
-                    </p>
-                    <p className="mt-2 text-sm text-white/90">
-                      Keep the conversation visible for tenants and internal reviewers.
-                    </p>
-                  </div>
-                  <div className="rounded-2xl bg-white/20 px-4 py-3 text-sm text-white/90">
-                    {!subjectSelected ? (
-                      <p>Select a record to preview conversations.</p>
-                    ) : latestThread ? (
-                      <div className="space-y-1">
-                        <p className="font-semibold">
-                          {latestThread.author?.name ?? latestThread.author?.type ?? "Actor"}
-                        </p>
-                        <p className="text-xs text-white/80">
-                          {formatDateTime(latestThread.created_at)}
-                        </p>
-                        <p className="max-h-24 overflow-hidden whitespace-pre-line text-sm text-white/90">
-                          {latestThread.message || "—"}
-                        </p>
-                      </div>
-                    ) : (
-                      <p>No messages yet — send a decision to start the thread.</p>
+        </div>
+
+        {selectedStepDefinition &&
+          selectedStepDefinition.id === "founders_directors" &&
+          renderFounders()}
+
+        {!(
+          selectedStepDefinition &&
+          selectedStepDefinition.id === "founders_directors" &&
+          founders.length > 0
+        ) && (
+          <ModernTable<PayloadEntry>
+            data={payloadEntries.map(([key, value], index) => ({
+              id: `${key}-${index}`,
+              fieldName: key,
+              fieldValue: value,
+            }))}
+            columns={[
+              {
+                key: "fieldName",
+                header: "Field",
+                render: (val: unknown) => (
+                  <span className="font-medium text-gray-700">{val as string}</span>
+                ),
+              },
+              {
+                key: "fieldValue",
+                header: "Value",
+                render: (val: unknown) => renderValue(val),
+              },
+            ]}
+            emptyMessage={
+              !submission ? "No submission found for this step." : "No data provided yet."
+            }
+            paginated={false}
+            searchable={false}
+          />
+        )}
+
+        {selectedStepDefinition?.id !== "founders_directors" && (
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-gray-800">Documents</h3>
+            {renderDocuments()}
+          </div>
+        )}
+
+        <div className="space-y-3">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+            <MessageCircle size={16} />
+            Conversation History
+          </h3>
+          {renderThreads()}
+        </div>
+      </div>
+    );
+  };
+
+  const renderReviewQueue = () => {
+    if (isQueueLoading) {
+      return (
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Loading review queue…
+        </div>
+      );
+    }
+
+    if (reviewQueue.length === 0) {
+      return <p className="text-sm text-gray-500">Nothing is waiting for review right now.</p>;
+    }
+
+    const sortedQueue = reviewQueue.slice().sort((a: QueueEntry, b: QueueEntry) => {
+      const aTime = a.queued_since ? new Date(a.queued_since).getTime() : Number.POSITIVE_INFINITY;
+      const bTime = b.queued_since ? new Date(b.queued_since).getTime() : Number.POSITIVE_INFINITY;
+      return aTime - bTime;
+    });
+
+    const enrichedQueue = sortedQueue.map((entry: QueueEntry) => {
+      const personaMeta = personaOptionMap.get(entry.persona);
+      const personaLabel = personaMeta?.label ?? entry.persona;
+      const tenantKey = tenantId ? String(tenantId) : "";
+      const userKey = userId ? String(userId) : "";
+      const entryTenantId = entry.tenant_id || "";
+      const entryUserId = entry.user_id || "";
+      const secondaryLine = entry.subtitle || entry.email || entry.tenant_name || null;
+      const queuedSince = entry.queued_since ? formatDateTime(entry.queued_since) : "—";
+      const lastActivity = entry.last_activity_at ? formatDateTime(entry.last_activity_at) : "—";
+      const awaitingSteps = Array.isArray(entry.awaiting_steps) ? entry.awaiting_steps : [];
+      const isActive =
+        persona === entry.persona &&
+        ((entry.target === "tenant" && tenantKey === entryTenantId) ||
+          (entry.target !== "tenant" && userKey === entryUserId));
+
+      return {
+        ...entry,
+        id: entry.key,
+        _personaLabel: personaLabel,
+        _secondaryLine: secondaryLine,
+        _queuedSince: queuedSince,
+        _lastActivity: lastActivity,
+        _awaitingSteps: awaitingSteps,
+        _isActive: isActive,
+      } as EnrichedQueueEntry;
+    });
+
+    return (
+      <>
+        {/* Desktop view */}
+        <div className="hidden rounded-2xl border border-gray-200 md:block">
+          <ModernTable<EnrichedQueueEntry>
+            data={enrichedQueue}
+            columns={[
+              {
+                key: "label",
+                header: "SUBJECT",
+                render: (_, entry: EnrichedQueueEntry) => (
+                  <div className="space-y-1">
+                    <p className="font-semibold text-gray-900">{entry.label}</p>
+                    {entry._secondaryLine && (
+                      <p className="text-xs text-gray-500">{entry._secondaryLine}</p>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-white/80">
-                    <Users size={16} className="shrink-0 text-white/90" />
-                    <span>
-                      {subjectSelected ? `Reviewing ${subjectLabel}` : "Awaiting selection"}
+                ),
+              },
+              {
+                key: "_personaLabel",
+                header: "PERSONA",
+                render: (val: unknown) => (
+                  <span className="text-xs text-gray-600">{val as string}</span>
+                ),
+              },
+              {
+                key: "_awaitingSteps",
+                header: "PENDING STEPS",
+                render: (val: unknown) => {
+                  const awaitingSteps = val as EnrichedQueueEntry["_awaitingSteps"];
+                  return (
+                    <div className="flex flex-wrap gap-1">
+                      {awaitingSteps.length === 0 ? (
+                        <span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-500">
+                          None
+                        </span>
+                      ) : (
+                        awaitingSteps
+                          .slice(0, 3)
+                          .map((step: { label: string; status: string }, idx: number) => (
+                            <span
+                              key={idx}
+                              className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
+                            >
+                              {step.label}
+                              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-blue-600">
+                                {STATUS_LABELS[step.status] ?? step.status}
+                              </span>
+                            </span>
+                          ))
+                      )}
+                      {awaitingSteps.length > 3 && (
+                        <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-600">
+                          +{awaitingSteps.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                  );
+                },
+              },
+              {
+                key: "_queuedSince",
+                header: "QUEUED",
+                render: (val: unknown) => (
+                  <span className="text-xs text-gray-600">{val as string}</span>
+                ),
+              },
+              {
+                key: "_lastActivity",
+                header: "LAST ACTIVITY",
+                render: (val: unknown) => (
+                  <span className="text-xs text-gray-600">{val as string}</span>
+                ),
+              },
+            ]}
+            onRowClick={(entry: EnrichedQueueEntry) => handleQueueSelection(entry)}
+            searchable={false}
+            filterable={false}
+            exportable={false}
+            paginated={false}
+            enableAnimations={false}
+          />
+        </div>
+
+        {/* Mobile view */}
+        <div className="space-y-3 md:hidden">
+          {enrichedQueue.map((entry: EnrichedQueueEntry) => (
+            <button
+              key={entry.key}
+              onClick={() => handleQueueSelection(entry)}
+              className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
+                entry._isActive
+                  ? "border-blue-500 bg-blue-50 shadow-sm"
+                  : "border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-gray-900">{entry.label}</p>
+                  {entry._secondaryLine && (
+                    <p className="text-xs text-gray-500">{entry._secondaryLine}</p>
+                  )}
+                  <p className="text-[11px] uppercase tracking-wide text-gray-400">
+                    {entry._personaLabel}
+                  </p>
+                </div>
+                <StatusPill
+                  label={`${entry.total_pending} ${entry.total_pending === 1 ? "step" : "steps"}`}
+                  tone="info"
+                />
+              </div>
+              <div className="mt-3 space-y-2 text-xs text-gray-600">
+                <div className="flex items-center gap-2 text-xs">
+                  <Clock size={12} />
+                  <span>Queued {entry._queuedSince}</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <MessageCircle size={12} />
+                  <span>Last activity {entry._lastActivity}</span>
+                </div>
+              </div>
+              {entry._awaitingSteps.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {entry._awaitingSteps
+                    .slice(0, 3)
+                    .map((step: { id: string; label: string; status: string }) => (
+                      <span
+                        key={`${entry.key}-${step.id}-mobile`}
+                        className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
+                      >
+                        {step.label}
+                        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-blue-600">
+                          {STATUS_LABELS[step.status] ?? step.status}
+                        </span>
+                      </span>
+                    ))}
+                  {entry._awaitingSteps.length > 3 && (
+                    <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-600">
+                      +{entry._awaitingSteps.length - 3} more
                     </span>
+                  )}
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      </>
+    );
+  };
+
+  return (
+    <AdminPageShell
+      title={title}
+      description={description}
+      contentClassName="space-y-8"
+      actions={
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusPill label={personaConfig?.label ?? "Persona"} tone="info" />
+          {subjectSelected && <StatusPill label={subjectLabel} tone="neutral" />}
+        </div>
+      }
+    >
+      <div className="space-y-6">
+        <div className="brand-hero rounded-[32px] text-white shadow-2xl">
+          <div className="relative p-6 sm:p-8 lg:p-10">
+            <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+              <div className="max-w-3xl space-y-6">
+                <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-white/70">
+                  <span className="rounded-full bg-white/15 px-3 py-1">Onboarding Review</span>
+                  {personaConfig?.label ? (
+                    <span className="rounded-full bg-white/10 px-3 py-1">
+                      {personaConfig.label}
+                    </span>
+                  ) : null}
+                </div>
+                <div className="space-y-2">
+                  <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                    {heroSubjectTitle}
+                  </h1>
+                  <p className="text-sm text-white/80 sm:text-base">{heroSubtitle}</p>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-3xl bg-white/10 p-4 backdrop-blur">
+                    <p className="text-xs font-medium uppercase tracking-wide text-white/70">
+                      Active Step
+                    </p>
+                    <div className="mt-2 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-white">
+                          {selectedStepDefinition?.label ?? "Select a step"}
+                        </p>
+                        <p className="mt-1 text-xs text-white/70">
+                          {selectedStepDefinition?.description ??
+                            "Pick a submission step from the list to view details."}
+                        </p>
+                      </div>
+                      {activeStepIndex >= 0 && (
+                        <span className="inline-flex items-center rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white">
+                          Step {activeStepIndex + 1} of {steps.length}
+                        </span>
+                      )}
+                    </div>
+                    {subjectSelected && activeStep && (
+                      <div className="mt-3 inline-flex items-center gap-2">
+                        <StatusPill
+                          label={STATUS_LABELS[currentStatus] ?? currentStatus}
+                          tone={resolveStatusTone(currentStatus, "neutral")}
+                        />
+                        <span className="text-[11px] text-white/70">
+                          Updated {formatDateTime(submission?.reviewed_at)}
+                        </span>
+                      </div>
+                    )}
                   </div>
+                  <div className="rounded-3xl bg-white/10 p-4 backdrop-blur">
+                    <p className="text-xs font-medium uppercase tracking-wide text-white/70">
+                      Review Progress
+                    </p>
+                    <div className="mt-2 flex items-end justify-between">
+                      <p className="text-3xl font-semibold">{progressSnapshot.percent}%</p>
+                      <p className="text-xs text-white/70">
+                        {progressSnapshot.completed} / {steps.length} steps approved
+                      </p>
+                    </div>
+                    <div className="mt-3 h-2 rounded-full bg-white/20">
+                      <div
+                        className="h-full rounded-full bg-white transition-all"
+                        style={{ width: `${progressSnapshot.percent}%` }}
+                      />
+                    </div>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wide text-white/70">
+                          Approved
+                        </p>
+                        <p className="text-sm font-semibold">{progressSnapshot.completed}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wide text-white/70">
+                          In Motion
+                        </p>
+                        <p className="text-sm font-semibold">{progressSnapshot.inFlight}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wide text-white/70">Pending</p>
+                        <p className="text-sm font-semibold">{progressSnapshot.pending}</p>
+                      </div>
+                    </div>
+                    {subjectSelected && (
+                      <div className="mt-4 space-y-3">
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wide text-white/70">
+                            Awaiting Review ({awaitingReviewSteps.length})
+                          </p>
+                          {awaitingReviewSteps.length ? (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {awaitingReviewSteps.map((step: any) => (
+                                <button
+                                  key={step.id}
+                                  onClick={() => setActiveStep(step.id)}
+                                  className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/15 px-3 py-1 text-xs font-medium text-white transition hover:bg-white/25"
+                                >
+                                  <span>{step.label}</span>
+                                  <StatusPill
+                                    label={STATUS_LABELS[step.status] ?? step.status}
+                                    tone={resolveStatusTone(step.status, "info")}
+                                  />
+                                </button>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-white/70">
+                              Nothing is queued for review right now.
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wide text-white/70">
+                            Not Started ({pendingSteps.length})
+                          </p>
+                          {pendingSteps.length ? (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {pendingSteps.map((step: any) => (
+                                <button
+                                  key={step.id}
+                                  onClick={() => setActiveStep(step.id)}
+                                  className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-medium text-white transition hover:bg-white/20"
+                                >
+                                  <span>{step.label}</span>
+                                  <StatusPill
+                                    label={STATUS_LABELS[step.status] ?? step.status}
+                                    tone={resolveStatusTone(step.status, "neutral")}
+                                  />
+                                </button>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-white/70">All steps have been initiated.</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="w-full max-w-sm space-y-4 rounded-[28px] bg-white/10 p-5 backdrop-blur">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-white/70">
+                    Collaboration
+                  </p>
+                  <p className="mt-2 text-sm text-white/90">
+                    Keep the conversation visible for tenants and internal reviewers.
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-white/20 px-4 py-3 text-sm text-white/90">
+                  {!subjectSelected ? (
+                    <p>Select a record to preview conversations.</p>
+                  ) : latestThread ? (
+                    <div className="space-y-1">
+                      <p className="font-semibold">
+                        {latestThread.author?.name ?? latestThread.author?.type ?? "Actor"}
+                      </p>
+                      <p className="text-xs text-white/80">
+                        {formatDateTime(latestThread.created_at)}
+                      </p>
+                      <p className="max-h-24 overflow-hidden whitespace-pre-line text-sm text-white/90">
+                        {latestThread.message || "—"}
+                      </p>
+                    </div>
+                  ) : (
+                    <p>No messages yet — send a decision to start the thread.</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 text-xs text-white/80">
+                  <Users size={16} className="shrink-0 text-white/90" />
+                  <span>
+                    {subjectSelected ? `Reviewing ${subjectLabel}` : "Awaiting selection"}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
-            <div className="space-y-6 xl:sticky xl:top-24">
-              <ModernCard title="Awaiting Review" className="space-y-3">
-                {isQueueLoading ? (
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Loading review queue…
-                  </div>
-                ) : reviewQueue.length === 0 ? (
-                  <p className="text-sm text-gray-500">Nothing is waiting for review right now.</p>
+        <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
+          <div className="space-y-6 xl:sticky xl:top-24">
+            <ModernCard title="Awaiting Review" className="space-y-3">
+              {renderReviewQueue()}
+            </ModernCard>
+
+            <ModernCard title="Select Persona" className="space-y-3">
+              <div className="space-y-3">{personaOptions.map(renderPersonaOption)}</div>
+            </ModernCard>
+
+            <ModernCard title={subjectType === "tenant" ? "Select Tenant" : "Select Client"}>
+              <div className="space-y-4">
+                {subjectType === "tenant" ? (
+                  <>
+                    <label className="block text-sm font-medium text-gray-700">Tenant</label>
+                    <div className="relative">
+                      <select
+                        value={selectedTenantId}
+                        onChange={(event) => setSelectedTenantId(event.target.value)}
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                      >
+                        <option value="">
+                          {isTenantsLoading ? "Loading tenants..." : "Select a tenant"}
+                        </option>
+                        {tenantsOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
                 ) : (
                   <>
-                    <div className="hidden rounded-2xl border border-gray-200 md:block">
-                      <ModernTable
-                        data={reviewQueue
-                          .slice()
-                          .sort((a: any, b: any) => {
-                            const aTime = a.queued_since
-                              ? new Date(a.queued_since).getTime()
-                              : Number.POSITIVE_INFINITY;
-                            const bTime = b.queued_since
-                              ? new Date(b.queued_since).getTime()
-                              : Number.POSITIVE_INFINITY;
-                            return aTime - bTime;
-                          })
-                          .map((entry: any) => {
-                            const personaMeta = personaOptionMap.get(entry.persona);
-                            const personaLabel = personaMeta?.label ?? entry.persona;
-                            const tenantKey = tenantId ? String(tenantId) : "";
-                            const userKey = userId ? String(userId) : "";
-                            const entryTenantId = entry.tenant_id ?? "";
-                            const entryUserId = entry.user_id ?? "";
-                            const secondaryLine =
-                              entry.subtitle || entry.email || entry.tenant_name || null;
-                            const queuedSince = entry.queued_since
-                              ? formatDateTime(entry.queued_since)
-                              : "—";
-                            const lastActivity = entry.last_activity_at
-                              ? formatDateTime(entry.last_activity_at)
-                              : "—";
-                            const awaitingSteps = Array.isArray(entry.awaiting_steps)
-                              ? entry.awaiting_steps
-                              : [];
-                            const isActive =
-                              persona === entry.persona &&
-                              ((entry.target === "tenant" && tenantKey === entryTenantId) ||
-                                (entry.target !== "tenant" && userKey === entryUserId));
-
-                            return {
-                              ...entry,
-                              id: entry.key,
-                              _personaLabel: personaLabel,
-                              _secondaryLine: secondaryLine,
-                              _queuedSince: queuedSince,
-                              _lastActivity: lastActivity,
-                              _awaitingSteps: awaitingSteps,
-                              _isActive: isActive,
-                            };
-                          })}
-                        columns={[
-                          {
-                            key: "label",
-                            header: "SUBJECT",
-                            render: (_, entry: any) => (
-                              <div className="space-y-1">
-                                <p className="font-semibold text-gray-900">{entry.label}</p>
-                                {entry._secondaryLine && (
-                                  <p className="text-xs text-gray-500">{entry._secondaryLine}</p>
-                                )}
-                              </div>
-                            ),
-                          },
-                          {
-                            key: "_personaLabel",
-                            header: "PERSONA",
-                            render: (val) => <span className="text-xs text-gray-600">{val}</span>,
-                          },
-                          {
-                            key: "_awaitingSteps",
-                            header: "PENDING STEPS",
-                            render: (awaitingSteps: any[]) => (
-                              <div className="flex flex-wrap gap-2">
-                                {awaitingSteps.length === 0 ? (
-                                  <span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-500">
-                                    None
-                                  </span>
-                                ) : (
-                                  awaitingSteps.slice(0, 3).map((step: any, idx: number) => (
-                                    <span
-                                      key={idx}
-                                      className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
-                                    >
-                                      {step.label}
-                                      <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-blue-600">
-                                        {STATUS_LABELS[step.status] ?? step.status}
-                                      </span>
-                                    </span>
-                                  ))
-                                )}
-                                {awaitingSteps.length > 3 && (
-                                  <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-600">
-                                    +{awaitingSteps.length - 3} more
-                                  </span>
-                                )}
-                              </div>
-                            ),
-                          },
-                          {
-                            key: "_queuedSince",
-                            header: "QUEUED",
-                            render: (val) => <span className="text-xs text-gray-600">{val}</span>,
-                          },
-                          {
-                            key: "_lastActivity",
-                            header: "LAST ACTIVITY",
-                            render: (val) => <span className="text-xs text-gray-600">{val}</span>,
-                          },
-                        ]}
-                        onRowClick={(entry: any) => handleQueueSelection(entry)}
-                        searchable={false}
-                        filterable={false}
-                        exportable={false}
-                        paginated={false}
-                        enableAnimations={false}
-                      />
-                    </div>
-                    <div className="space-y-3 md:hidden">
-                      {reviewQueue
-                        .slice()
-                        .sort((a: any, b: any) => {
-                          const aTime = a.queued_since
-                            ? new Date(a.queued_since).getTime()
-                            : Number.POSITIVE_INFINITY;
-                          const bTime = b.queued_since
-                            ? new Date(b.queued_since).getTime()
-                            : Number.POSITIVE_INFINITY;
-                          return aTime - bTime;
-                        })
-                        .map((entry: any) => {
-                          const personaMeta = personaOptionMap.get(entry.persona);
-                          const personaLabel = personaMeta?.label ?? entry.persona;
-                          const secondaryLine =
-                            entry.subtitle || entry.email || entry.tenant_name || null;
-                          const awaitingSteps = Array.isArray(entry.awaiting_steps)
-                            ? entry.awaiting_steps
-                            : [];
-                          const queuedSince = entry.queued_since
-                            ? formatDateTime(entry.queued_since)
-                            : "—";
-                          const lastActivity = entry.last_activity_at
-                            ? formatDateTime(entry.last_activity_at)
-                            : "—";
-                          const isActive =
-                            persona === entry.persona &&
-                            ((entry.target === "tenant" &&
-                              (tenantId ? String(tenantId) : "") === (entry.tenant_id ?? "")) ||
-                              (entry.target !== "tenant" &&
-                                (userId ? String(userId) : "") === (entry.user_id ?? "")));
-
-                          return (
-                            <button
-                              key={entry.key}
-                              onClick={() => handleQueueSelection(entry)}
-                              className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
-                                isActive
-                                  ? "border-blue-500 bg-blue-50 shadow-sm"
-                                  : "border-gray-200 hover:border-gray-300"
-                              }`}
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="space-y-1">
-                                  <p className="text-sm font-semibold text-gray-900">
-                                    {entry.label}
-                                  </p>
-                                  {secondaryLine && (
-                                    <p className="text-xs text-gray-500">{secondaryLine}</p>
-                                  )}
-                                  <p className="text-[11px] uppercase tracking-wide text-gray-400">
-                                    {personaLabel}
-                                  </p>
-                                </div>
-                                <StatusPill
-                                  label={`${entry.total_pending} ${
-                                    entry.total_pending === 1 ? "step" : "steps"
-                                  }`}
-                                  tone="info"
-                                />
-                              </div>
-                              <div className="mt-3 space-y-2 text-xs text-gray-600">
-                                <div className="flex items-center gap-2 text-xs">
-                                  <Clock size={12} />
-                                  <span>Queued {queuedSince}</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-xs text-gray-500">
-                                  <MessageCircle size={12} />
-                                  <span>Last activity {lastActivity}</span>
-                                </div>
-                              </div>
-                              {awaitingSteps.length > 0 && (
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                  {awaitingSteps.slice(0, 3).map((step: any) => (
-                                    <span
-                                      key={`${entry.key}-${step.id}-mobile`}
-                                      className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
-                                    >
-                                      {step.label}
-                                      <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-blue-600">
-                                        {STATUS_LABELS[step.status] ?? step.status}
-                                      </span>
-                                    </span>
-                                  ))}
-                                  {awaitingSteps.length > 3 && (
-                                    <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-600">
-                                      +{awaitingSteps.length - 3} more
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                            </button>
-                          );
-                        })}
+                    <label className="block text-sm font-medium text-gray-700">Client</label>
+                    <div className="relative">
+                      <select
+                        value={selectedClientId}
+                        onChange={(event) => setSelectedClientId(event.target.value)}
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                      >
+                        <option value="">
+                          {isClientsLoading ? "Loading clients..." : "Select a client"}
+                        </option>
+                        {filteredClients.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </>
                 )}
-              </ModernCard>
-
-              <ModernCard title="Select Persona" className="space-y-3">
-                <div className="space-y-3">{personaOptions.map(renderPersonaOption)}</div>
-              </ModernCard>
-
-              <ModernCard title={subjectType === "tenant" ? "Select Tenant" : "Select Client"}>
-                <div className="space-y-4">
-                  {subjectType === "tenant" ? (
-                    <>
-                      <label className="block text-sm font-medium text-gray-700">Tenant</label>
-                      <div className="relative">
-                        <select
-                          value={selectedTenantId}
-                          onChange={(event) => setSelectedTenantId(event.target.value)}
-                          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                        >
-                          <option value="">
-                            {isTenantsLoading ? "Loading tenants..." : "Select a tenant"}
-                          </option>
-                          {tenantsOptions.map((option: any) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <label className="block text-sm font-medium text-gray-700">Client</label>
-                      <div className="relative">
-                        <select
-                          value={selectedClientId}
-                          onChange={(event) => setSelectedClientId(event.target.value)}
-                          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                        >
-                          <option value="">
-                            {isClientsLoading ? "Loading clients..." : "Select a client"}
-                          </option>
-                          {filteredClients.map((option: any) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </>
-                  )}
-                  <p className="flex items-center gap-2 text-xs text-gray-500">
-                    <Users size={14} />
-                    Choose who you are reviewing to view their onboarding trail.
-                  </p>
-                </div>
-              </ModernCard>
-
-              <ModernCard title="Steps" className="space-y-3">
-                {!subjectSelected ? (
-                  <p className="text-sm text-gray-500">
-                    Select a {subjectType === "tenant" ? "tenant" : "client"} above to load
-                    onboarding steps.
-                  </p>
-                ) : loadingSummaries ? (
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Loading submissions…
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {steps.map((step: any) => {
-                      const isActive = activeStep === step.id;
-                      return (
-                        <button
-                          key={step.id}
-                          onClick={() => setActiveStep(step.id)}
-                          className={`w-full rounded-xl border px-4 py-3 text-left transition ${
-                            isActive
-                              ? "border-blue-500 bg-blue-50 shadow-sm"
-                              : "border-gray-200 hover:bg-gray-50"
-                          }`}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <p className="text-sm font-semibold text-gray-800">{step.label}</p>
-                              {step.description && (
-                                <p className="mt-1 text-xs text-gray-500">{step.description}</p>
-                              )}
-                            </div>
-                            <ChevronRight
-                              className={`h-4 w-4 text-gray-400 transition ${
-                                isActive ? "translate-x-1 text-blue-500" : ""
-                              }`}
-                            />
-                          </div>
-                          <div className="mt-3">{renderStepStatus(step.id)}</div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </ModernCard>
-            </div>
-
-            <div className="space-y-6">
-              <ModernCard
-                title={
-                  activeStep
-                    ? (steps.find((step) => step.id === activeStep)?.label ?? "Submission Detail")
-                    : "Submission Detail"
-                }
-              >
-                <p className="mb-4 text-sm text-gray-500">
-                  {activeStep
-                    ? (steps.find((step) => step.id === activeStep)?.description ?? "")
-                    : "Choose a step to review the submitted information."}
+                <p className="flex items-center gap-2 text-xs text-gray-500">
+                  <Users size={14} />
+                  Choose who you are reviewing to view their onboarding trail.
                 </p>
-                {!subjectSelected ? (
-                  <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-6 text-sm text-gray-500">
-                    Select a persona and {subjectType === "tenant" ? "tenant" : "client"} to start
-                    reviewing submissions.
-                  </div>
-                ) : !activeStep ? (
-                  <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-6 text-sm text-gray-500">
-                    Choose a step from the list to view submission details.
-                  </div>
-                ) : isDetailLoading ? (
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Loading submission detail…
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <StatusPill
-                        label={STATUS_LABELS[currentStatus] ?? currentStatus}
-                        tone={STATUS_TONES[currentStatus] ?? "neutral"}
-                      />
-                      <div className="text-xs text-gray-500">
-                        <div className="flex items-center gap-1">
-                          <Clock size={12} />
-                          Submitted: {formatDateTime(submission?.submitted_at)}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <ClipboardList size={12} />
-                          Reviewed: {formatDateTime(submission?.reviewed_at)}
-                        </div>
-                      </div>
-                    </div>
+              </div>
+            </ModernCard>
 
-                    {selectedStepDefinition &&
-                      selectedStepDefinition.id === "founders_directors" &&
-                      renderFounders()}
+            <ModernCard title="Steps" className="space-y-3">
+              {renderStepList()}
+            </ModernCard>
+          </div>
 
-                    {!(
-                      selectedStepDefinition &&
-                      selectedStepDefinition.id === "founders_directors" &&
-                      founders.length > 0
-                    ) && (
-                      <ModernTable
-                        data={payloadEntries.map(([key, value], index) => ({
-                          id: `${key}-${index}`,
-                          fieldName: key,
-                          fieldValue: value,
-                        }))}
-                        columns={[
-                          {
-                            key: "fieldName",
-                            header: "Field",
-                            render: (row) => (
-                              <span className="font-medium text-gray-700">{row.fieldName}</span>
-                            ),
-                          },
-                          {
-                            key: "fieldValue",
-                            header: "Value",
-                            render: (row) => renderValue(row.fieldValue),
-                          },
-                        ]}
-                        emptyMessage={
-                          !submission
-                            ? "No submission found for this step."
-                            : "No data provided yet."
-                        }
-                        paginated={false}
-                        searchable={false}
-                      />
-                    )}
+          <div className="space-y-6">
+            <ModernCard
+              title={
+                activeStep
+                  ? (steps.find((step) => step.id === activeStep)?.label ?? "Submission Detail")
+                  : "Submission Detail"
+              }
+            >
+              <p className="mb-4 text-sm text-gray-500">
+                {activeStep
+                  ? (steps.find((step) => step.id === activeStep)?.description ?? "")
+                  : "Choose a step to review the submitted information."}
+              </p>
+              {renderSubmissionDetail()}
+            </ModernCard>
 
-                    {selectedStepDefinition?.id !== "founders_directors" && (
-                      <div className="space-y-3">
-                        <h3 className="text-sm font-semibold text-gray-800">Documents</h3>
-                        {renderDocuments()}
-                      </div>
-                    )}
-
-                    <div className="space-y-3">
-                      <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-                        <MessageCircle size={16} />
-                        Conversation History
-                      </h3>
-                      {renderThreads()}
-                    </div>
-                  </div>
-                )}
-              </ModernCard>
-
-              <ModernCard title="Decision" className="space-y-4">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {STATUS_OPTIONS.map((option: any) => (
-                    <button
-                      key={option.value}
-                      onClick={() => setDecision(option.value)}
-                      className={`rounded-xl border px-4 py-3 text-left text-sm transition ${
-                        decision === option.value
-                          ? "border-blue-500 bg-blue-50 text-blue-700 shadow-sm"
-                          : "border-gray-200 hover:bg-gray-50"
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Message {requiresMessage && <span className="text-red-500">*</span>}
-                  </label>
-                  <textarea
-                    value={decisionMessage}
-                    onChange={(event) => setDecisionMessage(event.target.value)}
-                    rows={4}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                    placeholder="Share guidance or next steps with the submitter."
-                  />
-                  <p className="text-xs text-gray-500">
-                    Messages are visible to the submitter. Use them to clarify changes or confirm
-                    approval details.
-                  </p>
-                </div>
-                <ModernButton
-                  onClick={handleDecisionSubmit}
-                  isLoading={updateStatusMutation.isPending}
-                  isDisabled={!detailArgs || updateStatusMutation.isPending}
-                  className="flex items-center gap-2"
-                >
-                  <Send size={16} />
-                  {updateStatusMutation.isPending ? "Updating…" : "Send decision"}
-                </ModernButton>
-              </ModernCard>
-            </div>
+            <ModernCard title="Decision" className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                {STATUS_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setDecision(option.value)}
+                    className={`rounded-xl border px-4 py-3 text-left text-sm transition ${
+                      decision === option.value
+                        ? "border-blue-500 bg-blue-50 text-blue-700 shadow-sm"
+                        : "border-gray-200 hover:bg-gray-50"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Message {requiresMessage && <span className="text-red-500">*</span>}
+                </label>
+                <textarea
+                  value={decisionMessage}
+                  onChange={(event) => setDecisionMessage(event.target.value)}
+                  rows={4}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  placeholder="Share guidance or next steps with the submitter."
+                />
+                <p className="text-xs text-gray-500">
+                  Messages are visible to the submitter. Use them to clarify changes or confirm
+                  approval details.
+                </p>
+              </div>
+              <ModernButton
+                onClick={handleDecisionSubmit}
+                isLoading={updateStatusMutation.isPending}
+                isDisabled={!detailArgs || updateStatusMutation.isPending}
+                className="flex items-center gap-2"
+              >
+                <Send size={16} />
+                {updateStatusMutation.isPending ? "Updating…" : "Send decision"}
+              </ModernButton>
+            </ModernCard>
           </div>
         </div>
-      </AdminPageShell>
-    </>
+      </div>
+    </AdminPageShell>
   );
 };
 
 const AdminOnboardingReview = () => <OnboardingReviewPage />;
 
-export { OnboardingReviewPage, ADMIN_PERSONA_OPTIONS, STATUS_LABELS, STATUS_TONES, STATUS_OPTIONS };
+export { STATUS_LABELS, STATUS_TONES, STATUS_OPTIONS } from "../../shared/constants/onboarding";
+export { OnboardingReviewPage, ADMIN_PERSONA_OPTIONS };
 export default AdminOnboardingReview;

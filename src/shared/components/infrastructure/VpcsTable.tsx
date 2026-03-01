@@ -1,26 +1,16 @@
-// @ts-nocheck
 import React from "react";
 import { Trash2, Network } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
 
-export interface Vpc {
-  id: string;
-  name?: string;
-  cidr_block?: string;
-  cidr?: string;
-  state?: string;
-  status?: string;
-  is_default?: boolean;
-  region?: string;
-}
+import { Vpc } from "./types";
 
 interface VpcsTableProps {
   vpcs: Vpc[];
-  isLoading?: boolean;
-  emptyMessage?: string;
-  onDelete?: (vpc: Vpc) => void;
-  showDefaultBadge?: boolean;
-  showActions?: boolean;
+  isLoading?: boolean | undefined;
+  emptyMessage?: string | undefined;
+  onDelete?: ((vpc: Vpc) => void) | undefined;
+  showDefaultBadge?: boolean | undefined;
+  showActions?: boolean | undefined;
 }
 
 /**

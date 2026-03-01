@@ -4,7 +4,6 @@ import "./index.css";
 import App from "./App";
 import { BrowserRouter as Router } from "react-router-dom";
 import ContextProvider from "./contexts/contextprovider";
-import ObjectStorageProvider from "./contexts/ObjectStorageContext";
 import { Toaster } from "sonner";
 import QueryProvider from "./utils/queryProvider";
 import { HelmetProvider } from "react-helmet-async";
@@ -17,9 +16,7 @@ root.render(
         <QueryProvider>
           <Toaster position="top-right" richColors closeButton />
           <ContextProvider>
-            <ObjectStorageProvider>
-              <App />
-            </ObjectStorageProvider>
+            <App />
           </ContextProvider>
         </QueryProvider>
       </HelmetProvider>

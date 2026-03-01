@@ -1,9 +1,10 @@
-// @ts-nocheck
 import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Globe2 } from "lucide-react";
 import ClientPageShell from "../components/ClientPageShell";
-import ElasticIpsContainer from "../../shared/components/infrastructure/containers/ElasticIpsContainer";
+import ElasticIpsContainer, {
+  ElasticIpHooks,
+} from "../../shared/components/infrastructure/containers/ElasticIpsContainer";
 import {
   useElasticIps,
   useCreateElasticIp,
@@ -23,12 +24,12 @@ const ClientElasticIps: React.FC = () => {
   const region = searchParams.get("region") || "";
 
   // Hook references passed to container (not called here)
-  const hooks = {
-    useList: useElasticIps,
-    useCreate: useCreateElasticIp,
-    useDelete: useDeleteElasticIp,
-    useAssociate: useAssociateElasticIp,
-    useDisassociate: useDisassociateElasticIp,
+  const hooks: ElasticIpHooks = {
+    useList: useElasticIps as ElasticIpHooks["useList"],
+    useCreate: useCreateElasticIp as ElasticIpHooks["useCreate"],
+    useDelete: useDeleteElasticIp as ElasticIpHooks["useDelete"],
+    useAssociate: useAssociateElasticIp as ElasticIpHooks["useAssociate"],
+    useDisassociate: useDisassociateElasticIp as ElasticIpHooks["useDisassociate"],
   };
 
   return (
@@ -37,7 +38,7 @@ const ClientElasticIps: React.FC = () => {
       projectId={projectId}
       region={region}
       hooks={hooks}
-      wrapper={({ headerActions, children }) => (
+      wrapper={({ children }) => (
         <ClientPageShell
           title={
             <span className="flex items-center gap-2">
@@ -46,7 +47,6 @@ const ClientElasticIps: React.FC = () => {
             </span>
           }
           description="Static public IP addresses for your instances"
-          // Client still gets headerActions but buttons hidden via permissions
         >
           {children}
         </ClientPageShell>

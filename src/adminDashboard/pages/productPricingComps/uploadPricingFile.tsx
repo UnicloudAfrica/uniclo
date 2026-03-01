@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useState } from "react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { X, Loader2, AlertTriangle, CheckCircle } from "lucide-react";
 import { useUploadProductPricingFile } from "../../../hooks/adminHooks/adminproductPricingHook";
@@ -8,10 +7,10 @@ import { FileInput } from "../../../utils/fileInput";
 
 const UploadPricingFileModal = ({ isOpen, onClose }: any) => {
   const queryClient = useQueryClient();
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFile, setSelectedFile] = useState<any>(null);
   const [isDryRun, setIsDryRun] = useState(false);
   const [error, setError] = useState("");
-  const [uploadResult, setUploadResult] = useState(null);
+  const [uploadResult, setUploadResult] = useState<any>(null);
 
   const { mutate: uploadFile, isPending } = useUploadProductPricingFile();
 
@@ -109,7 +108,7 @@ const UploadPricingFileModal = ({ isOpen, onClose }: any) => {
           <div className="flex items-center justify-end px-6 py-4 border-t rounded-b-[24px]">
             <button
               onClick={handleFinish}
-              className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors"
+              className="px-8 py-3 bg-[var(--theme-color)] text-white font-medium rounded-full hover:bg-[var(--theme-color)] transition-colors"
             >
               Finish
             </button>
@@ -137,7 +136,7 @@ const UploadPricingFileModal = ({ isOpen, onClose }: any) => {
               type="checkbox"
               checked={isDryRun}
               onChange={(e) => setIsDryRun(e.target.checked)}
-              className="h-4 w-4 text-[#288DD1] focus:ring-[#288DD1] border-gray-300 rounded"
+              className="h-4 w-4 text-[var(--theme-color)] focus:ring-[var(--theme-color)] border-gray-300 rounded"
             />
             <label htmlFor="dry-run" className="ml-2 block text-sm text-gray-700">
               Perform a dry run (validate file without importing)
@@ -148,7 +147,7 @@ const UploadPricingFileModal = ({ isOpen, onClose }: any) => {
           <div className="flex gap-3">
             <button
               onClick={handleClose}
-              className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
+              className="px-6 py-2 text-[var(--theme-text-color)] bg-[var(--theme-surface-alt)] border border-[var(--theme-surface-alt)] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
               disabled={isPending}
             >
               Cancel
@@ -156,7 +155,7 @@ const UploadPricingFileModal = ({ isOpen, onClose }: any) => {
             <button
               onClick={handleSubmit}
               disabled={isPending || !selectedFile}
-              className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="px-8 py-3 bg-[var(--theme-color)] text-white font-medium rounded-full hover:bg-[var(--theme-color)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {isPending ? "Uploading..." : "Upload File"}
               {isPending && <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />}
@@ -171,13 +170,13 @@ const UploadPricingFileModal = ({ isOpen, onClose }: any) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[500px] mx-4 w-full">
         {/* Header */}
-        <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
-          <h2 className="text-lg font-semibold text-[#575758]">
+        <div className="flex justify-between items-center px-6 py-4 border-b bg-[var(--theme-surface-alt)] rounded-t-[24px]">
+          <h2 className="text-lg font-semibold text-[var(--theme-text-color)]">
             {uploadResult ? "Upload Summary" : "Upload Pricing File"}
           </h2>
           <button
             onClick={handleClose}
-            className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
+            className="text-gray-400 hover:text-[rgb(var(--theme-neutral-900) / 0.7)] font-medium transition-colors"
             disabled={isPending}
           >
             <X className="w-5 h-5" />

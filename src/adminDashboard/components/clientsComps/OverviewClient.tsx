@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CalendarClock, SquarePen, Trash2 } from "lucide-react";
 import EditClientModal from "../../pages/clientComps/EditClient";
@@ -13,9 +12,10 @@ const encodeId = (id: string) => encodeURIComponent(btoa(id));
 
 interface OverviewClientProps {
   client: any;
+  openEditOnLoad?: boolean;
 }
 
-const OverviewClient: React.FC<OverviewClientProps> = ({ client }: any) => {
+const OverviewClient: React.FC<OverviewClientProps> = ({ client, openEditOnLoad }: any) => {
   const navigate = useNavigate();
   const [isEditClientModalOpen, setIsEditClientModalOpen] = useState(false);
   const [isDeleteClientModalOpen, setIsDeleteClientModalOpen] = useState(false);
@@ -97,6 +97,12 @@ const OverviewClient: React.FC<OverviewClientProps> = ({ client }: any) => {
     setIsEditClientModalOpen(true);
   };
 
+  useEffect(() => {
+    if (openEditOnLoad && client) {
+      openEditClientModal(client);
+    }
+  }, [client, openEditOnLoad]);
+
   const closeEditClientModal = () => {
     setIsEditClientModalOpen(false);
     setSelectedClient(null);
@@ -132,7 +138,7 @@ const OverviewClient: React.FC<OverviewClientProps> = ({ client }: any) => {
           </div>
         )}
 
-        <div className="rounded-3xl border border-[#EAECF0] bg-gradient-to-br from-white via-[#F5F8FB] to-white p-6 shadow-sm">
+        <div className="rounded-3xl border border-[var(--theme-surface-alt)] bg-gradient-to-br from-white via-[var(--theme-surface-alt)] to-white p-6 shadow-sm">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -178,10 +184,10 @@ const OverviewClient: React.FC<OverviewClientProps> = ({ client }: any) => {
 
         <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
           <div className="space-y-6">
-            <div className="rounded-3xl border border-[#EAECF0] bg-white p-5 shadow-sm">
+            <div className="rounded-3xl border border-[var(--theme-surface-alt)] bg-white p-5 shadow-sm">
               <h3 className="text-sm font-semibold text-slate-900">Contact Details</h3>
               <ul className="mt-4 space-y-3">
-                {contactItems.map(({ label, value, iconKey, tone, type, action }) => (
+                {contactItems.map(({ label, value, iconKey, tone, type, action }: any) => (
                   <li key={label} className="flex items-start gap-3 text-sm">
                     <IconBadge iconKey={iconKey} tone={tone as any} size="sm" className="mt-0.5" />
                     <div>
@@ -191,7 +197,7 @@ const OverviewClient: React.FC<OverviewClientProps> = ({ client }: any) => {
                       {type === "mailto" && value && value !== "Not provided" ? (
                         <a
                           href={`mailto:${value}`}
-                          className="text-sm font-semibold text-[#288DD1] hover:underline"
+                          className="text-sm font-semibold text-[var(--theme-color)] hover:underline"
                         >
                           {value}
                         </a>
@@ -199,7 +205,7 @@ const OverviewClient: React.FC<OverviewClientProps> = ({ client }: any) => {
                         <button
                           type="button"
                           onClick={action}
-                          className="text-sm font-semibold text-[#288DD1] hover:underline"
+                          className="text-sm font-semibold text-[var(--theme-color)] hover:underline"
                         >
                           {value}
                         </button>
@@ -212,13 +218,13 @@ const OverviewClient: React.FC<OverviewClientProps> = ({ client }: any) => {
               </ul>
             </div>
 
-            <div className="rounded-3xl border border-[#EAECF0] bg-white p-5 shadow-sm">
+            <div className="rounded-3xl border border-[var(--theme-surface-alt)] bg-white p-5 shadow-sm">
               <div className="flex items-center gap-2">
                 <IconBadge iconKey="business.registeredAddress" tone="slate" size="sm" />
                 <h3 className="text-sm font-semibold text-slate-900">Address & Location</h3>
               </div>
               <dl className="mt-4 space-y-4">
-                <div className="rounded-2xl border border-[#EEF2F6] bg-[#F9FAFB] p-3 text-sm text-slate-800">
+                <div className="rounded-2xl border border-[var(--theme-surface-alt)] bg-[var(--theme-surface-alt)] p-3 text-sm text-slate-800">
                   {addressLine}
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-xs text-slate-600">
@@ -240,7 +246,7 @@ const OverviewClient: React.FC<OverviewClientProps> = ({ client }: any) => {
           </div>
 
           <div className="space-y-6">
-            <div className="rounded-3xl border border-[#EAECF0] bg-white p-5 shadow-sm">
+            <div className="rounded-3xl border border-[var(--theme-surface-alt)] bg-white p-5 shadow-sm">
               <div className="flex items-center gap-2">
                 <IconBadge iconKey="contact.accountId" tone="primary" size="sm" />
                 <h3 className="text-sm font-semibold text-slate-900">Account Details</h3>
@@ -253,9 +259,9 @@ const OverviewClient: React.FC<OverviewClientProps> = ({ client }: any) => {
               </dl>
             </div>
 
-            <div className="rounded-3xl border border-[#EAECF0] bg-white p-5 shadow-sm">
+            <div className="rounded-3xl border border-[var(--theme-surface-alt)] bg-white p-5 shadow-sm">
               <div className="flex items-center gap-2">
-                <CalendarClock className="h-5 w-5 text-[#288DD1]" />
+                <CalendarClock className="h-5 w-5 text-[var(--theme-color)]" />
                 <h3 className="text-sm font-semibold text-slate-900">Activity Timeline</h3>
               </div>
               <dl className="mt-4 space-y-3 text-sm">
@@ -285,7 +291,7 @@ const OverviewClient: React.FC<OverviewClientProps> = ({ client }: any) => {
 };
 
 const InfoStat = ({ label, value }: { label: string; value: string }) => (
-  <div className="rounded-2xl border border-[#EEF2F6] bg-white p-4 shadow-sm">
+  <div className="rounded-2xl border border-[var(--theme-surface-alt)] bg-white p-4 shadow-sm">
     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
     <p className="mt-1 text-sm font-semibold text-slate-900">{value}</p>
   </div>
@@ -299,7 +305,7 @@ const DetailRow = ({ label, value }: { label: string; value: string }) => (
 );
 
 const TimelineRow = ({ label, value }: { label: string; value: string }) => (
-  <div className="flex items-center justify-between rounded-2xl border border-[#EEF2F6] bg-[#F9FAFB] px-4 py-3">
+  <div className="flex items-center justify-between rounded-2xl border border-[var(--theme-surface-alt)] bg-[var(--theme-surface-alt)] px-4 py-3">
     <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</dt>
     <dd className="text-sm font-semibold text-slate-800">{value}</dd>
   </div>

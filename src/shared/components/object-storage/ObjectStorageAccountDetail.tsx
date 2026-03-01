@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -29,8 +28,49 @@ import { useObjectStorageBroadcasting } from "../../../hooks/useObjectStorageBro
 const statusConfig = {
   active: { label: "Active", icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-50" },
   provisioning: { label: "Provisioning", icon: Clock, color: "text-amber-500", bg: "bg-amber-50" },
-  provision_failed: { label: "Failed", icon: XCircle, color: "text-rose-500", bg: "bg-rose-50" },
+  provision_failed: {
+    label: "Failed",
+    icon: XCircle,
+    color: "text-rose-500",
+    bg: "bg-rose-50",
+  },
   suspended: { label: "Suspended", icon: XCircle, color: "text-gray-500", bg: "bg-gray-100" },
+};
+
+type AccountStatus = keyof typeof statusConfig;
+
+interface Account extends Record<string, unknown> {
+  id?: string | number;
+  name?: string;
+  status?: AccountStatus | string;
+  quota_gb?: number;
+  accessKeys?: unknown;
+  access_keys?: unknown;
+}
+
+interface Bucket extends Record<string, unknown> {
+  id?: string | number;
+  name?: string;
+  size_bytes?: number;
+}
+
+type ProvisioningEvent = {
+  step?: { id?: string };
+  accountId?: string | number;
+  account_id?: string | number;
+  account?: { id?: string | number; uuid?: string | number };
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === "string" && error.trim()) return error;
+  if (isRecord(error) && typeof error["message"] === "string" && error["message"].trim()) {
+    return error["message"];
+  }
+  return fallback;
 };
 
 interface ObjectStorageAccountDetailProps {
@@ -56,11 +96,11 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
   canDelete = false,
 }) => {
   const navigate = useNavigate();
-  const [account, setAccount] = useState(null);
-  const [buckets, setBuckets] = useState([]);
+  const [account, setAccount] = useState<Account | null>(null);
+  const [buckets, setBuckets] = useState<Bucket[]>([]);
   const [loading, setLoading] = useState(true);
   const [bucketsLoading, setBucketsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Active tab
   const [activeTab, setActiveTab] = useState<
@@ -89,9 +129,9 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
         const data = await objectStorageApi.fetchAccount(accountId);
         setAccount(data);
         setError(null);
-      } catch (err: any) {
+      } catch (err) {
         if (!options.silent) {
-          setError(err.message);
+          setError(getErrorMessage(err, "Failed to load account details"));
           ToastUtils.error("Failed to load account details");
         } else {
           console.error("Failed to refresh account details:", err);
@@ -125,7 +165,7 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
   }, [accountId, fetchAccountDetails, fetchBuckets]);
 
   const handleProvisioningUpdate = useCallback(
-    (event: any) => {
+    (event: ProvisioningEvent) => {
       if (!event?.step) return;
       fetchAccountDetails({ silent: true });
 
@@ -144,27 +184,37 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
       await objectStorageApi.createBucket(accountId, { name });
       ToastUtils.success("Silo created successfully");
       fetchBuckets();
-    } catch (err: any) {
-      ToastUtils.error(err.message || "Failed to create silo");
+    } catch (err) {
+      ToastUtils.error(getErrorMessage(err, "Failed to create silo"));
       throw err;
     } finally {
       setCreatingBucket(false);
     }
   };
 
-  const handleDeleteBucket = async (bucket: any) => {
-    if (!window.confirm(`Delete silo "${bucket.name}"? This cannot be undone.`)) return;
+  const handleDeleteBucket = async (bucket: Bucket) => {
+    if (
+      !globalThis.window.confirm(
+        `Delete silo "${bucket.name || "this silo"}"? This cannot be undone.`
+      )
+    )
+      return;
 
     try {
-      setDeletingBucketId(bucket.id);
-      await objectStorageApi.deleteBucket(accountId, bucket.id);
+      const bucketId = bucket.id;
+      if (bucketId === undefined || bucketId === null) {
+        ToastUtils.error("Missing silo identifier.");
+        return;
+      }
+      setDeletingBucketId(String(bucketId));
+      await objectStorageApi.deleteBucket(accountId, bucketId);
       ToastUtils.success("Silo deleted");
       if (selectedBucket === bucket.name) {
         setSelectedBucket(null);
       }
       fetchBuckets();
-    } catch (err: any) {
-      ToastUtils.error(err.message || "Failed to delete silo");
+    } catch (err) {
+      ToastUtils.error(getErrorMessage(err, "Failed to delete silo"));
     } finally {
       setDeletingBucketId(null);
     }
@@ -180,13 +230,20 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
       await objectStorageApi.deleteAccount(accountId);
       ToastUtils.success("Storage account deleted successfully");
       navigate(backUrl, { state: { refresh: true } });
-    } catch (err: any) {
-      ToastUtils.error(err.message || "Failed to delete account");
+    } catch (err) {
+      ToastUtils.error(getErrorMessage(err, "Failed to delete account"));
       throw err;
     }
   };
+  const getStatusConfig = (statusStr: string) => {
+    const key = (
+      statusConfig[statusStr as AccountStatus] ? statusStr : "provisioning"
+    ) as AccountStatus;
+    return statusConfig[key];
+  };
 
-  const status = statusConfig[account?.status] || statusConfig.provisioning;
+  const accountName = account?.name || "Storage account";
+  const status = getStatusConfig(account?.status || "provisioning");
   const StatusIcon = status.icon;
 
   if (loading) {
@@ -250,7 +307,7 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
               <Database className="h-5 w-5 text-primary-600" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-gray-900">{account.name}</h1>
+              <h1 className="text-lg font-semibold text-gray-900">{accountName}</h1>
               <div className="flex items-center gap-2">
                 <span
                   className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${status.bg} ${status.color}`}
@@ -359,20 +416,20 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
           ) : activeTab === "analytics" ? (
             <ObjectStorageAnalytics
               accountId={accountId}
-              accountName={account.name}
+              accountName={accountName}
               onExtendStorage={() => setShowExtendModal(true)}
             />
           ) : activeTab === "subscription" ? (
             <div className="p-6 overflow-y-auto h-full">
               <ObjectStorageSubscription
                 accountId={accountId}
-                accountName={account.name}
+                accountName={accountName}
                 onRenewSuccess={handleRefresh}
               />
             </div>
           ) : (
             <div className="p-6 overflow-y-auto h-full">
-              <ObjectStorageTransactions accountId={accountId} accountName={account.name} />
+              <ObjectStorageTransactions accountId={accountId} accountName={accountName} />
             </div>
           )}
         </div>
@@ -383,8 +440,8 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
         isOpen={showExtendModal}
         onClose={() => setShowExtendModal(false)}
         accountId={accountId}
-        accountName={account.name}
-        currentQuotaGb={account.quota_gb || 0}
+        accountName={accountName}
+        currentQuotaGb={typeof account.quota_gb === "number" ? account.quota_gb : 0}
         usedGb={buckets.reduce((sum, b) => sum + (b.size_bytes || 0), 0) / 1024 ** 3}
         onSuccess={() => {
           setShowExtendModal(false);
@@ -398,10 +455,16 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
           isOpen={showDeleteModal}
           onClose={() => setShowDeleteModal(false)}
           onConfirm={handleDeleteAccount}
-          accountName={account.name}
+          accountName={accountName}
           accountId={accountId}
           bucketCount={buckets.length}
-          accessKeyCount={account?.accessKeys?.length || account?.access_keys?.length || 0}
+          accessKeyCount={
+            Array.isArray(account?.accessKeys)
+              ? account.accessKeys.length
+              : Array.isArray(account?.access_keys)
+                ? account.access_keys.length
+                : 0
+          }
         />
       )}
     </div>

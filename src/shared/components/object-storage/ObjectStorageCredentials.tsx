@@ -1,11 +1,10 @@
-// @ts-nocheck
 import React, { useState } from "react";
 import { Copy, Check, Key, Eye, EyeOff, AlertTriangle } from "lucide-react";
 
 interface ObjectStorageCredentialsProps {
-  endpoint?: string;
-  accessKeyId?: string;
-  secretKey?: string; // Only shown once after creation
+  endpoint?: string | undefined;
+  accessKeyId?: string | undefined;
+  secretKey?: string | undefined; // Only shown once after creation
   showSecretOnce?: boolean;
   onSecretDismissed?: () => void;
   confirmLabel?: string;

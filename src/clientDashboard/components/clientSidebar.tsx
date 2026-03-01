@@ -5,14 +5,14 @@ import { DashboardSidebar } from "../../shared/components/sidebar";
 import { buildClientMenuItems } from "../../shared/config/sidebarMenus";
 
 interface ClientSidebarProps {
-  isMobileMenuOpen?: boolean;
-  onCloseMobileMenu?: () => void;
+  isMobileMenuOpen?: boolean | undefined;
+  onCloseMobileMenu?: (() => void) | undefined;
 }
 
 interface ClientProfile {
-  email?: string;
-  first_name?: string;
-  last_name?: string;
+  email?: string | undefined;
+  first_name?: string | undefined;
+  last_name?: string | undefined;
   [key: string]: unknown;
 }
 

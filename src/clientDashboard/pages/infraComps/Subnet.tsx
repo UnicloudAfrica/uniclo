@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useMemo } from "react";
 import { Eye, Trash2, RefreshCw } from "lucide-react";
 import {

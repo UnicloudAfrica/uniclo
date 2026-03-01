@@ -22,16 +22,16 @@ export const getStatusDisplayConfig = (status: string | undefined): StatusDispla
     case "processing":
     case "provisioning":
       return {
-        backgroundColor: "#FEF3C7",
-        color: "#D97706",
+        backgroundColor: "rgb(var(--theme-warning-100))",
+        color: "rgb(var(--theme-warning-600))",
         icon: <Loader2 size={12} className="animate-spin" />,
         label: normalizedStatus === "processing" ? "Processing" : "Provisioning",
         animate: true,
       };
     case "active":
       return {
-        backgroundColor: "#D1FAE5",
-        color: "#059669",
+        backgroundColor: "rgb(var(--theme-success-100))",
+        color: "rgb(var(--theme-success-600))",
         icon: <Check size={12} />,
         label: "Active",
         animate: false,
@@ -39,8 +39,8 @@ export const getStatusDisplayConfig = (status: string | undefined): StatusDispla
     case "failed":
     case "error":
       return {
-        backgroundColor: "#FEE2E2",
-        color: "#DC2626",
+        backgroundColor: "rgb(var(--theme-danger-100))",
+        color: "rgb(var(--theme-danger-600))",
         icon: <AlertCircle size={12} />,
         label: normalizedStatus === "failed" ? "Failed" : "Error",
         animate: false,
@@ -48,32 +48,32 @@ export const getStatusDisplayConfig = (status: string | undefined): StatusDispla
     case "inactive":
     case "archived":
       return {
-        backgroundColor: "#E5E7EB",
-        color: "#6B7280",
+        backgroundColor: "var(--theme-surface-alt)",
+        color: "var(--theme-text-color)",
         icon: <Clock size={12} />,
         label: normalizedStatus === "archived" ? "Archived" : "Inactive",
         animate: false,
       };
     case "pending":
       return {
-        backgroundColor: "#DBEAFE",
-        color: "#1D4ED8",
+        backgroundColor: "rgb(var(--theme-color-100))",
+        color: "rgb(var(--theme-color-600))",
         icon: <Clock size={12} />,
         label: "Pending",
         animate: false,
       };
     case "deleted":
       return {
-        backgroundColor: "#FEE2E2",
-        color: "#991B1B",
+        backgroundColor: "rgb(var(--theme-danger-100))",
+        color: "rgb(var(--theme-danger-700))",
         icon: <XCircle size={12} />,
         label: "Deleted",
         animate: false,
       };
     default:
       return {
-        backgroundColor: "#F3F4F6",
-        color: "#4B5563",
+        backgroundColor: "var(--theme-surface-alt)",
+        color: "var(--theme-text-color)",
         icon: <Activity size={12} />,
         label: status || "Unknown",
         animate: false,

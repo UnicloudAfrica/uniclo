@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Loader2, X } from "lucide-react";
 import ToastUtils from "../../../../utils/toastUtil";
 import { useUpdateProductPricing } from "../../../../hooks/adminHooks/adminproductPricingHook";
@@ -27,7 +26,7 @@ const EditObjectStorageTierModal = ({ isOpen, onClose, tier, onUpdated }: any) =
   }, [existingPrice, quota]);
 
   const [pricePerGb, setPricePerGb] = useState(initialPerGb || 0);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, any>>({});
 
   useEffect(() => {
     if (isOpen) {
@@ -43,7 +42,7 @@ const EditObjectStorageTierModal = ({ isOpen, onClose, tier, onUpdated }: any) =
   const totalPrice = quota ? Number(pricePerGb || 0) * quota : 0;
 
   const validate = () => {
-    const nextErrors = {};
+    const nextErrors: Record<string, any> = {};
     if (!quota) {
       nextErrors.quota = "Invalid quota for this tier.";
     }
@@ -95,12 +94,14 @@ const EditObjectStorageTierModal = ({ isOpen, onClose, tier, onUpdated }: any) =
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 px-4 font-Outfit">
       <div className="w-full max-w-[520px] rounded-[24px] bg-white shadow-xl">
-        <div className="flex items-center justify-between rounded-t-[24px] border-b bg-[#F2F2F2] px-6 py-4">
-          <h2 className="text-lg font-semibold text-[#575758]">Edit Object Storage Tier</h2>
+        <div className="flex items-center justify-between rounded-t-[24px] border-b bg-[var(--theme-surface-alt)] px-6 py-4">
+          <h2 className="text-lg font-semibold text-[var(--theme-text-color)]">
+            Edit Object Storage Tier
+          </h2>
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 transition hover:text-[#1E1E1EB2]"
+            className="text-gray-400 transition hover:text-[rgb(var(--theme-neutral-900) / 0.7)]"
             aria-label="Close"
             disabled={isPending}
           >
@@ -167,7 +168,7 @@ const EditObjectStorageTierModal = ({ isOpen, onClose, tier, onUpdated }: any) =
             </button>
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-full bg-[#288DD1] px-6 py-2 text-sm font-semibold text-white transition hover:bg-[#1f7ab6] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-full bg-[var(--theme-color)] px-6 py-2 text-sm font-semibold text-white transition hover:bg-[rgb(var(--theme-color-500))] disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isPending}
             >
               Save changes

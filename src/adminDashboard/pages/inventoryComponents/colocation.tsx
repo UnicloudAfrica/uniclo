@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Building2, Loader2, Pencil } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import {
@@ -8,16 +7,21 @@ import {
 } from "../../../hooks/adminHooks/colocationHooks";
 import { ModernButton } from "../../../shared/components/ui";
 
+type ColocationSettingResponse = {
+  percentage?: number | null;
+};
+
 const ColocationSetting = ({ selectedRegion, onMetricsChange }: any) => {
   const {
-    data: fetchedSetting,
+    data: fetchedSettingRaw,
     isFetching: isSettingFetching,
     error: fetchError,
   } = useFetchColocationSettings(selectedRegion);
+  const fetchedSetting = fetchedSettingRaw as ColocationSettingResponse | undefined;
   const { mutate: updateSetting, isPending: isUpdating } = useCreateColocationSettings();
   const [percentage, setPercentage] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, any>>({});
 
   useEffect(() => {
     if (fetchedSetting) {
@@ -51,13 +55,13 @@ const ColocationSetting = ({ selectedRegion, onMetricsChange }: any) => {
   }, [fetchedSetting, onMetricsChange]);
 
   const validateInput = () => {
-    const nextErrors = {};
+    const nextErrors: Record<string, any> = {};
     const value = Number(percentage);
 
     if (percentage.trim() === "" || Number.isNaN(value)) {
-      nextErrors.percentage = "Enter a valid percentage.";
+      nextErrors["percentage"] = "Enter a valid percentage.";
     } else if (value < 0 || value > 100) {
-      nextErrors.percentage = "Percentage must be between 0 and 100.";
+      nextErrors["percentage"] = "Percentage must be between 0 and 100.";
     }
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -148,7 +152,7 @@ const ColocationSetting = ({ selectedRegion, onMetricsChange }: any) => {
               value={percentage}
               onChange={(event) => setPercentage(event.target.value)}
               className={`flex-1 rounded-xl border px-4 py-2 text-sm text-slate-600 outline-none transition focus:border-primary-300 focus:bg-white ${
-                errors.percentage ? "border-red-300 focus:border-red-400" : "border-slate-200"
+                errors["percentage"] ? "border-red-300 focus:border-red-400" : "border-slate-200"
               }`}
               placeholder="Enter percentage (0-100)"
               disabled={isUpdating || !isEditing}
@@ -157,7 +161,9 @@ const ColocationSetting = ({ selectedRegion, onMetricsChange }: any) => {
               %
             </span>
           </div>
-          {errors.percentage && <p className="mt-2 text-xs text-red-500">{errors.percentage}</p>}
+          {errors["percentage"] && (
+            <p className="mt-2 text-xs text-red-500">{errors["percentage"]}</p>
+          )}
 
           {isEditing && (
             <div className="mt-6 flex flex-wrap gap-3">

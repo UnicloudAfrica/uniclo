@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Package, X } from "lucide-react";
 import { Option } from "../../../hooks/objectStorageUtils";
 import { ResolvedProfile } from "../../../hooks/useObjectStoragePricing";
@@ -8,18 +8,17 @@ export interface ObjectStorageProfileCardProps {
   profile: ResolvedProfile;
   index: number;
   regionOptions: Option[];
-  isLoadingPricing?: boolean;
-  errors?: Record<string, string>;
+  isLoadingPricing?: boolean | undefined;
+  errors?: Record<string, string> | undefined;
   canRemove?: boolean;
   showPriceOverride?: boolean; // Only show for admin context
-  onUpdate: (updates: Partial<ResolvedProfile>) => void;
   onRemove: () => void;
   onRegionChange: (region: string) => void;
   onTierChange: (tierKey: string) => void;
   onMonthsChange: (months: string) => void;
   onStorageGbChange: (storageGb: string) => void;
   onNameChange: (name: string) => void;
-  onUnitPriceChange?: (unitPrice: string) => void;
+  onUnitPriceChange?: ((unitPrice: string) => void) | undefined;
 }
 
 export const ObjectStorageProfileCard: React.FC<ObjectStorageProfileCardProps> = ({
@@ -30,7 +29,6 @@ export const ObjectStorageProfileCard: React.FC<ObjectStorageProfileCardProps> =
   errors = {},
   canRemove = true,
   showPriceOverride = false,
-  onUpdate,
   onRemove,
   onRegionChange,
   onTierChange,
@@ -60,11 +58,11 @@ export const ObjectStorageProfileCard: React.FC<ObjectStorageProfileCardProps> =
     { value: "36", label: "36 months" },
   ];
 
-  const tierHelper = isLoadingPricing
-    ? "Loading tiers..."
-    : profile.region
-      ? ""
-      : "Select a region first.";
+  const tierHelper = useMemo(() => {
+    if (isLoadingPricing) return "Loading tiers...";
+    if (profile.region) return "";
+    return "Select a region first.";
+  }, [isLoadingPricing, profile.region]);
 
   const storageHelper = profile.tierQuotaGb
     ? `Default tier size: ${profile.tierQuotaGb} GB`
@@ -110,7 +108,7 @@ export const ObjectStorageProfileCard: React.FC<ObjectStorageProfileCardProps> =
           onChange={(event) => onRegionChange(event.target.value)}
           options={regionOptions}
           placeholder="Select a region"
-          error={errors.region}
+          error={errors ? errors["region"] : undefined}
         />
 
         <ModernSelect
@@ -121,7 +119,7 @@ export const ObjectStorageProfileCard: React.FC<ObjectStorageProfileCardProps> =
           placeholder={profile.region ? "Select a tier" : "Select a region first"}
           disabled={!profile.region || Boolean(isLoadingPricing)}
           helper={tierHelper}
-          error={errors.tierKey}
+          error={errors ? errors["tierKey"] : undefined}
         />
 
         <ModernInput
@@ -134,7 +132,7 @@ export const ObjectStorageProfileCard: React.FC<ObjectStorageProfileCardProps> =
           onChange={(event) => onStorageGbChange(event.target.value)}
           placeholder={profile.tierQuotaGb ? String(profile.tierQuotaGb) : "100"}
           helper={storageHelper}
-          error={errors.storageGb}
+          error={errors ? errors["storageGb"] : undefined}
         />
 
         <ModernSelect
@@ -143,7 +141,7 @@ export const ObjectStorageProfileCard: React.FC<ObjectStorageProfileCardProps> =
           onChange={(event) => onMonthsChange(event.target.value)}
           options={monthOptions}
           placeholder="Select term length"
-          error={errors.months}
+          error={errors ? errors["months"] : undefined}
         />
 
         {showPriceOverride && (
@@ -157,6 +155,7 @@ export const ObjectStorageProfileCard: React.FC<ObjectStorageProfileCardProps> =
               min="0"
               step="0.01"
               helper="Leave empty to use default pricing."
+              error={errors ? errors["unitPriceOverride"] : undefined}
             />
           </div>
         )}
@@ -180,7 +179,7 @@ export const ObjectStorageProfileCard: React.FC<ObjectStorageProfileCardProps> =
             <div>
               <p className="text-xs uppercase tracking-wide text-gray-500">Duration</p>
               <p className="font-semibold text-gray-900">
-                {profile.months} month{profile.months !== 1 ? "s" : ""}
+                {profile.months} month{profile.months === 1 ? "" : "s"}
               </p>
             </div>
             <div>

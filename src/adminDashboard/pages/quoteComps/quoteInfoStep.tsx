@@ -1,11 +1,16 @@
-// @ts-nocheck
-import React from "react";
 import ModernInput from "../../../shared/components/ui/ModernInput";
+import type { MultiQuoteFormData, MultiQuoteFormErrors, UpdateFormData } from "./quoteTypes";
 
 const selectBaseClass =
   "w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400";
 
-const QuoteInfoStep = ({ formData, errors, updateFormData }: any) => {
+type QuoteInfoStepProps = {
+  formData: MultiQuoteFormData;
+  errors: MultiQuoteFormErrors;
+  updateFormData: UpdateFormData;
+};
+
+const QuoteInfoStep = ({ formData, errors, updateFormData }: QuoteInfoStepProps) => {
   return (
     <div className="space-y-8">
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">

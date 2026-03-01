@@ -1,5 +1,3 @@
-// @ts-nocheck
-import React from "react";
 import {
   FileText,
   Download,
@@ -14,9 +12,24 @@ import { useFetchCountries } from "../../../hooks/adminHooks/countriesHooks";
 import ModernCard from "../../../shared/components/ui/ModernCard";
 import ModernInput from "../../../shared/components/ui/ModernInput";
 import { ModernButton } from "../../../shared/components/ui";
+import type { MultiQuoteFormData, MultiQuoteFormErrors, UpdateFormData } from "./quoteTypes";
 
 const selectBaseClass =
   "w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:cursor-wait disabled:bg-slate-50";
+
+type QuoteFinalReviewStepProps = {
+  formData: MultiQuoteFormData;
+  pricingRequests: any[];
+  objectStorageRequests: any[];
+  tenants: any[];
+  updateFormData: UpdateFormData;
+  errors?: MultiQuoteFormErrors;
+  assignmentDetails?: {
+    assignType?: string;
+    tenant?: any;
+    user?: any;
+  };
+};
 
 const QuoteFinalReviewStep = ({
   formData,
@@ -26,15 +39,15 @@ const QuoteFinalReviewStep = ({
   updateFormData,
   errors = {},
   assignmentDetails = {},
-}) => {
-  const { data: countries, isLoading: isCountriesLoading } = useFetchCountries();
+}: QuoteFinalReviewStepProps) => {
+  const { data: countriesData, isLoading: isCountriesLoading } = useFetchCountries();
+  const countries = Array.isArray(countriesData) ? countriesData : [];
   const {
     assignType: assignmentMode = "",
     tenant: assignedTenant,
     user: assignedUser,
   } = assignmentDetails || {};
-  const selectedTenant =
-    assignedTenant || tenants?.find((t) => String(t.id) === String(formData.tenant_id));
+  const selectedTenant = assignedTenant || null;
   const selectedUser = assignedUser || null;
   const tenantLabel = selectedTenant
     ? selectedTenant.name || selectedTenant.company_name || `Tenant ${selectedTenant.id}`

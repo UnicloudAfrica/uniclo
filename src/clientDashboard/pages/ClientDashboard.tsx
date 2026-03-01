@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
@@ -29,17 +28,19 @@ import VerifyAccountPromptModal from "../components/verifyAccountPrompt";
 import ClientActiveTab from "../components/clientActiveTab";
 import ClientPageShell from "../components/ClientPageShell";
 import { useFetchClientProductOffers } from "../../hooks/clientHooks/productsHook";
-import useClientTheme from "../../hooks/clientHooks/useClientTheme";
 import { useFetchClientProjects } from "../../hooks/clientHooks/projectHooks";
 import { useFetchClientPurchasedInstances } from "../../hooks/clientHooks/instanceHooks";
 import clientSilentApi from "../../index/client/silent";
 import { useQuery } from "@tanstack/react-query";
+import { InstanceData } from "../../hooks/clientHooks/instanceHooks";
+import { Project } from "../../hooks/clientHooks/projectHooks";
 
-interface DashboardMessage {
-  projects: number;
-  active_instances: number;
-  pending_instances: number;
-  support: number;
+// Define fallback for types if not exported from hooks
+interface Profile {
+  first_name?: string;
+  business_name?: string;
+  company_name?: string;
+  verified?: boolean | number;
 }
 
 interface Metric {
@@ -90,16 +91,17 @@ interface OfferSection {
   ctaLabel: string;
 }
 
-interface Profile {
-  first_name?: string;
-  business_name?: string;
-  company_name?: string;
-  verified?: boolean | number;
+interface Ticket {
+  status: string;
 }
 
-interface Theme {
-  themeColor?: string;
-  secondaryColor?: string;
+interface DashboardStats {
+  message?: {
+    projects: number;
+    active_instances: number;
+    pending_instances: number;
+    support: number;
+  };
 }
 
 // Fetch support tickets count
@@ -108,10 +110,8 @@ const useFetchClientTicketStats = () => {
     queryKey: ["client", "support", "stats"],
     queryFn: async () => {
       const res = await clientSilentApi("GET", "/business/support");
-      const tickets = res?.data || [];
-      const open = tickets.filter(
-        (t: any) => t.status !== "resolved" && t.status !== "closed"
-      ).length;
+      const tickets = ((res as any)?.data || []) as Ticket[];
+      const open = tickets.filter((t) => t.status !== "resolved" && t.status !== "closed").length;
       return { open, total: tickets.length };
     },
     staleTime: 1000 * 60 * 5,
@@ -119,13 +119,13 @@ const useFetchClientTicketStats = () => {
 };
 
 const useFetchClientDashboardStats = () => {
-  const { data: projectsData, isFetching: isProjectsFetching } = useFetchClientProjects();
+  const { data: projectsData, isFetching: isProjectsFetching } = useFetchClientProjects() as any;
   const { data: instancesData, isFetching: isInstancesFetching } =
-    useFetchClientPurchasedInstances();
+    useFetchClientPurchasedInstances() as any;
   const { data: ticketStats, isFetching: isTicketsFetching } = useFetchClientTicketStats();
 
-  const projects = projectsData?.data || [];
-  const instances = instancesData?.data || [];
+  const projects = (projectsData?.data as any[]) || [];
+  const instances = (instancesData?.data as any[]) || [];
 
   const activeInstances = instances.filter((i: any) =>
     ["running", "active", "ready", "online"].includes(i.status?.toLowerCase())
@@ -248,7 +248,7 @@ const formatLabel = (value = "") =>
     .replace(/[-_]/g, " ")
     .split(" ")
     .filter(Boolean)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word: any) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 
 const formatDateLabel = (value?: string) => {
@@ -371,7 +371,6 @@ const ClientDashboard: React.FC = () => {
   } = useFetchClientDashboardStats();
   const { data: offers = DEFAULT_OFFERS, isFetching: isOffersFetching } =
     useFetchClientProductOffers() as { data: Offers; isFetching: boolean };
-  const { data: theme } = useClientTheme() as { data: Theme | undefined };
 
   const [showVerifyModal, setShowVerifyModal] = useState(false);
 
@@ -410,13 +409,6 @@ const ClientDashboard: React.FC = () => {
     () => metricsWithIcons.filter((metric: any) => HIGHLIGHT_METRICS.includes(metric.label)),
     [metricsWithIcons]
   );
-
-  const accentGradient = useMemo(() => {
-    // Default to the platform theme when branding is unavailable.
-    const start = theme?.themeColor || "#288DD1";
-    const end = theme?.secondaryColor || "#3FE0C8";
-    return `linear-gradient(135deg, ${start} 0%, ${end} 100%)`;
-  }, [theme?.themeColor, theme?.secondaryColor]);
 
   const welcomeName = profile?.first_name || profile?.business_name || profile?.company_name;
   const isVerified = profile?.verified === 1 || profile?.verified === true;
@@ -465,8 +457,8 @@ const ClientDashboard: React.FC = () => {
     const total = normalizedStatuses.length;
     let matched = 0;
 
-    const summary = groups.map((group) => {
-      const count = normalizedStatuses.filter((status) => group.match.includes(status)).length;
+    const summary = groups.map((group: any) => {
+      const count = normalizedStatuses.filter((status: any) => group.match.includes(status)).length;
       matched += count;
       return {
         ...group,
@@ -480,6 +472,7 @@ const ClientDashboard: React.FC = () => {
       summary.push({
         key: "other",
         label: "Other states",
+        match: [],
         color: "var(--theme-muted-color)",
         count: otherCount,
         percent: total ? Math.round((otherCount / total) * 100) : 0,
@@ -498,8 +491,7 @@ const ClientDashboard: React.FC = () => {
         breadcrumbs={[{ label: "Home", href: "/client-dashboard" }]}
       >
         <div className="space-y-10">
-          <section className="relative overflow-hidden rounded-[32px] border border-[--theme-border-color] bg-[--theme-card-bg] shadow-sm">
-            <div className="absolute inset-0" style={{ background: accentGradient }} />
+          <section className="brand-hero relative overflow-hidden rounded-[32px] shadow-sm">
             <div className="absolute -right-24 -top-24 h-56 w-56 rounded-full bg-white/20 blur-3xl" />
             <div className="absolute -bottom-24 left-10 h-44 w-44 rounded-full bg-white/10 blur-3xl" />
             <div className="relative z-10 grid gap-8 p-6 text-white md:p-10 lg:grid-cols-[1.2fr,0.8fr]">

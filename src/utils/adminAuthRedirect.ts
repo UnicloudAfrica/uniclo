@@ -1,0 +1,32 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import useAdminAuthStore from "../stores/adminAuthStore";
+
+const AUTH_PAGES = new Set(["/admin-signin", "/admin-signup"]);
+
+const useAuthRedirect = (): { isLoading: boolean } => {
+  const navigate = useNavigate();
+  const isAuthenticated = useAdminAuthStore((state) => state.isAuthenticated);
+  const hasHydrated = useAdminAuthStore((state) => state.hasHydrated);
+
+  useEffect(() => {
+    if (!hasHydrated) return;
+
+    const path = globalThis.window.location.pathname;
+    const isAuthPage = AUTH_PAGES.has(path);
+    const isDashboard = path.startsWith("/admin-dashboard");
+
+    if (isAuthenticated && isAuthPage) {
+      navigate("/admin-dashboard");
+      return;
+    }
+
+    if (!isAuthenticated && isDashboard) {
+      navigate("/admin-signin");
+    }
+  }, [isAuthenticated, hasHydrated, navigate]);
+
+  return { isLoading: !hasHydrated };
+};
+
+export default useAuthRedirect;

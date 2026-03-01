@@ -1,20 +1,19 @@
-// @ts-nocheck
-import React, { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2, Plus, Trash2, Upload } from "lucide-react";
-// @ts-ignore
+
 import Papa from "papaparse";
 import { read as readWorkbook, utils as xlsxUtils } from "xlsx";
 import AdminActiveTab from "../components/adminActiveTab";
 import AdminPageShell from "../components/AdminPageShell";
 import { ModernCard } from "../../shared/components/ui";
 import { ModernButton } from "../../shared/components/ui";
-// @ts-ignore
+
 import SelectableInput from "../../shared/components/ui/SelectableInput";
 import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
 import { useCreateProducts } from "../../hooks/adminHooks/adminProductHooks";
 import ToastUtils from "../../utils/toastUtil";
-// @ts-ignore
+
 import useAuthRedirect from "../../utils/adminAuthRedirect";
 import { useProductForm } from "../../hooks/adminHooks/useProductForm";
 import ModernTable from "../../shared/components/ui/ModernTable";
@@ -25,18 +24,27 @@ import {
   mapRowToEntry,
 } from "../../utils/productImportUtils";
 
-const AdminProductCreate: React.FC = () => {
+interface RegionOption {
+  code: string;
+  name: string;
+  [key: string]: unknown;
+}
+
+const AdminProductCreate = () => {
   const navigate = useNavigate();
   const { isLoading: isAuthLoading } = useAuthRedirect();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isImporting, setIsImporting] = useState(false);
 
-  const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
+  const { isFetching: isRegionsFetching, data: regionsData } = useFetchRegions();
   const { mutate: createProducts, isPending: isCreating } = useCreateProducts();
+  const regions = useMemo<RegionOption[]>(
+    () => (Array.isArray(regionsData) ? (regionsData as RegionOption[]) : []),
+    [regionsData]
+  );
 
   const regionLookup = useMemo(() => {
-    if (!regions) return {};
-    return regions.reduce((acc: Record<string, any>, region: any) => {
+    return regions.reduce((acc: Record<string, RegionOption>, region) => {
       acc[region.code] = region;
       return acc;
     }, {});
@@ -112,7 +120,17 @@ const AdminProductCreate: React.FC = () => {
         const data = await file.arrayBuffer();
         const workbook = readWorkbook(data);
         const sheetName = workbook.SheetNames[0];
+        if (!sheetName) {
+          ToastUtils.error("No worksheets found in the file.");
+          setIsImporting(false);
+          return;
+        }
         const sheet = workbook.Sheets[sheetName];
+        if (!sheet) {
+          ToastUtils.error("Unable to read worksheet data.");
+          setIsImporting(false);
+          return;
+        }
         rows = xlsxUtils.sheet_to_json(sheet);
       } else {
         ToastUtils.error("Unsupported file type. Please upload CSV or Excel.");
@@ -176,10 +194,12 @@ const AdminProductCreate: React.FC = () => {
               value={entry.name}
               onChange={(e) => handleEntryFieldChange(index, "name", e.target.value)}
               placeholder="Product name"
-              className={`w-full input-field ${entry.errors.name ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full input-field ${entry.errors["name"] ? "border-red-500" : "border-gray-300"}`}
               disabled={isSubmitting}
             />
-            {entry.errors.name && <p className="text-red-500 text-xs mt-1">{entry.errors.name}</p>}
+            {entry.errors["name"] && (
+              <p className="text-red-500 text-xs mt-1">{entry.errors["name"]}</p>
+            )}
           </div>
         ),
       },
@@ -191,18 +211,18 @@ const AdminProductCreate: React.FC = () => {
             <select
               value={entry.region}
               onChange={(e) => handleEntryFieldChange(index, "region", e.target.value)}
-              className={`w-full input-field ${entry.errors.region ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full input-field ${entry.errors["region"] ? "border-red-500" : "border-gray-300"}`}
               disabled={isSubmitting || isRegionsFetching}
             >
               <option value="">{isRegionsFetching ? "Loading..." : "Select region"}</option>
-              {regions?.map((region: any) => (
+              {regions.map((region) => (
                 <option key={region.code} value={region.code}>
                   {region.name}
                 </option>
               ))}
             </select>
-            {entry.errors.region && (
-              <p className="text-red-500 text-xs mt-1">{entry.errors.region}</p>
+            {entry.errors["region"] && (
+              <p className="text-red-500 text-xs mt-1">{entry.errors["region"]}</p>
             )}
             <p className="text-xs text-gray-400 mt-1">
               Provider: {entry.provider || "Auto-detected"}
@@ -218,7 +238,7 @@ const AdminProductCreate: React.FC = () => {
             <select
               value={entry.productable_type}
               onChange={(e) => handleEntryFieldChange(index, "productable_type", e.target.value)}
-              className={`w-full input-field ${entry.errors.productable_type ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full input-field ${entry.errors["productable_type"] ? "border-red-500" : "border-gray-300"}`}
               disabled={isSubmitting}
             >
               <option value="">Select type</option>
@@ -228,8 +248,8 @@ const AdminProductCreate: React.FC = () => {
                 </option>
               ))}
             </select>
-            {entry.errors.productable_type && (
-              <p className="text-red-500 text-xs mt-1">{entry.errors.productable_type}</p>
+            {entry.errors["productable_type"] && (
+              <p className="text-red-500 text-xs mt-1">{entry.errors["productable_type"]}</p>
             )}
           </div>
         ),
@@ -267,11 +287,13 @@ const AdminProductCreate: React.FC = () => {
                     onChange={(e) =>
                       handleEntryFieldChange(index, "objectStorageQuota", e.target.value)
                     }
-                    className={`w-full input-field ${entry.errors.objectStorageQuota ? "border-red-500" : "border-gray-300"}`}
+                    className={`w-full input-field ${entry.errors["objectStorageQuota"] ? "border-red-500" : "border-gray-300"}`}
                     disabled={isSubmitting}
                   />
-                  {entry.errors.objectStorageQuota && (
-                    <p className="text-red-500 text-xs mt-1">{entry.errors.objectStorageQuota}</p>
+                  {entry.errors["objectStorageQuota"] && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {entry.errors["objectStorageQuota"]}
+                    </p>
                   )}
                 </div>
                 <div>
@@ -286,12 +308,12 @@ const AdminProductCreate: React.FC = () => {
                     onChange={(e) =>
                       handleEntryFieldChange(index, "objectStoragePricePerGb", e.target.value)
                     }
-                    className={`w-full input-field ${entry.errors.objectStoragePricePerGb ? "border-red-500" : "border-gray-300"}`}
+                    className={`w-full input-field ${entry.errors["objectStoragePricePerGb"] ? "border-red-500" : "border-gray-300"}`}
                     disabled={isSubmitting}
                   />
-                  {entry.errors.objectStoragePricePerGb && (
+                  {entry.errors["objectStoragePricePerGb"] && (
                     <p className="text-red-500 text-xs mt-1">
-                      {entry.errors.objectStoragePricePerGb}
+                      {entry.errors["objectStoragePricePerGb"]}
                     </p>
                   )}
                 </div>
@@ -322,10 +344,10 @@ const AdminProductCreate: React.FC = () => {
                 disabled={isProductDisabled}
                 isLoading={entry.loadingOptions}
                 emptyMessage="No products found"
-                hasError={Boolean(entry.errors.productable_id)}
+                hasError={Boolean(entry.errors["productable_id"])}
               />
-              {entry.errors.productable_id && (
-                <p className="text-red-500 text-xs mt-1">{entry.errors.productable_id}</p>
+              {entry.errors["productable_id"] && (
+                <p className="text-red-500 text-xs mt-1">{entry.errors["productable_id"]}</p>
               )}
             </div>
           );
@@ -345,11 +367,11 @@ const AdminProductCreate: React.FC = () => {
                 value={entry.price}
                 onChange={(e) => handleEntryFieldChange(index, "price", e.target.value)}
                 placeholder="0.00"
-                className={`w-full input-field ${entry.errors.price ? "border-red-500" : "border-gray-300"}`}
+                className={`w-full input-field ${entry.errors["price"] ? "border-red-500" : "border-gray-300"}`}
                 disabled={isSubmitting || isObjectStorageRow}
               />
-              {entry.errors.price && (
-                <p className="text-red-500 text-xs mt-1">{entry.errors.price}</p>
+              {entry.errors["price"] && (
+                <p className="text-red-500 text-xs mt-1">{entry.errors["price"]}</p>
               )}
             </div>
           );

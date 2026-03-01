@@ -1,5 +1,3 @@
-// @ts-nocheck
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
 import SharedCreateInvoice from "../../shared/components/billing/SharedCreateInvoice";

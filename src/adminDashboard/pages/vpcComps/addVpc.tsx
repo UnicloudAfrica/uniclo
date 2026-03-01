@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
 import { useCreateVpc } from "../../../hooks/adminHooks/vcpHooks";
@@ -8,6 +7,8 @@ import ModernInput from "../../../shared/components/ui/ModernInput";
 import ModernSelect from "../../../shared/components/ui/ModernSelect";
 import { designTokens } from "../../../styles/designTokens";
 import ToastUtils from "../../../utils/toastUtil";
+import { type Region } from "../../../shared/types/resource";
+import { type VpcApiResponse } from "../../../shared/types/vpc";
 
 const checkboxStyles = {
   width: "18px",
@@ -16,9 +17,17 @@ const checkboxStyles = {
   border: `1px solid ${designTokens.colors.neutral[300]}`,
 };
 
-const AddVpc = ({ isOpen, onClose, projectId = "" }: any) => {
+const AddVpc = ({
+  isOpen,
+  onClose,
+  projectId = "",
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  projectId: string;
+}) => {
   const queryClient = useQueryClient();
-  const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
+  const { isFetching: isRegionsFetching, data: regions = [] } = useFetchRegions();
   const { mutate, isPending } = useCreateVpc();
 
   const [formData, setFormData] = useState({
@@ -27,7 +36,7 @@ const AddVpc = ({ isOpen, onClose, projectId = "" }: any) => {
     cidr_block: "",
     is_default: false,
   });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, any>>({});
 
   useEffect(() => {
     if (!isOpen) {
@@ -42,19 +51,19 @@ const AddVpc = ({ isOpen, onClose, projectId = "" }: any) => {
   }, [isOpen]);
 
   const validateForm = () => {
-    const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = "A VPC name is required.";
-    if (!formData.region) newErrors.region = "Select a region.";
+    const newErrors: Record<string, any> = {};
+    if (!formData.name.trim()) newErrors["name"] = "A VPC name is required.";
+    if (!formData.region) newErrors["region"] = "Select a region.";
     if (!formData.cidr_block.trim()) {
-      newErrors.cidr_block = "Provide a CIDR block.";
+      newErrors["cidr_block"] = "Provide a CIDR block.";
     } else if (!/^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/.test(formData.cidr_block)) {
-      newErrors.cidr_block = "CIDR block must be valid (for example, 10.0.0.0/16).";
+      newErrors["cidr_block"] = "CIDR block must be valid (for example, 10.0.0.0/16).";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateField = (field: any, value: any) => {
+  const updateField = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
@@ -76,8 +85,13 @@ const AddVpc = ({ isOpen, onClose, projectId = "" }: any) => {
           queryClient.invalidateQueries({ queryKey: ["vpcs", projectId] });
           onClose();
         },
-        onError: (error) => {
-          ToastUtils.error(error?.message || "Failed to create the VPC. Try again.");
+        onError: (error: unknown) => {
+          const apiError = error as VpcApiResponse;
+          const errMsg =
+            typeof apiError.message === "string"
+              ? apiError.message
+              : (apiError.message as any)?.message;
+          ToastUtils.error(errMsg || "Failed to create the VPC. Try again.");
         },
       }
     );
@@ -86,13 +100,13 @@ const AddVpc = ({ isOpen, onClose, projectId = "" }: any) => {
   const actions = [
     {
       label: "Cancel",
-      variant: "ghost",
+      variant: "ghost" as const,
       onClick: onClose,
       disabled: isPending,
     },
     {
       label: isPending ? "Creating..." : "Create VPC",
-      variant: "primary",
+      variant: "primary" as const,
       onClick: handleSubmit,
       disabled: isPending || isRegionsFetching,
     },
@@ -119,7 +133,7 @@ const AddVpc = ({ isOpen, onClose, projectId = "" }: any) => {
           placeholder="Production network"
           value={formData.name}
           onChange={(event) => updateField("name", event.target.value)}
-          error={errors.name}
+          error={errors["name"]}
           required
         />
         <ModernSelect
@@ -129,20 +143,18 @@ const AddVpc = ({ isOpen, onClose, projectId = "" }: any) => {
           onChange={(event) => updateField("region", event.target.value)}
           disabled={isRegionsFetching}
           required
-          error={errors.region}
-          options={
-            regions?.map((region: any) => ({
-              label: region.name,
-              value: region.code,
-            })) ?? []
-          }
+          error={errors["region"]}
+          options={regions.map((region: Region) => ({
+            label: region.name,
+            value: region.code || String(region.id),
+          }))}
         />
         <ModernInput
           label="CIDR Block"
           placeholder="10.0.0.0/16"
           value={formData.cidr_block}
           onChange={(event) => updateField("cidr_block", event.target.value)}
-          error={errors.cidr_block}
+          error={errors["cidr_block"]}
           required
         />
         <label className="flex items-center gap-3">

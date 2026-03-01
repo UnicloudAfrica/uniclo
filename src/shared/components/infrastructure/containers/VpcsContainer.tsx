@@ -1,5 +1,5 @@
-// @ts-nocheck
 import React, { useState } from "react";
+import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 import { Plus, RefreshCw, RefreshCcw } from "lucide-react";
 import VpcsOverview from "../VpcsOverview";
 import CreateVpcModal from "../modals/CreateVpcModal";
@@ -9,23 +9,12 @@ import {
   type Hierarchy,
   type VpcPermissions,
 } from "../../../config/permissionPresets";
-import type { Vpc } from "../VpcsTable";
+import { Vpc } from "../types";
 
 interface VpcHooks {
-  useList: (
-    projectId: string,
-    region: string
-  ) => { data: Vpc[]; isLoading: boolean; refetch: () => void };
-  useCreate: () => {
-    mutate: (params: any, options?: any) => void;
-    mutateAsync: (params: any) => Promise<any>;
-    isPending: boolean;
-  };
-  useDelete: () => {
-    mutate: (params: any) => void;
-    mutateAsync: (params: any) => Promise<any>;
-    isPending: boolean;
-  };
+  useList: (projectId: string, region?: string, options?: any) => UseQueryResult<Vpc[], Error>;
+  useCreate: () => UseMutationResult<any, any, any, unknown>;
+  useDelete: () => UseMutationResult<any, any, any, unknown>;
   /** Optional sync function - only for Client dashboard */
   onSync?: () => Promise<void>;
 }
@@ -70,7 +59,7 @@ const VpcsContainer: React.FC<VpcsContainerProps> = ({
   // Use injected hooks - SINGLE SOURCE OF TRUTH
   const { data: vpcs = [], isLoading, refetch } = hooks.useList(projectId, region);
   const { mutate: createVpc, isPending: isCreating } = hooks.useCreate();
-  const { mutate: deleteVpc, isPending: isDeleting } = hooks.useDelete();
+  const { mutate: deleteVpc } = hooks.useDelete();
 
   // Handlers
   const handleCreate = (name: string, cidr: string, isDefault: boolean) => {
@@ -116,7 +105,7 @@ const VpcsContainer: React.FC<VpcsContainerProps> = ({
           {isSyncing ? "Syncing..." : "Sync VPCs"}
         </ModernButton>
       )}
-      <ModernButton variant="secondary" size="sm" onClick={refetch} disabled={isLoading}>
+      <ModernButton variant="secondary" size="sm" onClick={() => refetch()} disabled={isLoading}>
         <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
         Refresh
       </ModernButton>
@@ -136,7 +125,7 @@ const VpcsContainer: React.FC<VpcsContainerProps> = ({
         vpcs={vpcs}
         isLoading={isLoading}
         permissions={permissions}
-        onDelete={permissions.canDelete ? handleDelete : undefined}
+        onDelete={permissions.canDelete ? (vpc) => handleDelete(vpc) : undefined}
       />
 
       {/* Create Modal - only if can create */}

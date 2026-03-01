@@ -1,20 +1,22 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import ClientPageShell from "../components/ClientPageShell";
 import TemplateGallery from "../../components/templates/TemplateGallery";
 import { Wrench } from "lucide-react";
 
+import { InstanceTemplate } from "../../hooks/useInstanceTemplates";
+
 const ClientInstanceCreate: React.FC = () => {
   const navigate = useNavigate();
 
-  const handleQuickDeploy = (template: any) => {
+  const handleQuickDeploy = (template: InstanceTemplate) => {
     // Navigate to provisioning wizard with template pre-fill
     navigate("/client-dashboard/instances/provision", {
       state: { template },
     });
   };
 
-  const handleCustomize = (template: any) => {
+  const handleCustomize = (template: InstanceTemplate) => {
     // Navigate to provisioning wizard with template for customization
     navigate("/client-dashboard/instances/provision", {
       state: { template, customize: true },

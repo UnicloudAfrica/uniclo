@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Loader2,
@@ -11,35 +10,104 @@ import {
   Eye,
   PlusCircle,
   ChevronDown,
-  X,
-  Download,
   ExternalLink,
   Mail,
   Phone,
   Calendar,
   Building,
   MapPin,
-  UserCheck,
 } from "lucide-react";
 import AdminActiveTab from "../components/adminActiveTab";
-import { ModernCard } from "../../shared/components/ui";
-import { ModernButton } from "../../shared/components/ui";
-import { useFetchLeadById, useConvertLeadToUser } from "../../hooks/adminHooks/leadsHook";
+import { ModernCard, ModernButton } from "../../shared/components/ui";
+import {
+  useFetchLeadById,
+  useConvertLeadToUser,
+  type Lead,
+  type LeadUser,
+} from "../../hooks/adminHooks/leadsHook";
 import EditLead from "./leadComps/editLead";
 import AddLeadStage from "./leadComps/addLeadStage";
 import { EditLeadStage } from "./leadComps/editLeadStage";
 import AddLeadDocument from "./leadComps/addLeadDoc";
 import UpdateLeadDoc from "./leadComps/updateLeadDoc";
 import DocumentViewerModal from "./leadComps/documentViewer";
-import AdminPageShell from "../components/AdminPageShell.tsx";
-// import { DocumentViewerModal } from "./leadComps/documentViewer";
+import AdminPageShell from "../components/AdminPageShell";
 
-const formatStatusForDisplay = (status: any) => {
+type LeadStatus =
+  | "new"
+  | "contacted"
+  | "qualified"
+  | "proposal_sent"
+  | "negotiating"
+  | "closed_won"
+  | "closed_lost";
+
+type LeadDocument = {
+  id?: string | number;
+  name?: string;
+  status?: string;
+  document_type?: string;
+  uploaded_by?: LeadUser | string | null;
+};
+
+type LeadStage = {
+  id?: string | number;
+  name?: string;
+  description?: string;
+  status?: string;
+  started_at?: string;
+  completed_at?: string;
+  assigned_to?: LeadUser | null;
+  documents?: LeadDocument[];
+};
+
+type LeadPricingSummary = {
+  total?: string | number;
+  currency?: string;
+  instances?: string | number;
+  months?: string | number;
+};
+
+type LeadDetails = Omit<Lead, "id" | "assigned_to" | "status"> & {
+  id?: string | number;
+  assigned_to?: LeadUser | string | null;
+  status?: LeadStatus | string;
+  pricing_summary?: LeadPricingSummary | null;
+  documents?: LeadDocument[];
+  stages?: LeadStage[];
+};
+
+type UiState = {
+  isEditLeadOpen: boolean;
+  isAddDocOpen: boolean;
+  isAddStageModalOpen: boolean;
+  isEditStageModalOpen: boolean;
+  isActionsDropdownOpen: boolean;
+  isUpdateDocModalOpen: boolean;
+  isViewerOpen: boolean;
+};
+
+type DataState = {
+  leadId: string | null;
+  leadNameFromUrl: string;
+  editingStage: LeadStage | null;
+  editingDocument: LeadDocument | null;
+  viewingDocument: LeadDocument | null;
+};
+
+const formatStatusForDisplay = (status?: string | null) => {
   return status?.replace(/_/g, " ") || "N/A";
 
   // DetailItem Component
 };
-const DetailItem = ({ label, value, className = "" }: any) => (
+
+type DetailItemProps = {
+  label: string;
+  value: string | number | null | undefined;
+  className?: string;
+};
+
+const DetailItem = ({ label, value, className = "" }: DetailItemProps) => (
   <div className={`flex flex-col ${className}`}>
     <span className="font-medium text-gray-600">{label}:</span>
     <span className="text-gray-900 capitalize">{value || "N/A"}</span>
@@ -47,7 +115,13 @@ const DetailItem = ({ label, value, className = "" }: any) => (
 );
 
 // Document Item Component
-const DocumentItem = ({ doc, onUpdate, onView }: any) => (
+type DocumentItemProps = {
+  doc: LeadDocument;
+  onUpdate: (doc: LeadDocument) => void;
+  onView: (doc: LeadDocument) => void;
+};
+
+const DocumentItem = ({ doc, onUpdate, onView }: DocumentItemProps) => (
   <div className="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-200">
     <div className="flex items-center justify-between mb-2">
       <div className="flex items-center min-w-0 flex-1">
@@ -83,8 +157,10 @@ const DocumentItem = ({ doc, onUpdate, onView }: any) => (
       </div>
       <div className="col-span-2">
         <span className="font-medium">Uploaded By:</span>{" "}
-        {doc.uploaded_by?.first_name && doc.uploaded_by?.last_name
-          ? `${doc.uploaded_by.first_name} ${doc.uploaded_by.last_name}`
+        {typeof doc.uploaded_by === "object"
+          ? doc.uploaded_by?.first_name && doc.uploaded_by?.last_name
+            ? `${doc.uploaded_by.first_name} ${doc.uploaded_by.last_name}`
+            : "N/A"
           : doc.uploaded_by || "N/A"}
       </div>
     </div>
@@ -92,9 +168,9 @@ const DocumentItem = ({ doc, onUpdate, onView }: any) => (
 );
 
 // Status Badge Component
-const StatusBadge = ({ status }: any) => {
-  const getStatusColorClass = (status: any) => {
-    const statusColors = {
+const StatusBadge = ({ status }: { status?: string | null | undefined }) => {
+  const getStatusColorClass = (value?: string | null) => {
+    const statusColors: Record<string, string> = {
       new: "bg-blue-100 text-blue-800",
       contacted: "bg-yellow-100 text-yellow-800",
       qualified: "bg-green-100 text-green-800",
@@ -103,7 +179,7 @@ const StatusBadge = ({ status }: any) => {
       closed_won: "bg-emerald-100 text-emerald-800",
       closed_lost: "bg-red-100 text-red-800",
     };
-    return statusColors[status] || "bg-gray-100 text-gray-800";
+    return statusColors[value || ""] || "bg-gray-100 text-gray-800";
   };
   return (
     <span
@@ -111,18 +187,342 @@ const StatusBadge = ({ status }: any) => {
         status
       )}`}
     >
-      {formatStatusForDisplay(status)}
+      {formatStatusForDisplay(status || undefined)}
     </span>
   );
-
-  // Main Component
 };
+
+// Lead Overview Section
+type LeadOverviewSectionProps = {
+  first_name?: string | null | undefined;
+  last_name?: string | null | undefined;
+  email?: string | null | undefined;
+  phone?: string | null | undefined;
+  country?: string | null | undefined;
+  lead_type?: string | null | undefined;
+  source?: string | null | undefined;
+  status?: string | null | undefined;
+  created_at?: string | null | undefined;
+  last_contacted_at?: string | null | undefined;
+  follow_up_date?: string | null | undefined;
+  formatDate: (date?: string | null | undefined) => string;
+};
+
+const LeadOverviewSection = ({
+  first_name,
+  last_name,
+  email,
+  phone,
+  country,
+  lead_type,
+  source,
+  status,
+  created_at,
+  last_contacted_at,
+  follow_up_date,
+  formatDate,
+}: LeadOverviewSectionProps) => (
+  <ModernCard title="Lead Overview" className="mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Contact Information */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">
+          Contact Information
+        </h3>
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <User className="w-4 h-4 text-gray-400" />
+            <div>
+              <p className="text-sm text-gray-500">Full Name</p>
+              <p className="font-medium">
+                {first_name || ""} {last_name || ""}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Mail className="w-4 h-4 text-gray-400" />
+            <div>
+              <p className="text-sm text-gray-500">Email</p>
+              <p className="font-medium">{email || "N/A"}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Phone className="w-4 h-4 text-gray-400" />
+            <div>
+              <p className="text-sm text-gray-500">Phone</p>
+              <p className="font-medium">{phone || "N/A"}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <MapPin className="w-4 h-4 text-gray-400" />
+            <div>
+              <p className="text-sm text-gray-500">Country</p>
+              <p className="font-medium capitalize">{country || "N/A"}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Lead Information */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">
+          Lead Information
+        </h3>
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <Building className="w-4 h-4 text-gray-400" />
+            <div>
+              <p className="text-sm text-gray-500">Lead Type</p>
+              <p className="font-medium capitalize">{lead_type || "N/A"}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <ExternalLink className="w-4 h-4 text-gray-400" />
+            <div>
+              <p className="text-sm text-gray-500">Source</p>
+              <p className="font-medium capitalize">{source || "N/A"}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-4 h-4" />
+            <div>
+              <p className="text-sm text-gray-500">Status</p>
+              <StatusBadge status={status ?? undefined} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Timeline Information */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">
+          Timeline
+        </h3>
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <Calendar className="w-4 h-4 text-gray-400" />
+            <div>
+              <p className="text-sm text-gray-500">Created At</p>
+              <p className="font-medium">{formatDate(created_at)}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Calendar className="w-4 h-4 text-gray-400" />
+            <div>
+              <p className="text-sm text-gray-500">Last Contacted</p>
+              <p className="font-medium">{formatDate(last_contacted_at)}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Calendar className="w-4 h-4 text-gray-400" />
+            <div>
+              <p className="text-sm text-gray-500">Follow Up Date</p>
+              <p className="font-medium">
+                {follow_up_date ? new Date(follow_up_date).toLocaleDateString() : "N/A"}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ModernCard>
+);
+
+// Admin & Pricing Section
+type AdminPricingSectionProps = {
+  assigned_to?: LeadUser | string | null | undefined;
+  pricing_summary?: LeadPricingSummary | null | undefined;
+};
+
+const AdminPricingSection = ({ assigned_to, pricing_summary }: AdminPricingSectionProps) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+    <div className="bg-white rounded-[12px] p-3 md:p-6 shadow-sm">
+      <h2 className="text-xl font-semibold text-[var(--theme-text-color)] mb-4">Assigned Admin</h2>
+      {assigned_to && typeof assigned_to === "object" ? (
+        <div className="text-sm space-y-2">
+          <DetailItem
+            label="Name"
+            value={
+              `${(assigned_to as LeadUser).first_name || ""} ${(assigned_to as LeadUser).last_name || ""}`.trim() ||
+              "N/A"
+            }
+          />
+          <DetailItem label="Email" value={(assigned_to as LeadUser).email} />
+        </div>
+      ) : assigned_to ? (
+        <p className="text-gray-900">{String(assigned_to)}</p>
+      ) : (
+        <p className="text-gray-500">Not Assigned</p>
+      )}
+    </div>
+
+    <div className="bg-white rounded-[12px] p-3 md:p-6 shadow-sm">
+      <h2 className="text-xl font-semibold text-[var(--theme-text-color)] mb-4">
+        Pricing Breakdown
+      </h2>
+      {pricing_summary ? (
+        <div className="text-sm space-y-2">
+          <DetailItem
+            label="Total"
+            value={`${pricing_summary.total} ${pricing_summary.currency}`}
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <DetailItem label="Instances" value={pricing_summary.instances} />
+            <DetailItem label="Months" value={pricing_summary.months} />
+          </div>
+        </div>
+      ) : (
+        <p className="text-gray-500">No pricing information available.</p>
+      )}
+    </div>
+  </div>
+);
+
+// Lead Stages Section
+type LeadStagesSectionProps = {
+  stages?: LeadStage[] | null | undefined;
+  onEditStage: (stage: LeadStage) => void;
+  onUpdateDoc: (doc: LeadDocument) => void;
+  onViewDoc: (doc: LeadDocument) => void;
+  formatDate: (date?: string | null | undefined) => string;
+};
+
+const LeadStagesSection = ({
+  stages,
+  onEditStage,
+  onUpdateDoc,
+  onViewDoc,
+  formatDate,
+}: LeadStagesSectionProps) => (
+  <div className="bg-white rounded-[12px] p-3 md:p-6 mb-8">
+    <h2 className="text-xl font-semibold text-[var(--theme-text-color)] mb-4">Stages</h2>
+    {stages && stages.length > 0 ? (
+      <div className="space-y-4">
+        {stages.map((stage: LeadStage) => (
+          <div
+            key={`${stage.name}-${stage.started_at}`}
+            className="border-l-4 border-blue-500 pl-4 py-2"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold text-gray-800 capitalize">
+                {formatStatusForDisplay(stage.name)}
+              </h3>
+              <button
+                onClick={() => onEditStage(stage)}
+                className="text-gray-400 hover:text-blue-500 transition-colors"
+                title="Edit Stage"
+              >
+                <Edit className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 italic mb-3">
+              {stage.description || "No description."}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-4 text-sm">
+              <DetailItem label="Status" value={formatStatusForDisplay(stage.status)} />
+              <DetailItem label="Started" value={formatDate(stage.started_at)} />
+              <DetailItem label="Completed" value={formatDate(stage.completed_at)} />
+              <DetailItem
+                label="Assigned To"
+                value={
+                  stage.assigned_to
+                    ? `${stage.assigned_to.first_name} ${stage.assigned_to.last_name}`
+                    : "N/A"
+                }
+              />
+            </div>
+
+            {/* Stage Documents */}
+            <div>
+              <h5 className="text-md font-semibold text-gray-700 mb-2">
+                Documents for this Stage:
+              </h5>
+              {stage.documents && stage.documents.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {stage.documents.map((doc: LeadDocument) => (
+                    <DocumentItem
+                      key={doc.id}
+                      doc={doc}
+                      onUpdate={onUpdateDoc}
+                      onView={onViewDoc}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm">No documents for this stage.</p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <p className="text-center py-4 text-gray-500">No stages have been added for this lead.</p>
+    )}
+  </div>
+);
+
+// Lead Notes Section
+const LeadNotesSection = ({ notes }: { notes?: string | null | undefined }) => (
+  <div className="bg-white rounded-[12px] p-3 md:p-6 shadow-sm mb-8">
+    <h2 className="text-xl font-semibold text-[var(--theme-text-color)] mb-4">Notes</h2>
+    {typeof notes === "string" && notes.length > 0 ? (
+      <div className="space-y-3">
+        {notes.split("\n\n").map((note: string, index: number) => (
+          <div key={index} className="flex items-start">
+            <span className="text-gray-500 mr-2 mt-1">&bull;</span>
+            <p className="text-gray-900 leading-relaxed">
+              {note.trim() || "No content for this note."}
+            </p>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <p className="text-gray-500">No notes available.</p>
+    )}
+  </div>
+);
+
+// Lead Documents Section
+type LeadDocumentsSectionProps = {
+  documents?: LeadDocument[] | null | undefined;
+  onAddDoc: () => void;
+  onUpdateDoc: (doc: LeadDocument) => void;
+  onViewDoc: (doc: LeadDocument) => void;
+};
+
+const LeadDocumentsSection = ({
+  documents,
+  onAddDoc,
+  onUpdateDoc,
+  onViewDoc,
+}: LeadDocumentsSectionProps) => (
+  <div className="bg-white rounded-[12px] p-3 md:p-6 shadow-sm mb-8">
+    <div className="flex items-center justify-between mb-4">
+      <h2 className="text-xl font-semibold text-[var(--theme-text-color)]">Documents</h2>
+      <button
+        onClick={onAddDoc}
+        className="flex items-center px-4 py-2 bg-gray-200 text-gray-800 font-medium rounded-lg hover:bg-gray-300 transition-colors"
+      >
+        <PlusCircle className="w-4 h-4 mr-2" /> Add Document
+      </button>
+    </div>
+    {documents && documents.length > 0 ? (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {documents.map((doc: LeadDocument) => (
+          <DocumentItem key={doc.id} doc={doc} onUpdate={onUpdateDoc} onView={onViewDoc} />
+        ))}
+      </div>
+    ) : (
+      <p className="text-center py-4 text-gray-500">No documents found for this lead.</p>
+    )}
+  </div>
+);
 export default function AdminLeadDetails() {
   const navigate = useNavigate();
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   // State management
-  const [uiState, setUiState] = useState({
+  const [uiState, setUiState] = useState<UiState>({
     isEditLeadOpen: false,
     isAddDocOpen: false,
     isAddStageModalOpen: false,
@@ -132,7 +532,7 @@ export default function AdminLeadDetails() {
     isViewerOpen: false,
   });
 
-  const [dataState, setDataState] = useState({
+  const [dataState, setDataState] = useState<DataState>({
     leadId: null,
     leadNameFromUrl: "",
     editingStage: null,
@@ -142,7 +542,7 @@ export default function AdminLeadDetails() {
 
   // Extract URL parameters
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(globalThis.window.location.search);
     const encodedId = params.get("id");
     const nameFromUrl = params.get("name");
 
@@ -151,7 +551,6 @@ export default function AdminLeadDetails() {
         const decodedId = atob(decodeURIComponent(encodedId));
         setDataState((prev) => ({ ...prev, leadId: decodedId }));
       } catch (error) {
-        console.error("Failed to decode lead ID:", error);
         setDataState((prev) => ({ ...prev, leadId: null }));
       }
     }
@@ -165,24 +564,28 @@ export default function AdminLeadDetails() {
 
   // Close dropdown on outside click
   useEffect(() => {
-    const handleClickOutside = (event: any) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setUiState((prev) => ({ ...prev, isActionsDropdownOpen: false }));
       }
-      document.addEventListener("mousedown", handleClickOutside);
     };
+    document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Hooks
-  const { data: leadDetails, isFetching, isError } = useFetchLeadById(dataState.leadId);
+  const { data: leadDetailsData, isFetching, isError } = useFetchLeadById(dataState.leadId ?? "");
   const { mutate: convertLead, isPending: isConverting } = useConvertLeadToUser();
+  const leadDetails =
+    leadDetailsData && typeof leadDetailsData === "object"
+      ? (leadDetailsData as LeadDetails)
+      : null;
 
   // UI Handlers
-  const updateUiState = (updates: any) => {
+  const updateUiState = (updates: Partial<UiState>) => {
     setUiState((prev) => ({ ...prev, ...updates }));
   };
-  const updateDataState = (updates: any) => {
+  const updateDataState = (updates: Partial<DataState>) => {
     setDataState((prev) => ({ ...prev, ...updates }));
   };
   const handleGoBack = () => navigate("/admin-dashboard/leads");
@@ -193,15 +596,15 @@ export default function AdminLeadDetails() {
     }
     updateUiState({ isActionsDropdownOpen: false });
   };
-  const handleEditStage = (stage: any) => {
+  const handleEditStage = (stage: LeadStage) => {
     updateDataState({ editingStage: stage });
     updateUiState({ isEditStageModalOpen: true });
   };
-  const handleUpdateDoc = (doc: any) => {
+  const handleUpdateDoc = (doc: LeadDocument) => {
     updateDataState({ editingDocument: doc });
     updateUiState({ isUpdateDocModalOpen: true });
   };
-  const handleViewDoc = (document: any) => {
+  const handleViewDoc = (document: LeadDocument) => {
     updateDataState({ viewingDocument: document });
     updateUiState({ isViewerOpen: true });
   };
@@ -216,7 +619,7 @@ export default function AdminLeadDetails() {
       <>
         <AdminActiveTab />
         <AdminPageShell contentClassName="p-6 md:p-8 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[var(--theme-color)]" />
           <p className="ml-2 text-gray-700">Loading lead details...</p>
         </AdminPageShell>
       </>
@@ -258,18 +661,18 @@ export default function AdminLeadDetails() {
     stages,
   } = leadDetails;
 
-  const formatDate = (dateString: any) => {
+  const formatDate = (dateString?: string | null) => {
     return dateString ? new Date(dateString).toLocaleString() : "N/A";
   };
   return (
     <>
       <AdminActiveTab />
 
-      <main className="top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 relative">
+      <main className="top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[var(--theme-surface-alt)] min-h-full p-6 md:p-8 relative">
         {/* Converting Overlay */}
         {isConverting && (
           <div className="absolute inset-0 bg-gray-100 bg-opacity-75 z-20 flex flex-col items-center justify-center">
-            <Loader2 className="w-12 h-12 animate-spin text-[#288DD1]" />
+            <Loader2 className="w-12 h-12 animate-spin text-[var(--theme-color)]" />
             <p className="mt-4 text-lg font-semibold text-gray-700">Converting Lead to User...</p>
           </div>
         )}
@@ -345,259 +748,40 @@ export default function AdminLeadDetails() {
           </div>
         </div>
 
-        {/* Lead Overview */}
-        <ModernCard title="Lead Overview" className="mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Contact Information */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">
-                Contact Information
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <User className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-sm text-gray-500">Full Name</p>
-                    <p className="font-medium">
-                      {first_name} {last_name}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Mail className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-sm text-gray-500">Email</p>
-                    <p className="font-medium">{email || "N/A"}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Phone className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-sm text-gray-500">Phone</p>
-                    <p className="font-medium">{phone || "N/A"}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <MapPin className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-sm text-gray-500">Country</p>
-                    <p className="font-medium capitalize">{country || "N/A"}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+        {/* Sections */}
+        <LeadOverviewSection
+          first_name={first_name}
+          last_name={last_name}
+          email={email}
+          phone={phone}
+          country={country}
+          lead_type={lead_type}
+          source={source}
+          status={status}
+          created_at={created_at}
+          last_contacted_at={last_contacted_at}
+          follow_up_date={follow_up_date}
+          formatDate={formatDate}
+        />
 
-            {/* Lead Information */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">
-                Lead Information
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Building className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-sm text-gray-500">Lead Type</p>
-                    <p className="font-medium capitalize">{lead_type || "N/A"}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <ExternalLink className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-sm text-gray-500">Source</p>
-                    <p className="font-medium capitalize">{source || "N/A"}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-4 h-4" />
-                  <div>
-                    <p className="text-sm text-gray-500">Status</p>
-                    <StatusBadge status={status} />
-                  </div>
-                </div>
-              </div>
-            </div>
+        <AdminPricingSection assigned_to={assigned_to} pricing_summary={pricing_summary} />
 
-            {/* Timeline Information */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">
-                Timeline
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Calendar className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-sm text-gray-500">Created At</p>
-                    <p className="font-medium">{formatDate(created_at)}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Calendar className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-sm text-gray-500">Last Contacted</p>
-                    <p className="font-medium">{formatDate(last_contacted_at)}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Calendar className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-sm text-gray-500">Follow Up Date</p>
-                    <p className="font-medium">
-                      {follow_up_date ? new Date(follow_up_date).toLocaleDateString() : "N/A"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </ModernCard>
+        <LeadStagesSection
+          stages={stages}
+          onEditStage={handleEditStage}
+          onUpdateDoc={handleUpdateDoc}
+          onViewDoc={handleViewDoc}
+          formatDate={formatDate}
+        />
 
-        {/* Assigned Admin & Pricing */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-          <div className="bg-white rounded-[12px] p-3 md:p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-[#575758] mb-4">Assigned Admin</h2>
-            {assigned_to ? (
-              <div className="text-sm space-y-2">
-                <DetailItem
-                  label="Name"
-                  value={`${assigned_to.first_name} ${assigned_to.last_name}`}
-                />
-                <DetailItem label="Email" value={assigned_to.email} />
-              </div>
-            ) : (
-              <p className="text-gray-500">Not Assigned</p>
-            )}
-          </div>
+        <LeadNotesSection notes={notes} />
 
-          <div className="bg-white rounded-[12px] p-3 md:p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-[#575758] mb-4">Pricing Breakdown</h2>
-            {pricing_summary ? (
-              <div className="text-sm space-y-2">
-                <DetailItem
-                  label="Total"
-                  value={`${pricing_summary.total} ${pricing_summary.currency}`}
-                />
-                <div className="grid grid-cols-2 gap-3">
-                  <DetailItem label="Instances" value={pricing_summary.instances} />
-                  <DetailItem label="Months" value={pricing_summary.months} />
-                </div>
-              </div>
-            ) : (
-              <p className="text-gray-500">No pricing information available.</p>
-            )}
-          </div>
-        </div>
-
-        {/* Stages */}
-        <div className="bg-white rounded-[12px] p-3 md:p-6 mb-8">
-          <h2 className="text-xl font-semibold text-[#575758] mb-4">Stages</h2>
-          {stages && stages.length > 0 ? (
-            <div className="space-y-4">
-              {stages.map((stage, index) => (
-                <div key={index} className="border-l-4 border-blue-500 pl-4 py-2">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-semibold text-gray-800 capitalize">
-                      {formatStatusForDisplay(stage.name)}
-                    </h3>
-                    <button
-                      onClick={() => handleEditStage(stage)}
-                      className="text-gray-400 hover:text-blue-500 transition-colors"
-                      title="Edit Stage"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <p className="text-sm text-gray-600 italic mb-3">
-                    {stage.description || "No description."}
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-4 text-sm">
-                    <DetailItem label="Status" value={formatStatusForDisplay(stage.status)} />
-                    <DetailItem label="Started" value={formatDate(stage.started_at)} />
-                    <DetailItem label="Completed" value={formatDate(stage.completed_at)} />
-                    <DetailItem
-                      label="Assigned To"
-                      value={
-                        stage.assigned_to
-                          ? `${stage.assigned_to.first_name} ${stage.assigned_to.last_name}`
-                          : "N/A"
-                      }
-                    />
-                  </div>
-
-                  {/* Stage Documents */}
-                  <div>
-                    <h5 className="text-md font-semibold text-gray-700 mb-2">
-                      Documents for this Stage:
-                    </h5>
-                    {stage.documents && stage.documents.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {stage.documents.map((doc: any) => (
-                          <DocumentItem
-                            key={doc.id}
-                            doc={doc}
-                            onUpdate={handleUpdateDoc}
-                            onView={handleViewDoc}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 text-sm">No documents for this stage.</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-center py-4 text-gray-500">
-              No stages have been added for this lead.
-            </p>
-          )}
-        </div>
-
-        {/* Notes */}
-        <div className="bg-white rounded-[12px] p-3 md:p-6 shadow-sm mb-8">
-          <h2 className="text-xl font-semibold text-[#575758] mb-4">Notes</h2>
-          {notes && notes.length > 0 ? (
-            <div className="space-y-3">
-              {notes.split("\n\n").map((note, index) => (
-                <div key={index} className="flex items-start">
-                  <span className="text-gray-500 mr-2 mt-1">&bull;</span>
-                  <p className="text-gray-900 leading-relaxed">
-                    {note.trim() || "No content for this note."}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500">No notes available.</p>
-          )}
-        </div>
-
-        {/* Documents */}
-        <div className="bg-white rounded-[12px] p-3 md:p-6 shadow-sm mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-[#575758]">Documents</h2>
-            <button
-              onClick={() => updateUiState({ isAddDocOpen: true })}
-              className="flex items-center px-4 py-2 bg-gray-200 text-gray-800 font-medium rounded-lg hover:bg-gray-300 transition-colors"
-            >
-              <PlusCircle className="w-4 h-4 mr-2" /> Add Document
-            </button>
-          </div>
-          {documents && documents.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {documents.map((doc: any) => (
-                <DocumentItem
-                  key={doc.id}
-                  doc={doc}
-                  onUpdate={handleUpdateDoc}
-                  onView={handleViewDoc}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="text-center py-4 text-gray-500">No documents found for this lead.</p>
-          )}
-        </div>
+        <LeadDocumentsSection
+          documents={documents}
+          onAddDoc={() => updateUiState({ isAddDocOpen: true })}
+          onUpdateDoc={handleUpdateDoc}
+          onViewDoc={handleViewDoc}
+        />
       </main>
 
       {/* Modals */}

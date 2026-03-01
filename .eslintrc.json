@@ -28,6 +28,9 @@
                 "*.ts",
                 "*.tsx"
             ],
+            "extends": [
+                "plugin:@typescript-eslint/recommended"
+            ],
             "parser": "@typescript-eslint/parser",
             "parserOptions": {
                 "ecmaFeatures": {
@@ -35,12 +38,74 @@
                 },
                 "ecmaVersion": "latest",
                 "sourceType": "module"
+            },
+            "rules": {
+                "@typescript-eslint/no-unused-vars": ["warn", {
+                    "argsIgnorePattern": "^_",
+                    "varsIgnorePattern": "^_",
+                    "caughtErrorsIgnorePattern": "^_"
+                }],
+                "@typescript-eslint/no-explicit-any": "off",
+                "@typescript-eslint/ban-ts-comment": "error"
+            }
+        },
+        {
+            "files": [
+                "src/types/**/*.*",
+                "src/stores/**/*.*",
+                "src/contexts/**/*.*",
+                "src/utils/**/*.*",
+                "src/shared/config/**/*.*"
+            ],
+            "rules": {
+                "@typescript-eslint/no-explicit-any": "error"
+            }
+        },
+        {
+            "files": [
+                "src/adminDashboard/**/*.*"
+            ],
+            "rules": {
+                "no-restricted-imports": [
+                    "error",
+                    {
+                        "patterns": [
+                            "src/index/tenant/*",
+                            "src/index/tenant/**",
+                            "src/stores/tenantAuthStore"
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "files": [
+                "src/dashboard/**/*.*",
+                "src/clientDashboard/**/*.*",
+                "src/tenantDashboard/**/*.*"
+            ],
+            "rules": {
+                "no-restricted-imports": [
+                    "error",
+                    {
+                        "patterns": [
+                            "src/index/admin/*",
+                            "src/index/admin/**",
+                            "src/stores/adminAuthStore"
+                        ]
+                    }
+                ]
             }
         }
     ],
     "rules": {
-        "prettier/prettier": "warn",
-        "no-unused-vars": "warn",
+        "prettier/prettier": "error",
+        "no-unused-vars": "off",
+        "@typescript-eslint/no-unused-vars": ["warn", {
+            "argsIgnorePattern": "^_",
+            "varsIgnorePattern": "^_",
+            "caughtErrorsIgnorePattern": "^_"
+        }],
         "no-console": "warn"
     }
 }

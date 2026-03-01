@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Eye, MapPin, Plus, RefreshCw, Trash2 } from "lucide-react";
@@ -15,13 +14,14 @@ import AddVpc from "../vpcComps/addVpc";
 import DeleteVpcModal from "../vpcComps/deleteVpc";
 import ViewVpcModal from "../vpcComps/viewVpc";
 import ToastUtils from "../../../utils/toastUtil";
+import type { MetaItem, Tone } from "../../../shared/components/ui/ResourceSection";
 
 const ITEMS_PER_PAGE = 6;
 
 const normalizeStatus = (value: any) =>
   value ? value.toString().replace(/_/g, " ").toLowerCase() : "";
 
-const getToneForStatus = (status: any) => {
+const getToneForStatus = (status: any): Tone => {
   const normalized = normalizeStatus(status);
   if (["active", "available", "ready", "associated", "attached"].includes(normalized)) {
     return "success";
@@ -41,28 +41,29 @@ const VPCs = ({ projectId = "", region = "" }: any) => {
   const { mutate: deleteVpc, isPending: isDeleting } = useDeleteVpc();
 
   const [isCreateModalOpen, setCreateModal] = useState(false);
-  const [deleteModal, setDeleteModal] = useState(null); // stores vpc object
-  const [viewModal, setViewModal] = useState(null); // stores vpc object
+  const [deleteModal, setDeleteModal] = useState<any>(null); // stores vpc object
+  const [viewModal, setViewModal] = useState<any>(null); // stores vpc object
   const [isSyncing, setIsSyncing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const totalItems = vpcs?.length ?? 0;
+  const vpcList = Array.isArray(vpcs) ? vpcs : [];
+  const totalItems = vpcList.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
   const currentVpcs = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return (vpcs ?? []).slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [vpcs, currentPage]);
+    return vpcList.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [vpcList, currentPage]);
 
-  const stats = useMemo(() => {
-    const defaults = (vpcs ?? []).filter((item: any) => item.is_default).length;
-    const pending = (vpcs ?? []).filter((item: any) =>
+  const stats = useMemo<MetaItem[]>(() => {
+    const defaults = vpcList.filter((item: any) => item.is_default).length;
+    const pending = vpcList.filter((item: any) =>
       ["pending", "creating", "syncing"].includes(normalizeStatus(item.state || item.status))
     ).length;
-    const healthy = (vpcs ?? []).filter((item: any) =>
+    const healthy = vpcList.filter((item: any) =>
       ["available", "active"].includes(normalizeStatus(item.state || item.status))
     ).length;
 
-    const baseStats = [
+    const baseStats: MetaItem[] = [
       {
         label: "Total VPCs",
         value: totalItems,
@@ -95,7 +96,7 @@ const VPCs = ({ projectId = "", region = "" }: any) => {
     }
 
     return baseStats;
-  }, [vpcs, totalItems, region]);
+  }, [vpcList, totalItems, region]);
 
   const openDeleteModal = (vpc: any) => setDeleteModal(vpc);
   const closeDeleteModal = () => setDeleteModal(null);
@@ -118,7 +119,7 @@ const VPCs = ({ projectId = "", region = "" }: any) => {
       });
       ToastUtils.success("VPCs synced successfully.");
     } catch (error) {
-      ToastUtils.error(error?.message || "Unable to sync VPCs right now.");
+      ToastUtils.error(error instanceof Error ? error.message : "Unable to sync VPCs right now.");
     } finally {
       setIsSyncing(false);
     }
@@ -135,7 +136,7 @@ const VPCs = ({ projectId = "", region = "" }: any) => {
         closeDeleteModal();
       },
       onError: (error) => {
-        ToastUtils.error(error?.message || "Failed to delete VPC.");
+        ToastUtils.error(error instanceof Error ? error.message : "Failed to delete VPC.");
         closeDeleteModal();
       },
     });
@@ -176,50 +177,56 @@ const VPCs = ({ projectId = "", region = "" }: any) => {
         {totalItems > 0 ? (
           <>
             <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-              {currentVpcs.map((vpc: any) => (
-                <ResourceListCard
-                  key={vpc.id}
-                  title={vpc.name || "Unnamed VPC"}
-                  subtitle={vpc.id || "Unknown ID"}
-                  metadata={[
-                    { label: "Region", value: vpc.region || region || "—" },
-                    { label: "CIDR", value: vpc.cidr_block || "—" },
-                    {
-                      label: "Default",
-                      value: vpc.is_default ? "Yes" : "No",
-                    },
-                  ]}
-                  statuses={[
-                    {
-                      label: normalizeStatus(vpc.state) || "unknown",
-                      tone: getToneForStatus(vpc.state),
-                    },
-                    vpc.status
-                      ? {
-                          label: normalizeStatus(vpc.status) || "unknown",
-                          tone: getToneForStatus(vpc.status),
-                        }
-                      : null,
-                  ].filter(Boolean)}
-                  actions={[
-                    {
-                      key: "inspect",
-                      icon: <Eye size={16} />,
-                      variant: "ghost",
-                      onClick: () => openViewModal(vpc),
-                      title: "Inspect VPC",
-                    },
-                    {
-                      key: "remove",
-                      icon: <Trash2 size={16} />,
-                      variant: "danger",
-                      onClick: () => openDeleteModal(vpc),
-                      disabled: isDeleting,
-                      title: "Remove VPC",
-                    },
-                  ]}
-                />
-              ))}
+              {currentVpcs.map((vpc: any, index: number) => {
+                const vpcId = vpc.id != null ? String(vpc.id) : "";
+                const cardKey = vpcId || vpc.cidr_block || vpc.name || `vpc-${index}`;
+                const statuses: Array<{ label: string; tone?: Tone }> = [
+                  {
+                    label: normalizeStatus(vpc.state) || "unknown",
+                    tone: getToneForStatus(vpc.state),
+                  },
+                ];
+                if (vpc.status) {
+                  statuses.push({
+                    label: normalizeStatus(vpc.status) || "unknown",
+                    tone: getToneForStatus(vpc.status),
+                  });
+                }
+
+                return (
+                  <ResourceListCard
+                    key={cardKey}
+                    title={vpc.name || "Unnamed VPC"}
+                    subtitle={vpcId || "Unknown ID"}
+                    metadata={[
+                      { label: "Region", value: vpc.region || region || "—" },
+                      { label: "CIDR", value: vpc.cidr_block || "—" },
+                      {
+                        label: "Default",
+                        value: vpc.is_default ? "Yes" : "No",
+                      },
+                    ]}
+                    statuses={statuses}
+                    actions={[
+                      {
+                        key: "inspect",
+                        label: "Inspect",
+                        icon: <Eye size={16} />,
+                        variant: "ghost",
+                        onClick: () => openViewModal(vpc),
+                      },
+                      {
+                        key: "remove",
+                        label: "Remove",
+                        icon: <Trash2 size={16} />,
+                        variant: "danger",
+                        onClick: () => openDeleteModal(vpc),
+                        disabled: isDeleting,
+                      },
+                    ]}
+                  />
+                );
+              })}
             </div>
 
             {totalPages > 1 && (

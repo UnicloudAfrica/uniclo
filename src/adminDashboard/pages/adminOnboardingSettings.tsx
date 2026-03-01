@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useEffect, useMemo, useState } from "react";
 import {
   useFetchOnboardingSettings,
@@ -8,11 +7,38 @@ import {
 } from "../../hooks/adminHooks/onboardingSettingsHooks";
 import { Loader2, Plus, Save, Trash2, X } from "lucide-react";
 import ToastUtils from "../../utils/toastUtil";
-import AdminPageShell from "../components/AdminPageShell.tsx";
+import AdminPageShell from "../components/AdminPageShell";
 import useAuthRedirect from "../../utils/adminAuthRedirect";
 import { useFetchCountries as useAdminFetchCountries } from "../../hooks/adminHooks/countriesHooks";
 import { STEP_CONFIG } from "../../dashboard/onboarding/stepConfig";
 import ModernTable from "../../shared/components/ui/ModernTable";
+
+type EnforcementMode = "required" | "grace" | "optional";
+
+interface OnboardingSettingForm {
+  persona: string;
+  step_id: string;
+  country_code: string;
+  enforcement: EnforcementMode;
+  grace_period_days: string;
+}
+
+interface OnboardingSetting {
+  id: string | number;
+  persona: string;
+  step_id: string;
+  country_code?: string | null;
+  enforcement: EnforcementMode;
+  grace_period_days?: number | string | null;
+}
+
+interface CountryRecord extends Record<string, unknown> {
+  id?: string | number;
+  name?: string;
+  iso2?: string;
+  iso3?: string;
+  numeric_code?: string | number;
+}
 
 const enforcementOptions = [
   { value: "required", label: "Required" },
@@ -20,7 +46,7 @@ const enforcementOptions = [
   { value: "optional", label: "Optional" },
 ];
 
-const emptyForm = {
+const emptyForm: OnboardingSettingForm = {
   persona: "",
   step_id: "",
   country_code: "",
@@ -29,18 +55,26 @@ const emptyForm = {
 };
 const AdminOnboardingSettings = () => {
   const [form, setForm] = useState(emptyForm);
-  const [editingId, setEditingId] = useState(null);
+  const [editingId, setEditingId] = useState<string | number | null>(null);
 
   const { isLoading } = useAuthRedirect();
 
   const {
-    data: settings,
+    data: settingsData,
     isFetching: isSettingsFetching,
     isError,
     refetch,
   } = useFetchOnboardingSettings();
 
-  const { data: countries = [], isFetching: isCountriesFetching } = useAdminFetchCountries();
+  const { data: countriesData = [], isFetching: isCountriesFetching } = useAdminFetchCountries();
+  const settings = useMemo<OnboardingSetting[]>(
+    () => (Array.isArray(settingsData) ? (settingsData as OnboardingSetting[]) : []),
+    [settingsData]
+  );
+  const countries = useMemo<CountryRecord[]>(
+    () => (Array.isArray(countriesData) ? (countriesData as CountryRecord[]) : []),
+    [countriesData]
+  );
 
   const createMutation = useCreateOnboardingSetting();
   const updateMutation = useUpdateOnboardingSetting();
@@ -54,9 +88,9 @@ const AdminOnboardingSettings = () => {
 
   const isSubmitting =
     createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
+  const stepConfigMap = STEP_CONFIG as Record<string, Array<{ id: string; label?: string }>>;
 
   const sortedSettings = useMemo(() => {
-    if (!settings) return [];
     return [...settings].sort((a, b) => {
       if (a.persona === b.persona) {
         if (a.step_id === b.step_id) {
@@ -68,43 +102,50 @@ const AdminOnboardingSettings = () => {
     });
   }, [settings]);
 
-  const handleChange = (field: any, value: any) => {
+  const handleChange = <K extends keyof OnboardingSettingForm>(
+    field: K,
+    value: OnboardingSettingForm[K]
+  ) => {
     setForm((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
-  const personaOptions = useMemo(() => Object.keys(STEP_CONFIG), []);
+  const personaOptions = useMemo(() => Object.keys(stepConfigMap), [stepConfigMap]);
 
   const stepOptions = useMemo(() => {
-    if (!form.persona || !STEP_CONFIG[form.persona]) return [];
-    return STEP_CONFIG[form.persona].map((definition: any) => ({
+    const stepDefinitions = stepConfigMap[form.persona];
+    if (!form.persona || !stepDefinitions) return [];
+    return stepDefinitions.map((definition) => ({
       value: definition.id,
       label: definition.label ?? definition.id,
     }));
-  }, [form.persona]);
+  }, [form.persona, stepConfigMap]);
 
   const resetForm = () => {
     setForm(emptyForm);
     setEditingId(null);
   };
-  const handleEdit = (setting: any) => {
+  const handleEdit = (setting: OnboardingSetting) => {
     setEditingId(setting.id);
     setForm({
       persona: setting.persona,
       step_id: setting.step_id,
       country_code: setting.country_code ?? "",
       enforcement: setting.enforcement ?? "required",
-      grace_period_days: setting.grace_period_days ?? "",
+      grace_period_days:
+        setting.grace_period_days === null || setting.grace_period_days === undefined
+          ? ""
+          : String(setting.grace_period_days),
     });
   };
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: string | number) => {
     try {
       await deleteMutation.mutateAsync(id);
       ToastUtils.success("Setting deleted");
     } catch (error) {
       console.error(error);
-      ToastUtils.error(error?.message ?? "Failed to delete setting.");
+      ToastUtils.error(error instanceof Error ? error.message : "Failed to delete setting.");
     }
   };
   useEffect(() => {
@@ -115,11 +156,12 @@ const AdminOnboardingSettings = () => {
     }
     const exists = stepOptions.some((option) => option.value === form.step_id);
     if (!exists) {
-      setForm((prev) => ({ ...prev, step_id: stepOptions[0].value }));
+      const nextStepId = stepOptions[0]?.value ?? "";
+      setForm((prev) => ({ ...prev, step_id: nextStepId }));
     }
   }, [form.persona, stepOptions]);
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const payload = {
@@ -144,13 +186,13 @@ const AdminOnboardingSettings = () => {
       refetch();
     } catch (error) {
       console.error(error);
-      ToastUtils.error(error?.message ?? "Unable to save setting.");
+      ToastUtils.error(error instanceof Error ? error.message : "Unable to save setting.");
     }
   };
   if (isLoading) {
     return (
       <div className="w-full h-svh flex items-center justify-center">
-        <Loader2 className="w-12 animate-spin text-[#288DD1]" />
+        <Loader2 className="w-12 animate-spin text-[var(--theme-color)]" />
       </div>
     );
   }
@@ -181,7 +223,7 @@ const AdminOnboardingSettings = () => {
                     required
                   >
                     <option value="">Select persona</option>
-                    {personaOptions.map((persona: any) => (
+                    {personaOptions.map((persona) => (
                       <option key={persona} value={persona}>
                         {persona}
                       </option>
@@ -202,7 +244,7 @@ const AdminOnboardingSettings = () => {
                     <option value="">
                       {form.persona ? "Select step" : "Select persona first"}
                     </option>
-                    {stepOptions.map((option: any) => (
+                    {stepOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
@@ -223,7 +265,7 @@ const AdminOnboardingSettings = () => {
                         Loading countries...
                       </option>
                     ) : (
-                      countries.map((country: any) => {
+                      countries.map((country) => {
                         const code = (
                           country.iso2 ||
                           country.iso3 ||
@@ -250,10 +292,12 @@ const AdminOnboardingSettings = () => {
                   </label>
                   <select
                     value={form.enforcement}
-                    onChange={(event) => handleChange("enforcement", event.target.value)}
+                    onChange={(event) =>
+                      handleChange("enforcement", event.target.value as EnforcementMode)
+                    }
                     className="input-field mt-1"
                   >
-                    {enforcementOptions.map((option: any) => (
+                    {enforcementOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
@@ -282,7 +326,7 @@ const AdminOnboardingSettings = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="inline-flex items-center gap-2 rounded-lg bg-[#288DD1] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1f6ea7] disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-lg bg-[var(--theme-color)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[rgb(var(--theme-color-600))] disabled:opacity-60"
                 >
                   {isSubmitting ? (
                     <>
@@ -323,7 +367,7 @@ const AdminOnboardingSettings = () => {
                 Loading settings…
               </div>
             ) : (
-              <ModernTable
+              <ModernTable<OnboardingSetting>
                 data={sortedSettings}
                 columns={[
                   {
@@ -360,7 +404,7 @@ const AdminOnboardingSettings = () => {
                     key: "actions",
                     header: "Actions",
                     align: "right",
-                    render: (_, setting) => (
+                    render: (_value, setting) => (
                       <div className="flex justify-end gap-2">
                         <button
                           type="button"

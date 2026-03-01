@@ -1,11 +1,25 @@
-// @ts-nocheck
 import React, { useMemo, useState } from "react";
 import { X, Search, User } from "lucide-react";
 import { ModernButton } from "../ui";
 import { useFetchAdmins } from "../../../hooks/adminHooks/adminHooks";
 import { useFetchTenantAdmins } from "../../../hooks/adminUserHooks";
 
-const UserSelectModal = ({
+interface UserType {
+  id: string | number;
+  name: string;
+  email: string;
+  [key: string]: unknown;
+}
+
+interface UserSelectModalProps {
+  context?: "admin" | "tenant";
+  isOpen: boolean;
+  onClose: () => void;
+  onSelect: (user: UserType) => void;
+  title?: string;
+}
+
+const UserSelectModal: React.FC<UserSelectModalProps> = ({
   context = "admin",
   isOpen,
   onClose,
@@ -13,12 +27,12 @@ const UserSelectModal = ({
   title = "Select User to Assign",
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
 
   const adminQuery = useFetchAdmins({ enabled: context === "admin" && isOpen });
   const tenantQuery = useFetchTenantAdmins({ enabled: context === "tenant" && isOpen });
 
-  const users = context === "tenant" ? tenantQuery.data || [] : adminQuery.data || [];
+  const users: UserType[] = context === "tenant" ? tenantQuery.data || [] : adminQuery.data || [];
   const loading = context === "tenant" ? tenantQuery.isLoading : adminQuery.isLoading;
 
   const filteredUsers = useMemo(() => {

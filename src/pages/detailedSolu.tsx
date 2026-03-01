@@ -1,0 +1,237 @@
+import Footer from "../components/footer";
+import Navbar from "../components/navbar";
+import { useParams, Link } from "react-router-dom";
+import { useContext, useEffect, useMemo, useState } from "react";
+import { initializeApp, getApps } from "firebase/app";
+import { getFirestore, getDoc, doc, getDocs, collection, query } from "firebase/firestore";
+import { motion } from "framer-motion";
+import adbg from "./assets/adBG.svg";
+import admob from "./assets/adMob.svg";
+import copy from "./assets/copy.svg";
+import { SolutionsContext } from "../contexts/contextprovider";
+import DOMPurify from "dompurify";
+
+interface SolutionItem {
+  id: string;
+  topic: string;
+  desc: string;
+  date: string;
+  url: string;
+  content: string;
+  order?: number;
+  [key: string]: any;
+}
+
+const DetailedSolution = () => {
+  // ... firebase config
+  const firebaseConfig = {
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [solutionsArray] = useContext(SolutionsContext) as [SolutionItem[]];
+
+  const emptySolution = {
+    topic: "",
+    desc: "",
+    date: "",
+    url: "",
+    content: "",
+    id: "",
+  };
+  const [selectedSolutionItem, setSelectedSolutionItem] = useState<SolutionItem>(emptySolution);
+  const [otherSolutionsState, setOtherSolutionsState] = useState<SolutionItem[]>([]);
+
+  const { id } = useParams();
+
+  const selectedFromContext = useMemo(() => {
+    if (!id || !solutionsArray.length) return null;
+    return solutionsArray.find((item) => item.id === id) || null;
+  }, [id, solutionsArray]);
+
+  const otherSolutionsFromContext = useMemo(() => {
+    if (!id || !solutionsArray.length) return [];
+    return solutionsArray.filter((item) => item.id !== id);
+  }, [id, solutionsArray]);
+
+  const resolvedSelected = selectedFromContext || selectedSolutionItem;
+  const resolvedOtherSolutions =
+    otherSolutionsFromContext.length > 0 ? otherSolutionsFromContext : otherSolutionsState;
+
+  const db = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+    return getFirestore(app);
+  }, []);
+
+  useEffect(() => {
+    if (selectedFromContext) {
+      setSelectedSolutionItem(selectedFromContext);
+    }
+  }, [selectedFromContext]);
+
+  useEffect(() => {
+    if (!id || !db || solutionsArray.length) return;
+    const docRef = doc(db, "solutions", id);
+    getDoc(docRef)
+      .then((doc) => {
+        if (doc.exists()) {
+          const solu = { id: doc.id, ...doc.data() } as SolutionItem;
+          setSelectedSolutionItem(solu);
+        } else {
+          console.log("Document does not exist");
+        }
+      })
+      .catch((error) => {
+        console.error("Error getting document:", error);
+      });
+  }, [id, db, solutionsArray.length]);
+
+  useEffect(() => {
+    if (!id || !db || solutionsArray.length) return;
+    const soluCollectionRef = collection(db, "solutions");
+    const q = query(soluCollectionRef);
+    getDocs(q)
+      .then((querySnapshot) => {
+        const otherSoluData = [];
+        querySnapshot.forEach((doc) => {
+          const soluData = { id: doc.id, ...doc.data() } as SolutionItem;
+          if (id !== doc.id) {
+            otherSoluData.push(soluData);
+          }
+        });
+        setOtherSolutionsState(otherSoluData);
+      })
+      .catch((error) => {
+        console.error("Error getting documents:", error);
+      });
+  }, [id, db, solutionsArray.length]);
+
+  //func to copy link
+  const [buttonText, setButtonText] = useState("Copy link");
+  const handleLinkCopy = () => {
+    const currentLink = globalThis.window.location.href;
+
+    navigator.clipboard
+      .writeText(currentLink)
+      .then(() => {
+        setButtonText("Copied!");
+        setTimeout(() => {
+          setButtonText("Copy link");
+        }, 2000); // Change back to 'Copy link' after 3000 milliseconds (3 seconds)
+      })
+      .catch((err) => {
+        console.error("Unable to copy link to clipboard", err);
+      });
+  };
+
+  return (
+    <>
+      <Navbar />
+      <motion.div>
+        <div className="mt-[10em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[var(--theme-heading-color)]">
+          <p className=" font-medium text-3xl md:text-4xl text-center">{resolvedSelected.topic}</p>
+          <p className=" text-center font-normal mt-3 text-[var(--theme-text-color)] text-lg md:text-xl ">
+            {resolvedSelected.desc}
+          </p>
+          <div
+            className=" w-full h-[350px] md:h-[500px] my-16 bg-[var(--theme-surface-alt)] rounded-[20px]"
+            style={{
+              backgroundImage: `url(${resolvedSelected.url})`,
+              backgroundSize: "cover",
+            }}
+          ></div>
+          <p className=" font-medium text-[30px] leading-[40px] text-center"></p>
+          <p
+            style={{ whiteSpace: "pre-line" }}
+            className=" mt-3 text-sm whitespace-pre-line text-justify text-[var(--theme-text-color)] md:px-[15%] font-normal"
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(resolvedSelected.content) }}
+          />
+          <div className=" md:px-[15%] mt-6">
+            <button
+              onClick={handleLinkCopy}
+              className=" flex px-3 py-2 border border-[var(--theme-surface-alt)] rounded-[8px] justify-center items-center space-x-2"
+            >
+              <img src={copy} className=" w-4 h-4" alt="" />
+              <p className=" text-xs font-medium">{buttonText}</p>
+            </button>
+          </div>
+          <p className=" font-medium text-xl md:text-3xl text-center mt-16">
+            Explore other solutions
+          </p>
+          <p className=" text-center font-normal mt-3 text-xl text-[var(--theme-text-color)]">
+            Discover Your Custom Cloud Advantage: Tailored Solutions for Every Industry
+          </p>
+          <div
+            className={`grid grid-cols-1 md:grid-cols-${
+              resolvedOtherSolutions.length > 1 ? 2 : 1
+            } gap-[32px] lg:gap-[4%] w-full mt-8 mb-[6em]`}
+          >
+            {resolvedOtherSolutions.slice(0, 2).map((item, index) => (
+              <Link to={`/solutions/${item.id}`} key={index}>
+                <div className="w-full text-center">
+                  <div
+                    className="w-full h-[290px] bg-[var(--theme-surface-alt)] rounded-[20px]"
+                    style={{
+                      backgroundImage: `url(${item.url})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
+                  ></div>
+                  <p className="text-left mt-6 text-xl lg:text-2xl font-medium">{item.topic}</p>
+                  <p className="text-left mt-3 text-[rgb(var(--theme-neutral-900) / 0.8)] text-sm">
+                    {item.desc}
+                  </p>
+                  <button className=" flex mt-6 items-center">
+                    <p className=" gradient-text text-base">View more</p>
+                  </button>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <motion.div className=" w-full font-Outfit text-[var(--theme-card-bg)]">
+            <div className=" w-full h-[400px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] relative md:space-y-4">
+              <img
+                src={adbg}
+                className="hidden md:block absolute left-0 w-full h-full object-cover rounded-[30px]"
+                alt=""
+              />
+              <img
+                src={admob}
+                className="z-10 absolute top-0 h-full w-full object-cover block md:hidden"
+                alt=""
+              />
+              <p className=" font-semibold text-xl md:text-3xl">Want product news and updates</p>
+              <p className=" font-normal px-4 md:px-0 text-lg md:text-xl">
+                Subscribe to UniCloud Africa blog to get update right in your inbox
+              </p>
+              <div className=" flex flex-col md:flex-row items-center justify-center z-20  mt-4 md:space-x-6 space-y-4 md:space-y-0">
+                <input
+                  placeholder="Enter Email"
+                  className=" w-full md:w-auto h-[52px] bg-[rgb(var(--secondary-color-rgb) / 0.5)] py-2.5 px-4 md:px-7 text-base placeholder:text-white placeholder:font-Outfit font-Outfit placeholder:text-sm  rounded-[30px]"
+                  type="text"
+                />
+                <Link to="/contact" target="_blank" rel="noopener noreferrer">
+                  <button className="  md:w-auto px-6 md:px-9 py-3 md:py-4 bg-[var(--theme-card-bg)] rounded-[30px] text-base text-[var(--theme-heading-color)]">
+                    Subscribe
+                  </button>
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        <Footer />
+      </motion.div>
+    </>
+  );
+};
+
+export default DetailedSolution;

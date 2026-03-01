@@ -57,7 +57,7 @@ export const buildTenantHeadbarPreset = (tenantData?: {
   color?: string;
 }): HeadbarPreset => ({
   ...basePresets.tenant,
-  themeColor: tenantData?.color || "#288DD1",
+  themeColor: tenantData?.color || "var(--theme-color)",
   logo: {
     src: tenantData?.logo || adminLogo,
     alt: `${tenantData?.name || "Tenant"} Logo`,

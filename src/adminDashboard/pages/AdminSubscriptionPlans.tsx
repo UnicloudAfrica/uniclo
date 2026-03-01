@@ -1,12 +1,9 @@
-// @ts-nocheck
 import React, { useState } from "react";
 import {
   Plus,
   Edit2,
   Trash2,
   Eye,
-  Calendar,
-  DollarSign,
   Users,
   Package,
   Check,
@@ -20,7 +17,6 @@ import {
 import AdminPageShell from "../components/AdminPageShell";
 import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
 import { ModernButton } from "../../shared/components/ui";
-import { designTokens } from "../../styles/designTokens";
 import {
   useFetchSubscriptionPlans,
   useDeleteSubscriptionPlan,
@@ -205,11 +201,11 @@ const PlanCard: React.FC<{
 
 export default function AdminSubscriptionPlans() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
+  const [, setShowCreateModal] = useState(false);
+  const [, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
 
   const { data: plansData, isLoading } = useFetchSubscriptionPlans();
-  const { mutate: deletePlan, isPending: isDeleting } = useDeleteSubscriptionPlan();
+  const { mutate: deletePlan } = useDeleteSubscriptionPlan();
 
   const plans: SubscriptionPlan[] = plansData?.data || [];
 
@@ -238,7 +234,7 @@ export default function AdminSubscriptionPlans() {
       alert("Cannot delete plan with active subscribers");
       return;
     }
-    if (window.confirm(`Delete plan "${plan.name}"?`)) {
+    if (globalThis.window.confirm(`Delete plan "${plan.name}"?`)) {
       (deletePlan as any)(plan.id);
     }
   };

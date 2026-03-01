@@ -64,7 +64,7 @@ interface OrderSuccessStepProps {
   configurationSummaries: ConfigurationSummary[];
   pricingSummary?: PricingSummary;
   keypairDownloads?: KeypairDownload[];
-  instances?: any[];
+  instances?: unknown;
   instancesPageUrl: string;
   onCreateAnother: () => void;
   resourceLabel?: string;
@@ -1047,7 +1047,7 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
         {/* Actions */}
         <div className="flex gap-3 mt-6">
           <ModernButton
-            onClick={() => (window.location.href = instancesPageUrl)}
+            onClick={() => (globalThis.window.location.href = instancesPageUrl)}
             className="flex-1"
           >
             View My Instances

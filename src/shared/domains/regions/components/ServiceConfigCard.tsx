@@ -2,7 +2,6 @@
  * Service Configuration Card
  * Reusable component for enabling/configuring a service in a region
  */
-// @ts-nocheck
 import React from "react";
 import { Server, Database, Globe, Check, AlertCircle, Loader2 } from "lucide-react";
 import ModernInput from "../../../components/ui/ModernInput";
@@ -58,7 +57,7 @@ const ServiceConfigCard: React.FC<ServiceConfigCardProps> = ({
   const Icon = SERVICE_ICONS[serviceType] || Server;
   const label = serviceConfig?.label || serviceType;
   const description = serviceConfig?.description || "";
-  const fields = serviceConfig?.fields || {};
+  const fields: Record<string, FieldDefinition> = serviceConfig?.fields ?? {};
 
   return (
     <div

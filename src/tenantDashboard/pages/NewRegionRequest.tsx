@@ -1,13 +1,27 @@
-// @ts-nocheck
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import tenantRegionApi from "../../services/tenantRegionApi";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
 
+type FulfillmentMode = "automated" | "manual";
+type Provider = "zadara";
+
+interface RegionRequestFormData {
+  provider: Provider;
+  code: string;
+  name: string;
+  country_code: string;
+  city: string;
+  base_url: string;
+  fulfillment_mode: FulfillmentMode;
+}
+
+type RegionRequestErrors = Partial<Record<keyof RegionRequestFormData, string>>;
+
 const NewRegionRequest = () => {
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<RegionRequestFormData>({
     provider: "zadara",
     code: "",
     name: "",
@@ -17,19 +31,20 @@ const NewRegionRequest = () => {
     fulfillment_mode: "automated",
   });
 
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<RegionRequestErrors>({});
 
-  const handleChange = (e: any) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const field = name as keyof RegionRequestFormData;
+    setFormData((prev) => ({ ...prev, [field]: value as RegionRequestFormData[typeof field] }));
     // Clear error for this field
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
   const validate = () => {
-    const newErrors = {};
+    const newErrors: RegionRequestErrors = {};
     if (!formData.code) newErrors.code = "Region code is required";
     if (!formData.name) newErrors.name = "Region name is required";
     if (!formData.country_code) newErrors.country_code = "Country code is required";
@@ -40,7 +55,7 @@ const NewRegionRequest = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!validate()) return;

@@ -169,7 +169,7 @@ export const PROFILE_TABS: TabConfig[] = [
             type: "select",
             options: ITEMS_PER_PAGE_OPTIONS,
             icon: Activity,
-            cast: (value: any) => Number(value) || 25,
+            cast: (value: unknown) => Number(value) || 25,
           },
         ],
       },

@@ -49,7 +49,8 @@ export const objectStoragePresets: Record<"admin" | "tenant" | "client", ObjectS
       badge: "Storage Ops",
       heading: "Approve, fast-track, and monitor tenant capacity",
       copy: "Keep Zadara accounts in sync, trigger payments, and react to provisioning issues before they impact customers.",
-      gradientClassName: "from-[#050F2C] via-[#0F3B68] to-[#1E80F9]",
+      gradientClassName:
+        "from-[var(--theme-heading-color)] via-[rgb(var(--theme-color-700))] to-[rgb(var(--theme-color-500))]",
     },
     heroCards: [
       {
@@ -101,7 +102,8 @@ export const objectStoragePresets: Record<"admin" | "tenant" | "client", ObjectS
       badge: "Tenant Storage",
       heading: "Track your Silo Storage capacity in one place",
       copy: "Review provisioned accounts, monitor status, and request additional storage when needed.",
-      gradientClassName: "from-[#050F2C] via-[#0B3264] to-[#1A6DD8]",
+      gradientClassName:
+        "from-[var(--theme-heading-color)] via-[rgb(var(--theme-color-700))] to-[rgb(var(--theme-color-500))]",
     },
     heroCards: [
       {
@@ -140,7 +142,8 @@ export const objectStoragePresets: Record<"admin" | "tenant" | "client", ObjectS
       badge: "Client Storage",
       heading: "Purchase, track, and scale your Silo Storage capacity",
       copy: "Keep Zadara orders aligned with tenant demand and jump into account details without leaving the console.",
-      gradientClassName: "from-[#050F2C] via-[#0B3264] to-[#1A6DD8]",
+      gradientClassName:
+        "from-[var(--theme-heading-color)] via-[rgb(var(--theme-color-700))] to-[rgb(var(--theme-color-500))]",
     },
     heroCards: [
       {

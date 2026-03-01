@@ -24,7 +24,9 @@ const useSidebarStore = create<SidebarState>()(
     }),
     {
       name: "sidebar-storage",
-      partialize: (state) => ({ isCollapsed: state.isCollapsed }) as any, // Only persist collapsed state
+      partialize: (state): Pick<SidebarState, "isCollapsed"> => ({
+        isCollapsed: state.isCollapsed,
+      }), // Only persist collapsed state
     }
   )
 );

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useEffect, useState } from "react";
 import {
   AlertCircle,
@@ -14,7 +13,7 @@ import {
   X,
 } from "lucide-react";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
-import { ModernButton, ModernCard } from "../../shared/components/ui";
+import { ModernButton } from "../../shared/components/ui";
 import ToastUtils from "../../utils/toastUtil";
 import {
   useFetchBranding,
@@ -35,14 +34,14 @@ const ColorPickerField: React.FC<{
 }> = ({ label, value, onChange }: any) => {
   const [showPicker, setShowPicker] = useState(false);
   const presets = [
-    "#3B82F6",
-    "#10B981",
-    "#F59E0B",
-    "#EF4444",
-    "#8B5CF6",
-    "#EC4899",
-    "#14B8A6",
-    "#F97316",
+    "var(--theme-color)",
+    "rgb(var(--theme-success-500))",
+    "rgb(var(--theme-warning-500))",
+    "rgb(var(--theme-danger-500))",
+    "rgb(var(--theme-color-500))",
+    "rgb(var(--theme-danger-500))",
+    "rgb(var(--secondary-color-rgb))",
+    "rgb(var(--theme-warning-500))",
   ];
 
   return (
@@ -58,7 +57,7 @@ const ColorPickerField: React.FC<{
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="#3B82F6"
+          placeholder="var(--theme-color)"
           className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500"
         />
       </div>
@@ -72,10 +71,11 @@ const ColorPickerField: React.FC<{
                 onChange(color);
                 setShowPicker(false);
               }}
-              className={`w-8 h-8 rounded-lg border-2 transition-transform hover:scale-110 ${value === color
+              className={`w-8 h-8 rounded-lg border-2 transition-transform hover:scale-110 ${
+                value === color
                   ? "border-gray-800 ring-2 ring-offset-2 ring-blue-500"
                   : "border-transparent"
-                }`}
+              }`}
               style={{ backgroundColor: color }}
             />
           ))}
@@ -120,8 +120,9 @@ const FileUploadField: React.FC<{
           setDragOver(false);
           if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
         }}
-        className={`relative border-2 border-dashed rounded-xl p-4 text-center transition-colors ${dragOver ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300"
-          }`}
+        className={`relative border-2 border-dashed rounded-xl p-4 text-center transition-colors ${
+          dragOver ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300"
+        }`}
       >
         {preview ? (
           <div className="relative inline-block">
@@ -407,9 +408,9 @@ const useTenantBrandingSettingsState = () => {
   const { mutate: resetBranding, isPending: isResetting } = useResetBranding();
 
   const [formData, setFormData] = useState({
-    primary_color: "#3B82F6",
-    secondary_color: "#10B981",
-    surface_alt: "#F3F4F6",
+    primary_color: "var(--theme-color)",
+    secondary_color: "rgb(var(--theme-success-500))",
+    surface_alt: "var(--theme-surface-alt)",
     company_name: "",
     email: "",
     support_email: "",
@@ -424,9 +425,9 @@ const useTenantBrandingSettingsState = () => {
     if (brandingData?.settings) {
       const { branding, business } = brandingData.settings;
       setFormData({
-        primary_color: branding?.primary_color || "#3B82F6",
-        secondary_color: branding?.secondary_color || "#10B981",
-        surface_alt: branding?.surface_alt || "#F3F4F6",
+        primary_color: branding?.primary_color || "var(--theme-color)",
+        secondary_color: branding?.secondary_color || "rgb(var(--theme-success-500))",
+        surface_alt: branding?.surface_alt || "var(--theme-surface-alt)",
         company_name: business?.company_name || "",
         email: business?.email || "",
         support_email: business?.support_email || "",
@@ -471,7 +472,7 @@ const useTenantBrandingSettingsState = () => {
   };
 
   const handleReset = () => {
-    if (window.confirm("Reset all branding to platform defaults?")) {
+    if (globalThis.window.confirm("Reset all branding to platform defaults?")) {
       resetBranding();
     }
   };

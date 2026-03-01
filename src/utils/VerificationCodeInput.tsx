@@ -9,6 +9,7 @@ interface VerificationCodeInputProps {
   onComplete?: (code: string) => void;
   onResend?: () => void;
   userEmail?: string | null;
+  showResend?: boolean;
 }
 
 export default function VerificationCodeInput({
@@ -18,19 +19,36 @@ export default function VerificationCodeInput({
   onComplete = () => {},
   onResend = () => {},
   userEmail,
+  showResend = true,
 }: VerificationCodeInputProps) {
-  const [code, setCode] = useState<string[]>(initialCode || new Array(length).fill(""));
+  const isControlled = Array.isArray(initialCode);
+  const [internalCode, setInternalCode] = useState<string[]>(new Array(length).fill(""));
+  const code = isControlled ? (initialCode as string[]) : internalCode;
   const [timeLeft, setTimeLeft] = useState(0); // Start with 0, set to 50 on success
   const [isActive, setIsActive] = useState(false); // Start inactive, activate on success
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const { mutate, isPending } = useResendOTP();
   const lastCompletedValueRef = useRef<string | null>(null);
+  const onCompleteRef = useRef(onComplete);
 
-  // Sync code with parent state
+  // Reset local state when switching length in uncontrolled mode
   useEffect(() => {
-    setCode(initialCode || new Array(length).fill(""));
-    lastCompletedValueRef.current = null;
-  }, [initialCode, length]);
+    if (!isControlled) {
+      setInternalCode(new Array(length).fill(""));
+      lastCompletedValueRef.current = null;
+    }
+  }, [isControlled, length]);
+
+  // Reset completion tracking when parent drives code changes
+  useEffect(() => {
+    if (isControlled) {
+      lastCompletedValueRef.current = null;
+    }
+  }, [isControlled, initialCode]);
+
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   // Timer effect
   useEffect(() => {
@@ -60,7 +78,9 @@ export default function VerificationCodeInput({
     const newCode = [...code];
     lastCompletedValueRef.current = null;
     newCode[index] = element.value;
-    setCode(newCode);
+    if (!isControlled) {
+      setInternalCode(newCode);
+    }
     onCodeChange(newCode); // Sync with parent
 
     // Focus next input
@@ -78,7 +98,9 @@ export default function VerificationCodeInput({
       // Clear current input
       const newCode = [...code];
       newCode[index] = "";
-      setCode(newCode);
+      if (!isControlled) {
+        setInternalCode(newCode);
+      }
       onCodeChange(newCode); // Sync with parent
       lastCompletedValueRef.current = null;
     }
@@ -91,7 +113,9 @@ export default function VerificationCodeInput({
 
     if (pasteCode.every((char) => !isNaN(Number(char)))) {
       const newCode = [...pasteCode, ...new Array(length - pasteCode.length).fill("")];
-      setCode(newCode);
+      if (!isControlled) {
+        setInternalCode(newCode);
+      }
       lastCompletedValueRef.current = null;
       onCodeChange(newCode); // Sync with parent
       // Focus the next empty input or last input
@@ -121,10 +145,9 @@ export default function VerificationCodeInput({
     const isComplete = code.every((digit) => digit !== "");
     if (isComplete && joined !== lastCompletedValueRef.current) {
       lastCompletedValueRef.current = joined;
-      onComplete(joined);
+      onCompleteRef.current(joined);
     }
-    onCodeChange(code); // Sync state on every change
-  }, [code, onCodeChange, onComplete]);
+  }, [code]);
 
   return (
     <div className="flex flex-col items-center space-y-6 p-4 font-Outfit">
@@ -143,33 +166,37 @@ export default function VerificationCodeInput({
             onChange={(e) => handleChange(e.target, index)}
             onKeyDown={(e) => handleKeyDown(e, index)}
             onPaste={handlePaste}
-            className="w-12 h-16 sm:w-12 sm:h-16 md:w-12 md:h-16 text-center text-2xl sm:text-3xl font-semibold border border-[#D9D9D9] rounded-xl focus:border-[#288DD1] focus:outline-none focus:ring-1 focus:ring-[#288DD1] transition-all duration-200 bg-white"
+            className="w-12 h-16 sm:w-12 sm:h-16 md:w-12 md:h-16 text-center text-2xl sm:text-3xl font-semibold border border-[rgb(var(--theme-neutral-300))] rounded-xl focus:border-[var(--theme-color)] focus:outline-none focus:ring-1 focus:ring-[var(--theme-color)] transition-all duration-200 bg-white"
           />
         ))}
       </div>
 
       {/* Resend Section */}
-      <div className="text-center">
-        <span className="text-[#676767] text-xs sm:text-sm">
-          Code Sent.{" "}
-          <button
-            onClick={handleResend}
-            disabled={timeLeft > 0 || isPending || !userEmail}
-            className={`font-medium transition-colors duration-200 ${
-              timeLeft > 0 || isPending || !userEmail
-                ? "text-[#676767] cursor-not-allowed"
-                : "text-[#288DD1] hover:text-[#6db1df] cursor-pointer underline"
-            }`}
-          >
-            {isPending ? (
-              <Loader2 className="w-4 h-4 text-[#288DD1] animate-spin inline-block" />
-            ) : (
-              "Resend Code"
+      {showResend ? (
+        <div className="text-center">
+          <span className="text-[var(--theme-text-color)] text-xs sm:text-sm">
+            Code Sent.{" "}
+            <button
+              onClick={handleResend}
+              disabled={timeLeft > 0 || isPending || !userEmail}
+              className={`font-medium transition-colors duration-200 ${
+                timeLeft > 0 || isPending || !userEmail
+                  ? "text-[var(--theme-text-color)] cursor-not-allowed"
+                  : "text-[var(--theme-color)] hover:text-[rgb(var(--theme-color-400))] cursor-pointer underline"
+              }`}
+            >
+              {isPending ? (
+                <Loader2 className="w-4 h-4 text-[var(--theme-color)] animate-spin inline-block" />
+              ) : (
+                "Resend Code"
+              )}
+            </button>
+            {timeLeft > 0 && (
+              <span className="text-[var(--theme-color)]"> in {formatTime(timeLeft)}</span>
             )}
-          </button>
-          {timeLeft > 0 && <span className="text-[#288DD1]"> in {formatTime(timeLeft)}</span>}
-        </span>
-      </div>
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 }

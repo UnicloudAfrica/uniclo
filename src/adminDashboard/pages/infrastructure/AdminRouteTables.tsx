@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Route as RouteIcon } from "lucide-react";
@@ -25,8 +24,8 @@ const AdminRouteTables: React.FC = () => {
     useSubnets: useSubnets,
     useInternetGateways: useInternetGateways,
     useNatGateways: useNatGateways,
-    useCreateRoute: useCreateRoute,
-    useDeleteRoute: useDeleteRoute,
+    useCreate: useCreateRoute,
+    useDelete: useDeleteRoute,
     useAssociate: useAssociateRouteTable,
     useDisassociate: useDisassociateRouteTable,
   };

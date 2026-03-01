@@ -11,6 +11,45 @@ import type {
   VpcPeeringConnection,
 } from "../components/infrastructure/types";
 
+type UnknownRecord = Record<string, unknown>;
+type ResourceLike = {
+  id?: unknown;
+  provider_resource_id?: unknown;
+  allocation_id?: unknown;
+  local_id?: unknown;
+  [key: string]: unknown;
+};
+
+const isRecord = (value: unknown): value is UnknownRecord =>
+  typeof value === "object" && value !== null;
+
+const asRecord = (value: unknown): UnknownRecord => (isRecord(value) ? value : {});
+
+const asArray = <T>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
+
+const asOptionalString = (value: unknown): string | undefined => {
+  if (value === null || value === undefined) return undefined;
+  if (typeof value === "string") return value;
+  return String(value);
+};
+
+const asOptionalNumber = (value: unknown): number | undefined => {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : undefined;
+};
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  const record = asRecord(error);
+  const response = asRecord(record["response"]);
+  const responseData = asRecord(response["data"]);
+  return (
+    (responseData["error"] as string | undefined) ||
+    (responseData["message"] as string | undefined) ||
+    (record["message"] as string | undefined) ||
+    fallback
+  );
+};
+
 const getInfraPrefix = (context: ApiContext) => {
   if (context === "tenant") return "/admin";
   if (context === "client") return "/business";
@@ -29,8 +68,8 @@ const resolveRegion = (region: string | undefined, context: ApiContext) => {
   return region;
 };
 
-const normalizeResourceId = <T extends Record<string, any>>(item: T) => {
-  const providerId = item.provider_resource_id || item.allocation_id || item.id;
+const normalizeResourceId = <T extends ResourceLike>(item: T): T => {
+  const providerId = item.provider_resource_id ?? item.allocation_id ?? item.id;
   const localId = item.local_id ?? item.id;
 
   return {
@@ -38,79 +77,103 @@ const normalizeResourceId = <T extends Record<string, any>>(item: T) => {
     provider_resource_id: item.provider_resource_id ?? providerId,
     allocation_id: item.allocation_id ?? providerId,
     local_id: localId,
-    id: providerId,
+    id: providerId ?? item.id,
   };
 };
 
-const resolveLocalId = (items: Array<any> | undefined, providerId: string) => {
+const resolveLocalId = (items: Array<ResourceLike> | undefined, providerId: string) => {
   if (!items || !providerId) return providerId;
   const match = items.find(
-    (item) => item.id === providerId || item.provider_resource_id === providerId
+    (item) =>
+      String(item.id ?? "") === providerId || String(item.provider_resource_id ?? "") === providerId
   );
-  return match?.local_id ?? match?.id ?? providerId;
+  const localId = match?.local_id ?? match?.id;
+  return localId ? String(localId) : providerId;
 };
 
-const normalizeElasticIp = (item: any): ElasticIp => {
-  const normalized = normalizeResourceId(item);
+const normalizeElasticIp = (item: unknown): ElasticIp => {
+  const record = asRecord(item);
+  const normalized = normalizeResourceId(record as ResourceLike);
   return {
     ...normalized,
-    public_ip: item.public_ip ?? item.publicIp,
-    instance_id: item.instance_id ?? item.associated_instance_id ?? item.associatedInstanceId,
-    network_interface_id:
-      item.network_interface_id ??
-      item.associated_network_interface_id ??
-      item.associatedNetworkInterfaceId,
-    association_id: item.association_id ?? item.associationId,
-    state: item.state ?? item.status,
-  };
+    public_ip: asOptionalString(record["public_ip"] ?? record["publicIp"]),
+    instance_id: asOptionalString(
+      record["instance_id"] ?? record["associated_instance_id"] ?? record["associatedInstanceId"]
+    ),
+    network_interface_id: asOptionalString(
+      record["network_interface_id"] ??
+        record["associated_network_interface_id"] ??
+        record["associatedNetworkInterfaceId"]
+    ),
+    association_id: asOptionalString(record["association_id"] ?? record["associationId"]),
+    state: asOptionalString(record["state"] ?? record["status"]),
+  } as ElasticIp;
 };
 
-const normalizeNatGateway = (item: any): NatGateway => {
-  const normalized = normalizeResourceId(item);
+const normalizeNatGateway = (item: unknown): NatGateway => {
+  const record = asRecord(item);
+  const normalized = normalizeResourceId(record as ResourceLike);
   return {
     ...normalized,
-    public_ip: item.public_ip ?? item.elastic_ip ?? item.elastic_ip_address,
-    state: item.state ?? item.status,
-  };
+    public_ip: asOptionalString(
+      record["public_ip"] ?? record["elastic_ip"] ?? record["elastic_ip_address"]
+    ),
+    state: asOptionalString(record["state"] ?? record["status"]),
+  } as NatGateway;
 };
 
-const normalizeNetworkAcl = (item: any): NetworkAcl => {
-  return normalizeResourceId(item);
+const normalizeNetworkAcl = (item: unknown): NetworkAcl => {
+  const record = asRecord(item);
+  return normalizeResourceId(record as ResourceLike) as NetworkAcl;
 };
 
-const normalizeSecurityGroup = (item: any): SecurityGroup => {
-  const normalized = normalizeResourceId(item);
-  const ingressRules = item.rules?.ingress ?? item.rules?.ingress_rules ?? item.ingress_rules ?? [];
-  const egressRules = item.rules?.egress ?? item.rules?.egress_rules ?? item.egress_rules ?? [];
+const normalizeSecurityGroup = (item: unknown): SecurityGroup => {
+  const record = asRecord(item);
+  const normalized = normalizeResourceId(record as ResourceLike);
+  const rules = asRecord(record["rules"]);
+  const ingressRules = asArray(
+    rules["ingress"] ?? rules["ingress_rules"] ?? record["ingress_rules"]
+  );
+  const egressRules = asArray(rules["egress"] ?? rules["egress_rules"] ?? record["egress_rules"]);
 
   return {
     ...normalized,
-    description: item.description ?? item.desc,
-    inbound_rules_count: item.inbound_rules_count ?? ingressRules.length,
-    outbound_rules_count: item.outbound_rules_count ?? egressRules.length,
-  };
+    description: asOptionalString(record["description"] ?? record["desc"]),
+    inbound_rules_count: asOptionalNumber(record["inbound_rules_count"]) ?? ingressRules.length,
+    outbound_rules_count: asOptionalNumber(record["outbound_rules_count"]) ?? egressRules.length,
+  } as SecurityGroup;
 };
 
-const normalizeSubnet = (item: any): Subnet => {
-  const normalized = normalizeResourceId(item);
+const normalizeSubnet = (item: unknown): Subnet => {
+  const record = asRecord(item);
+  const normalized = normalizeResourceId(record as ResourceLike);
   return {
     ...normalized,
-    cidr: item.cidr ?? item.cidr_block,
-    cidr_block: item.cidr_block ?? item.cidr,
-    state: item.state ?? item.status,
-    available_ips:
-      item.available_ips ?? item.available_ip_address_count ?? item.availableIpAddressCount,
-    is_default: item.is_default ?? item.default,
-  };
+    cidr: asOptionalString(record["cidr"] ?? record["cidr_block"]),
+    cidr_block: asOptionalString(record["cidr_block"] ?? record["cidr"]),
+    state: asOptionalString(record["state"] ?? record["status"]),
+    available_ips: asOptionalNumber(
+      record["available_ips"] ??
+        record["available_ip_address_count"] ??
+        record["availableIpAddressCount"]
+    ),
+    is_default:
+      (record["is_default"] as boolean | undefined) ?? (record["default"] as boolean | undefined),
+  } as Subnet;
 };
 
-const normalizeVpcPeering = (item: any): VpcPeeringConnection => {
-  return normalizeResourceId(item);
+const normalizeVpcPeering = (item: unknown): VpcPeeringConnection => {
+  const record = asRecord(item);
+  return normalizeResourceId(record as ResourceLike) as VpcPeeringConnection;
 };
 
 // ==================== NAT Gateways ====================
 
-export const useNatGateways = (projectId: string, region?: string) => {
+export const useNatGateways = (
+  projectId: string,
+  region?: string,
+  options?: { enabled?: boolean }
+) => {
   const { apiBaseUrl, context, authHeaders, isAuthenticated } = useApiContext();
   const resolvedRegion = region || "";
   const isAdmin = context === "admin";
@@ -128,10 +191,11 @@ export const useNatGateways = (projectId: string, region?: string) => {
         withCredentials: true,
       });
 
-      const items = data.data || [];
-      return (items as any[]).map(normalizeNatGateway);
+      const items = asArray(asRecord(data)["data"]);
+      return items.map(normalizeNatGateway);
     },
-    enabled: isAuthenticated && !!projectId && (isAdmin || !!resolvedRegion),
+    enabled:
+      isAuthenticated && !!projectId && (isAdmin || !!resolvedRegion) && options?.enabled !== false,
   });
 };
 
@@ -166,15 +230,15 @@ export const useCreateNatGateway = () => {
       );
       return data;
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("NAT Gateway created successfully");
       queryClient.invalidateQueries({
         queryKey: ["nat-gateways", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to create NAT Gateway");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to create NAT Gateway"));
     },
   });
 };
@@ -216,22 +280,26 @@ export const useDeleteNatGateway = () => {
         data: { project_id: projectId, region: resolvedRegion },
       });
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("NAT Gateway deleted successfully");
       queryClient.invalidateQueries({
         queryKey: ["nat-gateways", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to delete NAT Gateway");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to delete NAT Gateway"));
     },
   });
 };
 
 // ==================== Elastic IPs ====================
 
-export const useElasticIps = (projectId: string, region?: string) => {
+export const useElasticIps = (
+  projectId: string,
+  region?: string,
+  options?: { enabled?: boolean }
+) => {
   const { apiBaseUrl, context, authHeaders, isAuthenticated } = useApiContext();
   const resolvedRegion = region || "";
   const isAdmin = context === "admin";
@@ -249,10 +317,11 @@ export const useElasticIps = (projectId: string, region?: string) => {
         withCredentials: true,
       });
 
-      const items = data.data || [];
-      return (items as any[]).map(normalizeElasticIp);
+      const items = asArray(asRecord(data)["data"]);
+      return items.map(normalizeElasticIp);
     },
-    enabled: isAuthenticated && !!projectId && (isAdmin || !!resolvedRegion),
+    enabled:
+      isAuthenticated && !!projectId && (isAdmin || !!resolvedRegion) && options?.enabled !== false,
   });
 };
 
@@ -287,15 +356,15 @@ export const useCreateElasticIp = () => {
       );
       return data;
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("Elastic IP allocated successfully");
       queryClient.invalidateQueries({
         queryKey: ["elastic-ips", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to allocate Elastic IP");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to allocate Elastic IP"));
     },
   });
 };
@@ -343,15 +412,15 @@ export const useAssociateElasticIp = () => {
       );
       return data;
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("Elastic IP associated successfully");
       queryClient.invalidateQueries({
         queryKey: ["elastic-ips", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to associate Elastic IP");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to associate Elastic IP"));
     },
   });
 };
@@ -389,15 +458,15 @@ export const useDisassociateElasticIp = () => {
         data: { project_id: projectId, region: resolvedRegion, allocation_id: elasticIpId },
       });
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("Elastic IP disassociated successfully");
       queryClient.invalidateQueries({
         queryKey: ["elastic-ips", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to disassociate Elastic IP");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to disassociate Elastic IP"));
     },
   });
 };
@@ -439,22 +508,26 @@ export const useDeleteElasticIp = () => {
         data: { project_id: projectId, region: resolvedRegion },
       });
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("Elastic IP released successfully");
       queryClient.invalidateQueries({
         queryKey: ["elastic-ips", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to release Elastic IP");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to release Elastic IP"));
     },
   });
 };
 
 // ==================== Security Groups ====================
 
-export const useSecurityGroups = (projectId: string, region?: string) => {
+export const useSecurityGroups = (
+  projectId: string,
+  region?: string,
+  options?: { enabled?: boolean }
+) => {
   const { apiBaseUrl, context, authHeaders, isAuthenticated } = useApiContext();
   const resolvedRegion = region || "";
   const isAdmin = context === "admin";
@@ -472,10 +545,11 @@ export const useSecurityGroups = (projectId: string, region?: string) => {
         withCredentials: true,
       });
 
-      const items = data.data || [];
-      return (items as any[]).map(normalizeSecurityGroup);
+      const items = asArray(asRecord(data)["data"]);
+      return items.map(normalizeSecurityGroup);
     },
-    enabled: isAuthenticated && !!projectId && (isAdmin || !!resolvedRegion),
+    enabled:
+      isAuthenticated && !!projectId && (isAdmin || !!resolvedRegion) && options?.enabled !== false,
   });
 };
 
@@ -510,15 +584,15 @@ export const useCreateSecurityGroup = () => {
       );
       return data;
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("Security group created successfully");
       queryClient.invalidateQueries({
         queryKey: ["security-groups", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to create security group");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to create security group"));
     },
   });
 };
@@ -564,15 +638,15 @@ export const useDeleteSecurityGroup = () => {
         data: { project_id: projectId, region: resolvedRegion },
       });
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("Security group deleted successfully");
       queryClient.invalidateQueries({
         queryKey: ["security-groups", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to delete security group");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to delete security group"));
     },
   });
 };
@@ -612,6 +686,15 @@ export const useSecurityGroupRules = (
         resolved,
       ]);
 
+      const resolveRules = (group: unknown) => {
+        const record = asRecord(group);
+        const rules = asRecord(record["rules"]);
+        return {
+          ingress: asArray(rules["ingress"] ?? rules["ingress_rules"] ?? record["ingress_rules"]),
+          egress: asArray(rules["egress"] ?? rules["egress_rules"] ?? record["egress_rules"]),
+        };
+      };
+
       if (!cachedGroups) {
         const { data } = await axios.get(buildUrl(apiBaseUrl, context, `/security-groups`), {
           params: { project_id: projectId, region: resolved },
@@ -619,18 +702,16 @@ export const useSecurityGroupRules = (
           withCredentials: true,
         });
 
-        const items = (data.data || []) as any[];
+        const items = asArray(asRecord(data)["data"]);
         const normalized = items.map(normalizeSecurityGroup);
         queryClient.setQueryData(["security-groups", context, projectId, resolved], normalized);
         const match = normalized.find((sg) => sg.id === securityGroupId);
-        const ingress = (match as any)?.rules?.ingress ?? [];
-        const egress = (match as any)?.rules?.egress ?? [];
+        const { ingress, egress } = resolveRules(match);
         return { ingress_rules: ingress, egress_rules: egress };
       }
 
-      const match = cachedGroups.find((sg) => sg.id === securityGroupId) as any;
-      const ingress = match?.rules?.ingress ?? [];
-      const egress = match?.rules?.egress ?? [];
+      const match = cachedGroups.find((sg: { id: string }) => sg.id === securityGroupId);
+      const { ingress, egress } = resolveRules(match);
       return { ingress_rules: ingress, egress_rules: egress };
     },
     enabled: isAuthenticated && !!projectId && !!securityGroupId && (isAdmin || !!resolvedRegion),
@@ -643,7 +724,12 @@ const buildSecurityGroupRule = (payload: {
   port_range_max?: number;
   cidr?: string;
 }) => {
-  const rule: any = {
+  const rule: {
+    ip_protocol: string;
+    from_port: number;
+    to_port: number;
+    ip_ranges?: Array<{ cidr_ip: string }>;
+  } = {
     ip_protocol: payload.protocol,
     from_port: payload.port_range_min ?? -1,
     to_port: payload.port_range_max ?? -1,
@@ -710,7 +796,14 @@ export const useAddSecurityGroupRule = () => {
       );
       return data;
     },
-    onSuccess: (_, { projectId, region, securityGroupId }) => {
+    onSuccess: (
+      _: void,
+      {
+        projectId,
+        region,
+        securityGroupId,
+      }: { projectId: string; region?: string; securityGroupId: string }
+    ) => {
       const resolvedRegion = region || "";
       ToastUtils.success("Security group rule added successfully");
       queryClient.invalidateQueries({
@@ -720,8 +813,8 @@ export const useAddSecurityGroupRule = () => {
         queryKey: ["security-groups", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to add security group rule");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to add security group rule"));
     },
   });
 };
@@ -778,7 +871,14 @@ export const useRemoveSecurityGroupRule = () => {
         },
       });
     },
-    onSuccess: (_, { projectId, region, securityGroupId }) => {
+    onSuccess: (
+      _: void,
+      {
+        projectId,
+        region,
+        securityGroupId,
+      }: { projectId: string; region?: string; securityGroupId: string }
+    ) => {
       const resolvedRegion = region || "";
       ToastUtils.success("Security group rule removed successfully");
       queryClient.invalidateQueries({
@@ -788,15 +888,15 @@ export const useRemoveSecurityGroupRule = () => {
         queryKey: ["security-groups", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to remove security group rule");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to remove security group rule"));
     },
   });
 };
 
 // ==================== Subnets ====================
 
-export const useSubnets = (projectId: string, region?: string) => {
+export const useSubnets = (projectId: string, region?: string, options?: { enabled?: boolean }) => {
   const { apiBaseUrl, context, authHeaders, isAuthenticated } = useApiContext();
   const resolvedRegion = region || "";
   const isAdmin = context === "admin";
@@ -814,10 +914,11 @@ export const useSubnets = (projectId: string, region?: string) => {
         withCredentials: true,
       });
 
-      const items = data.data || [];
-      return (items as any[]).map(normalizeSubnet);
+      const items = asArray(asRecord(data)["data"]);
+      return items.map(normalizeSubnet);
     },
-    enabled: isAuthenticated && !!projectId && (isAdmin || !!resolvedRegion),
+    enabled:
+      isAuthenticated && !!projectId && (isAdmin || !!resolvedRegion) && options?.enabled !== false,
   });
 };
 
@@ -852,15 +953,15 @@ export const useCreateSubnet = () => {
       );
       return data;
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("Subnet created successfully");
       queryClient.invalidateQueries({
         queryKey: ["subnets", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to create subnet");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to create subnet"));
     },
   });
 };
@@ -905,22 +1006,22 @@ export const useDeleteSubnet = () => {
         data: { project_id: projectId, region: resolvedRegion },
       });
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("Subnet deleted successfully");
       queryClient.invalidateQueries({
         queryKey: ["subnets", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to delete subnet");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to delete subnet"));
     },
   });
 };
 
 // ==================== VPCs ====================
 
-export const useVpcs = (projectId: string, region?: string) => {
+export const useVpcs = (projectId: string, region?: string, options?: { enabled?: boolean }) => {
   const { apiBaseUrl, context, authHeaders, isAuthenticated } = useApiContext();
   const resolvedRegion = region || "";
   const isAdmin = context === "admin";
@@ -938,10 +1039,11 @@ export const useVpcs = (projectId: string, region?: string) => {
         withCredentials: true,
       });
 
-      const items = data.data || [];
-      return (items as any[]).map(normalizeResourceId);
+      const items = asArray(asRecord(data)["data"]);
+      return items.map((item) => normalizeResourceId(asRecord(item) as ResourceLike));
     },
-    enabled: isAuthenticated && !!projectId && (isAdmin || !!resolvedRegion),
+    enabled:
+      isAuthenticated && !!projectId && (isAdmin || !!resolvedRegion) && options?.enabled !== false,
   });
 };
 
@@ -976,15 +1078,15 @@ export const useCreateVpc = () => {
       );
       return data;
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("VPC created successfully");
       queryClient.invalidateQueries({
         queryKey: ["vpcs", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to create VPC");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to create VPC"));
     },
   });
 };
@@ -1012,7 +1114,12 @@ export const useDeleteVpc = () => {
       }
 
       const resolvedRegion = resolveRegion(region, context);
-      const cached = queryClient.getQueryData<any[]>(["vpcs", context, projectId, resolvedRegion]);
+      const cached = queryClient.getQueryData<Array<ResourceLike>>([
+        "vpcs",
+        context,
+        projectId,
+        resolvedRegion,
+      ]);
       const localId = resolveLocalId(cached, vpcId);
 
       await axios.delete(buildUrl(apiBaseUrl, context, `/vpcs/${localId}`), {
@@ -1021,22 +1128,26 @@ export const useDeleteVpc = () => {
         data: { project_id: projectId, region: resolvedRegion },
       });
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("VPC deleted successfully");
       queryClient.invalidateQueries({
         queryKey: ["vpcs", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to delete VPC");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to delete VPC"));
     },
   });
 };
 
 // ==================== Network ACLs ====================
 
-export const useNetworkAcls = (projectId: string, region?: string) => {
+export const useNetworkAcls = (
+  projectId: string,
+  region?: string,
+  options?: { enabled?: boolean }
+) => {
   const { apiBaseUrl, context, authHeaders, isAuthenticated } = useApiContext();
   const resolvedRegion = region || "";
   const isAdmin = context === "admin";
@@ -1054,10 +1165,11 @@ export const useNetworkAcls = (projectId: string, region?: string) => {
         withCredentials: true,
       });
 
-      const items = data.data || [];
-      return (items as any[]).map(normalizeNetworkAcl);
+      const items = asArray(asRecord(data)["data"]);
+      return items.map(normalizeNetworkAcl);
     },
-    enabled: isAuthenticated && !!projectId && (isAdmin || !!resolvedRegion),
+    enabled:
+      isAuthenticated && !!projectId && (isAdmin || !!resolvedRegion) && options?.enabled !== false,
   });
 };
 
@@ -1092,15 +1204,15 @@ export const useCreateNetworkAcl = () => {
       );
       return data;
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("Network ACL created successfully");
       queryClient.invalidateQueries({
         queryKey: ["network-acls", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to create Network ACL");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to create Network ACL"));
     },
   });
 };
@@ -1142,15 +1254,15 @@ export const useDeleteNetworkAcl = () => {
         data: { project_id: projectId, region: resolvedRegion },
       });
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("Network ACL deleted successfully");
       queryClient.invalidateQueries({
         queryKey: ["network-acls", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to delete Network ACL");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to delete Network ACL"));
     },
   });
 };
@@ -1183,7 +1295,7 @@ export const useNetworkAclRules = (projectId: string, networkAclId: string, regi
         withCredentials: true,
       });
 
-      const items = (data.data || []) as any[];
+      const items = asArray(asRecord(data)["data"]);
       const normalized = items.map(normalizeNetworkAcl);
       queryClient.setQueryData(["network-acls", context, projectId, resolved], normalized);
       const match = normalized.find((acl) => acl.id === networkAclId);
@@ -1231,7 +1343,14 @@ export const useAddNetworkAclRule = () => {
       }
 
       const resolved = resolveRegion(region, context);
-      const entry: any = {
+      const entry: {
+        rule_number: number;
+        protocol: string;
+        rule_action: "allow" | "deny";
+        egress: boolean;
+        cidr_block: string;
+        port_range?: { from: number; to: number };
+      } = {
         rule_number: payload.rule_number,
         protocol: payload.protocol,
         rule_action: payload.rule_action,
@@ -1255,7 +1374,14 @@ export const useAddNetworkAclRule = () => {
       );
       return data;
     },
-    onSuccess: (_, { projectId, region, networkAclId }) => {
+    onSuccess: (
+      _: void,
+      {
+        projectId,
+        region,
+        networkAclId,
+      }: { projectId: string; region?: string; networkAclId: string }
+    ) => {
       const resolvedRegion = region || "";
       ToastUtils.success("Network ACL rule added successfully");
       queryClient.invalidateQueries({
@@ -1265,8 +1391,8 @@ export const useAddNetworkAclRule = () => {
         queryKey: ["network-acls", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to add Network ACL rule");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to add Network ACL rule"));
     },
   });
 };
@@ -1301,12 +1427,14 @@ export const useRemoveNetworkAclRule = () => {
 
       const resolved = resolveRegion(region, context);
       const cacheKey = ["network-acl-rules", context, projectId, networkAclId, resolved];
-      const cached: any = queryClient.getQueryData(cacheKey);
-      const entries = cached?.entries || [];
-      const entry = entries.find(
-        (rule: any) => rule.rule_number === payload.rule_number && rule.egress === payload.egress
-      );
-      const entryId = entry?.id ?? entry?.entry_id;
+      const cached = queryClient.getQueryData(cacheKey);
+      const entries = asArray(asRecord(cached)["entries"]);
+      const entry = entries.find((rule) => {
+        const record = asRecord(rule);
+        return record["rule_number"] === payload.rule_number && record["egress"] === payload.egress;
+      });
+      const entryRecord = asRecord(entry);
+      const entryId = entryRecord["id"] ?? entryRecord["entry_id"];
       if (!entryId) {
         throw new Error("Rule entry id not found for deletion");
       }
@@ -1322,7 +1450,14 @@ export const useRemoveNetworkAclRule = () => {
         },
       });
     },
-    onSuccess: (_, { projectId, region, networkAclId }) => {
+    onSuccess: (
+      _: void,
+      {
+        projectId,
+        region,
+        networkAclId,
+      }: { projectId: string; region?: string; networkAclId: string }
+    ) => {
       const resolvedRegion = region || "";
       ToastUtils.success("Network ACL rule removed successfully");
       queryClient.invalidateQueries({
@@ -1332,15 +1467,19 @@ export const useRemoveNetworkAclRule = () => {
         queryKey: ["network-acls", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to remove Network ACL rule");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to remove Network ACL rule"));
     },
   });
 };
 
 // ==================== VPC Peering ====================
 
-export const useVpcPeering = (projectId: string, region?: string) => {
+export const useVpcPeering = (
+  projectId: string,
+  region?: string,
+  options?: { enabled?: boolean }
+) => {
   const { apiBaseUrl, context, authHeaders, isAuthenticated } = useApiContext();
   const resolvedRegion = region || "";
   const isAdmin = context === "admin";
@@ -1358,10 +1497,11 @@ export const useVpcPeering = (projectId: string, region?: string) => {
         withCredentials: true,
       });
 
-      const items = data.data || [];
-      return (items as any[]).map(normalizeVpcPeering);
+      const items = asArray(asRecord(data)["data"]);
+      return items.map(normalizeVpcPeering);
     },
-    enabled: isAuthenticated && !!projectId && (isAdmin || !!resolvedRegion),
+    enabled:
+      isAuthenticated && !!projectId && (isAdmin || !!resolvedRegion) && options?.enabled !== false,
   });
 };
 
@@ -1402,15 +1542,15 @@ export const useCreateVpcPeering = () => {
       );
       return data;
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("VPC peering connection created successfully");
       queryClient.invalidateQueries({
         queryKey: ["vpc-peering", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to create VPC peering connection");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to create VPC peering connection"));
     },
   });
 };
@@ -1449,15 +1589,15 @@ export const useAcceptVpcPeering = () => {
         { headers: authHeaders, withCredentials: true }
       );
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("VPC peering connection accepted");
       queryClient.invalidateQueries({
         queryKey: ["vpc-peering", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to accept VPC peering connection");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to accept VPC peering connection"));
     },
   });
 };
@@ -1496,15 +1636,15 @@ export const useRejectVpcPeering = () => {
         { headers: authHeaders, withCredentials: true }
       );
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("VPC peering connection rejected");
       queryClient.invalidateQueries({
         queryKey: ["vpc-peering", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to reject VPC peering connection");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to reject VPC peering connection"));
     },
   });
 };
@@ -1546,22 +1686,26 @@ export const useDeleteVpcPeering = () => {
         data: { project_id: projectId, region: resolved },
       });
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("VPC peering connection deleted successfully");
       queryClient.invalidateQueries({
         queryKey: ["vpc-peering", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to delete VPC peering connection");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to delete VPC peering connection"));
     },
   });
 };
 
 // ==================== Internet Gateways ====================
 
-export const useInternetGateways = (projectId: string, region?: string) => {
+export const useInternetGateways = (
+  projectId: string,
+  region?: string,
+  options?: { enabled?: boolean }
+) => {
   const { apiBaseUrl, context, authHeaders, isAuthenticated } = useApiContext();
   const resolvedRegion = region || "";
   const isAdmin = context === "admin";
@@ -1579,10 +1723,11 @@ export const useInternetGateways = (projectId: string, region?: string) => {
         withCredentials: true,
       });
 
-      const items = data.data || [];
-      return (items as any[]).map(normalizeResourceId);
+      const items = asArray<ResourceLike>(asRecord(data)["data"]);
+      return items.map(normalizeResourceId);
     },
-    enabled: isAuthenticated && !!projectId && (isAdmin || !!resolvedRegion),
+    enabled:
+      isAuthenticated && !!projectId && (isAdmin || !!resolvedRegion) && options?.enabled !== false,
   });
 };
 
@@ -1617,15 +1762,15 @@ export const useCreateInternetGateway = () => {
       );
       return data;
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("Internet Gateway created successfully");
       queryClient.invalidateQueries({
         queryKey: ["internet-gateways", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to create Internet Gateway");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to create Internet Gateway"));
     },
   });
 };
@@ -1653,7 +1798,7 @@ export const useDeleteInternetGateway = () => {
       }
 
       const resolvedRegion = resolveRegion(region, context);
-      const cached = queryClient.getQueryData<any[]>([
+      const cached = queryClient.getQueryData<Array<ResourceLike>>([
         "internet-gateways",
         context,
         projectId,
@@ -1667,15 +1812,15 @@ export const useDeleteInternetGateway = () => {
         data: { project_id: projectId, region: resolvedRegion },
       });
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("Internet Gateway deleted successfully");
       queryClient.invalidateQueries({
         queryKey: ["internet-gateways", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to delete Internet Gateway");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to delete Internet Gateway"));
     },
   });
 };
@@ -1717,15 +1862,15 @@ export const useAttachInternetGateway = () => {
         { headers: authHeaders, withCredentials: true }
       );
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("Internet Gateway attached successfully");
       queryClient.invalidateQueries({
         queryKey: ["internet-gateways", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to attach Internet Gateway");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to attach Internet Gateway"));
     },
   });
 };
@@ -1767,22 +1912,26 @@ export const useDetachInternetGateway = () => {
         },
       });
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("Internet Gateway detached successfully");
       queryClient.invalidateQueries({
         queryKey: ["internet-gateways", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to detach Internet Gateway");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to detach Internet Gateway"));
     },
   });
 };
 
 // ==================== Route Tables ====================
 
-export const useRouteTables = (projectId: string, region?: string) => {
+export const useRouteTables = (
+  projectId: string,
+  region?: string,
+  options?: { enabled?: boolean }
+) => {
   const { apiBaseUrl, context, authHeaders, isAuthenticated } = useApiContext();
   const resolvedRegion = region || "";
   const isAdmin = context === "admin";
@@ -1800,10 +1949,11 @@ export const useRouteTables = (projectId: string, region?: string) => {
         withCredentials: true,
       });
 
-      const items = data.data || [];
-      return (items as any[]).map(normalizeResourceId);
+      const items = asArray<ResourceLike>(asRecord(data)["data"]);
+      return items.map(normalizeResourceId);
     },
-    enabled: isAuthenticated && !!projectId && (isAdmin || !!resolvedRegion),
+    enabled:
+      isAuthenticated && !!projectId && (isAdmin || !!resolvedRegion) && options?.enabled !== false,
   });
 };
 
@@ -1843,15 +1993,15 @@ export const useCreateRoute = () => {
       );
       return data;
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("Route created successfully");
       queryClient.invalidateQueries({
         queryKey: ["route-tables", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to create route");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to create route"));
     },
   });
 };
@@ -1886,15 +2036,15 @@ export const useDeleteRoute = () => {
         data: { project_id: projectId, region: resolved, ...payload },
       });
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("Route deleted successfully");
       queryClient.invalidateQueries({
         queryKey: ["route-tables", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to delete route");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to delete route"));
     },
   });
 };
@@ -1941,15 +2091,15 @@ export const useAssociateRouteTable = () => {
       );
       return data;
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("Route table associated successfully");
       queryClient.invalidateQueries({
         queryKey: ["route-tables", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to associate route table");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to associate route table"));
     },
   });
 };
@@ -1990,15 +2140,15 @@ export const useDisassociateRouteTable = () => {
         }
       );
     },
-    onSuccess: (_, { projectId, region }) => {
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
       const resolvedRegion = region || "";
       ToastUtils.success("Route table disassociated successfully");
       queryClient.invalidateQueries({
         queryKey: ["route-tables", context, projectId, resolvedRegion],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to disassociate route table");
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to disassociate route table"));
     },
   });
 };

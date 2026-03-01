@@ -1,0 +1,102 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import silentApi from "../../index/admin/silent";
+import api from "../../index/admin/api";
+
+const fetchProducts = async ({ country_code, provider, productType }: any) => {
+  const params = [];
+  if (country_code) {
+    params.push(`country_code=${encodeURIComponent(country_code)}`);
+  }
+  if (provider) {
+    params.push(`provider=${encodeURIComponent(provider)}`);
+  }
+  if (productType) {
+    params.push(`productable_type=${encodeURIComponent(productType)}`);
+  }
+  const queryString = params.length > 0 ? `?${params.join("&")}` : "";
+  const res = await silentApi("GET", `/products${queryString}`);
+  if (!res.data) {
+    throw new Error("Failed to fetch product pricing");
+  }
+  return res.data;
+};
+
+const createProducts = async (productData: any) => {
+  const res = await api("POST", "/products", productData);
+  if (!res.data) {
+    throw new Error("Failed to create product pricing");
+  }
+  return res.data;
+};
+
+const updateProduct = async ({ id, productData }: any) => {
+  const res = await api("PUT", `/products/${id}`, productData);
+  if (!res.data) {
+    throw new Error("Failed to update product");
+  }
+  return res.data;
+};
+
+const deleteProduct = async (id: any) => {
+  const res = await api("DELETE", `/products/${id}`);
+  if (!res.data) {
+    throw new Error("Failed to delete product");
+  }
+  return res.data;
+};
+
+export const useFetchProducts = (country_code: any = "", provider: any = "", options: any = {}) => {
+  const { productType = "", ...queryOptions } = options || {};
+
+  return useQuery({
+    queryKey: ["productsadmin", country_code || "none", provider || "none", productType || "all"],
+    queryFn: () =>
+      fetchProducts({
+        country_code,
+        provider,
+        productType,
+      }),
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    ...queryOptions,
+  });
+};
+
+export const useCreateProducts = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createProducts,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["productsadmin"] });
+    },
+    onError: (error: any) => {
+      console.error("Error creating product pricing:", error);
+    },
+  });
+};
+
+export const useUpdateProduct = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["productsadmin"] });
+    },
+    onError: (error: any) => {
+      console.error("Error updating product:", error);
+    },
+  });
+};
+
+export const useDeleteProduct = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["productsadmin"] });
+    },
+    onError: (error: any) => {
+      console.error("Error deleting product:", error);
+    },
+  });
+};

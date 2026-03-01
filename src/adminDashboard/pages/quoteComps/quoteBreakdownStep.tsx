@@ -1,5 +1,3 @@
-// @ts-nocheck
-import React from "react";
 import { Download, CheckCircle, FileText } from "lucide-react";
 import ModernCard from "../../../shared/components/ui/ModernCard";
 import { ModernButton } from "../../../shared/components/ui";

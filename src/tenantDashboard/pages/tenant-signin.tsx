@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import logo from "./assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
@@ -13,22 +12,41 @@ import {
 } from "../../hooks/useBrandingTheme";
 import useImageFallback from "../../hooks/useImageFallback";
 import { getSubdomain } from "../../utils/getSubdomain";
+import AuthShell from "../../components/auth/AuthShell";
 
-const TenantLogin = ({ tenant = "Tenant" }: any) => {
+interface TenantLoginProps {
+  tenant?: string;
+}
+
+type LoginErrors = Partial<Record<"email" | "password" | "general", string>>;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (typeof error === "string" && error.trim() !== "") return error;
+  if (isRecord(error) && typeof error.message === "string" && error.message.trim() !== "") {
+    return error.message;
+  }
+  return fallback;
+};
+
+const TenantLogin: React.FC<TenantLoginProps> = ({ tenant = "Tenant" }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<LoginErrors>({});
   const { mutate, isPending } = useLoginAccount();
   const navigate = useNavigate();
-  const { userEmail, setUserEmail } = useTenantAuthStore.getState();
+  const { setUserEmail, setTwoFactorRequired, clearTwoFactorRequirement } =
+    useTenantAuthStore.getState();
   const { isLoading } = useAuthRedirect();
   const fallbackBrand = {
     name: tenant,
     logo,
-    color: "#288DD1",
+    color: "var(--theme-color)",
   };
-  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+  const hostname = typeof window !== "undefined" ? globalThis.window.location.hostname : "";
   const subdomain = typeof window !== "undefined" ? getSubdomain() : null;
   const { data: branding } = usePublicBrandingTheme({
     domain: hostname,
@@ -36,9 +54,6 @@ const TenantLogin = ({ tenant = "Tenant" }: any) => {
   });
   useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
   const accentColor = branding?.accentColor || fallbackBrand.color;
-  const accentTint = /^#([0-9A-F]{6}|[0-9A-F]{3})$/i.test(accentColor)
-    ? `${accentColor}20`
-    : "#288DD120";
   const brandName = branding?.company?.name || fallbackBrand.name;
   const logoSrc = resolveBrandLogo(branding, fallbackBrand.logo);
   const logoAlt = branding?.company?.name
@@ -49,10 +64,13 @@ const TenantLogin = ({ tenant = "Tenant" }: any) => {
     fallbackBrand.logo
   );
 
+  useEffect(() => {
+    clearTwoFactorRequirement?.();
+  }, [clearTwoFactorRequirement]);
+
   // Validation function
   const validateForm = () => {
-    let newErrors = {};
-
+    const newErrors: LoginErrors = {};
     if (!email) {
       newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(email)) {
@@ -70,7 +88,7 @@ const TenantLogin = ({ tenant = "Tenant" }: any) => {
   };
 
   // Handle form submission for login
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!validateForm()) return;
@@ -81,12 +99,31 @@ const TenantLogin = ({ tenant = "Tenant" }: any) => {
     };
 
     mutate(userData, {
-      onSuccess: () => {
+      onSuccess: (res) => {
+        const responseRecord = isRecord(res) ? res : {};
+        const dataRecord = isRecord(responseRecord.data) ? responseRecord.data : {};
+        const settingsRecord = isRecord(dataRecord.settings) ? dataRecord.settings : {};
+        const securityRecord = isRecord(settingsRecord.security) ? settingsRecord.security : {};
+        const profileRecord = isRecord(dataRecord.profile) ? dataRecord.profile : {};
+        const userRecord = isRecord(dataRecord.user) ? dataRecord.user : {};
+        const requiresTwoFactor = Boolean(
+          dataRecord.two_factor_enabled ??
+          dataRecord.two_factor_required ??
+          dataRecord.requires_two_factor ??
+          securityRecord.two_factor_enabled ??
+          profileRecord.two_factor_enabled ??
+          responseRecord.requires_two_factor ??
+          responseRecord.two_factor_required ??
+          userRecord.two_factor_enabled ??
+          false
+        );
+
+        setTwoFactorRequired?.(requiresTwoFactor);
         setUserEmail(email);
         navigate("/verify-mail"); // Redirect on success
       },
       onError: (err) => {
-        setErrors({ general: err.message || "Failed to login" });
+        setErrors({ general: getErrorMessage(err, "Failed to login") });
         console.log(err);
       },
     });
@@ -101,11 +138,8 @@ const TenantLogin = ({ tenant = "Tenant" }: any) => {
   }
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-8 font-Outfit"
-      style={{ backgroundColor: accentTint }} // Light background tint
-    >
-      <div className="max-w-md mx-auto w-full bg-white p-6 rounded-xl shadow-md">
+    <AuthShell>
+      <div className="max-w-md mx-auto w-full bg-[var(--theme-card-bg)] p-6 rounded-xl shadow-md">
         <div className="mb-6 text-center">
           <img
             src={resolvedLogoSrc}
@@ -113,12 +147,14 @@ const TenantLogin = ({ tenant = "Tenant" }: any) => {
             alt={logoAlt}
             onError={handleLogoError}
           />
-          <h1 className="text-2xl font-semibold text-[#121212] mb-2">Welcome Back</h1>
-          <p className="text-[#676767] text-sm">Welcome back to {brandName}.</p>
+          <h1 className="text-2xl font-semibold text-[var(--theme-heading-color)] mb-2">
+            Welcome Back
+          </h1>
+          <p className="text-[var(--theme-text-color)] text-sm">Welcome back to {brandName}.</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[var(--theme-heading-color)] mb-1">
               Email <span className="text-red-500">*</span>
             </label>
             <input
@@ -126,15 +162,13 @@ const TenantLogin = ({ tenant = "Tenant" }: any) => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className={`w-full input-field ${
-                errors.email ? "border-red-500" : "border-gray-300"
-              }`}
+              className={`w-full auth-input ${errors.email ? "auth-input-error" : ""}`}
               placeholder="Enter email address"
             />
             {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[var(--theme-heading-color)] mb-1">
               Password <span className="text-red-500">*</span>
             </label>
             <div className="relative">
@@ -143,15 +177,13 @@ const TenantLogin = ({ tenant = "Tenant" }: any) => {
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className={`w-full input-field pr-10 ${
-                  errors.password ? "border-red-500" : "border-gray-300"
-                }`}
+                className={`w-full auth-input pr-10 ${errors.password ? "auth-input-error" : ""}`}
                 placeholder="Enter password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-2 text-gray-500"
+                className="absolute right-2 top-2 text-[var(--theme-muted-color)]"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -180,7 +212,9 @@ const TenantLogin = ({ tenant = "Tenant" }: any) => {
             {isPending ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : "Login"}
           </button>
           <div className="text-center mt-4">
-            <span className="text-sm text-[#1E1E1E99]">Don't have an account? </span>
+            <span className="text-sm text-[rgb(var(--theme-neutral-900) / 0.6)]">
+              Don't have an account?{" "}
+            </span>
             <Link
               to="/sign-up"
               type="button"
@@ -192,7 +226,7 @@ const TenantLogin = ({ tenant = "Tenant" }: any) => {
           </div>
         </form>
       </div>
-    </div>
+    </AuthShell>
   );
 };
 

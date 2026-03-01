@@ -22,6 +22,18 @@ const AdminAutoScaling: React.FC = () => {
 
   // Only provide create callbacks when project context is available
   const hasProjectContext = !!rawProjectId && !!region && rawProjectId !== "null";
+  const handleCreateGroup = hasProjectContext
+    ? () =>
+        navigate(
+          `/admin-dashboard/infrastructure/autoscaling/create-group?id=${rawProjectId}&region=${region}`
+        )
+    : undefined;
+  const handleCreateLaunchConfig = hasProjectContext
+    ? () =>
+        navigate(
+          `/admin-dashboard/infrastructure/autoscaling/create-config?id=${rawProjectId}&region=${region}`
+        )
+    : undefined;
 
   return (
     <>
@@ -32,22 +44,8 @@ const AdminAutoScaling: React.FC = () => {
         <AutoScalingManagementContainer
           projectId={projectId}
           region={region}
-          onCreateGroup={
-            hasProjectContext
-              ? () =>
-                  navigate(
-                    `/admin-dashboard/infrastructure/autoscaling/create-group?id=${rawProjectId}&region=${region}`
-                  )
-              : undefined
-          }
-          onCreateLaunchConfig={
-            hasProjectContext
-              ? () =>
-                  navigate(
-                    `/admin-dashboard/infrastructure/autoscaling/create-config?id=${rawProjectId}&region=${region}`
-                  )
-              : undefined
-          }
+          {...(handleCreateGroup ? { onCreateGroup: handleCreateGroup } : {})}
+          {...(handleCreateLaunchConfig ? { onCreateLaunchConfig: handleCreateLaunchConfig } : {})}
         />
       </AdminPageShell>
     </>

@@ -1,0 +1,28 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/components/**/*",
+    "src/contexts/**/*",
+    "src/features/auth/**/*",
+    "src/features/cube-instance/**/*",
+    "src/hooks/*.ts",
+    "src/hooks/*.tsx",
+    "src/index/admin/**/*",
+    "src/index/client/**/*",
+    "src/index/tenant/**/*",
+    "src/services/**/*",
+    "src/shared/**/*",
+    "src/stores/**/*",
+    "src/styles/**/*",
+    "src/types/**/*",
+    "src/utils/**/*",
+    "src/config.ts"
+  ],
+  "exclude": [
+    "src/adminComps/**/*",
+    "src/adminDashboard/**/*",
+    "src/clientDashboard/**/*",
+    "src/dashboard/**/*",
+    "src/tenantDashboard/**/*"
+  ]
+}

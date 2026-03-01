@@ -1,9 +1,8 @@
-// @ts-nocheck
 import { Copy } from "lucide-react";
 import ModernModal from "../../../shared/components/ui/ModernModal";
 import ToastUtils from "../../../utils/toastUtil";
 import { designTokens } from "../../../styles/designTokens";
-import StatusPill from "../../../shared/components/ui/StatusPill";
+import StatusPill, { type StatusTone } from "../../../shared/components/ui/StatusPill";
 
 const copyButtonStyles = {
   display: "inline-flex",
@@ -17,9 +16,56 @@ const copyButtonStyles = {
   transition: "all 0.2s ease",
 };
 
-const getToneForStatus = (status: any) => {
+type VpcCidrAssociation = {
+  cidr_assoc_id?: string;
+  cidr_block?: string;
+  state?: string;
+};
+
+type VpcServiceVm = {
+  id?: string | number;
+  vm_type?: string;
+  status?: string;
+};
+
+type VpcMetadata = {
+  enable_dns_support?: boolean;
+  enable_dns_hostnames?: boolean;
+  dhcp_options_id?: string;
+  cidr_assocs_set?: VpcCidrAssociation[];
+  service_vms?: VpcServiceVm[];
+};
+
+type VpcDetails = {
+  id?: string | number;
+  uuid?: string;
+  name?: string;
+  provider?: string;
+  region?: string;
+  cidr_block?: string;
+  is_default?: boolean;
+  state?: string;
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
+  metadata?: VpcMetadata | null;
+};
+
+type DetailRowProps = {
+  label: string;
+  value?: string | number | null | undefined;
+  copyable?: boolean;
+};
+
+type ViewVpcModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  vpc?: VpcDetails | null;
+};
+
+const getToneForStatus = (status?: string | null): StatusTone => {
   if (!status) return "neutral";
-  const normalized = status.toLowerCase();
+  const normalized = String(status).toLowerCase();
   if (["available", "active", "attached", "ready", "synced"].includes(normalized)) {
     return "success";
   }
@@ -32,12 +78,15 @@ const getToneForStatus = (status: any) => {
   return "neutral";
 };
 
-const DetailRow = ({ label, value, copyable }: any) => {
+const DetailRow = ({ label, value, copyable }: DetailRowProps) => {
+  const displayValue = value ?? "—";
   const handleCopy = async () => {
+    const text = value === null || value === undefined ? "" : String(value);
+    if (!text) return;
     try {
-      await navigator.clipboard.writeText(value);
+      await navigator.clipboard.writeText(text);
       ToastUtils.success("Copied to clipboard");
-    } catch (error) {
+    } catch {
       ToastUtils.error("Copy failed");
     }
   };
@@ -55,9 +104,9 @@ const DetailRow = ({ label, value, copyable }: any) => {
           className="flex-1 break-words text-sm"
           style={{ color: designTokens.colors.neutral[800] }}
         >
-          {value ?? "—"}
+          {displayValue}
         </span>
-        {copyable && value && (
+        {copyable && value !== null && value !== undefined && String(value).length > 0 && (
           <button
             type="button"
             onClick={handleCopy}
@@ -79,11 +128,11 @@ const DetailRow = ({ label, value, copyable }: any) => {
   );
 };
 
-const ViewVpcModal = ({ isOpen, onClose, vpc }: any) => {
+const ViewVpcModal = ({ isOpen, onClose, vpc }: ViewVpcModalProps) => {
   const actions = [
     {
       label: "Close",
-      variant: "ghost",
+      variant: "ghost" as const,
       onClick: onClose,
     },
   ];
@@ -186,16 +235,16 @@ const ViewVpcModal = ({ isOpen, onClose, vpc }: any) => {
                       CIDR Associations
                     </h4>
                     <div className="space-y-2 rounded-xl border border-dashed p-4">
-                      {vpc.metadata.cidr_assocs_set.map((assoc: any) => (
+                      {vpc.metadata.cidr_assocs_set.map((assoc, index) => (
                         <div
-                          key={assoc.cidr_assoc_id}
+                          key={assoc.cidr_assoc_id ?? assoc.cidr_block ?? index}
                           className="flex flex-wrap items-center justify-between gap-2"
                         >
                           <span
                             className="text-sm font-medium"
                             style={{ color: designTokens.colors.neutral[700] }}
                           >
-                            {assoc.cidr_block}
+                            {assoc.cidr_block ?? "—"}
                           </span>
                           <StatusPill label={assoc.state} tone={getToneForStatus(assoc.state)} />
                         </div>
@@ -213,9 +262,9 @@ const ViewVpcModal = ({ isOpen, onClose, vpc }: any) => {
                     Service VMs
                   </h4>
                   <div className="space-y-2 rounded-xl border border-dashed p-4">
-                    {vpc.metadata.service_vms.map((vm: any) => (
+                    {vpc.metadata.service_vms.map((vm, index) => (
                       <div
-                        key={vm.id}
+                        key={vm.id ?? vm.vm_type ?? index}
                         className="flex flex-wrap items-center justify-between gap-2"
                       >
                         <div>
@@ -223,13 +272,13 @@ const ViewVpcModal = ({ isOpen, onClose, vpc }: any) => {
                             className="text-sm font-medium"
                             style={{ color: designTokens.colors.neutral[700] }}
                           >
-                            {vm.vm_type}
+                            {vm.vm_type ?? "—"}
                           </p>
                           <p
                             className="text-xs"
                             style={{ color: designTokens.colors.neutral[500] }}
                           >
-                            {vm.id}
+                            {vm.id ?? "—"}
                           </p>
                         </div>
                         <StatusPill label={vm.status} tone={getToneForStatus(vm.status)} />

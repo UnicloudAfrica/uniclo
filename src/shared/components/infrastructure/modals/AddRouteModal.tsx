@@ -1,16 +1,14 @@
-// @ts-nocheck
 import React, { useState, useEffect } from "react";
-import ModernModal from "../../ui/ModernModal";
+import ModernModal, { ModalAction } from "../../ui/ModernModal";
 import ModernInput from "../../ui/ModernInput";
 import ModernSelect from "../../ui/ModernSelect";
-import { ModernButton } from "../ui";
 
 interface AddRouteModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAdd: (data: any) => void;
-  internetGateways: any[];
-  natGateways: any[];
+  internetGateways: unknown;
+  natGateways: unknown;
   isLoading?: boolean;
 }
 
@@ -74,7 +72,7 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({
     if (val) setSelectedGatewayId(""); // Exclusive
   };
 
-  const actions = [
+  const actions: ModalAction[] = [
     {
       label: "Cancel",
       variant: "ghost",

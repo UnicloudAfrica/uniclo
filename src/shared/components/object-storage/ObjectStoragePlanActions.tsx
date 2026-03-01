@@ -1,6 +1,19 @@
 import React from "react";
 import { ArrowLeft, MapPin, ShieldCheck, Zap } from "lucide-react";
 
+interface ObjectStoragePlanActionsProps {
+  persona?: "admin" | "tenant" | "client";
+  hasTenantContext?: boolean;
+  canFastTrack?: boolean;
+  enableFastTrack?: boolean;
+  onStandardPlan?: () => void;
+  onFastTrack?: () => void;
+  onBack?: () => void;
+  standardLabel?: string;
+  fastTrackLabel?: string;
+  loading?: boolean;
+}
+
 /**
  * Reusable CTA cluster for Silo Storage plan selection.
  *
@@ -9,7 +22,7 @@ import { ArrowLeft, MapPin, ShieldCheck, Zap } from "lucide-react";
  * - tenant: Standard visible. Fast-track optional (pass canFastTrack=true to show).
  * - client: Standard only (fast-track hidden).
  */
-const ObjectStoragePlanActions = ({
+const ObjectStoragePlanActions: React.FC<ObjectStoragePlanActionsProps> = ({
   persona = "client", // 'admin' | 'tenant' | 'client'
   hasTenantContext = false,
   canFastTrack = false,

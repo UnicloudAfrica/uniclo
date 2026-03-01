@@ -2,17 +2,19 @@ import { useState, useEffect, useCallback } from "react";
 import adminSilentApi from "../index/admin/silent";
 import ToastUtils from "../utils/toastUtil";
 
+type ResourceList<T = unknown> = T[];
+
 export interface InstanceResources {
-  projects: any[];
-  regions: any[];
-  instance_types: any[];
-  os_images: any[];
-  volume_types: any[];
-  bandwidths: any[];
-  security_groups: any[];
-  keypairs: any[];
-  floating_ips?: any[];
-  volumes?: any[];
+  projects: ResourceList;
+  regions: ResourceList;
+  instance_types: ResourceList;
+  os_images: ResourceList;
+  volume_types: ResourceList;
+  bandwidths: ResourceList;
+  security_groups: ResourceList;
+  keypairs: ResourceList;
+  floating_ips?: ResourceList;
+  volumes?: ResourceList;
 }
 
 const initialResources: InstanceResources = {
@@ -29,7 +31,11 @@ const initialResources: InstanceResources = {
 };
 
 // Type for API function that can be passed from different contexts
-export type ApiFn = (method: string, endpoint: string, body?: any) => Promise<any>;
+export type ApiFn = (
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
+  endpoint: string,
+  body?: Record<string, unknown> | FormData | null
+) => Promise<unknown>;
 
 interface UseInstanceResourcesOptions {
   /** Custom API function to use instead of default adminSilentApi */

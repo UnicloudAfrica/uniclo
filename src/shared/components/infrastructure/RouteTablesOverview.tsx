@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState } from "react";
 import {
   Route as RouteIcon,
@@ -15,38 +14,21 @@ import ModernButton from "../ui/ModernButton";
 import ModernCard from "../ui/ModernCard";
 import { RouteTablePermissions } from "../../config/permissionPresets";
 
-interface RouteTable {
-  id: string;
-  name?: string;
-  vpc_id?: string;
-  is_main?: boolean;
-  routes?: {
-    destination_cidr_block: string;
-    gateway_id?: string;
-    nat_gateway_id?: string;
-    state?: string;
-  }[];
-  associations?: {
-    route_table_association_id: string;
-    subnet_id?: string;
-    is_main?: boolean;
-    main?: boolean; // legacy API inconsistency handling
-  }[];
-}
+import { RouteTable, Subnet, InternetGateway, NatGateway } from "./types";
 
 interface RouteTablesOverviewProps {
   routeTables: RouteTable[];
-  subnets: any[];
-  internetGateways?: any[]; // For Modal
-  natGateways?: any[]; // For Modal
+  subnets: Subnet[];
+  internetGateways?: InternetGateway[] | undefined; // For Modal
+  natGateways?: NatGateway[] | undefined; // For Modal
   isLoading: boolean;
   permissions: RouteTablePermissions;
   // Actions
-  onAddRoute?: (routeTableId: string, data: any) => void;
-  onDeleteRoute?: (routeTableId: string, destination: string) => void;
-  onAssociate?: (routeTableId: string, subnetId: string) => void;
-  onDisassociate?: (associationId: string) => void;
-  onRefresh?: () => void;
+  onAddRoute?: ((routeTableId: string, data: any) => void) | undefined;
+  onDeleteRoute?: ((routeTableId: string, destination: string) => void) | undefined;
+  onAssociate?: ((routeTableId: string, subnetId: string) => void) | undefined;
+  onDisassociate?: ((associationId: string) => void) | undefined;
+  onRefresh?: (() => void) | undefined;
   // State for Modals (Controlled by Container usually, but Overview can emit "Request")
   // For simplicity, let's let Overview trigger the callbacks, and Container opens/handles Modals if needed?
   // OR Overview owns the "Show Modal" state and renders Modals?
@@ -192,13 +174,13 @@ const RouteTablesOverview: React.FC<RouteTablesOverviewProps> = ({
                   </button>
                 </div>
 
-                {activeTab === "routes" && permissions.canManageRoutes && (
+                {activeTab === "routes" && permissions?.canManageRoutes && (
                   <ModernButton variant="primary" size="sm" onClick={() => setShowAddRoute(true)}>
                     <Plus size={14} /> Add Route
                   </ModernButton>
                 )}
 
-                {activeTab === "associations" && permissions.canManageAssociations && (
+                {activeTab === "associations" && permissions?.canManageAssociations && (
                   <ModernButton variant="primary" size="sm" onClick={() => setShowAssociate(true)}>
                     <LinkIcon size={14} /> Associate Subnet
                   </ModernButton>
@@ -251,7 +233,7 @@ const RouteTablesOverview: React.FC<RouteTablesOverviewProps> = ({
                               </span>
                             </td>
                             <td className="py-3 px-6 text-right">
-                              {permissions.canManageRoutes &&
+                              {permissions?.canManageRoutes &&
                                 route.destination_cidr_block !== "local" && (
                                   <button
                                     onClick={() =>
@@ -298,7 +280,7 @@ const RouteTablesOverview: React.FC<RouteTablesOverviewProps> = ({
                                   </div>
                                 </div>
                               </div>
-                              {permissions.canManageAssociations &&
+                              {permissions?.canManageAssociations &&
                                 !assoc.is_main &&
                                 !assoc.main && (
                                   <button
@@ -338,7 +320,7 @@ const RouteTablesOverview: React.FC<RouteTablesOverviewProps> = ({
         onAdd={handleAddRoute}
         internetGateways={internetGateways}
         natGateways={natGateways}
-        isLoading={isLoading} // Ideally fine-grained loading state per action, but general loading works
+        isLoading={Boolean(isLoading)} // Ideally fine-grained loading state per action, but general loading works
       />
 
       <AssociateSubnetModal

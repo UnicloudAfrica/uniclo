@@ -137,7 +137,7 @@ export function usePaymentHistory(page = 1, perPage = 15) {
         `/billing/payment-history?page=${page}&per_page=${perPage}`
       );
       return response as {
-        data: any[];
+        data: unknown;
         meta: {
           current_page: number;
           last_page: number;

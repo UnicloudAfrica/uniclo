@@ -2,14 +2,13 @@
  * Availability & Access Form
  * Reusable component for region visibility and fast track settings
  */
-// @ts-nocheck
 import React from "react";
 import { Globe, AlertCircle, ChevronRight } from "lucide-react";
-import type { RegionFormData } from "../types/serviceConfig.types";
+import type { RegionFormChangeHandler, RegionFormData } from "../types/serviceConfig.types";
 
 export interface AvailabilityAccessFormProps {
   regionData: RegionFormData;
-  onChange: (field: keyof RegionFormData, value: any) => void;
+  onChange: RegionFormChangeHandler;
   showFastTrack?: boolean;
 }
 
@@ -63,7 +62,9 @@ const AvailabilityAccessForm: React.FC<AvailabilityAccessFormProps> = ({
           <div className="relative">
             <select
               value={regionData.fast_track_mode}
-              onChange={(e) => onChange("fast_track_mode", e.target.value)}
+              onChange={(e) =>
+                onChange("fast_track_mode", e.target.value as RegionFormData["fast_track_mode"])
+              }
               className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
             >
               <option value="disabled">Disabled (Standard)</option>

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Permission presets derived from user hierarchy.
  * These define what actions each role can perform on infrastructure resources.
@@ -347,7 +346,7 @@ type PermissionMap = {
   networkAcls: NetworkAclPermissions;
 };
 
-const PERMISSION_PRESETS: Record<ResourceType, Record<Hierarchy, any>> = {
+const PERMISSION_PRESETS: { [K in ResourceType]: Record<Hierarchy, PermissionMap[K]> } = {
   elasticIps: ELASTIC_IP_PERMISSIONS,
   securityGroups: SECURITY_GROUP_PERMISSIONS,
   subnets: SUBNET_PERMISSIONS,

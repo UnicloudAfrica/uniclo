@@ -1,14 +1,20 @@
-// @ts-nocheck
-import React, { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, ArrowLeft, Loader2 } from "lucide-react";
-import AdminPageShell from "../components/AdminPageShell.tsx";
+import AdminPageShell from "../components/AdminPageShell";
 import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
 import { ModernButton } from "../../shared/components/ui";
 import { useFetchAdminById } from "../../hooks/adminHooks/adminHooks";
 import { EditAdminModal } from "./adminComps/editAdmin";
 
-const decodeId = (encodedId: any) => {
+interface AdminRecord {
+  id?: string | number;
+  identifier?: string;
+  email?: string;
+  [key: string]: unknown;
+}
+
+const decodeId = (encodedId?: string) => {
   if (!encodedId) return null;
   try {
     return atob(decodeURIComponent(encodedId));
@@ -32,7 +38,11 @@ const AdminUserEdit = () => {
     enabled: !!decodedAdminId,
   });
 
-  const adminRecord = useMemo(() => adminDetails?.data ?? adminDetails, [adminDetails]);
+  const adminRecord = useMemo<AdminRecord | null>(() => {
+    if (!adminDetails || typeof adminDetails !== "object") return null;
+    const payload = adminDetails as { data?: AdminRecord } & AdminRecord;
+    return payload.data ?? payload;
+  }, [adminDetails]);
 
   const goBack = () => navigate("/admin-dashboard/admin-users");
 
@@ -57,8 +67,8 @@ const AdminUserEdit = () => {
       >
         <TenantClientsSideMenu />
         {isFetching && (
-          <div className="flex h-64 flex-col items-center justify-center gap-3 rounded-3xl border border-[#EAECF0] bg-white">
-            <Loader2 className="h-8 w-8 animate-spin text-[#288DD1]" />
+          <div className="flex h-64 flex-col items-center justify-center gap-3 rounded-3xl border border-[var(--theme-surface-alt)] bg-white">
+            <Loader2 className="h-8 w-8 animate-spin text-[var(--theme-color)]" />
             <p className="text-sm font-medium text-slate-600">Loading admin record...</p>
           </div>
         )}

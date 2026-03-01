@@ -86,3 +86,81 @@ export interface LoadBalancer {
   provider_resource_id?: string;
   local_id?: string | number;
 }
+export interface Vpc {
+  id: string;
+  name?: string;
+  cidr_block?: string;
+  cidr?: string;
+  state?: string;
+  status?: string;
+  is_default?: boolean;
+  region?: string;
+  provider_resource_id?: string;
+  local_id?: string | number;
+}
+
+export interface InternetGatewayAttachment {
+  vpc_id: string;
+  state: string;
+}
+
+export interface InternetGateway {
+  id: string;
+  name?: string;
+  vpc_id?: string;
+  state?: string;
+  attachments?: InternetGatewayAttachment[];
+  provider_resource_id?: string;
+  local_id?: string | number;
+}
+
+export interface Route {
+  destination_cidr_block: string;
+  gateway_id?: string;
+  nat_gateway_id?: string;
+  state?: string;
+}
+
+export interface RouteTableAssociation {
+  route_table_association_id: string;
+  subnet_id?: string;
+  gateway_id?: string;
+  is_main?: boolean;
+  main?: boolean;
+}
+
+export interface RouteTable {
+  id: string;
+  name?: string;
+  vpc_id?: string;
+  is_main?: boolean;
+  routes?: Route[];
+  associations?: RouteTableAssociation[];
+  provider_resource_id?: string;
+  local_id?: string | number;
+}
+
+export interface KeyPair {
+  id: string;
+  name: string;
+  fingerprint?: string;
+  key_material?: string;
+  created_at?: string;
+  provider_resource_id?: string;
+  local_id?: string | number;
+}
+
+export interface NetworkInterface {
+  id: string;
+  name?: string;
+  subnet_id?: string;
+  vpc_id?: string;
+  status?: string;
+  state?: string;
+  mac_address?: string;
+  private_ip_address?: string;
+  instance_id?: string;
+  security_groups?: unknown;
+  provider_resource_id?: string;
+  local_id?: string | number;
+}

@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/dashboard/**/*",
+    "src/clientDashboard/**/*",
+    "src/tenantDashboard/**/*",
+    "src/features/client/**/*",
+    "src/features/tenant/**/*",
+    "src/hooks/clientHooks/**/*",
+    "src/hooks/tenantHooks/**/*",
+    "src/index/client/**/*",
+    "src/index/tenant/**/*",
+    "src/stores/clientAuthStore.ts",
+    "src/stores/tenantAuthStore.ts"
+  ]
+}

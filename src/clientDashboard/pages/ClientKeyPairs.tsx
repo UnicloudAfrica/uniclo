@@ -1,9 +1,10 @@
-// @ts-nocheck
 import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Key } from "lucide-react";
 import ClientPageShell from "../components/ClientPageShell";
-import KeyPairsContainer from "../../shared/components/infrastructure/containers/KeyPairsContainer";
+import KeyPairsContainer, {
+  KeyPairHooks,
+} from "../../shared/components/infrastructure/containers/KeyPairsContainer";
 import {
   useFetchClientKeyPairs,
   useDeleteClientKeyPair,
@@ -15,10 +16,10 @@ const ClientKeyPairs: React.FC = () => {
   const projectId = searchParams.get("project") || "";
   const region = searchParams.get("region") || "";
 
-  const hooks = {
-    useList: useFetchClientKeyPairs,
-    useDelete: useDeleteClientKeyPair,
-    useSync: useSyncKeyPairs, // Generic sync handles context via ApiContext validation or passed headers, but context is key
+  const hooks: KeyPairHooks = {
+    useList: useFetchClientKeyPairs as KeyPairHooks["useList"],
+    useDelete: useDeleteClientKeyPair as KeyPairHooks["useDelete"],
+    useSync: useSyncKeyPairs as KeyPairHooks["useSync"],
   };
 
   return (
@@ -27,7 +28,7 @@ const ClientKeyPairs: React.FC = () => {
       projectId={projectId}
       region={region}
       hooks={hooks}
-      wrapper={({ headerActions, children }) => (
+      wrapper={({ children }) => (
         <ClientPageShell
           title={
             <span className="flex items-center gap-2">
@@ -36,7 +37,6 @@ const ClientKeyPairs: React.FC = () => {
             </span>
           }
           description="Manage SSH key pairs for secure instance access"
-          actions={headerActions}
         >
           {children}
         </ClientPageShell>

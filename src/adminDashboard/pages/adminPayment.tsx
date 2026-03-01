@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -10,7 +9,7 @@ import {
   RefreshCcw,
   Wallet,
 } from "lucide-react";
-import AdminPageShell from "../components/AdminPageShell.tsx";
+import AdminPageShell from "../components/AdminPageShell";
 import ResourceHero from "../../shared/components/ui/ResourceHero";
 import ResourceDataExplorer from "../components/ResourceDataExplorer";
 import { ModernCard } from "../../shared/components/ui";
@@ -20,7 +19,64 @@ import {
   useFetchAdminTransactions,
 } from "../../hooks/adminHooks/paymentHooks";
 
-const statusOptions = [
+interface StatusOption {
+  label: string;
+  value: string;
+}
+
+interface AdminTransaction {
+  id?: string | number | null;
+  identifier?: string | number | null;
+  reference?: string;
+  status?: string;
+  amount?: number | string | null;
+  currency?: string;
+  payment_gateway?: string;
+  payment_type?: string;
+  created_at?: string;
+  user?: {
+    name?: string;
+    email?: string;
+  };
+}
+
+type ExplorerRow = Record<string, unknown> & AdminTransaction;
+
+interface ExplorerColumn {
+  key?: string;
+  accessorKey?: string;
+  header: React.ReactNode;
+  align?: "left" | "center" | "right";
+  render?: (row: Record<string, unknown>) => React.ReactNode;
+}
+
+interface TransactionMeta {
+  total?: number;
+  last_page?: number;
+  from?: number;
+  to?: number;
+}
+
+interface TransactionCollectionResponse {
+  data?: AdminTransaction[];
+  meta?: TransactionMeta | null;
+}
+
+const getTransactionId = (transaction: AdminTransaction): string | number | null => {
+  if (
+    transaction.identifier !== undefined &&
+    transaction.identifier !== null &&
+    transaction.identifier !== ""
+  ) {
+    return transaction.identifier;
+  }
+  if (transaction.id !== undefined && transaction.id !== null) {
+    return transaction.id;
+  }
+  return null;
+};
+
+const statusOptions: StatusOption[] = [
   { label: "All statuses", value: "" },
   { label: "Successful", value: "successful" },
   { label: "Completed", value: "completed" },
@@ -33,7 +89,7 @@ const successStatuses = new Set(["successful", "completed", "paid", "success"]);
 const processingStatuses = new Set(["processing", "pending", "awaiting"]);
 const failedStatuses = new Set(["failed", "declined", "cancelled", "error"]);
 
-const formatCurrency = (value, currency = "NGN") => {
+const formatCurrency = (value: number | string | null | undefined, currency = "NGN") => {
   if (value === null || value === undefined || Number.isNaN(value)) {
     return "—";
   }
@@ -45,10 +101,10 @@ const formatCurrency = (value, currency = "NGN") => {
   })}`;
 };
 
-const formatDate = (value: any) => {
+const formatDate = (value: string | number | Date | null | undefined) => {
   if (!value) return "—";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
+  if (Number.isNaN(date.getTime())) return String(value);
   return date.toLocaleDateString(undefined, {
     year: "numeric",
     month: "short",
@@ -56,7 +112,7 @@ const formatDate = (value: any) => {
   });
 };
 
-const statusTone = (status: any) => {
+const statusTone = (status: string | null | undefined) => {
   const tone = (status || "").toLowerCase();
   if (successStatuses.has(tone)) {
     return {
@@ -107,14 +163,23 @@ export default function AdminPayment() {
   const { mutate: downloadReceipt, isPending: isDownloadingReceipt } =
     useDownloadAdminTransactionReceipt();
 
-  const transactions = response?.data ?? [];
-  const meta = response?.meta ?? {};
+  const typedResponse = response as TransactionCollectionResponse | undefined;
+  const transactions: ExplorerRow[] = Array.isArray(typedResponse?.data)
+    ? typedResponse.data.map((transaction) => transaction as ExplorerRow)
+    : [];
+  const meta = (typedResponse?.meta ?? {}) as TransactionMeta;
   const totalRecords = meta?.total ?? transactions.length;
 
-  const primaryCurrency = transactions.find((tx) => tx.currency)?.currency ?? "NGN";
+  const primaryCurrency =
+    transactions.find((tx: AdminTransaction) => Boolean(tx.currency))?.currency ?? "NGN";
 
   const computedStats = useMemo(() => {
-    const summary = transactions.reduce(
+    const summary = transactions.reduce<{
+      completed: number;
+      failed: number;
+      processing: number;
+      volume: number;
+    }>(
       (acc, tx) => {
         const status = (tx.status || "").toLowerCase();
         if (successStatuses.has(status)) {
@@ -170,12 +235,19 @@ export default function AdminPayment() {
   ]);
 
   const handleDownload = useCallback(
-    (row) => {
-      const identifier = row.identifier || row.id;
-      if (!identifier) return;
+    (row: AdminTransaction) => {
+      const identifier = getTransactionId(row);
+      if (identifier === null) return;
       downloadReceipt(identifier, {
-        onSuccess: (buffer) => {
-          const blob = new Blob([buffer], { type: "application/pdf" });
+        onSuccess: (buffer: unknown) => {
+          const receiptData: BlobPart =
+            buffer instanceof Blob ||
+            typeof buffer === "string" ||
+            buffer instanceof ArrayBuffer ||
+            ArrayBuffer.isView(buffer)
+              ? (buffer as BlobPart)
+              : JSON.stringify(buffer ?? "");
+          const blob = new Blob([receiptData], { type: "application/pdf" });
           const url = URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = url;
@@ -190,50 +262,62 @@ export default function AdminPayment() {
     [downloadReceipt]
   );
 
-  const tableColumns = useMemo(
+  const tableColumns = useMemo<ExplorerColumn[]>(
     () => [
       {
         key: "identifier",
         header: "Receipt",
-        render: (row) => (
-          <button
-            type="button"
-            onClick={() =>
-              navigate(`/admin-dashboard/payment/${encodeURIComponent(row.identifier || row.id)}`)
-            }
-            className="flex flex-col text-left transition hover:text-primary-600"
-          >
-            <span className="text-sm font-semibold text-slate-900">
-              {row.identifier || `Transaction ${row.id}`}
-            </span>
-            <span className="text-xs text-slate-500">Ref • {row.reference || "n/a"}</span>
-          </button>
-        ),
+        render: (rowData: Record<string, unknown>) => {
+          const row = rowData as ExplorerRow;
+          return (
+            <button
+              type="button"
+              onClick={() => {
+                const transactionId = getTransactionId(row);
+                if (transactionId === null) return;
+                navigate(`/admin-dashboard/payment/${encodeURIComponent(String(transactionId))}`);
+              }}
+              className="flex flex-col text-left transition hover:text-primary-600"
+            >
+              <span className="text-sm font-semibold text-slate-900">
+                {row.identifier || `Transaction ${row.id}`}
+              </span>
+              <span className="text-xs text-slate-500">Ref • {row.reference || "n/a"}</span>
+            </button>
+          );
+        },
       },
       {
         key: "customer",
         header: "Customer",
-        render: (row) => (
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-slate-800">{row.user?.name || "—"}</span>
-            {row.user?.email && <span className="text-xs text-slate-500">{row.user.email}</span>}
-          </div>
-        ),
+        render: (rowData: Record<string, unknown>) => {
+          const row = rowData as ExplorerRow;
+          return (
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-slate-800">{row.user?.name || "—"}</span>
+              {row.user?.email && <span className="text-xs text-slate-500">{row.user.email}</span>}
+            </div>
+          );
+        },
       },
       {
         key: "amount",
         header: "Amount",
-        render: (row) => (
-          <div className="text-sm font-semibold text-slate-900">
-            {formatCurrency(row.amount, row.currency)}
-          </div>
-        ),
+        render: (rowData: Record<string, unknown>) => {
+          const row = rowData as ExplorerRow;
+          return (
+            <div className="text-sm font-semibold text-slate-900">
+              {formatCurrency(row.amount, row.currency)}
+            </div>
+          );
+        },
         align: "right",
       },
       {
         key: "status",
         header: "Status",
-        render: (row) => {
+        render: (rowData: Record<string, unknown>) => {
+          const row = rowData as ExplorerRow;
           const tone = statusTone(row.status);
           return (
             <span
@@ -247,54 +331,63 @@ export default function AdminPayment() {
       {
         key: "payment_gateway",
         header: "Gateway",
-        render: (row) => (
-          <div className="flex flex-col">
-            <span className="text-sm text-slate-700">{row.payment_gateway || "—"}</span>
-            {row.payment_type && (
-              <span className="text-xs text-slate-500">
-                {(row.payment_type || "").replace(/_/g, " ")}
-              </span>
-            )}
-          </div>
-        ),
+        render: (rowData: Record<string, unknown>) => {
+          const row = rowData as ExplorerRow;
+          return (
+            <div className="flex flex-col">
+              <span className="text-sm text-slate-700">{row.payment_gateway || "—"}</span>
+              {row.payment_type && (
+                <span className="text-xs text-slate-500">
+                  {(row.payment_type || "").replace(/_/g, " ")}
+                </span>
+              )}
+            </div>
+          );
+        },
       },
       {
         key: "created_at",
         header: "Created",
-        render: (row) => (
-          <span className="text-sm text-slate-600">{formatDate(row.created_at)}</span>
-        ),
+        render: (rowData: Record<string, unknown>) => {
+          const row = rowData as ExplorerRow;
+          return <span className="text-sm text-slate-600">{formatDate(row.created_at)}</span>;
+        },
       },
       {
         key: "actions",
         header: "",
         align: "right",
-        render: (row) => (
-          <div className="flex items-center justify-end gap-2">
-            <ModernButton
-              variant="ghost"
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:border-primary-200 hover:text-primary-600"
-              onClick={() =>
-                navigate(`/admin-dashboard/payment/${encodeURIComponent(row.identifier || row.id)}`)
-              }
-            >
-              View
-            </ModernButton>
-            <ModernButton
-              variant="ghost"
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:border-primary-200 hover:text-primary-600"
-              onClick={() => handleDownload(row)}
-              disabled={isDownloadingReceipt}
-            >
-              {isDownloadingReceipt ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Download className="h-3.5 w-3.5" />
-              )}
-              PDF
-            </ModernButton>
-          </div>
-        ),
+        render: (rowData: Record<string, unknown>) => {
+          const row = rowData as ExplorerRow;
+          return (
+            <div className="flex items-center justify-end gap-2">
+              <ModernButton
+                variant="ghost"
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:border-primary-200 hover:text-primary-600"
+                onClick={() => {
+                  const transactionId = getTransactionId(row);
+                  if (transactionId === null) return;
+                  navigate(`/admin-dashboard/payment/${encodeURIComponent(String(transactionId))}`);
+                }}
+              >
+                View
+              </ModernButton>
+              <ModernButton
+                variant="ghost"
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:border-primary-200 hover:text-primary-600"
+                onClick={() => handleDownload(row)}
+                disabled={isDownloadingReceipt}
+              >
+                {isDownloadingReceipt ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Download className="h-3.5 w-3.5" />
+                )}
+                PDF
+              </ModernButton>
+            </div>
+          );
+        },
       },
     ],
     [navigate, handleDownload, isDownloadingReceipt]
@@ -310,7 +403,7 @@ export default function AdminPayment() {
         }}
         className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 shadow-sm transition focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-300"
       >
-        {statusOptions.map((option: any) => (
+        {statusOptions.map((option: StatusOption) => (
           <option key={option.value || "all"} value={option.value}>
             {option.label}
           </option>
@@ -368,7 +461,7 @@ export default function AdminPayment() {
             page={page}
             perPage={perPage}
             total={meta?.total ?? transactions.length}
-            meta={meta}
+            meta={meta as Record<string, unknown>}
             onPageChange={setPage}
             onPerPageChange={(value) => {
               setPerPage(value);

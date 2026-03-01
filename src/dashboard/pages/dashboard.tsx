@@ -1,5 +1,3 @@
-5; // @ts-nocheck
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Users, Server, Plus, Activity, ArrowRight, ShieldCheck, Zap } from "lucide-react";
 import TenantPageShell from "../components/TenantPageShell";
@@ -12,17 +10,19 @@ const Dashboard = () => {
 
   // Fetch Data
   const { data: clients, isLoading: clientsLoading } = useFetchClients();
-  const { data: projects, isLoading: projectsLoading } = useFetchTenantProjects();
+  const { data: projectsResponse, isLoading: projectsLoading } = useFetchTenantProjects();
 
   // Calculate Stats
   const clientCount = clients?.length || 0;
-  const projectCount = projects?.length || 0;
+  const projects = Array.isArray(projectsResponse)
+    ? projectsResponse
+    : projectsResponse?.data || [];
+  const projectCount = projects.length;
 
   // Calculate active instances across all projects
-  const activeInstancesCount =
-    projects?.reduce((acc: number, project: any) => {
-      return acc + (project.instances_count || 0);
-    }, 0) || 0;
+  const activeInstancesCount = projects.reduce((acc: number, project: any) => {
+    return acc + (project.instances_count || 0);
+  }, 0);
 
   const quickActions = [
     {
@@ -94,7 +94,7 @@ const Dashboard = () => {
               key={index}
               className="group cursor-pointer hover:border-blue-200 transition-all duration-200 hover:shadow-md"
               onClick={action.action}
-              noPadding
+              padding="none"
             >
               <div className="p-6 flex items-start justify-between">
                 <div className="flex items-start gap-4">

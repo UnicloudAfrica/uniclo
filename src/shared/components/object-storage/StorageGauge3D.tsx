@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import { AlertTriangle } from "lucide-react";
 
@@ -13,13 +12,29 @@ interface StorageGauge3DProps {
  * Shows used vs total capacity with color-coded warnings
  */
 const StorageGauge3D: React.FC<StorageGauge3DProps> = ({ usedGb, totalGb, showWarning = true }) => {
-  const percentage = totalGb > 0 ? Math.min((usedGb / totalGb) * 100, 100) : 0;
+  const safeUsedGb = usedGb ?? 0;
+  const safeTotalGb = totalGb ?? 0;
+  const percentage = safeTotalGb > 0 ? Math.min((safeUsedGb / safeTotalGb) * 100, 100) : 0;
 
   // Color thresholds
   const getColor = () => {
-    if (percentage >= 95) return { fill: "#ef4444", bg: "#fee2e2", text: "text-red-600" };
-    if (percentage >= 80) return { fill: "#f59e0b", bg: "#fef3c7", text: "text-amber-600" };
-    return { fill: "#10b981", bg: "#d1fae5", text: "text-emerald-600" };
+    if (percentage >= 95)
+      return {
+        fill: "rgb(var(--theme-danger-500))",
+        bg: "rgb(var(--theme-danger-100))",
+        text: "text-red-600",
+      };
+    if (percentage >= 80)
+      return {
+        fill: "rgb(var(--theme-warning-500))",
+        bg: "rgb(var(--theme-warning-100))",
+        text: "text-amber-600",
+      };
+    return {
+      fill: "rgb(var(--theme-success-500))",
+      bg: "rgb(var(--theme-success-100))",
+      text: "text-emerald-600",
+    };
   };
 
   const colors = getColor();
@@ -27,9 +42,10 @@ const StorageGauge3D: React.FC<StorageGauge3DProps> = ({ usedGb, totalGb, showWa
   const isCritical = percentage >= 95;
 
   // Format storage display
-  const formatStorage = (gb: number) => {
-    if (gb >= 1000) return `${(gb / 1000).toFixed(1)} TB`;
-    return `${gb.toFixed(1)} GB`;
+  const formatStorage = (gb: number | undefined | null) => {
+    const value = gb ?? 0;
+    if (value >= 1000) return `${(value / 1000).toFixed(1)} TB`;
+    return `${value.toFixed(1)} GB`;
   };
 
   return (
@@ -93,7 +109,7 @@ const StorageGauge3D: React.FC<StorageGauge3DProps> = ({ usedGb, totalGb, showWa
       <div className="mt-4 text-center">
         <div className={`text-2xl font-bold ${colors.text}`}>{percentage.toFixed(0)}%</div>
         <div className="text-sm text-[--theme-muted-color] mt-1">
-          {formatStorage(usedGb)} / {formatStorage(totalGb)}
+          {formatStorage(safeUsedGb)} / {formatStorage(safeTotalGb)}
         </div>
       </div>
 

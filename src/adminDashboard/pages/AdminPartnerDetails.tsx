@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import AdminActiveTab from "../components/adminActiveTab";
 import OverviewPartner from "../components/partnersComponent/OverviewPartner";
 import PartnerModules from "../components/partnersComponent/PartnerModules";
@@ -27,6 +26,23 @@ import TenantBillingTab from "./tenantComps/TenantBillingTab";
 import TenantNetworkPolicyTab from "./tenantComps/TenantNetworkPolicyTab";
 import { useTenantBroadcasting } from "../../hooks/useTenantBroadcasting";
 
+type PartnerBusiness = {
+  name?: string;
+  industry?: string;
+  country?: string;
+  city?: string;
+};
+
+type PartnerDetails = {
+  business?: PartnerBusiness | null;
+  email?: string;
+  phone?: string;
+  country?: string;
+  city?: string;
+  verified?: number;
+  updated_at?: string;
+};
+
 // Function to decode the ID from URL (re-used from other files)
 const decodeId = (encodedId: string) => {
   try {
@@ -45,12 +61,15 @@ export default function AdminPartnerDetails() {
 
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [tenantName, setTenantName] = useState("Partner"); // Default name
+  const [openEditOnLoad, setOpenEditOnLoad] = useState(false);
 
   // Extract ID and name from URL query parameters on component mount
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const encodedId = queryParams.get("id");
     const nameFromUrl = queryParams.get("name");
+    const editFromUrl = queryParams.get("edit");
+    const shouldOpenEdit = Boolean(editFromUrl);
 
     if (encodedId) {
       const decodedId = decodeId(encodedId);
@@ -59,18 +78,30 @@ export default function AdminPartnerDetails() {
     if (nameFromUrl) {
       setTenantName(decodeURIComponent(nameFromUrl));
     }
-  }, [location.search]);
+
+    setOpenEditOnLoad(shouldOpenEdit);
+
+    if (shouldOpenEdit) {
+      queryParams.delete("edit");
+      const updated = queryParams.toString();
+      navigate(`${location.pathname}${updated ? `?${updated}` : ""}`, { replace: true });
+    }
+  }, [location.search, location.pathname, navigate]);
 
   // Use broadcasting hook for real-time updates
   useTenantBroadcasting(tenantId);
 
   // Fetch tenant details using the custom hook
   const {
-    data: partnerDetails,
+    data: partnerDetailsData,
     isFetching: isPartnerFetching,
     isError: isPartnerError,
     error: partnerError,
   } = useFetchTenantById(tenantId);
+  const partnerDetails =
+    partnerDetailsData && typeof partnerDetailsData === "object"
+      ? (partnerDetailsData as PartnerDetails)
+      : null;
 
   const formatDate = (value: string) => {
     if (!value) return null;
@@ -95,7 +126,7 @@ export default function AdminPartnerDetails() {
         : "Industry not captured",
       icon: Building2,
       accentBg: "bg-primary/10",
-      accentText: "text-[#288DD1]",
+      accentText: "text-[var(--theme-color)]",
     },
     {
       label: "Primary Contact",
@@ -134,7 +165,13 @@ export default function AdminPartnerDetails() {
       value: "overview",
       description: "Compliance, documents, and account metadata",
       icon: LayoutDashboard,
-      component: <OverviewPartner partnerDetails={partnerDetails} tenantId={tenantId!} />,
+      component: (
+        <OverviewPartner
+          partnerDetails={partnerDetails}
+          tenantId={tenantId!}
+          openEditOnLoad={openEditOnLoad}
+        />
+      ),
     },
     {
       label: "Clients",
@@ -186,7 +223,7 @@ export default function AdminPartnerDetails() {
       <>
         <AdminActiveTab />
         <AdminPageShell contentClassName="p-6 md:p-8 flex items-center justify-center flex-col">
-          <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[var(--theme-color)]" />
           <p className="ml-2 text-gray-700 mt-2">Loading partner details...</p>
         </AdminPageShell>
       </>
@@ -206,7 +243,7 @@ export default function AdminPartnerDetails() {
           )}
           <button
             onClick={() => navigate("/admin-dashboard/partners")}
-            className="px-6 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors"
+            className="px-6 py-3 bg-[var(--theme-color)] text-white font-medium rounded-full hover:bg-[var(--theme-color)] transition-colors"
           >
             Go back to Partners List
           </button>
@@ -224,7 +261,7 @@ export default function AdminPartnerDetails() {
         actions={
           <button
             onClick={() => navigate("/admin-dashboard/partners")}
-            className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-[#288DD1] hover:text-[#288DD1]"
+            className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-[var(--theme-color)] hover:text-[var(--theme-color)]"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Partners
@@ -233,10 +270,10 @@ export default function AdminPartnerDetails() {
         contentClassName="space-y-8"
       >
         <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {summaryCards.map(({ label, value, hint, icon: Icon, accentBg, accentText }) => (
+          {summaryCards.map(({ label, value, hint, icon: Icon, accentBg, accentText }: any) => (
             <div
               key={label}
-              className="rounded-3xl border border-[#EAECF0] bg-white p-5 shadow-sm transition hover:border-primary/50 hover:shadow-md"
+              className="rounded-3xl border border-[var(--theme-surface-alt)] bg-white p-5 shadow-sm transition hover:border-primary/50 hover:shadow-md"
             >
               <div className="flex items-start gap-3">
                 <span
@@ -267,13 +304,15 @@ export default function AdminPartnerDetails() {
                   onClick={() => setActiveButton(value)}
                   className={`group flex items-start gap-3 rounded-3xl border px-5 py-4 text-left shadow-sm transition ${
                     isActive
-                      ? "border-[#288DD1] bg-[#F3FAFF] shadow-md"
+                      ? "border-[var(--theme-color)] bg-[var(--theme-surface-alt)] shadow-md"
                       : "border-transparent bg-white hover:border-primary/40 hover:shadow-md"
                   }`}
                 >
                   <span
                     className={`mt-1 flex h-10 w-10 items-center justify-center rounded-2xl ${
-                      isActive ? "bg-primary/15 text-[#288DD1]" : "bg-slate-100 text-slate-500"
+                      isActive
+                        ? "bg-primary/15 text-[var(--theme-color)]"
+                        : "bg-slate-100 text-slate-500"
                     }`}
                   >
                     <Icon className="h-5 w-5" />
@@ -281,7 +320,7 @@ export default function AdminPartnerDetails() {
                   <div>
                     <p
                       className={`text-sm font-semibold ${
-                        isActive ? "text-[#0F172A]" : "text-slate-700"
+                        isActive ? "text-[var(--theme-heading-color)]" : "text-slate-700"
                       }`}
                     >
                       {label}
@@ -294,8 +333,8 @@ export default function AdminPartnerDetails() {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-[#EAECF0] bg-white p-6 shadow-sm">
-          {tabs.find((tab) => tab.value === activeButton)?.component ?? tabs[0].component}
+        <section className="rounded-3xl border border-[var(--theme-surface-alt)] bg-white p-6 shadow-sm">
+          {(tabs.find((tab) => tab.value === activeButton) ?? tabs[0])?.component ?? null}
         </section>
       </AdminPageShell>
     </>

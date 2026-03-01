@@ -69,7 +69,11 @@ const DnsZoneList: React.FC<DnsZoneListProps> = ({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                if (window.confirm(`Are you sure you want to delete the zone ${zone.name}?`)) {
+                if (
+                  globalThis.window.confirm(
+                    `Are you sure you want to delete the zone ${zone.name}?`
+                  )
+                ) {
                   onDeleteZone(zone.id);
                 }
               }}

@@ -1,15 +1,21 @@
 import React, { useState } from "react";
-import { Box, ArrowRight, AlertTriangle, Loader2 } from "lucide-react";
-import { useSetupInfrastructure } from "../../../hooks/adminHooks/projectHooks";
+import { ArrowRight, AlertTriangle, Loader2 } from "lucide-react";
+import {
+  useSetupInfrastructure,
+  SetupInfrastructureInput,
+} from "../../../hooks/adminHooks/projectHooks";
 import { ModernButton } from "../../../shared/components/ui";
 import NetworkPresetSelector, {
   DEFAULT_PRESETS,
 } from "../../../shared/components/network/NetworkPresetSelector";
 import { useNetworkPresets } from "../../../hooks/networkPresetHooks";
 
+import { UseMutationResult } from "@tanstack/react-query";
+import { Project } from "../../../types/project";
+
 interface InfrastructureSetupWizardProps {
-  project: any;
-  setupMutation?: any;
+  project: Project;
+  setupMutation?: UseMutationResult<unknown, unknown, SetupInfrastructureInput, unknown>;
 }
 
 const InfrastructureSetupWizard: React.FC<InfrastructureSetupWizardProps> = ({
@@ -17,7 +23,7 @@ const InfrastructureSetupWizard: React.FC<InfrastructureSetupWizardProps> = ({
   setupMutation: customSetupMutation,
 }) => {
   // Initialize with preset selected during project creation (if any), otherwise default to standard
-  const initialPreset = project.metadata?.network_preset || "standard";
+  const initialPreset = project.metadata?.["network_preset"] ?? "standard";
   const [selectedBlueprint, setSelectedBlueprint] = useState(initialPreset);
   const [showConfirm, setShowConfirm] = useState(false);
 

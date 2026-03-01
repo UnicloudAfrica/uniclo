@@ -1,7 +1,5 @@
-// @ts-nocheck
-import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AdminPageShell from "../components/AdminPageShell.tsx";
+import AdminPageShell from "../components/AdminPageShell";
 import { SharedCreateInvoice } from "../../shared/components";
 
 const CreateInvoice = () => {

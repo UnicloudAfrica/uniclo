@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import {
@@ -20,7 +19,7 @@ export const AttachSgModal = ({
     region,
     network_interface_id: networkInterfaceId,
   });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, any>>({});
   const { mutate: attach, isPending } = useAttachClientNetworkInterfaceSecurityGroup();
   const { data: securityGroups } = useFetchClientSecurityGroups(projectId, form.region, {
     enabled: !!projectId && !!form.region,
@@ -38,7 +37,7 @@ export const AttachSgModal = ({
 
   const submit = (e: any) => {
     if (e) e.preventDefault();
-    const eobj = {};
+    const eobj: Record<string, any> = {};
     if (!form.region) eobj.region = "Region is required";
     if (!form.security_group_id) eobj.security_group_id = "Security Group ID is required";
     if (!form.network_interface_id) eobj.network_interface_id = "ENI ID is required";
@@ -136,7 +135,7 @@ export const AttachSgModal = ({
             <button
               type="submit"
               disabled={isPending}
-              className="px-4 py-2 rounded bg-[#288DD1] text-white text-sm disabled:opacity-50"
+              className="px-4 py-2 rounded bg-[var(--theme-color)] text-white text-sm disabled:opacity-50"
             >
               {isPending ? "Attaching..." : "Attach"}
             </button>
@@ -159,7 +158,7 @@ export const DetachSgModal = ({
     region,
     network_interface_id: networkInterfaceId,
   });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, any>>({});
   const { mutate: detach, isPending } = useDetachClientNetworkInterfaceSecurityGroup();
   const { data: securityGroups } = useFetchClientSecurityGroups(projectId, form.region, {
     enabled: !!projectId && !!form.region,
@@ -177,7 +176,7 @@ export const DetachSgModal = ({
 
   const submit = (e: any) => {
     if (e) e.preventDefault();
-    const eobj = {};
+    const eobj: Record<string, any> = {};
     if (!form.region) eobj.region = "Region is required";
     if (!form.security_group_id) eobj.security_group_id = "Security Group ID is required";
     if (!form.network_interface_id) eobj.network_interface_id = "ENI ID is required";
@@ -275,7 +274,7 @@ export const DetachSgModal = ({
             <button
               type="submit"
               disabled={isPending}
-              className="px-4 py-2 rounded bg-[#288DD1] text-white text-sm disabled:opacity-50"
+              className="px-4 py-2 rounded bg-[var(--theme-color)] text-white text-sm disabled:opacity-50"
             >
               {isPending ? "Detaching..." : "Detach"}
             </button>

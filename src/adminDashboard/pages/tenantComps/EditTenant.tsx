@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useEffect, useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useUpdateTenant } from "../../../hooks/adminHooks/tenantHooks";
@@ -170,7 +169,7 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit overflow-y-auto py-10">
       <div className="bg-white rounded-[24px] max-w-4xl mx-4 w-full my-auto">
         {/* Header */}
-        <div className="flex justify-between items-center px-8 py-6 border-b bg-[#F2F2F2] rounded-t-[24px]">
+        <div className="flex justify-between items-center px-8 py-6 border-b bg-[var(--theme-surface-alt)] rounded-t-[24px]">
           <h2 className="text-xl font-semibold text-gray-800">Edit Partner</h2>
           <button
             onClick={onClose}
@@ -437,7 +436,7 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
             <button
               type="submit"
               disabled={isPending}
-              className="px-8 py-2.5 bg-[#288DD1] text-white font-medium rounded-lg hover:bg-[#1F7AC4] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              className="px-8 py-2.5 bg-[var(--theme-color)] text-white font-medium rounded-lg hover:bg-[rgb(var(--theme-color-500))] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             >
               {isPending ? (
                 <>

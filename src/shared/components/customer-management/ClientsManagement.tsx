@@ -1,14 +1,6 @@
-// @ts-nocheck
-import React, { useMemo, useState } from "react";
-import {
-  Users,
-  ShieldCheck,
-  Building2,
-  UserPlus,
-  Filter,
-  ArrowUpRight,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
+import { Users, ShieldCheck, Building2, UserPlus, Filter, ArrowUpRight } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import ModernStatsCard from "../ui/ModernStatsCard";
 import ModernTable from "../ui/ModernTable";
@@ -20,29 +12,70 @@ import ClientEditModal from "./ClientEditModal";
 import PromoteClientModal from "../../../adminDashboard/pages/clientComps/PromoteClientModal";
 import adminSilentApi from "../../../index/admin/silent";
 import tenantSilentApi from "../../../index/tenant/silentTenant";
+import adminFileApi from "../../../index/admin/fileapi";
+import tenantFileApi from "../../../index/tenant/fileapi";
 import ToastUtil from "../../../utils/toastUtil";
+import { Client } from "../../../types/client";
 
-const encodeId = (id) => encodeURIComponent(btoa(id));
-const resolveClientId = (client) => client?.identifier || client?.id || client?.uuid || "";
+const encodeId = (id: string | number) => encodeURIComponent(btoa(String(id)));
+const decodeId = (encodedId: string) => {
+  try {
+    return atob(decodeURIComponent(encodedId));
+  } catch {
+    return null;
+  }
+};
+const resolveClientId = (client: Client | null): string | number =>
+  client?.identifier || client?.id || client?.uuid || "";
 
-const ClientsManagement = ({ context = "admin" }) => {
+interface ClientsManagementProps {
+  context?: "admin" | "tenant";
+}
+
+const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin" }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
 
   const [selectedTenantId, setSelectedTenantId] = useState("");
   const [isDeleteClientModalOpen, setIsDeleteClientModalOpen] = useState(false);
   const [isEditClientModalOpen, setIsEditClientModalOpen] = useState(false);
   const [isPromoteClientModalOpen, setIsPromoteClientModalOpen] = useState(false);
-  const [selectedClient, setSelectedClient] = useState(null);
-  const [selectedClients, setSelectedClients] = useState([]);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedClients, setSelectedClients] = useState<string[]>([]);
 
   const adminClientsQuery = useAdminFetchClients({ enabled: context === "admin" });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tenantClientsQuery = useTenantFetchClients(null, { enabled: context === "tenant" });
 
-  const clients = context === "tenant" ? tenantClientsQuery.data : adminClientsQuery.data;
-  const isFetching = context === "tenant" ? tenantClientsQuery.isFetching : adminClientsQuery.isFetching;
+  const clients: Client[] =
+    (context === "tenant" ? tenantClientsQuery.data : adminClientsQuery.data) || [];
+  const isFetching =
+    context === "tenant" ? tenantClientsQuery.isFetching : adminClientsQuery.isFetching;
 
   const clientData = useMemo(() => clients || [], [clients]);
+
+  useEffect(() => {
+    if (context !== "admin") return;
+    const params = new URLSearchParams(location.search);
+    const editId = params.get("edit");
+    if (!editId || isFetching) return;
+
+    const decodedId = decodeId(editId);
+    if (!decodedId) return;
+
+    const match = clientData.find(
+      (client) => String(client.identifier ?? client.id ?? client.uuid ?? "") === String(decodedId)
+    );
+
+    if (match) {
+      setSelectedClient(match);
+      setIsEditClientModalOpen(true);
+    }
+
+    params.delete("edit");
+    navigate(`${location.pathname}${params.toString() ? `?${params}` : ""}`, { replace: true });
+  }, [clientData, context, isFetching, location.pathname, location.search, navigate]);
 
   const uniqueTenants = useMemo(() => {
     if (context !== "admin") return [];
@@ -60,13 +93,12 @@ const ClientsManagement = ({ context = "admin" }) => {
 
   const totalClients = clientData.length;
   const activeClients = clientData.filter(
-    (client) => client.status === "active" || client.is_active
+    (client) => client.status === "active" || (client as any).is_active
   ).length;
   const tenantCount = context === "admin" ? Math.max(uniqueTenants.length - 1, 0) : 1;
   const pendingClients = clientData.filter((client) => client.status === "pending").length;
 
-
-  const handleViewDetails = (client) => {
+  const handleViewDetails = (client: Client) => {
     if (context === "admin") {
       const encodedId = encodeId(client.identifier || client.id);
       const clientFullName = encodeURIComponent(`${client.first_name} ${client.last_name}`);
@@ -80,17 +112,17 @@ const ClientsManagement = ({ context = "admin" }) => {
     }
   };
 
-  const handleEditClient = (client) => {
+  const handleEditClient = (client: Client) => {
     setSelectedClient(client);
     setIsEditClientModalOpen(true);
   };
 
-  const handleDeleteClient = (client) => {
+  const handleDeleteClient = (client: Client) => {
     setSelectedClient(client);
     setIsDeleteClientModalOpen(true);
   };
 
-  const handlePromoteClient = (client) => {
+  const handlePromoteClient = (client: Client) => {
     if (context !== "admin") return;
     setSelectedClient(client);
     setIsPromoteClientModalOpen(true);
@@ -111,14 +143,15 @@ const ClientsManagement = ({ context = "admin" }) => {
     setSelectedClient(null);
   };
 
-  const apiClient = context === "admin" ? adminSilentApi : tenantSilentApi;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const apiClient: any = context === "admin" ? adminSilentApi : tenantSilentApi;
 
   const refreshClients = () => {
     queryClient.invalidateQueries({ queryKey: ["clients"] });
   };
 
   const handleBulkDelete = async () => {
-    if (!window.confirm(`Delete ${selectedClients.length} client(s)?`)) return;
+    if (!globalThis.window.confirm(`Delete ${selectedClients.length} client(s)?`)) return;
 
     try {
       await apiClient("DELETE", "/clients/bulk-delete", {
@@ -134,20 +167,16 @@ const ClientsManagement = ({ context = "admin" }) => {
   };
 
   const handleBulkExport = async (format = "csv") => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fileApiClient: any = context === "admin" ? adminFileApi : tenantFileApi;
     try {
-      const response = await apiClient(
-        "POST",
-        "/clients/bulk-export",
-        {
-          client_ids: selectedClients,
-          format,
-        },
-        {
-          responseType: "blob",
-        }
-      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const response: any = await fileApiClient("POST", "/clients/bulk-export", {
+        client_ids: selectedClients,
+        format,
+      });
 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const url = globalThis.window.URL.createObjectURL(new Blob([response]));
       const link = document.createElement("a");
       link.href = url;
       link.setAttribute("download", `clients_${Date.now()}.${format}`);
@@ -156,14 +185,15 @@ const ClientsManagement = ({ context = "admin" }) => {
       link.remove();
 
       ToastUtil.success(`Successfully exported ${selectedClients.length} client(s)`);
-    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       ToastUtil.error("Failed to export clients");
       console.error("Bulk export error:", error);
     }
   };
 
   const handleBulkDuplicate = async () => {
-    if (!window.confirm(`Duplicate ${selectedClients.length} client(s)?`)) return;
+    if (!globalThis.window.confirm(`Duplicate ${selectedClients.length} client(s)?`)) return;
 
     try {
       await apiClient("POST", "/clients/bulk-duplicate", {
@@ -180,7 +210,7 @@ const ClientsManagement = ({ context = "admin" }) => {
   };
 
   const handleBulkArchive = async () => {
-    if (!window.confirm(`Archive ${selectedClients.length} client(s)?`)) return;
+    if (!globalThis.window.confirm(`Archive ${selectedClients.length} client(s)?`)) return;
 
     try {
       await apiClient("POST", "/clients/bulk-archive", {
@@ -196,8 +226,8 @@ const ClientsManagement = ({ context = "admin" }) => {
     }
   };
 
-  const handleDuplicateClient = async (client) => {
-    if (!window.confirm(`Duplicate ${client.first_name} ${client.last_name}?`)) return;
+  const handleDuplicateClient = async (client: Client) => {
+    if (!globalThis.window.confirm(`Duplicate ${client.first_name} ${client.last_name}?`)) return;
 
     try {
       await apiClient("POST", `/clients/${client.identifier || client.id}/duplicate`);
@@ -209,8 +239,8 @@ const ClientsManagement = ({ context = "admin" }) => {
     }
   };
 
-  const handleArchiveClient = async (client) => {
-    if (!window.confirm(`Archive ${client.first_name} ${client.last_name}?`)) return;
+  const handleArchiveClient = async (client: Client) => {
+    if (!globalThis.window.confirm(`Archive ${client.first_name} ${client.last_name}?`)) return;
 
     try {
       await apiClient("POST", `/clients/${client.identifier || client.id}/archive`);
@@ -226,7 +256,7 @@ const ClientsManagement = ({ context = "admin" }) => {
     {
       key: "name",
       header: "Name",
-      render: (_value, item) => (
+      render: (_value: any, item: Client) => (
         <div className="font-medium text-gray-900">
           {item.first_name} {item.last_name}
         </div>
@@ -236,7 +266,7 @@ const ClientsManagement = ({ context = "admin" }) => {
     {
       key: "email",
       header: "Email Address",
-      render: (_value, item) => <div className="text-gray-600">{item.email}</div>,
+      render: (_value: any, item: Client) => <div className="text-gray-600">{item.email}</div>,
       sortable: true,
     },
     ...(context === "admin"
@@ -244,7 +274,7 @@ const ClientsManagement = ({ context = "admin" }) => {
           {
             key: "tenant_name",
             header: "Tenant Name",
-            render: (_value, item) => (
+            render: (_value: any, item: Client) => (
               <div className="text-gray-600">{item.tenant?.name || "N/A"}</div>
             ),
             sortable: true,
@@ -254,7 +284,7 @@ const ClientsManagement = ({ context = "admin" }) => {
     {
       key: "created_at",
       header: "Created",
-      render: (_value, item) => (
+      render: (_value: any, item: Client) => (
         <div className="text-gray-600">
           {item.created_at ? new Date(item.created_at).toLocaleDateString() : "—"}
         </div>
@@ -264,7 +294,7 @@ const ClientsManagement = ({ context = "admin" }) => {
     {
       key: "actions",
       header: "Actions",
-      render: (_value, item) => (
+      render: (_value: any, item: Client) => (
         <div className="flex justify-end">
           <TableActionButtons
             onView={() => handleViewDetails(item)}
@@ -298,7 +328,8 @@ const ClientsManagement = ({ context = "admin" }) => {
   const filteredData = useMemo(() => {
     if (context !== "admin") return clientData;
     if (!selectedTenantId) return clientData;
-    return clientData.filter((item) => String(item.tenant_id) === String(selectedTenantId));
+    // eslint-disable-next-line eqeqeq
+    return clientData.filter((item) => String(item.tenant_id) == String(selectedTenantId));
   }, [clientData, selectedTenantId, context]);
 
   return (
@@ -345,24 +376,28 @@ const ClientsManagement = ({ context = "admin" }) => {
         bulkActions={[
           {
             label: "Export as CSV",
+            variant: "outline",
             onClick: () => handleBulkExport("csv"),
           },
           {
             label: "Export as Excel",
+            variant: "outline",
             onClick: () => handleBulkExport("xlsx"),
           },
           {
             label: "Duplicate",
+            variant: "outline",
             onClick: handleBulkDuplicate,
           },
           {
             label: "Archive",
+            variant: "outline",
             onClick: handleBulkArchive,
           },
           {
             label: "Delete",
             onClick: handleBulkDelete,
-            variant: "danger",
+            variant: "outlineDanger",
           },
         ]}
         filterSlot={
@@ -378,7 +413,7 @@ const ClientsManagement = ({ context = "admin" }) => {
                   onChange={(e) => setSelectedTenantId(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 >
-                  {uniqueTenants.map((tenant) => (
+                  {uniqueTenants.map((tenant: any) => (
                     <option key={tenant.id} value={tenant.id}>
                       {tenant.name}
                     </option>
@@ -410,6 +445,7 @@ const ClientsManagement = ({ context = "admin" }) => {
       {context === "admin" && (
         <PromoteClientModal
           isOpen={isPromoteClientModalOpen}
+          // eslint-disable-next-line @typescript-eslint/no-empty-function
           onClose={closePromoteClientModal}
           client={selectedClient}
           onPromoted={() => {

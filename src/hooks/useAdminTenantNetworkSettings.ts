@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentAdminApi from "../index/admin/silent";
 import adminApi from "../index/admin/api";

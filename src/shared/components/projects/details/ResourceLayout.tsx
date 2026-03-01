@@ -5,14 +5,14 @@ export interface ResourceNavItem {
   id: string;
   label: string;
   icon: LucideIcon;
-  count?: number;
-  category?: string;
-  description?: string;
-  disabled?: boolean;
+  count?: number | undefined;
+  category?: string | undefined;
+  description?: string | undefined;
+  disabled?: boolean | undefined;
 }
 
 interface ResourceIndexPanelProps {
-  title?: string;
+  title?: string | undefined;
   items: ResourceNavItem[];
   activeId: string;
   onSelect: (id: string) => void;
@@ -106,12 +106,12 @@ const ResourceIndexPanel: React.FC<ResourceIndexPanelProps> = ({
 
 interface ResourceCanvasProps {
   title: string;
-  description?: string;
-  icon?: LucideIcon;
-  count?: number;
-  actions?: React.ReactNode;
+  description?: string | undefined;
+  icon?: LucideIcon | undefined;
+  count?: number | undefined;
+  actions?: React.ReactNode | undefined;
   children: React.ReactNode;
-  className?: string;
+  className?: string | undefined;
 }
 
 const ResourceCanvas: React.FC<ResourceCanvasProps> = ({
@@ -154,12 +154,12 @@ const ResourceCanvas: React.FC<ResourceCanvasProps> = ({
 };
 
 interface ResourceSplitLayoutProps {
-  navTitle?: string;
+  navTitle?: string | undefined;
   items: ResourceNavItem[];
   activeId: string;
   onSelect: (id: string) => void;
   children: React.ReactNode;
-  className?: string;
+  className?: string | undefined;
 }
 
 const ResourceSplitLayout: React.FC<ResourceSplitLayoutProps> = ({

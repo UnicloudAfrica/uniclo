@@ -1,7 +1,6 @@
-// @ts-nocheck
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { clearAllAuthSessions } from "../../stores/sessionUtils";
+import { logoutActiveSession } from "../../stores/sessionUtils";
 import { DashboardSidebar } from "../../shared/components/sidebar";
 import { tenantMenuItems } from "../../shared/config/sidebarMenus";
 import useSidebarStore from "../../stores/sidebarStore";
@@ -24,11 +23,11 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({ tenantData }) => {
   const navigate = useNavigate();
   const { isMobileOpen, closeMobile } = useSidebarStore();
 
-  const themeColor = tenantData?.color || "#288DD1";
+  const themeColor = tenantData?.color || "var(--theme-color)";
 
   const handleLogout = async () => {
     try {
-      clearAllAuthSessions();
+      await logoutActiveSession();
       closeMobile();
       navigate("/tenant-signin");
     } catch (error) {

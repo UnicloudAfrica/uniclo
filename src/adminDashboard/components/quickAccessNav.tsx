@@ -1,5 +1,3 @@
-// @ts-nocheck
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Server, Settings, Terminal, Zap, Users, Activity, TrendingUp } from "lucide-react";
 

@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Loader2,
@@ -12,32 +11,48 @@ import {
   Building,
   Server,
   Activity,
-  ChevronRight,
 } from "lucide-react";
-import ModernTable from "../../shared/components/ui/ModernTable";
+import ModernTable, { Column } from "../../shared/components/ui/ModernTable";
 import { ModernCard } from "../../shared/components/ui";
 import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
 import { ModernButton } from "../../shared/components/ui";
-import AdminPageShell from "../components/AdminPageShell.tsx";
+import AdminPageShell from "../components/AdminPageShell";
 import { designTokens } from "../../styles/designTokens";
 import DeleteRegionModal from "./regionComps/deleteRegion";
-import { useFetchRegions, useDeleteRegion } from "../../hooks/adminHooks/regionHooks";
+import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
 import useAuthRedirect from "../../utils/adminAuthRedirect";
+
+interface RegionRecord {
+  id?: string | number | null;
+  code?: string;
+  name?: string;
+  provider?: string;
+  country_code?: string;
+  city?: string;
+  status?: string;
+  is_active?: boolean;
+}
 
 const AdminRegion = () => {
   const { isLoading } = useAuthRedirect();
-  const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
+  const { isFetching: isRegionsFetching, data: regionsData } = useFetchRegions();
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [selectedRegion, setSelectedRegion] = useState(null);
+  const [selectedRegion, setSelectedRegion] = useState<RegionRecord | null>(null);
 
   // Calculate region statistics
-  const regionList = Array.isArray(regions) ? regions : [];
+  const regionList: RegionRecord[] = Array.isArray(regionsData)
+    ? (regionsData as RegionRecord[])
+    : [];
   const uniqueCountries = new Set(
-    regionList.map((region: any) => region.country_code).filter(Boolean)
+    regionList.map((region: RegionRecord) => region.country_code).filter(Boolean)
   );
-  const uniqueProviders = new Set(regionList.map((region: any) => region.provider).filter(Boolean));
-  const uniqueCities = new Set(regionList.map((region: any) => region.city).filter(Boolean));
-  const activeRegionsCount = regionList.filter((region) => region.is_active).length;
+  const uniqueProviders = new Set(
+    regionList.map((region: RegionRecord) => region.provider).filter(Boolean)
+  );
+  const uniqueCities = new Set(
+    regionList.map((region: RegionRecord) => region.city).filter(Boolean)
+  );
+  const activeRegionsCount = regionList.filter((region: RegionRecord) => region.is_active).length;
 
   const regionStats = {
     totalRegions: regionList.length,
@@ -46,7 +61,7 @@ const AdminRegion = () => {
     uniqueProviders: uniqueProviders.size,
     uniqueCities: uniqueCities.size,
   };
-  const openDeleteModal = (item: any) => {
+  const openDeleteModal = (item: RegionRecord) => {
     setSelectedRegion(item);
     setDeleteModalOpen(true);
   };
@@ -56,26 +71,26 @@ const AdminRegion = () => {
 
     // Define columns for ModernTable
   };
-  const columns = [
+  const columns: Column<RegionRecord>[] = [
     {
       key: "serialNumber",
       header: "S/N",
-      render: (value, row, index) => index + 1,
+      render: (_value: unknown, _row: RegionRecord, index: number) => index + 1,
     },
     {
       key: "name",
       header: "Region Name",
-      render: (value) => (
+      render: (value: unknown) => (
         <div className="flex items-center gap-2">
           <MapPin size={16} style={{ color: designTokens.colors.primary[500] }} />
-          <span className="font-medium">{value}</span>
+          <span className="font-medium">{String(value || "—")}</span>
         </div>
       ),
     },
     {
       key: "provider",
       header: "Provider",
-      render: (value) => (
+      render: (value: unknown) => (
         <div className="flex items-center gap-2">
           <Server size={16} style={{ color: designTokens.colors.success[500] }} />
           <span
@@ -85,7 +100,7 @@ const AdminRegion = () => {
               color: designTokens.colors.success[700],
             }}
           >
-            {value}
+            {String(value || "—")}
           </span>
         </div>
       ),
@@ -93,27 +108,27 @@ const AdminRegion = () => {
     {
       key: "country_code",
       header: "Country",
-      render: (value) => (
+      render: (value: unknown) => (
         <div className="flex items-center gap-2">
           <Globe size={16} style={{ color: designTokens.colors.warning[500] }} />
-          <span>{value}</span>
+          <span>{String(value || "—")}</span>
         </div>
       ),
     },
     {
       key: "city",
       header: "City",
-      render: (value) => (
+      render: (value: unknown) => (
         <div className="flex items-center gap-2">
           <Building size={16} style={{ color: designTokens.colors.neutral[500] }} />
-          <span>{value}</span>
+          <span>{String(value || "—")}</span>
         </div>
       ),
     },
     {
       key: "status",
       header: "Status",
-      render: (value) => (
+      render: (value: unknown) => (
         <span
           className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium capitalize"
           style={{
@@ -128,14 +143,14 @@ const AdminRegion = () => {
           }}
         >
           <Activity size={14} />
-          {value || "unknown"}
+          {String(value || "unknown")}
         </span>
       ),
     },
     {
       key: "is_active",
       header: "Active",
-      render: (value) => (
+      render: (value: unknown) => (
         <span
           className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
           style={{
@@ -156,17 +171,19 @@ const AdminRegion = () => {
     {
       icon: <Eye size={16} />,
       label: "",
-      onClick: (item) => (window.location.href = `/admin-dashboard/regions/${item.code}`),
+      onClick: (item: RegionRecord) =>
+        (globalThis.window.location.href = `/admin-dashboard/regions/${item.code}`),
     },
     {
       icon: <Edit size={16} />,
       label: "",
-      onClick: (item) => (window.location.href = `/admin-dashboard/regions/${item.code}/edit`),
+      onClick: (item: RegionRecord) =>
+        (globalThis.window.location.href = `/admin-dashboard/regions/${item.code}/edit`),
     },
     {
       icon: <Trash2 size={16} />,
       label: "",
-      onClick: (item) => openDeleteModal(item),
+      onClick: (item: RegionRecord) => openDeleteModal(item),
     },
   ];
 
@@ -240,8 +257,8 @@ const AdminRegion = () => {
             exportable={true}
             sortable={true}
             loading={isRegionsFetching}
-            onRowClick={(region) =>
-              (window.location.href = `/admin-dashboard/regions/${region.code}`)
+            onRowClick={(region: RegionRecord) =>
+              (globalThis.window.location.href = `/admin-dashboard/regions/${region.code}`)
             }
             emptyMessage="No regions configured. Add regions to manage your infrastructure."
           />

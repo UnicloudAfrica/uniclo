@@ -1,11 +1,10 @@
-// @ts-nocheck
 import React, { useEffect, useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import logo from "./assets/logo.png";
 import { useNavigate } from "react-router-dom";
 
 import useAdminAuthStore from "../../stores/adminAuthStore";
-// @ts-ignore
+
 import useAuthRedirect from "../../utils/adminAuthRedirect";
 import { useLoginAdminAccount } from "../../hooks/adminHooks/authHooks";
 import {
@@ -14,6 +13,7 @@ import {
   useApplyBrandingTheme,
 } from "../../hooks/useBrandingTheme";
 import useImageFallback from "../../hooks/useImageFallback";
+import AuthShell from "../../components/auth/AuthShell";
 
 interface LoginErrors {
   email?: string;
@@ -33,9 +33,18 @@ export default function AdminLogin() {
   const { isLoading } = useAuthRedirect();
   const { data: branding } = usePlatformBrandingTheme();
   useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
-  const logoSrc = resolveBrandLogo(branding, logo);
-  const logoAlt = branding?.company?.name ? `${branding.company.name} Logo` : "Logo";
-  const companyName = branding?.company?.name || "Unicloud Africa";
+  const fallbackBrand = {
+    name: "Unicloud Africa",
+    logo,
+    color: "var(--theme-color)",
+  };
+  const accentColor = branding?.accentColor || fallbackBrand.color;
+  const logoSrc = resolveBrandLogo(branding, fallbackBrand.logo);
+  const brandingCompanyName = branding?.company?.["name"];
+  const logoAlt = brandingCompanyName
+    ? `${brandingCompanyName} Logo`
+    : `${fallbackBrand.name} Logo`;
+  const companyName = brandingCompanyName || fallbackBrand.name;
   const { src: resolvedLogoSrc, onError: handleLogoError } = useImageFallback(logoSrc, logo);
 
   useEffect(() => {
@@ -99,104 +108,94 @@ export default function AdminLogin() {
   if (isLoading) {
     return (
       <div className=" w-full h-svh flex items-center justify-center">
-        <Loader2 className=" w-12 text-[#288DD1] animate-spin" />
+        <Loader2 className=" w-12 text-[var(--theme-color)] animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex p-8 font-Outfit">
-      {/* Left Side - Login Form */}
-      <div className="flex-1 flex flex-col justify-center py bg-white">
-        <div className="max-w-md mx-auto w-full">
-          {/* Logo */}
-          <div className="mb-8">
-            <div className="flex items-center justify-center">
-              <img
-                src={resolvedLogoSrc}
-                className="w-[100px]"
-                alt={logoAlt}
-                onError={handleLogoError}
-              />
-            </div>
-          </div>
-
-          {/* Welcome Title */}
-          <div className="mb-8 w-full text-center">
-            <h1 className="text-2xl font-semibold text-[#121212] mb-2">Welcome Back</h1>
-            <p className="text-[#676767] text-sm">
-              Welcome back to {companyName}. Enter your details to access the admin dashboard
-            </p>
-          </div>
-
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email Field */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter email address"
-                className={`w-full input-field ${
-                  errors.email ? "border-red-500" : "border-gray-300"
-                }`}
-              />
-              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-            </div>
-
-            {/* Password Field */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter password"
-                  className={`w-full pr-10 input-field ${
-                    errors.password ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-5 flex items-center"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-gray-400" />
-                  )}
-                </button>
-              </div>
-              {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
-            </div>
-
-            {/* General Error */}
-            {errors.general && <p className="text-red-500 text-xs mt-1">{errors.general}</p>}
-
-            {/* Login Button */}
-            <button
-              type="submit"
-              disabled={isPending}
-              className="w-full bg-[#288DD1] hover:bg-[#6db1df] text-white font-semibold py-3 px-4 rounded-[30px] transition-colors focus:outline-none focus:ring-1 focus:ring-[#288DD1] focus:ring-offset-2 flex items-center justify-center"
-            >
-              {isPending ? <Loader2 className="w-4 text-white animate-spin" /> : "Login"}
-            </button>
-          </form>
+    <AuthShell>
+      <div className="max-w-md mx-auto w-full bg-[var(--theme-card-bg)] p-6 rounded-xl shadow-md">
+        <div className="mb-6 text-center">
+          <img
+            src={resolvedLogoSrc}
+            className="w-[100px] mx-auto mb-4 rounded"
+            alt={logoAlt}
+            onError={handleLogoError}
+          />
+          <h1 className="text-2xl font-semibold text-[var(--theme-heading-color)] mb-2">
+            Welcome Back
+          </h1>
+          <p className="text-[var(--theme-text-color)] text-sm">
+            Welcome back to {companyName}. Enter your details to access the admin dashboard
+          </p>
         </div>
-      </div>
 
-      {/* Right Side - Illustration */}
-      <div className="flex-1 side-bg hidden lg:flex items-center justify-center relative overflow-hidden"></div>
-    </div>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-[var(--theme-heading-color)] mb-2"
+            >
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter email address"
+              className={`w-full auth-input ${errors.email ? "auth-input-error" : ""}`}
+            />
+            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+          </div>
+
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-[var(--theme-heading-color)] mb-2"
+            >
+              Password
+            </label>
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter password"
+                className={`w-full pr-10 auth-input ${errors.password ? "auth-input-error" : ""}`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-5 flex items-center"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4 text-[var(--theme-muted-color)]" />
+                ) : (
+                  <Eye className="h-4 w-4 text-[var(--theme-muted-color)]" />
+                )}
+              </button>
+            </div>
+            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+          </div>
+
+          {errors.general && <p className="text-red-500 text-xs mt-1">{errors.general}</p>}
+
+          <button
+            type="submit"
+            disabled={isPending}
+            className="w-full hover:opacity-80 text-white font-semibold py-3 px-4 rounded-lg transition-opacity focus:outline-none focus:ring-1 focus:ring-offset-2 flex items-center justify-center"
+            style={{
+              backgroundColor: accentColor,
+              transition: "opacity 0.3s",
+            }}
+          >
+            {isPending ? <Loader2 className="w-4 text-white animate-spin" /> : "Login"}
+          </button>
+        </form>
+      </div>
+    </AuthShell>
   );
 }

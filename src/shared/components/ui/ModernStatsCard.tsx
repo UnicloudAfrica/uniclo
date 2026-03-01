@@ -1,14 +1,20 @@
-import React, { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, ArrowUp, ArrowDown } from "lucide-react";
-import { designTokens } from "../../../styles/designTokens";
 import {
-  useAnimations,
-  // @ts-ignore
-  animationUtils,
-  // @ts-ignore
-  useReducedMotion,
-} from "../../../hooks/useAnimations";
+  useState,
+  useEffect,
+  isValidElement,
+  cloneElement,
+  type ReactElement,
+  type CSSProperties,
+} from "react";
+import { ArrowUp, ArrowDown } from "lucide-react";
+import { designTokens } from "../../../styles/designTokens";
+import { useAnimations, useReducedMotion } from "../../../hooks/useAnimations";
 import { useResponsive } from "../../../hooks/useResponsive";
+
+type StatsIconProps = {
+  size?: number;
+  color?: string;
+};
 
 interface ModernStatsCardProps {
   title?: string;
@@ -17,7 +23,7 @@ interface ModernStatsCardProps {
   change?: number | null;
   changeType?: "percentage" | "absolute" | "custom";
   trend?: "up" | "down" | "neutral";
-  icon?: React.ReactElement | null;
+  icon?: ReactElement<StatsIconProps> | null;
   color?: "primary" | "success" | "warning" | "error" | "info";
   size?: "sm" | "md" | "lg";
   loading?: boolean;
@@ -31,7 +37,7 @@ interface ModernStatsCardProps {
   responsive?: boolean;
 }
 
-const ModernStatsCard: React.FC<ModernStatsCardProps> = ({
+const ModernStatsCard = ({
   title = "",
   value = "",
   previousValue = null,
@@ -50,23 +56,19 @@ const ModernStatsCard: React.FC<ModernStatsCardProps> = ({
   animateOnMount = true,
   staggerDelay = 0,
   responsive = true,
-}) => {
+}: ModernStatsCardProps) => {
   // Animation hooks
-  const { useInView, useLoadingAnimation, useFlashAnimation, useHoverAnimation } = useAnimations();
-  const [inViewRef, isInView] = useInView(0.1);
+  const { useInView, useLoadingAnimation, useHoverAnimation } = useAnimations();
+  const [inViewRef, isInView] = useInView<HTMLDivElement>(0.1);
   const showLoadingAnimation = useLoadingAnimation(loading);
-  const { flashState, triggerSuccess, triggerError } = useFlashAnimation();
   const { isHovered, hoverProps } = useHoverAnimation();
   const prefersReducedMotion = useReducedMotion();
 
   // Responsive hooks
-  const { isMobile, isTablet, isDesktop, getResponsiveValue, getFontSize, getSpacing } =
-    useResponsive();
+  const { isMobile, isTablet, isDesktop, getResponsiveValue } = useResponsive();
 
   // State for mount animations
   const [isMounted, setIsMounted] = useState(false);
-  const [prevValue, setPrevValue] = useState(value);
-
   // Effect for mount animation
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -76,10 +78,6 @@ const ModernStatsCard: React.FC<ModernStatsCardProps> = ({
     return () => clearTimeout(timer);
   }, [staggerDelay]);
 
-  // Effect for value change animation
-  useEffect(() => {
-    setPrevValue(value);
-  }, [value, loading]);
   const colors = {
     primary: {
       bg: designTokens.colors.primary[50],
@@ -282,7 +280,7 @@ const ModernStatsCard: React.FC<ModernStatsCardProps> = ({
     return classes.join(" ");
   };
 
-  const cardStyles: React.CSSProperties = {
+  const cardStyles: CSSProperties = {
     backgroundColor: designTokens.colors.neutral[0],
     border: `1px solid ${designTokens.colors.neutral[200]}`,
     borderRadius: designTokens.borderRadius.xl,
@@ -301,14 +299,14 @@ const ModernStatsCard: React.FC<ModernStatsCardProps> = ({
       }),
   };
 
-  const headerStyles: React.CSSProperties = {
+  const headerStyles: CSSProperties = {
     display: "flex",
     alignItems: "flex-start",
     justifyContent: "space-between",
     marginBottom: "12px",
   };
 
-  const titleStyles: React.CSSProperties = {
+  const titleStyles: CSSProperties = {
     fontSize: sizes[size as keyof typeof sizes].titleSize,
     fontWeight: designTokens.typography.fontWeight.medium,
     color: designTokens.colors.neutral[600],
@@ -316,7 +314,7 @@ const ModernStatsCard: React.FC<ModernStatsCardProps> = ({
     lineHeight: "1.4",
   };
 
-  const iconContainerStyles: React.CSSProperties = {
+  const iconContainerStyles: CSSProperties = {
     padding: "8px",
     borderRadius: designTokens.borderRadius.lg,
     backgroundColor: colors[color].bg,
@@ -327,14 +325,14 @@ const ModernStatsCard: React.FC<ModernStatsCardProps> = ({
     flexShrink: 0,
   };
 
-  const valueContainerStyles: React.CSSProperties = {
+  const valueContainerStyles: CSSProperties = {
     display: "flex",
     alignItems: "baseline",
     gap: "4px",
     marginBottom: description || changeValue !== null ? "8px" : "0",
   };
 
-  const valueStyles: React.CSSProperties = {
+  const valueStyles: CSSProperties = {
     fontSize: sizes[size as keyof typeof sizes].valueSize,
     fontWeight: designTokens.typography.fontWeight.bold,
     color: designTokens.colors.neutral[900],
@@ -344,7 +342,7 @@ const ModernStatsCard: React.FC<ModernStatsCardProps> = ({
     position: "relative",
   };
 
-  const loadingSkeletonStyles: React.CSSProperties = {
+  const loadingSkeletonStyles: CSSProperties = {
     width: "80%",
     height: sizes[size as keyof typeof sizes].valueSize,
     backgroundColor: designTokens.colors.neutral[200],
@@ -353,36 +351,36 @@ const ModernStatsCard: React.FC<ModernStatsCardProps> = ({
     overflow: "hidden",
   };
 
-  const prefixSuffixStyles: React.CSSProperties = {
+  const prefixSuffixStyles: CSSProperties = {
     fontSize: sizes[size as keyof typeof sizes].titleSize,
     fontWeight: designTokens.typography.fontWeight.medium,
     color: designTokens.colors.neutral[500],
   };
 
-  const changeContainerStyles: React.CSSProperties = {
+  const changeContainerStyles: CSSProperties = {
     display: "flex",
     alignItems: "center",
     gap: "4px",
     marginTop: "4px",
   };
 
-  const changeTextStyles: React.CSSProperties = {
+  const changeTextStyles: CSSProperties = {
     fontSize: sizes[size as keyof typeof sizes].changeSize,
     fontWeight: designTokens.typography.fontWeight.medium,
     color: getTrendColor(),
   };
 
-  const descriptionStyles: React.CSSProperties = {
-    fontSize: designTokens.typography.fontSize.xs[0] as any,
+  const descriptionStyles: CSSProperties = {
+    fontSize: designTokens.typography.fontSize.xs[0],
     color: designTokens.colors.neutral[500],
     marginTop: "4px",
     lineHeight: "1.4",
   };
 
-  const loadingOverlayStyles: React.CSSProperties = {
+  const loadingOverlayStyles: CSSProperties = {
     position: "absolute",
     inset: 0,
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    backgroundColor: "rgb(var(--theme-neutral-50) / 0.8)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -413,7 +411,7 @@ const ModernStatsCard: React.FC<ModernStatsCardProps> = ({
 
   return (
     <div
-      ref={inViewRef as any}
+      ref={inViewRef}
       data-stats-card
       style={cardStyles}
       className={`${className} ${getAnimationClasses()} ${getResponsiveClasses()}`}
@@ -447,8 +445,8 @@ const ModernStatsCard: React.FC<ModernStatsCardProps> = ({
             }}
             className={loading ? "pulse" : ""}
           >
-            {React.isValidElement(icon)
-              ? React.cloneElement(icon as React.ReactElement<any>, {
+            {isValidElement(icon)
+              ? cloneElement(icon, {
                   size: sizes[size as keyof typeof sizes].iconSize,
                   color: colors[color].icon,
                 })

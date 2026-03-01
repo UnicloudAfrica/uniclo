@@ -87,7 +87,7 @@ const ImageList: React.FC<ImageListProps> = ({ images, isLoading, onDelete }) =>
       render: (id: string) => (
         <button
           onClick={() => {
-            if (window.confirm("Are you sure you want to delete this machine image?")) {
+            if (globalThis.window.confirm("Are you sure you want to delete this machine image?")) {
               onDelete(id);
             }
           }}

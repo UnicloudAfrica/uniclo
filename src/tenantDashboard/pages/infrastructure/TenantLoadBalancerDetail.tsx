@@ -4,10 +4,8 @@ import {
   Zap,
   Plus,
   Trash2,
-  RefreshCw,
   Layers,
   Shield,
-  Globe,
   ArrowLeft,
   Activity,
   Server,
@@ -16,7 +14,6 @@ import {
   Check,
   X,
   ChevronRight,
-  Info,
 } from "lucide-react";
 import TenantPageShell from "../../components/TenantPageShell";
 import ModernCard from "../../../shared/components/ui/ModernCard";
@@ -67,18 +64,10 @@ const TenantLoadBalancerDetail: React.FC = () => {
   const [selectedInstanceIds, setSelectedInstanceIds] = useState<string[]>([]);
 
   const { data: lb, isLoading: lbLoading } = useLoadBalancer(projectId, lbId || "");
-  const {
-    data: listeners = [],
-    isLoading: listenersLoading,
-    refetch: refetchListeners,
-  } = useListeners(projectId, lbId);
-  const {
-    data: targetGroups = [],
-    isLoading: tgLoading,
-    refetch: refetchTGs,
-  } = useTargetGroups(projectId);
+  const { data: listeners = [], refetch: refetchListeners } = useListeners(projectId, lbId);
+  const { data: targetGroups = [], refetch: refetchTGs } = useTargetGroups(projectId);
   const { data: instancesResponse } = useFetchPurchasedInstances({ project_id: projectId });
-  const instances = instancesResponse?.data || [];
+  const instances = Array.isArray(instancesResponse?.data) ? instancesResponse.data : [];
 
   const createListenerMutation = useCreateListener();
   const deleteListenerMutation = useDeleteListener();
@@ -127,7 +116,7 @@ const TenantLoadBalancerDetail: React.FC = () => {
 
   const handleRegisterTargets = async () => {
     if (!showRegisterTargets) return;
-    const targets = selectedInstanceIds.map((id) => ({ vm_id: id, port: newTG.port || 80 }));
+    const targets = selectedInstanceIds.map((id: any) => ({ vm_id: id, port: newTG.port || 80 }));
     await registerTargetsMutation.mutateAsync({
       projectId,
       tgId: showRegisterTargets,
@@ -245,10 +234,14 @@ const TenantLoadBalancerDetail: React.FC = () => {
               <ModernCard className="p-6 border-dashed border-2 border-blue-100 bg-blue-50/30">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                    <label
+                      htmlFor="listener_name"
+                      className="block text-xs font-bold text-gray-500 uppercase mb-1"
+                    >
                       Name
                     </label>
                     <input
+                      id="listener_name"
                       type="text"
                       placeholder="http-80"
                       className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
@@ -257,11 +250,15 @@ const TenantLoadBalancerDetail: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                    <label
+                      htmlFor="listener_protocol"
+                      className="block text-xs font-bold text-gray-500 uppercase mb-1"
+                    >
                       Protocol / Port
                     </label>
                     <div className="flex gap-2">
                       <select
+                        id="listener_protocol"
                         className="w-24 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none"
                         value={newListener.protocol}
                         onChange={(e) =>
@@ -274,21 +271,29 @@ const TenantLoadBalancerDetail: React.FC = () => {
                         <option>UDP</option>
                       </select>
                       <input
+                        id="listener_port"
                         type="number"
                         placeholder="80"
                         className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                         value={newListener.port}
                         onChange={(e) =>
-                          setNewListener({ ...newListener, port: parseInt(e.target.value) })
+                          setNewListener({
+                            ...newListener,
+                            port: Number.parseInt(e.target.value) || 0,
+                          })
                         }
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                    <label
+                      htmlFor="listener_target_group"
+                      className="block text-xs font-bold text-gray-500 uppercase mb-1"
+                    >
                       Forward to Target Group
                     </label>
                     <select
+                      id="listener_target_group"
                       className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none"
                       value={newListener.target_group_id}
                       onChange={(e) =>
@@ -405,10 +410,14 @@ const TenantLoadBalancerDetail: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                      <label
+                        htmlFor="tg_name"
+                        className="block text-xs font-bold text-gray-500 uppercase mb-1"
+                      >
                         Name
                       </label>
                       <input
+                        id="tg_name"
                         type="text"
                         placeholder="tg-production"
                         className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none"
@@ -418,10 +427,14 @@ const TenantLoadBalancerDetail: React.FC = () => {
                     </div>
                     <div className="flex gap-4">
                       <div className="flex-1">
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                        <label
+                          htmlFor="tg_protocol"
+                          className="block text-xs font-bold text-gray-500 uppercase mb-1"
+                        >
                           Protocol
                         </label>
                         <select
+                          id="tg_protocol"
                           className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none"
                           value={newTG.protocol}
                           onChange={(e) => setNewTG({ ...newTG, protocol: e.target.value })}
@@ -432,24 +445,34 @@ const TenantLoadBalancerDetail: React.FC = () => {
                         </select>
                       </div>
                       <div className="w-24">
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                        <label
+                          htmlFor="tg_port"
+                          className="block text-xs font-bold text-gray-500 uppercase mb-1"
+                        >
                           Port
                         </label>
                         <input
+                          id="tg_port"
                           type="number"
                           className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none"
                           value={newTG.port}
-                          onChange={(e) => setNewTG({ ...newTG, port: parseInt(e.target.value) })}
+                          onChange={(e) =>
+                            setNewTG({ ...newTG, port: Number.parseInt(e.target.value) || 0 })
+                          }
                         />
                       </div>
                     </div>
                   </div>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                      <label
+                        htmlFor="tg_hc_path"
+                        className="block text-xs font-bold text-gray-500 uppercase mb-1"
+                      >
                         Health Check Path
                       </label>
                       <input
+                        id="tg_hc_path"
                         type="text"
                         className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none"
                         value={newTG.health_check_path}
@@ -457,10 +480,14 @@ const TenantLoadBalancerDetail: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                      <label
+                        htmlFor="tg_type"
+                        className="block text-xs font-bold text-gray-500 uppercase mb-1"
+                      >
                         Target Type
                       </label>
                       <select
+                        id="tg_type"
                         className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none"
                         value={newTG.target_type}
                         onChange={(e) => setNewTG({ ...newTG, target_type: e.target.value })}
@@ -588,7 +615,7 @@ const TenantLoadBalancerDetail: React.FC = () => {
                       onClick={() => {
                         if (isSelected) {
                           setSelectedInstanceIds(
-                            selectedInstanceIds.filter((id) => id !== instance.id)
+                            selectedInstanceIds.filter((id: any) => id !== instance.id)
                           );
                         } else {
                           setSelectedInstanceIds([...selectedInstanceIds, instance.id]);

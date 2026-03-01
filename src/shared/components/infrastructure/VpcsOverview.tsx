@@ -1,18 +1,18 @@
-// @ts-nocheck
 import React from "react";
 import { Network } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
-import VpcsTable, { type Vpc } from "./VpcsTable";
+import VpcsTable from "./VpcsTable";
+import { Vpc } from "./types";
 import type { VpcPermissions } from "../../config/permissionPresets";
 
 interface VpcsOverviewProps {
   vpcs: Vpc[];
-  isLoading?: boolean;
-  emptyMessage?: string;
-  onDelete?: (vpc: Vpc) => void;
-  showActions?: boolean;
+  isLoading?: boolean | undefined;
+  emptyMessage?: string | undefined;
+  onDelete?: ((vpc: Vpc) => void) | undefined;
+  showActions?: boolean | undefined;
   /** Optional permissions object for permission-based action and display gating */
-  permissions?: VpcPermissions;
+  permissions?: VpcPermissions | undefined;
 }
 
 /**

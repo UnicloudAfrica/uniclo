@@ -5,10 +5,10 @@ import type { NatGateway } from "./types";
 
 interface NatGatewaysTableProps {
   natGateways: NatGateway[];
-  isLoading?: boolean;
-  emptyMessage?: string;
-  onDelete?: (nat: NatGateway) => void;
-  showActions?: boolean;
+  isLoading?: boolean | undefined;
+  emptyMessage?: string | undefined;
+  onDelete?: ((nat: NatGateway) => void) | undefined;
+  showActions?: boolean | undefined;
 }
 
 const NatGatewaysTable: React.FC<NatGatewaysTableProps> = ({

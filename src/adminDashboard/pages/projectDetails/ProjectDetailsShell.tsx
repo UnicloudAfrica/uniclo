@@ -1,54 +1,78 @@
-import React, { useState, useMemo } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import {
-  Activity,
-  Users,
-  Network,
-  Database,
-  Shield,
-  Settings,
-  LayoutDashboard,
-  RefreshCw,
-} from "lucide-react";
+import React from "react";
+import { ApiResponse } from "../../../shared/types/resource";
 
-import ResourceHeader from "./ResourceHeader";
 import TeamTab from "./TeamTab";
 import NetworkingTab from "./NetworkingTab";
 import ComputeTab from "./ComputeTab";
-import { ModernButton } from "../../../shared/components/ui";
-import ProjectDetailsOverview from "../../../shared/components/projects/details/ProjectDetailsOverview";
+import ProjectDetailsLayout from "../../../shared/components/projects/details/ProjectDetailsLayout";
 import ToastUtils from "../../../utils/toastUtil";
+import {
+  useProjectDetailsAdapter,
+  InstanceSummary,
+  ComputeSubView,
+} from "../../../shared/components/projects/details/ProjectDetailsView";
+import {
+  ResourceCounts as UnifiedResourceCounts,
+  SetupStep as UnifiedSetupStep,
+} from "../../../shared/components/projects/details/ProjectUnifiedView";
+import { InfraStatusData } from "../../../shared/components/projects/details/projectDetailsResourceCounts";
+import {
+  useFetchIpPools,
+  useFetchProjectEdgeConfigAdmin,
+} from "../../../hooks/adminHooks/edgeHooks";
+import { Project, ProjectUser, CloudPolicy } from "../../../types/project";
+
+interface SummaryAction {
+  method?: string;
+  endpoint?: string;
+  label?: string;
+}
+
+interface SummaryItem {
+  title?: string;
+  key?: string;
+  missing_count?: number;
+  completed?: boolean;
+  complete?: boolean;
+  action?: SummaryAction;
+}
 
 interface ProjectDetailsShellProps {
-  project: any;
-  projectInstances: any[];
-  allProjectUsers: any[];
-  cloudPolicies: any[];
-  resourceCounts: any;
-  infraStatusData: any;
-  networkData: any;
-  instanceStats: any;
+  project: Project;
+  projectInstances: InstanceSummary[];
+  allProjectUsers: ProjectUser[];
+  cloudPolicies: CloudPolicy[];
+  resourceCounts: UnifiedResourceCounts;
+  infraStatusData: InfraStatusData | null;
+  networkData: unknown;
   canCreateInstances?: boolean;
-  setupSteps: any[];
+  setupSteps: UnifiedSetupStep[];
   setupProgressPercent: number;
   isProjectStatusFetching: boolean;
   isSyncingInfrastructure: boolean;
-  syncInfrastructure: (payload: any) => void;
-  assignPolicy: any;
-  revokePolicy: any;
-  handleUserAction: (user: any, actionKey: string) => Promise<void>;
-  handleGenericAction: (params: any) => Promise<any>;
-  refetchProjectDetails: () => Promise<any>;
-  refetchProjectStatus: () => Promise<any>;
+  syncInfrastructure: (payload: { projectId: string }) => void;
+  assignPolicy: (args: {
+    projectId: string | number;
+    userId: string | number;
+    policyId: number;
+  }) => Promise<ApiResponse<any>>;
+  revokePolicy: (args: {
+    projectId: string | number;
+    userId: string | number;
+    policyId: number;
+  }) => Promise<ApiResponse<any>>;
+  handleUserAction: (user: ProjectUser, actionKey: string) => Promise<void>;
+  refetchProjectDetails: () => Promise<unknown>;
+  refetchProjectStatus: () => Promise<unknown>;
   isAssigningPolicy: boolean;
   isRevokingPolicy: boolean;
   setIsMemberModalOpen: (open: boolean) => void;
   handleInviteSubmit: (e: React.FormEvent) => Promise<void>;
-  inviteForm: any;
-  setInviteForm: (form: any) => void;
-  formatMemberName: (user: any) => string;
-  requiredActions?: any[];
-  onRequiredAction?: (action: any, item: any) => void;
+  inviteForm: { name: string; email: string; role: string; note: string };
+  setInviteForm: (form: { name: string; email: string; role: string; note: string }) => void;
+  formatMemberName: (user: ProjectUser) => string;
+  requiredActions?: SummaryItem[];
+  onRequiredAction?: (action: SummaryAction, item?: SummaryItem) => void;
 }
 
 const ProjectDetailsShell: React.FC<ProjectDetailsShellProps> = ({
@@ -59,7 +83,6 @@ const ProjectDetailsShell: React.FC<ProjectDetailsShellProps> = ({
   resourceCounts,
   infraStatusData,
   networkData,
-  instanceStats,
   canCreateInstances = true,
   setupSteps,
   setupProgressPercent,
@@ -69,7 +92,6 @@ const ProjectDetailsShell: React.FC<ProjectDetailsShellProps> = ({
   assignPolicy,
   revokePolicy,
   handleUserAction,
-  handleGenericAction,
   refetchProjectDetails,
   refetchProjectStatus,
   isAssigningPolicy,
@@ -82,205 +104,99 @@ const ProjectDetailsShell: React.FC<ProjectDetailsShellProps> = ({
   requiredActions,
   onRequiredAction,
 }) => {
-  const [activeTab, setActiveTab] = useState("overview");
-  const [activeNetworkingResource, setActiveNetworkingResource] = useState("vpcs");
-  const [activeComputeSubView, setActiveComputeSubView] = useState<"instances" | "keypairs">(
-    "instances"
-  );
+  const projectId = project?.identifier;
+  const region = project?.region;
 
-  const resourceHeaderStats = useMemo(() => {
-    return {
-      vCPUs: resourceCounts.vcpus || 0,
-      ram: "4 GiB", // Simplified: needs to be derived from instances or metadata
-      volumes: resourceCounts.volumes || 0,
-      images: resourceCounts.images || 0,
-      snapshots: resourceCounts.snapshots || 0,
-      ipPoolUsed: 7, // Mocked for now to match UI blueprint
-      ipPoolTotal: 124,
-    };
-  }, [resourceCounts]);
+  const { data: edgeConfig } = useFetchProjectEdgeConfigAdmin(projectId, region, {
+    enabled: Boolean(projectId && region),
+  });
+  const edgePayload = (edgeConfig as ApiResponse<Record<string, unknown>>)?.data ?? edgeConfig;
+  const edgeNetworkId = (edgePayload as Record<string, unknown> | undefined)?.[
+    "edge_network_id"
+  ] as string | undefined;
 
-  const tabs = [
-    { id: "overview", label: "Overview", icon: LayoutDashboard },
-    { id: "compute", label: "Compute", icon: Activity },
-    { id: "networking", label: "Networking", icon: Network },
-    { id: "storage", label: "Storage", icon: Database },
-    { id: "team", label: "Identity & Access", icon: Users },
-    { id: "limits", label: "Limits", icon: Shield },
-    { id: "settings", label: "Settings", icon: Settings },
-  ];
+  const { data: ipPools } = useFetchIpPools(projectId, region, edgeNetworkId, {
+    enabled: Boolean(projectId && region && edgeNetworkId),
+  });
+
+  const projectDetails = useProjectDetailsAdapter({
+    project,
+    projectId,
+    projectInstances,
+    users: allProjectUsers,
+    projectStatus: project,
+    infraStatusData,
+    networkStatusData: networkData,
+    edgeConfig,
+    ipPools,
+    setupSteps,
+    setupProgressPercent,
+    resourceCounts,
+    canCreateInstances,
+    requiredActions: requiredActions || [],
+    isStatusFetching: isProjectStatusFetching,
+    isSyncing: isSyncingInfrastructure,
+    onEnableInternet: async () => {
+      ToastUtils.info("Internet Gateway management from shell");
+    },
+    onSyncResources: () => syncInfrastructure({ projectId: project?.identifier }),
+    onRequiredAction: onRequiredAction as any,
+    renderComputeTab: ({
+      activeSubView,
+      setActiveSubView,
+    }: {
+      activeSubView: ComputeSubView;
+      setActiveSubView: (view: ComputeSubView) => void;
+    }) => (
+      <ComputeTab
+        project={project}
+        initialSubView={activeSubView}
+        onSubViewChange={setActiveSubView}
+      />
+    ),
+    renderNetworkingTab: ({
+      activeResource,
+      setActiveResource,
+    }: {
+      activeResource: string;
+      setActiveResource: (id: string) => void;
+    }) => (
+      <NetworkingTab
+        project={project}
+        resourceCounts={resourceCounts}
+        initialResource={activeResource}
+        onResourceChange={setActiveResource}
+      />
+    ),
+    renderTeamTab: () => (
+      <TeamTab
+        project={project}
+        allProjectUsers={allProjectUsers}
+        cloudPolicies={cloudPolicies}
+        assignPolicy={assignPolicy}
+        revokePolicy={revokePolicy}
+        handleUserAction={handleUserAction}
+        refetchProjectDetails={refetchProjectDetails}
+        refetchProjectStatus={refetchProjectStatus}
+        isAssigningPolicy={isAssigningPolicy}
+        isRevokingPolicy={isRevokingPolicy}
+        setIsMemberModalOpen={setIsMemberModalOpen}
+        formatMemberName={formatMemberName}
+        handleInviteSubmit={handleInviteSubmit}
+        inviteForm={inviteForm}
+        setInviteForm={setInviteForm}
+      />
+    ),
+  });
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-180px)]">
-      <ResourceHeader project={project} resourceStats={resourceHeaderStats} />
-
-      {/* Tabs Navigation */}
-      <div className="bg-white border-b border-gray-200 px-6 md:px-8 sticky top-0 z-20 shadow-sm">
-        <div className="max-w-[1600px] mx-auto flex overflow-x-auto no-scrollbar">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-4 border-b-2 text-sm font-medium transition-all whitespace-nowrap ${
-                  isActive
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                <Icon size={18} />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Content Area */}
-      <main className="flex-1 p-6 overflow-auto">
-        <div className="max-w-[1600px] mx-auto">
-          {activeTab === "overview" && (
-            <ProjectDetailsOverview
-              requiredActions={requiredActions}
-              onRequiredAction={onRequiredAction}
-              unifiedViewProps={{
-                project,
-                instanceStats,
-                resourceCounts,
-                canCreateInstances,
-                networkStatus: networkData,
-                setupSteps,
-                setupProgressPercent,
-                instances: projectInstances,
-                showMemberManagement: true,
-                showSyncButton: true,
-                onAddInstance: () => {
-                  setActiveComputeSubView("instances");
-                  setActiveTab("compute");
-                },
-                onEnableInternet: async () => {
-                  ToastUtils.info("Internet Gateway management from shell");
-                },
-                onManageMembers: () => setActiveTab("team"),
-                onViewNetworkDetails: () => {
-                  setActiveNetworkingResource("vpcs");
-                  setActiveTab("networking");
-                },
-                onViewAllResources: () => {
-                  setActiveNetworkingResource("vpcs");
-                  setActiveTab("networking");
-                },
-                onViewKeyPairs: () => {
-                  setActiveComputeSubView("keypairs");
-                  setActiveTab("compute");
-                },
-                onViewRouteTables: () => {
-                  setActiveNetworkingResource("routes");
-                  setActiveTab("networking");
-                },
-                onViewElasticIps: () => {
-                  setActiveNetworkingResource("eips");
-                  setActiveTab("networking");
-                },
-                onViewNetworkInterfaces: () => {
-                  setActiveNetworkingResource("enis");
-                  setActiveTab("networking");
-                },
-                onSyncResources: () => syncInfrastructure({ projectId: project?.identifier }),
-                onViewUsers: () => setActiveTab("team"),
-                onViewSubnets: () => {
-                  setActiveNetworkingResource("subnets");
-                  setActiveTab("networking");
-                },
-                onViewSecurityGroups: () => {
-                  setActiveNetworkingResource("sgs");
-                  setActiveTab("networking");
-                },
-                onViewVpcs: () => {
-                  setActiveNetworkingResource("vpcs");
-                  setActiveTab("networking");
-                },
-                onViewNatGateways: () => {
-                  setActiveNetworkingResource("nat");
-                  setActiveTab("networking");
-                },
-                onViewInternetGateways: () => {
-                  setActiveNetworkingResource("igw");
-                  setActiveTab("networking");
-                },
-                onViewNetworkAcls: () => {
-                  setActiveNetworkingResource("acls");
-                  setActiveTab("networking");
-                },
-                onViewVpcPeering: () => {
-                  setActiveNetworkingResource("peering");
-                  setActiveTab("networking");
-                },
-                onViewLoadBalancers: () => {
-                  setActiveNetworkingResource("lbs");
-                  setActiveTab("networking");
-                },
-              }}
-            />
-          )}
-
-          {activeTab === "compute" && (
-            <ComputeTab
-              project={project}
-              initialSubView={activeComputeSubView}
-              onSubViewChange={setActiveComputeSubView}
-            />
-          )}
-
-          {activeTab === "team" && (
-            <TeamTab
-              project={project}
-              allProjectUsers={allProjectUsers}
-              cloudPolicies={cloudPolicies}
-              assignPolicy={assignPolicy}
-              revokePolicy={revokePolicy}
-              handleUserAction={handleUserAction}
-              refetchProjectDetails={refetchProjectDetails}
-              refetchProjectStatus={refetchProjectStatus}
-              isAssigningPolicy={isAssigningPolicy}
-              isRevokingPolicy={isRevokingPolicy}
-              setIsMemberModalOpen={setIsMemberModalOpen}
-              formatMemberName={formatMemberName}
-              handleInviteSubmit={handleInviteSubmit}
-              inviteForm={inviteForm}
-              setInviteForm={setInviteForm}
-            />
-          )}
-
-          {activeTab === "networking" && (
-            <NetworkingTab
-              project={project}
-              resourceCounts={resourceCounts}
-              initialResource={activeNetworkingResource}
-              onResourceChange={setActiveNetworkingResource}
-            />
-          )}
-
-          {/* Placeholder Tabs */}
-          {!["overview", "team", "networking"].includes(activeTab) && (
-            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-dashed border-gray-300 shadow-sm">
-              <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4 transition-transform hover:scale-110">
-                <LayoutDashboard className="text-gray-300" size={32} />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900">
-                {tabs.find((t) => t.id === activeTab)?.label}
-              </h3>
-              <p className="text-gray-500 text-sm max-w-md text-center">
-                We're currently refactoring this module into the unified view. Check back soon for
-                Zadara-style management controls!
-              </p>
-            </div>
-          )}
-        </div>
-      </main>
-    </div>
+    <ProjectDetailsLayout
+      project={projectDetails.projectForLayout}
+      resourceStats={projectDetails.resourceHeaderStats}
+      tabs={projectDetails.tabs}
+      activeTab={projectDetails.activeTab}
+      onTabChange={projectDetails.setActiveTab}
+    />
   );
 };
 

@@ -1,22 +1,39 @@
-// @ts-nocheck
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useFetchNetworks, syncNetworksFromProvider } from "../../../hooks/adminHooks/networkHooks";
 import { useCreateNetworkInterface } from "../../../hooks/adminHooks/networkHooks";
 import ToastUtils from "../../../utils/toastUtil";
 
+interface NetworkOption {
+  id?: string | number;
+  name?: string;
+  identifier?: string;
+  type?: string;
+  provider_resource_id?: string;
+  meta?: {
+    network_type?: string;
+    provider_resource_id?: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
 const AddEni = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: any) => {
   const [form, setForm] = useState({ name: "", network_id: "", region: defaultRegion || "" });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, any>>({});
   const [isSyncingVpcs, setIsSyncingVpcs] = useState(false);
 
-  const { data: networks, isFetching: isFetchingNetworks } = useFetchNetworks(
+  const { data: networksData, isFetching: isFetchingNetworks } = useFetchNetworks(
     projectId,
     form.region,
     {
       enabled: !!projectId && !!form.region,
     }
+  );
+  const networks = useMemo<NetworkOption[]>(
+    () => (Array.isArray(networksData) ? (networksData as NetworkOption[]) : []),
+    [networksData]
   );
   const { mutate: createEni, isPending } = useCreateNetworkInterface();
   const queryClient = useQueryClient();
@@ -30,9 +47,9 @@ const AddEni = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: any)
   if (!isOpen) return null;
 
   const validate = () => {
-    const e = {};
-    if (!form.network_id) e.network_id = "VPC (Network) is required";
-    if (!form.region) e.region = "Region is required";
+    const e: Record<string, any> = {};
+    if (!form.network_id) e["network_id"] = "VPC (Network) is required";
+    if (!form.region) e["region"] = "Region is required";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -50,7 +67,7 @@ const AddEni = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: any)
       });
       ToastUtils.success("Network list refreshed.");
     } catch (error) {
-      ToastUtils.error(error?.message || "Failed to refresh networks.");
+      ToastUtils.error(error instanceof Error ? error.message : "Failed to refresh networks.");
     } finally {
       setIsSyncingVpcs(false);
     }
@@ -100,12 +117,12 @@ const AddEni = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: any)
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="block text-sm text-gray-700">VPC (Network)</label>
-              {Boolean(networks?.length) && (
+              {Boolean(networks.length) && (
                 <button
                   type="button"
                   onClick={handleRefreshNetworks}
                   disabled={isSyncingVpcs || !form.region}
-                  className="text-xs text-[#288DD1] hover:text-primary-600 underline disabled:no-underline disabled:text-gray-400 disabled:cursor-not-allowed bg-transparent border-none p-0"
+                  className="text-xs text-[var(--theme-color)] hover:text-primary-600 underline disabled:no-underline disabled:text-gray-400 disabled:cursor-not-allowed bg-transparent border-none p-0"
                 >
                   {isSyncingVpcs ? "Refreshing..." : "Refresh list"}
                 </button>
@@ -114,15 +131,15 @@ const AddEni = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: any)
             <select
               value={form.network_id}
               onChange={(e) => setForm((p) => ({ ...p, network_id: e.target.value }))}
-              className={`w-full border rounded px-3 py-2 text-sm ${errors.network_id ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full border rounded px-3 py-2 text-sm ${errors["network_id"] ? "border-red-500" : "border-gray-300"}`}
               disabled={!form.region}
             >
               <option value="" disabled>
                 {!form.region ? "Select region first" : "Select VPC"}
               </option>
-              {(networks || [])
-                .filter((net: any) => (net.type || net?.meta?.network_type) === "vpc_network")
-                .map((v: any) => {
+              {networks
+                .filter((net) => (net.type || net?.meta?.network_type) === "vpc_network")
+                .map((v) => {
                   const providerId = v.provider_resource_id || v.meta?.provider_resource_id || v.id;
                   const localId = v.id || providerId;
                   return (
@@ -132,15 +149,17 @@ const AddEni = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: any)
                   );
                 })}
             </select>
-            {errors.network_id && <p className="text-xs text-red-500 mt-1">{errors.network_id}</p>}
-            {!isFetchingNetworks && (!networks || networks.length === 0) && form.region && (
+            {errors["network_id"] && (
+              <p className="text-xs text-red-500 mt-1">{errors["network_id"]}</p>
+            )}
+            {!isFetchingNetworks && networks.length === 0 && form.region && (
               <div className="text-xs text-gray-500 mt-2 flex items-center justify-between">
                 <span>No networks found for this region. Sync from provider?</span>
                 <button
                   type="button"
                   onClick={handleRefreshNetworks}
                   disabled={isSyncingVpcs}
-                  className="text-[#288DD1] hover:text-primary-600 underline disabled:no-underline disabled:text-gray-400 disabled:cursor-not-allowed bg-transparent border-none p-0"
+                  className="text-[var(--theme-color)] hover:text-primary-600 underline disabled:no-underline disabled:text-gray-400 disabled:cursor-not-allowed bg-transparent border-none p-0"
                 >
                   {isSyncingVpcs ? "Refreshing..." : "Refresh list"}
                 </button>
@@ -159,7 +178,7 @@ const AddEni = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: any)
             <button
               type="submit"
               disabled={isPending}
-              className="px-4 py-2 rounded bg-[#288DD1] text-white text-sm disabled:opacity-50"
+              className="px-4 py-2 rounded bg-[var(--theme-color)] text-white text-sm disabled:opacity-50"
             >
               {isPending ? "Creating..." : "Create"}
             </button>

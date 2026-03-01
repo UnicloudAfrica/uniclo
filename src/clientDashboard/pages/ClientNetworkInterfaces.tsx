@@ -1,9 +1,10 @@
-// @ts-nocheck
 import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Cable } from "lucide-react";
 import ClientPageShell from "../components/ClientPageShell";
-import NetworkInterfacesContainer from "../../shared/components/infrastructure/containers/NetworkInterfacesContainer";
+import NetworkInterfacesContainer, {
+  NetworkInterfaceHooks,
+} from "../../shared/components/infrastructure/containers/NetworkInterfacesContainer";
 import {
   useFetchClientNetworkInterfaces,
   syncClientNetworkInterfacesFromProvider,
@@ -19,8 +20,8 @@ const ClientNetworkInterfaces: React.FC = () => {
   const projectId = searchParams.get("project") || "";
   const region = searchParams.get("region") || "";
 
-  const hooks = {
-    useList: useFetchClientNetworkInterfaces,
+  const hooks: NetworkInterfaceHooks = {
+    useList: useFetchClientNetworkInterfaces as NetworkInterfaceHooks["useList"],
     onSync: async () => {
       await syncClientNetworkInterfacesFromProvider({ project_id: projectId, region });
       ToastUtils.success("Network Interfaces synced from provider");
@@ -33,7 +34,7 @@ const ClientNetworkInterfaces: React.FC = () => {
       projectId={projectId}
       region={region}
       hooks={hooks}
-      wrapper={({ headerActions, children }) => (
+      wrapper={({ children }) => (
         <ClientPageShell
           title={
             <span className="flex items-center gap-2">
@@ -42,7 +43,6 @@ const ClientNetworkInterfaces: React.FC = () => {
             </span>
           }
           description="Virtual network cards attached to instances"
-          actions={headerActions}
         >
           {children}
         </ClientPageShell>

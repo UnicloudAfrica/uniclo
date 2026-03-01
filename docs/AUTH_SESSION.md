@@ -78,5 +78,5 @@ All API helpers (`src/index/**/*`) now:
 ## Practical Implications
 
 - Logging into any portal clears other personas automatically.
-- The persisted session JSON now contains enough metadata (role + domain) to drive redirects and API headers without guessing from `window.location`.
+- The persisted session JSON now contains enough metadata (role + domain) to drive redirects and API headers without guessing from `globalThis.window.location`.
 - All logout buttons and 401 handlers share the same helpers, so it’s impossible to end up in a “ghost” session.

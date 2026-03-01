@@ -1,9 +1,7 @@
 import React, { useMemo } from "react";
 import ReactFlow, { Background, Controls, Panel, MarkerType, BackgroundVariant } from "reactflow";
 import "reactflow/dist/style.css";
-import { Server, Globe, Shield, Radio, Box } from "lucide-react";
-
-const nodeTypes = {}; // We can add custom node types later
+import { Globe, Box } from "lucide-react";
 
 /**
  * ProjectTopologyGraph
@@ -12,10 +10,10 @@ const nodeTypes = {}; // We can add custom node types later
  * Uses React Flow for an interactive, zoomable experience.
  */
 interface ProjectTopologyGraphProps {
-  vpc?: any;
-  subnets?: any[];
-  igw?: any;
-  instances?: any[];
+  vpc?: { name?: string };
+  subnets?: Array<{ id?: string | number; name?: string; cidr?: string }>;
+  igw?: { id?: string | number; name?: string } | boolean;
+  instances?: Array<{ id?: string | number; name?: string; status?: string }>;
   activeStepId?: string;
 }
 
@@ -23,13 +21,12 @@ const ProjectTopologyGraph: React.FC<ProjectTopologyGraphProps> = ({
   vpc,
   subnets = [],
   igw,
-  instances = [],
   activeStepId,
 }) => {
   // 1. Transform Backend Data to Nodes/Edges
   const { nodes, edges } = useMemo(() => {
-    const nodes: any[] = [];
-    const edges: any[] = [];
+    const nodes: import("reactflow").Node[] = [];
+    const edges: import("reactflow").Edge[] = [];
 
     // Core VPC Node (The Container)
     nodes.push({
@@ -39,8 +36,8 @@ const ProjectTopologyGraph: React.FC<ProjectTopologyGraphProps> = ({
       style: {
         width: 600,
         height: 500,
-        backgroundColor: "rgba(59, 130, 246, 0.05)",
-        border: "2px dashed #3b82f6",
+        backgroundColor: "rgb(var(--theme-color-rgb) / 0.05)",
+        border: "2px dashed var(--theme-color)",
         borderRadius: "16px",
         zIndex: -1,
       },
@@ -62,8 +59,8 @@ const ProjectTopologyGraph: React.FC<ProjectTopologyGraphProps> = ({
       style: {
         padding: "10px",
         borderRadius: "50px",
-        background: "#fff",
-        border: "2px solid #3b82f6",
+        background: "var(--theme-card-bg)",
+        border: "2px solid var(--theme-color)",
         width: 80,
       },
     });
@@ -92,10 +89,10 @@ const ProjectTopologyGraph: React.FC<ProjectTopologyGraphProps> = ({
         style: {
           width: 160,
           height: 300,
-          backgroundColor: "#fff",
-          border: "1px solid #e2e8f0",
+          backgroundColor: "var(--theme-card-bg)",
+          border: "1px solid rgb(var(--theme-neutral-200))",
           borderRadius: "8px",
-          boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+          boxShadow: "var(--shadow-sm, 0 4px 6px -1px rgb(var(--theme-neutral-900) / 0.1))",
         },
       });
 
@@ -105,8 +102,8 @@ const ProjectTopologyGraph: React.FC<ProjectTopologyGraphProps> = ({
         source: "igw",
         target: `subnet-${s.id || idx}`,
         animated: true,
-        style: { stroke: "#3b82f6", strokeWidth: 1 },
-        markerEnd: { type: MarkerType.ArrowClosed, color: "#3b82f6" },
+        style: { stroke: "var(--theme-color)", strokeWidth: 1 },
+        markerEnd: { type: MarkerType.ArrowClosed, color: "var(--theme-color)" },
       });
     });
 
@@ -118,8 +115,8 @@ const ProjectTopologyGraph: React.FC<ProjectTopologyGraphProps> = ({
         position: { x: 200, y: 10 },
         className: "animate-pulse",
         style: {
-          background: "#f59e0b",
-          color: "#fff",
+          background: "rgb(var(--theme-warning-500))",
+          color: "var(--theme-card-bg)",
           fontSize: "8px",
           borderRadius: "4px",
           padding: "4px 8px",
@@ -130,23 +127,33 @@ const ProjectTopologyGraph: React.FC<ProjectTopologyGraphProps> = ({
     }
 
     return { nodes, edges };
-  }, [vpc, subnets, igw, instances, activeStepId]);
+  }, [vpc, subnets, igw, activeStepId]);
 
   return (
-    <div className="w-full h-[500px] bg-gray-50 rounded-xl border border-gray-200 overflow-hidden relative shadow-inner">
+    <div className="w-full h-[500px] bg-[rgb(var(--theme-neutral-50))] rounded-xl border border-[rgb(var(--theme-neutral-200))] overflow-hidden relative shadow-inner">
       <ReactFlow
         nodes={nodes}
         edges={edges}
         fitView
-        className="bg-slate-50"
+        className="bg-[rgb(var(--theme-neutral-50))]"
         maxZoom={1.5}
         minZoom={0.5}
       >
-        <Background color="#cbd5e1" variant={BackgroundVariant.Dots} gap={20} size={1} />
-        <Controls showInteractive={false} className="bg-white border-gray-200" />
+        <Background
+          color="rgb(var(--theme-neutral-300))"
+          variant={BackgroundVariant.Dots}
+          gap={20}
+          size={1}
+        />
+        <Controls
+          showInteractive={false}
+          className="border-[rgb(var(--theme-neutral-200))]"
+          style={{ backgroundColor: "var(--theme-card-bg)" }}
+        />
         <Panel
           position="top-right"
-          className="bg-white/80 backdrop-blur-sm p-2 rounded-lg border border-gray-100 shadow-sm"
+          className="backdrop-blur-sm p-2 rounded-lg border border-[rgb(var(--theme-neutral-100))] shadow-sm"
+          style={{ backgroundColor: "rgb(var(--theme-neutral-50) / 0.8)" }}
         >
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">

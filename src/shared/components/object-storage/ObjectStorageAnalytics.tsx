@@ -1,20 +1,6 @@
-// @ts-nocheck
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { HardDrive, TrendingUp, BarChart3, RefreshCw, Loader2, Plus, Info } from "lucide-react";
 import {
-  TrendingUp,
-  TrendingDown,
-  Clock,
-  Database,
-  AlertTriangle,
-  Plus,
-  RefreshCw,
-  Loader2,
-  BarChart3,
-  Info,
-} from "lucide-react";
-import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -25,6 +11,7 @@ import {
 } from "recharts";
 import objectStorageApi from "../../../services/objectStorageApi";
 import ToastUtils from "../../../utils/toastUtil";
+import { ModernCard } from "@/shared/components/ui";
 
 interface AnalyticsData {
   current: {
@@ -51,41 +38,163 @@ interface AnalyticsData {
 
 interface ObjectStorageAnalyticsProps {
   accountId: string;
-  accountName: string;
   onExtendStorage: () => void;
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error instanceof Error && (error as any)["message"]) return (error as any)["message"];
+  if (typeof error === "string" && error.trim()) return error;
+  if (isRecord(error) && typeof error["message"] === "string" && String(error["message"]).trim()) {
+    return String(error["message"]);
+  }
+  return fallback;
+};
+
+interface AnalyticsStatsGridProps {
+  current: AnalyticsData["current"];
+  forecast: AnalyticsData["forecast"];
+}
+
+const AnalyticsStatsGrid: React.FC<AnalyticsStatsGridProps> = ({ current, forecast }) => {
+  // Use current values instead of non-existent stats
+  return (
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <ModernCard variant="outlined" padding="lg" className="relative overflow-hidden">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-primary-600">
+            <HardDrive className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-500">Current Usage</p>
+            <h3 className="text-2xl font-bold text-slate-900">
+              {current.used_gb || 0}
+              <span className="ml-1 text-sm font-medium text-slate-400">GB</span>
+            </h3>
+          </div>
+        </div>
+      </ModernCard>
+
+      <ModernCard variant="outlined" padding="lg" className="relative overflow-hidden">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+            <TrendingUp className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-500">Daily growth</p>
+            <h3 className="text-2xl font-bold text-slate-900">
+              {(forecast.avg_daily_growth_gb ?? 0).toFixed(2)}
+              <span className="ml-1 text-sm font-medium text-slate-400">GB</span>
+            </h3>
+          </div>
+        </div>
+      </ModernCard>
+
+      <ModernCard variant="outlined" padding="lg" className="relative overflow-hidden">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+            <BarChart3 className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-500">Recommended</p>
+            <h3 className="text-2xl font-bold text-slate-900">
+              +{forecast.recommended_extension_gb || 0}
+              <span className="ml-1 text-sm font-medium text-slate-400">GB</span>
+            </h3>
+          </div>
+        </div>
+      </ModernCard>
+    </div>
+  );
+};
+
+interface UsageTrendChartProps {
+  trend: AnalyticsData["trend"];
+  forecast: AnalyticsData["forecast"];
+}
+
+const UsageTrendChart: React.FC<UsageTrendChartProps> = ({ trend, forecast }) => {
+  if (!forecast.has_sufficient_data) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+        <p className="flex items-center gap-2 text-sm">
+          <Info className="h-4 w-4" />
+          Gathering data... ({forecast.data_points} of 7 days collected)
+        </p>
+        <p className="text-xs mt-1">Trends will appear after 7+ days of data</p>
+      </div>
+    );
+  }
+
+  return (
+    <ResponsiveContainer width="100%" height={250}>
+      <AreaChart data={trend}>
+        <defs>
+          <linearGradient id="colorUsage" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="var(--theme-color)" stopOpacity={0.3} />
+            <stop offset="95%" stopColor="var(--theme-color)" stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--theme-border-color)" />
+        <XAxis
+          dataKey="date"
+          tick={{ fontSize: 12, fill: "var(--theme-muted-color)" }}
+          tickFormatter={(value) => {
+            const date = new Date(value);
+            return `${date.getMonth() + 1}/${date.getDate()}`;
+          }}
+        />
+        <YAxis
+          tick={{ fontSize: 12, fill: "var(--theme-muted-color)" }}
+          tickFormatter={(value) => `${value}GB`}
+        />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: "var(--theme-heading-color)",
+            border: "none",
+            borderRadius: "8px",
+            color: "var(--theme-card-bg)",
+          }}
+          formatter={(value: number | undefined) => [(value || 0).toFixed(2) + " GB", "Usage"]}
+          labelFormatter={(label) => new Date(label).toLocaleDateString()}
+        />
+        <Area
+          type="monotone"
+          dataKey="used_gb"
+          stroke="var(--theme-color)"
+          strokeWidth={2}
+          fillOpacity={1}
+          fill="url(#colorUsage)"
+        />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+};
+
 const ObjectStorageAnalytics: React.FC<ObjectStorageAnalyticsProps> = ({
   accountId,
-  accountName,
   onExtendStorage,
 }) => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<AnalyticsData | null>(null);
 
-  useEffect(() => {
-    loadAnalytics();
-  }, [accountId]);
-
-  const loadAnalytics = async () => {
+  const loadAnalytics = useCallback(async () => {
     setLoading(true);
     try {
       const result = await objectStorageApi.getAnalytics(accountId);
-      setData(result);
-    } catch (err: any) {
-      ToastUtils.error(err.message || "Failed to load analytics");
+      setData(result as AnalyticsData);
+    } catch (err) {
+      ToastUtils.error(getErrorMessage(err, "Failed to load analytics"));
     } finally {
       setLoading(false);
     }
-  };
+  }, [accountId]);
 
-  const formatBytes = (bytes: number): string => {
-    if (bytes === 0) return "0 B";
-    const k = 1024;
-    const sizes = ["B", "KB", "MB", "GB", "TB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  };
+  useEffect(() => {
+    loadAnalytics();
+  }, [loadAnalytics]);
 
   if (loading) {
     return (
@@ -108,13 +217,9 @@ const ObjectStorageAnalytics: React.FC<ObjectStorageAnalyticsProps> = ({
   }
 
   const { current, trend, forecast } = data;
-  const isGrowing = forecast.avg_daily_growth_gb > 0;
-  const isCritical = forecast.days_until_full !== null && forecast.days_until_full <= 7;
-  const isWarning = forecast.days_until_full !== null && forecast.days_until_full <= 30;
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-800">Storage Analytics</h2>
         <button
@@ -126,149 +231,16 @@ const ObjectStorageAnalytics: React.FC<ObjectStorageAnalyticsProps> = ({
         </button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Used Storage */}
-        <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <Database className="h-4 w-4 text-primary-500" />
-            <span className="text-sm text-gray-500">Used Storage</span>
-          </div>
-          <p className="text-2xl font-bold text-gray-800">{current.used_gb} GB</p>
-          <p className="text-xs text-gray-400">
-            of {current.quota_gb} GB ({current.usage_percent}%)
-          </p>
-        </div>
+      <AnalyticsStatsGrid current={current} forecast={forecast} />
 
-        {/* Daily Growth */}
-        <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-2">
-            {isGrowing ? (
-              <TrendingUp className="h-4 w-4 text-amber-500" />
-            ) : (
-              <TrendingDown className="h-4 w-4 text-emerald-500" />
-            )}
-            <span className="text-sm text-gray-500">Daily Growth</span>
-          </div>
-          <p className="text-2xl font-bold text-gray-800">
-            {isGrowing ? "+" : ""}
-            {forecast.avg_daily_growth_gb.toFixed(2)} GB
-          </p>
-          <p className="text-xs text-gray-400">average per day</p>
-        </div>
-
-        {/* Days Until Full */}
-        <div
-          className={`p-4 rounded-xl border shadow-sm ${
-            isCritical
-              ? "bg-red-50 border-red-200"
-              : isWarning
-                ? "bg-amber-50 border-amber-200"
-                : "bg-white border-gray-200"
-          }`}
-        >
-          <div className="flex items-center gap-2 mb-2">
-            <Clock
-              className={`h-4 w-4 ${isCritical ? "text-red-500" : isWarning ? "text-amber-500" : "text-gray-500"}`}
-            />
-            <span
-              className={`text-sm ${isCritical ? "text-red-600" : isWarning ? "text-amber-600" : "text-gray-500"}`}
-            >
-              Days Until Full
-            </span>
-          </div>
-          <p
-            className={`text-2xl font-bold ${isCritical ? "text-red-700" : isWarning ? "text-amber-700" : "text-gray-800"}`}
-          >
-            {forecast.days_until_full !== null ? `${forecast.days_until_full} days` : "∞"}
-          </p>
-          <p
-            className={`text-xs ${isCritical ? "text-red-500" : isWarning ? "text-amber-500" : "text-gray-400"}`}
-          >
-            {isCritical
-              ? "Critical - extend now!"
-              : isWarning
-                ? "Consider extending"
-                : "at current growth rate"}
-          </p>
-        </div>
-
-        {/* Recommended Extension */}
-        <div className="p-4 bg-gradient-to-br from-primary-50 to-primary-100 rounded-xl border border-primary-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <Plus className="h-4 w-4 text-primary-500" />
-            <span className="text-sm text-primary-600">Recommended</span>
-          </div>
-          <p className="text-2xl font-bold text-primary-700">
-            +{forecast.recommended_extension_gb} GB
-          </p>
-          <p className="text-xs text-primary-500">for 60 days headroom</p>
-        </div>
-      </div>
-
-      {/* Usage Trend Chart */}
       <div className="bg-[--theme-card-bg] rounded-xl border border-[--theme-border-color] shadow-sm p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-[--theme-heading-color]">Usage Over Time</h3>
           <span className="text-xs text-[--theme-muted-color]">Last 30 days</span>
         </div>
-
-        {!forecast.has_sufficient_data ? (
-          <div className="flex flex-col items-center justify-center py-12 text-[--theme-muted-color]">
-            <Info className="h-10 w-10 mb-3 opacity-50" />
-            <p className="text-center">
-              Gathering data... ({forecast.data_points} of 7 days collected)
-            </p>
-            <p className="text-xs text-[--theme-muted-color] mt-1">
-              Trends will appear after 7+ days of data
-            </p>
-          </div>
-        ) : (
-          <ResponsiveContainer width="100%" height={250}>
-            <AreaChart data={trend}>
-              <defs>
-                <linearGradient id="colorUsage" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--theme-color)" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="var(--theme-color)" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--theme-border-color)" />
-              <XAxis
-                dataKey="date"
-                tick={{ fontSize: 12, fill: "var(--theme-muted-color)" }}
-                tickFormatter={(value) => {
-                  const date = new Date(value);
-                  return `${date.getMonth() + 1}/${date.getDate()}`;
-                }}
-              />
-              <YAxis
-                tick={{ fontSize: 12, fill: "var(--theme-muted-color)" }}
-                tickFormatter={(value) => `${value}GB`}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "var(--theme-heading-color)",
-                  border: "none",
-                  borderRadius: "8px",
-                  color: "var(--theme-card-bg)",
-                }}
-                formatter={(value: number) => [`${value.toFixed(2)} GB`, "Usage"]}
-                labelFormatter={(label) => new Date(label).toLocaleDateString()}
-              />
-              <Area
-                type="monotone"
-                dataKey="used_gb"
-                stroke="var(--theme-color)"
-                strokeWidth={2}
-                fillOpacity={1}
-                fill="url(#colorUsage)"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        )}
+        <UsageTrendChart trend={trend} forecast={forecast} />
       </div>
 
-      {/* Extend Storage CTA */}
       <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl text-white">
         <div>
           <h3 className="font-semibold">Need more storage?</h3>
@@ -285,7 +257,6 @@ const ObjectStorageAnalytics: React.FC<ObjectStorageAnalyticsProps> = ({
         </button>
       </div>
 
-      {/* Objects & Silos Info */}
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div className="p-3 bg-[--theme-surface-alt] rounded-lg">
           <span className="text-[--theme-muted-color]">Total Objects:</span>

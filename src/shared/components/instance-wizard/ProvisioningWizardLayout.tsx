@@ -4,7 +4,7 @@ import WizardStepper from "../ui/WizardStepper";
 interface ProvisioningWizardLayoutProps {
   steps: Array<{ id: string; title: string; desc?: string }>;
   activeStep: number;
-  onStepChange?: (index: number) => void;
+  onStepChange?: ((index: number) => void) | undefined;
   currentStepId?: string;
   reviewStepId?: string;
   successStepId?: string;
@@ -31,20 +31,27 @@ const ProvisioningWizardLayout: React.FC<ProvisioningWizardLayoutProps> = ({
   const isSuccessStep = currentStepId === successStepId;
   const isReviewStep = currentStepId === reviewStepId;
 
+  const renderStepContent = () => {
+    if (isSuccessStep) {
+      return successContent;
+    }
+
+    if (isReviewStep) {
+      return reviewContent;
+    }
+
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">{mainContent}</div>
+        {sidebarContent && <div className="lg:col-span-1">{sidebarContent}</div>}
+      </div>
+    );
+  };
+
   return (
     <div className={containerClassName}>
       <WizardStepper steps={steps} activeStep={activeStep} onStepChange={onStepChange} />
-
-      {isSuccessStep ? (
-        successContent
-      ) : isReviewStep ? (
-        reviewContent
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">{mainContent}</div>
-          {sidebarContent ? <div className="lg:col-span-1">{sidebarContent}</div> : null}
-        </div>
-      )}
+      {renderStepContent()}
     </div>
   );
 };

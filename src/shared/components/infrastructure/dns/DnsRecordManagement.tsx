@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Plus, Search, Trash2, Edit2, ShieldAlert } from "lucide-react";
+import { Plus, Search, Trash2, ShieldAlert } from "lucide-react";
 import ModernCard from "../../ui/ModernCard";
 
 export interface DnsRecord {
@@ -232,7 +232,11 @@ const DnsRecordManagement: React.FC<DnsRecordManagementProps> = ({
                   <td className="py-3 px-4 text-right">
                     <button
                       onClick={() => {
-                        if (window.confirm(`Delete ${record.type} record for ${record.name}?`)) {
+                        if (
+                          globalThis.window.confirm(
+                            `Delete ${record.type} record for ${record.name}?`
+                          )
+                        ) {
                           onDeleteRecord(record);
                         }
                       }}

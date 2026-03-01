@@ -24,7 +24,7 @@ const App: React.FC = () => {
   // const isTenant = !!subdomain; // True for xyz.unicloudafrica.com, false for unicloudafrica.com
 
   useEffect(() => {
-    window.scrollTo(0, 0);
+    globalThis.window.scrollTo(0, 0);
   }, [location.pathname]);
 
   return (

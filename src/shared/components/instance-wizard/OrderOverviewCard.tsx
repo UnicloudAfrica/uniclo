@@ -1,15 +1,76 @@
 import React from "react";
 import { ModernCard } from "../ui";
-import { StatusPill } from "../ui";
+import { StatusPill, type StatusTone } from "../ui";
 import { Configuration } from "../../../types/InstanceConfiguration";
 import { formatCurrencyValue } from "../../../utils/instanceCreationUtils";
 
+export type TransactionSummary = {
+  identifier?: string;
+  reference?: string;
+  id?: string | number;
+};
+
+export type PaymentSummary = {
+  required?: boolean;
+};
+
+export type SubmissionResult = {
+  payment?: PaymentSummary;
+  transaction?: TransactionSummary;
+};
+
+export type OrderReceipt = {
+  transaction?: TransactionSummary;
+};
+
+export type PaymentOption = {
+  transaction_reference?: string;
+};
+
+export type ConfigurationSummary = {
+  id?: string | number;
+  title?: string;
+  regionLabel?: string;
+  isComplete?: boolean;
+  statusLabel?: string;
+  computeLabel?: string;
+  osLabel?: string;
+  termLabel?: string;
+  storageLabel?: string;
+  floatingIpLabel?: string;
+  keypairLabel?: string;
+  subnetLabel?: string;
+  [key: string]: unknown;
+};
+
+export type BackendPricingLine = {
+  name?: string;
+  currency?: string;
+  unit_amount?: number | string;
+  total?: number | string;
+  quantity?: number | string;
+  frequency?: string;
+  months?: number | string;
+  meta?: {
+    region?: string;
+    region_code?: string;
+    regionCode?: string;
+    unit?: string;
+    [key: string]: unknown;
+  };
+};
+
+export type BackendPricingData = {
+  currency?: string;
+  lines?: BackendPricingLine[];
+};
+
 interface OrderOverviewCardProps {
   configurations: Configuration[];
-  configurationSummaries: any[];
-  submissionResult: any;
-  orderReceipt: any;
-  effectivePaymentOption: any;
+  configurationSummaries: ConfigurationSummary[];
+  submissionResult: SubmissionResult | null;
+  orderReceipt: OrderReceipt | null;
+  effectivePaymentOption: PaymentOption | null;
   summaryPlanLabel: string;
   summaryWorkflowLabel: string;
   assignmentSummary: string;
@@ -21,7 +82,7 @@ interface OrderOverviewCardProps {
   summaryDisplayCurrency: string;
   summaryConfigurationCount: number;
   taxLabelSuffix: string;
-  backendPricingData: any;
+  backendPricingData: BackendPricingData | null;
   resourceLabel?: string;
 }
 
@@ -45,7 +106,7 @@ const OrderOverviewCard: React.FC<OrderOverviewCardProps> = ({
   backendPricingData,
   resourceLabel = "Instance",
 }) => {
-  const overviewStatus = submissionResult
+  const overviewStatus: { label: string; tone: StatusTone } = submissionResult
     ? submissionResult.payment?.required
       ? { label: "Payment", tone: "warning" }
       : { label: "Ready", tone: "info" }
@@ -70,7 +131,7 @@ const OrderOverviewCard: React.FC<OrderOverviewCardProps> = ({
             Auto-calculated from the captured configuration and provisioning response.
           </p>
         </div>
-        <StatusPill label={overviewStatus.label} tone={overviewStatus.tone as any} />
+        <StatusPill label={overviewStatus.label} tone={overviewStatus.tone} />
       </div>
       <div className="space-y-3 text-sm">
         <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2">
@@ -215,14 +276,14 @@ const OrderOverviewCard: React.FC<OrderOverviewCardProps> = ({
           {summaryConfigurationCount === 1 ? "" : "s"} captured. Taxes are estimated and may change
           after finance review.
         </div>
-        {backendPricingData?.lines?.length > 0 && (
+        {backendPricingData?.lines?.length ? (
           <div className="rounded-xl border border-gray-100 bg-white px-3 py-3">
             <p className="text-sm font-semibold text-gray-900">Pricing breakdown</p>
             <p className="text-xs text-gray-500">
               Pulled directly from the backend pricing response.
             </p>
             <div className="mt-3 space-y-2">
-              {backendPricingData?.lines?.map((line: any, index: number) => {
+              {(backendPricingData.lines || []).map((line, index) => {
                 const lineCurrency =
                   line.currency || backendPricingData.currency || summaryDisplayCurrency;
                 const lineRegion =
@@ -268,7 +329,7 @@ const OrderOverviewCard: React.FC<OrderOverviewCardProps> = ({
               })}
             </div>
           </div>
-        )}
+        ) : null}
       </div>
     </ModernCard>
   );

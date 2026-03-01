@@ -1,6 +1,5 @@
-// @ts-nocheck
 "use client";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AlertTriangle, ExternalLink, Loader2, X } from "lucide-react";
 import { useDownloadDoc } from "../../../hooks/adminHooks/leadsHook";
@@ -28,9 +27,9 @@ const categorizeFileType = (mimeType: any, fileName: any) => {
 const DocumentViewerModal = ({ isOpen, onClose, document: documentData }: any) => {
   const documentId = documentData?.identifier;
   const documentName = documentData?.name || "Document Viewer";
-  const [modalContainer, setModalContainer] = useState(null);
-  const [objectUrl, setObjectUrl] = useState(null);
-  const [mimeType, setMimeType] = useState(null);
+  const [modalContainer, setModalContainer] = useState<any>(null);
+  const [objectUrl, setObjectUrl] = useState<any>(null);
+  const [mimeType, setMimeType] = useState<any>(null);
 
   const {
     data,
@@ -44,12 +43,12 @@ const DocumentViewerModal = ({ isOpen, onClose, document: documentData }: any) =
   });
 
   useEffect(() => {
-    const el = window.document.createElement("div");
+    const el = globalThis.window.document.createElement("div");
     el.id = "document-viewer-modal-portal";
     document.body.appendChild(el);
     setModalContainer(el);
     return () => {
-      window.document.body.removeChild(el);
+      globalThis.window.document.body.removeChild(el);
     };
   }, []);
 
@@ -85,10 +84,10 @@ const DocumentViewerModal = ({ isOpen, onClose, document: documentData }: any) =
       }
     };
     if (isOpen) {
-      window.document.addEventListener("keydown", handleKeyDown);
+      globalThis.window.document.addEventListener("keydown", handleKeyDown);
     }
     return () => {
-      window.document.removeEventListener("keydown", handleKeyDown);
+      globalThis.window.document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOpen, onClose]);
 
@@ -99,16 +98,16 @@ const DocumentViewerModal = ({ isOpen, onClose, document: documentData }: any) =
 
   const handleExternalView = () => {
     if (objectUrl) {
-      window.open(objectUrl, "_blank", "noopener,noreferrer");
+      globalThis.window.open(objectUrl, "_blank", "noopener,noreferrer");
     }
   };
 
   const handleDownload = () => {
     if (!objectUrl) return;
-    const anchor = window.document.createElement("a");
+    const anchor = globalThis.window.document.createElement("a");
     anchor.href = objectUrl;
     anchor.download = documentName;
-    window.document.body.appendChild(anchor);
+    globalThis.window.document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
   };
@@ -118,7 +117,7 @@ const DocumentViewerModal = ({ isOpen, onClose, document: documentData }: any) =
       return (
         <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-80 z-10">
           <div className="flex items-center space-x-3">
-            <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
+            <Loader2 className="w-8 h-8 animate-spin text-[var(--theme-color)]" />
             <span className="text-gray-700 font-medium">Loading document...</span>
           </div>
         </div>
@@ -184,13 +183,15 @@ const DocumentViewerModal = ({ isOpen, onClose, document: documentData }: any) =
   return createPortal(
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4 font-Outfit">
       <div className="bg-white rounded-[24px] max-w-8xl max-h-[90vh] w-full h-full flex flex-col shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] flex-shrink-0">
-          <h2 className="text-lg font-semibold text-[#575758] truncate pr-4">{documentName}</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b bg-[var(--theme-surface-alt)] rounded-t-[24px] flex-shrink-0">
+          <h2 className="text-lg font-semibold text-[var(--theme-text-color)] truncate pr-4">
+            {documentName}
+          </h2>
           <div className="flex items-center space-x-2 flex-shrink-0">
             <button
               onClick={handleExternalView}
               disabled={!objectUrl}
-              className="p-2 text-gray-600 hover:text-[#288DD1] transition-colors rounded-lg hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="p-2 text-gray-600 hover:text-[var(--theme-color)] transition-colors rounded-lg hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
               title="Open in New Tab"
             >
               <ExternalLink className="w-5 h-5" />
@@ -236,7 +237,7 @@ const DocumentViewerModal = ({ isOpen, onClose, document: documentData }: any) =
             </button>
             <button
               onClick={onClose}
-              className="px-4 py-2 text-white bg-[#288DD1] rounded-[20px] text-sm font-medium hover:bg-[#1976D2] transition-colors"
+              className="px-4 py-2 text-white bg-[var(--theme-color)] rounded-[20px] text-sm font-medium hover:bg-[var(--theme-color)] transition-colors"
             >
               Close
             </button>

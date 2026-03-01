@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import ClientActiveTab from "../components/clientActiveTab";
@@ -7,21 +6,12 @@ import ProjectsPageContainer from "../../shared/components/projects/ProjectsPage
 import {
   useFetchClientProjects,
   useDeleteClientProject,
+  Project as HookProject,
 } from "../../hooks/clientHooks/projectHooks";
+import { Project } from "../../types/project";
+import { ProjectExportRecord } from "../../utils/projectExport";
 import { encodeProjectId } from "../../utils/projectUtils";
 import ToastUtils from "../../utils/toastUtil";
-
-interface Project {
-  identifier: string;
-  name: string;
-  status?: string;
-  created_at?: string;
-  [key: string]: any;
-}
-
-interface ProjectsResponse {
-  data?: Project[];
-}
 
 const ClientProjects: React.FC = () => {
   const navigate = useNavigate();
@@ -38,26 +28,20 @@ const ClientProjects: React.FC = () => {
 
   const deleteProjectMutation = useDeleteClientProject();
 
-  // Extract projects array from response
-  const projects: Project[] =
-    (projectsResponse as ProjectsResponse)?.data ||
-    (Array.isArray(projectsResponse) ? projectsResponse : []) ||
-    [];
-
   // Navigation handlers
   const handleCreateProject = () => {
     navigate("/client-dashboard/projects/create");
   };
 
-  const handleViewProject = (project: Project) => {
-    const encodedId = encodeProjectId(project.identifier);
+  const handleViewProject = (project: HookProject) => {
+    const encodedId = encodeProjectId(String(project.identifier || project.id));
     const encodedName = encodeURIComponent(project.name);
     navigate(`/client-dashboard/projects/details?id=${encodedId}&name=${encodedName}`);
   };
 
-  const handleDeleteProject = async (project: Project) => {
+  const handleDeleteProject = async (project: HookProject) => {
     if (
-      !window.confirm(
+      !globalThis.window.confirm(
         `Are you sure you want to delete "${project.name}"? This action cannot be undone.`
       )
     ) {
@@ -65,40 +49,50 @@ const ClientProjects: React.FC = () => {
     }
 
     try {
-      await deleteProjectMutation.mutateAsync(project.identifier);
+      await deleteProjectMutation.mutateAsync(String(project.identifier || project.id));
       ToastUtils.success(`Project "${project.name}" deleted successfully`);
-    } catch (err: any) {
-      console.error("Failed to delete project:", err);
-      ToastUtils.error(err?.message || "Failed to delete project");
+    } catch (err: unknown) {
+      const error = err as Error;
+      ToastUtils.error(error.message || "Failed to delete project");
     }
   };
 
   // Bulk operations
   const handleBulkExport = async (selectedIds: string[]) => {
+    const projectsRaw = (projectsResponse?.data || []) as HookProject[];
     const { exportSelectedProjects } = await import("../../utils/projectExport");
     try {
-      await exportSelectedProjects(projects, selectedIds, "csv");
+      await exportSelectedProjects(
+        projectsRaw as unknown as ProjectExportRecord[],
+        selectedIds,
+        "csv"
+      );
       ToastUtils.success(`Exported ${selectedIds.length} projects successfully`);
-    } catch (err: any) {
-      console.error("Failed to export projects:", err);
-      ToastUtils.error(err?.message || "Failed to export projects");
+    } catch (err: unknown) {
+      const error = err as Error;
+      ToastUtils.error(error.message || "Failed to export projects");
     }
   };
+
+  // Convert HookProject[] to GlobalProject[] for the container
+  const projects = (projectsResponse?.data as unknown as Project[]) || [];
 
   return (
     <>
       <ClientActiveTab />
       <ClientPageShell title="Projects" description="Manage your infrastructure projects">
         <ProjectsPageContainer
-          projects={projects as any}
+          projects={projects}
           isLoading={isLoading}
           isFetching={isFetching}
           isError={isError}
-          error={error as any}
-          onRefresh={refetch}
+          error={error}
+          onRefresh={() => {
+            refetch();
+          }}
           onCreateProject={handleCreateProject}
-          onViewProject={handleViewProject}
-          onDeleteProject={handleDeleteProject}
+          onViewProject={(p: Project) => handleViewProject(p as unknown as HookProject)}
+          onDeleteProject={(p: Project) => handleDeleteProject(p as unknown as HookProject)}
           onBulkExport={handleBulkExport}
           showCreateButton={true}
           showRefreshButton={true}

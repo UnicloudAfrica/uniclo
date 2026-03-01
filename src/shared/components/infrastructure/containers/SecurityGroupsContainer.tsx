@@ -1,5 +1,5 @@
-// @ts-nocheck
 import React, { useState } from "react";
+import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 import { Plus, RefreshCw } from "lucide-react";
 import { SecurityGroupsOverview } from "../index";
 import CreateSecurityGroupModal from "../modals/CreateSecurityGroupModal";
@@ -9,17 +9,32 @@ import {
   type Hierarchy,
   type SecurityGroupPermissions,
 } from "../../../config/permissionPresets";
-import type { SecurityGroup } from "../types";
+import type { SecurityGroup, Vpc } from "../types";
 
 interface SecurityGroupHooks {
   useList: (
     projectId: string,
-    region: string
-  ) => { data: SecurityGroup[]; isLoading: boolean; refetch: () => void };
-  useCreate: () => { mutate: (params: any, options?: any) => void; isPending: boolean };
-  useDelete: () => { mutate: (params: any) => void };
+    region?: string,
+    options?: unknown
+  ) => UseQueryResult<SecurityGroup[], Error>;
+  useCreate: () => UseMutationResult<
+    unknown,
+    Error,
+    {
+      projectId: string;
+      region?: string;
+      payload: { name: string; description: string; vpc_id: string };
+    },
+    unknown
+  >;
+  useDelete: () => UseMutationResult<
+    unknown,
+    Error,
+    { projectId: string; region?: string; securityGroupId: string },
+    unknown
+  >;
   /** Optional - only needed for Admin who can create SGs */
-  useVpcs?: (projectId: string, region: string) => { data: any[] };
+  useVpcs?: (projectId: string, region?: string, options?: unknown) => UseQueryResult<Vpc[], Error>;
 }
 
 interface SecurityGroupsContainerProps {
@@ -63,7 +78,7 @@ const SecurityGroupsContainer: React.FC<SecurityGroupsContainerProps> = ({
   // Use injected hooks - SINGLE SOURCE OF TRUTH
   const { data: securityGroups = [], isLoading, refetch } = hooks.useList(projectId, region);
   // VPCs: use stub if hook not provided (Tenant/Client don't need VPCs)
-  const useVpcsHook = hooks.useVpcs ?? (() => ({ data: [] }));
+  const useVpcsHook = hooks.useVpcs ?? (() => ({ data: [] as Vpc[] }));
   const { data: vpcs = [] } = useVpcsHook(projectId, region);
   const { mutate: createSg, isPending: isCreating } = hooks.useCreate();
   const { mutate: deleteSg } = hooks.useDelete();
@@ -87,7 +102,7 @@ const SecurityGroupsContainer: React.FC<SecurityGroupsContainerProps> = ({
 
   const handleDelete = (sg: SecurityGroup) => {
     if (!permissions.canDelete) return;
-    if (confirm("Are you sure you want to delete this security group?")) {
+    if (globalThis.window.confirm("Are you sure you want to delete this security group?")) {
       deleteSg({ projectId, region, securityGroupId: sg.id });
     }
   };

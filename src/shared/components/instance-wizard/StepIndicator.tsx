@@ -35,8 +35,33 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
   variant = "horizontal",
   iconMap = {},
 }) => {
-  const getIcon = (stepId: string, index: number): LucideIcon => {
+  const getIcon = (stepId: string): LucideIcon => {
     return iconMap[stepId] || DEFAULT_ICONS[stepId] || Server;
+  };
+
+  const getGridStepClasses = (isActive: boolean, isCompleted: boolean) => {
+    if (isActive) return "border-primary-500 bg-primary-50/50 ring-1 ring-primary-200";
+    if (isCompleted) return "cursor-pointer border-gray-200 bg-white hover:border-gray-300";
+    return "border-gray-100 bg-gray-50 opacity-60";
+  };
+
+  const getGridNumberClasses = (isActive: boolean, isCompleted: boolean) => {
+    if (isActive) return "bg-primary-600 text-white";
+    if (isCompleted) return "bg-emerald-500 text-white";
+    return "bg-gray-200 text-gray-500";
+  };
+
+  const getHorizontalStepClasses = (isActive: boolean, isCompleted: boolean) => {
+    if (isActive) return "bg-blue-600 text-white shadow-lg shadow-blue-600/20";
+    if (isCompleted)
+      return "bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 cursor-pointer";
+    return "bg-gray-100 text-gray-400";
+  };
+
+  const getHorizontalIconWrapperClasses = (isActive: boolean, isCompleted: boolean) => {
+    if (isActive) return "bg-white/20";
+    if (isCompleted) return "bg-green-500 text-white";
+    return "bg-gray-200";
   };
 
   if (variant === "grid") {
@@ -46,29 +71,24 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
           const isActive = idx === activeStep;
           const isCompleted = idx < activeStep;
           const isClickable = isCompleted;
-          const Icon = getIcon(step.id, idx);
 
           return (
-            <div
+            <button
               key={step.id}
+              type="button"
+              disabled={!isClickable && !isActive}
               onClick={() => isClickable && onStepClick(idx)}
-              className={`relative flex flex-col gap-2 rounded-xl border p-4 transition-all ${
-                isActive
-                  ? "border-primary-500 bg-primary-50/50 ring-1 ring-primary-200"
-                  : isCompleted
-                    ? "cursor-pointer border-gray-200 bg-white hover:border-gray-300"
-                    : "border-gray-100 bg-gray-50 opacity-60"
-              }`}
+              className={`relative flex flex-col text-left w-full gap-2 rounded-xl border p-4 transition-all ${getGridStepClasses(
+                isActive,
+                isCompleted
+              )}`}
             >
               <div className="flex items-center justify-between">
                 <span
-                  className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-                    isActive
-                      ? "bg-primary-600 text-white"
-                      : isCompleted
-                        ? "bg-emerald-500 text-white"
-                        : "bg-gray-200 text-gray-500"
-                  }`}
+                  className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${getGridNumberClasses(
+                    isActive,
+                    isCompleted
+                  )}`}
                 >
                   {isCompleted ? <CheckCircle className="h-3.5 w-3.5" /> : idx + 1}
                 </span>
@@ -86,7 +106,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
                 </p>
                 <p className="text-xs text-gray-500">{step.desc}</p>
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -97,7 +117,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
   return (
     <div className="flex items-center justify-center gap-2 mb-8">
       {steps.map((step, idx) => {
-        const Icon = getIcon(step.id, idx);
+        const Icon = getIcon(step.id);
         const isActive = idx === activeStep;
         const isCompleted = idx < activeStep;
         const isClickable = isCompleted;
@@ -107,18 +127,16 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
             <button
               onClick={() => isClickable && onStepClick(idx)}
               disabled={!isClickable && !isActive}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                isActive
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
-                  : isCompleted
-                    ? "bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 cursor-pointer"
-                    : "bg-gray-100 text-gray-400"
-              }`}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${getHorizontalStepClasses(
+                isActive,
+                isCompleted
+              )}`}
             >
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  isActive ? "bg-white/20" : isCompleted ? "bg-green-500 text-white" : "bg-gray-200"
-                }`}
+                className={`w-8 h-8 rounded-full flex items-center justify-center ${getHorizontalIconWrapperClasses(
+                  isActive,
+                  isCompleted
+                )}`}
               >
                 {isCompleted ? <CheckCircle size={16} /> : <Icon size={16} />}
               </div>

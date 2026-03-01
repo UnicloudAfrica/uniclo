@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Eye, RefreshCw, MapPin } from "lucide-react";
@@ -7,16 +6,28 @@ import { ModernButton } from "../../../shared/components/ui";
 import { ResourceSection } from "../../../shared/components/ui";
 import { ResourceEmptyState } from "../../../shared/components/ui";
 import { ResourceListCard } from "../../../shared/components/ui";
-import StatusPill from "../../../shared/components/ui/StatusPill";
-import ModernModal from "../../../shared/components/ui/ModernModal";
+import StatusPill, { type StatusTone } from "../../../shared/components/ui/StatusPill";
+import ModernModal, { type ModalAction } from "../../../shared/components/ui/ModernModal";
 import { designTokens } from "../../../styles/designTokens";
 import ToastUtils from "../../../utils/toastUtil";
+import type { MetaItem } from "../../../shared/components/ui/ResourceSection";
 
 const ITEMS_PER_PAGE = 6;
 
+interface NetworkRecord {
+  id?: string | number;
+  name?: string;
+  cidr?: string;
+  vpc_id?: string;
+  type?: string;
+  status?: string;
+  meta?: Record<string, unknown>;
+  [key: string]: any;
+}
+
 const normalize = (value: any) => (value ? value.toString().replace(/_/g, " ") : "").toLowerCase();
 
-const getToneForStatus = (status: any) => {
+const getToneForStatus = (status: any): StatusTone => {
   const normalized = normalize(status);
   if (["active", "available"].includes(normalized)) return "success";
   if (["pending", "creating", "updating"].includes(normalized)) return "warning";
@@ -25,7 +36,7 @@ const getToneForStatus = (status: any) => {
 };
 
 const NetworkDetailsModal = ({ network, isOpen, onClose }: any) => {
-  const actions = [
+  const actions: ModalAction[] = [
     {
       label: "Close",
       variant: "ghost",
@@ -143,13 +154,12 @@ const Networks = ({ projectId = "", region = "", onStatsUpdate }: any) => {
   const { data: networks, isFetching } = useFetchNetworks(projectId, region);
   const [isSyncing, setIsSyncing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [viewNetwork, setViewNetwork] = useState(null);
+  const [viewNetwork, setViewNetwork] = useState<any>(null);
+  const networkList: NetworkRecord[] = Array.isArray(networks) ? networks : [];
 
   const filteredNetworks = useMemo(() => {
-    return (networks || []).filter(
-      (net) => (net.type || net?.meta?.network_type) === "vpc_network"
-    );
-  }, [networks]);
+    return networkList.filter((net) => (net.type || net?.meta?.["network_type"]) === "vpc_network");
+  }, [networkList]);
 
   const totalItems = filteredNetworks.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
@@ -162,11 +172,11 @@ const Networks = ({ projectId = "", region = "", onStatsUpdate }: any) => {
     onStatsUpdate?.(filteredNetworks.length);
   }, [filteredNetworks, onStatsUpdate]);
 
-  const stats = useMemo(() => {
+  const stats = useMemo<MetaItem[]>(() => {
     const uniqueVpcs = new Set(
       filteredNetworks.map((network: any) => network.vpc_id).filter(Boolean)
     );
-    const baseStats = [
+    const baseStats: MetaItem[] = [
       {
         label: "Total Networks",
         value: totalItems,
@@ -202,7 +212,7 @@ const Networks = ({ projectId = "", region = "", onStatsUpdate }: any) => {
       });
       ToastUtils.success("Networks synced successfully.");
     } catch (error) {
-      ToastUtils.error(error?.message || "Unable to sync networks.");
+      ToastUtils.error(error instanceof Error ? error.message : "Unable to sync networks.");
     } finally {
       setIsSyncing(false);
     }
@@ -222,36 +232,40 @@ const Networks = ({ projectId = "", region = "", onStatsUpdate }: any) => {
     </ModernButton>,
   ];
 
-  const renderNetworkCard = (network: any) => (
-    <ResourceListCard
-      key={network.id}
-      title={network.name || "Untitled network"}
-      subtitle={network.id || "Unknown ID"}
-      metadata={[
-        { label: "CIDR", value: network.cidr || "—" },
-        { label: "VPC", value: network.vpc_id || "—" },
-        {
-          label: "Type",
-          value: normalize(network.type) || network.type || "—",
-        },
-      ]}
-      statuses={[
-        {
-          label: network.status || "unknown",
-          tone: getToneForStatus(network.status),
-        },
-      ]}
-      actions={[
-        {
-          key: "inspect",
-          label: "Inspect",
-          icon: <Eye size={16} />,
-          variant: "ghost",
-          onClick: () => setViewNetwork(network),
-        },
-      ]}
-    />
-  );
+  const renderNetworkCard = (network: NetworkRecord, index: number) => {
+    const networkId = network.id != null ? String(network.id) : "";
+    const cardKey = networkId || `network-${index}`;
+    return (
+      <ResourceListCard
+        key={cardKey}
+        title={network.name || "Untitled network"}
+        subtitle={networkId || "Unknown ID"}
+        metadata={[
+          { label: "CIDR", value: network.cidr || "—" },
+          { label: "VPC", value: network.vpc_id || "—" },
+          {
+            label: "Type",
+            value: normalize(network.type) || network.type || "—",
+          },
+        ]}
+        statuses={[
+          {
+            label: network.status || "unknown",
+            tone: getToneForStatus(network.status),
+          },
+        ]}
+        actions={[
+          {
+            key: "inspect",
+            label: "Inspect",
+            icon: <Eye size={16} />,
+            variant: "ghost",
+            onClick: () => setViewNetwork(network),
+          },
+        ]}
+      />
+    );
+  };
 
   return (
     <>

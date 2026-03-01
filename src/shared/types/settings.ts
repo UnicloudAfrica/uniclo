@@ -17,7 +17,7 @@ export interface FieldConfig {
   options?: Option[];
   rows?: number;
   includeWhenUndefined?: boolean;
-  cast?: (value: any) => any;
+  cast?: (value: unknown) => unknown;
 }
 
 export interface GroupConfig {

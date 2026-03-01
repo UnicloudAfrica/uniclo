@@ -1,6 +1,6 @@
-// @ts-nocheck
 import { useEffect, useState } from "react";
 import ModernModal from "../../../shared/components/ui/ModernModal";
+import type { ModalAction } from "../../../shared/components/ui/ModernModal";
 import ModernInput from "../../../shared/components/ui/ModernInput";
 import ToastUtils from "../../../utils/toastUtil";
 import { useCreateIgw } from "../../../hooks/adminHooks/igwHooks";
@@ -8,7 +8,7 @@ import { designTokens } from "../../../styles/designTokens";
 
 const AddIgw = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: any) => {
   const [form, setForm] = useState({ name: "", region: defaultRegion || "" });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, any>>({});
   const { mutate: createIgw, isPending } = useCreateIgw();
 
   useEffect(() => {
@@ -18,9 +18,9 @@ const AddIgw = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: any)
   }, [defaultRegion]);
 
   const validate = () => {
-    const validationErrors = {};
-    if (!form.name.trim()) validationErrors.name = "Enter a name for the gateway.";
-    if (!form.region.trim()) validationErrors.region = "Specify a deployment region.";
+    const validationErrors: Record<string, any> = {};
+    if (!form.name.trim()) validationErrors["name"] = "Enter a name for the gateway.";
+    if (!form.region.trim()) validationErrors["region"] = "Specify a deployment region.";
     setErrors(validationErrors);
     return Object.keys(validationErrors).length === 0;
   };
@@ -44,14 +44,16 @@ const AddIgw = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: any)
           ToastUtils.success("Internet gateway created successfully.");
           onClose();
         },
-        onError: (error) => {
-          ToastUtils.error(error?.message || "Failed to create internet gateway.");
+        onError: (error: unknown) => {
+          ToastUtils.error(
+            error instanceof Error ? error.message : "Failed to create internet gateway."
+          );
         },
       }
     );
   };
 
-  const actions = [
+  const actions: ModalAction[] = [
     {
       label: "Cancel",
       variant: "ghost",
@@ -85,7 +87,7 @@ const AddIgw = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: any)
         placeholder="igw-public"
         value={form.name}
         onChange={(event) => updateField("name", event.target.value)}
-        error={errors.name}
+        error={errors["name"] || ""}
         required
       />
       <ModernInput
@@ -93,7 +95,7 @@ const AddIgw = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: any)
         placeholder="lagos-1"
         value={form.region}
         onChange={(event) => updateField("region", event.target.value)}
-        error={errors.region}
+        error={errors["region"] || ""}
         helper="Use the same region as your target VPC."
         required
       />

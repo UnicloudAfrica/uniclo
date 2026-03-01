@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import { X } from "lucide-react";
 import { Thread, SlaStatus } from "./threadTypes";
 import { SharedTicketDetail } from "./SharedTicketDetail";
-import adminApi, { adminSilentApi } from "../../../index/admin/api";
+import { adminSilentApi } from "../../../index/admin/api";
 
 interface ThreadDetailModalProps {
   thread: Thread;
@@ -38,7 +38,10 @@ export const ThreadDetailModal: React.FC<ThreadDetailModalProps> = ({
       <div className="bg-white rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
           <h3 className="font-semibold text-gray-900 truncate pr-4">{thread.subject}</h3>
-          <button onClick={onClose} className="p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all text-gray-400 hover:text-gray-600">
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all text-gray-400 hover:text-gray-600"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -46,14 +49,23 @@ export const ThreadDetailModal: React.FC<ThreadDetailModalProps> = ({
         <div className="flex-1 overflow-y-auto p-6 bg-white custom-scrollbar">
           <SharedTicketDetail
             thread={thread}
-            slaStatus={slaStatus}
+            {...(slaStatus !== undefined ? { slaStatus } : {})}
             onBack={onClose}
-            onReply={onReply}
-            onEscalate={onEscalate}
-            onDeescalate={onDeescalate}
-            onResolve={onResolve}
-            onFetchMessages={(page) => adminSilentApi("GET", `/support/${thread.uuid || thread.id}/messages?per_page=15&page=${page}`)}
-            onUpdateLastRead={(messageId) => adminSilentApi("POST", `/support/${thread.uuid || thread.id}/read`, { last_read_message_id: messageId })}
+            {...(onReply ? { onReply } : {})}
+            {...(onEscalate ? { onEscalate } : {})}
+            {...(onDeescalate ? { onDeescalate } : {})}
+            {...(onResolve ? { onResolve } : {})}
+            onFetchMessages={(page) =>
+              adminSilentApi(
+                "GET",
+                `/support/${thread.uuid || thread.id}/messages?per_page=15&page=${page}`
+              )
+            }
+            onUpdateLastRead={(messageId) =>
+              adminSilentApi("POST", `/support/${thread.uuid || thread.id}/read`, {
+                last_read_message_id: messageId,
+              })
+            }
             canEscalate={canEscalate}
             canDeescalate={canDeescalate}
             canResolve={canResolve}

@@ -1,24 +1,10 @@
-// @ts-nocheck
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  Activity,
-  Clock,
-  Layers,
-  MapPin,
-  RefreshCw,
-  Server,
-  Shield,
-  XCircle,
-  Wifi,
-  Route,
-} from "lucide-react";
+import { Activity, Layers, MapPin, RefreshCw, Server, Shield, Wifi, Route } from "lucide-react";
 import AdminActiveTab from "../components/adminActiveTab";
 import AdminPageShell from "../components/AdminPageShell";
-import { ModernCard } from "../../shared/components/ui";
 import { ModernButton } from "../../shared/components/ui";
-import ModernTable from "../../shared/components/ui/ModernTable";
 import PaymentModal from "../../shared/components/ui/PaymentModal";
 import config from "../../config";
 import {
@@ -26,24 +12,16 @@ import {
   useProjectStatus,
   useProjectMembershipSuggestions,
   useUpdateProject,
-  useEnableVpc,
   useProjectNetworkStatus,
-  useEnableInternetAccess,
-  useProvisionProject,
   useRevokeProjectUserPolicy,
   useAssignProjectUserPolicy,
+  ProjectStatusResponse,
 } from "../../hooks/adminHooks/projectHooks";
 import { useCloudPolicies } from "../../hooks/adminHooks/cloudPolicyHooks";
 import {
   useProjectInfrastructureStatus,
   useSyncProjectInfrastructure,
 } from "../../hooks/adminHooks/projectInfrastructureHooks";
-import KeyPairs from "./infraComps/keyPairs";
-import SecurityGroup from "./infraComps/securityGroup";
-import VPCs from "./infraComps/vpcs";
-import Networks from "./infraComps/networks";
-import InfrastructureSetupWizard from "../components/provisioning/InfrastructureSetupWizard";
-import ProvisioningFullScreen from "./projectComps/ProvisioningFullScreen";
 import { useFetchNetworks, useFetchNetworkInterfaces } from "../../hooks/adminHooks/networkHooks";
 import { useFetchKeyPairs } from "../../hooks/adminHooks/keyPairHooks";
 import { useFetchSecurityGroups } from "../../hooks/adminHooks/securityGroupHooks";
@@ -58,86 +36,26 @@ import {
   useVpcPeering,
 } from "../../hooks/adminHooks/vpcInfraHooks";
 import { useLoadBalancers } from "../../hooks/adminHooks/loadBalancerHooks";
-import Subnets from "./infraComps/subNet";
-import IGWs from "./infraComps/igw";
-import RouteTables from "./infraComps/routetable";
-import ENIs from "./infraComps/enis";
-import EIPs from "./infraComps/eips";
+import { useFetchProjectEdgeConfigAdmin } from "../../hooks/adminHooks/edgeHooks";
+
 import AssignEdgeConfigModal from "./projectComps/assignEdgeConfig";
-import { designTokens } from "../../styles/designTokens";
 import ToastUtils from "../../utils/toastUtil";
-import {
-  useFetchProjectEdgeConfigAdmin,
-  syncProjectEdgeConfigAdmin,
-} from "../../hooks/adminHooks/edgeHooks";
-import { useProjectBroadcasting } from "../../hooks/useProjectBroadcasting";
-import api, { adminSilentApi as silentApi } from "../../index/admin/api";
+
+import api from "../../index/admin/api";
+
+import InfrastructureSetupWizard from "../components/provisioning/InfrastructureSetupWizard";
+import ProvisioningFullScreen from "../../shared/components/provisioning/ProvisioningFullScreen";
 
 import ProjectMemberManagerModal from "../../shared/components/projects/ProjectMemberManagerModal";
-
-// Shared Components
-import ProjectDetailsHero from "../../shared/components/projects/details/ProjectDetailsHero";
-import ProjectInstancesOverview from "../../shared/components/projects/details/ProjectInstancesOverview";
-import ProjectInfrastructureJourney from "../../shared/components/projects/details/ProjectInfrastructureJourney";
-import ProjectQuickStatus from "../../shared/components/projects/details/ProjectQuickStatus";
-import ProjectUnifiedView from "../../shared/components/projects/details/ProjectUnifiedView";
 import ProjectDetailsShell from "./projectDetails/ProjectDetailsShell";
 
-// Types
-interface User {
-  id: number | string;
-  name?: string;
-  full_name?: string;
-  first_name?: string;
-  firstName?: string;
-  middle_name?: string;
-  middleName?: string;
-  last_name?: string;
-  lastName?: string;
-  email: string;
-  roles?: string[];
-  role?: string;
-  status?: {
-    tenant_admin?: boolean;
-    provider_account?: boolean;
-    aws_policy?: boolean;
-    symp_policy?: boolean;
-    role?: string;
-    cloud_policies?: Array<{
-      id: number;
-      name: string;
-      is_default: boolean;
-      status: string;
-    }>;
-  };
-}
+import { ProjectUser, SummaryItem, SummaryAction } from "../../types/project";
 
-interface Project {
-  id: number | string;
-  identifier: string;
-  name: string;
-  region: string;
-  region_name?: string;
-  provider: string;
-  status: string;
-  created_at: string;
-  type: string;
-  tenant_id?: string;
-  client_id?: string;
-  assignment_scope?: string;
-  summary?: any[];
-  users?: {
-    local?: User[];
-  };
-  tenant?: {
-    id: string;
-  };
-  clients?: {
-    id: string;
-  }[];
-  instances?: any[];
-  pending_instances?: any[];
-  vpc_enabled?: boolean;
+import { ApiResponse } from "../../shared/types/resource";
+
+// Types
+interface User extends Omit<ProjectUser, "actions"> {
+  actions?: Record<string, any>;
 }
 
 interface InviteForm {
@@ -154,12 +72,10 @@ const decodeId = (encodedId: string | null): string | null => {
     // Sanity check: ensure no control characters (like null byte)
     // eslint-disable-next-line no-control-regex
     if (/[\x00-\x1F]/.test(decoded)) {
-      console.warn("Decoded ID contains control characters, rejecting:", decoded);
       return null;
     }
     return decoded;
   } catch (e) {
-    console.error("Error decoding ID:", e);
     return null;
   }
 };
@@ -167,54 +83,30 @@ const decodeId = (encodedId: string | null): string | null => {
 const isTenantAdmin = (user: User | null): boolean => {
   if (!user) return false;
   if (
-    Array.isArray(user.roles) &&
-    user.roles.some((role) => role === "tenant_admin" || role === "tenant-admin")
+    Array.isArray(user?.["roles"]) &&
+    (user?.["roles"] as string[]).some((role) => role === "tenant_admin" || role === "tenant-admin")
   ) {
     return true;
   }
-  if (typeof user.role === "string") {
-    const role = user.role.toLowerCase();
+  if (typeof user?.["role"] === "string") {
+    const role = (user?.["role"] as string).toLowerCase();
     if (role.includes("tenant_admin") || role.includes("tenant-admin")) return true;
   }
-  if (user?.status?.tenant_admin) return true;
+  if ((user?.["status"] as Record<string, any>)?.["tenant_admin"]) return true;
   return false;
 };
 
-const formatDate = (value: string | undefined): string => {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return String(value);
-  return parsed.toLocaleString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-};
+const formatMemberName = (user: User | null): string => {
+  if (!user) return "User";
+  if (user?.["name"]) return user?.["name"] as string;
+  if (user?.["full_name"]) return user?.["full_name"] as string;
 
-const toTitleCase = (input: string | undefined = ""): string =>
-  input
-    .toString()
-    .replace(/[_-]/g, " ")
-    .split(" ")
-    .filter(Boolean)
-    .map((word: any) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+  const firstName = user?.["first_name"] || user?.["firstName"] || "";
+  const middleName = user?.["middle_name"] || user?.["middleName"] || "";
+  const lastName = user?.["last_name"] || user?.["lastName"] || "";
 
-const formatMemberName = (user: User = { email: "", id: "" }): string => {
-  if (user.name) return user.name;
-  if (user.full_name) return user.full_name;
-  const parts = [
-    user.first_name || user.firstName || null,
-    user.middle_name || user.middleName || null,
-    user.last_name || user.lastName || null,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .trim();
-  if (parts) return parts;
-  return user.email || (user.id ? `User #${user.id}` : "Unknown user");
+  const name = [firstName, middleName, lastName].filter(Boolean).join(" ").trim();
+  return name || (user?.["email"] as string) || String(user?.["id"]) || "User";
 };
 
 const INVITE_FORM_DEFAULT: InviteForm = {
@@ -224,75 +116,26 @@ const INVITE_FORM_DEFAULT: InviteForm = {
   note: "",
 };
 
-const getProjectStatusVariant = (status: string = "") => {
-  const normalized = status.toString().toLowerCase();
-  switch (normalized) {
-    case "active":
-      return {
-        label: "Active",
-        bg: "bg-emerald-50",
-        text: "text-emerald-700",
-        dot: "bg-emerald-500",
-      };
-    case "pending":
-    case "processing":
-    case "provisioning":
-      return {
-        label:
-          normalized === "pending"
-            ? "Pending"
-            : normalized === "processing"
-              ? "Processing"
-              : "Provisioning",
-        bg: "bg-amber-50",
-        text: "text-amber-700",
-        dot: "bg-amber-500",
-      };
-    case "inactive":
-      return {
-        label: "Inactive",
-        bg: "bg-gray-100",
-        text: "text-gray-600",
-        dot: "bg-gray-400",
-      };
-    case "failed":
-    case "error":
-      return {
-        label: normalized === "failed" ? "Failed" : "Error",
-        bg: "bg-rose-50",
-        text: "text-rose-700",
-        dot: "bg-rose-500",
-      };
-    default:
-      return {
-        label: toTitleCase(normalized || "Unknown"),
-        bg: "bg-blue-50",
-        text: "text-blue-700",
-        dot: "bg-blue-500",
-      };
-  }
-};
-
 export default function AdminProjectDetails() {
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [activeSection, setActiveSection] = useState("overview");
   const [isAssignEdgeOpen, setIsAssignEdgeOpen] = useState(false);
-  const [isEdgeSyncing, setIsEdgeSyncing] = useState(false);
-  const [activePaymentPayload, setActivePaymentPayload] = useState<any>(null);
+  const [activePaymentPayload, setActivePaymentPayload] = useState<Record<string, unknown> | null>(
+    null
+  );
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<number>>(new Set());
   const [membershipError, setMembershipError] = useState("");
-  const [activeTeamTab, setActiveTeamTab] = useState("provisioning");
+
   const [inviteForm, setInviteForm] = useState<InviteForm>(INVITE_FORM_DEFAULT);
-  const [isInviteSubmitting, setIsInviteSubmitting] = useState(false);
+
   const [inviteSuccessMessage, setInviteSuccessMessage] = useState("");
   const [resourceCounts, setResourceCounts] = useState<Record<string, number>>({});
   const [isInProvisioningMode, setIsInProvisioningMode] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const [forceHideProvisioning, setForceHideProvisioning] = useState(false);
 
   const queryParams = new URLSearchParams(location.search);
   const identifierParam = queryParams.get("identifier");
@@ -310,7 +153,7 @@ export default function AdminProjectDetails() {
     if (isNewProject && !isInProvisioningMode) {
       setIsInProvisioningMode(true);
     }
-  }, [isNewProject]);
+  }, [isNewProject, isInProvisioningMode]);
 
   const {
     data: projectStatusData,
@@ -318,37 +161,44 @@ export default function AdminProjectDetails() {
     refetch: refetchProjectStatus,
   } = useProjectStatus(projectId, {
     refetchInterval: (query) => {
-      const status = query?.state?.data?.project?.status;
+      const data = query.state.data as ProjectStatusResponse | undefined;
+      const status = data?.["project"]?.["status"];
       return status === "provisioning" || status === "pending" ? 3000 : false;
     },
   });
 
   const {
     data: projectDetailsResponse,
-    isFetching: isProjectDetailsFetching,
+
     refetch: refetchProjectDetails,
   } = useFetchProjectById(projectId, {
     enabled: Boolean(projectId),
-    refetchInterval: (query) => {
+    refetchInterval: (query: any) => {
       const status = query?.state?.data?.data?.status;
       return status === "provisioning" || status === "pending" ? 3000 : false;
     },
-  });
+  }) as any;
 
   const { data: infraStatusData } = useProjectInfrastructureStatus(projectId, {
     enabled: Boolean(projectId),
-  }) as any;
+  });
 
   const allProjectUsers = useMemo(() => {
-    if (Array.isArray(projectDetailsResponse?.users)) return projectDetailsResponse.users;
-    if (Array.isArray(projectStatusData?.project?.users)) return projectStatusData.project.users;
-    if (Array.isArray(projectStatusData?.project?.users?.local))
-      return projectStatusData.project.users.local;
+    const details = projectDetailsResponse as ApiResponse<{ users?: User[] }> | undefined;
+    const detailsUsers = details?.data?.users;
+    if (Array.isArray(detailsUsers)) return detailsUsers;
+    if (Array.isArray(projectStatusData?.project?.["users"]))
+      return projectStatusData.project["users"] as User[];
+
+    const statusUsers = projectStatusData?.project?.["users"] as
+      | Record<string, unknown>
+      | undefined;
+    if (Array.isArray(statusUsers?.["local"])) return statusUsers["local"] as User[];
     return [];
   }, [projectDetailsResponse, projectStatusData]);
 
-  const handleInviteSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleInviteSubmit = async (_e: React.FormEvent) => {
+    _e.preventDefault();
     // Todo: Implement invite logic
     ToastUtils.info("Invite functionality coming soon.");
   };
@@ -363,8 +213,8 @@ export default function AdminProjectDetails() {
     setResourceCounts({});
   }, [projectId]);
 
-  const { mutateAsync: updateProjectMembers, isPending: isMembershipUpdating } = useUpdateProject();
-  const { mutateAsync: runProvisioning, isPending: isProvisioning } = useProvisionProject();
+  const { isPending: isMembershipUpdating } = useUpdateProject();
+
   const { mutateAsync: syncInfrastructure, isPending: isSyncingInfrastructure } =
     useSyncProjectInfrastructure();
   const { mutateAsync: revokePolicy, isPending: isRevokingPolicy } = useRevokeProjectUserPolicy();
@@ -374,14 +224,14 @@ export default function AdminProjectDetails() {
 
   const { data: cloudPoliciesResponse } = useCloudPolicies(
     {
-      region: project?.region,
+      region: project?.["region"] as string | undefined,
       active_only: true,
-      provider: project?.provider || "zadara",
+      provider: (project?.["provider"] as string | undefined) || "zadara",
     },
-    { enabled: Boolean(project?.region) }
+    { enabled: Boolean(project?.["region"]) }
   );
 
-  const cloudPolicies = cloudPoliciesResponse || [];
+  const cloudPolicies = Array.isArray(cloudPoliciesResponse) ? cloudPoliciesResponse : [];
 
   const updateResourceCount = useCallback((resource: string, count: number) => {
     setResourceCounts((prev) => {
@@ -392,22 +242,20 @@ export default function AdminProjectDetails() {
     });
   }, []);
 
-  const infrastructureComponents = infraStatusData?.data?.components;
-  const edgeComponent = infrastructureComponents?.edge_networks ?? infrastructureComponents?.edge;
-
   // Compute setupSteps early for use in provisioning screen
   const setupSteps = useMemo(() => {
-    if (Array.isArray(project?.provisioning_progress)) {
-      return project.provisioning_progress.map((step: any) => ({
-        id: step.id || step.label?.toLowerCase()?.replace(/\s+/g, "_") || "step",
-        label: step.label || "Step",
-        status: step.status as any,
-        description: step.status === "completed" ? "Completed" : "Action in progress",
-        updated_at: step.updated_at,
+    const progress = project?.["provisioning_progress"];
+    if (Array.isArray(progress)) {
+      return progress.map((step) => ({
+        id: step.id || (step as any)?.["label"]?.toLowerCase()?.replaceAll(/\s+/g, "_") || "step",
+        label: (step as any)?.["label"] || "Step",
+        status: (step as any)?.["status"] as any,
+        description: (step as any)?.["status"] === "completed" ? "Completed" : "Action in progress",
+        updated_at: (step as any)?.["updated_at"],
       }));
     }
     return [];
-  }, [project?.provisioning_progress]);
+  }, [project?.["provisioning_progress"]]);
 
   // Sticky provisioning mode: once we enter provisioning, stay until all steps are complete
   const allStepsComplete =
@@ -415,7 +263,8 @@ export default function AdminProjectDetails() {
 
   useEffect(() => {
     // Enter provisioning mode when status becomes 'provisioning' OR when we have new=true param
-    if ((project?.status === "provisioning" || isNewProject) && !isInProvisioningMode) {
+    const currentStatus = project?.["status"];
+    if ((currentStatus === "provisioning" || isNewProject) && !isInProvisioningMode) {
       setIsInProvisioningMode(true);
     }
     // Exit provisioning mode when:
@@ -427,14 +276,15 @@ export default function AdminProjectDetails() {
         setIsInProvisioningMode(false);
         // Remove the 'new' param from URL to prevent re-entering provisioning mode on refresh
         if (isNewProject) {
-          const newUrl = new URL(window.location.href);
+          const newUrl = new URL(globalThis.window.location.href);
           newUrl.searchParams.delete("new");
-          window.history.replaceState({}, "", newUrl.toString());
+          globalThis.window.history.replaceState({}, "", newUrl.toString());
         }
       }, 2000); // 2 second delay to show completion
       return () => clearTimeout(timer);
     }
-  }, [project?.status, allStepsComplete, isInProvisioningMode, isNewProject]);
+    return undefined;
+  }, [project, project?.status, allStepsComplete, isInProvisioningMode, isNewProject]);
 
   const { data: networksData } = useFetchNetworks(project?.identifier, project?.region, {
     enabled: Boolean(project?.identifier && project?.region),
@@ -486,9 +336,11 @@ export default function AdminProjectDetails() {
   useEffect(() => {
     if (Array.isArray(vpcsData)) {
       updateResourceCount("vpcs", vpcsData.length);
-    } else if (infraStatusData?.data?.components?.vpc?.count !== undefined) {
-      // Fallback to infrastructure status if VPCs data is not available
-      updateResourceCount("vpcs", infraStatusData.data.components.vpc.count);
+    } else {
+      const vpcCount = (infraStatusData as any)?.["data"]?.["components"]?.["vpc"]?.["count"];
+      if (vpcCount !== undefined) {
+        updateResourceCount("vpcs", vpcCount);
+      }
     }
   }, [vpcsData, infraStatusData, updateResourceCount]);
 
@@ -565,20 +417,21 @@ export default function AdminProjectDetails() {
       updateResourceCount("load_balancers", loadBalancersData.length);
     }
   }, [loadBalancersData, updateResourceCount]);
-  const summary = project?.summary ?? [];
+  const summary = (project?.["summary"] ?? []) as SummaryItem[];
   const requiredActions = useMemo(
-    () => summary.filter((item: any) => !item?.completed && item?.action),
+    () => summary.filter((item) => !item?.["completed"] && item?.["action"]),
     [summary]
   );
 
-  // Initialize Real-time Provisioning Hook
-  useProjectBroadcasting(project?.id);
+  // useProjectBroadcasting is now handled by the useProjectDetailsAdapter shared hook
+  // which is called inside ProjectDetailsShell below.
 
-  const normalizeSummaryKey = (value: string = "") => value.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const normalizeSummaryKey = (value: string = "") =>
+    value.toLowerCase().replaceAll(/[^a-z0-9]/g, "");
 
   const summaryStatusMap = useMemo(() => {
-    const map = new Map();
-    summary.forEach((item: any) => {
+    const map = new Map<string, SummaryItem>();
+    summary.forEach((item) => {
       if (item?.title) {
         map.set(normalizeSummaryKey(item.title), item);
       }
@@ -594,7 +447,7 @@ export default function AdminProjectDetails() {
       const normalized = normalizeSummaryKey(label);
       if (summaryStatusMap.has(normalized)) {
         const item = summaryStatusMap.get(normalized);
-        return item?.completed ?? item?.complete ?? false;
+        return item?.["completed"] ?? item?.["complete"] ?? false;
       }
     }
     return undefined;
@@ -605,7 +458,7 @@ export default function AdminProjectDetails() {
   const { data: networkStatusData, refetch: refetchNetworkStatus } = useProjectNetworkStatus(
     resolvedProjectId,
     { enabled: Boolean(resolvedProjectId) }
-  );
+  ) as any;
 
   // Track previous status to detect provisioning completion
   const prevProjectStatusRef = useRef<string | undefined>(undefined);
@@ -642,10 +495,10 @@ export default function AdminProjectDetails() {
   const prevAllStepsCompletedRef = useRef<boolean>(false);
 
   useEffect(() => {
-    const progress = project?.provisioning_progress;
+    const progress = project?.["provisioning_progress"];
     if (!Array.isArray(progress) || progress.length === 0) return;
 
-    const allCompleted = progress.every((step: any) => step.status === "completed");
+    const allCompleted = progress.every((step) => (step as any)?.["status"] === "completed");
     const wasIncomplete = !prevAllStepsCompletedRef.current;
 
     // Detect transition to all-completed state
@@ -681,15 +534,13 @@ export default function AdminProjectDetails() {
     return networkStatusData.network || networkStatusData?.data?.network || networkStatusData;
   }, [networkStatusData]);
 
-  const { mutateAsync: enableInternet, isPending: isEnablingInternet } = useEnableInternetAccess();
-
   const { data: edgeConfig, refetch: refetchEdgeConfig } = useFetchProjectEdgeConfigAdmin(
     resolvedProjectId,
     project?.region,
     {
       enabled: Boolean(resolvedProjectId && project?.region),
     }
-  );
+  ) as any;
   const edgePayload = edgeConfig?.data ?? edgeConfig;
   const projectDetailsPayload = projectDetailsResponse?.data ?? projectDetailsResponse;
   const projectDetails = projectDetailsPayload || project;
@@ -716,10 +567,13 @@ export default function AdminProjectDetails() {
     return null;
   }, [project, projectDetails]);
 
-  const assignmentScope =
-    projectDetails?.assignment_scope ||
-    project?.assignment_scope ||
-    (projectClientId ? "client" : projectTenantId ? "tenant" : "internal");
+  const assignmentScope = (() => {
+    if (projectDetails?.assignment_scope) return projectDetails.assignment_scope;
+    if (project?.assignment_scope) return project.assignment_scope;
+    if (projectClientId) return "client";
+    if (projectTenantId) return "tenant";
+    return "internal";
+  })();
 
   const membershipParams = useMemo(() => {
     if (!assignmentScope && !projectTenantId && !projectClientId) {
@@ -738,12 +592,16 @@ export default function AdminProjectDetails() {
     });
 
   const providerLabel =
-    project?.region_name ||
-    project?.region ||
-    projectDetails?.region_name ||
-    projectDetails?.region ||
+    (project?.["region_name"] as string | undefined) ||
+    (project?.["region"] as string | undefined) ||
+    (projectDetails?.["region_name"] as string | undefined) ||
+    (projectDetails?.["region"] as string | undefined) ||
     "Provider";
-  const projectUsers = project?.users?.local ?? [];
+  const projectUsersRaw = (project?.["users"] as Record<string, any> | undefined)?.["local"];
+  const projectUsers = useMemo(
+    () => (Array.isArray(projectUsersRaw) ? projectUsersRaw : []),
+    [projectUsersRaw]
+  );
   const tenantAdminUsers = projectUsers.filter(isTenantAdmin);
   const tenantAdminCount = tenantAdminUsers.length;
   const hasTenantAdmin = tenantAdminCount > 0;
@@ -896,7 +754,7 @@ export default function AdminProjectDetails() {
       });
     };
 
-    entries.forEach((user: any) => {
+    entries.forEach((user) => {
       const numericId = Number(user?.id);
       upsertMember(user, {
         isCurrent: projectUserIdSet.has(numericId),
@@ -911,7 +769,7 @@ export default function AdminProjectDetails() {
       });
     });
 
-    return Array.from(map.values()).sort((a: any, b: any) => a.name.localeCompare(b.name));
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [membershipSuggestions, projectUsers, projectUserIdSet, tenantAdminUsers]);
 
   const pendingOwnerCount = useMemo(() => {
@@ -943,8 +801,6 @@ export default function AdminProjectDetails() {
     return [];
   }, [projectDetails, project]);
 
-  const instanceCount = projectInstances.length;
-
   const infrastructureSections = [
     { key: "user-provisioning", label: "Team access", icon: <Shield size={16} /> },
     { key: "vpcs", label: "Virtual Private Cloud", icon: <Server size={16} /> },
@@ -963,13 +819,14 @@ export default function AdminProjectDetails() {
     // Helper to check infra status from backend if available
     const checkInfraStatus = (key: string) => {
       const components = infraStatusData?.data?.components;
-      if (!components) return null;
-      const comp = components[key];
-      if (!comp) return false;
+      const comp = components?.[key];
+      if (!comp) return null;
       return (
         comp.status === "active" || comp.status === "completed" || (comp.count && comp.count > 0)
       );
     };
+
+    const hasCount = (key: string) => (resourceCounts[key] ?? 0) > 0;
 
     switch (sectionKey) {
       case "user-provisioning":
@@ -978,12 +835,8 @@ export default function AdminProjectDetails() {
         return setupConditionsMet;
       case "vpcs": {
         const infraStatus = checkInfraStatus("vpc");
-        // If infraStatus is available, strictly check count > 0 (or status completed which implies it)
-        // But user asked for count > 0 specifically.
-        if (infraStatusData?.data?.components?.vpc) {
-          return (infraStatusData.data.components.vpc.count ?? 0) > 0;
-        }
-
+        if (infraStatus !== null) return infraStatus;
+        if (infraStatusData?.data?.components?.vpc?.count) return true;
         const summaryFlag = summaryCompleted(
           "vpc",
           "vpcs",
@@ -991,76 +844,54 @@ export default function AdminProjectDetails() {
           "vpcprovisioned"
         );
         if (summaryFlag === true) return true;
-        if (projectDetails?.vpc_enabled) return true; // Fallback
-        return summaryFlag ?? false;
+        return projectDetails?.vpc_enabled || summaryFlag || false;
       }
       case "networks": {
-        const infraStatus = checkInfraStatus("networks"); // or whatever key backend uses, likely 'networks' isn't in standard map yet so fallback
-        if ((resourceCounts.networks ?? 0) > 0) return true;
-        const summaryFlag = summaryCompleted("network", "networks", "subnet", "subnets"); // Legacy summary check
-        if (summaryFlag === true) return true;
-        return summaryFlag ?? false;
+        const infraStatus = checkInfraStatus("networks");
+        if (infraStatus !== null) return infraStatus;
+        if (hasCount("networks")) return true;
+        return summaryCompleted("network", "networks", "subnet", "subnets") || false;
       }
       case "keypairs": {
         const infraStatus = checkInfraStatus("keypairs");
         if (infraStatus !== null) return infraStatus;
-
-        if ((resourceCounts.keyPairs ?? 0) > 0) return true;
-        const summaryFlag = summaryCompleted("keypair", "keypairs", "createkeypair");
-        if (summaryFlag === true) return true;
-        return summaryFlag ?? false;
+        if (hasCount("keyPairs")) return true;
+        return summaryCompleted("keypair", "keypairs", "createkeypair") || false;
       }
       case "edge": {
         const infraStatus = checkInfraStatus("edge_networks");
         if (infraStatus !== null) return infraStatus;
-
         const edgeSummary = summaryCompleted("edge", "edge network", "edge_network");
         if (edgeSummary === true) return true;
-        if (
+        const hasEdgePayload =
           edgePayload &&
           (Array.isArray(edgePayload)
             ? edgePayload.length > 0
-            : Object.keys(edgePayload).length > 0)
-        )
-          return true;
-        return edgeSummary ?? false;
+            : Object.keys(edgePayload).length > 0);
+        return hasEdgePayload || edgeSummary || false;
       }
-      case "security-groups": {
-        const infraStatus = checkInfraStatus("security_groups");
-        if (infraStatus !== null) return infraStatus;
-        if ((resourceCounts.security_groups ?? 0) > 0) return true;
-        const summaryFlag = summaryCompleted("securitygroup", "securitygroups");
-        if (summaryFlag === true) return true;
-        return summaryFlag ?? false;
-      }
-      case "subnets": {
-        const infraStatus = checkInfraStatus("subnets");
-        if (infraStatus !== null) return infraStatus;
-        if ((resourceCounts.subnets ?? 0) > 0) return true;
-        const summaryFlag = summaryCompleted("subnet", "subnets");
-        if (summaryFlag === true) return true;
-        return summaryFlag ?? false;
-      }
-      case "igws": {
-        const infraStatus = checkInfraStatus("internet_gateways");
-        if (infraStatus !== null) return infraStatus;
-        return (resourceCounts.internet_gateways ?? 0) > 0;
-      }
-      case "route-tables": {
-        const infraStatus = checkInfraStatus("route_tables");
-        if (infraStatus !== null) return infraStatus;
-        return (resourceCounts.routeTables ?? 0) > 0;
-      }
-      case "enis": {
-        const infraStatus = checkInfraStatus("network_interfaces");
-        if (infraStatus !== null) return infraStatus;
-        return (resourceCounts.enis ?? 0) > 0;
-      }
-      case "eips": {
-        const infraStatus = checkInfraStatus("elastic_ips");
-        if (infraStatus !== null) return infraStatus;
-        return (resourceCounts.eips ?? 0) > 0;
-      }
+      case "security-groups":
+        return (
+          checkInfraStatus("security_groups") ??
+          hasCount("security_groups") ??
+          summaryCompleted("securitygroup", "securitygroups") ??
+          false
+        );
+      case "subnets":
+        return (
+          checkInfraStatus("subnets") ??
+          hasCount("subnets") ??
+          summaryCompleted("subnet", "subnets") ??
+          false
+        );
+      case "igws":
+        return checkInfraStatus("internet_gateways") ?? hasCount("internet_gateways");
+      case "route-tables":
+        return checkInfraStatus("route_tables") ?? hasCount("routeTables");
+      case "enis":
+        return checkInfraStatus("network_interfaces") ?? hasCount("enis");
+      case "eips":
+        return checkInfraStatus("elastic_ips") ?? hasCount("eips");
       default:
         return false;
     }
@@ -1069,80 +900,6 @@ export default function AdminProjectDetails() {
     getStatusForSection(section.key)
   ).length;
   const healthPercent = Math.round((completedSections / infrastructureSections.length) * 100);
-
-  const projectStatusVariant = getProjectStatusVariant(project?.status || projectDetails?.status);
-  const totalInfraSections = infrastructureSections.length || 1;
-  const infrastructureStepLabel = `${completedSections}/${totalInfraSections} infra steps`;
-  const heroProjectIdentifier =
-    project?.identifier || projectDetails?.identifier || resolvedProjectId || projectId;
-  const heroProviderLabel = project?.provider || projectDetails?.provider || "Provider";
-  const heroRegionLabel = (project?.region || projectDetails?.region || "Region").toUpperCase();
-
-  const metadataItems = useMemo(
-    () => [
-      {
-        label: "Project Identifier",
-        value: heroProjectIdentifier || "—",
-      },
-      {
-        label: "Project Type",
-        value: toTitleCase(projectDetails?.type || project?.type || "Unknown"),
-      },
-      {
-        label: "Created",
-        value: formatDate(projectDetails?.created_at || project?.created_at),
-      },
-      {
-        label: "Instances",
-        value: `${instanceCount} tracked`,
-      },
-    ],
-    [
-      heroProjectIdentifier,
-      instanceCount,
-      project?.created_at,
-      project?.type,
-      projectDetails?.created_at,
-      projectDetails?.type,
-    ]
-  );
-
-  const summaryMetrics = useMemo(
-    () => [
-      {
-        label: "Project Type",
-        value: toTitleCase(projectDetails?.type || project?.type),
-        helper: "Deployment model for workloads",
-        icon: Layers,
-      },
-      {
-        label: "Region",
-        value: heroRegionLabel,
-        helper: "Deployment location",
-        icon: MapPin,
-      },
-      {
-        label: "Instances",
-        value: instanceCount,
-        helper: "Compute resources attached",
-        icon: Server,
-      },
-      {
-        label: "Created",
-        value: formatDate(projectDetails?.created_at || project?.created_at),
-        helper: "Project inception date",
-        icon: Clock,
-      },
-    ],
-    [
-      heroRegionLabel,
-      instanceCount,
-      project?.created_at,
-      project?.type,
-      projectDetails?.created_at,
-      projectDetails?.type,
-    ]
-  );
 
   const headerActions = (
     <div className="flex flex-wrap gap-2">
@@ -1188,46 +945,6 @@ export default function AdminProjectDetails() {
   if (!hasTenantAdmin) missingInstancePrereqs.push("Assign tenant admin");
   if (!setupConditionsMet) missingInstancePrereqs.push("Complete project setup");
 
-  const quickStatusItems = [
-    {
-      label: "Provisioning ready",
-      active: areAllSummaryItemsComplete && hasTenantAdmin,
-      tone: areAllSummaryItemsComplete && hasTenantAdmin ? "success" : "danger",
-    },
-    {
-      label: "Edge configuration synced",
-      active: Boolean(
-        edgeComponent &&
-        (edgeComponent.status === "completed" ||
-          (typeof edgeComponent.count === "number" && edgeComponent.count > 0))
-      ),
-      tone:
-        edgeComponent &&
-        (edgeComponent.status === "completed" ||
-          (typeof edgeComponent.count === "number" && edgeComponent.count > 0))
-          ? "success"
-          : "neutral",
-    },
-    {
-      label: "Tenant admin present",
-      active: hasTenantAdmin,
-      tone: hasTenantAdmin ? "success" : "danger",
-    },
-    {
-      label: "Instance prerequisites ready",
-      active: canCreateInstances,
-      tone: canCreateInstances ? "success" : "danger",
-    },
-  ];
-
-  const handleSectionClick = (key: string) => {
-    setActiveSection(key);
-    setTimeout(() => {
-      contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 60);
-  };
-  const { mutate: enableVpc, isPending: isVpcEnabling } = useEnableVpc();
-
   const instanceStats = useMemo(() => {
     const base = { total: projectInstances.length, running: 0, provisioning: 0, paymentPending: 0 };
     projectInstances.forEach((instance: any) => {
@@ -1249,17 +966,6 @@ export default function AdminProjectDetails() {
     return base;
   }, [projectInstances]);
 
-  const recentInstances = useMemo(() => {
-    return [...projectInstances]
-      .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, 5);
-  }, [projectInstances]);
-
-  // eslint-disable-next-line no-unused-vars
-  const handleOpenPayment = (entry: any) => {
-    setActivePaymentPayload(entry);
-    setIsPaymentModalOpen(true);
-  };
   const closePaymentModal = () => {
     setIsPaymentModalOpen(false);
     setActivePaymentPayload(null);
@@ -1267,11 +973,6 @@ export default function AdminProjectDetails() {
   const handlePaymentComplete = async () => {
     closePaymentModal();
     await Promise.all([refetchProjectStatus(), refetchProjectDetails()]);
-  };
-
-  const handleNavigateAddInstance = () => {
-    if (!resolvedProjectId) return;
-    navigate(`/admin-dashboard/create-instance?project=${encodeURIComponent(resolvedProjectId)}`);
   };
 
   const handleToggleMember = (id: number) => {
@@ -1283,7 +984,7 @@ export default function AdminProjectDetails() {
     });
   };
 
-  const handleGenericAction = async ({ method, endpoint, label, payload = {} }) => {
+  const handleGenericAction = async ({ method, endpoint, label, payload = {} }: any) => {
     try {
       // Use a consistent ID to prevent notification stacking
       const toastId = `project-action-${endpoint}`;
@@ -1315,627 +1016,13 @@ export default function AdminProjectDetails() {
   const handleSaveMembers = async () => {
     // Implementation for saving members
   };
-  const renderSectionContent = () => {
-    const contextualActions = summary.filter((item) => !item.completed && item.action);
-
-    switch (activeSection) {
-      case "overview":
-        return (
-          <div className="space-y-6">
-            {contextualActions.length > 0 && (
-              <ModernCard className="border-l-4 border-l-yellow-400 bg-yellow-50/30">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <Activity className="text-yellow-600" size={20} />
-                    <h3 className="text-lg font-semibold text-gray-900">Required Actions</h3>
-                  </div>
-                  <span className="text-xs font-medium text-yellow-700 bg-yellow-100 px-2 py-1 rounded-full">
-                    {contextualActions.length} Pending
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {contextualActions.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-white p-4 rounded-lg border border-yellow-200 shadow-sm flex flex-col justify-between"
-                    >
-                      <div>
-                        <div className="text-sm font-medium text-gray-900 mb-1">{item.title}</div>
-                        {item.missing_count && (
-                          <div className="text-xs text-red-500 mb-2">
-                            {item.missing_count} missing
-                          </div>
-                        )}
-                      </div>
-                      <ModernButton
-                        size="sm"
-                        variant="primary"
-                        className="w-full mt-3"
-                        onClick={() =>
-                          handleGenericAction({
-                            method: item.action.method,
-                            endpoint: item.action.endpoint,
-                            label: item.action.label,
-                          })
-                        }
-                      >
-                        {item.action.label}
-                      </ModernButton>
-                    </div>
-                  ))}
-                </div>
-              </ModernCard>
-            )}
-
-            <ProjectUnifiedView
-              project={{
-                id: project?.id || projectId || "",
-                identifier: project?.identifier || resolvedProjectId || "",
-                name: project?.name || "Project",
-                status: project?.status || "unknown",
-                region: project?.region,
-                region_name: project?.region_name,
-                provider: project?.provider,
-                created_at: project?.created_at,
-              }}
-              instanceStats={{
-                total: instanceStats?.total || 0,
-                running: instanceStats?.running || 0,
-                stopped:
-                  (instanceStats?.total || 0) -
-                  (instanceStats?.running || 0) -
-                  (instanceStats?.provisioning || 0),
-                provisioning: instanceStats?.provisioning || 0,
-              }}
-              resourceCounts={{
-                vpcs:
-                  infraStatusData?.data?.components?.vpc?.count ??
-                  resourceCounts.vpcs ??
-                  networkData?.vpc?.count ??
-                  0,
-                subnets:
-                  infraStatusData?.data?.components?.subnets?.count ??
-                  resourceCounts.subnets ??
-                  networkData?.subnets?.count ??
-                  0,
-                security_groups:
-                  infraStatusData?.data?.components?.security_groups?.count ??
-                  resourceCounts.security_groups ??
-                  networkData?.security_groups?.count ??
-                  0,
-                key_pairs:
-                  infraStatusData?.data?.components?.keypairs?.count ??
-                  resourceCounts.key_pairs ??
-                  networkData?.key_pairs?.count ??
-                  0,
-                route_tables:
-                  infraStatusData?.data?.components?.route_tables?.count ??
-                  resourceCounts.route_tables ??
-                  networkData?.route_tables?.count ??
-                  0,
-                elastic_ips:
-                  infraStatusData?.data?.components?.elastic_ips?.count ??
-                  resourceCounts.elastic_ips ??
-                  networkData?.elastic_ips?.count ??
-                  0,
-                network_interfaces:
-                  infraStatusData?.data?.components?.network_interfaces?.count ??
-                  resourceCounts.network_interfaces ??
-                  networkData?.network_interfaces?.count ??
-                  0,
-                nat_gateways: resourceCounts.nat_gateways ?? 0,
-                network_acls: resourceCounts.network_acls ?? 0,
-                vpc_peering: resourceCounts.vpc_peering ?? 0,
-                internet_gateways:
-                  infraStatusData?.data?.components?.internet_gateways?.count ??
-                  resourceCounts.internet_gateways ??
-                  networkData?.internet_gateways?.count ??
-                  0,
-                load_balancers:
-                  infraStatusData?.data?.components?.load_balancers?.count ??
-                  resourceCounts.load_balancers ??
-                  0,
-                users: allProjectUsers.length,
-              }}
-              canCreateInstances={canCreateInstances}
-              networkStatus={networkData}
-              vpcs={networksData || []}
-              subnets={subnetsData || []}
-              igws={igwsData || []}
-              setupSteps={
-                Array.isArray(project?.provisioning_progress)
-                  ? project.provisioning_progress.map((step: any) => ({
-                      id: step.id || step.label?.toLowerCase()?.replace(/\s+/g, "_") || "step",
-                      label: step.label || "Step",
-                      status: step.status as any,
-                      description: step.status === "completed" ? "Completed" : "Action in progress",
-                      updated_at: step.updated_at,
-                    }))
-                  : project?.status === "provisioning" &&
-                      Array.isArray(project?.provisioning_progress)
-                    ? project.provisioning_progress.map((step: any) => ({
-                        id: step.id || step.label?.toLowerCase()?.replace(/\s+/g, "_") || "step",
-                        label: step.label || "Step",
-                        status: step.status as any,
-                        description:
-                          step.status === "completed" ? "Completed" : "Action in progress",
-                        updated_at: step.updated_at,
-                      }))
-                    : quickStatusItems?.map((item: any) => ({
-                        id: item.label?.toLowerCase()?.replace(/\s+/g, "_") || "step",
-                        label: item.label || "Step",
-                        status: item.active ? ("completed" as const) : ("not_started" as const),
-                        description: item.active ? "Ready" : "Action required",
-                      }))
-              }
-              setupProgressPercent={healthPercent}
-              edgeNetworkConnected={!!edgePayload?.edge_network_id}
-              edgeNetworkName={edgePayload?.edge_network_name}
-              onAddInstance={handleNavigateAddInstance}
-              onEnableInternet={async () => {
-                try {
-                  const result = await enableInternet(resolvedProjectId);
-                  const alreadyEnabled = result?.already_enabled || result?.data?.already_enabled;
-                  if (alreadyEnabled) {
-                    ToastUtils.info("Internet access is already enabled for this project.");
-                  } else {
-                    ToastUtils.success("Internet access enabled successfully!");
-                  }
-                  await refetchNetworkStatus();
-                  await refetchProjectStatus();
-                } catch (error: any) {
-                  console.error("Enable internet error:", error);
-                  ToastUtils.error(error?.message || "Failed to enable internet access");
-                }
-              }}
-              onManageMembers={() => handleSectionClick("user-provisioning")}
-              onViewAllResources={() => handleSectionClick("user-provisioning")}
-              onSyncResources={() => {
-                syncInfrastructure({ projectId: resolvedProjectId });
-              }}
-              onViewNetworkDetails={() => handleSectionClick?.("vpcs")}
-              onCompleteSetup={async () => {
-                try {
-                  ToastUtils.info("Restarting infrastructure provisioning...");
-                  await runProvisioning(resolvedProjectId);
-                  ToastUtils.success("Provisioning sequence started!");
-                  refetchProjectStatus();
-                } catch (error: any) {
-                  console.error("Provisioning error:", error);
-                  ToastUtils.error(error?.message || "Failed to restart provisioning");
-                }
-              }}
-              onViewKeyPairs={() =>
-                navigate(
-                  `/admin-dashboard/key-pairs?project=${project?.identifier || projectId}&region=${project?.region}`
-                )
-              }
-              onViewRouteTables={() =>
-                navigate(
-                  `/admin-dashboard/infrastructure/route-tables?project=${project?.identifier || projectId}&region=${project?.region}`
-                )
-              }
-              onViewElasticIps={() =>
-                navigate(
-                  `/admin-dashboard/infrastructure/elastic-ips?project=${project?.identifier || projectId}&region=${project?.region}`
-                )
-              }
-              onViewNetworkInterfaces={() =>
-                navigate(
-                  `/admin-dashboard/infrastructure/network-interfaces?project=${project?.identifier || projectId}&region=${project?.region}`
-                )
-              }
-              onViewVpcs={() =>
-                navigate(
-                  `/admin-dashboard/infrastructure/vpcs?project=${project?.identifier || projectId}&region=${project?.region}`
-                )
-              }
-              onViewSubnets={() =>
-                navigate(
-                  `/admin-dashboard/infrastructure/subnets?project=${project?.identifier || projectId}&region=${project?.region}`
-                )
-              }
-              onViewSecurityGroups={() =>
-                navigate(
-                  `/admin-dashboard/infrastructure/security-groups?project=${project?.identifier || projectId}&region=${project?.region}`
-                )
-              }
-              onViewNatGateways={() =>
-                navigate(
-                  `/admin-dashboard/infrastructure/nat-gateways?project=${project?.identifier || projectId}&region=${project?.region}`
-                )
-              }
-              onViewNetworkAcls={() =>
-                navigate(
-                  `/admin-dashboard/infrastructure/network-acls?project=${project?.identifier || projectId}&region=${project?.region}`
-                )
-              }
-              onViewVpcPeering={() =>
-                navigate(
-                  `/admin-dashboard/infrastructure/vpc-peering?project=${project?.identifier || projectId}&region=${project?.region}`
-                )
-              }
-              onViewInternetGateways={() =>
-                navigate(
-                  `/admin-dashboard/infrastructure/internet-gateways?project=${project?.identifier || projectId}&region=${project?.region}`
-                )
-              }
-              onViewLoadBalancers={() =>
-                navigate(
-                  `/admin-dashboard/infrastructure/load-balancers?project=${project?.identifier || projectId}&region=${project?.region}`
-                )
-              }
-              onViewUsers={() => handleSectionClick("user-provisioning")}
-              isEnablingInternet={isEnablingInternet}
-              isSyncing={isProjectStatusFetching || isProjectDetailsFetching}
-              isProvisioning={isProvisioning}
-              showMemberManagement={true}
-              showSyncButton={true}
-            />
-          </div>
-        );
-      case "user-provisioning":
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-medium text-gray-900">Team Access</h3>
-                <p className="text-sm text-gray-500">
-                  Keep collaborators aligned—invite operators or tweak roles fast.
-                </p>
-              </div>
-              <div className="flex bg-gray-100 p-1 rounded-lg">
-                <button
-                  onClick={() => setActiveTeamTab("provisioning")}
-                  className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${activeTeamTab === "provisioning" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-900"}`}
-                >
-                  Members
-                </button>
-                <button
-                  onClick={() => setActiveTeamTab("invite")}
-                  className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${activeTeamTab === "invite" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-900"}`}
-                >
-                  Invite
-                </button>
-              </div>
-            </div>
-
-            {activeTeamTab === "provisioning" && (
-              <div className="space-y-4">
-                <div className="flex justify-end">
-                  <ModernButton
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setIsMemberModalOpen(true)}
-                  >
-                    Manage Team
-                  </ModernButton>
-                </div>
-                <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                  <ModernTable
-                    data={allProjectUsers.map((user: User) => ({ ...user, id: user.id }))}
-                    columns={[
-                      {
-                        key: "user_info",
-                        header: "MEMBER",
-                        render: (_, user: User) => (
-                          <div className="flex flex-col">
-                            <span className="font-bold text-gray-900 leading-tight">
-                              {formatMemberName(user)}
-                            </span>
-                            <span className="text-[10px] text-gray-400 break-all">
-                              {user.email}
-                            </span>
-                          </div>
-                        ),
-                      },
-                      {
-                        key: "role",
-                        header: "ROLE",
-                        render: (_, user: User) => (
-                          <div className="flex flex-col">
-                            <span className="text-gray-900 border px-2 py-0.5 rounded-full text-[10px] w-fit font-mono font-bold uppercase mb-1">
-                              {user.status?.role ||
-                                (Array.isArray(user.roles) ? user.roles[0] : user.role) ||
-                                "Member"}
-                            </span>
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {user.status?.provider_account ? (
-                                <span className="px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[8px] font-bold border border-green-200">
-                                  ACCOUNT READY
-                                </span>
-                              ) : (
-                                <span className="px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400 text-[8px] font-bold border border-gray-200">
-                                  NO ACCOUNT
-                                </span>
-                              )}
-                              {user.status?.aws_policy && (
-                                <span
-                                  className="px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[8px] font-bold border border-blue-200"
-                                  title="Storage Policy Attached"
-                                >
-                                  STORAGE
-                                </span>
-                              )}
-                              {user.status?.symp_policy && (
-                                <span
-                                  className="px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[8px] font-bold border border-indigo-200"
-                                  title="Network Policy Attached"
-                                >
-                                  NETWORK
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        ),
-                      },
-                      {
-                        key: "policies",
-                        header: "CLOUD POLICIES",
-                        render: (_, user: User) => (
-                          <div className="flex flex-col gap-2 min-w-[180px]">
-                            {/* Detailed Cloud Policies List */}
-                            <div className="flex flex-wrap gap-1.5">
-                              {user.status?.cloud_policies &&
-                              user.status.cloud_policies.length > 0 ? (
-                                user.status.cloud_policies.map((policy) => (
-                                  <div
-                                    key={policy.id}
-                                    className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold border transition-all ${
-                                      policy.status === "active"
-                                        ? "bg-blue-50 border-blue-200 text-blue-800"
-                                        : "bg-gray-50 border-gray-200 text-gray-500"
-                                    }`}
-                                  >
-                                    <span>{policy.name}</span>
-                                    {policy.status === "active" && !policy.is_compulsory && (
-                                      <button
-                                        onClick={async () => {
-                                          if (confirm(`Revoke ${policy.name} for ${user.email}?`)) {
-                                            try {
-                                              const toastId = `policy-action-${user.id}`;
-                                              ToastUtils.info(`Revoking ${policy.name}...`, {
-                                                id: toastId,
-                                              });
-                                              const res = await revokePolicy({
-                                                projectId: project?.identifier || projectId,
-                                                userId: user.id,
-                                                policyId: policy.id,
-                                              });
-                                              ToastUtils.success(
-                                                res?.data?.message || "Policy revoked successfully",
-                                                { id: toastId }
-                                              );
-                                              refetchProjectDetails();
-                                              refetchProjectStatus();
-                                            } catch (err: any) {
-                                              const msg =
-                                                err?.response?.data?.message ||
-                                                err?.message ||
-                                                "Failed to revoke policy";
-                                              ToastUtils.error(msg, {
-                                                id: `policy-action-${user.id}`,
-                                              });
-                                            }
-                                          }
-                                        }}
-                                        className="text-blue-400 hover:text-red-500 transition-colors"
-                                        title={`Revoke ${policy.name}`}
-                                        disabled={isRevokingPolicy}
-                                      >
-                                        <XCircle className="w-3 h-3" />
-                                      </button>
-                                    )}
-                                    {policy.is_compulsory && (
-                                      <span className="text-[8px] text-blue-400/80 font-bold">
-                                        (REQ)
-                                      </span>
-                                    )}
-                                  </div>
-                                ))
-                              ) : (
-                                <span className="text-[10px] text-gray-400 italic">
-                                  No cloud policies
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Add Policy Button */}
-                            {cloudPolicies.some((p) => {
-                              const assignedIds = (user.status?.cloud_policies || []).map(
-                                (cp) => cp.id
-                              );
-                              return !p.is_compulsory && !assignedIds.includes(p.id);
-                            }) && (
-                              <div className="flex items-center gap-2">
-                                <select
-                                  className="text-[10px] bg-white border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer transition-all hover:border-gray-400"
-                                  onChange={async (e) => {
-                                    const policyId = e.target.value;
-                                    if (!policyId) return;
-                                    try {
-                                      const toastId = `policy-action-${user.id}`;
-                                      ToastUtils.info("Assigning policy...", { id: toastId });
-                                      const res = await assignPolicy({
-                                        projectId: project?.identifier || projectId,
-                                        userId: user.id,
-                                        policyId: Number(policyId),
-                                      });
-                                      // The backend returns success:true/false with a message
-                                      ToastUtils.success(
-                                        res?.data?.message || "Policy assigned successfully",
-                                        { id: toastId }
-                                      );
-                                      refetchProjectDetails();
-                                      refetchProjectStatus();
-                                    } catch (err: any) {
-                                      const msg =
-                                        err?.response?.data?.message ||
-                                        err?.message ||
-                                        "Failed to assign policy";
-                                      ToastUtils.error(msg, { id: `policy-action-${user.id}` });
-                                    }
-                                    e.target.value = ""; // reset
-                                  }}
-                                  value=""
-                                  disabled={isAssigningPolicy}
-                                >
-                                  <option value="" disabled>
-                                    + Add cloud policy
-                                  </option>
-                                  {cloudPolicies
-                                    ?.filter((p) => {
-                                      const assignedIds = (user.status?.cloud_policies || []).map(
-                                        (cp) => cp.id
-                                      );
-                                      return !p.is_compulsory && !assignedIds.includes(p.id);
-                                    })
-                                    .map((p) => (
-                                      <option key={p.id} value={p.id}>
-                                        {p.name}
-                                      </option>
-                                    ))}
-                                </select>
-                              </div>
-                            )}
-                          </div>
-                        ),
-                      },
-                      {
-                        key: "actions",
-                        header: "ACTIONS",
-                        render: (_, user: User) => {
-                          const userActions = user.actions || {};
-                          return (
-                            <div className="flex flex-wrap gap-2">
-                              {Object.entries(userActions).map(([key, action]: [string, any]) => {
-                                if (!action.show) return null;
-                                return (
-                                  <ModernButton
-                                    key={key}
-                                    size="xs"
-                                    variant="outline"
-                                    className="h-7 text-[10px] px-2"
-                                    onClick={() => handleUserAction(user, key)}
-                                  >
-                                    {action.label || key}
-                                  </ModernButton>
-                                );
-                              })}
-                            </div>
-                          );
-                        },
-                      },
-                    ]}
-                    searchable={false}
-                    filterable={false}
-                    exportable={false}
-                    paginated={false}
-                    enableAnimations={false}
-                    emptyMessage="No team members found."
-                  />
-                </div>
-              </div>
-            )}
-
-            {activeTeamTab === "invite" && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6 max-w-2xl">
-                <form onSubmit={handleInviteSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Name</label>
-                    <input
-                      type="text"
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      value={inviteForm.name}
-                      onChange={(e) => setInviteForm({ ...inviteForm, name: e.target.value })}
-                      placeholder="John Doe"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
-                    <input
-                      type="email"
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      value={inviteForm.email}
-                      onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
-                      placeholder="john@example.com"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Role</label>
-                    <select
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      value={inviteForm.role}
-                      onChange={(e) => setInviteForm({ ...inviteForm, role: e.target.value })}
-                    >
-                      <option value="member">Member</option>
-                      <option value="admin">Admin</option>
-                      <option value="viewer">Viewer</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Note (Optional)
-                    </label>
-                    <textarea
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      rows={3}
-                      value={inviteForm.note}
-                      onChange={(e) => setInviteForm({ ...inviteForm, note: e.target.value })}
-                    />
-                  </div>
-                  <div className="flex justify-end">
-                    <ModernButton type="submit" disabled={isInviteSubmitting}>
-                      {isInviteSubmitting ? "Sending..." : "Send Invite"}
-                    </ModernButton>
-                  </div>
-                </form>
-              </div>
-            )}
-          </div>
-        );
-
-      case "vpcs":
-        return <VPCs projectId={resolvedProjectId} region={project?.region} />;
-      case "networks":
-        return (
-          <Networks
-            projectId={resolvedProjectId}
-            region={project?.region}
-            onStatsUpdate={(count: number) => updateResourceCount("networks", count)}
-          />
-        );
-      case "keypairs":
-        return (
-          <KeyPairs
-            projectId={resolvedProjectId}
-            region={project?.region}
-            onStatsUpdate={(count: number) => updateResourceCount("keyPairs", count)}
-          />
-        );
-      case "security-groups":
-        return <SecurityGroup projectId={resolvedProjectId} region={project?.region} />;
-      case "subnets":
-        return <Subnets projectId={resolvedProjectId} region={project?.region} />;
-      case "igws":
-        return <IGWs projectId={resolvedProjectId} region={project?.region} />;
-      case "route-tables":
-        return <RouteTables projectId={resolvedProjectId} region={project?.region} />;
-      case "enis":
-        return <ENIs projectId={resolvedProjectId} region={project?.region} />;
-      case "eips":
-        return <EIPs projectId={resolvedProjectId} region={project?.region} />;
-      default:
-        return null;
-    }
-  };
 
   // Phase 8: Dedicated Provisioning Screen
   // Use sticky mode: once provisioning starts, stay on this screen until complete
-  if (isInProvisioningMode || project?.status === "provisioning") {
+  if ((isInProvisioningMode || project?.["status"] === "provisioning") && !forceHideProvisioning) {
     return (
       <ProvisioningFullScreen
-        project={project}
+        project={project as any}
         setupSteps={setupSteps || []}
         onRefresh={() => {
           // Refetch both project status and details to detect completion
@@ -1943,32 +1030,36 @@ export default function AdminProjectDetails() {
           refetchProjectDetails();
         }}
         onViewProject={() => {
+          setForceHideProvisioning(true);
           // Force page reload to re-evaluate project status
-          window.location.reload();
+          globalThis.window.location.reload();
         }}
       />
     );
   }
 
   // Infra Studio: Project created but not provisioned
-  if (project?.status === "created" || project?.provisioning_status === "created") {
+  if (
+    project?.["status"] === "created" ||
+    (project as any)?.["provisioning_status"] === "created"
+  ) {
     return (
       <>
         <AdminActiveTab />
         <AdminPageShell
           title="Infrastructure Setup"
-          description={`Initialize infrastructure for ${project?.name || projectId}`}
+          description={`Initialize infrastructure for ${project?.["name"] || projectId}`}
           breadcrumbs={[
             { label: "Home", href: "/admin-dashboard" },
             { label: "Projects", href: "/admin-dashboard/projects" },
             {
-              label: project ? `${project.name} - ${project.identifier}` : "Project Details",
+              label: project ? `${project["name"]} - ${project["identifier"]}` : "Project Details",
               href: "/admin-dashboard/projects",
             },
             { label: "Setup" },
           ]}
         >
-          <InfrastructureSetupWizard project={project} />
+          <InfrastructureSetupWizard project={project as any} />
         </AdminPageShell>
       </>
     );
@@ -1978,17 +1069,17 @@ export default function AdminProjectDetails() {
     <>
       <AdminActiveTab />
       <AdminPageShell
-        title={project?.name || "Project Overview"}
+        title={project?.["name"] || "Project Overview"}
         description={
           project
-            ? `${project?.identifier || projectId} • ${project?.provider || "Provider"} • ${project?.region || "Region"}`
+            ? `${project?.["identifier"] || projectId} • ${project?.["provider"] || "Provider"} • ${project?.["region"] || "Region"}`
             : "Loading project context..."
         }
         breadcrumbs={[
           { label: "Home", href: "/admin-dashboard" },
           { label: "Projects", href: "/admin-dashboard/projects" },
           {
-            label: project ? `${project.name} - ${project.identifier}` : "Project Details",
+            label: project ? `${project["name"]} - ${project["identifier"]}` : "Project Details",
           },
         ]}
         actions={headerActions}
@@ -2002,55 +1093,69 @@ export default function AdminProjectDetails() {
           cloudPolicies={cloudPolicies}
           resourceCounts={{
             vcpus: instanceStats.total * 2,
-            volumes: resourceCounts.volumes || 0,
-            images: resourceCounts.images || 0,
-            snapshots: resourceCounts.snapshots || 0,
-            vpcs: infraStatusData?.data?.components?.vpc?.count ?? resourceCounts.vpcs ?? 0,
+            volumes: resourceCounts["volumes"] || 0,
+            images: resourceCounts["images"] || 0,
+            snapshots: resourceCounts["snapshots"] || 0,
+            vpcs:
+              (infraStatusData as any)?.["data"]?.["components"]?.["vpc"]?.["count"] ??
+              resourceCounts["vpcs"] ??
+              0,
             subnets:
-              infraStatusData?.data?.components?.subnets?.count ?? resourceCounts.subnets ?? 0,
+              (infraStatusData as any)?.["data"]?.["components"]?.["subnets"]?.["count"] ??
+              resourceCounts["subnets"] ??
+              0,
             security_groups:
-              infraStatusData?.data?.components?.security_groups?.count ??
-              resourceCounts.security_groups ??
+              (infraStatusData as any)?.["data"]?.["components"]?.["security_groups"]?.["count"] ??
+              resourceCounts["security_groups"] ??
               0,
             key_pairs:
-              infraStatusData?.data?.components?.keypairs?.count ?? resourceCounts.key_pairs ?? 0,
+              (infraStatusData as any)?.["data"]?.["components"]?.["keypairs"]?.["count"] ??
+              resourceCounts["key_pairs"] ??
+              0,
             route_tables:
-              infraStatusData?.data?.components?.route_tables?.count ??
-              resourceCounts.route_tables ??
+              (infraStatusData as any)?.["data"]?.["components"]?.["route_tables"]?.["count"] ??
+              resourceCounts["route_tables"] ??
               0,
             elastic_ips:
-              infraStatusData?.data?.components?.elastic_ips?.count ??
-              resourceCounts.elastic_ips ??
+              (infraStatusData as any)?.["data"]?.["components"]?.["elastic_ips"]?.["count"] ??
+              resourceCounts["elastic_ips"] ??
               0,
             network_interfaces:
-              infraStatusData?.data?.components?.network_interfaces?.count ??
-              resourceCounts.network_interfaces ??
+              (infraStatusData as any)?.["data"]?.["components"]?.["network_interfaces"]?.[
+                "count"
+              ] ??
+              resourceCounts["network_interfaces"] ??
               0,
-            nat_gateways: resourceCounts.nat_gateways ?? 0,
-            network_acls: resourceCounts.network_acls ?? 0,
-            vpc_peering: resourceCounts.vpc_peering ?? 0,
+            nat_gateways: resourceCounts["nat_gateways"] ?? 0,
+            network_acls: resourceCounts["network_acls"] ?? 0,
+            vpc_peering: resourceCounts["vpc_peering"] ?? 0,
             internet_gateways:
-              infraStatusData?.data?.components?.internet_gateways?.count ??
-              resourceCounts.internet_gateways ??
+              (infraStatusData as any)?.["data"]?.["components"]?.["internet_gateways"]?.[
+                "count"
+              ] ??
+              resourceCounts[" internet_gateways"] ??
               0,
             load_balancers:
-              infraStatusData?.data?.components?.load_balancers?.count ??
-              resourceCounts.load_balancers ??
+              (infraStatusData as any)?.["data"]?.["components"]?.["load_balancers"]?.["count"] ??
+              resourceCounts["load_balancers"] ??
               0,
             users: allProjectUsers.length,
           }}
           infraStatusData={infraStatusData}
           networkData={networkData}
-          instanceStats={instanceStats}
           canCreateInstances={canCreateInstances}
           setupSteps={
-            Array.isArray(project?.provisioning_progress)
-              ? project.provisioning_progress.map((step: any) => ({
-                  id: step.id || step.label?.toLowerCase()?.replace(/\s+/g, "_") || "step",
-                  label: step.label || "Step",
-                  status: step.status as any,
-                  description: step.status === "completed" ? "Completed" : "Action in progress",
-                  updated_at: step.updated_at,
+            Array.isArray(project?.["provisioning_progress"])
+              ? (project?.["provisioning_progress"] as any[]).map((step) => ({
+                  id:
+                    step.id ||
+                    (step as any)?.["label"]?.toLowerCase()?.replaceAll(/\s+/g, "_") ||
+                    "step",
+                  label: (step as any)?.["label"] || "Step",
+                  status: (step as any)?.["status"] as any,
+                  description:
+                    (step as any)?.["status"] === "completed" ? "Completed" : "Action in progress",
+                  updated_at: (step as any)?.["updated_at"],
                 }))
               : []
           }
@@ -2061,7 +1166,6 @@ export default function AdminProjectDetails() {
           assignPolicy={assignPolicy}
           revokePolicy={revokePolicy}
           handleUserAction={handleUserAction}
-          handleGenericAction={handleGenericAction}
           refetchProjectDetails={refetchProjectDetails}
           refetchProjectStatus={refetchProjectStatus}
           isAssigningPolicy={isAssigningPolicy}
@@ -2072,7 +1176,7 @@ export default function AdminProjectDetails() {
           setInviteForm={setInviteForm}
           formatMemberName={formatMemberName}
           requiredActions={requiredActions}
-          onRequiredAction={(action: any) =>
+          onRequiredAction={(action: SummaryAction) =>
             handleGenericAction({
               method: action?.method || "POST",
               endpoint: action?.endpoint,
@@ -2108,8 +1212,8 @@ export default function AdminProjectDetails() {
       <AssignEdgeConfigModal
         isOpen={isAssignEdgeOpen}
         onClose={() => setIsAssignEdgeOpen(false)}
-        projectId={resolvedProjectId}
-        region={project?.region}
+        projectId={resolvedProjectId as any}
+        region={project?.["region"]}
         onSuccess={async () => {
           await refetchProjectStatus();
           await refetchEdgeConfig();

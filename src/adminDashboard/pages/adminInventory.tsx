@@ -1,6 +1,6 @@
-// @ts-nocheck
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import AdminPageShell from "../components/AdminPageShell.tsx";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { ComponentType, SVGProps } from "react";
+import AdminPageShell from "../components/AdminPageShell";
 import ProductSideMenu from "./inventoryComponents/productssidemenu";
 import BandWidth from "./inventoryComponents/bandwidth";
 import OSImages from "./inventoryComponents/osImages";
@@ -13,17 +13,52 @@ import ObjectStorageInventory from "./inventoryComponents/objectStorage";
 
 import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Wifi, HardDrive, Database, Server, Globe, Cable, FileText } from "lucide-react";
+import { Wifi, HardDrive, Database, Server, Globe, Cable } from "lucide-react";
 import ResourceHero from "../../shared/components/ui/ResourceHero";
 import { ModernCard } from "../../shared/components/ui";
+
+interface RegionRecord {
+  code: string;
+  name: string;
+}
+
+interface InventoryMetric {
+  label: string;
+  value: string;
+  description: string;
+}
+
+interface ProductSummary {
+  description: string;
+  metrics: InventoryMetric[];
+}
+
+interface InventoryHeroState {
+  title: string;
+  description: string;
+  metrics: InventoryMetric[];
+}
+
+interface ProductDefinition {
+  id: string;
+  name: string;
+  Component: ComponentType<{
+    selectedRegion: string;
+    onMetricsChange?: (payload: { description?: string; metrics?: InventoryMetric[] }) => void;
+  }>;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  caption: string;
+  summary: ProductSummary;
+}
 
 export default function AdminInventory() {
   const [activeProductTab, setActiveProductTab] = useState("os-images");
   const [selectedRegion, setSelectedRegion] = useState("");
-  const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
+  const { isFetching: isRegionsFetching, data: regionsData } = useFetchRegions();
+  const regions: RegionRecord[] = Array.isArray(regionsData) ? (regionsData as RegionRecord[]) : [];
   const location = useLocation();
   const navigate = useNavigate();
-  const [heroState, setHeroState] = useState({
+  const [heroState, setHeroState] = useState<InventoryHeroState>({
     title: "Inventory",
     description:
       "Monitor and curate the catalogue of infrastructure assets available to provisioning teams.",
@@ -31,7 +66,7 @@ export default function AdminInventory() {
   });
 
   const productComponents = useMemo(
-    () => [
+    (): ProductDefinition[] => [
       {
         id: "bandwidth",
         name: "Bandwidth",
@@ -148,8 +183,11 @@ export default function AdminInventory() {
   );
 
   useEffect(() => {
-    if (!isRegionsFetching && regions && regions.length > 0 && !selectedRegion) {
-      setSelectedRegion(regions[0].code);
+    if (!isRegionsFetching && regions.length > 0 && !selectedRegion) {
+      const defaultRegion = regions[0]?.code;
+      if (defaultRegion) {
+        setSelectedRegion(defaultRegion);
+      }
     }
   }, [isRegionsFetching, regions, selectedRegion]);
 
@@ -175,7 +213,7 @@ export default function AdminInventory() {
   }, [location.pathname, location.search, activeProductTab, navigate]);
 
   const buildHeroState = useCallback(
-    (product) => ({
+    (product: ProductDefinition | undefined): InventoryHeroState => ({
       title: product?.name ?? "Inventory",
       description:
         product?.summary?.description ??
@@ -186,8 +224,11 @@ export default function AdminInventory() {
   );
 
   useEffect(() => {
-    if (activeProductTab === null && productComponents.length > 0) {
-      setActiveProductTab(productComponents[0].id);
+    if (!activeProductTab && productComponents.length > 0) {
+      const defaultTab = productComponents[0]?.id;
+      if (defaultTab) {
+        setActiveProductTab(defaultTab);
+      }
     }
   }, [activeProductTab, productComponents]);
 
@@ -201,16 +242,19 @@ export default function AdminInventory() {
     setHeroState(buildHeroState(activeProduct));
   }, [activeProduct, selectedRegion, buildHeroState]);
 
-  const handleSummaryChange = useCallback((payload) => {
-    if (!payload) return;
-    setHeroState((prev) => ({
-      ...prev,
-      description: payload.description ?? prev.description,
-      metrics: Array.isArray(payload.metrics) ? payload.metrics : prev.metrics,
-    }));
-  }, []);
+  const handleSummaryChange = useCallback(
+    (payload: { description?: string; metrics?: InventoryMetric[] } | null) => {
+      if (!payload) return;
+      setHeroState((prev) => ({
+        ...prev,
+        description: payload.description ?? prev.description,
+        metrics: Array.isArray(payload.metrics) ? payload.metrics : prev.metrics,
+      }));
+    },
+    []
+  );
 
-  const handleProductTabChange = (tabId: any) => {
+  const handleProductTabChange = (tabId: string) => {
     setActiveProductTab(tabId);
     const nextActive = productComponents.find((product) => product.id === tabId);
     setHeroState(buildHeroState(nextActive));
@@ -218,7 +262,7 @@ export default function AdminInventory() {
     params.set("tab", tabId);
     navigate(`${location.pathname}?${params.toString()}`, { replace: false });
   };
-  const handleRegionChange = (regionCode: any) => setSelectedRegion(regionCode);
+  const handleRegionChange = (regionCode: string) => setSelectedRegion(regionCode);
 
   const regionSelector = (
     <div className="flex flex-col gap-2 text-left">
@@ -236,7 +280,7 @@ export default function AdminInventory() {
             Loading regions...
           </option>
         ) : (
-          regions?.map((region: any) => (
+          regions.map((region: RegionRecord) => (
             <option key={region.code} value={region.code}>
               {region.name}
             </option>
@@ -263,7 +307,7 @@ export default function AdminInventory() {
 
         <div className="flex flex-col gap-6 lg:flex-row">
           <ProductSideMenu
-            items={productComponents.map((product: any) => ({
+            items={productComponents.map((product: ProductDefinition) => ({
               id: product.id,
               name: product.name,
               icon: product.icon,

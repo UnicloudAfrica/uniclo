@@ -5,7 +5,6 @@ import { useSearchParams } from "react-router-dom";
 import {
   Option,
   ServiceProfile,
-  createServiceProfile,
   getRegionCode,
   makeTierKey,
   buildTierLabel,
@@ -14,12 +13,17 @@ import {
   formatRegionOptions,
   resolveCountryCodeFromEntity,
   GLOBAL_TIER_KEY,
-  COUNTRY_FALLBACK,
 } from "./objectStorageUtils";
 
 // Form state and pricing hooks
 import { useObjectStorageFormState } from "./useObjectStorageFormState";
-import { useObjectStoragePricing, ResolvedProfile, SummaryTotals } from "./useObjectStoragePricing";
+import {
+  useObjectStoragePricing,
+  ResolvedProfile,
+  SummaryTotals,
+  ObjectStorageOrderSummary,
+  PaymentOptionLike,
+} from "./useObjectStoragePricing";
 import { normalizePaymentOptions } from "../utils/instanceCreationUtils";
 
 // Shared hooks
@@ -34,20 +38,115 @@ import { useFetchTenantBusinessSettings } from "./settingsHooks";
 // Types
 export type ObjectStorageContext = "admin" | "tenant" | "client";
 
+type UnknownRecord = Record<string, unknown>;
+
+type PricingHookOptions = Record<string, unknown> & {
+  enabled?: boolean;
+  countryCode?: string;
+};
+
+type SubmitEvent = { preventDefault?: () => void };
+
+const isRecord = (value: unknown): value is UnknownRecord =>
+  typeof value === "object" && value !== null;
+
+const resolveOptionValue = (value: unknown): string | null => {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+  return String(value);
+};
+
+const resolveString = (value: unknown): string =>
+  value === null || value === undefined ? "" : String(value);
+
+type StorageProfileLike = {
+  id?: string | number;
+  name?: string;
+  tierName?: string;
+  tier_key?: string;
+  tierKey?: string;
+  region?: string;
+  regionLabel?: string;
+  currency?: string;
+  months?: number;
+  subtotal?: number;
+  account?: { id?: string | number };
+  account_id?: string | number;
+};
+
+type InstanceSummaryLike = {
+  id?: string | number;
+  name?: string;
+  provider?: string;
+  region?: string;
+  status?: string;
+};
+
+type PaymentAccountLike = {
+  id?: string | number;
+};
+
+type SavedCardLike = {
+  id?: string | number;
+  identifier?: string;
+  card_type?: string;
+  last4?: string;
+  exp_month?: string | number;
+  exp_year?: string | number;
+  bank?: string;
+  payment_gateway?: string;
+};
+
+type TransactionSummaryLike = {
+  identifier?: string;
+  reference?: string;
+  id?: string | number;
+  amount?: number;
+  currency?: string;
+  third_party_fee?: number;
+  transaction_fee?: number;
+  payment_gateway?: string;
+  status?: string;
+  user?: { email?: string };
+};
+
+type PaymentSummaryLike = {
+  payment_gateway_options?: PaymentOptionLike[];
+  saved_cards?: SavedCardLike[];
+  public_key?: string;
+  customer_context?: { email?: string };
+  reference?: string;
+  transaction_reference?: string;
+  gateway?: string;
+  expires_at?: string;
+};
+
+type PaymentTransactionData = {
+  data?: {
+    transaction?: TransactionSummaryLike | null;
+    order?: { storage_profiles?: StorageProfileLike[]; items?: StorageProfileLike[] } | null;
+    instances?: InstanceSummaryLike[];
+    payment?: PaymentSummaryLike | null;
+    accounts?: PaymentAccountLike[];
+    order_items?: StorageProfileLike[];
+  };
+};
+
 export interface ObjectStorageLogicConfig {
   context?: ObjectStorageContext;
   tenantId?: string;
   userId?: string;
   allowFastTrack?: boolean;
   // API overrides - allow passing custom hooks/functions for different contexts
-  useRegionsHook?: () => { data: any[]; isFetching: boolean };
-  useCountriesHook?: () => { data: any[]; isFetching: boolean };
+  useRegionsHook?: () => { data: unknown; isFetching: boolean };
+  useCountriesHook?: () => { data: unknown; isFetching: boolean };
   usePricingHook?: (
     region: string,
     productType: string,
-    options: any
-  ) => { data: any[]; isFetching: boolean };
-  submitOrderFn?: (payload: any) => Promise<any>;
+    options: PricingHookOptions
+  ) => { data: unknown; isFetching: boolean };
+  submitOrderFn?: (payload: Record<string, unknown>) => Promise<unknown>;
 }
 
 export interface ObjectStorageLogicReturn {
@@ -104,15 +203,15 @@ export interface ObjectStorageLogicReturn {
   hasCurrencyMismatch: boolean;
 
   // Order State
-  lastOrderSummary: any;
+  lastOrderSummary: ObjectStorageOrderSummary | null;
   orderId?: string | null;
   transactionId?: string | null;
   accountIds: string[];
   paymentRequired: boolean | null;
-  paymentTransactionData: any;
-  paymentOptions: any[];
-  selectedPaymentOption: any;
-  setSelectedPaymentOption: (option: any) => void;
+  paymentTransactionData: PaymentTransactionData | null;
+  paymentOptions: PaymentOptionLike[];
+  selectedPaymentOption: PaymentOptionLike | null;
+  setSelectedPaymentOption: (option: PaymentOptionLike | null) => void;
   isPaymentComplete: boolean;
   isPaymentFailed: boolean;
   transactionStatus: string;
@@ -133,10 +232,16 @@ export interface ObjectStorageLogicReturn {
   handlePreviousStep: () => void;
   validateWorkflowStep: () => boolean;
   validateServiceStep: () => boolean;
-  createOrder: (options?: { fastTrackOverride?: boolean }) => Promise<any | null>;
-  handlePaymentCompleted: (payload?: any) => void;
+  createOrder: (options?: {
+    fastTrackOverride?: boolean;
+  }) => Promise<ObjectStorageOrderSummary | null>;
+  handlePaymentCompleted: (payload?: Record<string, unknown>) => void;
   resetOrderState: () => void;
-  submitOrder: (event?: any, fastTrackOverride?: boolean, options?: any) => Promise<any | null>;
+  submitOrder: (
+    event?: SubmitEvent,
+    fastTrackOverride?: boolean,
+    options?: Record<string, unknown>
+  ) => Promise<ObjectStorageOrderSummary | null>;
   resetForm: () => void;
 
   // Context info
@@ -269,7 +374,7 @@ export const useObjectStorageLogic = (
   const adminContext = useCustomerContext({ enabled: isAdminContext });
 
   const defaultContextType =
-    context === "tenant" ? "tenant" : context === "client" ? "user" : "unassigned";
+    context === "tenant" ? "tenant" : context === "client" ? "user" : "tenant";
 
   const [localContextType, setLocalContextType] = useState(defaultContextType);
   const [localTenantId, setLocalTenantId] = useState(configTenantId || "");
@@ -323,17 +428,21 @@ export const useObjectStorageLogic = (
   const [profileErrors, setProfileErrors] = useState<Record<string, Record<string, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingPayment, setIsGeneratingPayment] = useState(false);
-  const [lastOrderSummary, setLastOrderSummary] = useState<any>(null);
-  const [selectedPaymentOption, setSelectedPaymentOption] = useState<any>(null);
+  const [lastOrderSummary, setLastOrderSummary] = useState<ObjectStorageOrderSummary | null>(null);
+  const [selectedPaymentOption, setSelectedPaymentOption] = useState<PaymentOptionLike | null>(
+    null
+  );
 
   // API Hooks - use provided hooks or defaults
   const defaultRegionsHook = useFetchRegions;
   const regionsHook = useRegionsHook || defaultRegionsHook;
-  const { data: regions = [], isFetching: isRegionsLoading } = regionsHook();
+  const { data: regionsData = [], isFetching: isRegionsLoading } = regionsHook();
+  const regions = Array.isArray(regionsData) ? regionsData : [];
 
   const defaultCountriesHook = useFetchCountries;
   const countriesHook = useCountriesHook || defaultCountriesHook;
-  const { data: sharedCountries = [], isFetching: isCountriesLoading } = countriesHook();
+  const { data: sharedCountriesData = [], isFetching: isCountriesLoading } = countriesHook();
+  const sharedCountries = Array.isArray(sharedCountriesData) ? sharedCountriesData : [];
 
   // Derived Values
   const selectedCountryCode = useMemo(
@@ -346,17 +455,21 @@ export const useObjectStorageLogic = (
       if (!code || !Array.isArray(sharedCountries)) {
         return "USD";
       }
-      const match = sharedCountries.find((country: any) => {
-        const iso = (country.code || country.iso2 || country.country_code || "").toUpperCase();
+      const match = sharedCountries.find((country) => {
+        if (!isRecord(country)) return false;
+        const iso = resolveString(
+          country.code ?? country.iso2 ?? country.country_code ?? ""
+        ).toUpperCase();
         return iso === code.toUpperCase();
       });
-      return (
-        match?.currency_code ||
-        match?.currency ||
-        match?.currencyCode ||
-        match?.currency_symbol ||
-        match?.currencySymbol ||
-        "USD"
+      const matchRecord = isRecord(match) ? match : {};
+      return resolveString(
+        matchRecord.currency_code ||
+          matchRecord.currency ||
+          matchRecord.currencyCode ||
+          matchRecord.currency_symbol ||
+          matchRecord.currencySymbol ||
+          "USD"
       ).toUpperCase();
     };
   }, [sharedCountries]);
@@ -372,16 +485,18 @@ export const useObjectStorageLogic = (
   // Pricing Hook
   const defaultPricingHook = useFetchProductPricing;
   const pricingHook = usePricingHook || defaultPricingHook;
-  const { data: tierPricingPayload = [], isFetching: isPricingLoading } = pricingHook(
+  const { data: tierPricingPayloadData = [], isFetching: isPricingLoading } = pricingHook(
     primaryRegion,
     "object_storage_configuration",
     { enabled: Boolean(primaryRegion), countryCode: effectiveCountryCode }
   );
+  const tierPricingPayload = Array.isArray(tierPricingPayloadData) ? tierPricingPayloadData : [];
 
   // Region Map
   const regionMap = useMemo(() => {
-    const map = new Map<string, any>();
-    (Array.isArray(regions) ? regions : []).forEach((region: any) => {
+    const map = new Map<string, UnknownRecord>();
+    (Array.isArray(regions) ? regions : []).forEach((region) => {
+      if (!isRecord(region)) return;
       const code = getRegionCode(region);
       if (code) {
         map.set(code.toLowerCase(), region);
@@ -399,13 +514,17 @@ export const useObjectStorageLogic = (
   // Tier Catalog
   const tierCatalog = useMemo(() => {
     const rawRows = Array.isArray(tierPricingPayload) ? tierPricingPayload : [];
-    const catalog = new Map<string, { options: Option[]; map: Map<string, any> }>();
+    const catalog = new Map<string, { options: Option[]; map: Map<string, UnknownRecord> }>();
 
-    rawRows.forEach((row: any) => {
-      const product = row?.product || {};
-      const effectivePricing = row?.pricing?.effective || {};
-      const regionCodeRaw = product.region || row?.region || product.region_code || GLOBAL_TIER_KEY;
-      const regionKey = regionCodeRaw?.toString().toLowerCase().trim() || GLOBAL_TIER_KEY;
+    rawRows.forEach((row) => {
+      if (!isRecord(row)) return;
+      const rowRecord = row;
+      const product = isRecord(rowRecord.product) ? rowRecord.product : {};
+      const pricing = isRecord(rowRecord.pricing) ? rowRecord.pricing : {};
+      const effectivePricing = isRecord(pricing.effective) ? pricing.effective : {};
+      const regionCodeRaw =
+        product.region ?? rowRecord.region ?? product.region_code ?? GLOBAL_TIER_KEY;
+      const regionKey = resolveString(regionCodeRaw).toLowerCase().trim() || GLOBAL_TIER_KEY;
       const key = makeTierKey(regionKey, {
         productable_type: product.productable_type,
         productable_id: product.productable_id,
@@ -421,16 +540,17 @@ export const useObjectStorageLogic = (
         return catalog.get(bucketKey)!;
       };
 
-      const currency = effectivePricing.currency || selectedCurrency || "USD";
-      const composite = {
+      const currency = resolveString(effectivePricing.currency || selectedCurrency || "USD");
+      const productObjectStorage = isRecord(product.object_storage) ? product.object_storage : {};
+      const composite: UnknownRecord = {
         ...effectivePricing,
         currency,
         product,
-        product_name: product.name || row?.product_name,
-        productable_id: product.productable_id || row?.productable_id,
-        productable_type: product.productable_type || row?.productable_type,
-        region: regionCodeRaw || "",
-        quota_gb: product.object_storage?.quota_gb || product.quota_gb || product.quota || null,
+        product_name: product.name || rowRecord.product_name,
+        productable_id: product.productable_id || rowRecord.productable_id,
+        productable_type: product.productable_type || rowRecord.productable_type,
+        region: resolveString(regionCodeRaw) || "",
+        quota_gb: productObjectStorage.quota_gb || product.quota_gb || product.quota || null,
       };
 
       const label = buildTierLabel(composite, null, selectedCurrency || "USD");
@@ -490,53 +610,62 @@ export const useObjectStorageLogic = (
   const tenantOptions = useMemo(() => {
     if (!Array.isArray(tenants)) return [];
     return tenants
-      .map((tenant: any) => {
-        const value = tenant.id ?? tenant.identifier ?? tenant.code ?? tenant.slug ?? "";
-        if (value === null || value === undefined || value === "") {
+      .map((tenant) => {
+        if (!isRecord(tenant)) return null;
+        const value = resolveOptionValue(
+          tenant.id ?? tenant.identifier ?? tenant.code ?? tenant.slug
+        );
+        if (!value) {
           return null;
         }
-        return {
-          value: String(value),
-          label:
-            tenant.name ||
+        const label = resolveString(
+          tenant.name ||
             tenant.company_name ||
             tenant.identifier ||
             tenant.code ||
-            `Tenant ${tenant.id}`,
+            `Tenant ${value}`
+        );
+        return {
+          value,
+          label,
           raw: tenant,
         };
       })
-      .filter(Boolean) as Option[];
+      .filter((option): option is Option => Boolean(option));
   }, [tenants]);
 
   const clientOptions = useMemo(() => {
     if (!Array.isArray(userPool)) return [];
     return userPool
-      .map((client: any) => {
+      .map((client) => {
+        if (!isRecord(client)) return null;
         const tenantId =
           client.tenant_id ??
           client.tenantId ??
-          client.tenant?.id ??
+          (isRecord(client.tenant) ? client.tenant.id : undefined) ??
           client.tenant_identifier ??
           client.tenant_code ??
           "";
         const rawClientId = client.id ?? client.identifier ?? client.uuid ?? "";
-        if (rawClientId === null || rawClientId === undefined || rawClientId === "") {
+        const value = resolveOptionValue(rawClientId);
+        if (!value) {
           return null;
         }
-        return {
-          value: String(rawClientId),
-          label:
-            client.company_name ||
+        const label = resolveString(
+          client.company_name ||
             client.business_name ||
             client.full_name ||
             client.email ||
-            `Client ${client.id}`,
+            `Client ${value}`
+        );
+        return {
+          value,
+          label,
           tenantId: tenantId ? String(tenantId) : "",
           raw: client,
         };
       })
-      .filter(Boolean) as Option[];
+      .filter((option): option is Option => Boolean(option));
   }, [userPool]);
 
   // Assignment Label
@@ -572,20 +701,28 @@ export const useObjectStorageLogic = (
 
   const accountIds = useMemo(() => {
     const ids = new Set<string>();
-    const add = (value: any) => {
+    const add = (value: unknown) => {
       if (value === null || value === undefined || value === "") return;
       ids.add(String(value));
     };
 
     add(lastOrderSummary?.account?.id);
     add(lastOrderSummary?.object_storage_account_id);
-    if (Array.isArray(lastOrderSummary?.accounts)) {
-      lastOrderSummary.accounts.forEach((account: any) => add(account?.id));
-    }
-    const orderItems = lastOrderSummary?.order_items || lastOrderSummary?.order?.items || [];
-    if (Array.isArray(orderItems)) {
-      orderItems.forEach((item: any) => add(item?.account_id || item?.account?.id));
-    }
+    const accounts = Array.isArray(lastOrderSummary?.accounts) ? lastOrderSummary?.accounts : [];
+    accounts.forEach((account) => {
+      if (!isRecord(account)) return;
+      add(account.id);
+    });
+    const orderItems = Array.isArray(lastOrderSummary?.order_items)
+      ? lastOrderSummary?.order_items
+      : Array.isArray(lastOrderSummary?.order?.items)
+        ? lastOrderSummary?.order?.items
+        : [];
+    orderItems.forEach((item) => {
+      if (!isRecord(item)) return;
+      const account = isRecord(item.account) ? item.account : {};
+      add(item.account_id ?? account.id);
+    });
 
     return Array.from(ids);
   }, [lastOrderSummary]);
@@ -597,7 +734,9 @@ export const useObjectStorageLogic = (
       lastOrderSummary?.transaction?.payment_gateway_options ||
       lastOrderSummary?.paymentOptions ||
       [];
-    return normalizePaymentOptions(raw);
+    const normalized = normalizePaymentOptions(raw);
+    const options = Array.isArray(normalized) ? normalized : [];
+    return options.filter(isRecord) as PaymentOptionLike[];
   }, [lastOrderSummary]);
 
   const paymentRequired =
@@ -623,18 +762,33 @@ export const useObjectStorageLogic = (
 
   const paymentTransactionData = useMemo(() => {
     if (!lastOrderSummary?.transaction && !lastOrderSummary?.payment) return null;
+    const orderItemsRaw = Array.isArray(lastOrderSummary?.order_items)
+      ? lastOrderSummary.order_items
+      : Array.isArray(lastOrderSummary?.order?.items)
+        ? lastOrderSummary.order?.items
+        : [];
+    const orderItems = orderItemsRaw.filter(isRecord) as StorageProfileLike[];
+    const storageProfiles = Array.isArray(lastOrderSummary?.serviceProfiles)
+      ? (lastOrderSummary.serviceProfiles as StorageProfileLike[])
+      : [];
+    const accounts = Array.isArray(lastOrderSummary?.accounts)
+      ? lastOrderSummary.accounts.filter(isRecord).map((account) => {
+          const id = account.id;
+          return typeof id === "string" || typeof id === "number" ? { id } : {};
+        })
+      : [];
     return {
       data: {
         transaction: lastOrderSummary?.transaction || null,
         order: {
           ...(lastOrderSummary?.order || {}),
           type: "object_storage",
-          items: lastOrderSummary?.order_items || lastOrderSummary?.order?.items || [],
-          storage_profiles: lastOrderSummary?.serviceProfiles || [],
+          items: orderItems,
+          storage_profiles: storageProfiles,
         },
         instances: [],
-        accounts: lastOrderSummary?.accounts || [],
-        order_items: lastOrderSummary?.order_items || [],
+        accounts,
+        order_items: orderItems,
         payment: lastOrderSummary?.payment || null,
       },
     };
@@ -651,9 +805,9 @@ export const useObjectStorageLogic = (
     if (
       selectedPaymentOption &&
       paymentOptions.some(
-        (option: any) =>
-          option?.transaction_reference === selectedPaymentOption?.transaction_reference ||
-          option?.reference === selectedPaymentOption?.reference
+        (option) =>
+          option.transaction_reference === selectedPaymentOption.transaction_reference ||
+          option.reference === selectedPaymentOption.reference
       )
     ) {
       return;
@@ -819,38 +973,55 @@ export const useObjectStorageLogic = (
   }, [activeStep]);
 
   const normalizeOrderSummary = useCallback(
-    (payload: any, fastTrackFlag?: boolean) => {
+    (payload: unknown, fastTrackFlag?: boolean): ObjectStorageOrderSummary | null => {
       if (!payload) return null;
-      const data = payload?.data || payload;
-      const transaction = data?.transaction || null;
-      const order = data?.order || null;
-      const payment = data?.payment || null;
+      if (!isRecord(payload)) return null;
+
+      const dataRecord = isRecord(payload.data) ? payload.data : payload;
+      if (!isRecord(dataRecord)) return null;
+
+      const transaction = isRecord(dataRecord.transaction) ? dataRecord.transaction : null;
+      const order = isRecord(dataRecord.order) ? dataRecord.order : null;
+      const payment = isRecord(dataRecord.payment) ? dataRecord.payment : null;
+
       const normalizedPaymentOptions = normalizePaymentOptions(
         payment?.payment_gateway_options ||
-        transaction?.payment_gateway_options ||
-        data?.payment_options ||
-        data?.paymentOptions
+          transaction?.payment_gateway_options ||
+          dataRecord.payment_options ||
+          dataRecord.paymentOptions
       );
+      const paymentOptionsArray = Array.isArray(normalizedPaymentOptions)
+        ? (normalizedPaymentOptions.filter(isRecord) as PaymentOptionLike[])
+        : [];
       const paymentState = payment
-        ? { ...payment, payment_gateway_options: normalizedPaymentOptions }
-        : normalizedPaymentOptions.length
-          ? { payment_gateway_options: normalizedPaymentOptions }
+        ? { ...payment, payment_gateway_options: paymentOptionsArray }
+        : paymentOptionsArray.length
+          ? { payment_gateway_options: paymentOptionsArray }
           : null;
+
+      const orderItemsRaw = dataRecord.order_items ?? order?.items ?? [];
+      const orderItems = Array.isArray(orderItemsRaw)
+        ? (orderItemsRaw.filter(isRecord) as UnknownRecord[])
+        : [];
+      const accountsRaw = dataRecord.accounts || (dataRecord.account ? [dataRecord.account] : []);
+      const accounts = Array.isArray(accountsRaw)
+        ? (accountsRaw.filter(isRecord) as UnknownRecord[])
+        : [];
 
       return {
         transaction,
         order,
         payment: paymentState,
-        paymentOptions: normalizedPaymentOptions,
+        paymentOptions: paymentOptionsArray,
         fastTrack:
           typeof fastTrackFlag === "boolean"
             ? fastTrackFlag
-            : (data?.fast_track ?? data?.fastTrack ?? isFastTrack),
+            : (dataRecord.fast_track ?? dataRecord.fastTrack ?? isFastTrack),
         serviceProfiles: resolvedProfiles,
-        order_items: data?.order_items || order?.items || [],
-        accounts: data?.accounts || (data?.account ? [data.account] : []),
-        account: data?.account || null,
-        object_storage_account_id: data?.object_storage_account_id,
+        order_items: orderItems,
+        accounts,
+        account: dataRecord.account || null,
+        object_storage_account_id: dataRecord.object_storage_account_id,
       };
     },
     [isFastTrack, resolvedProfiles]
@@ -858,7 +1029,11 @@ export const useObjectStorageLogic = (
 
   // Submit Order (placeholder - actual implementation depends on API)
   const submitOrder = useCallback(
-    async (event?: any, fastTrackOverride?: boolean, _options: any = {}) => {
+    async (
+      event?: SubmitEvent,
+      fastTrackOverride?: boolean,
+      _options: Record<string, unknown> = {}
+    ) => {
       event?.preventDefault();
       setIsSubmitting(true);
 
@@ -908,7 +1083,7 @@ export const useObjectStorageLogic = (
           throw new Error("Add at least one eligible service profile before submitting.");
         }
 
-        const payload: Record<string, any> = {
+        const payload: Record<string, unknown> = {
           object_storage_items: objectStorageItems,
           fast_track: fastTrackFlag,
         };
@@ -970,23 +1145,24 @@ export const useObjectStorageLogic = (
     [submitOrder]
   );
 
-  const handlePaymentCompleted = useCallback((payload: any = {}) => {
-    const rawStatus = payload?.status || payload?.transaction_status || "successful";
+  const handlePaymentCompleted = useCallback((payload: Record<string, unknown> = {}) => {
+    const payloadRecord = isRecord(payload) ? payload : {};
+    const rawStatus = payloadRecord.status || payloadRecord.transaction_status || "successful";
     const normalizedStatus = String(rawStatus).toLowerCase();
-    setLastOrderSummary((prev: any) => {
+    setLastOrderSummary((prev) => {
       if (!prev) return prev;
       return {
         ...prev,
         transaction: {
           ...(prev.transaction || {}),
           status: normalizedStatus,
-          payment_reference: payload?.reference || prev.transaction?.payment_reference,
+          payment_reference: payloadRecord.reference || prev.transaction?.payment_reference,
         },
         payment: {
           ...(prev.payment || {}),
           status: normalizedStatus,
           required: prev.payment?.required ?? false,
-          gateway: payload?.gateway || prev.payment?.gateway,
+          gateway: payloadRecord.gateway || prev.payment?.gateway,
         },
       };
     });

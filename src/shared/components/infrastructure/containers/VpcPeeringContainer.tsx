@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState } from "react";
 import { GitMerge, Plus, RefreshCw } from "lucide-react";
 import ModernButton from "../../ui/ModernButton";
@@ -9,7 +8,7 @@ interface VpcPeeringHooks {
     projectId: string,
     region?: string
   ) => {
-    data: any[];
+    data: unknown;
     isLoading: boolean;
     refetch: () => void;
   };
@@ -201,3 +200,4 @@ const VpcPeeringContainer: React.FC<VpcPeeringContainerProps> = ({
 };
 
 export default VpcPeeringContainer;
+export type { VpcPeeringHooks };

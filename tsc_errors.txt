@@ -1,0 +1,131 @@
+node_modules/@tanstack/query-core/build/legacy/focusManager.d.ts(6,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/@tanstack/query-core/build/legacy/hydration-DksKBgQq.d.ts(9,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/@tanstack/query-core/build/legacy/hydration-DksKBgQq.d.ts(115,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/@tanstack/query-core/build/legacy/hydration-DksKBgQq.d.ts(156,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/@tanstack/query-core/build/legacy/hydration-DksKBgQq.d.ts(205,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/@tanstack/query-core/build/legacy/hydration-DksKBgQq.d.ts(266,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/@tanstack/query-core/build/legacy/hydration-DksKBgQq.d.ts(424,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/@tanstack/query-core/build/legacy/hydration-DksKBgQq.d.ts(441,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/@tanstack/query-core/build/legacy/onlineManager.d.ts(6,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/@tanstack/query-core/build/legacy/queriesObserver.d.ts(11,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/@tanstack/query-core/build/legacy/removable.d.ts(2,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/@tanstack/query-core/build/legacy/timeoutManager.d.ts(41,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/sonner/dist/index.d.ts(1,8): error TS1259: Module '"/Users/mac_1/Documents/GitHub/unicloud/web/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+src/adminDashboard/pages/projectComps/addProject.tsx(11,32): error TS6142: Module './dropdownSelect' was resolved to '/Users/mac_1/Documents/GitHub/unicloud/web/src/adminDashboard/pages/projectComps/dropdownSelect.tsx', but '--jsx' is not set.
+src/adminDashboard/pages/projectComps/addProject.tsx(16,8): error TS6142: Module '../../../shared/components/network/NetworkPresetSelector' was resolved to '/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/network/NetworkPresetSelector.tsx', but '--jsx' is not set.
+src/adminDashboard/pages/projectComps/addProject.tsx(575,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(576,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(577,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(578,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(581,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(582,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(587,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(590,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(595,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(599,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(600,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(603,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(608,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(622,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(633,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(634,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(635,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(636,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(638,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(646,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(649,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(650,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(653,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(661,32): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(664,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(665,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(666,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(668,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(669,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(670,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(679,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(681,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(682,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(691,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(694,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(698,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(699,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(700,28): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(702,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(705,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(706,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(714,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(725,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(726,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(727,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(729,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(736,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(740,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(745,27): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(748,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(749,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(750,27): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(752,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(756,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(762,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(770,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(771,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(774,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(782,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(783,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(784,61): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(786,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(798,30): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(801,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(802,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(803,61): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(805,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(817,30): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(820,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(821,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(822,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(823,28): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(826,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(836,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(837,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(838,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(859,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(861,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(865,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(866,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(867,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(877,36): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(884,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(885,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(886,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(887,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(888,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(895,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(902,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(903,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(916,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(917,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(918,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(919,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(920,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(924,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(928,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(930,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(931,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(938,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(945,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/adminDashboard/pages/projectComps/addProject.tsx(946,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/config.ts(2,22): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/config.ts(2,34): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+src/hooks/adminHooks/cloudPolicyHooks.ts(20,13): error TS2339: Property 'data' does not exist on type 'unknown'.
+src/hooks/adminHooks/cloudPolicyHooks.ts(24,14): error TS2339: Property 'data' does not exist on type 'unknown'.
+src/hooks/adminHooks/projectHooks.ts(209,5): error TS2322: Type '(projectData: ProjectCreateInput) => Promise<ProjectRecord>' is not assignable to type 'MutationFunction<{ status: any; }, ProjectCreateInput>'.
+  Type 'Promise<ProjectRecord>' is not assignable to type 'Promise<{ status: any; }>'.
+    Type 'ProjectRecord' is not assignable to type '{ status: any; }'.
+      Property 'status' is optional in type 'ProjectRecord' but required in type '{ status: any; }'.
+src/hooks/adminHooks/projectHooks.ts(305,5): error TS2322: Type '({ id, projectData }: { id: Id; projectData: ApiPayload; }) => Promise<ProjectRecord>' is not assignable to type 'MutationFunction<unknown, { id: string; }>'.
+  Types of parameters '__0' and 'variables' are incompatible.
+    Property 'projectData' is missing in type '{ id: string; }' but required in type '{ id: Id; projectData: ApiPayload; }'.
+src/hooks/networkPresetHooks.ts(1,8): error TS1259: Module '"/Users/mac_1/Documents/GitHub/unicloud/web/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+src/hooks/networkPresetHooks.ts(6,48): error TS6142: Module '../shared/components/network/NetworkPresetSelector' was resolved to '/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/network/NetworkPresetSelector.tsx', but '--jsx' is not set.
+src/stores/adminAuthStore.ts(111,40): error TS2304: Cannot find name 'Tenant'.

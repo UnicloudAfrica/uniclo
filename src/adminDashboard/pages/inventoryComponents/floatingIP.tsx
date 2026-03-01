@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Globe, MapPin, DollarSign, Pencil, Trash2, Plus } from "lucide-react";
 import { useFetchFloatingIPs } from "../../../hooks/adminHooks/floatingIPHooks";
 import ResourceDataExplorer from "../../components/ResourceDataExplorer";
@@ -28,7 +27,7 @@ const FloatingIP = ({ selectedRegion, onMetricsChange }: any) => {
   const [isAddIPsModalOpen, setIsAddIPsModalOpen] = useState(false);
   const [isEditIPsModalOpen, setIsEditIPsModalOpen] = useState(false);
   const [isDeleteIPsModalOpen, setIsDeleteIPsModalOpen] = useState(false);
-  const [selectedIPs, setSelectedIPs] = useState(null);
+  const [selectedIPs, setSelectedIPs] = useState<any>(null);
 
   useEffect(() => {
     setPage(1);

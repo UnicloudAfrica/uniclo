@@ -1,6 +1,5 @@
-// @ts-nocheck
 import React from "react";
-import { RefreshCw, Cable, Server, Globe2 } from "lucide-react";
+import { Cable, Server, Globe2 } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
 
 export interface NetworkInterface {
@@ -25,8 +24,8 @@ export interface NetworkInterface {
 
 interface NetworkInterfacesTableProps {
   networkInterfaces: NetworkInterface[];
-  isLoading?: boolean;
-  emptyMessage?: string;
+  isLoading?: boolean | undefined;
+  emptyMessage?: string | undefined;
 }
 
 /**

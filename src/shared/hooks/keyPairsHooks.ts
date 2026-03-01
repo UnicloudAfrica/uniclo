@@ -6,6 +6,44 @@ import useAdminAuthStore from "../../stores/adminAuthStore";
 import useTenantAuthStore from "../../stores/tenantAuthStore";
 import useClientAuthStore from "../../stores/clientAuthStore";
 
+export interface KeyPair {
+  id: string;
+  name: string;
+  fingerprint?: string;
+  public_key?: string;
+  provider_resource_id?: string;
+  key_name?: string;
+  keypair_name?: string;
+  key_fingerprint?: string;
+  [key: string]: unknown;
+}
+
+export interface KeyPairPayload {
+  name?: string;
+  project_id?: string;
+  projectId?: string;
+  region?: string;
+  publicKey?: string;
+  public_key?: string;
+  [key: string]: unknown;
+}
+
+export interface KeyPairCreatePayload extends KeyPairPayload {
+  name: string;
+  project_id: string;
+  region: string;
+}
+
+export interface KeyPairUpdatePayload {
+  name?: string;
+  [key: string]: unknown;
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const asRecord = (value: unknown): Record<string, unknown> => (isRecord(value) ? value : {});
+
 const DEFAULT_HEADERS = {
   "Content-Type": "application/json",
   Accept: "application/json",
@@ -41,30 +79,47 @@ const getAuthHeadersForContext = (context: ApiContext) => {
   return DEFAULT_HEADERS;
 };
 
-const getErrorMessage = (error: any, fallback: string) => {
+const getErrorMessage = (error: unknown, fallback: string) => {
+  const record = asRecord(error);
+  const response = asRecord(record.response);
+  const responseData = asRecord(response.data);
   return (
-    error?.response?.data?.error || error?.response?.data?.message || error?.message || fallback
+    (responseData.error as string | undefined) ||
+    (responseData.message as string | undefined) ||
+    (record.message as string | undefined) ||
+    fallback
   );
 };
 
-const extractKeyPairs = (payload: any) => {
-  if (Array.isArray(payload?.data)) return payload.data;
+const extractKeyPairs = (payload: unknown) => {
+  const record = asRecord(payload);
+  if (Array.isArray(record.data)) return record.data;
   if (Array.isArray(payload)) return payload;
   return [];
 };
 
-const normalizeKeyPair = (item: any) => {
+const normalizeKeyPair = (item: unknown): KeyPair => {
+  const record = asRecord(item);
+  const id = String(record.id ?? record.provider_resource_id ?? record.name ?? "");
+  const name = String(record.name ?? record.key_name ?? record.keypair_name ?? record.id ?? "");
+  const fingerprint = String(record.fingerprint ?? record.key_fingerprint ?? "");
+
   return {
-    ...item,
-    id: item.id ?? item.provider_resource_id ?? item.name ?? "",
-    name: item.name ?? item.key_name ?? item.keypair_name ?? item.id ?? "",
-    fingerprint: item.fingerprint ?? item.key_fingerprint,
-  };
+    ...record,
+    id,
+    name,
+    fingerprint,
+  } as KeyPair;
 };
 
-const normalizeKeyPairs = (items: any[]) => items.map(normalizeKeyPair);
+const normalizeKeyPairs = (items: unknown[]) => items.map(normalizeKeyPair);
 
-const resolveProjectId = (input: any) => input?.project_id ?? input?.projectId ?? "";
+const resolveProjectId = (input: unknown) => {
+  const record = asRecord(input);
+  return (
+    (record.project_id as string | undefined) ?? (record.projectId as string | undefined) ?? ""
+  );
+};
 
 const resolveOptionalRegion = (region?: string) => region || "";
 
@@ -115,7 +170,7 @@ export const keyPairsKeys = {
   detail: (context: ApiContext, id?: string) => ["keyPairs", context, "detail", id ?? ""] as const,
 };
 
-export const useFetchKeyPairs = (projectId: string, region?: string, options: any = {}) => {
+export const useFetchKeyPairs = (projectId: string, region?: string, options = {}) => {
   const { apiBaseUrl, context, authHeaders, isAuthenticated } = useApiContext();
   const resolvedRegion = resolveOptionalRegion(region);
 
@@ -136,7 +191,7 @@ export const useFetchKeyPairs = (projectId: string, region?: string, options: an
   });
 };
 
-export const useFetchKeyPairById = (id: string, options: any = {}) => {
+export const useFetchKeyPairById = (id: string, options = {}) => {
   const { apiBaseUrl, context, authHeaders } = useApiContext();
   return useQuery({
     queryKey: keyPairsKeys.detail(context, id),
@@ -159,7 +214,7 @@ export const useCreateKeyPair = () => {
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
   return useMutation({
-    mutationFn: async (payload: any) => {
+    mutationFn: async (payload: KeyPairPayload) => {
       const project_id = resolveProjectId(payload);
       const region = requireRegion(payload?.region);
       if (!project_id) {
@@ -198,7 +253,7 @@ export const useUpdateKeyPair = () => {
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
   return useMutation({
-    mutationFn: async ({ id, keyPairData }: { id: string; keyPairData: any }) => {
+    mutationFn: async ({ id, keyPairData }: { id: string; keyPairData: KeyPairUpdatePayload }) => {
       if (!id) throw new Error("Key pair ID is required");
       const { data } = await axios.patch(
         buildUrl(apiBaseUrl, context, `/key-pairs/${id}`),
@@ -221,14 +276,14 @@ export const useDeleteKeyPair = () => {
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
   return useMutation({
-    mutationFn: async (input: any) => {
+    mutationFn: async (input: string | { id?: string; payload?: KeyPairPayload }) => {
       const id = typeof input === "string" ? input : input?.id;
       if (!id) throw new Error("Key pair ID is required");
       const payload = typeof input === "object" ? input?.payload : undefined;
       const requestConfig: {
         headers: Record<string, string>;
         withCredentials: boolean;
-        data?: any;
+        data?: KeyPairPayload;
       } = {
         headers: authHeaders,
         withCredentials: true,
@@ -243,8 +298,12 @@ export const useDeleteKeyPair = () => {
       return data;
     },
     onSuccess: (_, input) => {
-      const projectId = resolveProjectId(input || {});
-      const region = input?.region ?? input?.payload?.region ?? "";
+      const inputObj = typeof input === "object" ? input : {};
+      const projectId = resolveProjectId(inputObj);
+      const region =
+        (inputObj as { region?: string }).region ??
+        (inputObj as { payload?: KeyPairPayload }).payload?.region ??
+        "";
       if (projectId) {
         queryClient.invalidateQueries({
           queryKey: keyPairsKeys.list(context, projectId, region),
@@ -261,7 +320,7 @@ export const useSyncKeyPairs = () => {
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
   return useMutation({
-    mutationFn: async (payload: any) => {
+    mutationFn: async (payload: KeyPairPayload) => {
       const projectId = resolveProjectId(payload);
       const region = resolveOptionalRegion(payload?.region);
       if (!projectId) {
@@ -290,10 +349,7 @@ export const useSyncKeyPairs = () => {
   });
 };
 
-const syncKeyPairsForContext = async (
-  context: ApiContext,
-  payload: { project_id?: string; projectId?: string; region?: string }
-) => {
+const syncKeyPairsForContext = async (context: ApiContext, payload: KeyPairPayload) => {
   const projectId = resolveProjectId(payload);
   const region = resolveOptionalRegion(payload?.region);
   if (!projectId) {
@@ -310,28 +366,19 @@ const syncKeyPairsForContext = async (
       region,
       refresh: true,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     throw new Error(getErrorMessage(error, "Failed to sync key pairs"));
   }
 };
 
-export const syncKeyPairsFromProvider = (payload: {
-  project_id?: string;
-  projectId?: string;
-  region?: string;
-}) => syncKeyPairsForContext("admin", payload);
+export const syncKeyPairsFromProvider = (payload: KeyPairPayload) =>
+  syncKeyPairsForContext("admin", payload);
 
-export const syncTenantKeyPairsFromProvider = (payload: {
-  project_id?: string;
-  projectId?: string;
-  region?: string;
-}) => syncKeyPairsForContext("tenant", payload);
+export const syncTenantKeyPairsFromProvider = (payload: KeyPairPayload) =>
+  syncKeyPairsForContext("tenant", payload);
 
-export const syncClientKeyPairsFromProvider = (payload: {
-  project_id?: string;
-  projectId?: string;
-  region?: string;
-}) => syncKeyPairsForContext("client", payload);
+export const syncClientKeyPairsFromProvider = (payload: KeyPairPayload) =>
+  syncKeyPairsForContext("client", payload);
 
 export const useFetchTenantKeyPairs = useFetchKeyPairs;
 export const useFetchClientKeyPairs = useFetchKeyPairs;

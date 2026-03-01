@@ -4,15 +4,21 @@ import config from "../config";
 import useAdminAuthStore from "../stores/adminAuthStore";
 import useTenantAuthStore from "../stores/tenantAuthStore";
 import useClientAuthStore from "../stores/clientAuthStore";
+import { AuthState } from "../types/auth";
 
 export type ApiContext = "admin" | "tenant" | "client";
+
+type AuthStoreHook =
+  | typeof useAdminAuthStore
+  | typeof useTenantAuthStore
+  | typeof useClientAuthStore;
 
 interface ApiContextResult {
   context: ApiContext;
   apiBaseUrl: string;
   authHeaders: Record<string, string>;
   isAuthenticated: boolean;
-  authStore: any;
+  authStore: AuthStoreHook;
 }
 
 /**
@@ -23,14 +29,14 @@ export const useApiContext = (): ApiContextResult => {
   const location = useLocation();
 
   // Use separate selectors to prevent object creation on every render
-  const adminIsAuth = useAdminAuthStore((state: any) => state.isAuthenticated);
-  const adminGetHeaders = useAdminAuthStore((state: any) => state.getAuthHeaders);
+  const adminIsAuth = useAdminAuthStore((state: AuthState) => state.isAuthenticated);
+  const adminGetHeaders = useAdminAuthStore((state: AuthState) => state.getAuthHeaders);
 
-  const tenantIsAuth = useTenantAuthStore((state: any) => state.isAuthenticated);
-  const tenantGetHeaders = useTenantAuthStore((state: any) => state.getAuthHeaders);
+  const tenantIsAuth = useTenantAuthStore((state: AuthState) => state.isAuthenticated);
+  const tenantGetHeaders = useTenantAuthStore((state: AuthState) => state.getAuthHeaders);
 
-  const clientIsAuth = useClientAuthStore((state: any) => state.isAuthenticated);
-  const clientGetHeaders = useClientAuthStore((state: any) => state.getAuthHeaders);
+  const clientIsAuth = useClientAuthStore((state: AuthState) => state.isAuthenticated);
+  const clientGetHeaders = useClientAuthStore((state: AuthState) => state.getAuthHeaders);
 
   const buildHeaders = (getAuthHeaders?: () => Record<string, string>) => {
     if (typeof getAuthHeaders === "function") {
@@ -80,7 +86,9 @@ export const useApiContext = (): ApiContextResult => {
     adminIsAuth,
     tenantIsAuth,
     clientIsAuth,
-    // Exclude function refs from deps - they're stable from Zustand
+    adminGetHeaders,
+    tenantGetHeaders,
+    clientGetHeaders,
   ]);
 
   return result;

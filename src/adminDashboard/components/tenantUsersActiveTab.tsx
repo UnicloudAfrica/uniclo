@@ -1,5 +1,3 @@
-// @ts-nocheck
-import React from "react";
 import { NavLink } from "react-router-dom";
 
 const ManagementSideMenu = () => {
@@ -32,7 +30,7 @@ const ManagementSideMenu = () => {
             className={({ isActive }) =>
               `px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border ${
                 isActive
-                  ? "bg-[#eef6ff] border-[#c6e0ff] text-[#0b63ce] shadow-sm"
+                  ? "bg-[var(--theme-surface-alt)] border-[rgb(var(--theme-color-200))] text-[rgb(var(--theme-color-600))] shadow-sm"
                   : "border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900"
               }`
             }

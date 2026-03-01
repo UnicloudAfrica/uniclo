@@ -1,15 +1,17 @@
-// @ts-nocheck
 import React from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 import ClientPageShell from "../components/ClientPageShell";
-import NetworkAclsContainer from "../../shared/components/infrastructure/containers/NetworkAclsContainer";
+import NetworkAclsContainer, {
+  NetworkAclHooks,
+} from "../../shared/components/infrastructure/containers/NetworkAclsContainer";
 import {
   useNetworkAcls,
   useCreateNetworkAcl,
   useDeleteNetworkAcl,
   useVpcs,
 } from "../../shared/hooks/vpcInfraHooks";
+import { NetworkAcl } from "../../shared/components/infrastructure/types";
 
 const ClientNetworkAcls: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -17,18 +19,20 @@ const ClientNetworkAcls: React.FC = () => {
   const projectId = searchParams.get("project") || "";
   const region = searchParams.get("region") || "";
 
-  const hooks = {
-    useList: useNetworkAcls,
-    useVpcs: useVpcs,
-    useCreate: useCreateNetworkAcl,
-    useDelete: useDeleteNetworkAcl,
+  const hooks: NetworkAclHooks = {
+    useList: useNetworkAcls as NetworkAclHooks["useList"],
+    useVpcs: useVpcs as NetworkAclHooks["useVpcs"],
+    useCreate: useCreateNetworkAcl as NetworkAclHooks["useCreate"],
+    useDelete: useDeleteNetworkAcl as NetworkAclHooks["useDelete"],
   };
 
-  const handleManageRules = (acl: any) => {
+  const handleManageRules = (acl: NetworkAcl) => {
     // Clients can view rules? Usually Read-Only.
     // Assuming client view route exists
     navigate(
-      `/client-dashboard/infrastructure/network-acl-rules?project=${projectId}&region=${region}&acl=${acl.id}&name=${encodeURIComponent(acl.name || "ACL")}`
+      `/client-dashboard/infrastructure/network-acl-rules?project=${projectId}&region=${region}&acl=${
+        acl.id
+      }&name=${encodeURIComponent(acl.name || "ACL")}`
     );
   };
 
@@ -39,7 +43,7 @@ const ClientNetworkAcls: React.FC = () => {
       region={region}
       hooks={hooks}
       onManageRules={handleManageRules}
-      wrapper={({ headerActions, children }) => (
+      wrapper={({ children }) => (
         <ClientPageShell
           title={
             <span className="flex items-center gap-2">
@@ -48,7 +52,6 @@ const ClientNetworkAcls: React.FC = () => {
             </span>
           }
           description="Review network traffic rules"
-          actions={headerActions}
         >
           {children}
         </ClientPageShell>

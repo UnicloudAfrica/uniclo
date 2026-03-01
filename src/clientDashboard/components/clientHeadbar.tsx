@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import { DashboardHeadbar } from "../../shared/components/headbar";
 import { useDashboardProfile } from "../../shared/hooks/useDashboardProfile";
@@ -14,6 +13,7 @@ const ClientHeadbar: React.FC<ClientHeadbarProps> = ({ onMenuClick }) => {
   const { profile, isFetching: isProfileFetching } = useDashboardProfile("client");
   const { data: theme, isLoading: isThemeLoading } = useClientTheme();
   const { toggleMobile } = useSidebarStore();
+
   const preset = buildClientHeadbarPreset(theme);
 
   const handleMobileMenuToggle = () => {
@@ -33,7 +33,7 @@ const ClientHeadbar: React.FC<ClientHeadbarProps> = ({ onMenuClick }) => {
         firstName: profile.firstName,
         lastName: profile.lastName,
         initials: profile.initials,
-        avatar: profile.avatar,
+        ...(profile.avatar ? { avatar: profile.avatar } : {}),
       }}
       isProfileLoading={isProfileFetching}
       isThemeLoading={isThemeLoading}

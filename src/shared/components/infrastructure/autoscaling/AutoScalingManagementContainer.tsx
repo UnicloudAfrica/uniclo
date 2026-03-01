@@ -1,10 +1,9 @@
 import React, { useState } from "react";
-import { Plus, Trash2, Zap, Settings, RefreshCw, TrendingUp, Server } from "lucide-react";
+import { Plus, Trash2, Settings, TrendingUp, Server } from "lucide-react";
 import {
   useAutoScalingGroups,
   useDeleteAutoScalingGroup,
   useLaunchConfigurations,
-  useScalingPolicies,
 } from "../../../../hooks/autoScalingHooks";
 import ModernTable from "../../ui/ModernTable";
 import ModernCard from "../../ui/ModernCard";
@@ -73,13 +72,13 @@ const AutoScalingManagementContainer: React.FC<AutoScalingManagementContainerPro
       key: "name",
       header: "Name",
       accessor: "name",
-      render: (name: string, row: AutoScalingGroup) => (
+      render: (_value: unknown, row: AutoScalingGroup) => (
         <div className="flex items-center space-x-3">
           <div className="p-2 bg-primary-100 rounded-lg text-primary-600">
             <TrendingUp className="w-4 h-4" />
           </div>
           <div>
-            <div className="font-medium text-gray-900">{name || "Unnamed Group"}</div>
+            <div className="font-medium text-gray-900">{row.name || "Unnamed Group"}</div>
             <div className="text-xs text-gray-500 font-mono">{row.id}</div>
           </div>
         </div>
@@ -95,7 +94,7 @@ const AutoScalingManagementContainer: React.FC<AutoScalingManagementContainerPro
       key: "capacity",
       header: "Capacity",
       accessor: "desired_capacity",
-      render: (_: number, row: AutoScalingGroup) => (
+      render: (_value: unknown, row: AutoScalingGroup) => (
         <div className="text-sm">
           <div className="flex items-center space-x-2">
             <Server className="w-3.5 h-3.5 text-gray-400" />
@@ -113,7 +112,7 @@ const AutoScalingManagementContainer: React.FC<AutoScalingManagementContainerPro
       key: "created_at",
       header: "Created",
       accessor: "created_at",
-      render: (date: string) => (
+      render: (date: any) => (
         <div className="text-sm text-gray-500">{new Date(date).toLocaleString()}</div>
       ),
     },
@@ -129,7 +128,9 @@ const AutoScalingManagementContainer: React.FC<AutoScalingManagementContainerPro
               alert("Cannot delete: project context required");
               return;
             }
-            if (window.confirm("Are you sure you want to delete this auto-scaling group?")) {
+            if (
+              globalThis.window.confirm("Are you sure you want to delete this auto-scaling group?")
+            ) {
               deleteGroup({ id, projectId, region });
             }
           }}
@@ -147,13 +148,13 @@ const AutoScalingManagementContainer: React.FC<AutoScalingManagementContainerPro
       key: "name",
       header: "Name",
       accessor: "name",
-      render: (name: string, row: LaunchConfiguration) => (
+      render: (_value: unknown, row: LaunchConfiguration) => (
         <div className="flex items-center space-x-3">
           <div className="p-2 bg-secondary-100 rounded-lg text-secondary-600">
             <Settings className="w-4 h-4" />
           </div>
           <div>
-            <div className="font-medium text-gray-900">{name || "Unnamed Config"}</div>
+            <div className="font-medium text-gray-900">{row.name || "Unnamed Config"}</div>
             <div className="text-xs text-gray-500 font-mono">{row.id}</div>
           </div>
         </div>
@@ -163,7 +164,7 @@ const AutoScalingManagementContainer: React.FC<AutoScalingManagementContainerPro
       key: "instance_type",
       header: "Instance Type",
       accessor: "instance_type",
-      render: (type: string) => (
+      render: (type: any) => (
         <div className="text-sm">
           <span className="px-2 py-1 bg-gray-100 rounded text-gray-700 font-mono text-xs">
             {type}
@@ -175,7 +176,7 @@ const AutoScalingManagementContainer: React.FC<AutoScalingManagementContainerPro
       key: "image_id",
       header: "Image",
       accessor: "image_id",
-      render: (imageId: string) => (
+      render: (imageId: any) => (
         <div className="text-xs text-gray-500 font-mono">{imageId || "Not specified"}</div>
       ),
     },
@@ -183,13 +184,13 @@ const AutoScalingManagementContainer: React.FC<AutoScalingManagementContainerPro
       key: "key_pair",
       header: "Key Pair",
       accessor: "key_pair",
-      render: (keyPair: string) => <div className="text-sm text-gray-600">{keyPair || "—"}</div>,
+      render: (keyPair: any) => <div className="text-sm text-gray-600">{keyPair || "—"}</div>,
     },
     {
       key: "created_at",
       header: "Created",
       accessor: "created_at",
-      render: (date: string) => (
+      render: (date: any) => (
         <div className="text-sm text-gray-500">{new Date(date).toLocaleString()}</div>
       ),
     },

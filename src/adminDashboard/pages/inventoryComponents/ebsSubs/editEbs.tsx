@@ -1,11 +1,41 @@
-// @ts-nocheck
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import type { FormEvent } from "react";
 import { X, Loader2 } from "lucide-react";
 
 import ToastUtils from "../../../../utils/toastUtil"; // Ensure ToastUtils is
 import { useUpdateEbsVolume } from "../../../../hooks/adminHooks/ebsHooks";
-const EditEBSModal = ({ isOpen, onClose, ebsVolume }: any) => {
-  const [formData, setFormData] = useState({
+
+type EbsVolume = {
+  id?: string | number;
+  identifier?: string | number;
+  name?: string;
+  media_type?: string;
+  price?: number | string | null;
+  description?: string;
+  icon?: string;
+  iops_read?: number | string | null;
+  iops_write?: number | string | null;
+};
+
+type EbsFormData = {
+  name: string;
+  media_type: string;
+  description: string;
+  icon: string;
+  iops_read: string;
+  iops_write: string;
+};
+
+type EbsFormErrors = Partial<Record<keyof EbsFormData, string>>;
+
+interface EditEbsModalProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+  ebsVolume?: EbsVolume | null;
+}
+
+const EditEBSModal = ({ isOpen = false, onClose, ebsVolume }: EditEbsModalProps) => {
+  const [formData, setFormData] = useState<EbsFormData>({
     name: "",
     media_type: "",
     // price: "",
@@ -14,7 +44,7 @@ const EditEBSModal = ({ isOpen, onClose, ebsVolume }: any) => {
     iops_read: "",
     iops_write: "",
   });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<EbsFormErrors>({});
 
   // Populate form data when the modal opens or when the ebsVolume prop changes
   useEffect(() => {
@@ -22,10 +52,6 @@ const EditEBSModal = ({ isOpen, onClose, ebsVolume }: any) => {
       setFormData({
         name: ebsVolume.name || "",
         media_type: ebsVolume.media_type || "",
-        price:
-          ebsVolume.price !== undefined && ebsVolume.price !== null
-            ? parseFloat(ebsVolume.price).toFixed(2)
-            : "",
         description: ebsVolume.description || "",
         icon: ebsVolume.icon || "",
         iops_read:
@@ -57,19 +83,20 @@ const EditEBSModal = ({ isOpen, onClose, ebsVolume }: any) => {
   const { mutate, isPending } = useUpdateEbsVolume();
 
   const validateForm = () => {
-    const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = "Volume Name is required";
+    const newErrors: EbsFormErrors = {};
+    if (!formData.name.trim()) newErrors["name"] = "Volume Name is required";
     // media_type is optional, so no required validation here
 
-    const numberFields = [
+    const numberFields: Array<keyof Pick<EbsFormData, "iops_read" | "iops_write">> = [
       // "price",
       "iops_read",
       "iops_write",
     ];
 
-    numberFields.forEach((field: any) => {
-      const value = parseFloat(formData[field]);
-      if (isNaN(value) || formData[field] === "") {
+    numberFields.forEach((field) => {
+      const rawValue = formData[field];
+      const value = parseFloat(rawValue);
+      if (Number.isNaN(value) || rawValue === "") {
         newErrors[field] = `${field.replace(/_/g, " ")} must be a valid number`;
       } else if (value < 0) {
         newErrors[field] = `${field.replace(/_/g, " ")} cannot be negative`;
@@ -80,17 +107,18 @@ const EditEBSModal = ({ isOpen, onClose, ebsVolume }: any) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field: any, value: any) => {
+  const updateFormData = <K extends keyof EbsFormData>(field: K, value: EbsFormData[K]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: null }));
+    setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
-  const handleSubmit = (e: any) => {
-    if (e) e.preventDefault();
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
 
     if (!validateForm()) return;
 
-    if (ebsVolume?.id) {
+    const targetId = ebsVolume?.identifier ?? ebsVolume?.id;
+    if (targetId) {
       const updatedData = {
         name: formData.name,
         media_type: formData.media_type.trim() || null,
@@ -102,14 +130,13 @@ const EditEBSModal = ({ isOpen, onClose, ebsVolume }: any) => {
       };
 
       mutate(
-        { id: ebsVolume.identifier, volumeData: updatedData },
+        { id: targetId, volumeData: updatedData },
         {
           onSuccess: () => {
             ToastUtils.success("EBS Volume updated successfully");
-            onClose(); // Close modal on success
+            onClose?.(); // Close modal on success
           },
-          onError: (err) => {
-            // console.error("Failed to update EBS Volume:", err);
+          onError: () => {
             // ToastUtils.error("Failed to update EBS Volume. Please try again.");
           },
         }
@@ -126,13 +153,13 @@ const EditEBSModal = ({ isOpen, onClose, ebsVolume }: any) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[700px] mx-4 w-full">
         {/* Header */}
-        <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] w-full">
-          <h2 className="text-lg font-semibold text-[#575758]">
+        <div className="flex justify-between items-center px-6 py-4 border-b bg-[var(--theme-surface-alt)] rounded-t-[24px] w-full">
+          <h2 className="text-lg font-semibold text-[var(--theme-text-color)]">
             Edit EBS Volume: {ebsVolume?.name || "N/A"}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
+            className="text-gray-400 hover:text-[rgb(var(--theme-neutral-900) / 0.7)] font-medium transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -151,10 +178,10 @@ const EditEBSModal = ({ isOpen, onClose, ebsVolume }: any) => {
                 onChange={(e) => updateFormData("name", e.target.value)}
                 placeholder="e.g., General Purpose SSD"
                 className={`w-full input-field ${
-                  errors.name ? "border-red-500" : "border-gray-300"
+                  errors["name"] ? "border-red-500" : "border-gray-300"
                 }`}
               />
-              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+              {errors["name"] && <p className="text-red-500 text-xs mt-1">{errors["name"]}</p>}
             </div>
             <div>
               <label htmlFor="media_type" className="block text-sm font-medium text-gray-700 mb-2">
@@ -165,7 +192,7 @@ const EditEBSModal = ({ isOpen, onClose, ebsVolume }: any) => {
                 value={formData.media_type}
                 onChange={(e) => updateFormData("media_type", e.target.value)}
                 className={`w-full input-field ${
-                  errors.media_type ? "border-red-500" : "border-gray-300"
+                  errors["media_type"] ? "border-red-500" : "border-gray-300"
                 }`}
               >
                 <option value="">Select Media Type</option>
@@ -174,8 +201,8 @@ const EditEBSModal = ({ isOpen, onClose, ebsVolume }: any) => {
                 <option value="st1">st1 (Throughput Optimized HDD)</option>
                 <option value="sc1">sc1 (Cold HDD)</option>
               </select>
-              {errors.media_type && (
-                <p className="text-red-500 text-xs mt-1">{errors.media_type}</p>
+              {errors["media_type"] && (
+                <p className="text-red-500 text-xs mt-1">{errors["media_type"]}</p>
               )}
             </div>
             {/* <div>
@@ -211,10 +238,12 @@ const EditEBSModal = ({ isOpen, onClose, ebsVolume }: any) => {
                 onChange={(e) => updateFormData("iops_read", e.target.value)}
                 placeholder="e.g., 500"
                 className={`w-full input-field ${
-                  errors.iops_read ? "border-red-500" : "border-gray-300"
+                  errors["iops_read"] ? "border-red-500" : "border-gray-300"
                 }`}
               />
-              {errors.iops_read && <p className="text-red-500 text-xs mt-1">{errors.iops_read}</p>}
+              {errors["iops_read"] && (
+                <p className="text-red-500 text-xs mt-1">{errors["iops_read"]}</p>
+              )}
             </div>
             <div>
               <label htmlFor="iops_write" className="block text-sm font-medium text-gray-700 mb-2">
@@ -227,11 +256,11 @@ const EditEBSModal = ({ isOpen, onClose, ebsVolume }: any) => {
                 onChange={(e) => updateFormData("iops_write", e.target.value)}
                 placeholder="e.g., 200"
                 className={`w-full input-field ${
-                  errors.iops_write ? "border-red-500" : "border-gray-300"
+                  errors["iops_write"] ? "border-red-500" : "border-gray-300"
                 }`}
               />
-              {errors.iops_write && (
-                <p className="text-red-500 text-xs mt-1">{errors.iops_write}</p>
+              {errors["iops_write"] && (
+                <p className="text-red-500 text-xs mt-1">{errors["iops_write"]}</p>
               )}
             </div>
             <div className="md:col-span-2">
@@ -245,11 +274,11 @@ const EditEBSModal = ({ isOpen, onClose, ebsVolume }: any) => {
                 placeholder="Enter a brief description for the EBS volume"
                 rows="3"
                 className={`w-full input-field ${
-                  errors.description ? "border-red-500" : "border-gray-300"
+                  errors["description"] ? "border-red-500" : "border-gray-300"
                 }`}
               ></textarea>
-              {errors.description && (
-                <p className="text-red-500 text-xs mt-1">{errors.description}</p>
+              {errors["description"] && (
+                <p className="text-red-500 text-xs mt-1">{errors["description"]}</p>
               )}
             </div>
             <div className="md:col-span-2">
@@ -263,10 +292,10 @@ const EditEBSModal = ({ isOpen, onClose, ebsVolume }: any) => {
                 onChange={(e) => updateFormData("icon", e.target.value)}
                 placeholder="e.g., storage, database"
                 className={`w-full input-field ${
-                  errors.icon ? "border-red-500" : "border-gray-300"
+                  errors["icon"] ? "border-red-500" : "border-gray-300"
                 }`}
               />
-              {errors.icon && <p className="text-red-500 text-xs mt-1">{errors.icon}</p>}
+              {errors["icon"] && <p className="text-red-500 text-xs mt-1">{errors["icon"]}</p>}
             </div>
           </div>
         </div>
@@ -275,7 +304,7 @@ const EditEBSModal = ({ isOpen, onClose, ebsVolume }: any) => {
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
+              className="px-6 py-2 text-[var(--theme-text-color)] bg-[var(--theme-surface-alt)] border border-[var(--theme-surface-alt)] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
               disabled={isPending}
             >
               Cancel
@@ -283,7 +312,7 @@ const EditEBSModal = ({ isOpen, onClose, ebsVolume }: any) => {
             <button
               onClick={handleSubmit}
               disabled={isPending}
-              className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="px-8 py-3 bg-[var(--theme-color)] text-white font-medium rounded-full hover:bg-[var(--theme-color)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Save Changes
               {isPending && <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />}

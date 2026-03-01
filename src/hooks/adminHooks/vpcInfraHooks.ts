@@ -4,13 +4,137 @@ import ToastUtils from "../../utils/toastUtil";
 
 const adminApi = getAdminApi();
 
+// --- Interfaces ---
+
+export interface NatGateway {
+  id: string;
+  name: string;
+  subnet_id: string;
+  elastic_ip_id?: string;
+  status: string;
+  projectId?: string;
+}
+
+export interface ElasticIp {
+  id: string;
+  public_ip: string;
+  instance_id?: string;
+  network_interface_id?: string;
+  status: string;
+  name?: string;
+}
+
+export interface SecurityGroup {
+  id: string;
+  name: string;
+  description?: string;
+  vpc_id: string;
+}
+
+export interface SecurityGroupRule {
+  id: string;
+  direction: "ingress" | "egress";
+  protocol: string;
+  port_range_min?: number;
+  port_range_max?: number;
+  cidr?: string;
+  security_group_id: string;
+}
+
+export interface Subnet {
+  id: string;
+  name: string;
+  cidr_block: string;
+  vpc_id: string;
+  status: string;
+}
+
+export interface RouteTable {
+  id: string;
+  vpc_id: string;
+  name?: string;
+  routes: Route[];
+  associations: RouteTableAssociation[];
+}
+
+export interface Route {
+  destination_cidr_block: string;
+  gateway_id?: string;
+  nat_gateway_id?: string;
+}
+
+export interface RouteTableAssociation {
+  id: string;
+  subnet_id: string;
+  route_table_id: string;
+}
+
+export interface NetworkAcl {
+  id: string;
+  vpc_id: string;
+  name?: string;
+  is_default: boolean;
+  entries: NetworkAclRule[];
+}
+
+export interface NetworkAclRule {
+  rule_number: number;
+  protocol: string;
+  rule_action: "allow" | "deny";
+  egress: boolean;
+  cidr_block: string;
+  port_range_min?: number;
+  port_range_max?: number;
+}
+
+export interface VpcPeering {
+  id: string;
+  vpc_id: string;
+  peer_vpc_id: string;
+  status: string;
+  name?: string;
+}
+
+export interface SecurityPosture {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+export interface VpcPolicy {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+export interface Vpc {
+  id: string;
+  name: string;
+  cidr: string;
+  is_default: boolean;
+  status: string;
+}
+
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  data: T;
+  message?: string;
+  error?: string;
+}
+
+export interface AxiosApiResponse<T = unknown> {
+  data: ApiResponse<T>;
+}
+
 // ==================== NAT Gateways ====================
 
 export const useNatGateways = (projectId: string) => {
   return useQuery({
     queryKey: ["nat-gateways", projectId],
-    queryFn: async () => {
-      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/nat-gateways`);
+    queryFn: async (): Promise<NatGateway[]> => {
+      const { data }: AxiosApiResponse<NatGateway[]> = await adminApi.get(
+        `${API_BASE}/projects/${projectId}/nat-gateways`
+      );
       return data.data || [];
     },
     enabled: !!projectId,
@@ -27,18 +151,19 @@ export const useCreateNatGateway = () => {
       projectId: string;
       payload: { subnet_id: string; elastic_ip_id?: string; name?: string };
     }) => {
-      const { data } = await adminApi.post(
+      const { data }: AxiosApiResponse<NatGateway> = await adminApi.post(
         `${API_BASE}/projects/${projectId}/nat-gateways`,
         payload
       );
       return data;
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("NAT Gateway created successfully");
       queryClient.invalidateQueries({ queryKey: ["nat-gateways", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to create NAT Gateway");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to create NAT Gateway");
     },
   });
 };
@@ -55,12 +180,13 @@ export const useDeleteNatGateway = () => {
     }) => {
       await adminApi.delete(`${API_BASE}/projects/${projectId}/nat-gateways/${natGatewayId}`);
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("NAT Gateway deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["nat-gateways", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to delete NAT Gateway");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to delete NAT Gateway");
     },
   });
 };
@@ -70,8 +196,10 @@ export const useDeleteNatGateway = () => {
 export const useElasticIps = (projectId: string) => {
   return useQuery({
     queryKey: ["elastic-ips", projectId],
-    queryFn: async () => {
-      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/elastic-ips`);
+    queryFn: async (): Promise<ElasticIp[]> => {
+      const { data }: AxiosApiResponse<ElasticIp[]> = await adminApi.get(
+        `${API_BASE}/projects/${projectId}/elastic-ips`
+      );
       return data.data || [];
     },
     enabled: !!projectId,
@@ -88,18 +216,19 @@ export const useCreateElasticIp = () => {
       projectId: string;
       payload?: { name?: string };
     }) => {
-      const { data } = await adminApi.post(
+      const { data }: AxiosApiResponse<ElasticIp> = await adminApi.post(
         `${API_BASE}/projects/${projectId}/elastic-ips`,
         payload || {}
       );
       return data;
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("Elastic IP allocated successfully");
       queryClient.invalidateQueries({ queryKey: ["elastic-ips", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to allocate Elastic IP");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to allocate Elastic IP");
     },
   });
 };
@@ -116,18 +245,19 @@ export const useAssociateElasticIp = () => {
       elasticIpId: string;
       payload: { instance_id?: string; network_interface_id?: string };
     }) => {
-      const { data } = await adminApi.post(
+      const { data }: AxiosApiResponse<unknown> = await adminApi.post(
         `${API_BASE}/projects/${projectId}/elastic-ips/${elasticIpId}/associate`,
         payload
       );
       return data;
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("Elastic IP associated successfully");
       queryClient.invalidateQueries({ queryKey: ["elastic-ips", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to associate Elastic IP");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to associate Elastic IP");
     },
   });
 };
@@ -140,12 +270,13 @@ export const useDisassociateElasticIp = () => {
         `${API_BASE}/projects/${projectId}/elastic-ips/${elasticIpId}/disassociate`
       );
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("Elastic IP disassociated successfully");
       queryClient.invalidateQueries({ queryKey: ["elastic-ips", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to disassociate Elastic IP");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to disassociate Elastic IP");
     },
   });
 };
@@ -156,12 +287,13 @@ export const useDeleteElasticIp = () => {
     mutationFn: async ({ projectId, elasticIpId }: { projectId: string; elasticIpId: string }) => {
       await adminApi.delete(`${API_BASE}/projects/${projectId}/elastic-ips/${elasticIpId}`);
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("Elastic IP released successfully");
       queryClient.invalidateQueries({ queryKey: ["elastic-ips", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to release Elastic IP");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to release Elastic IP");
     },
   });
 };
@@ -170,8 +302,10 @@ export const useDeleteElasticIp = () => {
 export const useSecurityGroups = (projectId: string) => {
   return useQuery({
     queryKey: ["security-groups", projectId],
-    queryFn: async () => {
-      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/security-groups`);
+    queryFn: async (): Promise<SecurityGroup[]> => {
+      const { data }: AxiosApiResponse<SecurityGroup[]> = await adminApi.get(
+        `${API_BASE}/projects/${projectId}/security-groups`
+      );
       return data.data || [];
     },
     enabled: !!projectId,
@@ -188,18 +322,19 @@ export const useCreateSecurityGroup = () => {
       projectId: string;
       payload: { vpc_id: string; name: string; description?: string };
     }) => {
-      const { data } = await adminApi.post(
+      const { data }: AxiosApiResponse<SecurityGroup> = await adminApi.post(
         `${API_BASE}/projects/${projectId}/security-groups`,
         payload
       );
       return data;
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("Security group created successfully");
       queryClient.invalidateQueries({ queryKey: ["security-groups", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to create security group");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to create security group");
     },
   });
 };
@@ -216,12 +351,13 @@ export const useDeleteSecurityGroup = () => {
     }) => {
       await adminApi.delete(`${API_BASE}/projects/${projectId}/security-groups/${securityGroupId}`);
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("Security group deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["security-groups", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to delete security group");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to delete security group");
     },
   });
 };
@@ -231,8 +367,16 @@ export const useDeleteSecurityGroup = () => {
 export const useSecurityGroupRules = (projectId: string, securityGroupId: string) => {
   return useQuery({
     queryKey: ["security-group-rules", projectId, securityGroupId],
-    queryFn: async () => {
-      const { data } = await adminApi.get(
+    queryFn: async (): Promise<{
+      ingress_rules: SecurityGroupRule[];
+      egress_rules: SecurityGroupRule[];
+    }> => {
+      const {
+        data,
+      }: AxiosApiResponse<{
+        ingress_rules: SecurityGroupRule[];
+        egress_rules: SecurityGroupRule[];
+      }> = await adminApi.get(
         `${API_BASE}/projects/${projectId}/security-groups/${securityGroupId}/rules`
       );
       return data.data || { ingress_rules: [], egress_rules: [] };
@@ -259,20 +403,21 @@ export const useAddSecurityGroupRule = () => {
         cidr?: string;
       };
     }) => {
-      const { data } = await adminApi.post(
+      const { data }: AxiosApiResponse<SecurityGroupRule> = await adminApi.post(
         `${API_BASE}/projects/${projectId}/security-groups/${securityGroupId}/rules`,
         payload
       );
       return data;
     },
-    onSuccess: (_, { projectId, securityGroupId }) => {
+    onSuccess: (_data, { projectId, securityGroupId }) => {
       ToastUtils.success("Security group rule added successfully");
       queryClient.invalidateQueries({
         queryKey: ["security-group-rules", projectId, securityGroupId],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to add security group rule");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to add security group rule");
     },
   });
 };
@@ -300,14 +445,15 @@ export const useRemoveSecurityGroupRule = () => {
         { data: payload }
       );
     },
-    onSuccess: (_, { projectId, securityGroupId }) => {
+    onSuccess: (_data, { projectId, securityGroupId }) => {
       ToastUtils.success("Security group rule removed successfully");
       queryClient.invalidateQueries({
         queryKey: ["security-group-rules", projectId, securityGroupId],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to remove security group rule");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to remove security group rule");
     },
   });
 };
@@ -317,8 +463,10 @@ export const useRemoveSecurityGroupRule = () => {
 export const useSubnets = (projectId: string) => {
   return useQuery({
     queryKey: ["subnets", projectId],
-    queryFn: async () => {
-      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/subnets`);
+    queryFn: async (): Promise<Subnet[]> => {
+      const { data }: AxiosApiResponse<Subnet[]> = await adminApi.get(
+        `${API_BASE}/projects/${projectId}/subnets`
+      );
       return data.data || [];
     },
     enabled: !!projectId,
@@ -335,15 +483,19 @@ export const useCreateSubnet = () => {
       projectId: string;
       payload: { name: string; cidr_block: string; vpc_id: string };
     }) => {
-      const { data } = await adminApi.post(`${API_BASE}/projects/${projectId}/subnets`, payload);
+      const { data }: AxiosApiResponse<Subnet> = await adminApi.post(
+        `${API_BASE}/projects/${projectId}/subnets`,
+        payload
+      );
       return data;
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("Subnet created successfully");
       queryClient.invalidateQueries({ queryKey: ["subnets", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to create subnet");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to create subnet");
     },
   });
 };
@@ -360,18 +512,19 @@ export const useUpdateSubnet = () => {
       subnetId: string;
       payload: { name?: string };
     }) => {
-      const { data } = await adminApi.patch(
+      const { data }: AxiosApiResponse<Subnet> = await adminApi.patch(
         `${API_BASE}/projects/${projectId}/subnets/${subnetId}`,
         payload
       );
       return data;
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("Subnet updated successfully");
       queryClient.invalidateQueries({ queryKey: ["subnets", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to update subnet");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to update subnet");
     },
   });
 };
@@ -382,12 +535,13 @@ export const useDeleteSubnet = () => {
     mutationFn: async ({ projectId, subnetId }: { projectId: string; subnetId: string }) => {
       await adminApi.delete(`${API_BASE}/projects/${projectId}/subnets/${subnetId}`);
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("Subnet deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["subnets", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to delete subnet");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to delete subnet");
     },
   });
 };
@@ -397,8 +551,10 @@ export const useDeleteSubnet = () => {
 export const useRouteTables = (projectId: string) => {
   return useQuery({
     queryKey: ["route-tables", projectId],
-    queryFn: async () => {
-      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/route-tables`);
+    queryFn: async (): Promise<RouteTable[]> => {
+      const { data }: AxiosApiResponse<RouteTable[]> = await adminApi.get(
+        `${API_BASE}/projects/${projectId}/route-tables`
+      );
       return data.data || [];
     },
     enabled: !!projectId,
@@ -420,15 +576,19 @@ export const useCreateRoute = () => {
         nat_gateway_id?: string;
       };
     }) => {
-      const { data } = await adminApi.post(`${API_BASE}/projects/${projectId}/routes`, payload);
+      const { data }: AxiosApiResponse<Route> = await adminApi.post(
+        `${API_BASE}/projects/${projectId}/routes`,
+        payload
+      );
       return data;
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("Route created successfully");
       queryClient.invalidateQueries({ queryKey: ["route-tables", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to create route");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to create route");
     },
   });
 };
@@ -445,12 +605,13 @@ export const useDeleteRoute = () => {
     }) => {
       await adminApi.delete(`${API_BASE}/projects/${projectId}/routes`, { data: payload });
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("Route deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["route-tables", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to delete route");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to delete route");
     },
   });
 };
@@ -467,18 +628,19 @@ export const useAssociateRouteTable = () => {
       routeTableId: string;
       subnetId: string;
     }) => {
-      const { data } = await adminApi.post(
+      const { data }: AxiosApiResponse<RouteTableAssociation> = await adminApi.post(
         `${API_BASE}/projects/${projectId}/route-tables/${routeTableId}/associate`,
         { subnet_id: subnetId }
       );
       return data;
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("Route table associated successfully");
       queryClient.invalidateQueries({ queryKey: ["route-tables", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to associate route table");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to associate route table");
     },
   });
 };
@@ -497,12 +659,13 @@ export const useDisassociateRouteTable = () => {
         `${API_BASE}/projects/${projectId}/route-table-associations/${associationId}`
       );
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("Route table disassociated successfully");
       queryClient.invalidateQueries({ queryKey: ["route-tables", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to disassociate route table");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to disassociate route table");
     },
   });
 };
@@ -512,8 +675,10 @@ export const useDisassociateRouteTable = () => {
 export const useNetworkAcls = (projectId: string) => {
   return useQuery({
     queryKey: ["network-acls", projectId],
-    queryFn: async () => {
-      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/network-acls`);
+    queryFn: async (): Promise<NetworkAcl[]> => {
+      const { data }: AxiosApiResponse<NetworkAcl[]> = await adminApi.get(
+        `${API_BASE}/projects/${projectId}/network-acls`
+      );
       return data.data || [];
     },
     enabled: !!projectId,
@@ -530,18 +695,19 @@ export const useCreateNetworkAcl = () => {
       projectId: string;
       payload: { vpc_id: string; name?: string };
     }) => {
-      const { data } = await adminApi.post(
+      const { data }: AxiosApiResponse<NetworkAcl> = await adminApi.post(
         `${API_BASE}/projects/${projectId}/network-acls`,
         payload
       );
       return data;
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("Network ACL created successfully");
       queryClient.invalidateQueries({ queryKey: ["network-acls", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to create Network ACL");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to create Network ACL");
     },
   });
 };
@@ -558,12 +724,13 @@ export const useDeleteNetworkAcl = () => {
     }) => {
       await adminApi.delete(`${API_BASE}/projects/${projectId}/network-acls/${networkAclId}`);
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("Network ACL deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["network-acls", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to delete Network ACL");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to delete Network ACL");
     },
   });
 };
@@ -571,8 +738,8 @@ export const useDeleteNetworkAcl = () => {
 export const useNetworkAclRules = (projectId: string, networkAclId: string) => {
   return useQuery({
     queryKey: ["network-acl-rules", projectId, networkAclId],
-    queryFn: async () => {
-      const { data } = await adminApi.get(
+    queryFn: async (): Promise<{ entries: NetworkAclRule[] }> => {
+      const { data }: AxiosApiResponse<{ entries: NetworkAclRule[] }> = await adminApi.get(
         `${API_BASE}/projects/${projectId}/network-acls/${networkAclId}/rules`
       );
       return data.data || { entries: [] };
@@ -591,31 +758,24 @@ export const useAddNetworkAclRule = () => {
     }: {
       projectId: string;
       networkAclId: string;
-      payload: {
-        rule_number: number;
-        protocol: string;
-        rule_action: "allow" | "deny";
-        egress: boolean;
-        cidr_block: string;
-        port_range_min?: number;
-        port_range_max?: number;
-      };
+      payload: NetworkAclRule;
     }) => {
-      const { data } = await adminApi.post(
+      const { data }: AxiosApiResponse<NetworkAclRule> = await adminApi.post(
         `${API_BASE}/projects/${projectId}/network-acls/${networkAclId}/rules`,
         payload
       );
       return data;
     },
-    onSuccess: (_, { projectId, networkAclId }) => {
+    onSuccess: (_data, { projectId, networkAclId }) => {
       ToastUtils.success("Network ACL rule added successfully");
       queryClient.invalidateQueries({
         queryKey: ["network-acl-rules", projectId, networkAclId],
       });
       queryClient.invalidateQueries({ queryKey: ["network-acls", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to add Network ACL rule");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to add Network ACL rule");
     },
   });
 };
@@ -639,15 +799,16 @@ export const useRemoveNetworkAclRule = () => {
         }
       );
     },
-    onSuccess: (_, { projectId, networkAclId }) => {
+    onSuccess: (_data, { projectId, networkAclId }) => {
       ToastUtils.success("Network ACL rule removed successfully");
       queryClient.invalidateQueries({
         queryKey: ["network-acl-rules", projectId, networkAclId],
       });
       queryClient.invalidateQueries({ queryKey: ["network-acls", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to remove Network ACL rule");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to remove Network ACL rule");
     },
   });
 };
@@ -657,8 +818,10 @@ export const useRemoveNetworkAclRule = () => {
 export const useVpcPeering = (projectId: string) => {
   return useQuery({
     queryKey: ["vpc-peering", projectId],
-    queryFn: async () => {
-      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/vpc-peering`);
+    queryFn: async (): Promise<VpcPeering[]> => {
+      const { data }: AxiosApiResponse<VpcPeering[]> = await adminApi.get(
+        `${API_BASE}/projects/${projectId}/vpc-peering`
+      );
       return data.data || [];
     },
     enabled: !!projectId,
@@ -675,18 +838,19 @@ export const useCreateVpcPeering = () => {
       projectId: string;
       payload: { vpc_id: string; peer_vpc_id: string; name?: string };
     }) => {
-      const { data } = await adminApi.post(
+      const { data }: AxiosApiResponse<VpcPeering> = await adminApi.post(
         `${API_BASE}/projects/${projectId}/vpc-peering`,
         payload
       );
       return data;
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("VPC peering connection created successfully");
       queryClient.invalidateQueries({ queryKey: ["vpc-peering", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to create VPC peering connection");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to create VPC peering connection");
     },
   });
 };
@@ -697,12 +861,13 @@ export const useAcceptVpcPeering = () => {
     mutationFn: async ({ projectId, peeringId }: { projectId: string; peeringId: string }) => {
       await adminApi.post(`${API_BASE}/projects/${projectId}/vpc-peering/${peeringId}/accept`);
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("VPC peering connection accepted");
       queryClient.invalidateQueries({ queryKey: ["vpc-peering", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to accept VPC peering connection");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to accept VPC peering connection");
     },
   });
 };
@@ -713,12 +878,13 @@ export const useRejectVpcPeering = () => {
     mutationFn: async ({ projectId, peeringId }: { projectId: string; peeringId: string }) => {
       await adminApi.post(`${API_BASE}/projects/${projectId}/vpc-peering/${peeringId}/reject`);
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("VPC peering connection rejected");
       queryClient.invalidateQueries({ queryKey: ["vpc-peering", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to reject VPC peering connection");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to reject VPC peering connection");
     },
   });
 };
@@ -729,12 +895,13 @@ export const useDeleteVpcPeering = () => {
     mutationFn: async ({ projectId, peeringId }: { projectId: string; peeringId: string }) => {
       await adminApi.delete(`${API_BASE}/projects/${projectId}/vpc-peering/${peeringId}`);
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("VPC peering connection deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["vpc-peering", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to delete VPC peering connection");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to delete VPC peering connection");
     },
   });
 };
@@ -744,8 +911,10 @@ export const useDeleteVpcPeering = () => {
 export const useSecurityPostures = (projectId: string) => {
   return useQuery({
     queryKey: ["security-postures", projectId],
-    queryFn: async () => {
-      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/security-postures`);
+    queryFn: async (): Promise<SecurityPosture[]> => {
+      const { data }: AxiosApiResponse<SecurityPosture[]> = await adminApi.get(
+        `${API_BASE}/projects/${projectId}/security-postures`
+      );
       return data.data || [];
     },
     enabled: !!projectId,
@@ -757,8 +926,10 @@ export const useSecurityPostures = (projectId: string) => {
 export const useVpcPolicies = (projectId: string) => {
   return useQuery({
     queryKey: ["vpc-policies", projectId],
-    queryFn: async () => {
-      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/vpc-policies`);
+    queryFn: async (): Promise<VpcPolicy[]> => {
+      const { data }: AxiosApiResponse<VpcPolicy[]> = await adminApi.get(
+        `${API_BASE}/projects/${projectId}/vpc-policies`
+      );
       return data.data || [];
     },
     enabled: !!projectId,
@@ -770,8 +941,10 @@ export const useVpcPolicies = (projectId: string) => {
 export const useVpcs = (projectId: string) => {
   return useQuery({
     queryKey: ["vpcs", projectId],
-    queryFn: async () => {
-      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/vpcs`);
+    queryFn: async (): Promise<Vpc[]> => {
+      const { data }: AxiosApiResponse<Vpc[]> = await adminApi.get(
+        `${API_BASE}/projects/${projectId}/vpcs`
+      );
       return data.data || [];
     },
     enabled: !!projectId,
@@ -788,15 +961,19 @@ export const useCreateVpc = () => {
       projectId: string;
       payload: { name: string; cidr: string; is_default?: boolean };
     }) => {
-      const { data } = await adminApi.post(`${API_BASE}/projects/${projectId}/vpcs`, payload);
+      const { data }: AxiosApiResponse<Vpc> = await adminApi.post(
+        `${API_BASE}/projects/${projectId}/vpcs`,
+        payload
+      );
       return data;
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("VPC created successfully");
       queryClient.invalidateQueries({ queryKey: ["vpcs", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to create VPC");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to create VPC");
     },
   });
 };
@@ -807,12 +984,13 @@ export const useDeleteVpc = () => {
     mutationFn: async ({ projectId, vpcId }: { projectId: string; vpcId: string }) => {
       await adminApi.delete(`${API_BASE}/projects/${projectId}/vpcs/${vpcId}`);
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("VPC deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["vpcs", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to delete VPC");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to delete VPC");
     },
   });
 };
@@ -846,12 +1024,13 @@ export const useCreateInternetGateway = () => {
       );
       return data;
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("Internet Gateway created successfully");
       queryClient.invalidateQueries({ queryKey: ["internet-gateways", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to create Internet Gateway");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to create Internet Gateway");
     },
   });
 };
@@ -862,12 +1041,13 @@ export const useDeleteInternetGateway = () => {
     mutationFn: async ({ projectId, igwId }: { projectId: string; igwId: string }) => {
       await adminApi.delete(`${API_BASE}/projects/${projectId}/internet-gateways/${igwId}`);
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("Internet Gateway deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["internet-gateways", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to delete Internet Gateway");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to delete Internet Gateway");
     },
   });
 };
@@ -888,12 +1068,13 @@ export const useAttachInternetGateway = () => {
         vpc_id: vpcId,
       });
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("Internet Gateway attached successfully");
       queryClient.invalidateQueries({ queryKey: ["internet-gateways", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to attach Internet Gateway");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to attach Internet Gateway");
     },
   });
 };
@@ -914,12 +1095,13 @@ export const useDetachInternetGateway = () => {
         vpc_id: vpcId,
       });
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_data, { projectId }) => {
       ToastUtils.success("Internet Gateway detached successfully");
       queryClient.invalidateQueries({ queryKey: ["internet-gateways", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to detach Internet Gateway");
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(err.response?.data?.error || "Failed to detach Internet Gateway");
     },
   });
 };

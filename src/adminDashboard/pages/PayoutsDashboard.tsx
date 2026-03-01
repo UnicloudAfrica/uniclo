@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -168,7 +167,7 @@ const PayoutsDashboard: React.FC = () => {
 
   const handleProcessPayout = async (id: number) => {
     if (
-      window.confirm(
+      globalThis.window.confirm(
         "Are you sure you want to process this payout? This will initiate the bank transfer."
       )
     ) {
@@ -182,7 +181,7 @@ const PayoutsDashboard: React.FC = () => {
   };
 
   const handleCancelPayout = async (id: number) => {
-    if (window.confirm("Are you sure you want to cancel this payout?")) {
+    if (globalThis.window.confirm("Are you sure you want to cancel this payout?")) {
       try {
         await cancelPayout.mutateAsync(id);
         alert("Payout cancelled");
@@ -382,7 +381,7 @@ const PayoutsDashboard: React.FC = () => {
                       </td>
                     </tr>
                   ) : (
-                    payouts.map((payout) => (
+                    payouts.map((payout: any) => (
                       <tr key={payout.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">

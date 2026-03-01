@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, X } from "lucide-react";
 import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
 import ToastUtils from "../../../utils/toastUtil";
@@ -13,10 +12,10 @@ const AddSG = ({ isOpen, onClose, projectId = "", region: projectRegion = "" }: 
     region: "",
     description: "",
   });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, any>>({});
 
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors: Record<string, any> = {};
     if (!formData.name.trim()) newErrors.name = "Name is required";
     if (!formData.region) newErrors.region = "Region is required";
     if (!formData.description.trim()) newErrors.description = "Description is required";
@@ -62,11 +61,13 @@ const AddSG = ({ isOpen, onClose, projectId = "", region: projectRegion = "" }: 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full">
-        <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] w-full">
-          <h2 className="text-lg font-semibold text-[#575758]">Add New Security Group</h2>
+        <div className="flex justify-between items-center px-6 py-4 border-b bg-[var(--theme-surface-alt)] rounded-t-[24px] w-full">
+          <h2 className="text-lg font-semibold text-[var(--theme-text-color)]">
+            Add New Security Group
+          </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
+            className="text-gray-400 hover:text-[rgb(var(--theme-neutral-900) / 0.7)] font-medium transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -138,14 +139,14 @@ const AddSG = ({ isOpen, onClose, projectId = "", region: projectRegion = "" }: 
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
+              className="px-6 py-2 text-[var(--theme-text-color)] bg-[var(--theme-surface-alt)] border border-[var(--theme-surface-alt)] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
             >
               Close
             </button>
             <button
               onClick={handleSubmit}
               disabled={isPending || isRegionsFetching}
-              className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="px-8 py-3 bg-[var(--theme-color)] text-white font-medium rounded-full hover:bg-[var(--theme-color)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Create Security Group
               {isPending && <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />}

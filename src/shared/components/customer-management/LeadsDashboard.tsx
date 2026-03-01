@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -6,12 +5,9 @@ import {
   ArrowUpRight,
   BarChart3,
   CheckCircle2,
-  Eye,
   Loader2,
   UserPlus,
   Users,
-  Mail,
-  Phone,
   Filter,
 } from "lucide-react";
 import { ModernButton, ModernCard } from "../ui";
@@ -32,15 +28,17 @@ import LeadCard from "../../../adminDashboard/components/LeadCard";
 import ViewToggle from "../../../adminDashboard/components/ViewToggle";
 import QuickActionsMenu from "../../../adminDashboard/components/QuickActionsMenu";
 import { AdvancedFilterPanel, BulkActionBar, FilterPresets } from "../tables";
+import type { AdvancedFiltersState } from "../tables/AdvancedFilterPanel";
 import UserSelectModal from "./UserSelectModal";
 import adminSilentApi from "../../../index/admin/silent";
 import tenantSilentApi from "../../../index/tenant/silentTenant";
+import adminFileApi from "../../../index/admin/fileapi";
+import tenantFileApi from "../../../index/tenant/fileapi";
 import ToastUtil from "../../../utils/toastUtil";
-import useAdminAuthStore from "../../../stores/adminAuthStore";
-import useTenantAuthStore from "../../../stores/tenantAuthStore";
-import config from "../../../config";
+import { Lead } from "../../../types/lead";
 
-const formatCreatedAt = (dateString: any) => {
+const formatCreatedAt = (dateString: string | undefined) => {
+  if (!dateString) return "—";
   const date = new Date(dateString);
   return date.toLocaleDateString("en-US", {
     year: "numeric",
@@ -48,14 +46,15 @@ const formatCreatedAt = (dateString: any) => {
     day: "numeric",
   });
 };
-const encodeId = (id: any) => {
-  return encodeURIComponent(btoa(id));
+const encodeId = (id: string | number) => {
+  return encodeURIComponent(btoa(String(id)));
 };
-const getLeadIdentifier = (lead: any) => lead?.identifier || lead?.id;
-const normalizeId = (id: any) => (id !== undefined && id !== null ? String(id) : "");
+const getLeadIdentifier = (lead: Lead) => lead?.identifier || lead?.id;
+const normalizeId = (id: string | number | undefined | null) =>
+  id !== undefined && id !== null ? String(id) : "";
 
 // Helper function to format the status string for display
-const formatStatusForDisplay = (status: any) => {
+const formatStatusForDisplay = (status: string) => {
   return status.replace(/_/g, " ");
 };
 const STATUS_CONFIG = {
@@ -116,7 +115,10 @@ const STATUS_CONFIG = {
     color: "bg-gradient-to-r from-rose-500 to-rose-600",
   },
 };
-const STATUS_ORDER = [
+
+type StatusKey = keyof typeof STATUS_CONFIG;
+
+const STATUS_ORDER: StatusKey[] = [
   "all",
   "new",
   "contacted",
@@ -127,61 +129,139 @@ const STATUS_ORDER = [
   "closed_lost",
 ];
 
-const LeadsDashboard = ({ context = "admin" }) => {
+interface LeadsDashboardProps {
+  context?: "admin" | "tenant";
+}
+
+type QuickActionsMenuProps = React.ComponentProps<typeof QuickActionsMenu>;
+type QuickActionLead = QuickActionsMenuProps["lead"];
+type LeadCardProps = React.ComponentProps<typeof LeadCard>;
+type LeadCardLead = LeadCardProps["lead"];
+type ResourceDataExplorerProps = React.ComponentProps<typeof ResourceDataExplorer>;
+type ExplorerColumn = NonNullable<ResourceDataExplorerProps["columns"]>[number];
+type UnknownRecord = Record<string, unknown>;
+type AssignUser = { id: string | number; name?: string };
+type FileApiClient = (
+  method: string,
+  path: string,
+  payload?: Record<string, unknown>
+) => Promise<unknown>;
+type StatusSegment = { id: StatusKey; count: number; label: string; description: string };
+type FunnelStage = { id: Exclude<StatusKey, "all">; label: string; count: number; color: string };
+
+const isRecord = (value: unknown): value is UnknownRecord =>
+  typeof value === "object" && value !== null;
+
+const asRecord = (value: unknown): UnknownRecord => (isRecord(value) ? value : {});
+
+const asArray = <T,>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
+
+const coerceNumber = (value: unknown): number | undefined => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+};
+
+const normalizeLeadsByStatus = (value: unknown): Record<string, number> => {
+  if (!isRecord(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value).map(([key, count]) => [key, coerceNumber(count) ?? 0])
+  );
+};
+
+const extractLeadStats = (payload: unknown) => {
+  const record = asRecord(payload);
+  const data = asRecord(record.data);
+  const message = asRecord(record.message);
+  return {
+    leads: coerceNumber(message.leads ?? data.leads ?? record.leads),
+    leads_by_status: normalizeLeadsByStatus(
+      message.leads_by_status ?? data.leads_by_status ?? record.leads_by_status
+    ),
+  };
+};
+
+const isLead = (value: unknown): value is Lead => {
+  if (!isRecord(value)) return false;
+  const id = value.id;
+  return (
+    (typeof id === "string" || typeof id === "number") &&
+    typeof value.first_name === "string" &&
+    typeof value.last_name === "string" &&
+    typeof value.email === "string" &&
+    typeof value.status === "string"
+  );
+};
+
+const extractLeads = (payload: unknown): Lead[] => {
+  if (Array.isArray(payload)) {
+    return payload.filter(isLead);
+  }
+  const record = asRecord(payload);
+  if (Array.isArray(record.data)) {
+    return record.data.filter(isLead);
+  }
+  return [];
+};
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (typeof error === "string" && error.trim() !== "") return error;
+  if (isRecord(error) && typeof error.message === "string" && error.message.trim() !== "") {
+    return error.message;
+  }
+  return fallback;
+};
+
+const LeadsDashboard: React.FC<LeadsDashboardProps> = ({ context = "admin" }) => {
   const queryClient = useQueryClient();
 
-  const [activeStatus, setActiveStatus] = useState("all");
+  const [activeStatus, setActiveStatus] = useState<StatusKey>("all");
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState("table"); // table or card
-  const [selectedLeads, setSelectedLeads] = useState([]);
+  const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [activePreset, setActivePreset] = useState("all");
-  const [advancedFilters, setAdvancedFilters] = useState({
+  const [advancedFilters, setAdvancedFilters] = useState<AdvancedFiltersState>({
     dateRange: "all",
     source: "all",
     leadType: "all",
     minScore: 0,
   });
   const [showAssignModal, setShowAssignModal] = useState(false);
-  const [assignTarget, setAssignTarget] = useState(null); // 'bulk' or lead object
+  const [assignTarget, setAssignTarget] = useState<Lead | "bulk" | null>(null);
   const navigate = useNavigate();
 
   const basePath = context === "admin" ? "/admin-dashboard" : "/dashboard";
   const leadQueryKey = context === "admin" ? "admin-leads" : "tenant-leads";
   const apiClient = context === "admin" ? adminSilentApi : tenantSilentApi;
-  const exportBaseUrl = context === "admin" ? config.adminURL : config.tenantURL;
-
-  const adminAuthHeaders = useAdminAuthStore((state: any) => state.getAuthHeaders);
-  const tenantAuthHeaders = useTenantAuthStore((state: any) => state.getAuthHeaders);
-  const authHeaders =
-    context === "admin"
-      ? typeof adminAuthHeaders === "function"
-        ? adminAuthHeaders()
-        : {}
-      : typeof tenantAuthHeaders === "function"
-        ? tenantAuthHeaders()
-        : {};
 
   const openCreateLead = () => navigate(`${basePath}/leads/create`);
 
-  const pruneLeadsFromCache = (idsToRemove: any) => {
+  const pruneLeadsFromCache = (idsToRemove: (string | number)[]) => {
     const removeSet = new Set((idsToRemove || []).map(normalizeId).filter(Boolean));
 
     if (removeSet.size === 0) return;
 
-    queryClient.setQueriesData({ queryKey: [leadQueryKey] }, (old) => {
-      const filterList = (list: any) =>
-        list.filter((lead: any) => {
-          const idStr = normalizeId(lead.id);
-          const identStr = normalizeId(lead.identifier);
-          return !removeSet.has(idStr) && !removeSet.has(identStr);
-        });
+    queryClient.setQueriesData({ queryKey: [leadQueryKey] }, (old: unknown) => {
+      const filterList = (list: unknown) =>
+        asArray<unknown>(list)
+          .filter(isLead)
+          .filter((lead) => {
+            const idStr = normalizeId(lead.id);
+            const identStr = normalizeId(lead.identifier);
+            return !removeSet.has(idStr) && !removeSet.has(identStr);
+          });
 
       if (Array.isArray(old)) {
         return filterList(old);
       }
 
-      if (old && Array.isArray(old.data)) {
+      if (isRecord(old) && Array.isArray(old.data)) {
         return { ...old, data: filterList(old.data) };
       }
 
@@ -191,7 +271,7 @@ const LeadsDashboard = ({ context = "admin" }) => {
     // Build filter params for API
   };
   const filterParams = useMemo(() => {
-    const params = {};
+    const params: Record<string, string | number | boolean> = {};
 
     if (activeStatus && activeStatus !== "all") {
       params.status = activeStatus;
@@ -222,29 +302,27 @@ const LeadsDashboard = ({ context = "admin" }) => {
 
   const adminLeadsQuery = useAdminFetchLeads(filterParams, { enabled: context === "admin" });
   const tenantLeadsQuery = useTenantFetchLeads(filterParams, { enabled: context === "tenant" });
-
-  const leads =
-    (context === "tenant" ? tenantLeadsQuery.data : adminLeadsQuery.data) || [];
+  const leadQueryData = context === "tenant" ? tenantLeadsQuery.data : adminLeadsQuery.data;
+  const leads = useMemo(() => extractLeads(leadQueryData), [leadQueryData]);
   const isLeadsFetching =
     context === "tenant" ? tenantLeadsQuery.isLoading : adminLeadsQuery.isLoading;
-  const refetchLeads =
-    context === "tenant" ? tenantLeadsQuery.refetch : adminLeadsQuery.refetch;
+  const refetchLeads = context === "tenant" ? tenantLeadsQuery.refetch : adminLeadsQuery.refetch;
 
   const adminStatsQuery = useAdminFetchLeadStats({ enabled: context === "admin" });
   const tenantStatsQuery = useTenantFetchLeadStats({ enabled: context === "tenant" });
-  const leadStats = context === "tenant" ? tenantStatsQuery.data : adminStatsQuery.data;
+  const leadStatsData = context === "tenant" ? tenantStatsQuery.data : adminStatsQuery.data;
   const isLeadStatsFetching =
     context === "tenant" ? tenantStatsQuery.isFetching : adminStatsQuery.isFetching;
 
-  const leadsByStatus = useMemo(() => leadStats?.message?.leads_by_status ?? {}, [leadStats]);
-
-  const totalLeadCount = leadStats?.message?.leads ?? leads.length ?? 0;
-  const wonCount = leadsByStatus.closed_won ?? 0;
+  const leadStats = useMemo(() => extractLeadStats(leadStatsData), [leadStatsData]);
+  const leadsByStatus = leadStats.leads_by_status;
+  const totalLeadCount = leadStats.leads ?? leads.length ?? 0;
+  const wonCount = leadsByStatus["closed_won"] ?? 0;
   const engagedCount =
-    (leadsByStatus.contacted ?? 0) +
-    (leadsByStatus.qualified ?? 0) +
-    (leadsByStatus.proposal_sent ?? 0) +
-    (leadsByStatus.negotiating ?? 0);
+    (leadsByStatus["contacted"] ?? 0) +
+    (leadsByStatus["qualified"] ?? 0) +
+    (leadsByStatus["proposal_sent"] ?? 0) +
+    (leadsByStatus["negotiating"] ?? 0);
   const conversionRate = totalLeadCount ? Math.round((wonCount / totalLeadCount) * 100) : 0;
 
   // Mock trend data (replace with real data from API)
@@ -253,8 +331,8 @@ const LeadsDashboard = ({ context = "admin" }) => {
     conversion: 5,
     engaged: -3,
   };
-  const statusSegments = useMemo(() => {
-    return STATUS_ORDER.map((statusId: any) => {
+  const statusSegments = useMemo<StatusSegment[]>(() => {
+    return STATUS_ORDER.map((statusId) => {
       if (statusId === "all") {
         return {
           id: "all",
@@ -270,63 +348,63 @@ const LeadsDashboard = ({ context = "admin" }) => {
         label: config?.label ?? statusId,
         description: config?.description ?? "",
       };
-    }).filter((segment: any) => segment.id === "all" || segment.count > 0);
+    }).filter((segment) => segment.id === "all" || segment.count > 0);
   }, [leadsByStatus, totalLeadCount]);
 
   // Prepare funnel data
-  const funnelStages = useMemo(() => {
+  const funnelStages = useMemo<FunnelStage[]>(() => {
     return [
       {
         id: "new",
         label: "New",
-        count: leadsByStatus.new ?? 0,
+        count: leadsByStatus["new"] ?? 0,
         color: STATUS_CONFIG.new.color,
       },
       {
         id: "contacted",
         label: "Contacted",
-        count: leadsByStatus.contacted ?? 0,
+        count: leadsByStatus["contacted"] ?? 0,
         color: STATUS_CONFIG.contacted.color,
       },
       {
         id: "qualified",
         label: "Qualified",
-        count: leadsByStatus.qualified ?? 0,
+        count: leadsByStatus["qualified"] ?? 0,
         color: STATUS_CONFIG.qualified.color,
       },
       {
         id: "proposal_sent",
         label: "Proposal",
-        count: leadsByStatus.proposal_sent ?? 0,
+        count: leadsByStatus["proposal_sent"] ?? 0,
         color: STATUS_CONFIG.proposal_sent.color,
       },
       {
         id: "negotiating",
         label: "Negotiating",
-        count: leadsByStatus.negotiating ?? 0,
+        count: leadsByStatus["negotiating"] ?? 0,
         color: STATUS_CONFIG.negotiating.color,
       },
       {
         id: "closed_won",
         label: "Won",
-        count: leadsByStatus.closed_won ?? 0,
+        count: leadsByStatus["closed_won"] ?? 0,
         color: STATUS_CONFIG.closed_won.color,
       },
-    ].filter((stage: any) => stage.count > 0);
+    ].filter((stage) => stage.count > 0);
   }, [leadsByStatus]);
 
   const filteredLeads = useMemo(() => {
     if (!Array.isArray(leads)) return [];
 
     const byStatus =
-      activeStatus === "all" ? leads : leads.filter((lead: any) => lead.status === activeStatus);
+      activeStatus === "all" ? leads : leads.filter((lead) => lead.status === activeStatus);
 
     if (!searchValue.trim()) {
       return byStatus;
     }
 
     const term = searchValue.trim().toLowerCase();
-    return byStatus.filter((lead: any) => {
+    return byStatus.filter((lead: Lead) => {
       const name = `${lead.first_name} ${lead.last_name}`.toLowerCase();
       return (
         name.includes(term) ||
@@ -336,7 +414,7 @@ const LeadsDashboard = ({ context = "admin" }) => {
     });
   }, [leads, activeStatus, searchValue]);
 
-  const getStatusColorClass = (status: any) => {
+  const getStatusColorClass = (status: string) => {
     switch (status) {
       case "new":
         return "bg-blue-100 text-blue-800";
@@ -357,7 +435,7 @@ const LeadsDashboard = ({ context = "admin" }) => {
     }
   };
 
-  const handleViewLead = (lead: any) => {
+  const handleViewLead = (lead: Lead) => {
     const identifier = getLeadIdentifier(lead);
     if (!identifier) return;
     navigate(
@@ -367,23 +445,21 @@ const LeadsDashboard = ({ context = "admin" }) => {
     );
   };
 
-  const handleEmailLead = (lead: any) => {
-    window.location.href = `mailto:${lead.email}`;
+  const handleEmailLead = (lead: Lead) => {
+    globalThis.window.location.href = `mailto:${lead.email}`;
   };
 
-  const handleCallLead = (lead: any) => {
+  const handleCallLead = (lead: Lead) => {
     if (lead.phone) {
-      window.location.href = `tel:${lead.phone}`;
+      globalThis.window.location.href = `tel:${lead.phone}`;
     }
   };
 
   // Bulk selection handlers
-  const handleSelectLead = (leadId: any) => {
+  const handleSelectLead = (leadId: string | number | null | undefined) => {
     const normalized = normalizeId(leadId);
     setSelectedLeads((prev) =>
-      prev.includes(normalized)
-        ? prev.filter((id: any) => id !== normalized)
-        : [...prev, normalized]
+      prev.includes(normalized) ? prev.filter((id) => id !== normalized) : [...prev, normalized]
     );
   };
 
@@ -392,7 +468,9 @@ const LeadsDashboard = ({ context = "admin" }) => {
       setSelectedLeads([]);
     } else {
       setSelectedLeads(
-        filteredLeads.map((lead: any) => normalizeId(getLeadIdentifier(lead))).filter(Boolean)
+        filteredLeads
+          .map((lead) => normalizeId(getLeadIdentifier(lead)))
+          .filter((id): id is string => id.length > 0)
       );
     }
   };
@@ -406,18 +484,23 @@ const LeadsDashboard = ({ context = "admin" }) => {
     setShowAssignModal(true);
   };
 
-  const handleUserSelected = async (user) => {
+  const handleUserSelected = async (user: AssignUser) => {
     try {
+      if (!user || (typeof user.id !== "string" && typeof user.id !== "number")) {
+        throw new Error("Missing assignment target");
+      }
       if (assignTarget === "bulk") {
         await apiClient("POST", "/leads/bulk-assign", {
           lead_ids: selectedLeads,
           assigned_to: user.id,
         });
-        ToastUtil.success(`Successfully assigned ${selectedLeads.length} lead(s) to ${user.name}`);
+        ToastUtil.success(
+          `Successfully assigned ${selectedLeads.length} lead(s) to ${user.name ?? "user"}`
+        );
         setSelectedLeads([]);
         refetchLeads();
       } else if (assignTarget) {
-        const identifier = getLeadIdentifier(assignTarget);
+        const identifier = getLeadIdentifier(assignTarget as Lead);
         if (!identifier) {
           throw new Error("Missing lead identifier");
         }
@@ -425,7 +508,7 @@ const LeadsDashboard = ({ context = "admin" }) => {
         await apiClient("PATCH", `/leads/${identifier}`, {
           assigned_to: user.id,
         });
-        ToastUtil.success(`Successfully assigned lead to ${user.name}`);
+        ToastUtil.success(`Successfully assigned lead to ${user.name ?? "user"}`);
         refetchLeads();
       }
     } catch (error) {
@@ -438,7 +521,7 @@ const LeadsDashboard = ({ context = "admin" }) => {
   };
   const handleBulkDelete = async () => {
     if (
-      !window.confirm(
+      !globalThis.window.confirm(
         `Are you sure you want to delete ${selectedLeads.length} lead(s)? This action cannot be undone.`
       )
     ) {
@@ -469,45 +552,31 @@ const LeadsDashboard = ({ context = "admin" }) => {
     }
   };
   const handleBulkExport = async () => {
+    const fileApiClient: FileApiClient = context === "admin" ? adminFileApi : tenantFileApi;
     try {
-      const response = await fetch(
-        `${exportBaseUrl}/leads/bulk-export`,
-        {
-          method: "POST",
-          headers: {
-            ...(authHeaders || {}),
-            "Content-Type": "application/json",
-            Accept: "text/csv",
-          },
-          credentials: "include",
-          body: JSON.stringify({ lead_ids: selectedLeads }),
-        }
-      );
+      const response = await fileApiClient("POST", "/leads/bulk-export", {
+        lead_ids: selectedLeads,
+      });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Export failed");
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      const blob = response instanceof Blob ? response : new Blob([response as BlobPart]);
+      const url = globalThis.window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = `leads_export_${new Date().toISOString().split("T")[0]}.csv`;
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
+      globalThis.window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
       ToastUtil.success(`Successfully exported ${selectedLeads.length} lead(s)`);
     } catch (error) {
-      ToastUtil.error(error.message || "Failed to export leads");
+      ToastUtil.error(getErrorMessage(error, "Failed to export leads"));
       console.error("Bulk export error:", error);
     }
-
-    // Filter handlers
   };
-  const handlePresetChange = (presetId: any) => {
+  // Filter handlers
+
+  const handlePresetChange = (presetId: string) => {
     setActivePreset(presetId);
 
     // Apply preset logic
@@ -543,16 +612,21 @@ const LeadsDashboard = ({ context = "admin" }) => {
       minScore: 0,
     });
   };
-  const handleEditLead = (lead: any) => {
+  const handleEditLead = (lead: Lead) => {
+    void lead;
     // TODO: Navigate to edit page or open modal
     ToastUtil.info("Edit lead feature coming soon");
   };
-  const handleDeleteLead = async (lead) => {
-    if (!window.confirm(`Are you sure you want to delete ${lead.first_name} ${lead.last_name}?`)) {
+  const handleDeleteLead = async (lead: Lead) => {
+    if (
+      !globalThis.window.confirm(
+        `Are you sure you want to delete ${lead.first_name} ${lead.last_name}?`
+      )
+    ) {
       return;
     }
 
-    let previousCaches = [];
+    let previousCaches: Array<[unknown, unknown]> = [];
 
     try {
       const identifier = getLeadIdentifier(lead);
@@ -567,7 +641,7 @@ const LeadsDashboard = ({ context = "admin" }) => {
       pruneLeadsFromCache([normalized]);
       await apiClient("DELETE", `/leads/${normalized}`);
       ToastUtil.success("Lead deleted successfully");
-      setSelectedLeads((prev) => prev.filter((id: any) => id !== normalized));
+      setSelectedLeads((prev) => prev.filter((id: string) => id !== normalized));
       queryClient.invalidateQueries({ queryKey: [leadQueryKey] });
     } catch (error) {
       // Restore cache on failure
@@ -578,11 +652,11 @@ const LeadsDashboard = ({ context = "admin" }) => {
       console.error("Delete error:", error);
     }
   };
-  const handleAssignLead = (lead: any) => {
+  const handleAssignLead = (lead: Lead) => {
     setAssignTarget(lead);
     setShowAssignModal(true);
   };
-  const handleToggleFavorite = async (lead) => {
+  const handleToggleFavorite = async (lead: Lead) => {
     try {
       const identifier = getLeadIdentifier(lead);
       if (!identifier) {
@@ -597,6 +671,37 @@ const LeadsDashboard = ({ context = "admin" }) => {
       console.error("Toggle favorite error:", error);
     }
   };
+
+  const handleQuickView = (lead: QuickActionLead) => {
+    if (isLead(lead)) {
+      handleViewLead(lead);
+    }
+  };
+  const handleQuickEdit = (lead: QuickActionLead) => {
+    if (isLead(lead)) {
+      handleEditLead(lead);
+    }
+  };
+  const handleQuickEmail = (lead: QuickActionLead) => {
+    if (isLead(lead)) {
+      handleEmailLead(lead);
+    }
+  };
+  const handleQuickCall = (lead: QuickActionLead) => {
+    if (isLead(lead)) {
+      handleCallLead(lead);
+    }
+  };
+  const handleQuickDelete = (lead: QuickActionLead) => {
+    if (isLead(lead)) {
+      void handleDeleteLead(lead);
+    }
+  };
+  const handleQuickAssign = (lead: QuickActionLead) => {
+    if (isLead(lead)) {
+      handleAssignLead(lead);
+    }
+  };
   const headerActions = (
     <ModernButton onClick={openCreateLead} className="inline-flex items-center gap-2">
       <UserPlus className="h-4 w-4" />
@@ -604,7 +709,7 @@ const LeadsDashboard = ({ context = "admin" }) => {
     </ModernButton>
   );
 
-  const leadColumns = useMemo(
+  const leadColumns = useMemo<ExplorerColumn[]>(
     () => [
       {
         header: (
@@ -616,98 +721,123 @@ const LeadsDashboard = ({ context = "admin" }) => {
           />
         ),
         key: "select",
-        render: (row) => (
-          <input
-            type="checkbox"
-            checked={selectedLeads.includes(normalizeId(getLeadIdentifier(row)))}
-            onChange={() => handleSelectLead(getLeadIdentifier(row))}
-            className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-2 focus:ring-primary-500/20"
-          />
-        ),
+        render: (row: Record<string, unknown>) => {
+          const lead = row as Lead;
+          return (
+            <input
+              type="checkbox"
+              checked={selectedLeads.includes(normalizeId(getLeadIdentifier(lead)))}
+              onChange={() => handleSelectLead(getLeadIdentifier(lead))}
+              className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-2 focus:ring-primary-500/20"
+            />
+          );
+        },
       },
       {
         header: "Lead",
         key: "name",
-        render: (row) => (
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold text-slate-900">
-              {row.first_name} {row.last_name}
-            </span>
-            <span className="text-xs text-slate-400">{row.company ?? "—"}</span>
-          </div>
-        ),
+        render: (row: Record<string, unknown>) => {
+          const lead = row as Lead;
+          return (
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-slate-900">
+                {lead.first_name} {lead.last_name}
+              </span>
+              <span className="text-xs text-slate-400">{lead.company ?? "—"}</span>
+            </div>
+          );
+        },
       },
       {
         header: "Contact",
         key: "email",
-        render: (row) => (
-          <div className="flex flex-col text-sm text-slate-600">
-            <span>{row.email}</span>
-            {row.phone && <span className="text-xs text-slate-400">{row.phone}</span>}
-          </div>
-        ),
+        render: (row: Record<string, unknown>) => {
+          const lead = row as Lead;
+          return (
+            <div className="flex flex-col text-sm text-slate-600">
+              <span>{lead.email}</span>
+              {lead.phone && <span className="text-xs text-slate-400">{lead.phone}</span>}
+            </div>
+          );
+        },
       },
       {
         header: "Stage",
         key: "status",
-        render: (row) => (
-          <span
-            className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold capitalize ${getStatusColorClass(
-              row.status
-            )}`}
-          >
-            {formatStatusForDisplay(row.status)}
-          </span>
-        ),
+        render: (row: Record<string, unknown>) => {
+          const lead = row as Lead;
+          return (
+            <span
+              className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold capitalize ${getStatusColorClass(
+                lead.status
+              )}`}
+            >
+              {formatStatusForDisplay(lead.status)}
+            </span>
+          );
+        },
       },
       {
         header: "Score",
         key: "score",
-        render: (row) => <LeadScoreIndicator score={row.score || 0} size="sm" showLabel={false} />,
+        render: (row: Record<string, unknown>) => {
+          const lead = row as Lead;
+          return <LeadScoreIndicator score={lead.score || 0} size="sm" showLabel={false} />;
+        },
       },
       {
         header: "Source",
         key: "source",
-        render: (row) => (
-          <span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium capitalize text-slate-600">
-            {row.source || "—"}
-          </span>
-        ),
+        render: (row: Record<string, unknown>) => {
+          const lead = row as Lead;
+          return (
+            <span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium capitalize text-slate-600">
+              {lead.source || "—"}
+            </span>
+          );
+        },
       },
       {
         header: "Lead type",
         key: "lead_type",
-        render: (row) => (
-          <span className="text-sm font-medium capitalize text-slate-700">
-            {row.lead_type || "—"}
-          </span>
-        ),
+        render: (row: Record<string, unknown>) => {
+          const lead = row as Lead;
+          return (
+            <span className="text-sm font-medium capitalize text-slate-700">
+              {lead.lead_type || "—"}
+            </span>
+          );
+        },
       },
       {
         header: "Created",
         key: "created_at",
-        render: (row) => (
-          <span className="text-sm text-slate-500">{formatCreatedAt(row.created_at)}</span>
-        ),
+        render: (row: Record<string, unknown>) => {
+          const lead = row as Lead;
+          return <span className="text-sm text-slate-500">{formatCreatedAt(lead.created_at)}</span>;
+        },
       },
       {
         header: "",
         key: "actions",
         align: "right",
-        render: (row) => (
-          <QuickActionsMenu
-            lead={row}
-            onView={handleViewLead}
-            onEdit={handleEditLead}
-            onEmail={handleEmailLead}
-            onCall={handleCallLead}
-            onDelete={handleDeleteLead}
-            onAssign={handleAssignLead}
-          />
-        ),
+        render: (row: Record<string, unknown>) => {
+          const lead = row as Lead;
+          return (
+            <QuickActionsMenu
+              lead={lead}
+              onView={handleQuickView}
+              onEdit={handleQuickEdit}
+              onEmail={handleQuickEmail}
+              onCall={handleQuickCall}
+              onDelete={handleQuickDelete}
+              onAssign={handleQuickAssign}
+            />
+          );
+        },
       },
     ],
-    [navigate, selectedLeads, filteredLeads]
+    [selectedLeads, filteredLeads]
   );
 
   return (
@@ -772,7 +902,10 @@ const LeadsDashboard = ({ context = "admin" }) => {
                 </p>
               </div>
             </div>
-            <PipelineFunnel stages={funnelStages} onStageClick={setActiveStatus} />
+            <PipelineFunnel
+              stages={funnelStages}
+              onStageClick={(stageId) => setActiveStatus(String(stageId) as StatusKey)}
+            />
           </ModernCard>
         )}
 
@@ -796,7 +929,7 @@ const LeadsDashboard = ({ context = "admin" }) => {
           </div>
 
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {statusSegments.map((segment: any) => {
+            {statusSegments.map((segment) => {
               const config = STATUS_CONFIG[segment.id] || STATUS_CONFIG.all;
               const isActive = activeStatus === segment.id;
               return (
@@ -806,8 +939,8 @@ const LeadsDashboard = ({ context = "admin" }) => {
                   onClick={() => setActiveStatus(segment.id)}
                   className={`group flex flex-col gap-3 rounded-2xl border px-4 py-4 text-left transition ${
                     isActive
-                      ? "border-slate-900 bg-slate-900 text-white shadow-lg"
-                      : "border-slate-200 bg-white hover:border-slate-300"
+                      ? "border-[--theme-color] bg-[--theme-color] text-white shadow-lg"
+                      : "border-slate-200 bg-white hover:border-[--theme-color] hover:bg-[--theme-color-10]"
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -921,14 +1054,30 @@ const LeadsDashboard = ({ context = "admin" }) => {
                 </div>
               ) : filteredLeads.length > 0 ? (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {filteredLeads.map((lead: any) => (
+                  {filteredLeads.map((lead) => (
                     <LeadCard
                       key={lead.id}
                       lead={lead}
-                      onView={handleViewLead}
-                      onEmail={handleEmailLead}
-                      onCall={handleCallLead}
-                      onToggleFavorite={handleToggleFavorite}
+                      onView={(value: LeadCardLead) => {
+                        if (isLead(value)) {
+                          handleViewLead(value);
+                        }
+                      }}
+                      onEmail={(value: LeadCardLead) => {
+                        if (isLead(value)) {
+                          handleEmailLead(value);
+                        }
+                      }}
+                      onCall={(value: LeadCardLead) => {
+                        if (isLead(value)) {
+                          handleCallLead(value);
+                        }
+                      }}
+                      onToggleFavorite={(value: LeadCardLead) => {
+                        if (isLead(value)) {
+                          void handleToggleFavorite(value);
+                        }
+                      }}
                     />
                   ))}
                 </div>

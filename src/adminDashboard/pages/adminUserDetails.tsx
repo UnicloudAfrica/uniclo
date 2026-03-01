@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   AlertTriangle,
@@ -11,13 +10,37 @@ import {
   ShieldCheck,
   SquarePen,
 } from "lucide-react";
-import AdminPageShell from "../components/AdminPageShell.tsx";
+import AdminPageShell from "../components/AdminPageShell";
 import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
 import { ModernButton } from "../../shared/components/ui";
 import { ModernCard } from "../../shared/components/ui";
 import { useFetchAdminById } from "../../hooks/adminHooks/adminHooks";
 
-const decodeId = (encodedId: any) => {
+interface AdminRecord {
+  id?: string | number;
+  identifier?: string;
+  first_name?: string;
+  middle_name?: string;
+  last_name?: string;
+  role?: string;
+  status?: string;
+  updated_at?: string;
+  email?: string;
+  phone?: string;
+  country?: string;
+  country_id?: string | number;
+  city?: string;
+  address?: string;
+  state?: string;
+  zip?: string;
+  domain?: string;
+  created_at?: string;
+  force_password_reset?: boolean;
+  verified?: number;
+  mfa_enabled?: boolean;
+}
+
+const decodeId = (encodedId?: string) => {
   if (!encodedId) return null;
   try {
     return atob(decodeURIComponent(encodedId));
@@ -56,7 +79,11 @@ const AdminUserDetails = () => {
     enabled: !!decodedAdminId,
   });
 
-  const adminRecord = useMemo(() => adminDetails?.data ?? adminDetails, [adminDetails]);
+  const adminRecord = useMemo<AdminRecord | null>(() => {
+    if (!adminDetails || typeof adminDetails !== "object") return null;
+    const payload = adminDetails as { data?: AdminRecord } & AdminRecord;
+    return payload.data ?? payload;
+  }, [adminDetails]);
 
   const goBack = () => navigate("/admin-dashboard/admin-users");
   const goToEdit = () => navigate(`/admin-dashboard/admin-users/${adminId}/edit`);
@@ -76,7 +103,7 @@ const AdminUserDetails = () => {
       hint: adminRecord?.role ? `Role • ${adminRecord.role}` : "Role not assigned",
       icon: CircleUserRound,
       accentBg: "bg-primary/10",
-      accentText: "text-[#288DD1]",
+      accentText: "text-[var(--theme-color)]",
     },
     {
       label: "Status",
@@ -159,8 +186,8 @@ const AdminUserDetails = () => {
         <TenantClientsSideMenu />
 
         {isFetching && (
-          <div className="flex h-64 flex-col items-center justify-center gap-3 rounded-3xl border border-[#EAECF0] bg-white">
-            <Loader2 className="h-8 w-8 animate-spin text-[#288DD1]" />
+          <div className="flex h-64 flex-col items-center justify-center gap-3 rounded-3xl border border-[var(--theme-surface-alt)] bg-white">
+            <Loader2 className="h-8 w-8 animate-spin text-[var(--theme-color)]" />
             <p className="text-sm font-medium text-slate-600">Loading administrator profile...</p>
           </div>
         )}
@@ -179,10 +206,10 @@ const AdminUserDetails = () => {
         {!isFetching && adminRecord && (
           <>
             <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {summaryCards.map(({ label, value, hint, icon: Icon, accentBg, accentText }) => (
+              {summaryCards.map(({ label, value, hint, icon: Icon, accentBg, accentText }: any) => (
                 <div
                   key={label}
-                  className="rounded-3xl border border-[#EAECF0] bg-white p-5 shadow-sm transition hover:border-primary/50 hover:shadow-md"
+                  className="rounded-3xl border border-[var(--theme-surface-alt)] bg-white p-5 shadow-sm transition hover:border-primary/50 hover:shadow-md"
                 >
                   <div className="flex items-start gap-3">
                     <span
@@ -249,7 +276,7 @@ const AdminUserDetails = () => {
                 {devicesDetails.map(({ label, value }: any) => (
                   <div
                     key={label}
-                    className="rounded-2xl border border-[#EAECF0] bg-[#F8FAFC] px-4 py-3"
+                    className="rounded-2xl border border-[var(--theme-surface-alt)] bg-[var(--theme-surface-alt)] px-4 py-3"
                   >
                     <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                       {label}

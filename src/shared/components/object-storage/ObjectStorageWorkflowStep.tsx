@@ -67,17 +67,19 @@ export const ObjectStorageWorkflowStep: React.FC<ObjectStorageWorkflowStepProps>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div
               onClick={() => onModeChange("standard")}
-              className={`cursor-pointer rounded-xl border p-4 transition-all ${mode === "standard"
-                  ? "border-primary-500 bg-primary-50 ring-1 ring-primary-200"
+              className={`cursor-pointer rounded-xl border p-4 transition-all ${
+                mode === "standard"
+                  ? "border-primary-500 bg-white ring-1 ring-primary-200 shadow-sm"
                   : "border-gray-200 hover:border-gray-300"
-                }`}
+              }`}
             >
               <div className="flex items-center gap-3">
                 <div
-                  className={`rounded-lg p-2 ${mode === "standard"
+                  className={`rounded-lg p-2 ${
+                    mode === "standard"
                       ? "bg-primary-100 text-primary-600"
                       : "bg-gray-100 text-gray-500"
-                    }`}
+                  }`}
                 >
                   <CreditCard className="h-5 w-5" />
                 </div>
@@ -93,17 +95,19 @@ export const ObjectStorageWorkflowStep: React.FC<ObjectStorageWorkflowStepProps>
             {enableFastTrack && (
               <div
                 onClick={() => onModeChange("fast-track")}
-                className={`cursor-pointer rounded-xl border p-4 transition-all ${mode === "fast-track"
-                    ? "border-primary-500 bg-primary-50 ring-1 ring-primary-200"
+                className={`cursor-pointer rounded-xl border p-4 transition-all ${
+                  mode === "fast-track"
+                    ? "border-primary-500 bg-white ring-1 ring-primary-200 shadow-sm"
                     : "border-gray-200 hover:border-gray-300"
-                  }`}
+                }`}
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`rounded-lg p-2 ${mode === "fast-track"
+                    className={`rounded-lg p-2 ${
+                      mode === "fast-track"
                         ? "bg-primary-100 text-primary-600"
                         : "bg-gray-100 text-gray-500"
-                      }`}
+                    }`}
                   >
                     <Gauge className="h-5 w-5" />
                   </div>

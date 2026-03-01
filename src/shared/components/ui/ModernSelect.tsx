@@ -16,9 +16,9 @@ interface ModernSelectProps extends Omit<
   value?: string | number;
   onChange?: (event: React.ChangeEvent<HTMLSelectElement>) => void;
   onBlur?: (event: React.FocusEvent<HTMLSelectElement>) => void;
-  error?: string;
-  success?: string;
-  helper?: string;
+  error?: string | undefined;
+  success?: string | undefined;
+  helper?: string | undefined;
   required?: boolean;
   disabled?: boolean;
   size?: "sm" | "md" | "lg";
@@ -63,19 +63,19 @@ const ModernSelect = forwardRef<HTMLSelectElement, ModernSelectProps>(
       sm: {
         height: "36px",
         padding: "0 36px 0 12px",
-        fontSize: designTokens.typography.fontSize.sm[0] as string,
+        fontSize: designTokens.typography.fontSize.sm[0],
         iconSize: 16,
       },
       md: {
         height: "44px",
         padding: "0 44px 0 16px",
-        fontSize: designTokens.typography.fontSize.base[0] as string,
+        fontSize: designTokens.typography.fontSize.base[0],
         iconSize: 18,
       },
       lg: {
         height: "52px",
         padding: "0 48px 0 20px",
-        fontSize: designTokens.typography.fontSize.lg[0] as string,
+        fontSize: designTokens.typography.fontSize.lg[0],
         iconSize: 20,
       },
     };
@@ -123,7 +123,7 @@ const ModernSelect = forwardRef<HTMLSelectElement, ModernSelectProps>(
 
     const labelStyles: React.CSSProperties = {
       display: "block",
-      fontSize: designTokens.typography.fontSize.sm[0] as string,
+      fontSize: designTokens.typography.fontSize.sm[0],
       fontWeight: designTokens.typography.fontWeight.medium,
       color: error ? designTokens.colors.error[700] : designTokens.colors.neutral[600],
       marginBottom: "6px",
@@ -132,7 +132,7 @@ const ModernSelect = forwardRef<HTMLSelectElement, ModernSelectProps>(
 
     const helperTextStyles: React.CSSProperties = {
       marginTop: "6px",
-      fontSize: designTokens.typography.fontSize.xs[0] as string,
+      fontSize: designTokens.typography.fontSize.xs[0],
       fontFamily: designTokens.typography.fontFamily.sans.join(", "),
       color: error
         ? designTokens.colors.error[600]

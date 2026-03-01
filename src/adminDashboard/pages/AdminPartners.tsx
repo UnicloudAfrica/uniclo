@@ -1,19 +1,40 @@
-// @ts-nocheck
-import React, { useState, useMemo } from "react";
-import { Loader2, Plus, Users, Building2, Phone, Search, Filter } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Loader2, Plus, Users, Building2, Phone } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ModernButton } from "../../shared/components/ui";
 import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
 import { TableActionButtons } from "../../shared/components/tables";
-import ModernTable from "../../shared/components/ui/ModernTable";
+import ModernTable, { type Column } from "../../shared/components/ui/ModernTable";
 import useAuthRedirect from "../../utils/adminAuthRedirect";
 import { useFetchTenants } from "../../hooks/adminHooks/tenantHooks";
+import adminFileApi from "../../index/admin/fileapi";
 import DeleteTenantModal from "./tenantComps/DeleteTenant";
 import EditTenantModal from "./tenantComps/EditTenant";
 import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
 import AdminPageShell from "../components/AdminPageShell";
 
 const encodeId = (id: string) => encodeURIComponent(btoa(id));
+const decodeId = (encodedId: string) => {
+  try {
+    return atob(decodeURIComponent(encodedId));
+  } catch {
+    return null;
+  }
+};
+
+interface PartnerTenant {
+  id?: string | number | null;
+  identifier?: string;
+  name?: string;
+  company_type?: string | null;
+  industry?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  status?: string | null;
+  created_at?: string | null;
+  deleted_at?: string | null;
+  archived?: boolean;
+}
 
 const companyTypeMap: Record<string, string> = {
   RC: "Limited Liability Company",
@@ -34,34 +55,62 @@ const formatCompanyType = (type?: string | null) => {
 
 const AdminPartners = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isLoading } = useAuthRedirect();
-  const { data: tenants = [], isFetching: isTenantsFetching } = useFetchTenants();
+  const { data: tenantsData = [], isFetching: isTenantsFetching } = useFetchTenants();
+  const tenants = useMemo<PartnerTenant[]>(
+    () => (Array.isArray(tenantsData) ? (tenantsData as PartnerTenant[]) : []),
+    [tenantsData]
+  );
   const [isDeleteTenantModalOpen, setIsDeleteTenantModalOpen] = useState(false);
-  const [selectedTenantToDelete, setSelectedTenantToDelete] = useState<any>(null);
+  const [selectedTenantToDelete, setSelectedTenantToDelete] = useState<PartnerTenant | null>(null);
   const [isEditTenantModalOpen, setIsEditTenantModalOpen] = useState(false);
-  const [selectedTenantToEdit, setSelectedTenantToEdit] = useState<any>(null);
+  const [selectedTenantToEdit, setSelectedTenantToEdit] = useState<PartnerTenant | null>(null);
   const [selectedTenants, setSelectedTenants] = useState<string[]>([]);
 
-  const handleViewDetails = (item: any) => {
-    const encodedId = encodeId(item.identifier);
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const editId = params.get("edit");
+    if (!editId || isTenantsFetching) return;
+
+    const decodedId = decodeId(editId);
+    if (!decodedId) return;
+
+    const match = tenants.find(
+      (tenant) => String(tenant.identifier ?? tenant.id) === String(decodedId)
+    );
+
+    if (match) {
+      setSelectedTenantToEdit(match);
+      setIsEditTenantModalOpen(true);
+    }
+
+    params.delete("edit");
+    navigate(`${location.pathname}${params.toString() ? `?${params}` : ""}`, { replace: true });
+  }, [location.search, isTenantsFetching, navigate, tenants, location.pathname]);
+
+  const handleViewDetails = (item: PartnerTenant) => {
+    const identifier = item.identifier ?? (item.id ? String(item.id) : "");
+    if (!identifier) return;
+    const encodedId = encodeId(identifier);
     navigate(
-      `/admin-dashboard/partners/details?id=${encodedId}&name=${encodeURIComponent(item.name)}`
+      `/admin-dashboard/partners/details?id=${encodedId}&name=${encodeURIComponent(item.name ?? "")}`
     );
   };
 
-  const handleDeleteClick = (item: any) => {
+  const handleDeleteClick = (item: PartnerTenant) => {
     setSelectedTenantToDelete(item);
     setIsDeleteTenantModalOpen(true);
   };
 
-  const handleEditClick = (item: any) => {
+  const handleEditClick = (item: PartnerTenant) => {
     setSelectedTenantToEdit(item);
     setIsEditTenantModalOpen(true);
   };
 
   // Bulk operations
   const handleBulkDelete = async () => {
-    if (!window.confirm(`Delete ${selectedTenants.length} partner(s)?`)) return;
+    if (!globalThis.window.confirm(`Delete ${selectedTenants.length} partner(s)?`)) return;
 
     try {
       const { adminSilentApi } = await import("../../index/admin/api");
@@ -72,7 +121,7 @@ const AdminPartners = () => {
       const ToastUtil = (await import("../../utils/toastUtil")).default;
       ToastUtil.success(`Successfully deleted ${selectedTenants.length} partner(s)`);
       setSelectedTenants([]);
-      window.location.reload();
+      globalThis.window.location.reload();
     } catch (error) {
       const ToastUtil = (await import("../../utils/toastUtil")).default;
       ToastUtil.error("Failed to delete partners");
@@ -82,20 +131,16 @@ const AdminPartners = () => {
 
   const handleBulkExport = async (format = "csv") => {
     try {
-      const { adminSilentApi } = await import("../../index/admin/api");
-      const response = await adminSilentApi(
-        "POST",
-        "/tenants/bulk-export",
-        {
-          tenant_ids: selectedTenants,
-          format: format,
-        },
-        {
-          responseType: "blob",
-        }
-      );
+      const response = await adminFileApi<ArrayBuffer>("POST", "/tenants/bulk-export", {
+        tenant_ids: selectedTenants,
+        format,
+      });
 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const buffer =
+        response instanceof ArrayBuffer
+          ? response
+          : new TextEncoder().encode(String(response)).buffer;
+      const url = globalThis.window.URL.createObjectURL(new Blob([buffer]));
       const link = document.createElement("a");
       link.href = url;
       link.setAttribute("download", `partners_${Date.now()}.${format}`);
@@ -113,7 +158,7 @@ const AdminPartners = () => {
   };
 
   const handleBulkDuplicate = async () => {
-    if (!window.confirm(`Duplicate ${selectedTenants.length} partner(s)?`)) return;
+    if (!globalThis.window.confirm(`Duplicate ${selectedTenants.length} partner(s)?`)) return;
 
     try {
       const { adminSilentApi } = await import("../../index/admin/api");
@@ -124,7 +169,7 @@ const AdminPartners = () => {
       const ToastUtil = (await import("../../utils/toastUtil")).default;
       ToastUtil.success(`Successfully duplicated ${selectedTenants.length} partner(s)`);
       setSelectedTenants([]);
-      window.location.reload();
+      globalThis.window.location.reload();
     } catch (error) {
       const ToastUtil = (await import("../../utils/toastUtil")).default;
       ToastUtil.error("Failed to duplicate partners");
@@ -133,7 +178,7 @@ const AdminPartners = () => {
   };
 
   const handleBulkArchive = async () => {
-    if (!window.confirm(`Archive ${selectedTenants.length} partner(s)?`)) return;
+    if (!globalThis.window.confirm(`Archive ${selectedTenants.length} partner(s)?`)) return;
 
     try {
       const { adminSilentApi } = await import("../../index/admin/api");
@@ -144,7 +189,7 @@ const AdminPartners = () => {
       const ToastUtil = (await import("../../utils/toastUtil")).default;
       ToastUtil.success(`Successfully archived ${selectedTenants.length} partner(s)`);
       setSelectedTenants([]);
-      window.location.reload();
+      globalThis.window.location.reload();
     } catch (error) {
       const ToastUtil = (await import("../../utils/toastUtil")).default;
       ToastUtil.error("Failed to archive partners");
@@ -153,8 +198,9 @@ const AdminPartners = () => {
   };
 
   // Single item operations
-  const handleDuplicateTenant = async (tenant: any) => {
-    if (!window.confirm(`Duplicate ${tenant.name}?`)) return;
+  const handleDuplicateTenant = async (tenant: PartnerTenant) => {
+    if (!tenant.identifier) return;
+    if (!globalThis.window.confirm(`Duplicate ${tenant.name}?`)) return;
 
     try {
       const { adminSilentApi } = await import("../../index/admin/api");
@@ -162,7 +208,7 @@ const AdminPartners = () => {
 
       const ToastUtil = (await import("../../utils/toastUtil")).default;
       ToastUtil.success("Partner duplicated successfully");
-      window.location.reload();
+      globalThis.window.location.reload();
     } catch (error) {
       const ToastUtil = (await import("../../utils/toastUtil")).default;
       ToastUtil.error("Failed to duplicate partner");
@@ -170,8 +216,9 @@ const AdminPartners = () => {
     }
   };
 
-  const handleArchiveTenant = async (tenant: any) => {
-    if (!window.confirm(`Archive ${tenant.name}?`)) return;
+  const handleArchiveTenant = async (tenant: PartnerTenant) => {
+    if (!tenant.identifier) return;
+    if (!globalThis.window.confirm(`Archive ${tenant.name}?`)) return;
 
     try {
       const { adminSilentApi } = await import("../../index/admin/api");
@@ -179,7 +226,7 @@ const AdminPartners = () => {
 
       const ToastUtil = (await import("../../utils/toastUtil")).default;
       ToastUtil.success("Partner archived successfully");
-      window.location.reload();
+      globalThis.window.location.reload();
     } catch (error) {
       const ToastUtil = (await import("../../utils/toastUtil")).default;
       ToastUtil.error("Failed to archive partner");
@@ -189,12 +236,13 @@ const AdminPartners = () => {
 
   // Stats
   const totalPartners = tenants.length;
-  const activePartners = tenants.filter((tenant: any) => tenant.status === "active").length;
+  const activePartners = tenants.filter((tenant) => tenant.status === "active").length;
   const companyTypes = {
-    RC: tenants.filter((t: any) => t.company_type === "RC").length,
-    BN: tenants.filter((t: any) => t.company_type === "BN").length,
-    IT: tenants.filter((t: any) => t.company_type === "IT").length,
-    Other: tenants.filter((t: any) => !["RC", "BN", "IT"].includes(t.company_type)).length,
+    RC: tenants.filter((tenant) => tenant.company_type === "RC").length,
+    BN: tenants.filter((tenant) => tenant.company_type === "BN").length,
+    IT: tenants.filter((tenant) => tenant.company_type === "IT").length,
+    Other: tenants.filter((tenant) => !["RC", "BN", "IT"].includes(tenant.company_type ?? ""))
+      .length,
   };
 
   const headerActions = (
@@ -208,7 +256,7 @@ const AdminPartners = () => {
     </ModernButton>
   );
 
-  const columns = [
+  const columns: Column<PartnerTenant>[] = [
     {
       key: "name",
       header: "Name",
@@ -274,7 +322,7 @@ const AdminPartners = () => {
     {
       key: "actions",
       header: "Actions",
-      render: (item: any) => (
+      render: (_value, item) => (
         <div className="flex justify-end">
           <TableActionButtons
             onView={() => handleViewDetails(item)}
@@ -287,7 +335,7 @@ const AdminPartners = () => {
             showDelete={!item.deleted_at}
             showDuplicate
             showArchive={!item.archived}
-            itemName={item.name}
+            itemName={item.name ?? "partner"}
           />
         </div>
       ),
@@ -307,7 +355,6 @@ const AdminPartners = () => {
       <AdminPageShell
         title="Partners"
         description="Manage partner organizations and their details"
-        icon={<Building2 size={24} />}
         actions={headerActions}
         contentClassName="space-y-6"
       >
@@ -336,7 +383,7 @@ const AdminPartners = () => {
           />
         </div>
 
-        <ModernTable
+        <ModernTable<PartnerTenant>
           data={tenants}
           columns={columns}
           loading={isTenantsFetching}
@@ -347,24 +394,28 @@ const AdminPartners = () => {
           bulkActions={[
             {
               label: "Export as CSV",
+              variant: "outline",
               onClick: () => handleBulkExport("csv"),
             },
             {
               label: "Export as Excel",
+              variant: "outline",
               onClick: () => handleBulkExport("xlsx"),
             },
             {
               label: "Duplicate",
+              variant: "outline",
               onClick: handleBulkDuplicate,
             },
             {
               label: "Archive",
+              variant: "outline",
               onClick: handleBulkArchive,
             },
             {
               label: "Delete",
+              variant: "outlineDanger",
               onClick: handleBulkDelete,
-              variant: "danger",
             },
           ]}
         />

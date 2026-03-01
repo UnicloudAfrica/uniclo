@@ -8,6 +8,11 @@ For exact API payload/response contracts and wiring conventions, see:
 - docs/INTEGRATION_RULES.md (preferred)
 - INTEGRATION_RULES.md (root copy, if docs is not present)
 
+## Nobus v2 Planning
+
+For the Nobus `/api/v2` frontend delivery plan (action steps, all 40 wireframe pages, forms, and flow diagrams), see:
+- `web/docs/NOBUS_V2_FRONTEND_IMPLEMENTATION_PLAYBOOK.md`
+
 ## Available Scripts
 
 In the project directory, you can run:

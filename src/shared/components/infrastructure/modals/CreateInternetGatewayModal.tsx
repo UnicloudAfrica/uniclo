@@ -1,13 +1,12 @@
-// @ts-nocheck
 import React, { useState } from "react";
-import ModernModal from "../../ui/ModernModal";
+import ModernModal, { ModalAction } from "../../ui/ModernModal";
 import ModernInput from "../../ui/ModernInput";
 
 interface CreateInternetGatewayModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (name: string) => void;
-  isLoading?: boolean;
+  isLoading?: boolean | undefined;
 }
 
 const CreateInternetGatewayModal: React.FC<CreateInternetGatewayModalProps> = ({
@@ -23,7 +22,7 @@ const CreateInternetGatewayModal: React.FC<CreateInternetGatewayModalProps> = ({
     setName(""); // Reset on submit? Or wait for success? Container handles close.
   };
 
-  const actions = [
+  const actions: ModalAction[] = [
     {
       label: "Cancel",
       variant: "ghost",

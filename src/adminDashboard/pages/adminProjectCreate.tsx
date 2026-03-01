@@ -1,9 +1,7 @@
-// @ts-nocheck
-import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AdminPageShell from "../components/AdminPageShell.tsx";
+import AdminPageShell from "../components/AdminPageShell";
 import { ModernButton } from "../../shared/components/ui";
-import { AdminCreateProjectForm } from "./projectComps/addProject";
+import AdminCreateProjectForm from "./projectComps/addProject";
 
 const AdminProjectCreate = () => {
   const navigate = useNavigate();

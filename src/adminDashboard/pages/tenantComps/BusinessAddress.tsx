@@ -1,15 +1,14 @@
-// @ts-nocheck
 import React from "react";
 
 interface BusinessAddressProps {
   formData: any;
   setFormData: (data: any) => void;
   errors: any;
-  countries: any[];
+  countries: unknown;
   isCountriesFetching: boolean;
-  states?: any[];
+  states?: unknown;
   isStatesFetching?: boolean;
-  cities?: any[];
+  cities?: unknown;
   isCitiesFetching?: boolean;
   setErrors?: (errors: any) => void;
 }

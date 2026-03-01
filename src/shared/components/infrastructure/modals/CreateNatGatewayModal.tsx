@@ -1,10 +1,10 @@
-// @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import ModernModal from "../../ui/ModernModal";
+import ModernModal, { ModalAction } from "../../ui/ModernModal";
 import ModernInput from "../../ui/ModernInput";
 import ModernSelect from "../../ui/ModernSelect";
 import { useElasticIps, useSubnets } from "../../../hooks/vpcInfraHooks";
+import { Subnet, ElasticIp } from "../types";
 
 interface CreateNatGatewayModalProps {
   isOpen: boolean;
@@ -27,8 +27,12 @@ const CreateNatGatewayModal: React.FC<CreateNatGatewayModalProps> = ({
   const [selectedSubnet, setSelectedSubnet] = useState("");
   const [selectedEip, setSelectedEip] = useState("");
 
-  const { data: subnets = [] } = useSubnets(projectId, region, { enabled: isOpen });
-  const { data: elasticIps = [] } = useElasticIps(projectId, region, { enabled: isOpen });
+  const { data: subnets = [] } = useSubnets(projectId, region, { enabled: isOpen }) as {
+    data: Subnet[];
+  };
+  const { data: elasticIps = [] } = useElasticIps(projectId, region, { enabled: isOpen }) as {
+    data: ElasticIp[];
+  };
 
   const isFormValid = selectedSubnet;
 
@@ -43,8 +47,8 @@ const CreateNatGatewayModal: React.FC<CreateNatGatewayModalProps> = ({
   const handleSubmit = () => {
     if (!isFormValid) return;
 
-    const subnetRecord = subnets.find((subnet: any) => subnet.id === selectedSubnet);
-    const vpcId = subnetRecord?.vpc_id || subnetRecord?.vpc_provider_id;
+    const subnetRecord = subnets.find((subnet: Subnet) => subnet.id === selectedSubnet);
+    const vpcId = subnetRecord?.vpc_id;
 
     onCreate({
       project_id: projectId,
@@ -59,7 +63,7 @@ const CreateNatGatewayModal: React.FC<CreateNatGatewayModalProps> = ({
   };
 
   const getSubnetOptions = () => {
-    return subnets.map((subnet: any) => ({
+    return subnets.map((subnet: Subnet) => ({
       value: subnet.id,
       label: `${subnet.name || subnet.id} (${subnet.cidr || subnet.cidr_block})`,
     }));
@@ -69,15 +73,15 @@ const CreateNatGatewayModal: React.FC<CreateNatGatewayModalProps> = ({
     return [
       { value: "", label: "Allocate new Elastic IP" },
       ...elasticIps
-        .filter((eip: any) => !eip.association_id)
-        .map((eip: any) => ({
+        .filter((eip: ElasticIp) => !eip.association_id)
+        .map((eip: ElasticIp) => ({
           value: eip.id,
           label: eip.public_ip || eip.id,
         })),
     ];
   };
 
-  const actions = [
+  const actions: ModalAction[] = [
     {
       label: "Cancel",
       variant: "ghost",

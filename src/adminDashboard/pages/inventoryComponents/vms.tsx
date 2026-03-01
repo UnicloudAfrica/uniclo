@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Server, Cpu, Gauge, Pencil, Trash2, Plus } from "lucide-react";
 import { useFetchVmInstances } from "../../../hooks/adminHooks/vmHooks";
 import ResourceDataExplorer from "../../components/ResourceDataExplorer";
@@ -21,7 +20,7 @@ const Vms = ({ selectedRegion, onMetricsChange }: any) => {
   const [isAddVMModalOpen, setIsAddVMModalOpen] = useState(false);
   const [isEditVMModalOpen, setIsEditVMModalOpen] = useState(false);
   const [isDeleteVMModalOpen, setIsDeleteVMModalOpen] = useState(false);
-  const [selectedVM, setSelectedVM] = useState(null);
+  const [selectedVM, setSelectedVM] = useState<any>(null);
 
   useEffect(() => {
     setPage(1);

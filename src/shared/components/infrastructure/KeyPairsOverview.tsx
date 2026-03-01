@@ -1,25 +1,12 @@
-// @ts-nocheck
 import React, { useEffect, useMemo, useState } from "react";
 import { KeyRound, MapPin, RefreshCw, Trash2 } from "lucide-react";
-import {
-  ModernButton,
-  ResourceEmptyState,
-  ResourceListCard,
-  ResourceSection,
-  ModernTable,
-} from "../ui";
+import { ModernButton, ResourceEmptyState, ResourceSection, ModernTable } from "../ui";
+import type { MetaItem } from "../ui/ResourceSection";
 import KeyPairCreateModal from "./KeyPairCreateModal";
 import KeyPairDeleteModal from "./KeyPairDeleteModal";
 import type { KeyPairPermissions } from "../../config/permissionPresets";
 
-export interface KeyPair {
-  id: string;
-  name: string;
-  fingerprint?: string;
-  region?: string;
-  created_at?: string;
-  [key: string]: any;
-}
+import { KeyPair } from "./types";
 
 interface KeyPairsOverviewProps {
   keyPairs: KeyPair[];
@@ -71,7 +58,7 @@ const KeyPairsOverview: React.FC<KeyPairsOverviewProps> = ({
   const showRegionPicker = showRegionSelect ?? !region;
 
   const stats = useMemo(() => {
-    const baseStats = [
+    const baseStats: MetaItem[] = [
       {
         label: "Total Key Pairs",
         value: totalItems,
@@ -94,7 +81,7 @@ const KeyPairsOverview: React.FC<KeyPairsOverviewProps> = ({
     try {
       await onDelete(keyPair.id, keyPair.name);
       setDeleteModal(null);
-    } catch (error) {
+    } catch {
       // Error handling is done in container
     }
   };
@@ -104,10 +91,10 @@ const KeyPairsOverview: React.FC<KeyPairsOverviewProps> = ({
       {
         key: "name",
         header: "Name",
-        render: (name: string) => (
+        render: (_value: unknown, name: any) => (
           <div className="flex items-center gap-3">
             <KeyRound size={16} className="text-gray-400" />
-            <span className="font-medium text-gray-900">{name}</span>
+            <span className="font-medium text-gray-900">{String(name)}</span>
           </div>
         ),
         sortable: true,
@@ -115,9 +102,9 @@ const KeyPairsOverview: React.FC<KeyPairsOverviewProps> = ({
       {
         key: "fingerprint",
         header: "Fingerprint",
-        render: (fingerprint: string) => (
+        render: (_value: unknown, fingerprint: any) => (
           <code className="text-[10px] bg-gray-50 px-2 py-1 rounded text-gray-600 font-mono">
-            {fingerprint || "—"}
+            {String(fingerprint || "—")}
           </code>
         ),
       },

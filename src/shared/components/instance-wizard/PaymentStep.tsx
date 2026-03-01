@@ -2,9 +2,40 @@ import React from "react";
 import { CheckCircle } from "lucide-react";
 import { PaymentModal } from "../ui";
 
+type PaymentGatewayOption = {
+  id?: string | number;
+  name?: string;
+  [key: string]: unknown;
+};
+
+type PaymentSummary = {
+  required?: boolean;
+  payment_gateway_options?: PaymentGatewayOption[];
+  options?: PaymentGatewayOption[];
+};
+
+type TransactionSummary = {
+  identifier?: string;
+  id?: string | number;
+};
+
+type SubmissionResult = {
+  payment?: PaymentSummary;
+  transaction?: TransactionSummary;
+};
+
+type OrderReceipt = {
+  transaction?: TransactionSummary;
+};
+
+type ClientOption = {
+  value: string | number;
+  raw?: unknown;
+};
+
 interface PaymentStepProps {
-  submissionResult: any;
-  orderReceipt: any;
+  submissionResult: SubmissionResult | null;
+  orderReceipt: OrderReceipt | null;
   isPaymentSuccessful: boolean;
   summarySubtotalValue?: number;
   summaryTaxValue?: number;
@@ -13,8 +44,8 @@ interface PaymentStepProps {
   summaryDisplayCurrency: string;
   contextType: string;
   selectedUserId: string;
-  clientOptions: any[];
-  onPaymentComplete: (payload?: any) => void;
+  clientOptions: ClientOption[];
+  onPaymentComplete: (payload?: unknown) => void;
   apiBaseUrl: string;
   paymentTransactionLabel: string;
 }
@@ -35,6 +66,12 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
   apiBaseUrl,
   paymentTransactionLabel,
 }) => {
+  const selectedClient = clientOptions.find(
+    (option) => String(option.value) === String(selectedUserId)
+  );
+  const raw = selectedClient?.raw as { email?: unknown } | undefined;
+  const resolvedEmail = typeof raw?.email === "string" ? raw.email : "";
+
   return (
     <div className="space-y-6">
       {submissionResult?.payment?.required && !isPaymentSuccessful && (
@@ -51,14 +88,10 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
             grandTotal: summaryGrandTotalValue,
             currency: summaryDisplayCurrency,
           }}
-          email={
-            contextType === "user"
-              ? clientOptions.find((c) => c.value === String(selectedUserId))?.raw?.email || ""
-              : ""
-          }
+          email={contextType === "user" ? resolvedEmail : ""}
           transactionReference={
             submissionResult?.transaction?.identifier ||
-            submissionResult?.transaction?.id ||
+            submissionResult?.transaction?.id?.toString() ||
             orderReceipt?.transaction?.identifier ||
             ""
           }

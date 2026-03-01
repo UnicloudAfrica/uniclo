@@ -1,5 +1,3 @@
-import { utils as xlsxUtils } from "xlsx";
-
 export const OBJECT_STORAGE_TYPE = "object_storage_configuration";
 export const DEFAULT_OBJECT_STORAGE_PRICE_PER_GB = 0.16;
 
@@ -29,6 +27,11 @@ export const typeToEndpoint: Record<string, string | null> = {
 export const generateEntryId = (): string =>
   `entry-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
+type RegionInfo = {
+  provider?: string | null;
+  [key: string]: unknown;
+};
+
 export interface ProductEntry {
   id: string;
   name: string;
@@ -40,7 +43,7 @@ export interface ProductEntry {
   price: string;
   objectStorageQuota: string;
   objectStoragePricePerGb: string;
-  options: any[];
+  options: unknown;
   loadingOptions: boolean;
   errors: Record<string, string | null>;
 }
@@ -61,12 +64,12 @@ export const createEmptyEntry = (): ProductEntry => ({
   errors: {},
 });
 
-const coerceTrimmedString = (val: any): string => {
+const coerceTrimmedString = (val: unknown): string => {
   if (val === null || val === undefined) return "";
   return String(val).trim();
 };
 
-const normalizeType = (raw: any): string => {
+const normalizeType = (raw: unknown): string => {
   if (raw === null || raw === undefined) return "";
   const value = String(raw).trim().toLowerCase();
 
@@ -91,23 +94,32 @@ const normalizeType = (raw: any): string => {
     return aliases[value];
   }
 
-  return value.replace(/[-\s]+/g, "_");
+  return value.replaceAll(/[-\s]+/g, "_");
 };
 
 export const mapRowToEntry = (
-  row: any,
+  row: Record<string, unknown>,
   rowIndex: number,
-  regionMap: Record<string, any>
+  regionMap: Record<string, RegionInfo>
 ): { entry?: ProductEntry; error?: { row: number; message: string } } => {
   const rowLabel = rowIndex + 2; // account for header row
 
-  const name = coerceTrimmedString(row.name ?? row.product_name ?? row.Name ?? row["Product Name"]);
-  const region = coerceTrimmedString(row.region ?? row.region_code ?? row.Region ?? row["Region"]);
-  const rawType = row.productable_type ?? row.type ?? row.ProductType ?? row["Product Type"];
+  const name = coerceTrimmedString(
+    (row["name"] as string) ??
+      (row["product_name"] as string) ??
+      (row["Name"] as string) ??
+      (row["Product Name"] as string)
+  );
+  const region = coerceTrimmedString(
+    (row["region"] as string) ?? (row["region_code"] as string) ?? (row["Region"] as string)
+  );
+  const rawType =
+    row["productable_type"] ?? row["type"] ?? row["ProductType"] ?? row["Product Type"];
   const productableType = normalizeType(rawType);
-  const rawProductId = row.productable_id ?? row.product_id ?? row.ProductID ?? row["Product ID"];
+  const rawProductId =
+    row["productable_id"] ?? row["product_id"] ?? row["ProductID"] ?? row["Product ID"];
   const productableIdNumber = Number(rawProductId);
-  const rawPrice = row.price ?? row.price_usd ?? row.Price ?? row["Price"] ?? row["priceUSD"];
+  const rawPrice = row["price"] ?? row["price_usd"] ?? row["Price"] ?? row["priceUSD"];
   const priceNumber = Number(rawPrice);
 
   if (!name) {
@@ -139,32 +151,16 @@ export const mapRowToEntry = (
   }
 
   if (productableType === OBJECT_STORAGE_TYPE) {
-    const quota =
-      Number.isFinite(productableIdNumber) && productableIdNumber > 0
-        ? Math.floor(productableIdNumber)
-        : 1;
-    const resolvedPrice =
-      Number.isFinite(priceNumber) && priceNumber > 0
-        ? Number(priceNumber.toFixed(4))
-        : Number((quota * DEFAULT_OBJECT_STORAGE_PRICE_PER_GB).toFixed(4));
-    const pricePerGb =
-      quota > 0 && resolvedPrice > 0
-        ? Number((resolvedPrice / quota).toFixed(4))
-        : DEFAULT_OBJECT_STORAGE_PRICE_PER_GB;
-
-    const entry: ProductEntry = {
-      ...createEmptyEntry(),
-      name: name || objectStorageNameForQuota(quota),
-      productable_type: productableType,
-      productable_id: String(quota),
-      productSearch: "",
-      provider: regionInfo.provider ?? "",
-      region,
-      price: resolvedPrice.toFixed(4),
-      objectStorageQuota: String(quota),
-      objectStoragePricePerGb: pricePerGb.toString(),
+    return {
+      entry: mapRowToStorageEntry({
+        name,
+        productableType,
+        productableIdNumber,
+        priceNumber,
+        region,
+        provider: regionInfo.provider ?? "",
+      }),
     };
-    return { entry };
   }
 
   if (!Number.isFinite(productableIdNumber) || productableIdNumber <= 0) {
@@ -196,4 +192,40 @@ export const mapRowToEntry = (
     price: priceNumber.toString(),
   };
   return { entry };
+};
+
+const mapRowToStorageEntry = (params: {
+  name: string;
+  productableType: string;
+  productableIdNumber: number;
+  priceNumber: number;
+  region: string;
+  provider: string;
+}): ProductEntry => {
+  const { name, productableType, productableIdNumber, priceNumber, region, provider } = params;
+  const quota =
+    Number.isFinite(productableIdNumber) && productableIdNumber > 0
+      ? Math.floor(productableIdNumber)
+      : 1;
+  const resolvedPrice =
+    Number.isFinite(priceNumber) && priceNumber > 0
+      ? Number(priceNumber.toFixed(4))
+      : Number((quota * DEFAULT_OBJECT_STORAGE_PRICE_PER_GB).toFixed(4));
+  const pricePerGb =
+    quota > 0 && resolvedPrice > 0
+      ? Number((resolvedPrice / quota).toFixed(4))
+      : DEFAULT_OBJECT_STORAGE_PRICE_PER_GB;
+
+  return {
+    ...createEmptyEntry(),
+    name: name || objectStorageNameForQuota(quota),
+    productable_type: productableType,
+    productable_id: String(quota),
+    productSearch: "",
+    provider,
+    region,
+    price: resolvedPrice.toFixed(4),
+    objectStorageQuota: String(quota),
+    objectStoragePricePerGb: pricePerGb.toString(),
+  };
 };

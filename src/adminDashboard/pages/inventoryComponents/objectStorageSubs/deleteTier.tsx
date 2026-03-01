@@ -1,5 +1,3 @@
-// @ts-nocheck
-import React from "react";
 import { Loader2, Trash2, X } from "lucide-react";
 import ToastUtils from "../../../../utils/toastUtil";
 import { useDeleteProduct } from "../../../../hooks/adminHooks/adminProductHooks";
@@ -54,7 +52,7 @@ const DeleteObjectStorageTierModal = ({ isOpen, onClose, tier, onDeleted }: any)
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 px-4 font-Outfit">
       <div className="w-full max-w-[500px] rounded-[24px] bg-white shadow-xl">
-        <div className="flex items-center justify-between rounded-t-[24px] border-b bg-[#FEE2E2] px-6 py-4">
+        <div className="flex items-center justify-between rounded-t-[24px] border-b bg-[rgb(var(--theme-danger-100))] px-6 py-4">
           <div className="flex items-center gap-2 text-red-600">
             <Trash2 className="h-5 w-5" />
             <h2 className="text-lg font-semibold">Delete Object Storage Tier</h2>

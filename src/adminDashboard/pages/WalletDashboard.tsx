@@ -1,7 +1,5 @@
-// @ts-nocheck
 import React, { useState } from "react";
 import {
-  Wallet,
   ArrowUpCircle,
   ArrowDownCircle,
   RefreshCw,
@@ -9,22 +7,21 @@ import {
   Settings,
   TrendingUp,
   Clock,
-  DollarSign,
   Gift,
   AlertCircle,
-  ChevronRight,
   Filter,
+  type LucideIcon,
 } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
 import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
 import { ModernButton } from "../../shared/components/ui";
 import ModernTable from "../../shared/components/ui/ModernTable";
-import { designTokens } from "../../styles/designTokens";
 import {
   useFetchWalletBalance,
   useFetchWalletTransactions,
   useTopUpWallet,
 } from "../../hooks/walletHooks";
+import { type Column } from "../../shared/components/ui/ModernTable";
 
 // ═══════════════════════════════════════════════════════════════════
 // TYPES
@@ -52,17 +49,23 @@ interface WalletTransaction {
   created_at: string;
 }
 
+interface TxTypeConfig {
+  color: string;
+  bg: string;
+  icon: LucideIcon;
+  label: string;
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // BILLING MODE SELECTOR
 // ═══════════════════════════════════════════════════════════════════
 
 const BillingModeCard: React.FC<{
-  mode: string;
   title: string;
   description: string;
   isActive: boolean;
   onSelect: () => void;
-}> = ({ mode, title, description, isActive, onSelect }) => (
+}> = ({ title, description, isActive, onSelect }) => (
   <button
     onClick={onSelect}
     className={`p-4 rounded-xl border-2 text-left transition-all ${
@@ -122,7 +125,7 @@ const TopUpModal: React.FC<{
         </div>
 
         <div className="flex flex-wrap gap-2 mb-6">
-          {presets.map((preset: any) => (
+          {presets.map((preset: number) => (
             <button
               key={preset}
               onClick={() => setAmount(preset)}
@@ -167,7 +170,7 @@ export default function WalletDashboard() {
   const [showSettings, setShowSettings] = useState(false);
   const [filterType, setFilterType] = useState<string>("all");
 
-  const { data: wallet, isLoading: walletLoading } = useFetchWalletBalance();
+  const { data: wallet } = useFetchWalletBalance();
   const { data: transactionsData, isLoading: txLoading } = useFetchWalletTransactions();
   const { mutate: topUp, isPending: topUpLoading } = useTopUpWallet();
 
@@ -180,19 +183,23 @@ export default function WalletDashboard() {
 
   // Filter transactions
   const filteredTx =
-    filterType === "all" ? transactions : transactions.filter((tx: any) => tx.type === filterType);
+    filterType === "all"
+      ? transactions
+      : transactions.filter((tx: WalletTransaction) => tx.type === filterType);
 
   // Calculate stats
   const totalCredits = transactions
-    .filter((tx: any) => ["credit", "refund", "promotional", "transfer_in"].includes(tx.type))
+    .filter((tx: WalletTransaction) =>
+      ["credit", "refund", "promotional", "transfer_in"].includes(tx.type)
+    )
     .reduce((sum, tx) => sum + tx.amount, 0);
 
   const totalDebits = transactions
-    .filter((tx: any) => ["debit", "transfer_out"].includes(tx.type))
+    .filter((tx: WalletTransaction) => ["debit", "transfer_out"].includes(tx.type))
     .reduce((sum, tx) => sum + tx.amount, 0);
 
   const handleTopUp = (amount: number) => {
-    (topUp as any)(
+    topUp(
       { amount, currency, payment_method: "paystack" },
       {
         onSuccess: () => setShowTopUp(false),
@@ -200,22 +207,58 @@ export default function WalletDashboard() {
     );
   };
 
-  const txTypeConfig: Record<string, { color: string; bg: string; icon: any; label: string }> = {
-    credit: { color: "#10B981", bg: "#D1FAE5", icon: ArrowDownCircle, label: "Credit" },
-    debit: { color: "#EF4444", bg: "#FEE2E2", icon: ArrowUpCircle, label: "Debit" },
-    refund: { color: "#3B82F6", bg: "#DBEAFE", icon: RefreshCw, label: "Refund" },
-    adjustment: { color: "#8B5CF6", bg: "#EDE9FE", icon: Settings, label: "Adjustment" },
-    promotional: { color: "#F59E0B", bg: "#FEF3C7", icon: Gift, label: "Promo" },
-    transfer_in: { color: "#10B981", bg: "#D1FAE5", icon: ArrowDownCircle, label: "Transfer In" },
-    transfer_out: { color: "#EF4444", bg: "#FEE2E2", icon: ArrowUpCircle, label: "Transfer Out" },
+  const txTypeConfig: Record<string, TxTypeConfig> = {
+    credit: {
+      color: "rgb(var(--theme-success-500))",
+      bg: "rgb(var(--theme-success-100))",
+      icon: ArrowDownCircle,
+      label: "Credit",
+    },
+    debit: {
+      color: "rgb(var(--theme-danger-500))",
+      bg: "rgb(var(--theme-danger-100))",
+      icon: ArrowUpCircle,
+      label: "Debit",
+    },
+    refund: {
+      color: "var(--theme-color)",
+      bg: "rgb(var(--theme-color-100))",
+      icon: RefreshCw,
+      label: "Refund",
+    },
+    adjustment: {
+      color: "rgb(var(--theme-color-500))",
+      bg: "var(--theme-surface-alt)",
+      icon: Settings,
+      label: "Adjustment",
+    },
+    promotional: {
+      color: "rgb(var(--theme-warning-500))",
+      bg: "rgb(var(--theme-warning-100))",
+      icon: Gift,
+      label: "Promo",
+    },
+    transfer_in: {
+      color: "rgb(var(--theme-success-500))",
+      bg: "rgb(var(--theme-success-100))",
+      icon: ArrowDownCircle,
+      label: "Transfer In",
+    },
+    transfer_out: {
+      color: "rgb(var(--theme-danger-500))",
+      bg: "rgb(var(--theme-danger-100))",
+      icon: ArrowUpCircle,
+      label: "Transfer Out",
+    },
   };
 
-  const columns = [
+  const columns: Column<WalletTransaction>[] = [
     {
       key: "type",
       header: "Type",
-      render: (value: string) => {
-        const config = txTypeConfig[value] || txTypeConfig.credit;
+      render: (value: unknown) => {
+        const type = value as string;
+        const config = txTypeConfig[type] || txTypeConfig["credit"];
         const Icon = config.icon;
         return (
           <div className="flex items-center gap-2">
@@ -230,14 +273,16 @@ export default function WalletDashboard() {
     {
       key: "description",
       header: "Description",
-      render: (value: string) => (
-        <span className="text-sm text-gray-600 truncate max-w-[200px] block">{value || "—"}</span>
+      render: (value: unknown) => (
+        <span className="text-sm text-gray-600 truncate max-w-[200px] block">
+          {(value as string) || "—"}
+        </span>
       ),
     },
     {
       key: "amount",
       header: "Amount",
-      render: (value: number, tx: WalletTransaction) => {
+      render: (value: unknown, tx: WalletTransaction) => {
         const isCredit = ["credit", "refund", "promotional", "transfer_in"].includes(tx.type);
         return (
           <span className={`font-semibold ${isCredit ? "text-green-600" : "text-red-600"}`}>
@@ -251,7 +296,7 @@ export default function WalletDashboard() {
     {
       key: "balance_after",
       header: "Balance",
-      render: (value: number) => (
+      render: (value: unknown) => (
         <span className="text-sm text-gray-600">
           {symbol}
           {Number(value).toLocaleString()}
@@ -261,7 +306,8 @@ export default function WalletDashboard() {
     {
       key: "status",
       header: "Status",
-      render: (value: string) => {
+      render: (value: unknown) => {
+        const status = value as string;
         const statusColors: Record<string, string> = {
           completed: "bg-green-100 text-green-700",
           pending: "bg-yellow-100 text-yellow-700",
@@ -270,9 +316,9 @@ export default function WalletDashboard() {
         };
         return (
           <span
-            className={`px-2 py-0.5 rounded text-xs font-medium capitalize ${statusColors[value] || statusColors.pending}`}
+            className={`px-2 py-0.5 rounded text-xs font-medium capitalize ${statusColors[status] || statusColors["pending"]}`}
           >
-            {value}
+            {status}
           </span>
         );
       },
@@ -280,9 +326,9 @@ export default function WalletDashboard() {
     {
       key: "created_at",
       header: "Date",
-      render: (value: string) => (
+      render: (value: unknown) => (
         <span className="text-xs text-gray-500">
-          {new Date(value).toLocaleDateString("en-US", {
+          {new Date(value as string).toLocaleDateString("en-US", {
             month: "short",
             day: "numeric",
             hour: "2-digit",
@@ -371,21 +417,18 @@ export default function WalletDashboard() {
             <h3 className="font-semibold mb-4">Billing Mode</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <BillingModeCard
-                mode="prepaid"
                 title="Prepaid"
                 description="Pay upfront, deduct from balance"
                 isActive={billingMode === "prepaid"}
                 onSelect={() => {}}
               />
               <BillingModeCard
-                mode="postpaid"
                 title="Postpaid"
                 description="Pay at end of billing cycle"
                 isActive={billingMode === "postpaid"}
                 onSelect={() => {}}
               />
               <BillingModeCard
-                mode="hybrid"
                 title="Hybrid"
                 description="Use balance + credit limit"
                 isActive={billingMode === "hybrid"}
@@ -413,8 +456,8 @@ export default function WalletDashboard() {
 
         {/* Transactions Table */}
         <ModernTable
-          data={filteredTx}
-          columns={columns as any}
+          data={filteredTx as WalletTransaction[]}
+          columns={columns}
           title="Transaction History"
           searchable
           searchKeys={["description", "reference"]}

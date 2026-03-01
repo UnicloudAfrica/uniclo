@@ -1,15 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import {
-  TrendingUp,
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  Network,
-  Zap,
-  Settings,
-  Target,
-} from "lucide-react";
+import { TrendingUp, ArrowLeft, ArrowRight, Check, Settings } from "lucide-react";
 import TenantPageShell from "../../components/TenantPageShell";
 import ModernCard from "../../../shared/components/ui/ModernCard";
 import ModernButton from "../../../shared/components/ui/ModernButton";
@@ -237,7 +228,7 @@ const AutoScalingGroupWizard: React.FC = () => {
                 if (exists) {
                   setFormData({
                     ...formData,
-                    subnets: formData.subnets.filter((id) => id !== sub.id),
+                    subnets: formData.subnets.filter((id: any) => id !== sub.id),
                   });
                 } else {
                   setFormData({ ...formData, subnets: [...formData.subnets, sub.id] });
@@ -324,7 +315,7 @@ const AutoScalingGroupWizard: React.FC = () => {
                   name: "Average Network Out",
                   desc: "Scale based on outgoing network bytes",
                 },
-              ].map((metric) => (
+              ].map((metric: any) => (
                 <button
                   key={metric.id}
                   onClick={() => setFormData({ ...formData, metric_type: metric.id })}
@@ -395,7 +386,7 @@ const AutoScalingGroupWizard: React.FC = () => {
               Subnets ({formData.subnets.length})
             </div>
             <div className="flex flex-wrap gap-2">
-              {formData.subnets.map((id) => (
+              {formData.subnets.map((id: any) => (
                 <span
                   key={id}
                   className="px-2 py-1 bg-white border border-gray-200 rounded text-xs font-mono"
@@ -442,7 +433,7 @@ const AutoScalingGroupWizard: React.FC = () => {
         {/* Stepper */}
         <div className="flex items-center justify-between mb-12 relative px-4">
           <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-100 -translate-y-1/2 z-0"></div>
-          {[1, 2, 3, 4].map((num) => (
+          {[1, 2, 3, 4].map((num: any) => (
             <div
               key={num}
               className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${

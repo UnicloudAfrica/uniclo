@@ -1,23 +1,28 @@
-// @ts-nocheck
 /**
  * Admin Region Create Page
  * Uses shared components from /src/shared/domains/regions/components/
  */
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Loader2, AlertCircle } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
 import { ModernCard, ModernButton } from "../../shared/components/ui";
-import adminRegionApi from "../../services/adminRegionApi";
+import adminRegionApi, { RegionCreatePayload } from "../../services/adminRegionApi";
 import ToastUtils from "../../utils/toastUtil";
 import InvoiceWizardStepper from "../../shared/components/billing/invoice/InvoiceWizardStepper";
 import { useFetchCountries } from "../../hooks/resource";
+import {
+  ServiceConfigState,
+  ServiceDefinition,
+  FieldDefinition,
+} from "../../shared/domains/regions/types/serviceConfig.types";
 
 // Shared region components
 import {
   ServiceConfigCard,
   RegionInfoForm,
   AvailabilityAccessForm,
+  type Country,
 } from "../../shared/domains/regions/components";
 import { useRegionFormLogic } from "../../shared/domains/regions/hooks";
 
@@ -28,28 +33,52 @@ const RegionCreate = () => {
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
   const { data: countries = [] } = useFetchCountries();
+  const typedCountries = countries as Country[];
 
   // Wizard State
   const [currentStep, setCurrentStep] = useState(0);
   const steps = ["Region Details", "Service Configuration"];
 
   // Memoize callbacks to prevent infinite re-renders
-  const fetchProviderServices = useCallback(async (provider) => {
+  const fetchProviderServices = useCallback(async (provider: string) => {
     const res = await adminRegionApi.getProviderServices(provider);
-    return res.success ? res.data : null;
+    if (!res.success || !res.data) return null;
+
+    // Transform ProviderService[] to ProviderServicesSchema
+    const services: Record<string, ServiceDefinition> = {};
+    res.data.forEach((s) => {
+      const fields: Record<string, FieldDefinition> = {};
+      (s.fields || []).forEach((f) => {
+        fields[f.name] = {
+          label: f.label,
+          type: f.type as any, // Cast to ServiceFieldType since it comes from API
+          required: f.required,
+          ...(f.description ? { help: f.description } : {}),
+        };
+      });
+      services[s.type] = {
+        label: s.name,
+        fields,
+        ...(s.description ? { description: s.description } : {}),
+      };
+    });
+    return { services };
   }, []);
 
-  const verifyServiceCredentials = useCallback(async (provider, serviceType, credentials) => {
-    const res = await adminRegionApi.verifyProviderServiceCredentials(
-      provider,
-      serviceType,
-      credentials
-    );
-    if (res.success) {
-      ToastUtils.success(`${serviceType} verified successfully`);
-    }
-    return res;
-  }, []);
+  const verifyServiceCredentials = useCallback(
+    async (provider: string, serviceType: string, credentials: Record<string, string>) => {
+      const res = await adminRegionApi.verifyProviderServiceCredentials(
+        provider,
+        serviceType,
+        credentials
+      );
+      return {
+        success: res.success,
+        ...(res.message ? { message: res.message } : {}),
+      };
+    },
+    []
+  );
 
   // Use shared form logic hook with stable callbacks
   const {
@@ -75,8 +104,8 @@ const RegionCreate = () => {
   const services = (() => {
     const all = providerServices?.services || {};
     if (regionData.provider === "zadara") {
-      const allowed = ["compute", "object_storage"];
-      return Object.fromEntries(Object.entries(all).filter(([key]) => allowed.includes(key)));
+      const allowed = new Set(["compute", "object_storage"]);
+      return Object.fromEntries(Object.entries(all).filter(([key]) => allowed.has(key)));
     }
     return all;
   })();
@@ -88,40 +117,68 @@ const RegionCreate = () => {
         return;
       }
       setCurrentStep(1);
-      window.scrollTo(0, 0);
+      globalThis.window.scrollTo(0, 0);
     }
   };
 
   const handleBack = () => {
     setCurrentStep((prev) => prev - 1);
-    window.scrollTo(0, 0);
+    globalThis.window.scrollTo(0, 0);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  const validateSubmission = () => {
     if (!validateStep1()) {
       ToastUtils.error("Please fill in all required fields");
-      return;
+      return false;
     }
 
     const enabledServices = getEnabledServices();
     if (enabledServices.length === 0) {
       ToastUtils.error("Please enable at least one service for this region");
-      return;
+      return false;
     }
 
-    const automatedServices = enabledServices.filter(([_, cfg]) => cfg.mode === "automated");
+    const automatedServices = enabledServices.filter(([, cfg]) => cfg.mode === "automated");
     if (automatedServices.length > 0 && connectedServices.size === 0) {
       ToastUtils.error(
         "Please verify credentials for at least one service before creating the region"
       );
+      return false;
+    }
+    return true;
+  };
+
+  const storeServiceCredentials = async (
+    regionId: number,
+    enabledServices: [string, ServiceConfigState][]
+  ) => {
+    for (const [serviceType, config] of enabledServices) {
+      if (config.mode === "automated" && Object.keys(config.credentials).length > 0) {
+        try {
+          const isAlreadyVerified = connectedServices.has(serviceType);
+          await adminRegionApi.storeServiceCredentials(
+            regionId,
+            serviceType,
+            config.credentials,
+            isAlreadyVerified
+          );
+        } catch {
+          ToastUtils.error(`Failed to verify/store ${serviceType} credentials`);
+        }
+      }
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateSubmission()) {
       return;
     }
 
     setSubmitting(true);
     try {
-      const createPayload = {
+      const createPayload: RegionCreatePayload = {
         name: regionData.name,
         code: regionData.code,
         country_code: regionData.country_code?.toUpperCase() || null,
@@ -142,22 +199,8 @@ const RegionCreate = () => {
       const newRegionId = regionRes.data?.id;
       const newRegionCode = regionRes.data?.code || regionData.code;
 
-      // Store credentials for each automated service
-      for (const [serviceType, config] of enabledServices) {
-        if (config.mode === "automated" && Object.keys(config.credentials).length > 0) {
-          try {
-            const isAlreadyVerified = connectedServices.has(serviceType);
-            await adminRegionApi.storeServiceCredentials(
-              newRegionId,
-              serviceType,
-              config.credentials,
-              isAlreadyVerified
-            );
-          } catch (credError) {
-            console.error(`Failed to verify/store ${serviceType} credentials:`, credError);
-          }
-        }
-      }
+      await storeServiceCredentials(Number(newRegionId), getEnabledServices());
+
       ToastUtils.success("Region created successfully!");
 
       if (regionData.fast_track_mode === "grant_only" && newRegionId) {
@@ -166,137 +209,138 @@ const RegionCreate = () => {
       } else {
         navigate(`/admin-dashboard/regions/${newRegionCode}`);
       }
-    } catch (error) {
-      console.error("Error creating region:", error);
-      ToastUtils.error(error.message || "Failed to create region");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to create region";
+      ToastUtils.error(errorMessage);
     } finally {
       setSubmitting(false);
     }
   };
 
-  return (
-    <>
-      <AdminPageShell
-        title="Create New Region"
-        description="Set up a new data center region in a few steps"
-        contentClassName="max-w-full pb-32"
-      >
-        <div className="mb-8 max-w-3xl mx-auto">
-          <InvoiceWizardStepper currentStep={currentStep} steps={steps} />
+  const renderServicesList = () => {
+    if (loadingServices) {
+      return (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
         </div>
+      );
+    }
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Step 1: Region Details */}
-          {currentStep === 0 && (
-            <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <ModernCard title="Region Information" className="space-y-4">
-                <RegionInfoForm
-                  regionData={regionData}
-                  onChange={handleRegionChange}
-                  countries={countries}
-                  showProviderSelection={true}
-                />
-              </ModernCard>
+    if (Object.keys(services).length === 0) {
+      return (
+        <div className="text-center py-8">
+          <AlertCircle className="mx-auto h-8 w-8 text-amber-500 mb-2" />
+          <p className="text-sm text-gray-600">No services configured for {regionData.provider}</p>
+        </div>
+      );
+    }
 
-              <ModernCard title="Availability & Access" className="space-y-6">
-                <AvailabilityAccessForm
-                  regionData={regionData}
-                  onChange={handleRegionChange}
-                  showFastTrack={true}
-                />
-              </ModernCard>
-            </div>
-          )}
+    return (
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
+        {Object.entries(services).map(([serviceType, serviceConfig]) => (
+          <ServiceConfigCard
+            key={serviceType}
+            serviceType={serviceType}
+            serviceConfig={serviceConfig}
+            enabled={serviceConfigs[serviceType]?.enabled || false}
+            onToggle={() => handleServiceToggle(serviceType)}
+            fulfillmentMode={serviceConfigs[serviceType]?.mode || "manual"}
+            onModeChange={(mode) => handleModeChange(serviceType, mode)}
+            credentials={serviceConfigs[serviceType]?.credentials || {}}
+            onCredentialChange={(field, value) => handleCredentialChange(serviceType, field, value)}
+            onTestConnection={() => handleTestConnection(serviceType)}
+            testing={testingService[serviceType] || false}
+            status={connectedServices.has(serviceType) ? "connected" : "not_configured"}
+          />
+        ))}
+      </div>
+    );
+  };
 
-          {/* Step 2: Services */}
-          {currentStep === 1 && (
-            <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-right-8 duration-500">
-              <ModernCard title="Available Services" className="space-y-4">
-                <p className="text-sm text-gray-500">
-                  Select which services will be available in this region. For each service, choose
-                  manual or automated fulfillment.
-                </p>
+  return (
+    <AdminPageShell
+      title="Create New Region"
+      description="Set up a new data center region in a few steps"
+      contentClassName="max-w-full pb-32"
+    >
+      <div className="mb-8 max-w-3xl mx-auto">
+        <InvoiceWizardStepper currentStep={currentStep} steps={steps} />
+      </div>
 
-                {loadingServices ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                  </div>
-                ) : Object.keys(services).length > 0 ? (
-                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
-                    {Object.entries(services).map(([serviceType, serviceConfig]) => (
-                      <ServiceConfigCard
-                        key={serviceType}
-                        serviceType={serviceType}
-                        serviceConfig={serviceConfig}
-                        enabled={serviceConfigs[serviceType]?.enabled || false}
-                        onToggle={() => handleServiceToggle(serviceType)}
-                        fulfillmentMode={serviceConfigs[serviceType]?.mode || "manual"}
-                        onModeChange={(mode) => handleModeChange(serviceType, mode)}
-                        credentials={serviceConfigs[serviceType]?.credentials || {}}
-                        onCredentialChange={(field, value) =>
-                          handleCredentialChange(serviceType, field, value)
-                        }
-                        onTestConnection={() => handleTestConnection(serviceType)}
-                        testing={testingService[serviceType] || false}
-                        status={connectedServices.has(serviceType) ? "connected" : "not_configured"}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <AlertCircle className="mx-auto h-8 w-8 text-amber-500 mb-2" />
-                    <p className="text-sm text-gray-600">
-                      No services configured for {regionData.provider}
-                    </p>
-                  </div>
-                )}
-              </ModernCard>
-            </div>
-          )}
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Step 1: Region Details */}
+        {currentStep === 0 && (
+          <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <ModernCard title="Region Information" className="space-y-4">
+              <RegionInfoForm
+                regionData={regionData}
+                onChange={handleRegionChange}
+                countries={typedCountries}
+                showProviderSelection={true}
+              />
+            </ModernCard>
 
-          {/* Footer / Actions */}
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-gray-200 z-10 md:pl-64">
-            <div className="max-w-5xl mx-auto flex items-center justify-between">
-              <ModernButton
-                type="button"
-                variant="ghost"
-                onClick={
-                  currentStep === 0 ? () => navigate("/admin-dashboard/regions") : handleBack
-                }
-                disabled={submitting}
-              >
-                {currentStep === 0 ? "Cancel" : "Back"}
-              </ModernButton>
-
-              {currentStep === 0 ? (
-                <ModernButton type="button" variant="primary" onClick={handleNext} className="px-8">
-                  Next: Configure Services
-                </ModernButton>
-              ) : (
-                <ModernButton
-                  type="submit"
-                  variant="primary"
-                  isLoading={submitting}
-                  disabled={
-                    submitting ||
-                    (Object.values(serviceConfigs).some(
-                      (c) => c.enabled && c.mode === "automated"
-                    ) &&
-                      connectedServices.size === 0)
-                  }
-                  className="px-8 flex items-center gap-2"
-                >
-                  Create Region
-                  <ChevronRight className="h-4 w-4" />
-                </ModernButton>
-              )}
-            </div>
+            <ModernCard title="Availability & Access" className="space-y-6">
+              <AvailabilityAccessForm
+                regionData={regionData}
+                onChange={handleRegionChange}
+                showFastTrack={true}
+              />
+            </ModernCard>
           </div>
-          {/* Spacer for fixed footer */}
-          <div className="h-24"></div>
-        </form>
-      </AdminPageShell>
-    </>
+        )}
+
+        {/* Step 2: Services */}
+        {currentStep === 1 && (
+          <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-right-8 duration-500">
+            <ModernCard title="Available Services" className="space-y-4">
+              <p className="text-sm text-gray-500">
+                Select which services will be available in this region. For each service, choose
+                manual or automated fulfillment.
+              </p>
+              {renderServicesList()}
+            </ModernCard>
+          </div>
+        )}
+
+        {/* Footer / Actions */}
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-gray-200 z-10 md:pl-64">
+          <div className="max-w-5xl mx-auto flex items-center justify-between">
+            <ModernButton
+              type="button"
+              variant="ghost"
+              onClick={currentStep === 0 ? () => navigate("/admin-dashboard/regions") : handleBack}
+              disabled={submitting}
+            >
+              {currentStep === 0 ? "Cancel" : "Back"}
+            </ModernButton>
+
+            {currentStep === 0 ? (
+              <ModernButton type="button" variant="primary" onClick={handleNext} className="px-8">
+                Next: Configure Services
+              </ModernButton>
+            ) : (
+              <ModernButton
+                type="submit"
+                variant="primary"
+                isLoading={submitting}
+                disabled={
+                  submitting ||
+                  (Object.values(serviceConfigs).some((c) => c.enabled && c.mode === "automated") &&
+                    connectedServices.size === 0)
+                }
+                className="px-8 flex items-center gap-2"
+              >
+                Create Region
+                <ChevronRight className="h-4 w-4" />
+              </ModernButton>
+            )}
+          </div>
+        </div>
+        {/* Spacer for fixed footer */}
+        <div className="h-24"></div>
+      </form>
+    </AdminPageShell>
   );
 };
 

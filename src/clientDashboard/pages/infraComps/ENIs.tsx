@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { RefreshCw, Shield } from "lucide-react";
@@ -23,10 +22,10 @@ interface NetworkInterface {
   attachment?: any;
   state?: string;
   status?: string;
-  private_ip_addresses?: any[];
+  private_ip_addresses?: unknown;
   private_ip?: string;
   private_ip_address?: string;
-  security_groups?: any[];
+  security_groups?: unknown;
   mac_address?: string;
   mac?: string;
   availability_zone?: string;

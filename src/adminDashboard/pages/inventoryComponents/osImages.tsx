@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { HardDrive, ShieldCheck, AlertTriangle, Pencil, Trash2, Plus } from "lucide-react";
 import { useFetchOsImages } from "../../../hooks/adminHooks/os-imageHooks";
 import ResourceDataExplorer from "../../components/ResourceDataExplorer";

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect, useCallback } from "react";
 import {
   Folder,
@@ -22,7 +21,6 @@ import {
   List,
   Database,
   Rocket,
-  BookOpen,
   Zap,
   Shield,
   ArrowRight,
@@ -39,10 +37,15 @@ interface FileItem {
   last_modified?: string;
 }
 
+interface Bucket extends Record<string, unknown> {
+  id?: string | number;
+  name?: string;
+}
+
 interface ObjectStorageFileBrowserProps {
   accountId: string;
   bucketName: string | null;
-  buckets: any[];
+  buckets: Bucket[];
   onSelectBucket?: (name: string) => void;
 }
 
@@ -70,6 +73,18 @@ const formatSize = (bytes: number) => {
   const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === "string" && error.trim()) return error;
+  if (isRecord(error) && typeof error.message === "string" && error.message.trim()) {
+    return error.message;
+  }
+  return fallback;
 };
 
 const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
@@ -102,8 +117,8 @@ const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
         (f: FileItem) => !f.name.endsWith(".keep") && f.name !== ".keep"
       );
       setFiles(visibleFiles);
-    } catch (err: any) {
-      ToastUtils.error(err.message || "Failed to load objects");
+    } catch (err) {
+      ToastUtils.error(getErrorMessage(err, "Failed to load objects"));
     } finally {
       setLoading(false);
     }
@@ -120,7 +135,7 @@ const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
     if (bucketName) {
       fetchObjects();
     }
-  }, [currentPrefix, fetchObjects]);
+  }, [currentPrefix, fetchObjects]); // Added fetchObjects to dependency array
 
   const navigateToFolder = (prefix: string) => {
     setCurrentPrefix(prefix);
@@ -135,9 +150,9 @@ const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
   const handleDownload = async (item: FileItem) => {
     try {
       const url = await objectStorageApi.getObjectUrl(accountId, bucketName!, item.key);
-      window.open(url, "_blank");
-    } catch (err: any) {
-      ToastUtils.error(err.message || "Failed to get download URL");
+      globalThis.window.open(url, "_blank");
+    } catch (err) {
+      ToastUtils.error(getErrorMessage(err, "Failed to get download URL"));
     }
   };
 
@@ -146,21 +161,21 @@ const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
       const url = await objectStorageApi.getObjectUrl(accountId, bucketName!, item.key);
       setPreviewUrl(url);
       setPreviewName(item.name);
-    } catch (err: any) {
-      ToastUtils.error(err.message || "Failed to load preview");
+    } catch (err) {
+      ToastUtils.error(getErrorMessage(err, "Failed to load preview"));
     }
   };
 
   const handleDelete = async (item: FileItem) => {
-    if (!window.confirm(`Delete "${item.name}"?`)) return;
+    if (!globalThis.window.confirm(`Delete "${item.name}"?`)) return;
 
     try {
       setDeletingKey(item.key);
       await objectStorageApi.deleteObject(accountId, bucketName!, item.key);
       ToastUtils.success("Deleted successfully");
       fetchObjects();
-    } catch (err: any) {
-      ToastUtils.error(err.message || "Failed to delete");
+    } catch (err) {
+      ToastUtils.error(getErrorMessage(err, "Failed to delete"));
     } finally {
       setDeletingKey(null);
     }
@@ -182,8 +197,8 @@ const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
       setShowNewFolder(false);
       setNewFolderName("");
       fetchObjects();
-    } catch (err: any) {
-      ToastUtils.error(err.message || "Failed to create folder");
+    } catch (err) {
+      ToastUtils.error(getErrorMessage(err, "Failed to create folder"));
     } finally {
       setCreatingFolder(false);
     }
@@ -219,22 +234,31 @@ const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
         <div className="p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {buckets.slice(0, 3).map((bucket) => (
-              <button
-                key={bucket.id}
-                onClick={() => onSelectBucket?.(bucket.name)}
-                className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 hover:border-[rgb(var(--theme-color-300))] hover:bg-[rgb(var(--theme-color-50))] transition-all text-left group"
-              >
-                <div className="rounded-lg bg-[rgb(var(--theme-color-100))] p-3 group-hover:bg-[rgb(var(--theme-color-200))] transition-colors">
-                  <Database className="h-6 w-6 text-[var(--theme-color)]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 truncate">{bucket.name}</p>
-                  <p className="text-sm text-gray-500">Click to browse</p>
-                </div>
-                <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-primary-500 transition-colors" />
-              </button>
-            ))}
+            {buckets.slice(0, 3).map((bucket, index) => {
+              const bucketNameValue = typeof bucket.name === "string" ? bucket.name : "";
+              const displayName = bucketNameValue || "Unnamed silo";
+              const bucketKey = bucket.id ?? bucketNameValue ?? index;
+              return (
+                <button
+                  key={String(bucketKey)}
+                  onClick={() => {
+                    if (bucketNameValue) {
+                      onSelectBucket?.(bucketNameValue);
+                    }
+                  }}
+                  className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 hover:border-[rgb(var(--theme-color-300))] hover:bg-[rgb(var(--theme-color-50))] transition-all text-left group"
+                >
+                  <div className="rounded-lg bg-[rgb(var(--theme-color-100))] p-3 group-hover:bg-[rgb(var(--theme-color-200))] transition-colors">
+                    <Database className="h-6 w-6 text-[var(--theme-color)]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 truncate">{displayName}</p>
+                    <p className="text-sm text-gray-500">Click to browse</p>
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-primary-500 transition-colors" />
+                </button>
+              );
+            })}
           </div>
         </div>
 

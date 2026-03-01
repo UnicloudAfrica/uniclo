@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import { Cable, Server, Network } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
@@ -17,7 +16,6 @@ interface NetworkInterfacesOverviewProps {
 const NetworkInterfacesOverview: React.FC<NetworkInterfacesOverviewProps> = ({
   networkInterfaces,
   isLoading = false,
-  permissions,
 }) => {
   const attachedCount = networkInterfaces.filter((eni) => eni.attachment?.instance_id).length;
   const availableCount = networkInterfaces.length - attachedCount;

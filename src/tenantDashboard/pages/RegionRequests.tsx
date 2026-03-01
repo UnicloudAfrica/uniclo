@@ -1,12 +1,23 @@
-// @ts-nocheck
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Plus, MapPin } from "lucide-react";
 import tenantRegionApi from "../../services/tenantRegionApi";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
 
+interface Region {
+  id: string;
+  name: string;
+  approval_status: string;
+  fulfillment_mode: string;
+  code: string;
+  country_code: string;
+  provider: string;
+  platform_fee_percentage: number;
+  is_active: boolean;
+}
+
 const RegionRequests = () => {
-  const [regions, setRegions] = useState([]);
+  const [regions, setRegions] = useState<Region[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
 
@@ -19,15 +30,15 @@ const RegionRequests = () => {
       setLoading(true);
       const response = await tenantRegionApi.fetchRegionRequests();
       setRegions(response.data);
-    } catch (error) {
-      console.error("Error fetching regions:", error);
+    } catch {
+      // Error is handled by not crashing, no need to return
     } finally {
       setLoading(false);
     }
   };
 
-  const getStatusBadge = (status: any) => {
-    const badges = {
+  const getStatusBadge = (status: string) => {
+    const badges: Record<string, string> = {
       pending: "bg-yellow-100 text-yellow-800",
       approved: "bg-green-100 text-green-800",
       rejected: "bg-red-100 text-red-800",
@@ -93,15 +104,11 @@ const RegionRequests = () => {
           {/* Filters */}
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6">
             <div className="flex gap-2">
-              {["all", "pending", "approved", "rejected", "suspended"].map((status: any) => (
+              {["all", "pending", "approved", "rejected", "suspended"].map((status) => (
                 <button
                   key={status}
                   onClick={() => setFilter(status)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    filter === status
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === status ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
                 >
                   {status.charAt(0).toUpperCase() + status.slice(1)}
                 </button>
@@ -130,7 +137,7 @@ const RegionRequests = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4">
-              {filteredRegions.map((region: any) => (
+              {filteredRegions.map((region) => (
                 <div
                   key={region.id}
                   className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow"

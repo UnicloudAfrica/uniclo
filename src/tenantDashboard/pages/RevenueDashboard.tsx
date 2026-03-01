@@ -1,14 +1,57 @@
-// @ts-nocheck
 import React, { useState, useEffect } from "react";
 import tenantRegionApi from "../../services/tenantRegionApi";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
 import { Download } from "lucide-react";
 
+interface RevenueSummary {
+  total_revenue?: number;
+  total_orders?: number;
+  total_platform_fee?: number;
+  total_tenant_share?: number;
+  pending_settlement?: number;
+}
+
+interface RevenueShare {
+  id: string | number;
+  created_at?: string;
+  region?: { name?: string };
+  order?: { identifier?: string };
+  gross_amount?: number | string;
+  platform_fee_percentage?: number | string;
+  platform_fee_amount?: number | string;
+  tenant_share_amount?: number | string;
+  status?: string;
+}
+
+interface RevenueStatsResponse {
+  summary?: RevenueSummary;
+  [key: string]: unknown;
+}
+
+type RevenueFilters = {
+  start_date: string;
+  end_date: string;
+  region_id: string;
+  status: string;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const toNumber = (value: unknown) => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+};
+
 const RevenueDashboard = () => {
-  const [stats, setStats] = useState({});
-  const [shares, setShares] = useState([]);
+  const [stats, setStats] = useState<RevenueSummary>({});
+  const [shares, setShares] = useState<RevenueShare[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<RevenueFilters>({
     start_date: "",
     end_date: "",
     region_id: "",
@@ -26,8 +69,17 @@ const RevenueDashboard = () => {
         tenantRegionApi.fetchRevenueStats(filters),
         tenantRegionApi.fetchRevenueShares(filters),
       ]);
-      setStats(statsRes.data.summary || {});
-      setShares(sharesRes.data || []);
+      const statsData = isRecord(statsRes)
+        ? (statsRes as { data?: RevenueStatsResponse }).data
+        : {};
+      const summary =
+        isRecord(statsData) && isRecord(statsData.summary) ? statsData.summary : statsData?.summary;
+      setStats((summary as RevenueSummary) || {});
+      setShares(
+        Array.isArray((sharesRes as { data?: unknown }).data)
+          ? ((sharesRes as { data?: RevenueShare[] }).data ?? [])
+          : []
+      );
     } catch (error) {
       console.error("Error fetching revenue data:", error);
     } finally {
@@ -35,7 +87,7 @@ const RevenueDashboard = () => {
     }
   };
 
-  const handleFilterChange = (e: any) => {
+  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
@@ -79,26 +131,28 @@ const RevenueDashboard = () => {
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
               <div className="text-gray-500 text-sm font-medium">Total Revenue</div>
               <div className="text-3xl font-bold text-gray-900 mt-2">
-                ${(stats.total_revenue || 0).toFixed(2)}
+                ${toNumber(stats.total_revenue).toFixed(2)}
               </div>
-              <div className="text-sm text-gray-500 mt-1">{stats.total_orders || 0} orders</div>
+              <div className="text-sm text-gray-500 mt-1">
+                {toNumber(stats.total_orders)} orders
+              </div>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
               <div className="text-gray-500 text-sm font-medium">Platform Fee</div>
               <div className="text-3xl font-bold text-orange-600 mt-2">
-                ${(stats.total_platform_fee || 0).toFixed(2)}
+                ${toNumber(stats.total_platform_fee).toFixed(2)}
               </div>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
               <div className="text-gray-500 text-sm font-medium">Your Share</div>
               <div className="text-3xl font-bold text-green-600 mt-2">
-                ${(stats.total_tenant_share || 0).toFixed(2)}
+                ${toNumber(stats.total_tenant_share).toFixed(2)}
               </div>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
               <div className="text-gray-500 text-sm font-medium">Pending Settlement</div>
               <div className="text-3xl font-bold text-yellow-600 mt-2">
-                ${(stats.pending_settlement || 0).toFixed(2)}
+                ${toNumber(stats.pending_settlement).toFixed(2)}
               </div>
             </div>
           </div>
@@ -192,7 +246,7 @@ const RevenueDashboard = () => {
                       </td>
                     </tr>
                   ) : (
-                    shares.map((share: any) => (
+                    shares.map((share) => (
                       <tr key={share.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {new Date(share.created_at).toLocaleDateString()}

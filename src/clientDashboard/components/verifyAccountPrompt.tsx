@@ -18,18 +18,21 @@ const VerifyAccountPromptModal: React.FC<VerifyAccountPromptModalProps> = ({ isO
         <div className="flex justify-end">
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-[#1E1E1EB2] transition-colors"
+            className="text-gray-400 hover:text-[rgb(var(--theme-neutral-900) / 0.7)] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
         <div className="my-4">
-          <h3 className="text-xl font-semibold text-[#000] mb-3">Account Awaiting Approval</h3>
-          <p className="text-[#676767] text-sm mb-6">
+          <h3 className="text-xl font-semibold text-[var(--theme-heading-color)] mb-3">
+            Account Awaiting Approval
+          </h3>
+          <p className="text-[var(--theme-text-color)] text-sm mb-6">
             We're thrilled to have you! Your account is currently{" "}
-            <span className="text-[#FCA5A5] font-medium">under review</span> by our team. You'll be
-            able to access the dashboard soon. For updates,{" "}
-            <span className="text-[#FCA5A5] font-medium">contact support</span>.
+            <span className="text-[rgb(var(--theme-danger-300))] font-medium">under review</span> by
+            our team. You'll be able to access the dashboard soon. For updates,{" "}
+            <span className="text-[rgb(var(--theme-danger-300))] font-medium">contact support</span>
+            .
           </p>
         </div>
       </div>

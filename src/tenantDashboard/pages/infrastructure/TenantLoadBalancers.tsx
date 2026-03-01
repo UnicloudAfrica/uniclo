@@ -19,7 +19,7 @@ const TenantLoadBalancers: React.FC = () => {
 
   const handleDelete = async (lbId: string) => {
     if (
-      window.confirm(
+      globalThis.window.confirm(
         "Are you sure you want to delete this Load Balancer? This action cannot be undone."
       )
     ) {

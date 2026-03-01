@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import {
@@ -22,6 +21,64 @@ import FormLayout, {
   getAccentRgba,
 } from "../../../adminDashboard/components/FormLayout";
 
+interface ClientFormData {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  password: string;
+  password_confirmation: string;
+  verified: boolean;
+  country_id: string;
+  country: string;
+  state_id: string;
+  state: string;
+  city_id: string;
+  city: string;
+  address: string;
+  zip_code: string;
+  force_password_reset: boolean;
+  tenant_id: string;
+  business_name: string;
+  company_type: string;
+  industry: string;
+  registration_number: string;
+  tin_number: string;
+  website: string;
+  verification_token: string;
+}
+
+type ClientFormKey = keyof ClientFormData;
+
+type FormErrors = Partial<Record<ClientFormKey, string | string[] | null>>;
+
+type SelectOption = {
+  id?: number | string;
+  name?: string;
+  [key: string]: unknown;
+};
+
+type BasicOption = SelectOption;
+
+type TenantOption = SelectOption & {
+  company_name?: string;
+};
+
+interface SummaryItem {
+  label: string;
+  value: string;
+}
+
+interface SummarySection {
+  title: string;
+  items: SummaryItem[];
+}
+
+interface ApiErrorPayload {
+  message?: string;
+  errors?: FormErrors;
+}
+
 interface ClientCreateFormProps {
   context?: "admin" | "tenant";
   isOpen?: boolean;
@@ -40,7 +97,7 @@ const ClientCreateForm: React.FC<ClientCreateFormProps> = ({
   tenantName,
 }) => {
   const isPageMode = mode === "page";
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ClientFormData>({
     first_name: "",
     last_name: "",
     email: "",
@@ -69,24 +126,49 @@ const ClientCreateForm: React.FC<ClientCreateFormProps> = ({
   const [discountFormData, setDiscountFormData] = useState<DiscountFormData>(
     getDefaultDiscountFormData()
   );
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<FormErrors>({});
 
   const isAdminContext = context === "admin";
-  const { data: tenants, isFetching: isTenantsFetching } = useFetchTenants({
+  const { data: tenantsData, isFetching: isTenantsFetching } = useFetchTenants({
     enabled: isAdminContext,
   });
-  const { data: countries, isFetching: isCountriesFetching } = useFetchCountries();
-  const { data: states, isFetching: isStatesFetching } = useFetchStatesById(formData.country_id, {
-    enabled: !!formData.country_id,
-  });
-  const { data: cities, isFetching: isCitiesFetching } = useFetchCitiesById(formData.state_id, {
+  const { data: countriesData, isFetching: isCountriesFetching } = useFetchCountries();
+  const { data: statesData, isFetching: isStatesFetching } = useFetchStatesById(
+    formData.country_id,
+    {
+      enabled: !!formData.country_id,
+    }
+  );
+  const { data: citiesData, isFetching: isCitiesFetching } = useFetchCitiesById(formData.state_id, {
     enabled: !!formData.state_id,
   });
-  const { data: industries, isFetching: isIndustriesFetching } = useFetchIndustries();
+  const { data: industriesData, isFetching: isIndustriesFetching } = useFetchIndustries();
   const adminCreate = useAdminCreateClient();
   const tenantCreate = useTenantCreateClient();
   const { mutate: createClient, isPending } = isAdminContext ? adminCreate : tenantCreate;
   const { mutate: assignDiscount } = useAssignDiscount();
+
+  const resolveOptions = (value: unknown): BasicOption[] =>
+    Array.isArray(value) ? (value as BasicOption[]) : [];
+
+  const resolveTenantList = (value: unknown): TenantOption[] => {
+    if (Array.isArray(value)) {
+      return value as TenantOption[];
+    }
+    if (value && typeof value === "object") {
+      const data = (value as { data?: unknown }).data;
+      if (Array.isArray(data)) {
+        return data as TenantOption[];
+      }
+    }
+    return [];
+  };
+
+  const countries = resolveOptions(countriesData);
+  const states = resolveOptions(statesData);
+  const cities = resolveOptions(citiesData);
+  const industries = resolveOptions(industriesData);
+  const tenantList = resolveTenantList(tenantsData);
 
   useEffect(() => {
     if (!isPageMode && !isOpen) {
@@ -128,8 +210,10 @@ const ClientCreateForm: React.FC<ClientCreateFormProps> = ({
   }, [presetTenantId, isAdminContext]);
 
   useEffect(() => {
-    if (formData.country_id && countries) {
-      const selectedCountry = countries.find((c: any) => c.id === parseInt(formData.country_id));
+    if (formData.country_id && countries.length) {
+      const selectedCountry = countries.find(
+        (country) => String(country.id) === String(formData.country_id)
+      );
       setFormData((prev) => ({
         ...prev,
         country: selectedCountry?.name || "",
@@ -142,8 +226,8 @@ const ClientCreateForm: React.FC<ClientCreateFormProps> = ({
   }, [formData.country_id, countries]);
 
   useEffect(() => {
-    if (formData.state_id && states) {
-      const selectedState = states.find((s: any) => s.id === parseInt(formData.state_id));
+    if (formData.state_id && states.length) {
+      const selectedState = states.find((state) => String(state.id) === String(formData.state_id));
       setFormData((prev) => ({
         ...prev,
         state: selectedState?.name || "",
@@ -154,14 +238,14 @@ const ClientCreateForm: React.FC<ClientCreateFormProps> = ({
   }, [formData.state_id, states]);
 
   useEffect(() => {
-    if (formData.city_id && cities) {
-      const selectedCity = cities.find((c: any) => c.id === parseInt(formData.city_id));
+    if (formData.city_id && cities.length) {
+      const selectedCity = cities.find((city) => String(city.id) === String(formData.city_id));
       setFormData((prev) => ({ ...prev, city: selectedCity?.name || "" }));
     }
   }, [formData.city_id, cities]);
 
   const validateForm = () => {
-    const newErrors: any = {};
+    const newErrors: FormErrors = {};
     if (!formData.first_name.trim()) newErrors.first_name = "First Name is required";
     if (!formData.last_name.trim()) newErrors.last_name = "Last Name is required";
     if (!formData.email.trim()) newErrors.email = "Email Address is required";
@@ -192,50 +276,82 @@ const ClientCreateForm: React.FC<ClientCreateFormProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field: string, value: any) => {
+  const updateFormData = <K extends ClientFormKey>(field: K, value: ClientFormData[K]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev: any) => ({ ...prev, [field]: null }));
+    setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleSelectChange = (field: string, value: any, optionsList?: any[]) => {
+  const updateFormDataForInputs = (field: string, value: unknown) => {
+    if (field in formData) {
+      const key = field as ClientFormKey;
+      if (key === "verified" || key === "force_password_reset") {
+        updateFormData(key, Boolean(value) as ClientFormData[ClientFormKey]);
+        return;
+      }
+      const normalizedValue =
+        typeof value === "string" ? value : value == null ? "" : String(value);
+      updateFormData(key, normalizedValue as ClientFormData[ClientFormKey]);
+    }
+  };
+
+  const handleSelectChangeForInputs = (
+    field: string,
+    value: unknown,
+    optionsList?: SelectOption[]
+  ) => {
+    if (field in formData) {
+      handleSelectChange(field as ClientFormKey, value, optionsList);
+    }
+  };
+
+  const handleSelectChange = (
+    field: ClientFormKey,
+    value: unknown,
+    optionsList?: SelectOption[]
+  ) => {
+    const valueString = typeof value === "string" ? value : value == null ? "" : String(value);
     if (field === "country_id") {
-      const selectedCountry = optionsList?.find((option) => String(option.id) === String(value));
+      const selectedCountry = optionsList?.find(
+        (option) => String(option.id) === String(valueString)
+      );
       setFormData((prev) => ({
         ...prev,
-        country_id: value,
+        country_id: valueString,
         country: selectedCountry?.name || "",
         state_id: "",
         state: "",
         city_id: "",
         city: "",
       }));
-      setErrors((prev: any) => ({
+      setErrors((prev) => ({
         ...prev,
         country_id: null,
         state_id: null,
         city_id: null,
       }));
     } else if (field === "state_id") {
-      const selectedState = optionsList?.find((option) => String(option.id) === String(value));
+      const selectedState = optionsList?.find(
+        (option) => String(option.id) === String(valueString)
+      );
       setFormData((prev) => ({
         ...prev,
-        state_id: value,
+        state_id: valueString,
         state: selectedState?.name || "",
         city_id: "",
         city: "",
       }));
-      setErrors((prev: any) => ({ ...prev, state_id: null, city_id: null }));
+      setErrors((prev) => ({ ...prev, state_id: null, city_id: null }));
     } else if (field === "city_id") {
-      const selectedCity = optionsList?.find((option) => String(option.id) === String(value));
+      const selectedCity = optionsList?.find((option) => String(option.id) === String(valueString));
       setFormData((prev) => ({
         ...prev,
-        city_id: value,
+        city_id: valueString,
         city: selectedCity?.name || "",
       }));
-      setErrors((prev: any) => ({ ...prev, city_id: null }));
+      setErrors((prev) => ({ ...prev, city_id: null }));
     } else {
-      setFormData((prev) => ({ ...prev, [field]: value }));
-      setErrors((prev: any) => ({ ...prev, [field]: null }));
+      setFormData((prev) => ({ ...prev, [field]: valueString }));
+      setErrors((prev) => ({ ...prev, [field]: null }));
     }
   };
 
@@ -246,20 +362,33 @@ const ClientCreateForm: React.FC<ClientCreateFormProps> = ({
       return;
     }
 
-    const payload: any = {
+    const payload: Record<string, unknown> = {
       ...formData,
       ...(isAdminContext ? {} : { role: "client" }),
     };
 
-    if (!payload.tenant_id) {
-      delete payload.tenant_id;
+    const tenantIdValue = payload["tenant_id"];
+    if (!tenantIdValue) {
+      delete payload["tenant_id"];
     } else {
-      payload.tenant_id = String(payload.tenant_id);
+      payload["tenant_id"] = String(tenantIdValue);
     }
 
     createClient(payload, {
-      onSuccess: (response: any) => {
-        const userId = response?.data?.id;
+      onSuccess: (response: unknown) => {
+        const extractUserId = (value: unknown): string | number | null => {
+          if (!value || typeof value !== "object") return null;
+          const data = (value as { data?: unknown }).data;
+          if (data && typeof data === "object" && "id" in data) {
+            return (data as { id?: string | number }).id ?? null;
+          }
+          if ("id" in value) {
+            return (value as { id?: string | number }).id ?? null;
+          }
+          return null;
+        };
+
+        const userId = extractUserId(response);
 
         if (isAdminContext && discountFormData.enabled && discountFormData.value && userId) {
           const discountPayload = {
@@ -288,13 +417,28 @@ const ClientCreateForm: React.FC<ClientCreateFormProps> = ({
           onClose?.();
         }
       },
-      onError: (err: any) => {
-        const errorMsg = err.response?.data?.message || err.message || "Failed to add client.";
+      onError: (err: unknown) => {
+        const resolveErrorPayload = (value: unknown): ApiErrorPayload => {
+          if (!value || typeof value !== "object") return {};
+          const payload = value as {
+            message?: string;
+            response?: { data?: ApiErrorPayload };
+          };
+          const message = payload.response?.data?.message ?? payload.message;
+          const errors = payload.response?.data?.errors;
+          const result: ApiErrorPayload = {};
+          if (message !== undefined) result.message = message;
+          if (errors !== undefined) result.errors = errors;
+          return result;
+        };
+
+        const errorPayload = resolveErrorPayload(err);
+        const errorMsg = errorPayload.message || "Failed to add client.";
         ToastUtils.error(errorMsg);
-        if (err.response?.data?.errors) {
-          setErrors((prev: any) => ({
+        if (errorPayload.errors) {
+          setErrors((prev) => ({
             ...prev,
-            ...err.response.data.errors,
+            ...errorPayload.errors,
           }));
         }
       },
@@ -304,13 +448,8 @@ const ClientCreateForm: React.FC<ClientCreateFormProps> = ({
   const showCityDropdown = cities && cities.length > 0 && !isCitiesFetching;
   const accent = formAccent.primary;
   const formId = "add-client-form";
-  const tenantList = Array.isArray(tenants?.data)
-    ? tenants.data
-    : Array.isArray(tenants)
-      ? tenants
-      : [];
   const selectedTenant = tenantList.find(
-    (tenant: any) => String(tenant.id) === String(formData.tenant_id)
+    (tenant) => String(tenant.id) === String(formData.tenant_id)
   );
   const tenantDisplayName = isAdminContext
     ? selectedTenant?.name || "Unassigned"
@@ -322,7 +461,7 @@ const ClientCreateForm: React.FC<ClientCreateFormProps> = ({
   const verifiedLabel = formData.verified ? "Verified" : "Pending verification";
   const resetLabel = formData.force_password_reset ? "Forced on first login" : "Optional";
 
-  const summarySections = useMemo(
+  const summarySections = useMemo<SummarySection[]>(
     () => [
       {
         title: "Account contact",
@@ -371,11 +510,22 @@ const ClientCreateForm: React.FC<ClientCreateFormProps> = ({
     ]
   );
 
-  const guidanceItems = [
+  const guidanceItems: string[] = [
     "Assign the client to the correct tenant workspace.",
     "Use the Verify Business action to populate official records.",
     "Passwords are temporary; a reset can be forced on their first login.",
   ];
+
+  const normalizedErrors = useMemo<Record<string, string>>(() => {
+    return Object.entries(errors).reduce<Record<string, string>>((acc, [key, value]) => {
+      if (typeof value === "string") {
+        acc[key] = value;
+      } else if (Array.isArray(value) && value.length > 0) {
+        acc[key] = value.filter(Boolean).join(", ");
+      }
+      return acc;
+    }, {});
+  }, [errors]);
 
   const asideContent = (
     <>
@@ -385,9 +535,7 @@ const ClientCreateForm: React.FC<ClientCreateFormProps> = ({
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               Tenant assignment
             </p>
-            <p className="text-lg font-semibold text-slate-800">
-              {tenantDisplayName}
-            </p>
+            <p className="text-lg font-semibold text-slate-800">{tenantDisplayName}</p>
           </div>
           <span
             className="inline-flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold"
@@ -420,14 +568,14 @@ const ClientCreateForm: React.FC<ClientCreateFormProps> = ({
         </p>
       </div>
 
-      {summarySections.map((section: any) => (
+      {summarySections.map((section) => (
         <div
           key={section.title}
           className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
         >
           <h3 className="text-sm font-semibold text-slate-800">{section.title}</h3>
           <dl className="mt-3 space-y-3 text-sm">
-            {section.items.map((item: any) => (
+            {section.items.map((item) => (
               <div
                 key={`${section.title}-${item.label}`}
                 className="flex items-start justify-between gap-3"
@@ -445,7 +593,7 @@ const ClientCreateForm: React.FC<ClientCreateFormProps> = ({
       <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-100 p-5 shadow-sm">
         <h3 className="text-sm font-semibold text-slate-800">Quick guidance</h3>
         <ul className="mt-3 space-y-2 text-sm text-slate-600">
-          {guidanceItems.map((tip: any) => (
+          {guidanceItems.map((tip) => (
             <li key={tip} className="flex items-start gap-2">
               <span
                 className="mt-1 h-1.5 w-1.5 rounded-full"
@@ -487,7 +635,7 @@ const ClientCreateForm: React.FC<ClientCreateFormProps> = ({
     </div>
   );
 
-  const meta = [
+  const meta: Array<{ label: string; value: string }> = [
     {
       label: "Tenant",
       value: tenantDisplayName,
@@ -514,7 +662,7 @@ const ClientCreateForm: React.FC<ClientCreateFormProps> = ({
       description="Create a client profile, connect it to the right tenant workspace, and capture business records."
       accentGradient={accent.gradient}
       accentColor={accent.color}
-      meta={meta as any}
+      meta={meta}
       aside={asideContent}
       footer={footer}
       maxWidthClass={isPageMode ? "max-w-full" : "max-w-8xl"}
@@ -542,20 +690,21 @@ const ClientCreateForm: React.FC<ClientCreateFormProps> = ({
           <div className="mt-6 space-y-4">
             <ClientBusinessInputs
               formData={formData}
-              handleInputChange={(e: any) => {
-                if (e.target) {
-                  updateFormData(e.target.id, e.target.value);
+              handleInputChange={(event) => {
+                const target = event.target;
+                if (target) {
+                  updateFormDataForInputs(target.id, target.value);
                 }
               }}
-              updateFormData={updateFormData}
-              errors={errors}
+              updateFormData={updateFormDataForInputs}
+              errors={normalizedErrors}
               tenants={tenantList}
               tenantName={!isAdminContext ? tenantName : undefined}
               countries={countries}
               states={states}
               cities={showCityDropdown ? cities : []}
               industries={industries}
-              handleSelectChange={handleSelectChange}
+              handleSelectChange={handleSelectChangeForInputs}
               isTenantsFetching={isTenantsFetching}
               isCountriesFetching={isCountriesFetching}
               isStatesFetching={isStatesFetching}
@@ -577,7 +726,7 @@ const ClientCreateForm: React.FC<ClientCreateFormProps> = ({
             <DiscountFormSection
               formData={discountFormData}
               onChange={(data) => setDiscountFormData((prev) => ({ ...prev, ...data }))}
-              errors={errors}
+              errors={normalizedErrors}
             />
           </section>
         )}

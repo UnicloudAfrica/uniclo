@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import AdminPageShell from "../components/AdminPageShell";
 import TemplateManager from "../../shared/components/templates/TemplateManager";

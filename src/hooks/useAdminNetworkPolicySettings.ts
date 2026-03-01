@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentAdminApi from "../index/admin/silent";
 import adminApi from "../index/admin/api";
@@ -22,7 +21,7 @@ const updateNetworkPolicy = async (network_policy: NetworkPolicySettings) => {
   return res.data;
 };
 
-export const useAdminNetworkPolicySettings = (options = {}) => {
+export const useAdminNetworkPolicySettings = (options: any = {}) => {
   return useQuery({
     queryKey: ["admin-network-policy"],
     queryFn: fetchNetworkPolicy,

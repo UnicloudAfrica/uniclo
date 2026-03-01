@@ -7,7 +7,7 @@ interface InstanceParams {
   per_page?: number;
 }
 
-interface InstanceData {
+export interface InstanceData {
   id: number | string;
   status: string;
   [key: string]: unknown;

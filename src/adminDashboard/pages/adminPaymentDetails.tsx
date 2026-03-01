@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useMemo, useCallback } from "react";
+import { useMemo, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -10,7 +9,7 @@ import {
   Loader2,
   Wallet,
 } from "lucide-react";
-import AdminPageShell from "../components/AdminPageShell.tsx";
+import AdminPageShell from "../components/AdminPageShell";
 import ResourceHero from "../../shared/components/ui/ResourceHero";
 import { ModernButton } from "../../shared/components/ui";
 import { ModernCard } from "../../shared/components/ui";
@@ -22,7 +21,7 @@ import {
 } from "../../hooks/adminHooks/paymentHooks";
 import { designTokens } from "../../styles/designTokens";
 
-const formatCurrency = (amount, currency = "NGN") => {
+const formatCurrency = (amount: any, currency = "NGN") => {
   if (amount === null || amount === undefined || Number.isNaN(amount)) {
     return "—";
   }
@@ -86,7 +85,8 @@ const statusPalette = {
 };
 const StatusPill = ({ status }: any) => {
   if (!status) return null;
-  const tone = statusPalette[status.toLowerCase()] || statusPalette.default;
+  const normalizedStatus = String(status).toLowerCase() as keyof typeof statusPalette;
+  const tone = statusPalette[normalizedStatus] || statusPalette.default;
   return (
     <span
       className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${tone.bg} ${tone.text} ${tone.border}`}
@@ -110,12 +110,13 @@ export default function AdminPaymentDetails() {
   const { mutate: downloadReceipt, isPending: isDownloadingReceipt } =
     useDownloadAdminTransactionReceipt();
 
-  const transaction = data?.transaction ?? {};
-  const payment = data?.payment ?? {};
-  const lineItems = data?.line_items ?? data?.order?.items ?? [];
-  const totals = data?.totals ?? {};
-  const currency = data?.currency ?? transaction.currency ?? "NGN";
-  const user = data?.user ?? {};
+  const paymentData: any = data;
+  const transaction = paymentData?.transaction ?? {};
+  const payment = paymentData?.payment ?? {};
+  const lineItems = paymentData?.line_items ?? paymentData?.order?.items ?? [];
+  const totals = paymentData?.totals ?? {};
+  const currency = paymentData?.currency ?? transaction.currency ?? "NGN";
+  const user = paymentData?.user ?? {};
 
   const metrics = useMemo(() => {
     return [
@@ -164,8 +165,8 @@ export default function AdminPaymentDetails() {
     if (!transaction.identifier && !transaction.id) return;
     const identifier = transaction.identifier || transaction.id;
     downloadReceipt(identifier, {
-      onSuccess: (buffer) => {
-        const blob = new Blob([buffer], { type: "application/pdf" });
+      onSuccess: (buffer: any) => {
+        const blob = new Blob([buffer as BlobPart], { type: "application/pdf" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
@@ -215,7 +216,7 @@ export default function AdminPaymentDetails() {
       {
         key: "description",
         header: "SERVICE",
-        render: (_, item) => (
+        render: (_: any, item: any) => (
           <div>
             <p className="font-semibold text-slate-900">{item.description || "Service charge"}</p>
             {item.itemable?.identifier && (
@@ -227,7 +228,7 @@ export default function AdminPaymentDetails() {
       {
         key: "frequency",
         header: "FREQUENCY",
-        render: (val) => (
+        render: (val: any) => (
           <span className="text-slate-600">{(val || "Recurring").replace(/_/g, " ")}</span>
         ),
       },
@@ -235,13 +236,13 @@ export default function AdminPaymentDetails() {
         key: "quantity",
         header: "QTY",
         align: "right",
-        render: (val) => <span className="text-slate-600">{val ?? 1}</span>,
+        render: (val: any) => <span className="text-slate-600">{val ?? 1}</span>,
       },
       {
         key: "unit_price",
         header: "UNIT PRICE",
         align: "right",
-        render: (val) => (
+        render: (val: any) => (
           <span className="text-slate-600">{formatCurrency(val ?? 0, currency)}</span>
         ),
       },
@@ -249,18 +250,21 @@ export default function AdminPaymentDetails() {
         key: "subtotal",
         header: "LINE TOTAL",
         align: "right",
-        render: (val) => (
+        render: (val: any) => (
           <span className="font-semibold text-slate-900">{formatCurrency(val ?? 0, currency)}</span>
         ),
       },
     ];
 
-    const data = lineItems.map((item, idx) => ({ ...item, id: item.identifier || idx }));
+    const data = lineItems.map((item: any, idx: number) => ({
+      ...item,
+      id: item.identifier || idx,
+    }));
 
     return (
       <ModernTable
         data={data}
-        columns={columns}
+        columns={columns as any}
         searchable={false}
         filterable={false}
         exportable={false}
@@ -270,7 +274,7 @@ export default function AdminPaymentDetails() {
     );
   };
   const renderInstances = () => {
-    if (!data?.instances?.length) {
+    if (!paymentData?.instances?.length) {
       return null;
     }
 
@@ -278,7 +282,7 @@ export default function AdminPaymentDetails() {
       {
         key: "name",
         header: "INSTANCE",
-        render: (_, instance) => (
+        render: (_: any, instance: any) => (
           <div>
             <p className="font-semibold text-slate-900">{instance.name || instance.identifier}</p>
             <span className="text-xs text-slate-500">{instance.identifier}</span>
@@ -288,21 +292,24 @@ export default function AdminPaymentDetails() {
       {
         key: "region",
         header: "REGION",
-        render: (val) => <span className="text-slate-600 uppercase">{val || "—"}</span>,
+        render: (val: any) => <span className="text-slate-600 uppercase">{val || "—"}</span>,
       },
       {
         key: "provider",
         header: "PROVIDER",
-        render: (val) => <span className="text-slate-600">{val || "—"}</span>,
+        render: (val: any) => <span className="text-slate-600">{val || "—"}</span>,
       },
       {
         key: "status",
         header: "STATUS",
-        render: (val) => <span className="text-slate-600 capitalize">{val || "—"}</span>,
+        render: (val: any) => <span className="text-slate-600 capitalize">{val || "—"}</span>,
       },
     ];
 
-    const instanceData = data.instances.map((i) => ({ ...i, id: i.identifier || i.id }));
+    const instanceData = paymentData.instances.map((i: any) => ({
+      ...i,
+      id: i.identifier || i.id,
+    }));
 
     return (
       <ModernCard className="space-y-4 border border-slate-200/70 bg-white/90 shadow-sm">
@@ -319,7 +326,7 @@ export default function AdminPaymentDetails() {
         </div>
         <ModernTable
           data={instanceData}
-          columns={instanceColumns}
+          columns={instanceColumns as any}
           searchable={false}
           filterable={false}
           exportable={false}
@@ -354,7 +361,7 @@ export default function AdminPaymentDetails() {
               We couldn't retrieve this payment record. It may have been removed or there may be a
               temporary service disruption.
             </p>
-            <ModernButton onClick={refetchTransaction}>Retry</ModernButton>
+            <ModernButton onClick={() => refetchTransaction()}>Retry</ModernButton>
           </ModernCard>
         ) : (
           <>
@@ -464,7 +471,7 @@ export default function AdminPaymentDetails() {
                   </p>
                   <p
                     className="mt-2 text-lg font-semibold"
-                    style={{ color: designTokens.colors.primary[600] }}
+                    style={{ color: designTokens.colors["primary"]?.[600] ?? "var(--theme-color)" }}
                   >
                     {formatCurrency(totals.total ?? transaction.amount, currency)}
                   </p>

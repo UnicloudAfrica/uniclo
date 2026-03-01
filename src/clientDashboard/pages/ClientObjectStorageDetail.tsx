@@ -1,5 +1,3 @@
-// @ts-nocheck
-import React from "react";
 import { useParams } from "react-router-dom";
 import ClientActiveTab from "../components/clientActiveTab";
 import ClientPageShell from "../components/ClientPageShell";

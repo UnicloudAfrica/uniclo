@@ -6,10 +6,9 @@ import api from "../index/api";
 import { adminSilentApi } from "../index/admin/api";
 import adminApi from "../index/admin/api";
 import tenantApi from "../index/tenant/tenantApi";
+import silentTenantApi from "../index/tenant/silentTenant";
 import clientApi from "../index/client/api";
 import clientSilentApi from "../index/client/silent";
-import config from "../config";
-import useTenantAuthStore from "../stores/tenantAuthStore";
 
 // Types
 export interface Notification {
@@ -35,35 +34,6 @@ export interface NotificationPreference {
 // Context type for API selection
 export type ApiContext = "admin" | "tenant" | "client";
 
-// Silent tenant API (no toast notifications)
-const silentTenantApi = async (method: string, uri: string, body: any = null) => {
-  const url = config.tenantURL + uri;
-  const tenantState = useTenantAuthStore.getState();
-
-  const headers: Record<string, string> = tenantState?.getAuthHeaders
-    ? tenantState.getAuthHeaders()
-    : {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      };
-
-  const options: globalThis.RequestInit = {
-    method,
-    headers,
-    credentials: "include",
-    body: body ? JSON.stringify(body) : null,
-  };
-
-  const response = await fetch(url, options);
-  const res = await response.json();
-
-  if (!response.ok && response.status !== 201) {
-    throw new Error(res?.message || "An error occurred");
-  }
-
-  return res;
-};
-
 // Helper to get the correct API based on context
 const getApiForContext = (context: ApiContext, silent: boolean = false) => {
   switch (context) {
@@ -81,7 +51,7 @@ const getApiForContext = (context: ApiContext, silent: boolean = false) => {
 // Detect context from URL path
 export const detectApiContext = (): ApiContext => {
   if (typeof window !== "undefined") {
-    const path = window.location.pathname;
+    const path = globalThis.window.location.pathname;
     if (path.startsWith("/admin-dashboard")) return "admin";
     if (path.startsWith("/dashboard") || path.startsWith("/tenant-dashboard")) return "tenant";
   }
@@ -130,7 +100,7 @@ export function useNotifications(filters?: {
             total: number;
           };
         };
-      } catch (error) {
+      } catch {
         // Return empty data on error to prevent infinite re-renders
         return { data: [], meta: { current_page: 1, last_page: 1, per_page: 10, total: 0 } };
       }
@@ -151,7 +121,7 @@ export function useUnreadCount(enabled = true) {
       try {
         const response = await apiClient("GET", "/settings/notifications/unread-count");
         return response as { data: { unread_count: number } };
-      } catch (error) {
+      } catch {
         return { data: { unread_count: 0 } };
       }
     },
@@ -273,7 +243,7 @@ export function useNotificationPreferences() {
           },
         ];
         return { data: preferences, raw: settings };
-      } catch (error) {
+      } catch {
         return { data: [], raw: {} };
       }
     },

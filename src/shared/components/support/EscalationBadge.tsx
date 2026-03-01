@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import { ESCALATION_CONFIG } from "./threadTypes";
 

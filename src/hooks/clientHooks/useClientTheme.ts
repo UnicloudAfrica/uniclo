@@ -16,8 +16,8 @@ const mapBrandingToClientTheme = (branding: BrandingTheme | null): ClientTheme =
   return {
     businessLogoHref: resolveBrandLogo(branding, FALLBACK_LOGO) || FALLBACK_LOGO,
     businessLogoLink: branding?.logoHref ?? undefined,
-    themeColor: branding?.accentColor ?? "#288DD1",
-    secondaryColor: branding?.primaryColor ?? "#3FE0C8",
+    themeColor: branding?.accentColor ?? "var(--theme-color)",
+    secondaryColor: branding?.primaryColor ?? "var(--secondary-color)",
     palette: branding?.palette ?? {},
     company: branding?.company ?? {},
     branding: branding ?? null,

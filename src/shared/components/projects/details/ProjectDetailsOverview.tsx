@@ -54,9 +54,7 @@ const ProjectDetailsOverview: React.FC<ProjectDetailsOverviewProps> = ({
                 <div>
                   <div className="text-sm font-medium text-gray-900 mb-1">{item.title}</div>
                   {item.missing_count ? (
-                    <div className="text-xs text-red-500 mb-2">
-                      {item.missing_count} missing
-                    </div>
+                    <div className="text-xs text-red-500 mb-2">{item.missing_count} missing</div>
                   ) : null}
                 </div>
                 <ModernButton

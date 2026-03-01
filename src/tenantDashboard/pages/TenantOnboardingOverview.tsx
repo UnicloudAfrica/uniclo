@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Loader2,
   FileDown,
@@ -9,11 +8,13 @@ import {
   Clock,
   Send,
 } from "lucide-react";
-import Sidebar from "../components/TenantSidebar";
-import HeaderBar from "../components/TenantHeadbar";
-import BreadcrumbNav from "../components/clientAciveTab";
+import TenantPageShell from "../components/TenantPageShell";
 import { useTenantClientOnboardingState } from "../../hooks/tenantHooks/useTenantClientOnboardingState";
-import { useTenantSubjectOnboarding } from "../../hooks/tenantHooks/useTenantSubjectOnboarding";
+import {
+  useTenantSubjectOnboarding,
+  type TenantSubjectOnboardingArgs,
+  type TenantOnboardingTarget,
+} from "../../hooks/tenantHooks/useTenantSubjectOnboarding";
 import { StatusPill } from "../../shared/components/ui";
 import ToastUtils from "../../utils/toastUtil";
 import {
@@ -22,14 +23,121 @@ import {
 } from "../../hooks/onboardingReviewHooks";
 import { STATUS_LABELS, STATUS_OPTIONS, STATUS_TONES } from "../../shared/constants/onboarding";
 
-const formatDateTime = (value: any) => (value ? new Date(value).toLocaleString() : "—");
+type OnboardingStatus = keyof typeof STATUS_LABELS | (string & {});
+type DecisionStatus = (typeof STATUS_OPTIONS)[number]["value"];
 
-const flattenPayload = (payload, prefix = "") => {
+interface ProgressSummary {
+  percentage: number;
+  approved: number;
+  required: number;
+}
+
+interface OnboardingStep {
+  id: string | number;
+  label?: string;
+  status?: OnboardingStatus;
+  requires_review?: boolean;
+  submitted_at?: string | null;
+  reviewed_at?: string | null;
+  [key: string]: unknown;
+}
+
+interface OnboardingSubjectState {
+  id?: string | number;
+  name?: string;
+  email?: string;
+  tenant_name?: string;
+  status?: OnboardingStatus;
+  steps?: OnboardingStep[];
+  current_step?: string | number | null;
+  progress?: Partial<ProgressSummary>;
+  [key: string]: unknown;
+}
+
+interface OnboardingSubject {
+  id: string | number;
+  name?: string;
+  email?: string;
+  tenant_name?: string;
+  target: TenantOnboardingTarget;
+  subjectKey: string;
+  source: "state" | "queue";
+  status: OnboardingStatus;
+  steps: OnboardingStep[];
+  current_step?: string | number | null;
+  progress: ProgressSummary;
+}
+
+interface ReviewQueueEntry {
+  key: string;
+  target: TenantOnboardingTarget;
+  tenant_id?: string | number | null;
+  user_id?: string | number | null;
+  label?: string;
+  subtitle?: string;
+  email?: string;
+  tenant_name?: string;
+  persona?: string;
+  status?: OnboardingStatus;
+  awaiting_steps?: OnboardingStep[];
+  total_pending?: number;
+  queued_since?: string | number;
+  last_activity_at?: string | number;
+  progress?: Partial<ProgressSummary>;
+}
+
+interface SubmissionDocument {
+  id: string | number;
+  category?: string;
+  created_at?: string;
+  version?: string | number;
+  url?: string;
+}
+
+interface SubmissionAttachment {
+  url?: string;
+  name?: string;
+}
+
+interface SubmissionThread {
+  id: string | number;
+  author?: { name?: string; type?: string };
+  created_at?: string;
+  message?: string;
+  attachments?: SubmissionAttachment[];
+  action?: string;
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const asArray = <T,>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
+
+const normalizeProgress = (value: unknown, fallbackRequired: number): ProgressSummary => {
+  const record = isRecord(value) ? value : {};
+  const percentage = typeof record.percentage === "number" ? record.percentage : 0;
+  const approved = typeof record.approved === "number" ? record.approved : 0;
+  const required =
+    typeof record.required === "number" ? record.required : Math.max(fallbackRequired, 0);
+  return { percentage, approved, required };
+};
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (typeof error === "string" && error.trim() !== "") return error;
+  if (isRecord(error) && typeof error.message === "string" && error.message.trim() !== "") {
+    return error.message;
+  }
+  return fallback;
+};
+
+const formatDateTime = (value: unknown) => (value ? new Date(String(value)).toLocaleString() : "—");
+
+const flattenPayload = (payload: unknown, prefix = ""): Array<[string, unknown]> => {
   if (!payload || typeof payload !== "object") {
     return [];
   }
 
-  return Object.entries(payload).flatMap(([key, value]) => {
+  return Object.entries(payload).flatMap(([key, value]): Array<[string, unknown]> => {
     const path = prefix ? `${prefix}.${key}` : key;
 
     if (value && typeof value === "object" && !Array.isArray(value) && !("document_id" in value)) {
@@ -40,7 +148,7 @@ const flattenPayload = (payload, prefix = "") => {
   });
 };
 
-const renderValue = (value: any) => {
+const renderValue = (value: unknown) => {
   if (value === null || value === undefined || value === "") {
     return <span className="text-gray-400">—</span>;
   }
@@ -69,10 +177,11 @@ const renderValue = (value: any) => {
   }
 
   if (typeof value === "object") {
-    if (value.document_id) {
+    const objectValue = value as Record<string, unknown>;
+    if (objectValue.document_id) {
       return (
         <a
-          href={value.url}
+          href={String(objectValue.url || "")}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:underline"
@@ -93,21 +202,31 @@ const renderValue = (value: any) => {
   return String(value);
 };
 
-const SectionHeading = ({ title, count }: any) => (
+const SectionHeading = ({ title, count }: { title: string; count: number }) => (
   <div className="flex items-center justify-between">
     <h2 className="text-sm font-semibold text-gray-800">{title}</h2>
     <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{count}</span>
   </div>
 );
 
-const SubjectList = ({ label, items, selectedKey, onSelect }: any) => (
+const SubjectList = ({
+  label,
+  items,
+  selectedKey,
+  onSelect,
+}: {
+  label: string;
+  items: OnboardingSubject[];
+  selectedKey: string | null;
+  onSelect: (subject: OnboardingSubject) => void;
+}) => (
   <div className="rounded-2xl border border-gray-200 bg-white p-4">
     <SectionHeading title={label} count={items.length} />
     {items.length === 0 ? (
       <p className="mt-3 text-sm text-gray-500">No records yet.</p>
     ) : (
       <div className="mt-3 space-y-2">
-        {items.map((item: any) => {
+        {items.map((item) => {
           const isActive = selectedKey === item.subjectKey;
           const currentStep =
             item.steps.find((step) => step.id === item.current_step) ?? item.steps[0];
@@ -151,11 +270,19 @@ const SubjectList = ({ label, items, selectedKey, onSelect }: any) => (
   </div>
 );
 
-const StepList = ({ steps, activeStepId, onSelectStep }: any) => (
+const StepList = ({
+  steps,
+  activeStepId,
+  onSelectStep,
+}: {
+  steps: OnboardingStep[];
+  activeStepId: string | number | null;
+  onSelectStep: (stepId: string | number) => void;
+}) => (
   <div className="space-y-2">
-    {steps.map((step: any) => {
+    {steps.map((step) => {
       const isActive = step.id === activeStepId;
-      const tone = STATUS_TONES[step.status] ?? "neutral";
+      const tone = STATUS_TONES[step.status ?? ""] ?? "neutral";
 
       return (
         <button
@@ -175,7 +302,9 @@ const StepList = ({ steps, activeStepId, onSelectStep }: any) => (
               )}
             </div>
             <StatusPill
-              label={STATUS_LABELS[step.status] ?? step.status.replace(/_/g, " ")}
+              label={
+                step.status ? (STATUS_LABELS[step.status] ?? step.status.replace(/_/g, " ")) : "—"
+              }
               tone={tone}
             />
           </div>
@@ -190,11 +319,11 @@ const StepList = ({ steps, activeStepId, onSelectStep }: any) => (
 );
 
 const TenantOnboardingOverview = () => {
-  const [selectedSubject, setSelectedSubject] = useState(null);
-  const [activeStep, setActiveStep] = useState(null);
-  const [decision, setDecision] = useState("in_review");
+  const [selectedSubject, setSelectedSubject] = useState<OnboardingSubject | null>(null);
+  const [activeStep, setActiveStep] = useState<OnboardingStep["id"] | null>(null);
+  const [decision, setDecision] = useState<DecisionStatus>("in_review");
   const [decisionMessage, setDecisionMessage] = useState("");
-  const contentRef = useRef(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
 
   const {
     data = { tenants: [], clients: [] },
@@ -202,39 +331,74 @@ const TenantOnboardingOverview = () => {
     isFetching,
     refetch: refetchState,
   } = useTenantClientOnboardingState();
+  const stateData = useMemo(() => {
+    const tenants = asArray<OnboardingSubjectState>(data?.tenants);
+    const clients = asArray<OnboardingSubjectState>(data?.clients);
+    return { tenants, clients };
+  }, [data]);
 
   const {
-    data: reviewQueue = [],
+    data: reviewQueueRaw = [],
     isFetching: isQueueLoading,
     refetch: refetchQueue,
   } = useOnboardingReviewQueue(null, { refetchInterval: 60_000 });
-
-  const tenantData = {
-    name: "Your Organisation",
-    logo: "",
-    color: "var(--theme-color)",
-  };
+  const reviewQueue = useMemo<ReviewQueueEntry[]>(
+    () => asArray<ReviewQueueEntry>(reviewQueueRaw),
+    [reviewQueueRaw]
+  );
 
   const updateStatusMutation = useUpdateOnboardingStatus();
 
   const tenantSubjects = useMemo(
     () =>
-      (data.tenants ?? []).map((item: any) => ({
-        ...item,
-        subjectKey: `tenant:${item.id}`,
-        source: "state",
-      })),
-    [data.tenants]
+      (stateData.tenants ?? [])
+        .map((item): OnboardingSubject | null => {
+          if (item.id === null || item.id === undefined) {
+            return null;
+          }
+          const steps = asArray<OnboardingStep>(item.steps);
+          return {
+            id: item.id,
+            name: item.name,
+            email: item.email,
+            tenant_name: item.tenant_name,
+            target: "tenant",
+            subjectKey: `tenant:${item.id}`,
+            source: "state",
+            status: item.status ?? "submitted",
+            steps,
+            current_step: item.current_step ?? steps[0]?.id ?? null,
+            progress: normalizeProgress(item.progress, steps.length),
+          };
+        })
+        .filter((item): item is OnboardingSubject => Boolean(item)),
+    [stateData.tenants]
   );
 
   const clientSubjects = useMemo(
     () =>
-      (data.clients ?? []).map((item: any) => ({
-        ...item,
-        subjectKey: `client:${item.id}`,
-        source: "state",
-      })),
-    [data.clients]
+      (stateData.clients ?? [])
+        .map((item): OnboardingSubject | null => {
+          if (item.id === null || item.id === undefined) {
+            return null;
+          }
+          const steps = asArray<OnboardingStep>(item.steps);
+          return {
+            id: item.id,
+            name: item.name,
+            email: item.email,
+            tenant_name: item.tenant_name,
+            target: "client",
+            subjectKey: `client:${item.id}`,
+            source: "state",
+            status: item.status ?? "submitted",
+            steps,
+            current_step: item.current_step ?? steps[0]?.id ?? null,
+            progress: normalizeProgress(item.progress, steps.length),
+          };
+        })
+        .filter((item): item is OnboardingSubject => Boolean(item)),
+    [stateData.clients]
   );
 
   useEffect(() => {
@@ -290,8 +454,8 @@ const TenantOnboardingOverview = () => {
     return {
       target: selectedSubject.target,
       subjectId: String(selectedSubject.id),
-      step: activeStep,
-    };
+      step: String(activeStep),
+    } as TenantSubjectOnboardingArgs;
   }, [selectedSubject, activeStep]);
 
   const {
@@ -299,7 +463,9 @@ const TenantOnboardingOverview = () => {
     isLoading: isDetailLoading,
     isFetching: isDetailFetching,
     refetch: refetchSubmission,
-  } = useTenantSubjectOnboarding(detailArgs ?? {}, { enabled: Boolean(detailArgs) });
+  } = useTenantSubjectOnboarding(detailArgs ?? { target: "tenant", subjectId: "", step: "" }, {
+    enabled: Boolean(detailArgs),
+  });
 
   const selectedStepDefinition = useMemo(() => {
     if (!selectedSubject || !activeStep) {
@@ -340,12 +506,12 @@ const TenantOnboardingOverview = () => {
     "rejected",
   ].includes(currentStatus);
 
-  const handleSelectSubject = (subject: any) => {
+  const handleSelectSubject = (subject: OnboardingSubject) => {
     setSelectedSubject(subject);
     setActiveStep(subject.current_step ?? subject.steps[0]?.id ?? null);
   };
 
-  const handleQueueSelect = (entry: any) => {
+  const handleQueueSelect = (entry: ReviewQueueEntry | null) => {
     if (!entry) {
       return;
     }
@@ -364,7 +530,7 @@ const TenantOnboardingOverview = () => {
       return;
     }
 
-    const fallbackSteps = (entry.awaiting_steps ?? []).map((step: any) => ({
+    const fallbackSteps = (entry.awaiting_steps ?? []).map((step) => ({
       id: step.id,
       label: step.label,
       status: step.status,
@@ -384,11 +550,10 @@ const TenantOnboardingOverview = () => {
       status: entry.status ?? "submitted",
       steps: fallbackSteps,
       current_step: fallbackSteps[0]?.id ?? null,
-      progress: entry.progress ?? {
-        percentage: fallbackSteps.length > 0 ? 0 : 100,
-        approved: 0,
-        required: fallbackSteps.length,
-      },
+      progress: normalizeProgress(
+        entry.progress ?? null,
+        fallbackSteps.length > 0 ? fallbackSteps.length : 0
+      ),
     };
 
     setSelectedSubject(fallbackSubject);
@@ -431,7 +596,7 @@ const TenantOnboardingOverview = () => {
           }
         },
         onError: (error) => {
-          ToastUtils.error(error?.message ?? "Unable to update submission status.");
+          ToastUtils.error(getErrorMessage(error, "Unable to update submission status."));
         },
       }
     );
@@ -452,7 +617,7 @@ const TenantOnboardingOverview = () => {
       <div className="rounded-2xl border border-gray-200">
         <table className="w-full text-left text-sm">
           <tbody>
-            {entries.map(([key, value]) => (
+            {entries.map(([key, value]: [string, unknown]) => (
               <tr key={key} className="border-b border-gray-100">
                 <td className="w-1/3 px-4 py-3 font-medium text-gray-700">{key}</td>
                 <td className="px-4 py-3 text-gray-700">{renderValue(value)}</td>
@@ -465,7 +630,7 @@ const TenantOnboardingOverview = () => {
   };
 
   const renderDocuments = () => {
-    const documents = submissionDetail?.documents ?? [];
+    const documents = asArray<SubmissionDocument>(submissionDetail?.documents);
 
     if (!documents.length) {
       return <p className="text-sm text-gray-500">No documents uploaded yet.</p>;
@@ -473,7 +638,7 @@ const TenantOnboardingOverview = () => {
 
     return (
       <div className="space-y-3">
-        {documents.map((document: any) => (
+        {documents.map((document) => (
           <div
             key={document.id}
             className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 px-4 py-3 text-sm"
@@ -500,7 +665,7 @@ const TenantOnboardingOverview = () => {
   };
 
   const renderThreads = () => {
-    const threads = submissionDetail?.threads ?? [];
+    const threads = asArray<SubmissionThread>(submissionDetail?.threads);
 
     if (!threads.length) {
       return (
@@ -512,7 +677,7 @@ const TenantOnboardingOverview = () => {
 
     return (
       <div className="max-h-64 space-y-3 overflow-y-auto pr-2">
-        {threads.map((thread: any) => (
+        {threads.map((thread) => (
           <div key={thread.id} className="rounded-lg border border-gray-200 bg-white p-4 text-sm">
             <div className="flex items-center justify-between">
               <div className="font-medium text-gray-900">
@@ -550,13 +715,11 @@ const TenantOnboardingOverview = () => {
     );
   };
 
-  return (
-    <>
-      <Sidebar tenantData={tenantData} />
-      <HeaderBar tenantData={tenantData} />
-      <BreadcrumbNav tenantData={tenantData} />
+  const stepStatus = selectedStepDefinition?.status ?? "not_started";
 
-      <main ref={contentRef} className="dashboard-content-shell overflow-y-auto p-6 md:p-8">
+  return (
+    <TenantPageShell customHeader={<></>} disableContentPadding contentClassName="p-6 md:p-8">
+      <div ref={contentRef} className="overflow-y-auto">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">Onboarding Review</h1>
@@ -567,8 +730,7 @@ const TenantOnboardingOverview = () => {
           <div className="hidden gap-2 md:flex">
             <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs text-gray-600">
               <CheckCircle2 size={14} className="text-emerald-500" />
-              {tenantSubjects.filter((item: any) => item.status === "approved").length} tenants
-              approved
+              {tenantSubjects.filter((item) => item.status === "approved").length} tenants approved
             </div>
             <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs text-gray-600">
               <MessageCircle size={14} className="text-blue-500" />
@@ -620,14 +782,14 @@ const TenantOnboardingOverview = () => {
                           .slice()
                           .sort((a, b) => {
                             const aTime = a.queued_since
-                              ? new Date(a.queued_since).getTime()
+                              ? new Date(String(a.queued_since)).getTime()
                               : Number.POSITIVE_INFINITY;
                             const bTime = b.queued_since
-                              ? new Date(b.queued_since).getTime()
+                              ? new Date(String(b.queued_since)).getTime()
                               : Number.POSITIVE_INFINITY;
                             return aTime - bTime;
                           })
-                          .map((entry: any) => {
+                          .map((entry) => {
                             const entryKey = `${entry.target}:${entry.target === "tenant" ? entry.tenant_id : entry.user_id}`;
                             const isActive =
                               selectedSubject &&
@@ -640,9 +802,7 @@ const TenantOnboardingOverview = () => {
                             const lastActivity = entry.last_activity_at
                               ? formatDateTime(entry.last_activity_at)
                               : "—";
-                            const awaitingSteps = Array.isArray(entry.awaiting_steps)
-                              ? entry.awaiting_steps
-                              : [];
+                            const awaitingSteps = asArray<OnboardingStep>(entry.awaiting_steps);
 
                             return (
                               <tr
@@ -670,14 +830,16 @@ const TenantOnboardingOverview = () => {
                                         None
                                       </span>
                                     ) : (
-                                      awaitingSteps.slice(0, 3).map((step: any) => (
+                                      awaitingSteps.slice(0, 3).map((step) => (
                                         <span
                                           key={`${entry.key}-${step.id}`}
                                           className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
                                         >
                                           {step.label}
                                           <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-blue-600">
-                                            {STATUS_LABELS[step.status] ?? step.status}
+                                            {step.status
+                                              ? (STATUS_LABELS[step.status] ?? step.status)
+                                              : "—"}
                                           </span>
                                         </span>
                                       ))
@@ -706,23 +868,21 @@ const TenantOnboardingOverview = () => {
                       .slice()
                       .sort((a, b) => {
                         const aTime = a.queued_since
-                          ? new Date(a.queued_since).getTime()
+                          ? new Date(String(a.queued_since)).getTime()
                           : Number.POSITIVE_INFINITY;
                         const bTime = b.queued_since
-                          ? new Date(b.queued_since).getTime()
+                          ? new Date(String(b.queued_since)).getTime()
                           : Number.POSITIVE_INFINITY;
                         return aTime - bTime;
                       })
-                      .map((entry: any) => {
+                      .map((entry) => {
                         const entryKey = `${entry.target}:${entry.target === "tenant" ? entry.tenant_id : entry.user_id}`;
                         const isActive =
                           selectedSubject &&
                           `${selectedSubject.target}:${selectedSubject.id}` === entryKey;
                         const secondaryLine =
                           entry.subtitle || entry.email || entry.tenant_name || null;
-                        const awaitingSteps = Array.isArray(entry.awaiting_steps)
-                          ? entry.awaiting_steps
-                          : [];
+                        const awaitingSteps = asArray<OnboardingStep>(entry.awaiting_steps);
                         const queuedSince = entry.queued_since
                           ? formatDateTime(entry.queued_since)
                           : "—";
@@ -769,14 +929,16 @@ const TenantOnboardingOverview = () => {
                             </div>
                             {awaitingSteps.length > 0 && (
                               <div className="mt-3 flex flex-wrap gap-2">
-                                {awaitingSteps.slice(0, 3).map((step: any) => (
+                                {awaitingSteps.slice(0, 3).map((step) => (
                                   <span
                                     key={`${entry.key}-${step.id}-mobile`}
                                     className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
                                   >
                                     {step.label}
                                     <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-blue-600">
-                                      {STATUS_LABELS[step.status] ?? step.status}
+                                      {step.status
+                                        ? (STATUS_LABELS[step.status] ?? step.status)
+                                        : "—"}
                                     </span>
                                   </span>
                                 ))}
@@ -881,11 +1043,8 @@ const TenantOnboardingOverview = () => {
                           )}
                         </div>
                         <StatusPill
-                          label={
-                            STATUS_LABELS[selectedStepDefinition?.status] ??
-                            (selectedStepDefinition?.status ?? "not_started").replace(/_/g, " ")
-                          }
-                          tone={STATUS_TONES[selectedStepDefinition?.status] ?? "neutral"}
+                          label={STATUS_LABELS[stepStatus] ?? stepStatus.replace(/_/g, " ")}
+                          tone={STATUS_TONES[stepStatus] ?? "neutral"}
                         />
                       </div>
 
@@ -922,7 +1081,7 @@ const TenantOnboardingOverview = () => {
                               Decision
                             </h4>
                             <div className="grid gap-2 sm:grid-cols-2">
-                              {STATUS_OPTIONS.map((option: any) => (
+                              {STATUS_OPTIONS.map((option) => (
                                 <button
                                   key={option.value}
                                   onClick={() => setDecision(option.value)}
@@ -985,8 +1144,8 @@ const TenantOnboardingOverview = () => {
             </div>
           </div>
         </div>
-      </main>
-    </>
+      </div>
+    </TenantPageShell>
   );
 };
 

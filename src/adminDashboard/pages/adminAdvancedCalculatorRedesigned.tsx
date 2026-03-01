@@ -1,19 +1,16 @@
-// @ts-nocheck
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Calculator, Check, Settings, FileText, UserPlus } from "lucide-react";
 import CalculatorConfigStep from "./calculatorComps/calculatorConfigStep";
-import CalculatorSummaryStep from "./calculatorComps/calculatorSummaryStep";
+import CalculatorSummaryStep from "../../shared/components/billing/calculator/CalculatorSummaryStep";
 import ToastUtils from "../../utils/toastUtil";
-import { useSharedCalculatorPricing, useSharedClients } from "../../hooks/sharedCalculatorHooks";
-import { useFetchTenants } from "../../hooks/adminHooks/tenantHooks";
-import { useFetchClients } from "../../hooks/adminHooks/clientHooks";
-import AdminPageShell from "../components/AdminPageShell.tsx";
+import { useSharedCalculatorPricing } from "../../hooks/sharedCalculatorHooks";
+import AdminPageShell from "../components/AdminPageShell";
 import { ModernCard } from "../../shared/components/ui";
 import { ModernButton } from "../../shared/components/ui";
 import { useCustomerContext } from "../../hooks/adminHooks/useCustomerContext";
 import CustomerContextSelector from "../../shared/components/common/CustomerContextSelector";
+import type { CalculatorData, ObjectStorageRequest } from "../../shared/components/billing/types";
 
 const AdminAdvancedCalculatorRedesigned = () => {
   const navigate = useNavigate();
@@ -21,7 +18,7 @@ const AdminAdvancedCalculatorRedesigned = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isCalculating, setIsCalculating] = useState(false);
 
-  const [calculatorData, setCalculatorData] = useState({
+  const [calculatorData, setCalculatorData] = useState<CalculatorData>({
     pricing_requests: [],
     object_storage_items: [],
     apply_total_discount: false,
@@ -49,13 +46,14 @@ const AdminAdvancedCalculatorRedesigned = () => {
   // const [selectedTenantId, setSelectedTenantId] = useState("");
   // const [selectedUserId, setSelectedUserId] = useState("");
 
-  const [pricingResult, setPricingResult] = useState(null);
-  const [errors, setErrors] = useState({});
+  const [pricingResult, setPricingResult] = useState<any>(null);
+  const [errors, setErrors] = useState<Record<string, string | undefined>>({});
 
   const steps = [
     { title: "Configuration", icon: Settings },
     { title: "Summary", icon: FileText },
   ];
+  const activeStep = steps[currentStep] ?? steps[0];
 
   const { mutate: calculatePricingMutation, isPending: isCalculatingMutation } =
     useSharedCalculatorPricing();
@@ -66,12 +64,12 @@ const AdminAdvancedCalculatorRedesigned = () => {
   //   enabled: !!selectedTenantId,
   // });
 
-  const updateCalculatorData = React.useCallback((field, value) => {
+  const updateCalculatorData = React.useCallback((field: string, value: unknown) => {
     setCalculatorData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: null }));
+    setErrors((prev) => ({ ...prev, [field]: undefined }));
   }, []);
 
-  const handleCountryChange = (countryCode: any, currencyCode: any) => {
+  const handleCountryChange = (countryCode: string, currencyCode: string) => {
     const normalizedCountry = countryCode ? countryCode.toUpperCase() : "";
     const normalizedCurrency = currencyCode ? currencyCode.toUpperCase() : "USD";
 
@@ -92,46 +90,33 @@ const AdminAdvancedCalculatorRedesigned = () => {
     setCurrentStep(0);
     setErrors({});
   };
-  const addPricingRequest = (request: any) => {
-    setCalculatorData((prev) => ({
-      ...prev,
-      pricing_requests: [...prev.pricing_requests, request],
-    }));
-  };
-  const removePricingRequest = (index: any) => {
-    setCalculatorData((prev) => ({
-      ...prev,
-      pricing_requests: prev.pricing_requests.filter((_, i) => i !== index),
-    }));
-  };
-  const addStorageItem = (item: any) => {
+  const addStorageItem = (item: ObjectStorageRequest) => {
     setCalculatorData((prev) => ({
       ...prev,
       object_storage_items: [...(prev.object_storage_items || []), item],
     }));
   };
-  const removeStorageItem = (index: any) => {
+  const removeStorageItem = (index: number) => {
     setCalculatorData((prev) => ({
       ...prev,
       object_storage_items: (prev.object_storage_items || []).filter((_, i) => i !== index),
     }));
   };
   const validateConfiguration = () => {
-    const newErrors = {};
-
+    const newErrors: Record<string, any> = {};
     if (
       calculatorData.pricing_requests.length === 0 &&
       (calculatorData.object_storage_items?.length || 0) === 0
     ) {
-      newErrors.general = "Add at least one compute or Silo Storage entry before calculating.";
+      newErrors["general"] = "Add at least one compute or Silo Storage entry before calculating.";
     }
 
     if (calculatorData.apply_total_discount) {
       if (
         !calculatorData.total_discount_value ||
-        parseFloat(calculatorData.total_discount_value) <= 0
+        Number(calculatorData.total_discount_value) <= 0
       ) {
-        newErrors.total_discount_value = "Please enter a valid discount value.";
+        newErrors["total_discount_value"] = "Please enter a valid discount value.";
       }
     }
 
@@ -145,7 +130,14 @@ const AdminAdvancedCalculatorRedesigned = () => {
 
     const storageItems = calculatorData.object_storage_items || [];
 
-    const payload = {
+    const payload: {
+      pricing_requests: Record<string, unknown>[];
+      object_storage_items?: Record<string, unknown>[];
+      tenant_id?: string | number;
+      client_id?: string | number;
+      total_discount?: { type: string; value: number; label: string | null };
+      country_code?: string;
+    } = {
       pricing_requests: calculatorData.pricing_requests.map((req: any) => {
         const { _display, ...rest } = req;
         return rest;
@@ -175,7 +167,7 @@ const AdminAdvancedCalculatorRedesigned = () => {
     }
 
     if (calculatorData.apply_total_discount && calculatorData.total_discount_value) {
-      const discountValue = parseFloat(calculatorData.total_discount_value);
+      const discountValue = Number(calculatorData.total_discount_value);
       if (Number.isNaN(discountValue) || discountValue <= 0) {
         ToastUtils.error("Please enter a valid discount value.");
         setIsCalculating(false);
@@ -198,8 +190,12 @@ const AdminAdvancedCalculatorRedesigned = () => {
         setCurrentStep(1);
         ToastUtils.success("Pricing calculated successfully!");
       },
-      onError: (error) => {
-        ToastUtils.error(error.message || "Failed to calculate pricing. Please try again.");
+      onError: (error: unknown) => {
+        const message =
+          error instanceof Error && error.message
+            ? error.message
+            : "Failed to calculate pricing. Please try again.";
+        ToastUtils.error(message);
       },
       onSettled: () => {
         setIsCalculating(false);
@@ -217,11 +213,9 @@ const AdminAdvancedCalculatorRedesigned = () => {
     if (currentStep === 0) {
       return (
         <CalculatorConfigStep
-          calculatorData={calculatorData}
+          calculatorData={calculatorData as any}
           errors={errors}
           updateCalculatorData={updateCalculatorData}
-          onAddRequest={addPricingRequest}
-          onRemoveRequest={removePricingRequest}
           onAddStorageItem={addStorageItem}
           onRemoveStorageItem={removeStorageItem}
           onCountryChange={handleCountryChange}
@@ -296,7 +290,7 @@ const AdminAdvancedCalculatorRedesigned = () => {
               <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-slate-500">
                 <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-700 shadow-sm">
                   <Settings className="h-4 w-4 text-primary-500" />
-                  {`Step ${currentStep + 1} · ${steps[currentStep].title}`}
+                  {`Step ${currentStep + 1} · ${activeStep?.title ?? "Configuration"}`}
                 </span>
                 <span className="text-slate-400">
                   {currentStep === 0
@@ -313,7 +307,7 @@ const AdminAdvancedCalculatorRedesigned = () => {
               <div className="flex flex-col gap-4 p-6 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-slate-900">
-                    {steps[currentStep].title}
+                    {activeStep?.title ?? "Configuration"}
                   </h2>
                   <p className="text-sm text-slate-500">
                     Step through configuration and generate accurate pricing.
@@ -372,7 +366,9 @@ const AdminAdvancedCalculatorRedesigned = () => {
               </ModernButton>
             </div>
 
-            {errors.general && <p className="text-sm font-medium text-red-600">{errors.general}</p>}
+            {errors["general"] && (
+              <p className="text-sm font-medium text-red-600">{errors["general"]}</p>
+            )}
           </AdminPageShell>
         </main>
       </div>

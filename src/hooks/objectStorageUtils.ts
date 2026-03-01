@@ -15,6 +15,20 @@ export interface ServiceProfile {
 export const OBJECT_STORAGE_KEYWORDS = ["object_storage", "object storage"];
 export const GLOBAL_TIER_KEY = "__all__";
 
+type UnknownRecord = Record<string, unknown>;
+
+type PricingLike = UnknownRecord & {
+  product?: UnknownRecord;
+  pricing?: UnknownRecord;
+  object_storage?: UnknownRecord;
+  object_storage_configuration?: UnknownRecord;
+};
+
+type RegionLike = UnknownRecord;
+
+const isRecord = (value: unknown): value is UnknownRecord =>
+  typeof value === "object" && value !== null;
+
 /**
  * Generate a unique profile ID
  */
@@ -36,7 +50,7 @@ export const createServiceProfile = (): ServiceProfile => ({
 /**
  * Get region code from pricing object
  */
-export const getPricingRegionCode = (pricing: any): string =>
+export const getPricingRegionCode = (pricing?: PricingLike | null): string =>
   pricing?.region ||
   pricing?.product?.region ||
   pricing?.product?.region_code ||
@@ -47,7 +61,7 @@ export const getPricingRegionCode = (pricing: any): string =>
 /**
  * Create a unique tier key from region and pricing data
  */
-export const makeTierKey = (regionKey: string, pricing: any): string => {
+export const makeTierKey = (regionKey: string, pricing?: PricingLike | null): string => {
   const baseId =
     pricing?.productable_id ??
     pricing?.product_id ??
@@ -66,7 +80,7 @@ export const makeTierKey = (regionKey: string, pricing: any): string => {
 /**
  * Convert values to lowercase strings for comparison
  */
-export const toLowerCaseStrings = (values: any[] = []): string[] =>
+export const toLowerCaseStrings = (values: unknown[] = []): string[] =>
   values
     .flatMap((value) => (Array.isArray(value) ? value : [value]))
     .filter(
@@ -87,7 +101,7 @@ export const includesObjectStorageKeyword = (candidates: string[] = []): boolean
 /**
  * Determine if pricing is for object storage
  */
-export const isObjectStoragePricing = (pricing: any): boolean => {
+export const isObjectStoragePricing = (pricing?: PricingLike | null): boolean => {
   if (!pricing || typeof pricing !== "object") {
     return false;
   }
@@ -129,7 +143,7 @@ export const isObjectStoragePricing = (pricing: any): boolean => {
 /**
  * Resolve unit price from tier data
  */
-export const resolveTierUnitPrice = (tier: any): number => {
+export const resolveTierUnitPrice = (tier?: PricingLike | null): number => {
   if (!tier) return 0;
   const candidates = [
     tier.price_local,
@@ -153,7 +167,7 @@ export const resolveTierUnitPrice = (tier: any): number => {
 /**
  * Resolve quota (GiB) from tier data
  */
-export const resolveTierQuota = (tier: any): number => {
+export const resolveTierQuota = (tier?: PricingLike | null): number => {
   if (!tier) return 0;
   const candidates = [
     tier.product?.object_storage?.quota_gb,
@@ -176,7 +190,7 @@ export const resolveTierQuota = (tier: any): number => {
 /**
  * Resolve per-GB unit price from tier data
  */
-export const resolveTierUnitPricePerGb = (tier: any): number => {
+export const resolveTierUnitPricePerGb = (tier?: PricingLike | null): number => {
   const total = resolveTierUnitPrice(tier);
   if (!total) return 0;
   const quota = resolveTierQuota(tier);
@@ -189,7 +203,10 @@ export const resolveTierUnitPricePerGb = (tier: any): number => {
 /**
  * Resolve currency from tier data
  */
-export const resolveTierCurrency = (tier: any, fallback: string = "USD"): string => {
+export const resolveTierCurrency = (
+  tier?: PricingLike | null,
+  fallback: string = "USD"
+): string => {
   if (!tier) return fallback;
   const candidates = [
     tier.currency,
@@ -209,7 +226,7 @@ export const resolveTierCurrency = (tier: any, fallback: string = "USD"): string
 /**
  * Get region code from region object
  */
-export const getRegionCode = (region: any): string => {
+export const getRegionCode = (region?: RegionLike | null): string => {
   if (!region) return "";
   return (
     region.code ||
@@ -226,7 +243,7 @@ export const getRegionCode = (region: any): string => {
  * Build tier label for display
  */
 export const buildTierLabel = (
-  pricing: any,
+  pricing?: PricingLike | null,
   currencyOverride?: string | null,
   selectedCurrency?: string
 ): string => {
@@ -259,7 +276,7 @@ export const buildTierLabel = (
 /**
  * Get display name for a tier
  */
-export const getTierDisplayName = (pricing: any): string =>
+export const getTierDisplayName = (pricing?: PricingLike | null): string =>
   pricing?.product?.name ||
   pricing?.product_name ||
   pricing?.product?.product_name ||
@@ -288,7 +305,7 @@ export const formatCurrency = (amount: number | string, currency?: string): stri
 /**
  * Normalize payment options from various formats
  */
-export const normalizePaymentOptions = (options: any): any => {
+export const normalizePaymentOptions = (options: unknown): unknown => {
   if (!options) return null;
   if (typeof options === "string") {
     try {
@@ -315,14 +332,14 @@ export {
   type Option,
 } from "../shared/utils/countryUtils";
 
-
 /**
  * Format region options from API data
  */
-export const formatRegionOptions = (regions: any[]): Option[] => {
+export const formatRegionOptions = (regions: unknown[] = []): Option[] => {
   const seen = new Set<string>();
   return (Array.isArray(regions) ? regions : [])
     .map((region): Option | null => {
+      if (!isRecord(region)) return null;
       const code = getRegionCode(region);
       if (!code) return null;
       const lower = code.toLowerCase();

@@ -7,13 +7,13 @@ import type { SecurityGroupPermissions } from "../../config/permissionPresets";
 
 interface SecurityGroupsOverviewProps {
   securityGroups: SecurityGroup[];
-  isLoading?: boolean;
-  emptyMessage?: string;
-  onViewRules?: (sg: SecurityGroup) => void;
-  onDelete?: (sg: SecurityGroup) => void;
-  showActions?: boolean;
+  isLoading?: boolean | undefined;
+  emptyMessage?: string | undefined;
+  onViewRules?: ((sg: SecurityGroup) => void) | undefined;
+  onDelete?: ((sg: SecurityGroup) => void) | undefined;
+  showActions?: boolean | undefined;
   /** Optional permissions object for permission-based action gating */
-  permissions?: SecurityGroupPermissions;
+  permissions?: SecurityGroupPermissions | undefined;
 }
 
 const SecurityGroupsOverview: React.FC<SecurityGroupsOverviewProps> = ({

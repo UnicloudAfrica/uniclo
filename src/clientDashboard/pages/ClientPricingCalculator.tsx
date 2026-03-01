@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardPageShell from "../../shared/layouts/DashboardPageShell";

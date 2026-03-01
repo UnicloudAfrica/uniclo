@@ -1,26 +1,28 @@
-// @ts-nocheck
 import React, { useState } from "react";
 import { Globe, Plus, Link, Link2Off, Trash2 } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
 import ModernButton from "../ui/ModernButton";
 import { ResourceSection, ResourceEmptyState } from "../ui";
+import type { MetaItem } from "../ui/ResourceSection";
 import { InternetGatewayPermissions } from "../../config/permissionPresets";
 
 // Importing Modals
 import CreateInternetGatewayModal from "./modals/CreateInternetGatewayModal";
 import AttachInternetGatewayModal from "./modals/AttachInternetGatewayModal";
 
+import { InternetGateway, Vpc } from "./types";
+
 interface InternetGatewaysOverviewProps {
-  gateways: any[];
-  vpcs: any[]; // For attach modal
+  gateways: InternetGateway[];
+  vpcs: Vpc[]; // For attach modal
   isLoading: boolean;
   permissions: InternetGatewayPermissions;
-  onCreate?: (name: string) => void;
-  onDelete?: (igwId: string) => void;
-  onAttach?: (igwId: string, vpcId: string) => void;
-  onDetach?: (igwId: string, vpcId: string) => void;
-  isCreating?: boolean;
-  isAttaching?: boolean;
+  onCreate?: ((name: string) => void) | undefined;
+  onDelete?: ((igwId: string) => void) | undefined;
+  onAttach?: ((igwId: string, vpcId: string) => void) | undefined;
+  onDetach?: ((igwId: string, vpcId: string) => void) | undefined;
+  isCreating?: boolean | undefined;
+  isAttaching?: boolean | undefined;
 }
 
 const InternetGatewaysOverview: React.FC<InternetGatewaysOverviewProps> = ({
@@ -65,7 +67,7 @@ const InternetGatewaysOverview: React.FC<InternetGatewaysOverviewProps> = ({
       ]
     : [];
 
-  const stats = [
+  const stats: MetaItem[] = [
     {
       label: "Total Gateways",
       value: gateways.length,

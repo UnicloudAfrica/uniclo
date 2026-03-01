@@ -1,17 +1,16 @@
-// @ts-nocheck
 import { Loader2, X } from "lucide-react";
 
-const DeleteSGModal = ({ isOpen, onClose, onConfirm, securityGroupName, isDeleting }) => {
+const DeleteSGModal = ({ isOpen, onClose, onConfirm, securityGroupName, isDeleting }: any) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[500px] mx-4 w-full">
-        <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
-          <h2 className="text-lg font-semibold text-[#575758]">Confirm Delete</h2>
+        <div className="flex justify-between items-center px-6 py-4 border-b bg-[var(--theme-surface-alt)] rounded-t-[24px]">
+          <h2 className="text-lg font-semibold text-[var(--theme-text-color)]">Confirm Delete</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-[#1E1E1EB2] transition-colors"
+            className="text-gray-400 hover:text-[rgb(var(--theme-neutral-900) / 0.7)] transition-colors"
             disabled={isDeleting}
           >
             <X className="w-5 h-5" />
@@ -26,7 +25,7 @@ const DeleteSGModal = ({ isOpen, onClose, onConfirm, securityGroupName, isDeleti
         <div className="flex items-center justify-end px-6 py-4 border-t rounded-b-[24px]">
           <button
             onClick={onClose}
-            className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
+            className="px-6 py-2 text-[var(--theme-text-color)] bg-[var(--theme-surface-alt)] border border-[var(--theme-surface-alt)] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
             disabled={isDeleting}
           >
             Cancel

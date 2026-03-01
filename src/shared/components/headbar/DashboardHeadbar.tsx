@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, Bell, HelpCircle, User, Settings, LogOut, ChevronDown } from "lucide-react";
+import { Menu, HelpCircle, Settings, LogOut, ChevronDown } from "lucide-react";
 import { designTokens } from "../../../styles/designTokens";
 import NotificationCenter from "../NotificationCenter";
+
+const logoCache = new Map<string, string>();
 
 export interface DashboardHeadbarProps {
   /** Dashboard type for context-aware styling */
@@ -11,11 +13,11 @@ export interface DashboardHeadbarProps {
   onMobileMenuToggle?: () => void;
   /** User profile information */
   userProfile?: {
-    email?: string;
-    firstName?: string;
-    lastName?: string;
-    avatar?: string;
-    initials?: string;
+    email?: string | undefined;
+    firstName?: string | undefined;
+    lastName?: string | undefined;
+    avatar?: string | undefined;
+    initials?: string | undefined;
   };
   /** Logo configuration */
   logo?: {
@@ -146,7 +148,7 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
     if (onLogout) {
       onLogout();
     } else {
-      window.location.href = logoutPath;
+      globalThis.window.location.href = logoutPath;
     }
     setIsProfileOpen(false);
   };
@@ -156,19 +158,33 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
     alt: string;
     link: string;
     className?: string;
+    fallbackSrc?: string;
   } = {
     src: "/logo.svg",
     alt: `${dashboardType.charAt(0).toUpperCase() + dashboardType.slice(1)} Portal`,
-    link: `/${dashboardType}-dashboard`,
+    link: `/ ${dashboardType} -dashboard`,
   };
 
   const logoConfig = logo || defaultLogo;
-  const resolvedLogoSrc = logoConfig.src || logoConfig.fallbackSrc || defaultLogo.src;
+  const cacheKey = `${dashboardType}:${logoConfig.alt || ""} `;
+  const isFallbackLogo =
+    logoConfig.src === logoConfig.fallbackSrc || logoConfig.src === defaultLogo.src;
+  const cachedLogo = logoCache.get(cacheKey);
+  const resolvedLogoSrc =
+    (isFallbackLogo && cachedLogo) || logoConfig.src || logoConfig.fallbackSrc || defaultLogo.src;
   const [logoSrc, setLogoSrc] = useState(resolvedLogoSrc);
 
   useEffect(() => {
-    setLogoSrc(logoConfig.src || logoConfig.fallbackSrc || defaultLogo.src);
-  }, [logoConfig.src, logoConfig.fallbackSrc]);
+    const nextIsFallback =
+      logoConfig.src === logoConfig.fallbackSrc || logoConfig.src === defaultLogo.src;
+    const nextCached = logoCache.get(cacheKey);
+    const nextSrc =
+      (nextIsFallback && nextCached) || logoConfig.src || logoConfig.fallbackSrc || defaultLogo.src;
+    setLogoSrc(nextSrc);
+    if (!nextIsFallback && logoConfig.src) {
+      logoCache.set(cacheKey, logoConfig.src);
+    }
+  }, [logoConfig.src, logoConfig.fallbackSrc, defaultLogo.src, cacheKey]);
 
   const handleLogoError = () => {
     const fallback = logoConfig.fallbackSrc || defaultLogo.src;
@@ -251,7 +267,7 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
                     </div>
                     <div className="text-xs text-gray-600">
                       {userProfile?.firstName || userProfile?.lastName
-                        ? `${userProfile.firstName || ""} ${userProfile.lastName || ""}`.trim()
+                        ? `${userProfile.firstName || ""} ${userProfile.lastName || ""} `.trim()
                         : "No name"}
                     </div>
                   </>

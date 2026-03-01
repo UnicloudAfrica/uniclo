@@ -5,7 +5,7 @@ import ModernButton from "./ModernButton";
 
 export interface ModalAction {
   label: string;
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger" | "success";
+  variant?: "primary" | "secondary" | "outline" | "outlineDanger" | "ghost" | "danger" | "success";
   size?: "sm" | "md" | "lg";
   onClick: () => void;
   disabled?: boolean;
@@ -94,7 +94,7 @@ const ModernModal: React.FC<ModernModalProps> = ({
   const backdropStyles: React.CSSProperties = {
     position: "fixed",
     inset: 0,
-    backgroundColor: "rgba(15, 23, 42, 0.45)",
+    backgroundColor: designTokens.colors.surface.overlay,
     backdropFilter: "blur(6px)",
     display: "flex",
     alignItems: size === "full" ? "stretch" : "center",
@@ -133,7 +133,7 @@ const ModernModal: React.FC<ModernModalProps> = ({
   };
 
   const titleStyles: React.CSSProperties = {
-    fontSize: "18px" as any,
+    fontSize: designTokens.typography.fontSize.lg[0],
     fontWeight: designTokens.typography.fontWeight.semibold,
     color: designTokens.colors.neutral[900],
     margin: 0,
@@ -175,7 +175,7 @@ const ModernModal: React.FC<ModernModalProps> = ({
   const loadingOverlayStyles: React.CSSProperties = {
     position: "absolute",
     inset: 0,
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    backgroundColor: "rgb(var(--theme-neutral-50) / 0.8)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -231,13 +231,12 @@ const ModernModal: React.FC<ModernModalProps> = ({
                 onClick={onClose}
                 style={closeButtonStyles}
                 onMouseEnter={(e) => {
-                  (e.target as HTMLButtonElement).style.backgroundColor =
-                    designTokens.colors.neutral[100];
-                  (e.target as HTMLButtonElement).style.color = designTokens.colors.neutral[600];
+                  e.currentTarget.style.backgroundColor = designTokens.colors.neutral[100];
+                  e.currentTarget.style.color = designTokens.colors.neutral[600];
                 }}
                 onMouseLeave={(e) => {
-                  (e.target as HTMLButtonElement).style.backgroundColor = "transparent";
-                  (e.target as HTMLButtonElement).style.color = designTokens.colors.neutral[400];
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = designTokens.colors.neutral[400];
                 }}
                 aria-label="Close modal"
               >

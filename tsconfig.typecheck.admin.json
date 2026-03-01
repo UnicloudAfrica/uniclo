@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/vite-env.d.ts",
+    "src/types/**/*.d.ts",
+    "src/adminComps/**/*",
+    "src/adminDashboard/**/*",
+    "src/features/admin/**/*",
+    "src/hooks/adminHooks/**/*",
+    "src/hooks/adminHooks.ts",
+    "src/index/admin/**/*",
+    "src/stores/adminAuthStore.ts"
+  ]
+}

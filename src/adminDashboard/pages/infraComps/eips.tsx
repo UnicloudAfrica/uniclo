@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useMemo, useState } from "react";
 import {
   useFetchElasticIps,
@@ -14,10 +13,34 @@ import { ResourceSection } from "../../../shared/components/ui";
 import { ResourceEmptyState } from "../../../shared/components/ui";
 import { ResourceListCard } from "../../../shared/components/ui";
 import { ModernButton } from "../../../shared/components/ui";
+import type {
+  MetaItem as ResourceMetaItem,
+  Tone,
+} from "../../../shared/components/ui/ResourceSection";
 
 const ITEMS_PER_PAGE = 6;
 
-const getToneForStatus = (status = "") => {
+interface ElasticIpRecord {
+  id?: string | number;
+  address?: string;
+  allocation_id?: string;
+  association_id?: string;
+  instance_id?: string;
+  network_interface_id?: string;
+  resource_id?: string;
+  region?: string;
+  pool_id?: string;
+  created_at?: string;
+  status?: string;
+  [key: string]: unknown;
+}
+
+interface ResourceCardMetadata {
+  label: string;
+  value: string | number;
+}
+
+const getToneForStatus = (status = ""): Tone => {
   const normalized = status.toString().toLowerCase();
   if (["available", "released"].includes(normalized)) return "info";
   if (["in-use", "associated", "allocated"].includes(normalized)) return "success";
@@ -27,14 +50,20 @@ const getToneForStatus = (status = "") => {
 };
 
 const EIPs = ({ projectId = "", region = "" }: any) => {
-  const { data: eips, isFetching } = useFetchElasticIps(projectId, region);
+  const { data: eipsData, isFetching } = useFetchElasticIps(projectId, region);
+  const eips = useMemo<ElasticIpRecord[]>(
+    () => (Array.isArray(eipsData) ? (eipsData as ElasticIpRecord[]) : []),
+    [eipsData]
+  );
   const { mutate: deleteElasticIp, isPending: isDeleting } = useDeleteElasticIp();
   const queryClient = useQueryClient();
   const [isCreateModalOpen, setCreateModal] = useState(false);
-  const [deleteModal, setDeleteModal] = useState(null); // { id, name }
+  const [deleteModal, setDeleteModal] = useState<{ id: string | number; name: string } | null>(
+    null
+  );
   const openCreateModal = () => setCreateModal(true);
   const closeCreateModal = () => setCreateModal(false);
-  const openDeleteModal = (id: any, name: any) => setDeleteModal({ id, name });
+  const openDeleteModal = (id: string | number, name: string) => setDeleteModal({ id, name });
   const closeDeleteModal = () => setDeleteModal(null);
 
   const handleDelete = () => {
@@ -63,23 +92,21 @@ const EIPs = ({ projectId = "", region = "" }: any) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const totalItems = eips?.length ?? 0;
+  const totalItems = eips.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
   const currentEips = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return (eips ?? []).slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    return eips.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [eips, currentPage]);
 
   const availableCount = useMemo(
-    () =>
-      (eips || []).filter((eip) => (eip.status || "").toString().toLowerCase() === "available")
-        .length,
+    () => eips.filter((eip) => (eip.status || "").toString().toLowerCase() === "available").length,
     [eips]
   );
   const allocatedCount = totalItems - availableCount;
 
-  const stats = useMemo(() => {
-    const summary = [
+  const stats = useMemo<ResourceMetaItem[]>(() => {
+    const summary: ResourceMetaItem[] = [
       {
         label: "Elastic IPs",
         value: totalItems,
@@ -122,7 +149,7 @@ const EIPs = ({ projectId = "", region = "" }: any) => {
       ToastUtils.success("Elastic IPs synced successfully!");
     } catch (error) {
       console.error("Failed to sync Elastic IPs:", error);
-      ToastUtils.error(error?.message || "Failed to sync Elastic IPs.");
+      ToastUtils.error(error instanceof Error ? error.message : "Failed to sync Elastic IPs.");
     } finally {
       setIsSyncing(false);
     }
@@ -153,29 +180,33 @@ const EIPs = ({ projectId = "", region = "" }: any) => {
     if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
   };
 
-  const renderCard = (eip: any) => {
+  const renderCard = (eip: ElasticIpRecord) => {
     const status = eip.status || "unknown";
-    const allocationId = eip.allocation_id || eip.id;
+    const allocationId = eip.allocation_id ?? (eip.id != null ? String(eip.id) : undefined);
+    const cardKey = eip.id ?? eip.allocation_id ?? eip.address ?? "eip";
     const association =
       eip.association_id || eip.instance_id || eip.network_interface_id || eip.resource_id || null;
     const attachedLabel = association ? association : "Not assigned";
+    const metadata: ResourceCardMetadata[] = [
+      { label: "Region", value: eip.region || region || "—" },
+      { label: "Pool", value: eip.pool_id || "—" },
+      { label: "Attached To", value: String(attachedLabel) },
+    ];
+    if (eip.created_at) {
+      metadata.push({
+        label: "Allocated",
+        value: new Date(eip.created_at).toLocaleString(),
+      });
+    }
+
+    const deleteId = eip.id ?? eip.allocation_id;
 
     return (
       <ResourceListCard
-        key={eip.id}
+        key={cardKey}
         title={eip.address || "Elastic IP"}
-        subtitle={allocationId}
-        metadata={[
-          { label: "Region", value: eip.region || region || "—" },
-          { label: "Pool", value: eip.pool_id || "—" },
-          { label: "Attached To", value: attachedLabel },
-          eip.created_at
-            ? {
-                label: "Allocated",
-                value: new Date(eip.created_at).toLocaleString(),
-              }
-            : null,
-        ].filter(Boolean)}
+        {...(allocationId ? { subtitle: allocationId } : {})}
+        metadata={metadata}
         statuses={[
           {
             label: status,
@@ -188,8 +219,11 @@ const EIPs = ({ projectId = "", region = "" }: any) => {
             label: "Release",
             icon: <Trash2 size={16} />,
             variant: "danger",
-            onClick: () => openDeleteModal(eip.id, eip.address),
-            disabled: isDeleting,
+            onClick: () => {
+              if (deleteId == null) return;
+              openDeleteModal(deleteId, eip.address ?? String(deleteId));
+            },
+            disabled: isDeleting || deleteId == null,
           },
         ]}
       />

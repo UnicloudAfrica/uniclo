@@ -1,5 +1,6 @@
 import React from "react";
-import { Route } from "react-router-dom";
+import { Route, Outlet } from "react-router-dom";
+import ObjectStorageProvider from "../contexts/ObjectStorageContext";
 import AdminDashboard from "../adminDashboard/pages/AdminDashboard";
 import AdminPartners from "../adminDashboard/pages/AdminPartners";
 import AdminPartnerCreate from "../adminDashboard/pages/AdminPartnerCreate";
@@ -7,7 +8,6 @@ import AdminPartnerDetails from "../adminDashboard/pages/AdminPartnerDetails";
 import AdminClients from "../adminDashboard/pages/AdminClients";
 import AdminClientCreate from "../adminDashboard/pages/AdminClientCreate";
 import AdminClientDetails from "../adminDashboard/pages/AdminClientDetails";
-import AdminModules from "../adminDashboard/pages/adminModules";
 import AdminPayment from "../adminDashboard/pages/adminPayment";
 import AdminPaymentDetails from "../adminDashboard/pages/adminPaymentDetails";
 import VerifyAdminMail from "../adminDashboard/pages/AdminVerify";
@@ -32,9 +32,7 @@ import AdminPricing from "../adminDashboard/pages/adminPricing";
 import AdminProducts from "../adminDashboard/pages/AdminProducts";
 import AdminProductCreate from "../adminDashboard/pages/AdminProductCreate";
 import AdminTemplates from "../adminDashboard/pages/AdminTemplates";
-import AdminMultiQuote from "../adminDashboard/pages/adminMultiQuote";
 import CreateInvoice from "../adminDashboard/pages/CreateInvoice";
-import AdminAdvancedCalculator from "../adminDashboard/pages/adminAdvancedCalculator";
 import AdminPricingCalculator from "../adminDashboard/pages/AdminPricingCalculator";
 import AdminInfrastructureSetup from "../adminDashboard/pages/adminInfrastructureSetup";
 import AdminObjectStorage from "../adminDashboard/pages/adminObjectStorage";
@@ -83,6 +81,14 @@ import {
 } from "../adminDashboard/pages/infrastructure";
 import AdminKeyPairCreate from "../adminDashboard/pages/infrastructure/AdminKeyPairCreate";
 
+const ObjectStorageRouteProvider = (): JSX.Element => (
+  <ObjectStorageProvider>
+    <div className="object-storage-theme">
+      <Outlet />
+    </div>
+  </ObjectStorageProvider>
+);
+
 const AdminRoutes = (): React.JSX.Element => {
   return (
     <>
@@ -100,7 +106,6 @@ const AdminRoutes = (): React.JSX.Element => {
       <Route path="/admin-dashboard/clients" element={<AdminClients />} />
       <Route path="/admin-dashboard/clients/create" element={<AdminClientCreate />} />
       <Route path="/admin-dashboard/clients/details" element={<AdminClientDetails />} />
-      <Route path="/admin-dashboard/modules" element={<AdminModules />} />
       <Route path="/admin-dashboard/purchased-modules" element={<AdminPurchasedModules />} />
       <Route path="/admin-dashboard/payment" element={<AdminPayment />} />
       <Route path="/admin-dashboard/payment/:transactionId" element={<AdminPaymentDetails />} />
@@ -141,16 +146,21 @@ const AdminRoutes = (): React.JSX.Element => {
       <Route path="/admin-dashboard/instances" element={<AdminInstances />} />
       <Route path="/admin-dashboard/instances/details" element={<AdminInstancesDetails />} />
 
-      <Route path="/admin-dashboard/object-storage" element={<AdminObjectStorage />} />
-      <Route path="/admin-dashboard/object-storage/create" element={<AdminObjectStorageCreate />} />
-      <Route
-        path="/admin-dashboard/object-storage/:accountId"
-        element={<AdminObjectStorageDetail />}
-      />
-      <Route
-        path="/admin-dashboard/object-storage/:accountId/buckets/:bucketName/*"
-        element={<AdminObjectStorageDetail />}
-      />
+      <Route element={<ObjectStorageRouteProvider />}>
+        <Route path="/admin-dashboard/object-storage" element={<AdminObjectStorage />} />
+        <Route
+          path="/admin-dashboard/object-storage/create"
+          element={<AdminObjectStorageCreate />}
+        />
+        <Route
+          path="/admin-dashboard/object-storage/:accountId"
+          element={<AdminObjectStorageDetail />}
+        />
+        <Route
+          path="/admin-dashboard/object-storage/:accountId/buckets/:bucketName/*"
+          element={<AdminObjectStorageDetail />}
+        />
+      </Route>
       <Route path="/admin-dashboard/tax-configuration" element={<AdminTax />} />
       <Route path="/admin-dashboard/subscription-plans" element={<AdminSubscriptionPlans />} />
       <Route path="/admin-dashboard/wallet" element={<WalletDashboard />} />

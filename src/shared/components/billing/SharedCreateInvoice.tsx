@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { useCreateMultiQuotes } from "../../../hooks/adminHooks/calculatorOptionHooks";
@@ -20,6 +20,7 @@ import {
   ProductPricing,
   BillingRegion,
   InvoiceResponse,
+  UpdateInvoiceFormData,
 } from "./types";
 
 interface SharedCreateInvoiceProps {
@@ -27,11 +28,16 @@ interface SharedCreateInvoiceProps {
   onExit?: () => void;
 }
 
-const SharedCreateInvoice: React.FC<SharedCreateInvoiceProps> = ({ mode = "admin", onExit }) => {
+type InvoiceErrorKey = keyof InvoiceFormData | "general" | "total_discount" | "lead_info";
+type InvoiceErrors = Partial<Record<InvoiceErrorKey, string | null>>;
+
+const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProps) => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
   const [countryCode, setCountryCode] = useState("US");
   const [currencyCode, setCurrencyCode] = useState("USD");
+  const todayValue = new Date().toISOString().slice(0, 10);
+  const dueValue = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
   const [formData, setFormData] = useState<InvoiceFormData>({
     // Step 1
@@ -40,8 +46,8 @@ const SharedCreateInvoice: React.FC<SharedCreateInvoiceProps> = ({ mode = "admin
     emails: "",
     notes: "",
     bill_to_name: "",
-    invoice_date: new Date().toISOString().split("T")[0],
-    due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    invoice_date: todayValue,
+    due_date: dueValue,
     // Total discount fields
     apply_total_discount: false,
     total_discount_type: "percent",
@@ -77,7 +83,7 @@ const SharedCreateInvoice: React.FC<SharedCreateInvoiceProps> = ({ mode = "admin
 
   const [pricingRequests, setPricingRequests] = useState<PricingRequest[]>([]);
   const [objectStorageRequests, setObjectStorageRequests] = useState<ObjectStorageRequest[]>([]);
-  const [errors, setErrors] = useState<Record<string, string | null>>({});
+  const [errors, setErrors] = useState<InvoiceErrors>({});
   const [apiResponse, setApiResponse] = useState<InvoiceResponse | null>(null);
 
   const {
@@ -160,12 +166,12 @@ const SharedCreateInvoice: React.FC<SharedCreateInvoiceProps> = ({ mode = "admin
   const steps = ["Invoice Info", "Add Items", "Invoice Summary", "Final Review", "Confirmation"];
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    globalThis.window.scrollTo({ top: 0, behavior: "smooth" });
   }, [currentStep]);
 
-  const updateFormData = (field: keyof InvoiceFormData, value: unknown) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: null }));
+  const updateFormData: UpdateInvoiceFormData = (field, value) => {
+    setFormData((prev: InvoiceFormData) => ({ ...prev, [field]: value }));
+    setErrors((prev: InvoiceErrors) => ({ ...prev, [field]: null }));
   };
 
   const handleCurrencyChange = (country: string, currency: string) => {
@@ -182,7 +188,7 @@ const SharedCreateInvoice: React.FC<SharedCreateInvoiceProps> = ({ mode = "admin
   };
 
   const validateStep = (step = currentStep): boolean => {
-    const newErrors: Record<string, string | null> = {};
+    const newErrors: InvoiceErrors = {};
     if (step === 0) {
       if (!formData.subject) newErrors.subject = "Subject is required.";
       if (!formData.email) newErrors.email = "Primary email is required.";
@@ -210,7 +216,7 @@ const SharedCreateInvoice: React.FC<SharedCreateInvoiceProps> = ({ mode = "admin
   };
 
   const validateItem = (): boolean => {
-    const newErrors: Record<string, string | null> = {};
+    const newErrors: InvoiceErrors = {};
     if (!formData.region) newErrors.region = "Region is required.";
     if (!formData.compute_instance_id)
       newErrors.compute_instance_id = "Compute instance is required.";
@@ -271,7 +277,7 @@ const SharedCreateInvoice: React.FC<SharedCreateInvoiceProps> = ({ mode = "admin
   };
 
   const validateObjectStorageItem = (): boolean => {
-    const newErrors: Record<string, string | null> = {};
+    const newErrors: InvoiceErrors = {};
     if (!formData.object_storage_region) newErrors.object_storage_region = "Region is required.";
     if (!formData.object_storage_product_id)
       newErrors.object_storage_product_id = "Storage tier is required.";
@@ -365,16 +371,16 @@ const SharedCreateInvoice: React.FC<SharedCreateInvoiceProps> = ({ mode = "admin
     };
 
     if (contextType === "tenant" && selectedTenantId) {
-      payload.tenant_id = selectedTenantId;
+      payload["tenant_id"] = selectedTenantId;
     } else if (contextType === "user" && selectedUserId) {
-      payload.client_id = selectedUserId;
+      payload["client_id"] = selectedUserId;
       if (selectedTenantId) {
-        payload.tenant_id = selectedTenantId;
+        payload["tenant_id"] = selectedTenantId;
       }
     }
 
     if (formData.apply_total_discount && formData.total_discount_value) {
-      payload.total_discount = {
+      payload["total_discount"] = {
         type: formData.total_discount_type,
         value: Number(formData.total_discount_value),
         label: formData.total_discount_label || null,
@@ -382,8 +388,8 @@ const SharedCreateInvoice: React.FC<SharedCreateInvoiceProps> = ({ mode = "admin
     }
 
     if (formData.create_lead) {
-      payload.create_lead = true;
-      payload.lead_info = {
+      payload["create_lead"] = true;
+      payload["lead_info"] = {
         first_name: formData.lead_first_name || "",
         last_name: formData.lead_last_name || "",
         email: formData.lead_email || formData.email,
@@ -394,13 +400,15 @@ const SharedCreateInvoice: React.FC<SharedCreateInvoiceProps> = ({ mode = "admin
     }
 
     createMultiQuotes(payload, {
-      onSuccess: (res: InvoiceResponse) => {
+      onSuccess: (data) => {
+        const res = data as InvoiceResponse;
         ToastUtils.success("Invoice created successfully!");
         setApiResponse(res);
         setCurrentStep((prev) => prev + 1);
       },
-      onError: (err: { message?: string }) => {
-        ToastUtils.error(err.message || "Failed to create invoice. Please try again.");
+      onError: (err: unknown) => {
+        const message = err instanceof Error ? err.message : undefined;
+        ToastUtils.error(message || "Failed to create invoice. Please try again.");
       },
     });
   };
@@ -416,6 +424,9 @@ const SharedCreateInvoice: React.FC<SharedCreateInvoiceProps> = ({ mode = "admin
     tenant: selectedTenant,
     user: selectedUser,
   };
+  const handleContextTypeChange = (type: string) => {
+    setContextType(type as typeof contextType);
+  };
 
   const renderStep = () => {
     switch (currentStep) {
@@ -427,7 +438,7 @@ const SharedCreateInvoice: React.FC<SharedCreateInvoiceProps> = ({ mode = "admin
             updateFormData={updateFormData}
             mode={mode}
             contextType={contextType}
-            setContextType={setContextType}
+            setContextType={handleContextTypeChange}
             selectedTenantId={selectedTenantId}
             setSelectedTenantId={setSelectedTenantId}
             selectedUserId={selectedUserId}

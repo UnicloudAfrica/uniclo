@@ -1,4 +1,5 @@
 import type { MenuEntry } from "../components/sidebar";
+import type { LucideIcon } from "lucide-react";
 import {
   Home,
   Users,
@@ -38,40 +39,40 @@ type InfraRole = "admin" | "tenant" | "client";
 
 const INFRA_MENU_ITEMS: Array<{
   label: string;
-  icon: any;
-  iconByRole?: Partial<Record<InfraRole, any>>;
+  icon: LucideIcon;
+  iconByRole?: Partial<Record<InfraRole, LucideIcon>>;
   path: string;
   roles: InfraRole[];
 }> = [
-    {
-      label: "Projects",
-      icon: FolderOpen,
-      iconByRole: {
-        tenant: FolderKanban,
-        client: Briefcase,
-      },
-      path: "/projects",
-      roles: ["admin", "tenant", "client"],
+  {
+    label: "Projects",
+    icon: FolderOpen,
+    iconByRole: {
+      tenant: FolderKanban,
+      client: Briefcase,
     },
-    {
-      label: "Instances",
-      icon: Server,
-      path: "/instances",
-      roles: ["admin", "tenant", "client"],
-    },
-    {
-      label: "Templates",
-      icon: LayoutTemplate,
-      path: "/templates",
-      roles: ["admin", "tenant"],
-    },
-    {
-      label: "Silo Storage",
-      icon: HardDrive,
-      path: "/object-storage",
-      roles: ["admin", "tenant", "client"],
-    },
-  ];
+    path: "/projects",
+    roles: ["admin", "tenant", "client"],
+  },
+  {
+    label: "Instances",
+    icon: Server,
+    path: "/instances",
+    roles: ["admin", "tenant", "client"],
+  },
+  {
+    label: "Templates",
+    icon: LayoutTemplate,
+    path: "/templates",
+    roles: ["admin", "tenant"],
+  },
+  {
+    label: "Silo Storage",
+    icon: HardDrive,
+    path: "/object-storage",
+    roles: ["admin", "tenant", "client"],
+  },
+];
 
 const buildInfrastructureMenuGroup = (basePath: string, role: InfraRole): MenuEntry => {
   const normalizedBase = basePath.replace(/\/+$/, "");
@@ -316,6 +317,12 @@ export const tenantMenuItems: MenuEntry[] = [
         icon: TrendingUp,
         isLucide: true,
         path: "/dashboard/revenue",
+      },
+      {
+        name: "Price Settings",
+        icon: DollarSign,
+        isLucide: true,
+        path: "/dashboard/pricing-overrides",
       },
       {
         name: "Pricing Calculator",

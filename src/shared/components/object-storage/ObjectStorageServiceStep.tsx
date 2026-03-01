@@ -63,7 +63,6 @@ export const ObjectStorageServiceStep: React.FC<ObjectStorageServiceStepProps> =
             errors={profileErrors[profile.id]}
             canRemove={canRemove}
             showPriceOverride={showPriceOverride && dashboardContext === "admin"}
-            onUpdate={() => {}}
             onRemove={() => onRemoveProfile(profile.id)}
             onRegionChange={(region) => onRegionChange(profile.id, region)}
             onTierChange={(tierKey) => onTierChange(profile.id, tierKey)}

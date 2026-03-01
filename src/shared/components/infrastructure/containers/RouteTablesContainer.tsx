@@ -1,29 +1,29 @@
-// @ts-nocheck
 import React from "react";
-import { Plus, RefreshCw } from "lucide-react";
-import {
-  getRouteTablePermissions,
-  type Hierarchy,
-  type RouteTablePermissions,
-} from "../../../config/permissionPresets";
+import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
+import { RefreshCw } from "lucide-react";
+import { getRouteTablePermissions, type Hierarchy } from "../../../config/permissionPresets";
 import { RouteTablesOverview } from "..";
 import ToastUtils from "../../../../utils/toastUtil";
 import ModernButton from "../../ui/ModernButton";
 
 interface RouteTableHooks {
-  useList: (
+  useList: (projectId: string, region?: string, options?: any) => UseQueryResult<any[], Error>;
+  useSubnets: (projectId: string, region?: string, options?: any) => UseQueryResult<any[], Error>;
+  useInternetGateways: (
     projectId: string,
     region?: string,
     options?: any
-  ) => { data: any[]; isLoading: boolean; refetch: () => void };
-  useSubnets: (projectId: string, region?: string) => { data: any[] };
-  useInternetGateways: (projectId: string, region?: string) => { data: any[] };
-  useNatGateways: (projectId: string, region?: string) => { data: any[] };
+  ) => UseQueryResult<any[], Error>;
+  useNatGateways: (
+    projectId: string,
+    region?: string,
+    options?: any
+  ) => UseQueryResult<any[], Error>;
 
-  useCreate: () => { mutateAsync: (input: any) => Promise<any>; isPending: boolean };
-  useDelete: () => { mutateAsync: (input: any) => Promise<any>; isPending: boolean };
-  useAssociate: () => { mutateAsync: (input: any) => Promise<any>; isPending: boolean };
-  useDisassociate: () => { mutateAsync: (input: any) => Promise<any>; isPending: boolean };
+  useCreate: () => UseMutationResult<any, any, any, unknown>;
+  useDelete: () => UseMutationResult<any, any, any, unknown>;
+  useAssociate: () => UseMutationResult<any, any, any, unknown>;
+  useDisassociate: () => UseMutationResult<any, any, any, unknown>;
 }
 
 interface RouteTablesContainerProps {
@@ -35,7 +35,6 @@ interface RouteTablesContainerProps {
     headerActions: React.ReactNode;
     children: React.ReactNode;
   }) => React.ReactElement;
-  onStatsUpdate?: (count: number) => void;
 }
 
 const RouteTablesContainer: React.FC<RouteTablesContainerProps> = ({

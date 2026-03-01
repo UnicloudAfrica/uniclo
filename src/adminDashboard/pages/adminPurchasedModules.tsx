@@ -1,9 +1,7 @@
-// @ts-nocheck
-import React, { useState } from "react";
 import useAuthRedirect from "../../utils/adminAuthRedirect";
 import { useFetchProducts } from "../../hooks/adminHooks/productsHook";
 import AdminActiveTab from "../components/adminActiveTab";
-import ModernTable from "../../shared/components/ui/ModernTable";
+import ModernTable, { Column } from "../../shared/components/ui/ModernTable";
 import { ModernCard } from "../../shared/components/ui";
 import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
 import { ModernButton } from "../../shared/components/ui";
@@ -20,74 +18,123 @@ import {
 } from "lucide-react";
 import { designTokens } from "../../styles/designTokens";
 
+interface PurchasedModule {
+  id?: string | number;
+  name?: string;
+  description?: string;
+  price?: number | string | null;
+  purchasedDate?: string;
+  created_at?: string;
+  type?: string;
+}
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof (error as { message?: unknown }).message === "string"
+  ) {
+    return (error as { message: string }).message;
+  }
+  return fallback;
+};
+
+const toAmount = (value: number | string | null | undefined): number => {
+  const amount = Number(value);
+  return Number.isFinite(amount) ? amount : 0;
+};
+
 export default function AdminPurchasedModules() {
   const { isLoading } = useAuthRedirect();
   const {
-    data: purchasedProducts,
+    data: purchasedProductsData,
     isFetching: ispurchasedProductsFetching,
     isError: isPurchasedProductsError,
     error: purchasedProductsError,
     refetch: refetchPurchasedProducts,
   } = useFetchProducts();
 
-  // Function to toggle mobile menu
-
-  // Function to close mobile menu
+  const purchasedProducts: PurchasedModule[] = Array.isArray(purchasedProductsData)
+    ? (purchasedProductsData as PurchasedModule[])
+    : [];
 
   // Calculate module statistics
   const moduleStats = {
-    totalModules: purchasedProducts?.length || 0,
-    totalValue: purchasedProducts?.reduce((sum, module) => sum + (module.price || 0), 0) || 0,
-    recentPurchases:
-      purchasedProducts?.filter((module) => {
-        const purchaseDate = new Date(module.purchasedDate || module.created_at);
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        return purchaseDate >= thirtyDaysAgo;
-      }).length || 0,
-    uniqueModuleTypes: [
-      ...new Set(purchasedProducts?.map((module) => module.type || "Standard") || []),
-    ].length,
+    totalModules: purchasedProducts.length,
+    totalValue: purchasedProducts.reduce((sum, module) => sum + toAmount(module.price), 0),
+    recentPurchases: purchasedProducts.filter((module: PurchasedModule) => {
+      const purchaseDate = new Date(module.purchasedDate || module.created_at || "");
+      if (Number.isNaN(purchaseDate.getTime())) {
+        return false;
+      }
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      return purchaseDate >= thirtyDaysAgo;
+    }).length,
+    uniqueModuleTypes: [...new Set(purchasedProducts.map((module) => module.type || "Standard"))]
+      .length,
   };
+
   // Define columns for ModernTable
-  const columns = [
+  const columns: Column<PurchasedModule>[] = [
     {
       key: "name",
       header: "Module Name",
-      render: (value) => (
+      render: (value: unknown) => (
         <div className="flex items-center gap-2">
-          <Package size={16} style={{ color: designTokens.colors.primary[500] }} />
-          <span className="font-medium">{value || "N/A"}</span>
+          <Package
+            size={16}
+            style={{ color: designTokens.colors["primary"]?.[500] ?? "var(--theme-color)" }}
+          />
+          <span className="font-medium">
+            {typeof value === "string" && value.trim().length > 0 ? value : "N/A"}
+          </span>
         </div>
       ),
     },
     {
       key: "description",
       header: "Description",
-      render: (value) => (
+      render: (value: unknown) => (
         <div className="max-w-xs truncate">
-          <span title={value}>{value || "No description available"}</span>
+          <span title={typeof value === "string" ? value : ""}>
+            {typeof value === "string" && value.trim().length > 0
+              ? value
+              : "No description available"}
+          </span>
         </div>
       ),
     },
     {
       key: "price",
       header: "Price",
-      render: (value) => (
+      render: (value: unknown) => (
         <div className="flex items-center gap-1">
-          <DollarSign size={14} style={{ color: designTokens.colors.success[500] }} />
-          <span className="font-medium">${(value || 0).toFixed(2)}</span>
+          <DollarSign
+            size={14}
+            style={{
+              color: designTokens.colors["success"]?.[500] ?? "rgb(var(--theme-success-600))",
+            }}
+          />
+          <span className="font-medium">${toAmount(value as number | string).toFixed(2)}</span>
         </div>
       ),
     },
     {
       key: "purchasedDate",
       header: "Purchase Date",
-      render: (value, item) => (
+      render: (value: unknown, item: PurchasedModule) => (
         <div className="flex items-center gap-2">
-          <Calendar size={14} style={{ color: designTokens.colors.neutral[500] }} />
+          <Calendar
+            size={14}
+            style={{ color: designTokens.colors["neutral"]?.[500] ?? "var(--theme-text-color)" }}
+          />
           <span className="text-sm">
-            {value
+            {typeof value === "string" && value
               ? new Date(value).toLocaleDateString()
               : item.created_at
                 ? new Date(item.created_at).toLocaleDateString()
@@ -98,36 +145,16 @@ export default function AdminPurchasedModules() {
     },
   ];
 
-  // Define actions for ModernTable
-  const actions = [
-    {
-      icon: <Download size={16} />,
-      label: "Download",
-      onClick: (item) => handleDownload(item),
-    },
-    {
-      icon: <Edit2 size={16} />,
-      label: "Edit",
-      onClick: (item) => handleEdit(item),
-    },
-    {
-      icon: <Trash2 size={16} />,
-      label: "Delete",
-      onClick: (item) => handleDelete(item),
-      variant: "destructive",
-    },
-  ];
-
   // Action handlers
-  const handleDownload = (module: any) => {
+  const handleDownload = (module: PurchasedModule) => {
     console.log("Download module:", module);
     // Implement download logic
   };
-  const handleEdit = (module: any) => {
+  const handleEdit = (module: PurchasedModule) => {
     console.log("Edit module:", module);
     // Implement edit logic
   };
-  const handleDelete = (module: any) => {
+  const handleDelete = (module: PurchasedModule) => {
     console.log("Delete module:", module);
     // Implement delete logic
   };
@@ -135,14 +162,38 @@ export default function AdminPurchasedModules() {
     console.log("Add new module");
     // Implement add module logic
   };
+
+  // Define actions for ModernTable
+  const actions = [
+    {
+      icon: <Download size={16} />,
+      label: "Download",
+      onClick: (item: PurchasedModule) => handleDownload(item),
+    },
+    {
+      icon: <Edit2 size={16} />,
+      label: "Edit",
+      onClick: (item: PurchasedModule) => handleEdit(item),
+    },
+    {
+      icon: <Trash2 size={16} />,
+      label: "Delete",
+      onClick: (item: PurchasedModule) => handleDelete(item),
+      tone: "danger" as const,
+    },
+  ];
+
   if (isLoading) {
     return (
       <div className="w-full h-svh flex items-center justify-center">
         <Loader2
           className="w-8 h-8 animate-spin"
-          style={{ color: designTokens.colors.primary[500] }}
+          style={{ color: designTokens.colors["primary"]?.[500] ?? "var(--theme-color)" }}
         />
-        <p className="ml-2" style={{ color: designTokens.colors.neutral[700] }}>
+        <p
+          className="ml-2"
+          style={{ color: designTokens.colors["neutral"]?.[700] ?? "var(--theme-heading-color)" }}
+        >
           Loading...
         </p>
       </div>
@@ -157,9 +208,12 @@ export default function AdminPurchasedModules() {
         <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8 flex items-center justify-center">
           <Loader2
             className="w-8 h-8 animate-spin"
-            style={{ color: designTokens.colors.primary[500] }}
+            style={{ color: designTokens.colors["primary"]?.[500] ?? "var(--theme-color)" }}
           />
-          <p className="ml-2" style={{ color: designTokens.colors.neutral[700] }}>
+          <p
+            className="ml-2"
+            style={{ color: designTokens.colors["neutral"]?.[700] ?? "var(--theme-heading-color)" }}
+          >
             Loading purchased modules...
           </p>
         </main>
@@ -174,18 +228,27 @@ export default function AdminPurchasedModules() {
         <AdminActiveTab />
         <main
           className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8 flex items-center justify-center"
-          style={{ backgroundColor: designTokens.colors.neutral[25] }}
+          style={{
+            backgroundColor: designTokens.colors["neutral"]?.[25] ?? "var(--theme-surface-alt)",
+          }}
         >
           <ModernCard className="max-w-xl w-full">
             <div className="text-center">
               <div
                 className="text-lg font-medium mb-2"
-                style={{ color: designTokens.colors.error[700] }}
+                style={{
+                  color: designTokens.colors["error"]?.[700] ?? "rgb(var(--theme-danger-700))",
+                }}
               >
                 Failed to load purchased modules
               </div>
-              <div className="text-sm mb-4" style={{ color: designTokens.colors.error[600] }}>
-                {purchasedProductsError?.message || "An unexpected error occurred."}
+              <div
+                className="text-sm mb-4"
+                style={{
+                  color: designTokens.colors["error"]?.[600] ?? "rgb(var(--theme-danger-600))",
+                }}
+              >
+                {getErrorMessage(purchasedProductsError, "An unexpected error occurred.")}
               </div>
               <div className="flex items-center justify-center space-x-2">
                 <ModernButton onClick={() => refetchPurchasedProducts()} variant="outline">
@@ -205,7 +268,9 @@ export default function AdminPurchasedModules() {
       <AdminActiveTab />
       <main
         className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8"
-        style={{ backgroundColor: designTokens.colors.neutral[25] }}
+        style={{
+          backgroundColor: designTokens.colors["neutral"]?.[25] ?? "var(--theme-surface-alt)",
+        }}
       >
         <div className="space-y-6">
           {/* Page Header */}
@@ -213,11 +278,18 @@ export default function AdminPurchasedModules() {
             <div>
               <h1
                 className="text-2xl font-bold"
-                style={{ color: designTokens.colors.neutral[900] }}
+                style={{
+                  color: designTokens.colors["neutral"]?.[900] ?? "var(--theme-heading-color)",
+                }}
               >
                 Purchased Modules
               </h1>
-              <p className="mt-1 text-sm" style={{ color: designTokens.colors.neutral[600] }}>
+              <p
+                className="mt-1 text-sm"
+                style={{
+                  color: designTokens.colors["neutral"]?.[600] ?? "var(--theme-heading-color)",
+                }}
+              >
                 Manage your purchased modules and licensing
               </p>
             </div>
@@ -263,7 +335,7 @@ export default function AdminPurchasedModules() {
           <ModernCard>
             <ModernTable
               title={`Purchased Modules (${moduleStats.totalModules} total)`}
-              data={purchasedProducts || []}
+              data={purchasedProducts}
               columns={columns}
               actions={actions}
               searchable={true}

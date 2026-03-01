@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import ClientActiveTab from "../components/clientActiveTab";
@@ -7,6 +6,12 @@ import { useObjectStorage } from "../../contexts/ObjectStorageContext";
 import ObjectStorageDashboardContent from "../../shared/components/object-storage/ObjectStorageDashboardContent";
 import { objectStoragePresets } from "../../shared/config/objectStoragePresets";
 import useClientAuthStore from "../../stores/clientAuthStore";
+
+interface StorageAccount {
+  id: string | number;
+  created_at: string;
+  [key: string]: unknown;
+}
 
 const ClientObjectStoragePage: React.FC = () => {
   const navigate = useNavigate();
@@ -28,8 +33,8 @@ const ClientObjectStoragePage: React.FC = () => {
 
   const sortedAccounts = useMemo(
     () =>
-      [...(accounts as any[])].sort(
-        (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      [...(accounts as StorageAccount[])].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       ),
     [accounts]
   );
@@ -51,17 +56,17 @@ const ClientObjectStoragePage: React.FC = () => {
             loading: accountsLoading,
           }}
           table={{
-            accounts: sortedAccounts as any,
+            accounts: sortedAccounts as StorageAccount[],
             loading: accountsLoading,
             error: accountsError,
             onRetry: refreshAccounts,
             onRefresh: refreshAccounts,
-            onRowClick: (account: any) =>
+            onRowClick: (account: StorageAccount) =>
               navigate(`/client-dashboard/object-storage/${account.id}`),
             silosByAccount: accountSilos,
             siloLoading,
             siloErrors,
-            onLoadSilos: loadSilos,
+            onLoadSilos: (id: string | number) => loadSilos(id),
             onCreateSilo: () => {},
             onDeleteSilo: () => {},
             paginationMeta: accountsMeta,

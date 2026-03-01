@@ -1,34 +1,18 @@
 import React from "react";
 import { CheckCircle2, XCircle } from "lucide-react";
-import { SummaryTotals } from "../../../hooks/useObjectStoragePricing";
+import { SummaryTotals, PaymentOptionLike } from "../../../hooks/useObjectStoragePricing";
 import { PaymentModal } from "../ui";
 
-export interface PaymentOption {
-  gateway: string;
-  method?: string;
-  identifier?: string;
-  amount?: number;
-  currency?: string;
-  charge_breakdown?: {
-    total_fees?: number;
-    subtotal?: number;
-    tax?: number;
-  };
-  payment_url?: string;
-  public_key?: string;
-  reference?: string;
-}
-
 export interface ObjectStoragePaymentStepProps {
-  paymentOptions: PaymentOption[];
+  paymentOptions: PaymentOptionLike[];
   totals: SummaryTotals;
   isPaymentComplete?: boolean;
   isPaymentFailed?: boolean;
   isProcessing?: boolean;
   transactionId?: string;
-  transactionData?: any;
-  onPaymentComplete?: (payload: any) => void;
-  onPaymentOptionChange?: (option: any) => void;
+  transactionData?: React.ComponentProps<typeof PaymentModal>["transactionData"];
+  onPaymentComplete?: React.ComponentProps<typeof PaymentModal>["onPaymentComplete"];
+  onPaymentOptionChange?: React.ComponentProps<typeof PaymentModal>["onPaymentOptionChange"];
   apiBaseUrl?: string;
 }
 
@@ -57,6 +41,40 @@ export const ObjectStoragePaymentStep: React.FC<ObjectStoragePaymentStepProps> =
   };
 
   const showPaymentOptions = Boolean(transactionData) && paymentOptions.length > 0;
+
+  const renderPaymentContent = () => {
+    if (isPaymentComplete) return null;
+
+    if (showPaymentOptions && transactionData) {
+      return (
+        <PaymentModal
+          isOpen
+          mode="inline"
+          onClose={() => {}}
+          transactionData={transactionData}
+          onPaymentComplete={onPaymentComplete}
+          onPaymentOptionChange={onPaymentOptionChange}
+          apiBaseUrl={apiBaseUrl}
+          paymentOptions={paymentOptions}
+          pricingSummary={{
+            subtotal: totals.subtotal,
+            tax: totals.tax,
+            grandTotal: totals.total,
+            currency: totals.currency,
+          }}
+          className="border border-gray-200/80"
+        />
+      );
+    }
+
+    return (
+      <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-500">
+        {isProcessing
+          ? "Generating payment options..."
+          : "No payment options available. Please go back and generate payment options."}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -100,31 +118,7 @@ export const ObjectStoragePaymentStep: React.FC<ObjectStoragePaymentStepProps> =
         </div>
       )}
 
-      {!isPaymentComplete && showPaymentOptions ? (
-        <PaymentModal
-          isOpen
-          mode="inline"
-          onClose={() => {}}
-          transactionData={transactionData}
-          onPaymentComplete={onPaymentComplete}
-          onPaymentOptionChange={onPaymentOptionChange}
-          apiBaseUrl={apiBaseUrl}
-          paymentOptions={paymentOptions}
-          pricingSummary={{
-            subtotal: totals.subtotal,
-            tax: totals.tax,
-            grandTotal: totals.total,
-            currency: totals.currency,
-          }}
-          className="border border-gray-200/80"
-        />
-      ) : !isPaymentComplete ? (
-        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-500">
-          {isProcessing
-            ? "Generating payment options..."
-            : "No payment options available. Please go back and generate payment options."}
-        </div>
-      ) : null}
+      {renderPaymentContent()}
 
       {isPaymentComplete && (
         <p className="text-xs text-gray-500">

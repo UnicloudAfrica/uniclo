@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import {
@@ -22,6 +21,12 @@ interface AddClientModalProps {
   isOpen: boolean;
   onClose: () => void;
   mode?: "modal" | "page";
+}
+
+interface LocationOption {
+  id?: string | number;
+  name?: string;
+  [key: string]: unknown;
 }
 
 const AddClientModal: React.FC<AddClientModalProps> = ({ isOpen, onClose, mode = "modal" }) => {
@@ -57,17 +62,46 @@ const AddClientModal: React.FC<AddClientModalProps> = ({ isOpen, onClose, mode =
   );
   const [errors, setErrors] = useState<any>({});
 
-  const { data: tenants, isFetching: isTenantsFetching } = useFetchTenants();
-  const { data: countries, isFetching: isCountriesFetching } = useFetchCountries();
-  const { data: states, isFetching: isStatesFetching } = useFetchStatesById(formData.country_id, {
-    enabled: !!formData.country_id,
-  });
-  const { data: cities, isFetching: isCitiesFetching } = useFetchCitiesById(formData.state_id, {
+  const { data: tenantsData, isFetching: isTenantsFetching } = useFetchTenants();
+  const { data: countriesData, isFetching: isCountriesFetching } = useFetchCountries();
+  const { data: statesData, isFetching: isStatesFetching } = useFetchStatesById(
+    formData.country_id,
+    {
+      enabled: !!formData.country_id,
+    }
+  );
+  const { data: citiesData, isFetching: isCitiesFetching } = useFetchCitiesById(formData.state_id, {
     enabled: !!formData.state_id,
   });
-  const { data: industries, isFetching: isIndustriesFetching } = useFetchIndustries();
+  const { data: industriesData, isFetching: isIndustriesFetching } = useFetchIndustries();
+  const countries = useMemo<LocationOption[]>(
+    () => (Array.isArray(countriesData) ? (countriesData as LocationOption[]) : []),
+    [countriesData]
+  );
+  const states = useMemo<LocationOption[]>(
+    () => (Array.isArray(statesData) ? (statesData as LocationOption[]) : []),
+    [statesData]
+  );
+  const cities = useMemo<LocationOption[]>(
+    () => (Array.isArray(citiesData) ? (citiesData as LocationOption[]) : []),
+    [citiesData]
+  );
+  const industries = useMemo<LocationOption[]>(
+    () => (Array.isArray(industriesData) ? (industriesData as LocationOption[]) : []),
+    [industriesData]
+  );
+  const tenantList = useMemo<LocationOption[]>(() => {
+    if (Array.isArray(tenantsData)) {
+      return tenantsData as LocationOption[];
+    }
+    if (tenantsData && typeof tenantsData === "object" && "data" in tenantsData) {
+      const payload = tenantsData as { data?: unknown };
+      return Array.isArray(payload.data) ? (payload.data as LocationOption[]) : [];
+    }
+    return [];
+  }, [tenantsData]);
   const { mutate: createClient, isPending } = useCreateClient();
-  const { mutate: assignDiscount, isPending: isAssigningDiscount } = useAssignDiscount();
+  const { mutate: assignDiscount } = useAssignDiscount();
 
   useEffect(() => {
     if (!isPageMode && !isOpen) {
@@ -103,8 +137,10 @@ const AddClientModal: React.FC<AddClientModalProps> = ({ isOpen, onClose, mode =
   }, [isOpen, isPageMode]);
 
   useEffect(() => {
-    if (formData.country_id && countries) {
-      const selectedCountry = countries.find((c: any) => c.id === parseInt(formData.country_id));
+    if (formData.country_id) {
+      const selectedCountry = countries.find(
+        (country) => String(country.id) === String(formData.country_id)
+      );
       setFormData((prev) => ({
         ...prev,
         country: selectedCountry?.name || "",
@@ -117,8 +153,8 @@ const AddClientModal: React.FC<AddClientModalProps> = ({ isOpen, onClose, mode =
   }, [formData.country_id, countries]);
 
   useEffect(() => {
-    if (formData.state_id && states) {
-      const selectedState = states.find((s: any) => s.id === parseInt(formData.state_id));
+    if (formData.state_id) {
+      const selectedState = states.find((state) => String(state.id) === String(formData.state_id));
       setFormData((prev) => ({
         ...prev,
         state: selectedState?.name || "",
@@ -129,8 +165,8 @@ const AddClientModal: React.FC<AddClientModalProps> = ({ isOpen, onClose, mode =
   }, [formData.state_id, states]);
 
   useEffect(() => {
-    if (formData.city_id && cities) {
-      const selectedCity = cities.find((c: any) => c.id === parseInt(formData.city_id));
+    if (formData.city_id) {
+      const selectedCity = cities.find((city) => String(city.id) === String(formData.city_id));
       setFormData((prev) => ({ ...prev, city: selectedCity?.name || "" }));
     }
   }, [formData.city_id, cities]);
@@ -274,11 +310,6 @@ const AddClientModal: React.FC<AddClientModalProps> = ({ isOpen, onClose, mode =
   const showCityDropdown = cities && cities.length > 0 && !isCitiesFetching;
   const accent = formAccent.primary;
   const formId = "add-client-form";
-  const tenantList = Array.isArray(tenants?.data)
-    ? tenants.data
-    : Array.isArray(tenants)
-      ? tenants
-      : [];
   const selectedTenant = tenantList.find(
     (tenant: any) => String(tenant.id) === String(formData.tenant_id)
   );

@@ -2,7 +2,13 @@ import React from "react";
 import { ArrowLeft, Server } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ModernButton } from "../ui";
-import OrderOverviewCard from "./OrderOverviewCard";
+import OrderOverviewCard, {
+  type BackendPricingData,
+  type ConfigurationSummary,
+  type OrderReceipt,
+  type PaymentOption,
+  type SubmissionResult,
+} from "./OrderOverviewCard";
 import ToastUtils from "../../../utils/toastUtil";
 import { Configuration } from "../../../types/InstanceConfiguration";
 
@@ -10,10 +16,10 @@ interface ReviewSubmitStepProps {
   isFastTrack: boolean;
   summaryConfigurationCount: number;
   configurations: Configuration[];
-  configurationSummaries: any[];
-  submissionResult: any;
-  orderReceipt: any;
-  effectivePaymentOption: any;
+  configurationSummaries: ConfigurationSummary[];
+  submissionResult: SubmissionResult | null;
+  orderReceipt: OrderReceipt | null;
+  effectivePaymentOption: PaymentOption | null;
   summaryPlanLabel: string;
   summaryWorkflowLabel: string;
   assignmentSummary: string;
@@ -24,7 +30,7 @@ interface ReviewSubmitStepProps {
   summaryGrandTotalValue: number;
   summaryDisplayCurrency: string;
   taxLabelSuffix: string;
-  backendPricingData: any;
+  backendPricingData: BackendPricingData | null;
   onBack: () => void;
   onEditConfiguration: () => void;
   onConfirm?: () => void;

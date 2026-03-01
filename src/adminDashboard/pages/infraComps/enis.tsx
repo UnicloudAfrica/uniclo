@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { RefreshCw, Shield } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -13,8 +12,12 @@ import { ResourceSection } from "../../../shared/components/ui";
 import { ResourceEmptyState } from "../../../shared/components/ui";
 import { ResourceListCard } from "../../../shared/components/ui";
 import { ModernButton } from "../../../shared/components/ui";
+import type { MetaItem, Tone } from "../../../shared/components/ui/ResourceSection";
 
-const getToneForStatus = (status = "") => {
+type IpEntry = string | { private_ip_address?: string } | Record<string, unknown>;
+type SecurityGroupEntry = string | { id?: string; name?: string } | Record<string, unknown>;
+
+const getToneForStatus = (status = ""): Tone => {
   const normalized = status.toString().toLowerCase();
   if (["available", "active", "in-use", "inuse"].includes(normalized)) return "success";
   if (["pending", "attaching", "detaching"].includes(normalized)) return "warning";
@@ -31,7 +34,7 @@ const ENIs = ({ projectId = "", region = "" }: any) => {
   const [isSyncing, setIsSyncing] = useState(false);
 
   const list = Array.isArray(enis) ? enis : [];
-  const stats = useMemo(() => {
+  const stats = useMemo<MetaItem[]>(() => {
     let totalIps = 0;
     let attachedCount = 0;
     list.forEach((eni: any) => {
@@ -42,7 +45,7 @@ const ENIs = ({ projectId = "", region = "" }: any) => {
         attachedCount += 1;
       }
     });
-    const summary = [
+    const summary: MetaItem[] = [
       {
         label: "Network Interfaces",
         value: list.length,
@@ -86,7 +89,9 @@ const ENIs = ({ projectId = "", region = "" }: any) => {
       ToastUtils.success("Network interfaces synced successfully!");
     } catch (error) {
       console.error("Failed to sync network interfaces:", error);
-      ToastUtils.error(error?.message || "Failed to sync network interfaces.");
+      ToastUtils.error(
+        error instanceof Error ? error.message : "Failed to sync network interfaces."
+      );
     } finally {
       setIsSyncing(false);
     }
@@ -122,43 +127,51 @@ const ENIs = ({ projectId = "", region = "" }: any) => {
     >
       {list.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-          {list.map((eni: any) => {
+          {list.map((eni: any, index: number) => {
             const record = eni.network_interface ?? eni;
-            const id = record?.id ?? eni.id;
+            const idValue = record?.id ?? eni.id;
+            const idLabel = idValue != null ? String(idValue) : "";
+            const cardKey = idLabel || `eni-${index}`;
             const attachment = record?.attachment ?? eni.attachment;
             const statusRaw =
               record?.state ?? record?.status ?? eni.state ?? eni.status ?? "unknown";
             const status = statusRaw || "unknown";
-            const ips = record?.private_ip_addresses ?? [];
-            const securityGroups = record?.security_groups ?? eni.security_groups ?? [];
+            const ips: IpEntry[] = record?.private_ip_addresses ?? [];
+            const securityGroups: SecurityGroupEntry[] =
+              record?.security_groups ?? eni.security_groups ?? [];
+            const firstIp = ips[0];
             const primaryIp =
-              ips[0]?.private_ip_address || record?.private_ip || record?.private_ip_address || "—";
+              (typeof firstIp === "string" ? firstIp : firstIp?.private_ip_address) ||
+              record?.private_ip ||
+              record?.private_ip_address ||
+              "—";
             const macAddress = record?.mac_address || record?.mac || eni.mac_address || null;
             const zone = record?.availability_zone || eni.availability_zone || null;
+            const metadata = [
+              { label: "Primary IP", value: primaryIp },
+              {
+                label: "Attachment",
+                value: attachment?.instance_id || attachment?.id || "None",
+              },
+              {
+                label: "Security Groups",
+                value: securityGroups.length,
+              },
+              macAddress ? { label: "MAC Address", value: macAddress } : null,
+              zone
+                ? {
+                    label: "Availability Zone",
+                    value: zone,
+                  }
+                : null,
+            ].filter((item): item is { label: string; value: ReactNode } => Boolean(item));
 
             return (
               <ResourceListCard
-                key={id}
-                title={record?.name || id}
-                subtitle={id}
-                metadata={[
-                  { label: "Primary IP", value: primaryIp },
-                  {
-                    label: "Attachment",
-                    value: attachment?.instance_id || attachment?.id || "None",
-                  },
-                  {
-                    label: "Security Groups",
-                    value: securityGroups.length,
-                  },
-                  macAddress ? { label: "MAC Address", value: macAddress } : null,
-                  zone
-                    ? {
-                        label: "Availability Zone",
-                        value: zone,
-                      }
-                    : null,
-                ].filter(Boolean)}
+                key={cardKey}
+                title={record?.name || idLabel || "Network Interface"}
+                subtitle={idLabel || "—"}
+                metadata={metadata}
                 statuses={[
                   {
                     label: status,
@@ -177,10 +190,13 @@ const ENIs = ({ projectId = "", region = "" }: any) => {
                             const value =
                               typeof ip === "string"
                                 ? ip
-                                : ip.private_ip_address || JSON.stringify(ip);
+                                : "private_ip_address" in ip &&
+                                    typeof ip.private_ip_address === "string"
+                                  ? ip.private_ip_address
+                                  : JSON.stringify(ip);
                             return (
                               <li
-                                key={`${id}-ip-${idx}`}
+                                key={`${cardKey}-ip-${idx}`}
                                 className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700"
                               >
                                 {value}
@@ -199,7 +215,8 @@ const ENIs = ({ projectId = "", region = "" }: any) => {
                             variant="outline"
                             size="xs"
                             leftIcon={<Shield size={14} />}
-                            onClick={() => setAttachModal({ open: true, eniId: id })}
+                            onClick={() => setAttachModal({ open: true, eniId: idLabel })}
+                            isDisabled={!idLabel}
                           >
                             Attach
                           </ModernButton>
@@ -207,8 +224,8 @@ const ENIs = ({ projectId = "", region = "" }: any) => {
                             variant="ghost"
                             size="xs"
                             className="text-red-500 hover:text-red-600"
-                            onClick={() => setDetachModal({ open: true, eniId: id })}
-                            isDisabled={securityGroups.length === 0}
+                            onClick={() => setDetachModal({ open: true, eniId: idLabel })}
+                            isDisabled={securityGroups.length === 0 || !idLabel}
                           >
                             Detach
                           </ModernButton>
@@ -219,11 +236,28 @@ const ENIs = ({ projectId = "", region = "" }: any) => {
                       ) : (
                         <div className="flex flex-wrap gap-2">
                           {securityGroups.map((sg, idx) => {
-                            const label =
-                              typeof sg === "string" ? sg : sg.id || sg.name || JSON.stringify(sg);
+                            const label = (() => {
+                              if (typeof sg === "string") return sg;
+                              if (typeof sg === "number") return String(sg);
+                              if (sg && typeof sg === "object") {
+                                const record = sg as Record<string, unknown>;
+                                const idValue = record["id"];
+                                const nameValue = record["name"];
+                                const nameText =
+                                  typeof nameValue === "string" || typeof nameValue === "number"
+                                    ? String(nameValue)
+                                    : "";
+                                const idText =
+                                  typeof idValue === "string" || typeof idValue === "number"
+                                    ? String(idValue)
+                                    : "";
+                                return nameText || idText || JSON.stringify(record) || "—";
+                              }
+                              return "—";
+                            })();
                             return (
                               <span
-                                key={`${id}-sg-${idx}`}
+                                key={`${cardKey}-sg-${idx}`}
                                 className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600"
                               >
                                 {label}

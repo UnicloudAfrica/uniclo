@@ -1,4 +1,3 @@
-// @ts-nocheck
 import AdminAdvancedCalculatorRedesigned from "./adminAdvancedCalculatorRedesigned";
 
 export default AdminAdvancedCalculatorRedesigned;

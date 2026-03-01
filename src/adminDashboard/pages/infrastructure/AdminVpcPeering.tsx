@@ -26,17 +26,24 @@ const AdminVpcPeering: React.FC = () => {
   const { data: peeringConnections = [], isLoading, refetch } = useVpcPeering(projectId, region);
   const { data: vpcs = [] } = useVpcs(projectId, region);
   const { mutate: createPeering, isPending: isCreating } = useCreateVpcPeering();
-  const { mutate: acceptPeering, isPending: isAccepting } = useAcceptVpcPeering();
-  const { mutate: rejectPeering, isPending: isRejecting } = useRejectVpcPeering();
+  const { mutate: acceptPeering } = useAcceptVpcPeering();
+  const { mutate: rejectPeering } = useRejectVpcPeering();
   const { mutate: deletePeering } = useDeleteVpcPeering();
 
   const handleCreate = () => {
     if (!vpcId || !peerVpcId) return;
+    const payload: { vpc_id: string; peer_vpc_id: string; name?: string } = {
+      vpc_id: vpcId,
+      peer_vpc_id: peerVpcId,
+    };
+    if (peeringName.trim()) {
+      payload.name = peeringName.trim();
+    }
     createPeering(
       {
         projectId,
         region,
-        payload: { vpc_id: vpcId, peer_vpc_id: peerVpcId, name: peeringName || undefined },
+        payload,
       },
       {
         onSuccess: () => {

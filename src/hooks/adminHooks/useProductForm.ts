@@ -15,11 +15,11 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
 
   const updateEntry = useCallback(
     (index: number, updater: Partial<ProductEntry> | ((prev: ProductEntry) => ProductEntry)) => {
-      setEntries((prev) => {
+      setEntries((prev: any) => {
         if (index < 0 || index >= prev.length) return prev;
         const next = [...prev];
         const current = next[index];
-        // @ts-ignore
+
         const updated =
           typeof updater === "function" ? updater(current) : { ...current, ...updater };
         next[index] = updated;
@@ -30,11 +30,11 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
   );
 
   const addEntry = useCallback(() => {
-    setEntries((prev) => [...prev, createEmptyEntry()]);
+    setEntries((prev: any) => [...prev, createEmptyEntry()]);
   }, []);
 
   const removeEntry = useCallback((index: number) => {
-    setEntries((prev) => prev.filter((_, idx) => idx !== index));
+    setEntries((prev: any) => prev.filter((_: any, idx: any) => idx !== index));
   }, []);
 
   const loadProductOptions = useCallback(
@@ -42,7 +42,7 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
       const endpoint = typeToEndpoint[type];
       if (!endpoint || !regionCode || !type) return;
 
-      updateEntry(index, (prev) => ({
+      updateEntry(index, (prev: any) => ({
         ...prev,
         loadingOptions: true,
         options: [],
@@ -55,7 +55,6 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
         params.append("country", "USD");
         params.append("region", regionCode);
 
-        // @ts-ignore
         const response = await silentApi("GET", `${endpoint}?${params.toString()}`);
 
         const records = Array.isArray(response?.data)
@@ -78,7 +77,7 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
           };
         });
 
-        updateEntry(index, (prev) => {
+        updateEntry(index, (prev: any) => {
           const matchedOption = mappedOptions.find(
             (option: any) => String(option.id) === String(prev.productable_id)
           );
@@ -102,7 +101,7 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
 
   const handleEntryFieldChange = useCallback(
     (index: number, field: keyof ProductEntry, value: any) => {
-      setEntries((prevEntries) => {
+      setEntries((prevEntries: any) => {
         const currentEntry = prevEntries[index];
         if (!currentEntry) return prevEntries;
 
@@ -181,7 +180,7 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
           }
         } else if (field === "productable_id") {
           const selectedOption = currentEntry.options.find(
-            (option) => String(option.id) === String(value)
+            (option: any) => String(option.id) === String(value)
           );
           nextEntry = {
             ...nextEntry,
@@ -270,7 +269,7 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
 
   const handleProductSearchChange = useCallback(
     (index: number, searchValue: string) => {
-      updateEntry(index, (prev) => {
+      updateEntry(index, (prev: any) => {
         const trimmedValue = (searchValue || "").trim();
         if (!trimmedValue) {
           return {
@@ -282,7 +281,7 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
         }
 
         const matchedOption = prev.options.find(
-          (option) => option.name.toLowerCase() === trimmedValue.toLowerCase()
+          (option: any) => option.name.toLowerCase() === trimmedValue.toLowerCase()
         );
 
         if (matchedOption) {
@@ -308,7 +307,7 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
   const handleProductSelect = useCallback(
     (index: number, option: any) => {
       if (!option) {
-        updateEntry(index, (prev) => ({
+        updateEntry(index, (prev: any) => ({
           ...prev,
           productable_id: "",
           name: "",
@@ -317,7 +316,7 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
         return;
       }
 
-      updateEntry(index, (prev) => ({
+      updateEntry(index, (prev: any) => ({
         ...prev,
         productable_id: String(option.id),
         name: option.name,
@@ -330,8 +329,8 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
 
   const validateEntries = useCallback(() => {
     let hasErrors = false;
-    setEntries((prevEntries) => {
-      const nextEntries = prevEntries.map((entry) => {
+    setEntries((prevEntries: any) => {
+      const nextEntries = prevEntries.map((entry: any) => {
         const errors: Record<string, string> = {};
 
         if (!entry.name.trim()) errors.name = "Product name is required.";

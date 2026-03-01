@@ -60,8 +60,8 @@ export const CloudConnectionIllustration = ({ className, ...props }: Illustratio
         y2="31.9331"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stopColor="var(--theme-color, #288dd1)" />
-        <stop offset="1" stopColor="var(--secondary-color, #3fe0c8)" />
+        <stop stopColor="var(--theme-color, var(--theme-color))" />
+        <stop offset="1" stopColor="var(--secondary-color, var(--secondary-color))" />
       </linearGradient>
       <linearGradient
         id="brand-cloud-gradient-2"
@@ -71,8 +71,8 @@ export const CloudConnectionIllustration = ({ className, ...props }: Illustratio
         y2="50.0116"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stopColor="var(--theme-color, #288dd1)" />
-        <stop offset="1" stopColor="var(--secondary-color, #3fe0c8)" />
+        <stop stopColor="var(--theme-color, var(--theme-color))" />
+        <stop offset="1" stopColor="var(--secondary-color, var(--secondary-color))" />
       </linearGradient>
     </defs>
   </svg>
@@ -103,8 +103,8 @@ export const MobileIllustration = ({ className, ...props }: IllustrationProps) =
         y2="48.6002"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stopColor="var(--theme-color, #288dd1)" />
-        <stop offset="1" stopColor="var(--secondary-color, #3fe0c8)" />
+        <stop stopColor="var(--theme-color, var(--theme-color))" />
+        <stop offset="1" stopColor="var(--secondary-color, var(--secondary-color))" />
       </linearGradient>
     </defs>
   </svg>

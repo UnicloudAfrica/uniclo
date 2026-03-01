@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { ShieldCheck, Plus, Trash2, ArrowLeft, RefreshCw, ChevronLeft } from "lucide-react";
+import { ShieldCheck, Plus, Trash2, ChevronLeft } from "lucide-react";
 import AdminPageShell from "../../components/AdminPageShell";
 import ModernButton from "../../../shared/components/ui/ModernButton";
 import ModernCard from "../../../shared/components/ui/ModernCard";
@@ -37,7 +37,7 @@ const AdminNetworkAclRules: React.FC = () => {
     cidr_block: "0.0.0.0/0",
   });
 
-  const { data: rulesData, isLoading, refetch } = useNetworkAclRules(projectId, aclId, region);
+  const { data: rulesData } = useNetworkAclRules(projectId, aclId, region);
   const addRuleMutation = useAddNetworkAclRule();
   const removeRuleMutation = useRemoveNetworkAclRule();
 
@@ -54,7 +54,7 @@ const AdminNetworkAclRules: React.FC = () => {
   };
 
   const handleRemoveRule = async (ruleNumber: number, egress: boolean) => {
-    if (window.confirm(`Remove rule #${ruleNumber}?`)) {
+    if (globalThis.window.confirm(`Remove rule #${ruleNumber}?`)) {
       await removeRuleMutation.mutateAsync({
         projectId,
         region,

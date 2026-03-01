@@ -19,7 +19,9 @@ const AdminKeyPairCreate: React.FC = () => {
   const { mutateAsync: createKeyPair, isPending: isCreating } = useCreateKeyPair();
   const { data: projectsData, isLoading: isLoadingProjects } = useFetchProjects({ per_page: 100 });
 
-  const projects = projectsData?.data || [];
+  const projects = Array.isArray((projectsData as { data?: unknown })?.data)
+    ? (projectsData as { data: any[] }).data
+    : [];
 
   // Auto-select project from URL
   useEffect(() => {

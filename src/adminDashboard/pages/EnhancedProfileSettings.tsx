@@ -1,4 +1,3 @@
-import React from "react";
 import AdminPageShell from "../components/AdminPageShell";
 import AccountSettingsContent from "../../shared/components/settings/AccountSettingsContent";
 

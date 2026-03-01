@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useEffect, useState } from "react";
 import { ArrowUpRight, Loader2 } from "lucide-react";
 import { ModernInput, ModernModal } from "../../../shared/components/ui";
@@ -40,8 +39,8 @@ const PromoteClientModal: React.FC<PromoteClientModalProps> = ({
     }
 
     const payload: Record<string, string> = {};
-    if (tenantName.trim()) payload.tenant_name = tenantName.trim();
-    if (domain.trim()) payload.domain = domain.trim();
+    if (tenantName.trim()) payload["tenant_name"] = tenantName.trim();
+    if (domain.trim()) payload["domain"] = domain.trim();
 
     setIsSubmitting(true);
     try {

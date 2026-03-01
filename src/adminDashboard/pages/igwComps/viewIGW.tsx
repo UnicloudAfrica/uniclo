@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { X } from "lucide-react";
 
 const ViewIgwModal = ({ isOpen, onClose, igw }: any) => {

@@ -4,30 +4,30 @@ import { LogOut, X, ChevronLeft, ChevronRight } from "lucide-react";
 import CollapsibleMenu from "./CollapsibleMenu";
 import type { MenuEntry } from "./CollapsibleMenu";
 import useSidebarStore from "../../../stores/sidebarStore";
-import { clearAllAuthSessions } from "../../../stores/sessionUtils";
+import { logoutActiveSession } from "../../../stores/sessionUtils";
 
 export interface DashboardSidebarProps {
   /** Menu items to display */
   menuItems: MenuEntry[];
   /** Label to show at the top of the sidebar (e.g., "ADMIN", "TENANT") */
-  sidebarLabel?: string;
+  sidebarLabel?: string | undefined;
   /** Theme color for active states */
-  themeColor?: string;
+  themeColor?: string | undefined;
   /** Logout redirect path */
-  logoutPath?: string;
+  logoutPath?: string | undefined;
   /** Mobile menu open state (controlled from parent) */
-  isMobileMenuOpen?: boolean;
+  isMobileMenuOpen?: boolean | undefined;
   /** Callback when mobile menu should close */
-  onCloseMobileMenu?: () => void;
+  onCloseMobileMenu?: (() => void) | undefined;
   /** User profile data for mobile header */
   userProfile?: {
-    email?: string;
-    firstName?: string;
-    lastName?: string;
-    initials?: string;
+    email?: string | undefined;
+    firstName?: string | undefined;
+    lastName?: string | undefined;
+    initials?: string | undefined;
   };
   /** Custom logout handler (optional, defaults to clearAllAuthSessions + navigate) */
-  onLogout?: () => void;
+  onLogout?: (() => void) | undefined;
 }
 
 const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
@@ -58,11 +58,11 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
     closeMobile();
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (onLogout) {
-      onLogout();
+      await onLogout();
     } else {
-      clearAllAuthSessions();
+      await logoutActiveSession();
       navigate(logoutPath);
     }
     onCloseMobileMenu?.();

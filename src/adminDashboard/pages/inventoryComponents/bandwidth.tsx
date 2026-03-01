@@ -1,5 +1,5 @@
-// @ts-nocheck
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import type { ReactNode } from "react";
 import { Wifi, Pencil, Trash2, Plus, TrendingUp, DollarSign } from "lucide-react";
 import { useFetchBandwidthProducts } from "../../../hooks/adminHooks/bandwidthHooks";
 import ResourceDataExplorer from "../../components/ResourceDataExplorer";
@@ -8,7 +8,7 @@ import EditBandwidthModal from "./bandwidthSubs/editBandwidth";
 import DeleteBandwidthModal from "./bandwidthSubs/deleteBandWidth";
 import { ModernButton } from "../../../shared/components/ui";
 
-const formatCurrency = (amount, currency = "USD") => {
+const formatCurrency = (amount: number | string | null | undefined, currency = "USD") => {
   if (amount === null || amount === undefined || Number.isNaN(amount)) {
     return "—";
   }
@@ -20,6 +20,30 @@ const formatCurrency = (amount, currency = "USD") => {
   }).format(Number(amount));
 };
 
+type BandwidthItem = {
+  id?: string | number;
+  name?: string;
+  identifier?: string;
+  price?: number | string;
+  billing_frequency?: string;
+};
+
+type BandwidthResponse = {
+  data?: BandwidthItem[];
+  meta?: {
+    total?: number;
+    current_page?: number;
+    per_page?: number;
+  };
+};
+
+type ExplorerColumn = {
+  header: ReactNode;
+  key?: string;
+  align?: "left" | "center" | "right";
+  render?: (row: Record<string, unknown>) => ReactNode;
+};
+
 const BandWidth = ({ selectedRegion, onMetricsChange }: any) => {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
@@ -28,7 +52,7 @@ const BandWidth = ({ selectedRegion, onMetricsChange }: any) => {
   const [isAddBandwidthModalOpen, setIsAddBandwidthModalOpen] = useState(false);
   const [isEditBandwidthModalOpen, setIsEditBandwidthModalOpen] = useState(false);
   const [isDeleteBandwidthModalOpen, setIsDeleteBandwidthModalOpen] = useState(false);
-  const [selectedBandwidth, setSelectedBandwidth] = useState(null);
+  const [selectedBandwidth, setSelectedBandwidth] = useState<any>(null);
 
   useEffect(() => {
     setPage(1);
@@ -41,19 +65,20 @@ const BandWidth = ({ selectedRegion, onMetricsChange }: any) => {
     { enabled: Boolean(selectedRegion), keepPreviousData: true }
   );
 
-  const rows = data?.data ?? [];
-  const meta = data?.meta ?? null;
+  const response = (data as BandwidthResponse | undefined) ?? null;
+  const rows = Array.isArray(response?.data) ? response?.data : [];
+  const meta = response?.meta;
   const total = meta?.total ?? rows.length;
 
   const averagePrice = useMemo(() => {
     if (!rows.length) return 0;
-    const sum = rows.reduce((acc, item) => acc + Number(item.price || 0), 0);
+    const sum = rows.reduce((acc: number, item: BandwidthItem) => acc + Number(item.price || 0), 0);
     return sum / rows.length;
   }, [rows]);
 
   const highestPrice = useMemo(() => {
     if (!rows.length) return 0;
-    return Math.max(...rows.map((item: any) => Number(item.price || 0)));
+    return Math.max(...rows.map((item: BandwidthItem) => Number(item.price || 0)));
   }, [rows]);
 
   useEffect(() => {
@@ -98,55 +123,64 @@ const BandWidth = ({ selectedRegion, onMetricsChange }: any) => {
     setIsDeleteBandwidthModalOpen(true);
   };
 
-  const columns = [
+  const columns: ExplorerColumn[] = [
     {
       header: "SKU",
       key: "identifier",
-      render: (item) => (
-        <div className="flex flex-col">
-          <span className="font-semibold text-slate-900">{item.name || "Unnamed"}</span>
-          <span className="text-xs font-medium uppercase tracking-wider text-slate-400">
-            {item.identifier || "—"}
-          </span>
-        </div>
-      ),
+      render: (item: Record<string, unknown>) => {
+        const row = item as BandwidthItem;
+        return (
+          <div className="flex flex-col">
+            <span className="font-semibold text-slate-900">{row.name || "Unnamed"}</span>
+            <span className="text-xs font-medium uppercase tracking-wider text-slate-400">
+              {row.identifier || "—"}
+            </span>
+          </div>
+        );
+      },
     },
     {
       header: "Billing cadence",
       key: "billing_frequency",
-      align: "center",
-      render: (item) => (
-        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-          {item.billing_frequency?.replace(/_/g, " ") || "monthly"}
-        </span>
-      ),
+      align: "center" as const,
+      render: (item: Record<string, unknown>) => {
+        const row = item as BandwidthItem;
+        return (
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+            {row.billing_frequency?.replace(/_/g, " ") || "monthly"}
+          </span>
+        );
+      },
     },
     {
       header: "",
       key: "actions",
-      align: "right",
-      render: (item) => (
-        <div className="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => handleEditBandwidth(item)}
-            className="inline-flex items-center justify-center rounded-full border border-slate-200 p-2 text-slate-500 transition hover:border-primary-200 hover:text-primary-600"
-            title="Edit bandwidth"
-            aria-label="Edit bandwidth"
-          >
-            <Pencil className="h-3.5 w-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => handleDeleteBandwidth(item)}
-            className="inline-flex items-center justify-center rounded-full border border-red-200 p-2 text-red-500 transition hover:border-red-300 hover:bg-red-50"
-            title="Remove bandwidth"
-            aria-label="Remove bandwidth"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      ),
+      align: "right" as const,
+      render: (item: Record<string, unknown>) => {
+        const row = item as BandwidthItem;
+        return (
+          <div className="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => handleEditBandwidth(row)}
+              className="inline-flex items-center justify-center rounded-full border border-slate-200 p-2 text-slate-500 transition hover:border-primary-200 hover:text-primary-600"
+              title="Edit bandwidth"
+              aria-label="Edit bandwidth"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDeleteBandwidth(row)}
+              className="inline-flex items-center justify-center rounded-full border border-red-200 p-2 text-red-500 transition hover:border-red-300 hover:bg-red-50"
+              title="Remove bandwidth"
+              aria-label="Remove bandwidth"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        );
+      },
     },
   ];
 
@@ -175,7 +209,7 @@ const BandWidth = ({ selectedRegion, onMetricsChange }: any) => {
   };
 
   const handleSearch = useCallback(
-    (value) => {
+    (value: string) => {
       setSearch(value);
       setPage(1);
     },
@@ -188,12 +222,12 @@ const BandWidth = ({ selectedRegion, onMetricsChange }: any) => {
         title="Bandwidth catalog"
         description="Fine-tune bandwidth tiers and keep pricing aligned with infrastructure cost."
         columns={columns}
-        rows={rows}
+        rows={rows as Record<string, unknown>[]}
         loading={isFetching}
         page={meta?.current_page ?? page}
         perPage={meta?.per_page ?? perPage}
         total={total}
-        meta={meta}
+        {...(meta ? { meta } : {})}
         onPageChange={setPage}
         onPerPageChange={(next) => {
           setPerPage(next);

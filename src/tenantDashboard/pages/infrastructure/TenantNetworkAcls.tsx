@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
@@ -10,6 +9,7 @@ import {
   useDeleteNetworkAcl,
   useVpcs,
 } from "../../../shared/hooks/vpcInfraHooks";
+import type { NetworkAcl } from "../../../shared/components/infrastructure/types";
 
 const TenantNetworkAcls: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -24,7 +24,7 @@ const TenantNetworkAcls: React.FC = () => {
     useDelete: useDeleteNetworkAcl,
   };
 
-  const handleManageRules = (acl: any) => {
+  const handleManageRules = (acl: NetworkAcl) => {
     navigate(
       `/tenant-dashboard/infrastructure/network-acl-rules?project=${projectId}&region=${region}&acl=${acl.id}&name=${encodeURIComponent(acl.name || "ACL")}`
     );

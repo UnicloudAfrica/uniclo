@@ -1,5 +1,3 @@
-// @ts-nocheck
-import React from "react";
 import AdminPageShell from "../components/AdminPageShell";
 import LeadsDashboard from "../../shared/components/customer-management/LeadsDashboard";
 

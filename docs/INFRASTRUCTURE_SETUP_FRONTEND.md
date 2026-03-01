@@ -147,13 +147,13 @@ function MyComponent({ projectId }) {
 // In browser console (after loading the page)
 
 // Test infrastructure status
-await window.testInfraApi.getProjectStatus('649F5D');
+await globalThis.window.testInfraApi.getProjectStatus('649F5D');
 
 // Test VPC setup
-await window.testInfraApi.testVpcSetup('649F5D', 'lagos-1');
+await globalThis.window.testInfraApi.testVpcSetup('649F5D', 'lagos-1');
 
 // Test Edge Networks setup (after VPC)
-await window.testInfraApi.testEdgeNetworksSetup('649F5D', 'lagos-1');
+await globalThis.window.testInfraApi.testEdgeNetworksSetup('649F5D', 'lagos-1');
 ```
 
 ## 🚀 Deployment Steps
@@ -262,13 +262,13 @@ User clicks "Setup VPC" → Loading → Background provisioning → Status updat
 ### **Debug Commands**
 ```javascript
 // Check infrastructure status
-window.testInfraApi.getProjectStatus('YOUR_PROJECT_ID');
+globalThis.window.testInfraApi.getProjectStatus('YOUR_PROJECT_ID');
 
 // Test VPC setup
-window.testInfraApi.testVpcSetup('YOUR_PROJECT_ID');
+globalThis.window.testInfraApi.testVpcSetup('YOUR_PROJECT_ID');
 
 // Check React Query cache
-window.__REACT_QUERY_DEVTOOLS_GLOBAL_HOOK__
+globalThis.window.__REACT_QUERY_DEVTOOLS_GLOBAL_HOOK__
 ```
 
 ## 🎉 Implementation Complete!

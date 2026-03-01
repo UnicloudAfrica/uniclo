@@ -1,9 +1,10 @@
-// @ts-nocheck
 import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Network } from "lucide-react";
 import ClientPageShell from "../components/ClientPageShell";
-import SubnetsContainer from "../../shared/components/infrastructure/containers/SubnetsContainer";
+import SubnetsContainer, {
+  SubnetHooks,
+} from "../../shared/components/infrastructure/containers/SubnetsContainer";
 import { useSubnets, useCreateSubnet, useDeleteSubnet } from "../../shared/hooks/vpcInfraHooks";
 
 /**
@@ -17,11 +18,10 @@ const ClientSubnets: React.FC = () => {
   const region = searchParams.get("region") || "";
 
   // Hook references passed to container (not called here)
-  // Note: useVpcs not passed - Client can't create subnets
-  const hooks = {
-    useList: useSubnets,
-    useCreate: useCreateSubnet,
-    useDelete: useDeleteSubnet,
+  const hooks: SubnetHooks = {
+    useList: useSubnets as SubnetHooks["useList"],
+    useCreate: useCreateSubnet as SubnetHooks["useCreate"],
+    useDelete: useDeleteSubnet as SubnetHooks["useDelete"],
   };
 
   return (
@@ -30,7 +30,7 @@ const ClientSubnets: React.FC = () => {
       projectId={projectId}
       region={region}
       hooks={hooks}
-      wrapper={({ headerActions, children }) => (
+      wrapper={({ children }) => (
         <ClientPageShell
           title={
             <span className="flex items-center gap-2">
@@ -39,7 +39,6 @@ const ClientSubnets: React.FC = () => {
             </span>
           }
           description="Network segments within your VPC"
-          actions={headerActions}
         >
           {children}
         </ClientPageShell>

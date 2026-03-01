@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import {
@@ -83,7 +82,7 @@ const AddPartner: React.FC<AddPartnerProps> = ({ isOpen, onClose, mode = "modal"
   const [errors, setErrors] = useState<any>({});
 
   const { mutate: createTenant, isPending } = useCreateTenant();
-  const { mutate: assignDiscount, isPending: isAssigningDiscount } = useAssignDiscount();
+  const { mutate: assignDiscount } = useAssignDiscount();
   const { data: industries, isFetching: isIndustriesFetching } = useFetchIndustries();
   const { data: countries, isFetching: isCountriesFetching } = useFetchCountries();
   const { data: states, isFetching: isStatesFetching } = useFetchStatesById(
@@ -148,7 +147,7 @@ const AddPartner: React.FC<AddPartnerProps> = ({ isOpen, onClose, mode = "modal"
       validate: UploadFiles.validate,
     },
     {
-      component: (props: any) => (
+      component: () => (
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <header className="mb-4">
             <h3 className="text-base font-semibold text-slate-900">Default Pricing Discount</h3>
@@ -186,8 +185,13 @@ const AddPartner: React.FC<AddPartnerProps> = ({ isOpen, onClose, mode = "modal"
     },
   ];
 
+  const currentStepConfig = steps[currentStep];
+
   const validateStep = () => {
-    const stepErrors = steps[currentStep].validate(formData);
+    if (!currentStepConfig) {
+      return false;
+    }
+    const stepErrors = currentStepConfig.validate(formData);
     setErrors(stepErrors);
     return Object.keys(stepErrors).length === 0;
   };
@@ -342,7 +346,7 @@ const AddPartner: React.FC<AddPartnerProps> = ({ isOpen, onClose, mode = "modal"
             onClose();
           }
         },
-        onError: (error: any) => {
+        onError: () => {
           // ToastUtils.error(error.message || "Failed to add tenant");
         },
       });
@@ -360,7 +364,7 @@ const AddPartner: React.FC<AddPartnerProps> = ({ isOpen, onClose, mode = "modal"
     "businessLogo",
   ];
 
-  const uploadedDocs = docKeys.filter((key) => (formData.business as any)[key]).length;
+  const uploadedDocs = docKeys.filter((key: any) => (formData.business as any)[key]).length;
   const progress = Math.round(((currentStep + 1) / steps.length) * 100);
   const domainPreview = formData.domain ? `${formData.domain}.unicloudafrica.com` : "Not assigned";
   const contactName = [formData.first_name, formData.last_name].filter(Boolean).join(" ").trim();
@@ -373,15 +377,15 @@ const AddPartner: React.FC<AddPartnerProps> = ({ isOpen, onClose, mode = "modal"
           .replace(/\b\w/g, (char) => char.toUpperCase())
       : "Not provided";
 
-  const ActiveStep = steps[currentStep].component as React.ComponentType<any>;
-  const activeStepContent = (
+  const ActiveStep = (currentStepConfig?.component ?? (() => null)) as React.ComponentType<any>;
+  const activeStepContent = currentStepConfig ? (
     <ActiveStep
       formData={formData}
       setFormData={setFormData}
       errors={errors}
       setErrors={setErrors as any}
     />
-  );
+  ) : null;
 
   const summarySections = useMemo(
     () => [
@@ -544,7 +548,7 @@ const AddPartner: React.FC<AddPartnerProps> = ({ isOpen, onClose, mode = "modal"
           type="button"
           onClick={handleSubmit}
           disabled={isPending}
-          className="inline-flex w-full items-center justify-center rounded-full bg-[#047857] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#036149] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#047857] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+          className="inline-flex w-full items-center justify-center rounded-full bg-[rgb(var(--theme-success-700))] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[rgb(var(--theme-success-700))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[rgb(var(--theme-success-700))] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
         >
           {isPending ? (
             <>
@@ -563,7 +567,7 @@ const AddPartner: React.FC<AddPartnerProps> = ({ isOpen, onClose, mode = "modal"
     {
       label: "Current stage",
       value: `${currentStep + 1} / ${steps.length}`,
-      hint: steps[currentStep].label,
+      hint: currentStepConfig?.label ?? "Unknown",
     },
     {
       label: "Subdomain",

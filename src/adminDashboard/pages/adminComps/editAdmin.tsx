@@ -1,11 +1,16 @@
-// @ts-nocheck
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useUpdateAdmin } from "../../../hooks/adminHooks/adminHooks";
 import FormLayout, { formAccent, getAccentRgba } from "../../components/FormLayout";
 
-export const EditAdminModal = ({ isOpen, onClose, admin, onUpdateSuccess, mode = "modal" }) => {
+export const EditAdminModal = ({
+  isOpen,
+  onClose,
+  admin,
+  onUpdateSuccess,
+  mode = "modal",
+}: any) => {
   // State to hold form data, initialized with admin prop
   const [formData, setFormData] = useState({
     first_name: "",
@@ -247,7 +252,7 @@ export const EditAdminModal = ({ isOpen, onClose, admin, onUpdateSuccess, mode =
         type="submit"
         form={formId}
         disabled={isPending}
-        className="inline-flex w-full items-center justify-center rounded-full bg-[#047857] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#036149] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#047857] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+        className="inline-flex w-full items-center justify-center rounded-full bg-[rgb(var(--theme-success-700))] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[rgb(var(--theme-success-700))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[rgb(var(--theme-success-700))] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
       >
         {isPending ? (
           <>

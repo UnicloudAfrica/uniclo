@@ -4,6 +4,35 @@ This directory contains scripts for testing the backend API and capturing real r
 
 ---
 
+## TypeScript Strict Cleanup Workflow
+
+These commands are optimized for strict-mode refactors with cached runs and ranked error summaries.
+
+```bash
+# Full strict check (incremental cache + ranked summary)
+npm run typecheck
+
+# Targeted lanes
+npm run typecheck:admin
+npm run typecheck:dashboards
+npm run typecheck:core
+npm run typecheck:all:parallel
+
+# Rank the latest generated tsc log
+npm run typecheck:rank
+
+# Lint with cache
+npm run lint
+npm run lint:fix
+```
+
+Generated artifacts:
+- `.cache/tsc.*.tsbuildinfo` for incremental TypeScript runs
+- `.cache/ts-errors/*.log` for ranked TypeScript diagnostics
+- `.cache/eslint` for ESLint cache
+
+---
+
 ## Scripts
 
 ### 1. `quick-test-api.sh` ⚡️

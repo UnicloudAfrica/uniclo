@@ -22,9 +22,9 @@ interface WorkflowSelectionStepProps {
   billingCountry: string;
   isCountryLocked: boolean;
   isCountriesLoading: boolean;
-  tenants: any[];
+  tenants: unknown;
   isTenantsFetching: boolean;
-  userPool: any[];
+  userPool: unknown;
   isUsersFetching: boolean;
   countryOptions: Option[];
   onModeChange: (mode: string) => void;
@@ -74,8 +74,8 @@ const WorkflowSelectionStep: React.FC<WorkflowSelectionStepProps> = ({
 
   const eligibleRegionNames = showFastTrackInfo
     ? allRegionOptions
-      .filter((r: any) => fastTrackRegions.includes(r.value))
-      .map((r: any) => r.label)
+        .filter((r: any) => fastTrackRegions.includes(r.value))
+        .map((r: any) => r.label)
     : [];
 
   return (
@@ -91,17 +91,19 @@ const WorkflowSelectionStep: React.FC<WorkflowSelectionStepProps> = ({
               {showStandard && (
                 <div
                   onClick={() => onModeChange("standard")}
-                  className={`cursor-pointer rounded-xl border p-4 transition-all ${mode === "standard"
+                  className={`cursor-pointer rounded-xl border p-4 transition-all ${
+                    mode === "standard"
                       ? "border-primary-500 bg-primary-50 ring-1 ring-primary-200"
                       : "border-gray-200 hover:border-gray-300"
-                    }`}
+                  }`}
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className={`rounded-lg p-2 ${mode === "standard"
+                      className={`rounded-lg p-2 ${
+                        mode === "standard"
                           ? "bg-primary-100 text-primary-600"
                           : "bg-gray-100 text-gray-500"
-                        }`}
+                      }`}
                     >
                       <CreditCard className="h-5 w-5" />
                     </div>
@@ -122,19 +124,21 @@ const WorkflowSelectionStep: React.FC<WorkflowSelectionStepProps> = ({
                       onModeChange("fast-track");
                     }
                   }}
-                  className={`relative rounded-xl border p-4 transition-all ${fastTrackBlocked
+                  className={`relative rounded-xl border p-4 transition-all ${
+                    fastTrackBlocked
                       ? "cursor-not-allowed opacity-60 border-gray-200 bg-gray-50"
                       : mode === "fast-track"
                         ? "cursor-pointer border-primary-500 bg-primary-50 ring-1 ring-primary-200"
                         : "cursor-pointer border-gray-200 hover:border-gray-300"
-                    }`}
+                  }`}
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className={`rounded-lg p-2 ${mode === "fast-track"
+                      className={`rounded-lg p-2 ${
+                        mode === "fast-track"
                           ? "bg-primary-100 text-primary-600"
                           : "bg-gray-100 text-gray-500"
-                        }`}
+                      }`}
                     >
                       <Gauge className="h-5 w-5" />
                     </div>

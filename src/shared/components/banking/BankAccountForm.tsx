@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { Search, Check, Loader2, AlertCircle } from "lucide-react";
 import { Bank, BankDetails } from "./bankDetailsTypes";
@@ -30,6 +29,16 @@ export const BankAccountForm: React.FC<BankAccountFormProps> = ({
   onCancel,
   isSaving = false,
 }) => {
+  const getErrorMessage = (error: unknown): string => {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    if (typeof error === "string") {
+      return error;
+    }
+    return "Verification failed";
+  };
+
   const [selectedBank, setSelectedBank] = useState<Bank | null>(null);
   const [accountNumber, setAccountNumber] = useState(initialData?.account_number || "");
   const [accountName, setAccountName] = useState(initialData?.account_name || "");
@@ -62,8 +71,8 @@ export const BankAccountForm: React.FC<BankAccountFormProps> = ({
       if (!result.verified) {
         setVerifyError("Account verification pending");
       }
-    } catch (error: any) {
-      setVerifyError(error.message || "Verification failed");
+    } catch (error) {
+      setVerifyError(getErrorMessage(error));
       setIsVerified(false);
     } finally {
       setIsVerifying(false);
@@ -109,8 +118,12 @@ export const BankAccountForm: React.FC<BankAccountFormProps> = ({
               placeholder="Search bank..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              disabled={isLoadingBanks}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
+            {isLoadingBanks && (
+              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />
+            )}
           </div>
           {searchQuery && filteredBanks.length > 0 && (
             <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-auto">

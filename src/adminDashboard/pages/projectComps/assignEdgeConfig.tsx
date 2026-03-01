@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import {
   useFetchEdgeNetworks,
@@ -9,34 +8,113 @@ import {
 } from "../../../hooks/adminHooks/edgeHooks";
 import { useFetchGeneralRegions } from "../../../hooks/resource";
 
-const AssignEdgeConfigModal = ({ isOpen, onClose, onSuccess, projectId, region }: any) => {
+interface AssignEdgeConfigModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
+  projectId?: string | number | null;
+  region?: string;
+}
+
+interface RegionOption {
+  region?: string;
+  code?: string;
+  label?: string;
+  name?: string;
+}
+
+interface EdgeConfigMetadata {
+  edge_network_ip_pools?: Record<string, unknown[]>;
+  default_edgenet_ip_pool?: string;
+}
+
+interface EdgeConfig {
+  edge_network_id?: string;
+  ip_pool_id?: string;
+  flowlogs_enabled?: boolean;
+  metadata?: EdgeConfigMetadata;
+}
+
+interface EdgeNetworkOption {
+  id?: string;
+  uuid?: string;
+  identifier?: string;
+  name?: string;
+  label?: string;
+}
+
+interface IpPoolOption {
+  edge_network_ip_pool_id?: string;
+  id?: string;
+  uuid?: string;
+  label?: string;
+  name?: string;
+}
+
+interface EdgeFormData {
+  edge_network_id: string;
+  ip_pool_id: string;
+  flowlogs_enabled: boolean;
+}
+
+const asArray = <T,>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof (error as { message?: unknown }).message === "string"
+  ) {
+    return (error as { message: string }).message;
+  }
+  return fallback;
+};
+
+const AssignEdgeConfigModal = ({
+  isOpen,
+  onClose,
+  onSuccess,
+  projectId,
+  region,
+}: AssignEdgeConfigModalProps) => {
   const [selectedRegion, setSelectedRegion] = useState(region || "");
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<EdgeFormData>({
     edge_network_id: "",
     ip_pool_id: "",
     flowlogs_enabled: false,
   });
 
-  const { data: regions, isFetching: isFetchingRegions } = useFetchGeneralRegions();
+  const { data: regionsData, isFetching: isFetchingRegions } = useFetchGeneralRegions();
+  const regions = asArray<RegionOption>(regionsData);
 
-  const { data: currentConfig } = useFetchProjectEdgeConfigAdmin(projectId, selectedRegion, {
+  const { data: currentConfigData } = useFetchProjectEdgeConfigAdmin(projectId, selectedRegion, {
     enabled: isOpen && !!selectedRegion,
   });
-  const metadata = currentConfig?.metadata || {};
+  const currentConfig =
+    currentConfigData && typeof currentConfigData === "object"
+      ? (currentConfigData as EdgeConfig)
+      : null;
+  const metadata: EdgeConfigMetadata = currentConfig?.metadata ?? {};
   const {
-    data: edgeNetworks,
+    data: edgeNetworksData,
     isFetching: isFetchingNetworks,
     error: networksError,
     refetch: refetchNetworks,
   } = useFetchEdgeNetworks(projectId, selectedRegion, { enabled: isOpen && !!selectedRegion });
+  const edgeNetworks = asArray<EdgeNetworkOption>(edgeNetworksData);
   const {
-    data: ipPools,
+    data: ipPoolsData,
     isFetching: isFetchingPools,
     error: poolsError,
     refetch: refetchPools,
   } = useFetchIpPools(projectId, selectedRegion, formData.edge_network_id, {
     enabled: isOpen && !!selectedRegion && !!formData.edge_network_id,
   });
+  const ipPools = asArray<IpPoolOption>(ipPoolsData);
   const { mutate: assignEdge, isPending } = useAssignProjectEdge();
   const [manualMode, setManualMode] = useState(false);
 
@@ -66,12 +144,13 @@ const AssignEdgeConfigModal = ({ isOpen, onClose, onSuccess, projectId, region }
       if (formData.edge_network_id) {
         await refetchPools();
       }
-    } catch (e) {
+    } catch {
       // ignore; errors surface via networksError/poolsError
     }
   };
 
-  const updateForm = (field: any, value: any) => setFormData((p) => ({ ...p, [field]: value }));
+  const updateForm = <K extends keyof EdgeFormData>(field: K, value: EdgeFormData[K]) =>
+    setFormData((previous) => ({ ...previous, [field]: value }));
 
   const handleAssign = () => {
     if (!projectId || !selectedRegion || !formData.edge_network_id || !formData.ip_pool_id) {
@@ -130,11 +209,13 @@ const AssignEdgeConfigModal = ({ isOpen, onClose, onSuccess, projectId, region }
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-[1100] flex items-center justify-center font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full">
-        <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
-          <h2 className="text-lg font-semibold text-[#575758]">Assign Edge Configuration</h2>
+        <div className="flex justify-between items-center px-6 py-4 border-b bg-[var(--theme-surface-alt)] rounded-t-[24px]">
+          <h2 className="text-lg font-semibold text-[var(--theme-text-color)]">
+            Assign Edge Configuration
+          </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-[#1E1E1EB2]"
+            className="text-gray-400 hover:text-[rgb(var(--theme-neutral-900) / 0.7)]"
             disabled={isPending}
           >
             <X className="w-5 h-5" />
@@ -164,21 +245,28 @@ const AssignEdgeConfigModal = ({ isOpen, onClose, onSuccess, projectId, region }
                 onChange={(e) => {
                   setSelectedRegion(e.target.value);
                   // reset selections when region changes
-                  setFormData({
+                  setFormData((previous) => ({
                     edge_network_id: "",
                     ip_pool_id: "",
-                    flowlogs_enabled: formData.flowlogs_enabled,
-                  });
+                    flowlogs_enabled: previous.flowlogs_enabled,
+                  }));
                 }}
               >
                 <option value="">
                   {isFetchingRegions ? "Loading regions..." : "Select a region"}
                 </option>
-                {(regions || []).map((r: any) => (
-                  <option key={r.region} value={r.region}>
-                    {r.label}
-                  </option>
-                ))}
+                {regions.map((r: RegionOption, index: number) => {
+                  const value = r.region || r.code || "";
+                  if (!value) {
+                    return null;
+                  }
+                  const label = r.label || r.name || value;
+                  return (
+                    <option key={`${value}-${index}`} value={value}>
+                      {label}
+                    </option>
+                  );
+                })}
               </select>
             </div>
 
@@ -188,7 +276,7 @@ const AssignEdgeConfigModal = ({ isOpen, onClose, onSuccess, projectId, region }
                   Edge Network<span className="text-red-500">*</span>
                 </label>
                 <div className="flex items-center gap-3">
-                  {!isFetchingNetworks && selectedRegion && (edgeNetworks || []).length === 0 && (
+                  {!isFetchingNetworks && selectedRegion && edgeNetworks.length === 0 && (
                     <button
                       type="button"
                       className="text-xs text-blue-600 hover:underline"
@@ -222,23 +310,26 @@ const AssignEdgeConfigModal = ({ isOpen, onClose, onSuccess, projectId, region }
                     <option value="">
                       {isFetchingNetworks ? "Loading networks..." : "Select an edge network"}
                     </option>
-                    {(edgeNetworks || []).map((n: any) => (
-                      <option
-                        key={n.id || n.uuid || n.identifier}
-                        value={n.id || n.uuid || n.identifier}
-                      >
-                        {n.name || n.label || n.id}
-                      </option>
-                    ))}
+                    {edgeNetworks.map((n: EdgeNetworkOption, index: number) => {
+                      const networkValue = n.id || n.uuid || n.identifier || "";
+                      if (!networkValue) {
+                        return null;
+                      }
+                      return (
+                        <option key={`${networkValue}-${index}`} value={networkValue}>
+                          {n.name || n.label || networkValue}
+                        </option>
+                      );
+                    })}
                   </select>
                   {networksError && (
                     <p className="text-xs text-red-600 mt-1">
-                      {networksError.message || "Failed to load edge networks."}
+                      {getErrorMessage(networksError, "Failed to load edge networks.")}
                     </p>
                   )}
                   {!isFetchingNetworks &&
                     selectedRegion &&
-                    (edgeNetworks || []).length === 0 &&
+                    edgeNetworks.length === 0 &&
                     !networksError && (
                       <p className="text-xs text-yellow-700 mt-1">
                         No edge networks found for this region. Ensure provider credentials are
@@ -272,23 +363,26 @@ const AssignEdgeConfigModal = ({ isOpen, onClose, onSuccess, projectId, region }
                     <option value="">
                       {isFetchingPools ? "Loading IP pools..." : "Select an IP pool"}
                     </option>
-                    {(ipPools || []).map((p: any) => (
-                      <option
-                        key={p.edge_network_ip_pool_id || p.id || p.uuid}
-                        value={p.edge_network_ip_pool_id || p.id || p.uuid}
-                      >
-                        {p.label || p.name || p.edge_network_ip_pool_id || p.id}
-                      </option>
-                    ))}
+                    {ipPools.map((p: IpPoolOption, index: number) => {
+                      const poolValue = p.edge_network_ip_pool_id || p.id || p.uuid || "";
+                      if (!poolValue) {
+                        return null;
+                      }
+                      return (
+                        <option key={`${poolValue}-${index}`} value={poolValue}>
+                          {p.label || p.name || poolValue}
+                        </option>
+                      );
+                    })}
                   </select>
                   {poolsError && (
                     <p className="text-xs text-red-600 mt-1">
-                      {poolsError.message || "Failed to load IP pools."}
+                      {getErrorMessage(poolsError, "Failed to load IP pools.")}
                     </p>
                   )}
                   {!isFetchingPools &&
                     formData.edge_network_id &&
-                    (ipPools || []).length === 0 &&
+                    ipPools.length === 0 &&
                     !poolsError && (
                       <p className="text-xs text-yellow-700 mt-1">
                         No IP pools found for the selected edge network.
@@ -328,7 +422,7 @@ const AssignEdgeConfigModal = ({ isOpen, onClose, onSuccess, projectId, region }
           <div className="flex flex-wrap gap-3">
             <button
               onClick={onClose}
-              className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium"
+              className="px-6 py-2 text-[var(--theme-text-color)] bg-[var(--theme-surface-alt)] border border-[var(--theme-surface-alt)] rounded-[30px] font-medium"
             >
               Cancel
             </button>
@@ -337,7 +431,7 @@ const AssignEdgeConfigModal = ({ isOpen, onClose, onSuccess, projectId, region }
               disabled={
                 isPending || !selectedRegion || !formData.edge_network_id || !formData.ip_pool_id
               }
-              className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="px-8 py-3 bg-[var(--theme-color)] text-white font-medium rounded-[30px] hover:bg-[var(--theme-color)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Assign
               {isPending && <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />}
@@ -345,10 +439,12 @@ const AssignEdgeConfigModal = ({ isOpen, onClose, onSuccess, projectId, region }
             <button
               onClick={handleAutoAssign}
               disabled={isPending || !selectedRegion}
-              className="px-6 py-3 border border-[#288DD1] text-[#288DD1] font-medium rounded-[30px] hover:bg-primary-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="px-6 py-3 border border-[var(--theme-color)] text-[var(--theme-color)] font-medium rounded-[30px] hover:bg-primary-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Auto Assign Defaults
-              {isPending && <Loader2 className="w-4 h-4 ml-2 text-[#288DD1] animate-spin" />}
+              {isPending && (
+                <Loader2 className="w-4 h-4 ml-2 text-[var(--theme-color)] animate-spin" />
+              )}
             </button>
           </div>
         </div>

@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Calendar,
   CreditCard,
@@ -7,7 +6,6 @@ import {
   XCircle,
   CheckCircle,
   AlertTriangle,
-  Clock,
   ToggleLeft,
   ToggleRight,
   Loader2,
@@ -41,6 +39,36 @@ interface SubscriptionData {
   created_at: string;
 }
 
+type RenewalPayment = Record<string, unknown> & {
+  required?: boolean;
+};
+
+type RenewalTransaction = Record<string, unknown> & {
+  amount?: number;
+  currency?: string;
+};
+
+type RenewalResult = Record<string, unknown> & {
+  payment?: RenewalPayment;
+  transaction?: RenewalTransaction;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === "string" && error.trim()) return error;
+  if (
+    isRecord(error) &&
+    typeof error["message"] === "string" &&
+    (error["message"] as string).trim()
+  ) {
+    return error["message"] as string;
+  }
+  return fallback;
+};
+
 export const ObjectStorageSubscription: React.FC<ObjectStorageSubscriptionProps> = ({
   accountId,
   accountName,
@@ -54,26 +82,26 @@ export const ObjectStorageSubscription: React.FC<ObjectStorageSubscriptionProps>
   const [cancelling, setCancelling] = useState(false);
   const [showRenewModal, setShowRenewModal] = useState(false);
   const [renewMonths, setRenewMonths] = useState(1);
-  const [renewResult, setRenewResult] = useState<any>(null);
+  const [renewResult, setRenewResult] = useState<RenewalResult | null>(null);
   const [renewing, setRenewing] = useState(false);
+
+  const loadSubscription = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await objectStorageApi.getSubscription(accountId);
+      setSubscription(data as SubscriptionData);
+    } catch (err) {
+      ToastUtils.error(getErrorMessage(err, "Failed to load subscription"));
+    } finally {
+      setLoading(false);
+    }
+  }, [accountId]);
 
   useEffect(() => {
     if (accountId) {
       loadSubscription();
     }
-  }, [accountId]);
-
-  const loadSubscription = async () => {
-    setLoading(true);
-    try {
-      const data = await objectStorageApi.getSubscription(accountId);
-      setSubscription(data);
-    } catch (err: any) {
-      ToastUtils.error(err.message || "Failed to load subscription");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [accountId, loadSubscription]);
 
   const toggleAutoRenew = async () => {
     if (!subscription) return;
@@ -86,8 +114,8 @@ export const ObjectStorageSubscription: React.FC<ObjectStorageSubscriptionProps>
       ToastUtils.success(
         subscription.auto_renew ? "Auto-renewal disabled" : "Auto-renewal enabled"
       );
-    } catch (err: any) {
-      ToastUtils.error(err.message || "Failed to update auto-renewal");
+    } catch (err) {
+      ToastUtils.error(getErrorMessage(err, "Failed to update auto-renewal"));
     } finally {
       setUpdatingAutoRenew(false);
     }
@@ -96,12 +124,13 @@ export const ObjectStorageSubscription: React.FC<ObjectStorageSubscriptionProps>
   const handleCancel = async () => {
     setCancelling(true);
     try {
-      await objectStorageApi.cancelSubscription(accountId, cancelReason || null);
+      const reason = cancelReason.trim() ? cancelReason.trim() : null;
+      await objectStorageApi.cancelSubscription(accountId, reason);
       ToastUtils.success("Subscription cancelled");
       setShowCancelModal(false);
       loadSubscription();
-    } catch (err: any) {
-      ToastUtils.error(err.message || "Failed to cancel subscription");
+    } catch (err) {
+      ToastUtils.error(getErrorMessage(err, "Failed to cancel subscription"));
     } finally {
       setCancelling(false);
     }
@@ -112,8 +141,8 @@ export const ObjectStorageSubscription: React.FC<ObjectStorageSubscriptionProps>
       await objectStorageApi.reactivateSubscription(accountId);
       ToastUtils.success("Subscription reactivated");
       loadSubscription();
-    } catch (err: any) {
-      ToastUtils.error(err.message || "Failed to reactivate subscription");
+    } catch (err) {
+      ToastUtils.error(getErrorMessage(err, "Failed to reactivate subscription"));
     }
   };
 
@@ -121,9 +150,9 @@ export const ObjectStorageSubscription: React.FC<ObjectStorageSubscriptionProps>
     setRenewing(true);
     try {
       const result = await objectStorageApi.renewSubscription(accountId, renewMonths);
-      setRenewResult(result);
-    } catch (err: any) {
-      ToastUtils.error(err.message || "Failed to initiate renewal");
+      setRenewResult(result as RenewalResult);
+    } catch (err) {
+      ToastUtils.error(getErrorMessage(err, "Failed to initiate renewal"));
     } finally {
       setRenewing(false);
     }
@@ -148,12 +177,12 @@ export const ObjectStorageSubscription: React.FC<ObjectStorageSubscriptionProps>
         icon: <XCircle className="h-4 w-4" />,
       },
     };
-    const style = styles[status] || styles.active;
+    const style = styles[status] || styles["active"];
     return (
       <span
-        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${style.bg} ${style.text}`}
+        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${style?.bg} ${style?.text}`}
       >
-        {style.icon}
+        {style?.icon}
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );
@@ -279,10 +308,14 @@ export const ObjectStorageSubscription: React.FC<ObjectStorageSubscriptionProps>
             >
               {updatingAutoRenew ? (
                 <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-              ) : subscription.auto_renew ? (
-                <ToggleRight className="h-8 w-8 text-green-500" />
               ) : (
-                <ToggleLeft className="h-8 w-8 text-gray-400" />
+                <>
+                  {subscription.auto_renew ? (
+                    <ToggleRight className="h-8 w-8 text-green-500" />
+                  ) : (
+                    <ToggleLeft className="h-8 w-8 text-gray-400" />
+                  )}
+                </>
               )}
             </button>
           </div>
@@ -323,7 +356,7 @@ export const ObjectStorageSubscription: React.FC<ObjectStorageSubscriptionProps>
       {/* Cancel Modal */}
       {showCancelModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+          <div className="bg-white rounded-xl shadow-xl w-full max-md p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Cancel Subscription</h3>
             <p className="text-sm text-gray-600 mb-4">
               Your storage will remain accessible until {formatDate(subscription.expires_at)}. After
@@ -359,10 +392,17 @@ export const ObjectStorageSubscription: React.FC<ObjectStorageSubscriptionProps>
       {showRenewModal && !renewResult && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Renew Subscription</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4" id="renew-modal-title">
+              Renew Subscription
+            </h3>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Renewal Period</label>
-              <div className="grid grid-cols-4 gap-2">
+              <label
+                className="block text-sm font-medium text-gray-700 mb-2"
+                htmlFor="renewal-period-options"
+              >
+                Renewal Period
+              </label>
+              <div className="grid grid-cols-4 gap-2" id="renewal-period-options">
                 {[1, 3, 6, 12].map((m) => (
                   <button
                     key={m}
@@ -418,15 +458,15 @@ export const ObjectStorageSubscription: React.FC<ObjectStorageSubscriptionProps>
           mode="modal"
           transactionData={{
             data: {
-              transaction: renewResult.transaction,
-              payment: renewResult.payment,
+              transaction: renewResult.transaction as any,
+              payment: renewResult.payment as any,
               order: {
                 storage_profiles: [
                   {
                     name: accountName,
                     months: renewMonths,
-                    subtotal: renewResult.transaction?.amount,
-                    currency: renewResult.transaction?.currency,
+                    subtotal: renewResult.transaction?.amount ?? 0,
+                    currency: renewResult.transaction?.currency ?? "USD",
                   },
                 ],
               },

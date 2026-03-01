@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
 import {
   useAttachNetworkInterfaceSecurityGroup,
@@ -7,6 +6,12 @@ import {
 } from "../../../hooks/adminHooks/networkHooks";
 import { useFetchSecurityGroups } from "../../../hooks/adminHooks/securityGroupHooks";
 import ToastUtils from "../../../utils/toastUtil";
+
+interface SecurityGroupOption {
+  id?: string | number;
+  name?: string;
+  [key: string]: unknown;
+}
 
 export const AttachSgModal = ({
   isOpen,
@@ -20,11 +25,15 @@ export const AttachSgModal = ({
     region,
     network_interface_id: networkInterfaceId,
   });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, any>>({});
   const { mutate: attach, isPending } = useAttachNetworkInterfaceSecurityGroup();
-  const { data: securityGroups } = useFetchSecurityGroups(projectId, form.region, {
+  const { data: securityGroupsData } = useFetchSecurityGroups(projectId, form.region, {
     enabled: !!projectId && !!form.region,
   });
+  const securityGroups = useMemo<SecurityGroupOption[]>(
+    () => (Array.isArray(securityGroupsData) ? (securityGroupsData as SecurityGroupOption[]) : []),
+    [securityGroupsData]
+  );
 
   useEffect(() => {
     setForm((p) => ({ ...p, region, network_interface_id: networkInterfaceId }));
@@ -34,10 +43,10 @@ export const AttachSgModal = ({
 
   const submit = (e: any) => {
     if (e) e.preventDefault();
-    const eobj = {};
-    if (!form.region) eobj.region = "Region is required";
-    if (!form.security_group_id) eobj.security_group_id = "Security Group ID is required";
-    if (!form.network_interface_id) eobj.network_interface_id = "ENI ID is required";
+    const eobj: Record<string, any> = {};
+    if (!form.region) eobj["region"] = "Region is required";
+    if (!form.security_group_id) eobj["security_group_id"] = "Security Group ID is required";
+    if (!form.network_interface_id) eobj["network_interface_id"] = "ENI ID is required";
     setErrors(eobj);
     if (Object.keys(eobj).length) return;
     attach(
@@ -52,7 +61,8 @@ export const AttachSgModal = ({
           ToastUtils.success("Security group attached");
           onClose();
         },
-        onError: (err) => ToastUtils.error(err?.message || "Failed to attach security group"),
+        onError: (err: unknown) =>
+          ToastUtils.error(err instanceof Error ? err.message : "Failed to attach security group"),
       }
     );
   };
@@ -72,19 +82,19 @@ export const AttachSgModal = ({
             <input
               value={form.region}
               onChange={(e) => setForm((p) => ({ ...p, region: e.target.value }))}
-              className={`w-full border rounded px-3 py-2 text-sm ${errors.region ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full border rounded px-3 py-2 text-sm ${errors["region"] ? "border-red-500" : "border-gray-300"}`}
             />
-            {errors.region && <p className="text-xs text-red-500 mt-1">{errors.region}</p>}
+            {errors["region"] && <p className="text-xs text-red-500 mt-1">{errors["region"]}</p>}
           </div>
           <div>
             <label className="block text-sm text-gray-700 mb-1">ENI ID</label>
             <input
               value={form.network_interface_id}
               onChange={(e) => setForm((p) => ({ ...p, network_interface_id: e.target.value }))}
-              className={`w-full border rounded px-3 py-2 text-sm ${errors.network_interface_id ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full border rounded px-3 py-2 text-sm ${errors["network_interface_id"] ? "border-red-500" : "border-gray-300"}`}
             />
-            {errors.network_interface_id && (
-              <p className="text-xs text-red-500 mt-1">{errors.network_interface_id}</p>
+            {errors["network_interface_id"] && (
+              <p className="text-xs text-red-500 mt-1">{errors["network_interface_id"]}</p>
             )}
           </div>
           <div>
@@ -92,17 +102,17 @@ export const AttachSgModal = ({
             <select
               value={form.security_group_id}
               onChange={(e) => setForm((p) => ({ ...p, security_group_id: e.target.value }))}
-              className={`w-full border rounded px-3 py-2 text-sm ${errors.security_group_id ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full border rounded px-3 py-2 text-sm ${errors["security_group_id"] ? "border-red-500" : "border-gray-300"}`}
             >
               <option value="">Select Security Group</option>
-              {(securityGroups || []).map((sg: any) => (
+              {securityGroups.map((sg) => (
                 <option key={sg.id} value={sg.id}>
                   {sg.name || sg.id}
                 </option>
               ))}
             </select>
-            {errors.security_group_id && (
-              <p className="text-xs text-red-500 mt-1">{errors.security_group_id}</p>
+            {errors["security_group_id"] && (
+              <p className="text-xs text-red-500 mt-1">{errors["security_group_id"]}</p>
             )}
           </div>
           <div className="flex items-center justify-end gap-2">
@@ -116,7 +126,7 @@ export const AttachSgModal = ({
             <button
               type="submit"
               disabled={isPending}
-              className="px-4 py-2 rounded bg-[#288DD1] text-white text-sm disabled:opacity-50"
+              className="px-4 py-2 rounded bg-[var(--theme-color)] text-white text-sm disabled:opacity-50"
             >
               {isPending ? "Attaching..." : "Attach"}
             </button>
@@ -139,11 +149,15 @@ export const DetachSgModal = ({
     region,
     network_interface_id: networkInterfaceId,
   });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, any>>({});
   const { mutate: detach, isPending } = useDetachNetworkInterfaceSecurityGroup();
-  const { data: securityGroups } = useFetchSecurityGroups(projectId, form.region, {
+  const { data: securityGroupsData } = useFetchSecurityGroups(projectId, form.region, {
     enabled: !!projectId && !!form.region,
   });
+  const securityGroups = useMemo<SecurityGroupOption[]>(
+    () => (Array.isArray(securityGroupsData) ? (securityGroupsData as SecurityGroupOption[]) : []),
+    [securityGroupsData]
+  );
 
   useEffect(() => {
     setForm((p) => ({ ...p, region, network_interface_id: networkInterfaceId }));
@@ -153,10 +167,10 @@ export const DetachSgModal = ({
 
   const submit = (e: any) => {
     if (e) e.preventDefault();
-    const eobj = {};
-    if (!form.region) eobj.region = "Region is required";
-    if (!form.security_group_id) eobj.security_group_id = "Security Group ID is required";
-    if (!form.network_interface_id) eobj.network_interface_id = "ENI ID is required";
+    const eobj: Record<string, any> = {};
+    if (!form.region) eobj["region"] = "Region is required";
+    if (!form.security_group_id) eobj["security_group_id"] = "Security Group ID is required";
+    if (!form.network_interface_id) eobj["network_interface_id"] = "ENI ID is required";
     setErrors(eobj);
     if (Object.keys(eobj).length) return;
     detach(
@@ -171,7 +185,8 @@ export const DetachSgModal = ({
           ToastUtils.success("Security group detached");
           onClose();
         },
-        onError: (err) => ToastUtils.error(err?.message || "Failed to detach security group"),
+        onError: (err: unknown) =>
+          ToastUtils.error(err instanceof Error ? err.message : "Failed to detach security group"),
       }
     );
   };
@@ -191,19 +206,19 @@ export const DetachSgModal = ({
             <input
               value={form.region}
               onChange={(e) => setForm((p) => ({ ...p, region: e.target.value }))}
-              className={`w-full border rounded px-3 py-2 text-sm ${errors.region ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full border rounded px-3 py-2 text-sm ${errors["region"] ? "border-red-500" : "border-gray-300"}`}
             />
-            {errors.region && <p className="text-xs text-red-500 mt-1">{errors.region}</p>}
+            {errors["region"] && <p className="text-xs text-red-500 mt-1">{errors["region"]}</p>}
           </div>
           <div>
             <label className="block text-sm text-gray-700 mb-1">ENI ID</label>
             <input
               value={form.network_interface_id}
               onChange={(e) => setForm((p) => ({ ...p, network_interface_id: e.target.value }))}
-              className={`w-full border rounded px-3 py-2 text-sm ${errors.network_interface_id ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full border rounded px-3 py-2 text-sm ${errors["network_interface_id"] ? "border-red-500" : "border-gray-300"}`}
             />
-            {errors.network_interface_id && (
-              <p className="text-xs text-red-500 mt-1">{errors.network_interface_id}</p>
+            {errors["network_interface_id"] && (
+              <p className="text-xs text-red-500 mt-1">{errors["network_interface_id"]}</p>
             )}
           </div>
           <div>
@@ -211,17 +226,17 @@ export const DetachSgModal = ({
             <select
               value={form.security_group_id}
               onChange={(e) => setForm((p) => ({ ...p, security_group_id: e.target.value }))}
-              className={`w-full border rounded px-3 py-2 text-sm ${errors.security_group_id ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full border rounded px-3 py-2 text-sm ${errors["security_group_id"] ? "border-red-500" : "border-gray-300"}`}
             >
               <option value="">Select Security Group</option>
-              {(securityGroups || []).map((sg: any) => (
+              {securityGroups.map((sg) => (
                 <option key={sg.id} value={sg.id}>
                   {sg.name || sg.id}
                 </option>
               ))}
             </select>
-            {errors.security_group_id && (
-              <p className="text-xs text-red-500 mt-1">{errors.security_group_id}</p>
+            {errors["security_group_id"] && (
+              <p className="text-xs text-red-500 mt-1">{errors["security_group_id"]}</p>
             )}
           </div>
           <div className="flex items-center justify-end gap-2">
@@ -235,7 +250,7 @@ export const DetachSgModal = ({
             <button
               type="submit"
               disabled={isPending}
-              className="px-4 py-2 rounded bg-[#288DD1] text-white text-sm disabled:opacity-50"
+              className="px-4 py-2 rounded bg-[var(--theme-color)] text-white text-sm disabled:opacity-50"
             >
               {isPending ? "Detaching..." : "Detach"}
             </button>

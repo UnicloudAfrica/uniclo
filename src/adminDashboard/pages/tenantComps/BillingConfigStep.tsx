@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import { CreditCard, Wallet, Shield, Clock, CheckCircle } from "lucide-react";
 
@@ -81,7 +80,7 @@ const BillingConfigStep: React.FC<BillingConfigStepProps> & {
           Select which billing models this partner can use. They can choose from these options.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {BILLING_MODELS.map(({ value, label, description, icon: Icon }) => {
+          {BILLING_MODELS.map(({ value, label, description, icon: Icon }: any) => {
             const isSelected = billingConfig.allowed_billing_models?.includes(value);
             return (
               <button
@@ -127,9 +126,9 @@ const BillingConfigStep: React.FC<BillingConfigStepProps> & {
           onChange={(e) => updateBilling({ billing_model: e.target.value })}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
-          {BILLING_MODELS.filter((m) =>
+          {BILLING_MODELS.filter((m: any) =>
             billingConfig.allowed_billing_models?.includes(m.value)
-          ).map(({ value, label }) => (
+          ).map(({ value, label }: any) => (
             <option key={value} value={value}>
               {label}
             </option>

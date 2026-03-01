@@ -1,21 +1,14 @@
-// @ts-nocheck
 import React from "react";
-import {
-  getKeyPairPermissions,
-  type Hierarchy,
-  type KeyPairPermissions,
-} from "../../../config/permissionPresets";
-import KeyPairsOverview, { type KeyPair } from "../KeyPairsOverview";
+import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
+import { getKeyPairPermissions, type Hierarchy } from "../../../config/permissionPresets";
+import KeyPairsOverview from "../KeyPairsOverview";
+import { KeyPair } from "../types";
 import ToastUtils from "../../../../utils/toastUtil";
 
 interface KeyPairHooks {
-  useList: (
-    projectId: string,
-    region?: string,
-    options?: any
-  ) => { data: KeyPair[]; isFetching: boolean };
-  useDelete: () => { mutate: (input: any, options?: any) => void; isPending: boolean };
-  useSync: () => { mutateAsync: (payload: any) => Promise<any>; isPending: boolean };
+  useList: (projectId: string, region?: string, options?: any) => UseQueryResult<KeyPair[], Error>;
+  useDelete: () => UseMutationResult<any, any, any, unknown>;
+  useSync: () => UseMutationResult<any, any, any, unknown>;
 }
 
 interface KeyPairsContainerProps {

@@ -1,8 +1,6 @@
-// @ts-nocheck
 import React from "react";
-import lapapi from "../../index/admin/lapapi";
 import useAdminAuthStore from "../../stores/adminAuthStore";
-import { clearAllAuthSessions } from "../../stores/sessionUtils";
+import { logoutActiveSession } from "../../stores/sessionUtils";
 import { DashboardSidebar } from "../../shared/components/sidebar";
 import { adminMenuItems } from "../../shared/config/sidebarMenus";
 import { useNavigate } from "react-router-dom";
@@ -29,11 +27,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ forceRender = false }) => {
 
   const handleLogout = async () => {
     try {
-      await lapapi("POST", "/business/auth/logout");
+      await logoutActiveSession();
     } catch (error) {
       console.error("Admin logout failed:", error);
     } finally {
-      clearAllAuthSessions();
       clearUserEmail?.();
       closeMobile();
       navigate("/admin-signin");

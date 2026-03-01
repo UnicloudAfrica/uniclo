@@ -1,13 +1,12 @@
-// @ts-nocheck
 import React, { useState, useEffect } from "react";
-import ModernModal from "../../ui/ModernModal";
+import ModernModal, { ModalAction } from "../../ui/ModernModal";
 import ModernSelect from "../../ui/ModernSelect";
 
 interface AssociateSubnetModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAssociate: (subnetId: string) => void;
-  subnets: any[];
+  subnets: unknown;
   isLoading?: boolean;
 }
 
@@ -39,7 +38,7 @@ const AssociateSubnetModal: React.FC<AssociateSubnetModalProps> = ({
     }));
   };
 
-  const actions = [
+  const actions: ModalAction[] = [
     {
       label: "Cancel",
       variant: "ghost",

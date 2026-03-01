@@ -1,23 +1,33 @@
-// @ts-nocheck
 import React, { useMemo } from "react";
-import {
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  Package,
-} from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { ModernTable, Column } from "../../shared/components/ui";
 
 const buildClassName = (...classes: (string | undefined | null | false)[]) =>
   classes.filter(Boolean).join(" ");
 
+interface LegacyExplorerColumn {
+  key?: string;
+  accessorKey?: string;
+  header: React.ReactNode;
+  align?: "left" | "center" | "right";
+  cellClassName?: string;
+  render?: (row: Record<string, unknown>) => React.ReactNode;
+  fallback?: React.ReactNode;
+}
+
+interface ResourceExplorerMeta {
+  last_page?: number;
+  from?: number;
+  to?: number;
+  total?: number;
+  [key: string]: unknown;
+}
+
 interface ResourceDataExplorerProps {
   title?: string;
   description?: string;
-  columns?: any[]; // Keeping as any[] for now to support legacy column definition
-  rows?: any[];
+  columns?: LegacyExplorerColumn[];
+  rows?: Record<string, unknown>[];
   loading?: boolean;
   page?: number;
   perPage?: number;
@@ -34,7 +44,7 @@ interface ResourceDataExplorerProps {
     description?: string;
     action?: React.ReactNode;
   };
-  meta?: any;
+  meta?: ResourceExplorerMeta;
   highlight?: boolean;
 }
 
@@ -75,25 +85,39 @@ const ResourceDataExplorer: React.FC<ResourceDataExplorerProps> = ({
   };
 
   // Map legacy columns to DataTable columns
-  const tableColumns: Column<any>[] = useMemo(() => {
-    return columns.map((col, idx) => ({
-      key: col.key || col.accessorKey || `col-${idx}`,
-      header: col.header,
-      align: col.align,
-      className: col.cellClassName,
-      // We use a custom cell renderer to handle the legacy render function and fallback logic
-      render: (value: any, row: any, index: number) => {
-        if (typeof col.render === "function") {
-          return col.render(row);
-        }
-        // If no render function, use value from key
-        const itemValue = row[col.key || col.accessorKey];
-        if (itemValue === undefined || itemValue === null || itemValue === "") {
-          return col.fallback ?? "—";
-        }
-        return itemValue;
-      },
-    }));
+  const tableColumns: Column<Record<string, unknown>>[] = useMemo(() => {
+    return columns.map((col: LegacyExplorerColumn, idx: number) => {
+      const column: Column<Record<string, unknown>> = {
+        key: col.key || col.accessorKey || `col-${idx}`,
+        header: col.header,
+        // We use a custom cell renderer to handle the legacy render function and fallback logic
+        render: (_value: unknown, row: Record<string, unknown>) => {
+          if (typeof col.render === "function") {
+            return col.render(row);
+          }
+          // If no render function, use value from key
+          const fieldKey = col.key || col.accessorKey || "";
+          const itemValue = fieldKey ? row[fieldKey] : undefined;
+          if (itemValue === undefined || itemValue === null || itemValue === "") {
+            return col.fallback ?? "—";
+          }
+          if (React.isValidElement(itemValue)) {
+            return itemValue;
+          }
+          if (typeof itemValue === "string" || typeof itemValue === "number") {
+            return itemValue;
+          }
+          if (typeof itemValue === "boolean") {
+            return itemValue ? "true" : "false";
+          }
+          return String(itemValue);
+        },
+      };
+      if (col.align !== undefined) {
+        column.align = col.align;
+      }
+      return column;
+    });
   }, [columns]);
 
   const renderEmptyState = () => {
@@ -211,7 +235,7 @@ const ResourceDataExplorer: React.FC<ResourceDataExplorerProps> = ({
                 onChange={handlePerPageChange}
                 className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 focus:border-blue-300 focus:outline-none"
               >
-                {perPageOptions.map((option: any) => (
+                {perPageOptions.map((option: number) => (
                   <option key={option} value={option}>
                     {option}
                   </option>

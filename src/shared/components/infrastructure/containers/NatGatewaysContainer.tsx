@@ -1,11 +1,6 @@
-// @ts-nocheck
 import React, { useState } from "react";
 import { Plus, RefreshCw } from "lucide-react";
-import {
-  getNatGatewayPermissions,
-  type Hierarchy,
-  type NatGatewayPermissions,
-} from "../../../config/permissionPresets";
+import { getNatGatewayPermissions, type Hierarchy } from "../../../config/permissionPresets";
 import { NatGatewaysOverview } from "..";
 import ToastUtils from "../../../../utils/toastUtil";
 import ModernButton from "../../ui/ModernButton";
@@ -16,7 +11,7 @@ interface NatGatewayHooks {
     projectId: string,
     region?: string,
     options?: any
-  ) => { data: any[]; isLoading: boolean; refetch: () => void };
+  ) => { data: unknown; isLoading: boolean; refetch: () => void };
   useCreate: () => { mutate: (input: any, options?: any) => void; isPending: boolean };
   useDelete: () => { mutate: (input: any, options?: any) => void; isPending: boolean }; // Some Delete hooks use mutateAsync, check usage. vpcInfraHooks uses mutate.
 }
@@ -30,7 +25,6 @@ interface NatGatewaysContainerProps {
     headerActions: React.ReactNode;
     children: React.ReactNode;
   }) => React.ReactElement;
-  onStatsUpdate?: (count: number) => void;
   // Hooks to fetch dependencies for passing to Overview if needed?
   // Overview needs 'availableSubnetsCount'. We can pass that from the list data or fetch it here if needed.
   // Actually, Overview takes 'availableSubnetsCount'.
@@ -111,7 +105,7 @@ const NatGatewaysContainer: React.FC<NatGatewaysContainerProps> = ({
     <>
       <Wrapper headerActions={headerActions}>
         <NatGatewaysOverview
-          natGateways={natGateways}
+          natGateways={natGateways as any[]}
           isLoading={isLoading}
           availableSubnetsCount={0} // We'd need to fetch subnets to get this real count. Overview uses it for stats?
           onDelete={permissions.canDelete ? (gw) => handleDelete(gw.id) : undefined}

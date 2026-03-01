@@ -1,16 +1,39 @@
-// @ts-nocheck
-import React, { useState } from "react";
+import { useState } from "react";
 import DetailedModules from "./DetailedModules"; // Note: File import was DetailedModules, check casing. Step 4303 shows "./DetailedModules".
-import ModernTable from "../../../shared/components/ui/ModernTable";
+import ModernTable, { Column } from "../../../shared/components/ui/ModernTable";
 
 interface PartnerModulesProps {
   tenantId?: string;
 }
 
-const PartnerModules: React.FC<PartnerModulesProps> = ({ tenantId }: any) => {
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+interface PartnerModuleRow {
+  id: number;
+  module: string;
+  status: string;
+  plan: string;
+  startDate: string;
+  endDate: string;
+}
+
+const StatusBadge = ({ status }: { status: string }) => {
+  const isActive = status === "Active";
+  return (
+    <span
+      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+        isActive
+          ? "bg-[rgb(var(--theme-success-500) / 0.08)] text-[rgb(var(--theme-success-500))]"
+          : "bg-[rgb(var(--theme-danger-500) / 0.2)] text-[rgb(var(--theme-danger-500))]"
+      }`}
+    >
+      {status}
+    </span>
+  );
+};
+
+const PartnerModules: React.FC<PartnerModulesProps> = () => {
+  const [selectedItem, setSelectedItem] = useState<PartnerModuleRow | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const data = [
+  const data: PartnerModuleRow[] = [
     {
       id: 1,
       module: "Z2 Compute Instances",
@@ -93,7 +116,7 @@ const PartnerModules: React.FC<PartnerModulesProps> = ({ tenantId }: any) => {
     },
   ];
 
-  const handleRowClick = (item: any) => {
+  const handleRowClick = (item: PartnerModuleRow) => {
     setSelectedItem(item);
     setIsModalOpen(true);
   };
@@ -103,44 +126,27 @@ const PartnerModules: React.FC<PartnerModulesProps> = ({ tenantId }: any) => {
     setSelectedItem(null);
   };
 
-  const StatusBadge = ({ status }: { status: string }) => {
-    const isActive = status === "Active";
-    return (
-      <span
-        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-          isActive ? "bg-[#00BF6B14] text-[#00BF6B]" : "bg-[#EB417833] text-[#EB4178]"
-        }`}
-      >
-        {status}
-      </span>
-    );
-  };
-
-  const columns = [
+  const columns: Column<PartnerModuleRow>[] = [
     {
       key: "module",
       header: "MODULE",
-      className: "text-[#575758] font-normal",
     },
     {
       key: "status",
       header: "STATUS",
-      render: (val: string) => <StatusBadge status={val} />,
+      render: (_: unknown, row: PartnerModuleRow) => <StatusBadge status={row.status} />,
     },
     {
       key: "plan",
       header: "PLAN",
-      className: "text-[#575758] font-normal",
     },
     {
       key: "startDate",
       header: "START DATE",
-      className: "text-[#575758] font-normal",
     },
     {
       key: "endDate",
       header: "END DATE",
-      className: "text-[#575758] font-normal",
     },
   ];
 

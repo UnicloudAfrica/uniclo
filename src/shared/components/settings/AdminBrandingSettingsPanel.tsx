@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import ToastUtils from "../../../utils/toastUtil";
 import {
   generateColorPalette,
@@ -13,15 +12,25 @@ import {
   BrandingSettingsSkeleton,
 } from "../../../tenantDashboard/pages/TenantBrandingSettings";
 
+interface AdminBrandingFormData {
+  primary_color: string;
+  secondary_color: string;
+  surface_alt: string;
+  company_name: string;
+  support_email: string;
+  support_phone: string;
+  website: string;
+}
+
 const useAdminBrandingSettingsState = () => {
   const { data: brandingData, isLoading } = useFetchAdminBranding();
   const { mutate: updateBranding, isPending: isSaving } = useUpdateAdminBranding();
   const { mutate: resetBranding, isPending: isResetting } = useResetAdminBranding();
 
-  const [formData, setFormData] = useState({
-    primary_color: "#288DD1",
-    secondary_color: "#3FE0C8",
-    surface_alt: "#F3F4F6",
+  const [formData, setFormData] = useState<AdminBrandingFormData>({
+    primary_color: "var(--theme-color)",
+    secondary_color: "var(--secondary-color)",
+    surface_alt: "var(--theme-surface-alt)",
     company_name: "",
     support_email: "",
     support_phone: "",
@@ -34,9 +43,9 @@ const useAdminBrandingSettingsState = () => {
     if (brandingData?.settings) {
       const { branding, business } = brandingData.settings;
       setFormData({
-        primary_color: branding?.primary_color || "#288DD1",
-        secondary_color: branding?.secondary_color || "#3FE0C8",
-        surface_alt: branding?.surface_alt || "#F3F4F6",
+        primary_color: branding?.primary_color || "var(--theme-color)",
+        secondary_color: branding?.secondary_color || "var(--secondary-color)",
+        surface_alt: branding?.surface_alt || "var(--theme-surface-alt)",
         company_name: business?.company_name || "",
         support_email: business?.support_email || "",
         support_phone: business?.support_phone || "",
@@ -64,8 +73,8 @@ const useAdminBrandingSettingsState = () => {
   const handleSave = () => {
     const hasExistingFavicon = Boolean(
       brandingData?.resolved?.favicon ||
-        brandingData?.settings?.branding?.favicon_url ||
-        brandingData?.settings?.branding?.favicon_path
+      brandingData?.settings?.branding?.favicon_url ||
+      brandingData?.settings?.branding?.favicon_path
     );
     const isLogoUpdate = Boolean(files.logo);
     const isFaviconUpdate = Boolean(files.favicon);
@@ -75,11 +84,11 @@ const useAdminBrandingSettingsState = () => {
       return;
     }
 
-    (updateBranding as any)({ ...formData, ...files });
+    updateBranding({ ...formData, ...files });
   };
 
   const handleReset = () => {
-    if (window.confirm("Reset all branding to platform defaults?")) {
+    if (globalThis.window.confirm("Reset all branding to platform defaults?")) {
       resetBranding();
     }
   };

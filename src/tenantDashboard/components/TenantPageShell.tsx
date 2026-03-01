@@ -1,6 +1,5 @@
-// @ts-nocheck
 import React from "react";
-// @ts-ignore
+
 import DashboardPageShell from "../../shared/layouts/DashboardPageShell";
 
 interface TenantPageShellProps {

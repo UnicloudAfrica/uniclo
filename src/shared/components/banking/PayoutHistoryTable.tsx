@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import { CreditCard, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import {
@@ -22,7 +21,7 @@ export const PayoutHistoryTable: React.FC<PayoutHistoryTableProps> = ({
   showBankDetails = true,
   emptyMessage = "No payouts yet",
 }) => {
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: Payout["status"]) => {
     switch (status) {
       case "completed":
         return <CheckCircle className="w-4 h-4 text-green-600" />;

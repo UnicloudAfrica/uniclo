@@ -1,6 +1,5 @@
-// @ts-nocheck
 import React, { useState } from "react";
-import ModernModal from "../../ui/ModernModal";
+import ModernModal, { ModalAction } from "../../ui/ModernModal";
 import ModernInput from "../../ui/ModernInput";
 import ModernSelect from "../../ui/ModernSelect";
 
@@ -8,7 +7,7 @@ interface CreateNetworkAclModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (data: { vpc_id: string; name?: string }) => void;
-  vpcs: any[];
+  vpcs: unknown;
   isLoading?: boolean;
 }
 
@@ -43,7 +42,7 @@ const CreateNetworkAclModal: React.FC<CreateNetworkAclModalProps> = ({
     }));
   };
 
-  const actions = [
+  const actions: ModalAction[] = [
     {
       label: "Cancel",
       variant: "ghost",

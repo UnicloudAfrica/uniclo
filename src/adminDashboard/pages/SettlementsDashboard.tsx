@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -179,13 +178,13 @@ const SettlementsDashboard: React.FC = () => {
   const pagination = settlementData?.data || {};
 
   const handleMarkSettled = async (id: number) => {
-    if (window.confirm("Mark this settlement as paid?")) {
+    if (globalThis.window.confirm("Mark this settlement as paid?")) {
       await markSettled.mutateAsync({ id });
     }
   };
 
   const handleSendReminder = async (id: number) => {
-    if (window.confirm("Send payment reminder to the payer?")) {
+    if (globalThis.window.confirm("Send payment reminder to the payer?")) {
       try {
         await sendReminder.mutateAsync(id);
         alert("Reminder sent successfully!");
@@ -202,7 +201,7 @@ const SettlementsDashboard: React.FC = () => {
 
     // Open export URL in new tab (will download CSV)
     const baseUrl = adminApi.defaults.baseURL || "";
-    window.open(`${baseUrl}/settlements/export?${params.toString()}`, "_blank");
+    globalThis.window.open(`${baseUrl}/settlements/export?${params.toString()}`, "_blank");
   };
 
   return (

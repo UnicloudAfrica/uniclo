@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState } from "react";
 import { AlertTriangle, Trash2, X, Loader2 } from "lucide-react";
 

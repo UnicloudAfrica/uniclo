@@ -1,15 +1,5 @@
-// @ts-nocheck
 import React, { useState, useEffect } from "react";
-import {
-  Receipt,
-  Check,
-  Clock,
-  XCircle,
-  AlertCircle,
-  Loader2,
-  RefreshCw,
-  ExternalLink,
-} from "lucide-react";
+import { Receipt, Check, Clock, XCircle, AlertCircle, Loader2, RefreshCw } from "lucide-react";
 import objectStorageApi from "../../../services/objectStorageApi";
 import ToastUtils from "../../../utils/toastUtil";
 
@@ -31,6 +21,18 @@ interface ObjectStorageTransactionsProps {
   accountName: string;
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === "string" && error.trim()) return error;
+  if (isRecord(error) && typeof error.message === "string" && error.message.trim()) {
+    return error.message;
+  }
+  return fallback;
+};
+
 export const ObjectStorageTransactions: React.FC<ObjectStorageTransactionsProps> = ({
   accountId,
   accountName,
@@ -51,8 +53,8 @@ export const ObjectStorageTransactions: React.FC<ObjectStorageTransactionsProps>
       const data = await objectStorageApi.getTransactions(accountId);
       setTransactions(data.transactions || []);
       setTotal(data.total || 0);
-    } catch (err: any) {
-      ToastUtils.error(err.message || "Failed to load transactions");
+    } catch (err) {
+      ToastUtils.error(getErrorMessage(err, "Failed to load transactions"));
     } finally {
       setLoading(false);
     }

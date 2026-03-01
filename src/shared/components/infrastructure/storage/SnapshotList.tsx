@@ -82,7 +82,7 @@ const SnapshotList: React.FC<SnapshotListProps> = ({ snapshots, isLoading, onDel
       render: (id: string) => (
         <button
           onClick={() => {
-            if (window.confirm("Are you sure you want to delete this snapshot?")) {
+            if (globalThis.window.confirm("Are you sure you want to delete this snapshot?")) {
               onDelete(id);
             }
           }}

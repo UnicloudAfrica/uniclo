@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Shield } from "lucide-react";
@@ -9,6 +8,7 @@ import {
   useCreateSecurityGroup,
   useDeleteSecurityGroup,
 } from "../../../shared/hooks/vpcInfraHooks";
+import type { SecurityGroup } from "../../../shared/components/infrastructure/types";
 
 /**
  * Tenant Security Groups page - truly thin wrapper.
@@ -28,7 +28,7 @@ const TenantSecurityGroups: React.FC = () => {
     useDelete: useDeleteSecurityGroup,
   };
 
-  const handleNavigateToRules = (sg: any) => {
+  const handleNavigateToRules = (sg: SecurityGroup) => {
     navigate(
       `/dashboard/infrastructure/security-group-rules?project=${projectId}&region=${region}&sg=${sg.id}&name=${sg.name || "Security Group"}`
     );

@@ -1,5 +1,5 @@
-// @ts-nocheck
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { UseQueryOptions } from "@tanstack/react-query";
 import silentTenantApi from "../index/tenant/silentTenant";
 import tenantApi from "../index/tenant/tenantApi";
 
@@ -12,6 +12,13 @@ import tenantApi from "../index/tenant/tenantApi";
 // ================================
 // Types
 // ================================
+
+type QueryOptions<TData> = Omit<
+  UseQueryOptions<TData, Error, TData, readonly unknown[]>,
+  "queryKey" | "queryFn"
+>;
+
+type QueryParams = Record<string, string | number | boolean | null | undefined>;
 
 export interface BillingConfig {
   billing_model: "direct" | "prepaid_credit" | "credit_limit" | "paystack_split" | "trust_invoice";
@@ -105,7 +112,7 @@ const deletePaymentGateway = async (gatewayId: number) => {
 // Hooks
 // ================================
 
-export const useTenantBillingConfig = (options = {}) => {
+export const useTenantBillingConfig = (options: QueryOptions<BillingConfig> = {}) => {
   return useQuery({
     queryKey: ["tenant-billing-config"],
     queryFn: fetchBillingConfig,
@@ -128,7 +135,7 @@ export const useSelectBillingModel = () => {
   });
 };
 
-export const useTenantBillingBalance = (options = {}) => {
+export const useTenantBillingBalance = (options: QueryOptions<BillingBalance> = {}) => {
   return useQuery({
     queryKey: ["tenant-billing-balance"],
     queryFn: fetchBillingBalance,
@@ -138,7 +145,9 @@ export const useTenantBillingBalance = (options = {}) => {
   });
 };
 
-export const useTenantPaymentGateways = (options = {}) => {
+export const useTenantPaymentGateways = (
+  options: QueryOptions<{ gateways: PaymentGateway[]; supported_providers: string[] }> = {}
+) => {
   return useQuery({
     queryKey: ["tenant-payment-gateways"],
     queryFn: fetchPaymentGateways,
@@ -217,7 +226,7 @@ const createSubaccount = async (data: {
 // Bank & Subaccount Hooks
 // ================================
 
-export const useBankList = (options = {}) => {
+export const useBankList = (options: QueryOptions<Bank[]> = {}) => {
   return useQuery({
     queryKey: ["paystack-banks"],
     queryFn: fetchBanks,
@@ -254,7 +263,7 @@ export const useCreateSubaccount = () => {
 // Settlement & Invoice API Functions
 // ================================
 
-interface InvoiceItem {
+export interface InvoiceItem {
   id: number;
   invoice_number: string;
   total: number;
@@ -264,22 +273,41 @@ interface InvoiceItem {
   due_at: string | null;
   days_overdue: number;
   items_count: number;
+  created_at?: string;
 }
 
-interface EnforcementSummary {
+export interface EnforcementSummary {
   total_outstanding_cents: number;
   total_outstanding_formatted: string;
   pending_settlements: number;
   overdue_settlements: number;
   pending_invoices: number;
   overdue_invoices: number;
+  overdue_count?: number;
   is_suspended: boolean;
   should_suspend: boolean;
   payment_terms_days: number;
 }
 
-const fetchInvoices = async () => {
-  const res = await silentTenantApi("GET", "/admin/billing/invoices");
+export type InvoiceQueryParams = {
+  status?: string;
+  page?: number;
+  per_page?: number;
+};
+
+const toQueryString = (params: QueryParams): string => {
+  const entries = Object.entries(params).filter(([, value]) => {
+    if (value === undefined || value === null || value === "") return false;
+    return true;
+  });
+  if (entries.length === 0) return "";
+  return new URLSearchParams(entries.map(([key, value]) => [key, String(value)])).toString();
+};
+
+const fetchInvoices = async (params: InvoiceQueryParams = {}) => {
+  const query = toQueryString(params);
+  const url = `/admin/billing/invoices${query ? `?${query}` : ""}`;
+  const res = await silentTenantApi("GET", url);
   if (!res.data?.invoices) throw new Error("Failed to fetch invoices");
   return res.data.invoices as InvoiceItem[];
 };
@@ -304,17 +332,20 @@ const paySettlements = async (data: {
 // Settlement & Invoice Hooks
 // ================================
 
-export const useInvoices = (options = {}) => {
+export const useInvoices = (
+  params: InvoiceQueryParams = {},
+  options: QueryOptions<InvoiceItem[]> = {}
+) => {
   return useQuery({
-    queryKey: ["tenant-invoices"],
-    queryFn: fetchInvoices,
+    queryKey: ["tenant-invoices", params],
+    queryFn: () => fetchInvoices(params),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
   });
 };
 
-export const useEnforcementSummary = (options = {}) => {
+export const useEnforcementSummary = (options: QueryOptions<EnforcementSummary> = {}) => {
   return useQuery({
     queryKey: ["tenant-enforcement-summary"],
     queryFn: fetchEnforcementSummary,
@@ -350,7 +381,7 @@ export const useTenantBillingOperations = () => {
   const banks = useBankList({ enabled: false }); // Load on demand
   const verifyAccount = useVerifyBankAccount();
   const createSub = useCreateSubaccount();
-  const invoices = useInvoices({ enabled: false });
+  const invoices = useInvoices({}, { enabled: false });
   const enforcement = useEnforcementSummary({ enabled: false });
   const paySettlement = usePaySettlements();
 

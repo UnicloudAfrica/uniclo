@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Bell,
@@ -23,6 +22,7 @@ import {
 import { useContextAwareSettings } from "../../../hooks/useContextAwareSettings";
 import config from "../../../config";
 import { getTabsForContext } from "../../constants/profileTabs";
+import type { FieldConfig, GroupConfig, TabConfig } from "../../types/settings";
 import {
   flattenSettings,
   normalizeFieldValue,
@@ -48,14 +48,31 @@ interface AccountSettingsContentProps {
   context: "admin" | "tenant" | "client";
 }
 
+interface NetworkPolicyState {
+  force_eip_for_public_preset: boolean;
+  allow_preset_upgrade_for_eip: boolean;
+  require_eip_preflight: boolean;
+  strict_eip_preflight: boolean;
+}
+
+type TwoFactorModalMode = "enable" | "disable";
+
+interface TwoFactorModalState {
+  open: boolean;
+  mode: TwoFactorModalMode;
+  qrCodeSvg: string;
+  qrCodeUrl: string;
+  secret: string;
+}
+
 const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context }) => {
   const [activeTab, setActiveTab] = useState(getTabsForContext(context)[0]?.id || "profile");
-  const [formState, setFormState] = useState<Record<string, any>>({});
+  const [formState, setFormState] = useState<Record<string, unknown>>({});
   const [savingSection, setSavingSection] = useState<string | null>(null);
   const [resettingSection, setResettingSection] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [twoFactorModal, setTwoFactorModal] = useState({
+  const [twoFactorModal, setTwoFactorModal] = useState<TwoFactorModalState>({
     open: false,
     mode: "enable",
     qrCodeSvg: "",
@@ -74,7 +91,7 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
     useAdminNetworkPolicySettings({ enabled: isAdminContext });
   const updateNetworkPolicy = useUpdateAdminNetworkPolicySettings();
 
-  const defaultNetworkPolicy = useMemo(
+  const defaultNetworkPolicy = useMemo<NetworkPolicyState>(
     () => ({
       force_eip_for_public_preset: false,
       allow_preset_upgrade_for_eip: true,
@@ -84,7 +101,7 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
     []
   );
 
-  const normalizeBool = (value: any, fallback: boolean) => {
+  const normalizeBool = (value: unknown, fallback: boolean): boolean => {
     if (typeof value === "boolean") return value;
     if (typeof value === "number") return value === 1;
     if (typeof value === "string") {
@@ -95,7 +112,7 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
     return fallback;
   };
 
-  const [networkPolicy, setNetworkPolicy] = useState(defaultNetworkPolicy);
+  const [networkPolicy, setNetworkPolicy] = useState<NetworkPolicyState>(defaultNetworkPolicy);
 
   const {
     useFetchSettings,
@@ -107,9 +124,9 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
 
   const { data: profileSettingsData, isFetching, isRefetching, refetch } = useFetchSettings();
   const { mutateAsync: updateSettingsBatch, isPending: isUpdatingSettings } = useUpdateSettings();
-  const { mutateAsync: resetSettings, isPending: isResetting } = useResetSettings();
+  const { mutateAsync: resetSettings } = useResetSettings();
   const { mutateAsync: exportProfileSettings, isPending: isExporting } = useExportSettings();
-  const { mutateAsync: importProfileSettings, isPending: isImporting } = useImportSettings();
+  const { mutateAsync: importProfileSettings } = useImportSettings();
   const { mutateAsync: setupTwoFactor } = useSetupTwoFactor();
   const { mutateAsync: enableTwoFactor } = useEnableTwoFactor();
   const { mutateAsync: disableTwoFactor } = useDisableTwoFactor();
@@ -153,7 +170,7 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
     [profileSettingsData?.available_categories]
   );
 
-  const networkPolicyTab = useMemo(
+  const networkPolicyTab = useMemo<TabConfig>(
     () => ({
       id: "network-policy",
       name: "Network Policy",
@@ -165,7 +182,7 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
     []
   );
 
-  const brandingTab = useMemo(
+  const brandingTab = useMemo<TabConfig>(
     () => ({
       id: "branding",
       name: "Branding",
@@ -178,17 +195,17 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
   );
 
   const tabs = useMemo(() => {
-    const baseTabs = getTabsForContext(context);
+    const baseTabs = getTabsForContext(context) as TabConfig[];
     const filteredTabs = !availableCategories.length
       ? baseTabs
-      : baseTabs.filter((tab: any) => {
-        if (!tab.categories?.length) {
-          return true;
-        }
-        return tab.categories.some((category: string) => availableCategories.includes(category));
-      });
+      : baseTabs.filter((tab) => {
+          if (!tab.categories?.length) {
+            return true;
+          }
+          return tab.categories.some((category) => availableCategories.includes(category));
+        });
 
-    const customTabs = [];
+    const customTabs: TabConfig[] = [];
     if (isAdminContext) customTabs.push(networkPolicyTab);
     if (isTenantContext || isAdminContext) customTabs.push(brandingTab);
 
@@ -208,9 +225,9 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
     }
   }, [tabs, activeTab]);
 
-  const activeTabConfig = tabs.find((tab) => tab.id === activeTab) ?? tabs[0] ?? null;
+  const activeTabConfig = (tabs.find((tab) => tab.id === activeTab) ?? tabs[0]) as TabConfig;
 
-  const handleNetworkPolicyToggle = (key: string) => {
+  const handleNetworkPolicyToggle = (key: keyof NetworkPolicyState) => {
     setNetworkPolicy((prev) => {
       const nextValue = !prev[key];
       if (key === "require_eip_preflight" && !nextValue) {
@@ -240,9 +257,11 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
     ];
     const notificationsEnabled = notificationKeys.filter((key) => formState[key]).length;
 
+    const themeValue = formState["preferences.theme"];
     const theme =
-      formState["preferences.theme"]?.toString().replace(/^\w/, (c: string) => c.toUpperCase()) ||
-      "Light";
+      themeValue !== undefined && themeValue !== null
+        ? String(themeValue).replace(/^\w/, (c: string) => c.toUpperCase())
+        : "Light";
 
     return [
       {
@@ -281,7 +300,7 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
     setIsTwoFactorProcessing(false);
   };
 
-  const startEnableTwoFactor = async (event?: any) => {
+  const startEnableTwoFactor = async (event?: React.SyntheticEvent) => {
     if (event) {
       event.preventDefault();
       event.stopPropagation();
@@ -303,14 +322,16 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
         secret: data.secret || "",
       });
       setTwoFactorOtp("");
-    } catch (error: any) {
-      ToastUtils.error(error.message || "Unable to start two-factor authentication setup.");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to start two-factor authentication setup.";
+      ToastUtils.error(message);
     } finally {
       setIsFetchingTwoFactor(false);
     }
   };
 
-  const startDisableTwoFactor = (event?: any) => {
+  const startDisableTwoFactor = (event?: React.SyntheticEvent) => {
     if (event) {
       event.preventDefault();
       event.stopPropagation();
@@ -347,8 +368,10 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
       ToastUtils.success("Two-factor authentication enabled.");
       closeTwoFactorModal();
       await refetch();
-    } catch (error: any) {
-      ToastUtils.error(error.message || "Unable to enable two-factor authentication.");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to enable two-factor authentication.";
+      ToastUtils.error(message);
     } finally {
       setIsTwoFactorProcessing(false);
     }
@@ -375,14 +398,16 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
       ToastUtils.success("Two-factor authentication disabled.");
       closeTwoFactorModal();
       await refetch();
-    } catch (error: any) {
-      ToastUtils.error(error.message || "Unable to disable two-factor authentication.");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to disable two-factor authentication.";
+      ToastUtils.error(message);
     } finally {
       setIsTwoFactorProcessing(false);
     }
   };
 
-  const handleFieldChange = (stateKey: string, value: any) => {
+  const handleFieldChange = (stateKey: string, value: unknown) => {
     if (stateKey === "security.two_factor_enabled") {
       if (value) {
         setFormState((prev) => ({
@@ -414,8 +439,8 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
     refetch();
   };
 
-  const handleSaveSection = async (tab: any) => {
-    const fields = tab.groups.flatMap((group: any) => group.fields || []);
+  const handleSaveSection = async (tab: TabConfig) => {
+    const fields = tab.groups.flatMap((group: GroupConfig) => group.fields || []);
     const payload = buildSavePayload(fields, formState);
 
     if (!payload.length) {
@@ -430,29 +455,26 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
       });
       ToastUtils.success("Profile settings updated");
       await refetch();
-    } catch (error: any) {
-      ToastUtils.error(error.message || "We could not save your settings right now.");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "We could not save your settings right now.";
+      ToastUtils.error(message);
     } finally {
       setSavingSection(null);
     }
   };
 
-  const handleResetSection = async (tab: any) => {
+  const handleResetSection = async (tab: TabConfig) => {
     if (!tab.categories?.length) return;
     setResettingSection(tab.id);
     try {
-      await Promise.all(
-        tab.categories.map((category: any) =>
-          resetSettings({ category }).catch((error) => {
-            console.error(error);
-            throw error;
-          })
-        )
-      );
+      await Promise.all(tab.categories.map((category) => resetSettings({ category })));
       ToastUtils.success("Settings reset to defaults");
       await refetch();
-    } catch (error: any) {
-      ToastUtils.error(error.message || "Unable to reset this section right now.");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to reset this section right now.";
+      ToastUtils.error(message);
     } finally {
       setResettingSection(null);
     }
@@ -471,7 +493,7 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
       link.click();
       URL.revokeObjectURL(url);
       ToastUtils.success("Profile settings exported");
-    } catch (error) {
+    } catch {
       ToastUtils.error("Export failed. Please try again in a moment.");
     }
   };
@@ -479,6 +501,12 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
   const handleImportClick = () => {
     fileInputRef.current?.click();
   };
+
+  interface SettingsEntry {
+    category: string;
+    key: string;
+    value: unknown;
+  }
 
   const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -488,11 +516,11 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
     try {
       const text = await file.text();
       const parsed = JSON.parse(text);
-      let settingsArray: any[] = [];
+      let settingsArray: SettingsEntry[] = [];
       if (Array.isArray(parsed)) {
-        settingsArray = parsed;
+        settingsArray = parsed as SettingsEntry[];
       } else if (Array.isArray(parsed?.settings)) {
-        settingsArray = parsed.settings;
+        settingsArray = parsed.settings as SettingsEntry[];
       } else if (parsed?.settings && typeof parsed.settings === "object") {
         settingsArray = flattenObjectToSettingsArray(parsed.settings);
       } else if (typeof parsed === "object") {
@@ -507,8 +535,12 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
       await importProfileSettings({ settings: settingsArray });
       ToastUtils.success("Profile settings imported");
       await refetch();
-    } catch (error: any) {
-      ToastUtils.error(error.message || "Unable to import settings. Please verify the file.");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to import settings. Please verify the file.";
+      ToastUtils.error(message);
     } finally {
       setImporting(false);
       if (fileInputRef.current) {
@@ -612,7 +644,7 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
         <div className="flex flex-col gap-8">
           <div className="flex flex-col gap-4 lg:flex-row">
             <div className="flex w-full max-w-full flex-wrap gap-2 rounded-3xl border border-slate-200 bg-white/70 p-2 shadow-sm lg:w-72 lg:flex-col">
-              {tabs.map((tab: any) => {
+              {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = tab.id === activeTab;
                 return (
@@ -620,14 +652,16 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition ${isActive
-                      ? "bg-primary-500 text-white shadow-md"
-                      : "text-slate-600 hover:bg-slate-100"
-                      }`}
+                    className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition ${
+                      isActive
+                        ? "bg-primary-500 text-white shadow-md"
+                        : "text-slate-600 hover:bg-slate-100"
+                    }`}
                   >
                     <span
-                      className={`flex h-9 w-9 items-center justify-center rounded-xl ${isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
-                        }`}
+                      className={`flex h-9 w-9 items-center justify-center rounded-xl ${
+                        isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
+                      }`}
                     >
                       <Icon className="h-4 w-4" />
                     </span>
@@ -675,7 +709,7 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
                       />
                     )}
 
-                    {activeTabConfig.groups.map((group: any) => (
+                    {activeTabConfig.groups.map((group: GroupConfig) => (
                       <ModernCard
                         key={`${activeTabConfig.id}-${group.title}`}
                         className="space-y-6 border border-slate-200/80 bg-white/95 shadow-sm"
@@ -690,10 +724,11 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
 
                         {group.fields?.length ? (
                           <div
-                            className={`grid gap-5 ${group.layout === "grid" ? "sm:grid-cols-2" : "grid-cols-1"
-                              }`}
+                            className={`grid gap-5 ${
+                              group.layout === "grid" ? "sm:grid-cols-2" : "grid-cols-1"
+                            }`}
                           >
-                            {group.fields.map((field: any) => (
+                            {group.fields.map((field: FieldConfig) => (
                               <FieldControl
                                 key={field.stateKey}
                                 field={field}

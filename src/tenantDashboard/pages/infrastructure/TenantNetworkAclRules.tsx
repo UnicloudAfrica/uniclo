@@ -55,7 +55,7 @@ const TenantNetworkAclRules: React.FC = () => {
   };
 
   const handleRemoveRule = async (ruleNumber: number, egress: boolean) => {
-    if (window.confirm(`Remove rule #${ruleNumber}?`)) {
+    if (globalThis.window.confirm(`Remove rule #${ruleNumber}?`)) {
       await removeRuleMutation.mutateAsync({
         projectId,
         region,
@@ -91,7 +91,7 @@ const TenantNetworkAclRules: React.FC = () => {
       description={`Manage inbound and outbound rules for ${aclId}`}
       headerAction={
         <div className="flex gap-2">
-          <ModernButton variant="secondary" onClick={() => window.history.back()}>
+          <ModernButton variant="secondary" onClick={() => globalThis.window.history.back()}>
             <ArrowLeft className="w-4 h-4" />
             Back
           </ModernButton>

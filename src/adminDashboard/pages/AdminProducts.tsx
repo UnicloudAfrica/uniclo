@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -28,13 +27,67 @@ import { useFetchCountries } from "../../hooks/resource";
 import { useFetchProducts } from "../../hooks/adminHooks/adminProductHooks";
 import { useFetchProductPricing } from "../../hooks/adminHooks/adminproductPricingHook";
 import { matchesProductType, normalizeProductType } from "../../utils/productTypeUtils";
-// @ts-ignore
+
 import EditProduct from "./productComps/editProduct";
-// @ts-ignore
+
 import DeleteProduct from "./productComps/deleteProduct";
-// @ts-ignore
+
 import useAuthRedirect from "../../utils/adminAuthRedirect";
 import ToastUtils from "../../utils/toastUtil";
+
+interface ProductRow {
+  id?: string | number | null;
+  identifier?: string;
+  name?: string;
+  productable_type?: string;
+  productable_id?: string | number | null;
+  productableId?: string | number | null;
+  provider?: string;
+  region?: string;
+  price?: string | number | null;
+  status?: string;
+  deleted_at?: string | null;
+  archived?: boolean;
+  [key: string]: unknown;
+}
+
+interface PricingRow {
+  productable_type?: string;
+  productable_id?: string | number | null;
+  productableId?: string | number | null;
+  provider?: string;
+  region?: string;
+  price_usd?: string | number | null;
+  price_local?: string | number | null;
+  [key: string]: unknown;
+}
+
+interface ProductPricingResponse {
+  data?: PricingRow[];
+  meta?: Record<string, unknown> | null;
+}
+
+interface RegionOption {
+  code: string;
+  name: string;
+  [key: string]: unknown;
+}
+
+interface CountryOption {
+  code?: string;
+  iso2?: string;
+  id?: string | number;
+  name?: string;
+  [key: string]: unknown;
+}
+
+interface ExplorerColumn {
+  header: React.ReactNode;
+  key?: string;
+  accessorKey?: string;
+  align?: "left" | "center" | "right";
+  render?: (row: Record<string, unknown>) => React.ReactNode;
+}
 
 const formatCurrency = (value: any) => {
   if (value === null || value === undefined || Number.isNaN(Number(value))) {
@@ -43,7 +96,7 @@ const formatCurrency = (value: any) => {
   return `$${Number(value).toFixed(2)}`;
 };
 
-const deriveProductStats = (rows: any[]) => {
+const deriveProductStats = (rows: ProductRow[]) => {
   const total = rows.length;
   if (!total) {
     return {
@@ -52,10 +105,8 @@ const deriveProductStats = (rows: any[]) => {
       regionCount: 0,
     };
   }
-  const regionSet = new Set(rows.map((item: any) => item.region || "Global"));
-  const activeCount = rows.filter(
-    (item: any) => (item.status || "").toLowerCase() === "active"
-  ).length;
+  const regionSet = new Set(rows.map((item) => item.region || "Global"));
+  const activeCount = rows.filter((item) => (item.status || "").toLowerCase() === "active").length;
   return {
     total,
     active: activeCount,
@@ -315,7 +366,20 @@ const TAB_MAP = PRODUCT_TAB_CONFIG.reduce((acc: any, tab) => {
   return acc;
 }, {});
 
-const DEFAULT_TAB_ID = PRODUCT_TAB_CONFIG[0].id;
+const FALLBACK_CONFIG = PRODUCT_TAB_CONFIG[0] ?? {
+  id: "default",
+  name: "Products",
+  heroTitle: "Products",
+  heroDescription: "Manage product listings across regions.",
+  productType: "",
+  tableTitle: "Products",
+  tableDescription: "Review active product SKUs and pricing.",
+  emptyTitle: "No products found",
+  emptyDescription: "Add new products to populate this catalogue.",
+  metrics: [],
+};
+
+const DEFAULT_TAB_ID = FALLBACK_CONFIG.id;
 
 interface AdminProductsProps {
   initialTab?: string;
@@ -329,7 +393,7 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
 
   const [activeTab, setActiveTab] = useState(initialTabId);
   const [heroState, setHeroState] = useState(() => {
-    const config = TAB_MAP[initialTabId];
+    const config = TAB_MAP[initialTabId] ?? FALLBACK_CONFIG;
     return {
       title: config.heroTitle,
       description: config.heroDescription,
@@ -340,27 +404,35 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("");
   const [selectedCountryCode, setSelectedCountryCode] = useState("");
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductRow | null>(null);
   const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
 
   const { isLoading } = useAuthRedirect();
-  const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
-  const { isFetching: isCountriesFetching, data: countries } = useFetchCountries();
+  const { isFetching: isRegionsFetching, data: regionsData } = useFetchRegions();
+  const { isFetching: isCountriesFetching, data: countriesData } = useFetchCountries();
+  const regions = useMemo<RegionOption[]>(
+    () => (Array.isArray(regionsData) ? (regionsData as RegionOption[]) : []),
+    [regionsData]
+  );
+  const countries = useMemo<CountryOption[]>(
+    () => (Array.isArray(countriesData) ? (countriesData as CountryOption[]) : []),
+    [countriesData]
+  );
 
-  const activeConfig = TAB_MAP[activeTab] ?? TAB_MAP[DEFAULT_TAB_ID] ?? PRODUCT_TAB_CONFIG[0];
+  const activeConfig = TAB_MAP[activeTab] ?? TAB_MAP[DEFAULT_TAB_ID] ?? FALLBACK_CONFIG;
 
   const {
     isFetching: isProductsFetching,
-    data: products,
+    data: productsData,
     refetch,
   } = useFetchProducts(selectedCountryCode, "", {
     enabled: Boolean(!isRegionsFetching && !isCountriesFetching),
     productType: activeConfig.productType,
   });
-  const { isFetching: isPricingFetching, data: pricingData } = useFetchProductPricing(
+  const { isFetching: isPricingFetching, data: pricingDataRaw } = useFetchProductPricing(
     {
       region: selectedRegion,
       countryCode: selectedCountryCode,
@@ -371,6 +443,7 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
       keepPreviousData: true,
     }
   );
+  const pricingData = (pricingDataRaw as ProductPricingResponse | undefined) ?? undefined;
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -389,20 +462,20 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
     setPage(1);
   }, [activeConfig]);
 
-  const normalizedProducts = useMemo(() => (Array.isArray(products) ? products : []), [products]);
+  const normalizedProducts = useMemo<ProductRow[]>(
+    () => (Array.isArray(productsData) ? (productsData as ProductRow[]) : []),
+    [productsData]
+  );
 
   const pricingRows = useMemo(() => {
-    const rows = pricingData?.data ?? [];
-    if (!Array.isArray(rows)) return [];
+    const rows = Array.isArray(pricingData?.data) ? pricingData.data : [];
     if (!activeConfig?.productType) return rows;
-    return rows.filter((row: any) =>
-      matchesProductType(row.productable_type, activeConfig.productType)
-    );
+    return rows.filter((row) => matchesProductType(row.productable_type, activeConfig.productType));
   }, [pricingData, activeConfig]);
 
   const pricingLookup = useMemo(() => {
-    const map = new Map<string, any>();
-    pricingRows.forEach((row: any) => {
+    const map = new Map<string, PricingRow>();
+    pricingRows.forEach((row) => {
       const type = normalizeProductType(row.productable_type);
       const idValue = row.productable_id ?? row.productableId;
       if (!type || idValue === undefined || idValue === null) return;
@@ -426,7 +499,7 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
 
   const filteredByType = useMemo(
     () =>
-      normalizedProducts.filter((item: any) =>
+      normalizedProducts.filter((item) =>
         matchesProductType(item.productable_type, activeConfig.productType)
       ),
     [normalizedProducts, activeConfig]
@@ -435,14 +508,14 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
   const filteredByRegion = useMemo(() => {
     if (!selectedRegion) return filteredByType;
     return filteredByType.filter(
-      (item: any) => (item.region || "").toLowerCase() === selectedRegion.toLowerCase()
+      (item) => (item.region || "").toLowerCase() === selectedRegion.toLowerCase()
     );
   }, [filteredByType, selectedRegion]);
 
   const searchedRows = useMemo(() => {
     if (!searchQuery.trim()) return filteredByRegion;
     const query = searchQuery.trim().toLowerCase();
-    return filteredByRegion.filter((item: any) => {
+    return filteredByRegion.filter((item) => {
       const name = (item.name || "").toLowerCase();
       const identifier = (item.identifier || "").toLowerCase();
       return (
@@ -455,7 +528,7 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
 
   const rowsWithPricing = useMemo(() => {
     if (!pricingLookup.size) return searchedRows;
-    return searchedRows.map((row: any) => {
+    return searchedRows.map((row) => {
       const type = normalizeProductType(row.productable_type);
       const idValue = row.productable_id ?? row.productableId;
       if (!type || idValue === undefined || idValue === null) {
@@ -478,7 +551,7 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
         }
       }
       if (!pricingMatch) return row;
-      const price = pricingMatch.price_usd ?? pricingMatch.price_local ?? row.price;
+      const price = pricingMatch.price_usd ?? pricingMatch.price_local ?? row.price ?? null;
       return {
         ...row,
         price,
@@ -535,7 +608,7 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
     navigate({ search: params.toString() }, { replace: true });
   };
 
-  const openEditModal = (product: any) => {
+  const openEditModal = (product: ProductRow) => {
     if (product && product.id) {
       setSelectedProduct(product);
       setEditModalOpen(true);
@@ -544,7 +617,7 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
     }
   };
 
-  const openDeleteModal = (product: any) => {
+  const openDeleteModal = (product: ProductRow) => {
     if (product && product.id) {
       setSelectedProduct(product);
       setDeleteModalOpen(true);
@@ -563,62 +636,77 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
     setSelectedProduct(null);
   };
 
-  const columns = [
+  const columns: ExplorerColumn[] = [
     {
       header: "Product",
       key: "name",
-      render: (row: any) => (
-        <div className="flex items-center gap-3">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-500">
-            <Package className="h-4 w-4" />
-          </span>
-          <div className="space-y-1">
-            <p className="text-sm font-semibold text-slate-900">{row.name || "Unnamed product"}</p>
-            <p className="text-xs text-slate-500">
-              {row.identifier
-                ? `${row.identifier} · ${row.productable_type}`
-                : row.productable_type}
-            </p>
+      render: (rowData: Record<string, unknown>) => {
+        const row = rowData as ProductRow;
+        return (
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-500">
+              <Package className="h-4 w-4" />
+            </span>
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-slate-900">
+                {row.name || "Unnamed product"}
+              </p>
+              <p className="text-xs text-slate-500">
+                {row.identifier
+                  ? `${row.identifier} · ${row.productable_type}`
+                  : row.productable_type}
+              </p>
+            </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       header: "Provider",
       key: "provider",
       align: "center",
-      render: (row: any) => (
-        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-          {row.provider || "Platform"}
-        </span>
-      ),
+      render: (rowData: Record<string, unknown>) => {
+        const row = rowData as ProductRow;
+        return (
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+            {row.provider || "Platform"}
+          </span>
+        );
+      },
     },
     {
       header: "Region",
       key: "region",
       align: "center",
-      render: (row: any) => (
-        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-          {row.region || "Global"}
-        </span>
-      ),
+      render: (rowData: Record<string, unknown>) => {
+        const row = rowData as ProductRow;
+        return (
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+            {row.region || "Global"}
+          </span>
+        );
+      },
     },
     {
       header: "Price",
       key: "price",
       align: "right",
-      render: (row: any) => (
-        <span className="inline-flex items-center gap-1 text-sm font-semibold text-slate-900">
-          <DollarSign className="h-3.5 w-3.5 text-slate-400" />
-          {formatCurrency(row.price)}
-        </span>
-      ),
+      render: (rowData: Record<string, unknown>) => {
+        const row = rowData as ProductRow;
+        return (
+          <span className="inline-flex items-center gap-1 text-sm font-semibold text-slate-900">
+            <DollarSign className="h-3.5 w-3.5 text-slate-400" />
+            {formatCurrency(row.price)}
+          </span>
+        );
+      },
     },
     {
       header: "Status",
       key: "status",
       align: "center",
-      render: (row: any) => {
+      render: (rowData: Record<string, unknown>) => {
+        const row = rowData as ProductRow;
         const statusLabel = (row.status || "inactive").toLowerCase();
         const isActive = statusLabel === "active";
         return (
@@ -638,28 +726,31 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
       header: "",
       key: "actions",
       align: "right",
-      render: (row: any) => (
-        <div className="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => openEditModal(row)}
-            className="inline-flex items-center justify-center rounded-full border border-slate-200 p-2 text-slate-500 transition hover:border-blue-200 hover:text-blue-600"
-            title="Edit product"
-            aria-label="Edit product"
-          >
-            <Pencil className="h-3.5 w-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => openDeleteModal(row)}
-            className="inline-flex items-center justify-center rounded-full border border-red-200 p-2 text-red-500 transition hover:border-red-300 hover:bg-red-50"
-            title="Remove product"
-            aria-label="Remove product"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      ),
+      render: (rowData: Record<string, unknown>) => {
+        const row = rowData as ProductRow;
+        return (
+          <div className="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => openEditModal(row)}
+              className="inline-flex items-center justify-center rounded-full border border-slate-200 p-2 text-slate-500 transition hover:border-blue-200 hover:text-blue-600"
+              title="Edit product"
+              aria-label="Edit product"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => openDeleteModal(row)}
+              className="inline-flex items-center justify-center rounded-full border border-red-200 p-2 text-red-500 transition hover:border-red-300 hover:bg-red-50"
+              title="Remove product"
+              aria-label="Remove product"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        );
+      },
     },
   ];
 
@@ -687,7 +778,7 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
             <option value="">
               {isCountriesFetching ? "Loading countries..." : "All countries"}
             </option>
-            {countries?.map((country: any, index: number) => {
+            {countries.map((country, index) => {
               const key = (
                 country.iso2 ||
                 country.code ||
@@ -717,7 +808,7 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
             disabled={isRegionsFetching}
           >
             <option value="">{isRegionsFetching ? "Loading regions..." : "All regions"}</option>
-            {regions?.map((region: any) => (
+            {regions.map((region) => (
               <option key={region.code} value={region.code}>
                 {region.name}
               </option>
@@ -732,7 +823,7 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-12 w-12 animate-spin text-[#288DD1]" />
+        <Loader2 className="h-12 w-12 animate-spin text-[var(--theme-color)]" />
       </div>
     );
   }
@@ -760,7 +851,7 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
           <PricingSideMenu
             activeTab={activeTab}
             onTabChange={handleTabChange}
-            items={PRODUCT_TAB_CONFIG.map(({ id, name, caption, icon }: any) => ({
+            items={PRODUCT_TAB_CONFIG.map(({ id, name, caption, icon }) => ({
               id,
               name,
               caption,

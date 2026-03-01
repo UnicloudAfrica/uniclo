@@ -1,5 +1,3 @@
-// @ts-nocheck
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import AdminPageShell from "../components/AdminPageShell";
 import TenantClientsSideMenu from "../components/tenantUsersActiveTab";

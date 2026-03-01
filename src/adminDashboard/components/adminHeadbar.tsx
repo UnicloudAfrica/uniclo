@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardHeadbar } from "../../shared/components/headbar";
@@ -61,7 +60,7 @@ const AdminHeadbar: React.FC<AdminHeadbarProps> = ({ forceRender = false }) => {
         email: profile.email,
         firstName: profile.firstName,
         lastName: profile.lastName,
-        avatar: profile.avatar,
+        ...(profile.avatar !== undefined ? { avatar: profile.avatar } : {}),
       }}
       onLogout={handleLogout}
       isProfileLoading={isProfileFetching}

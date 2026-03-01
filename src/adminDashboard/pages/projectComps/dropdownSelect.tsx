@@ -1,6 +1,39 @@
-// @ts-nocheck
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ChevronDown, X, Loader2 } from "lucide-react";
+
+type SelectValue = string | number;
+
+type DropdownOption = Record<string, unknown>;
+
+export interface DropdownSelectProps {
+  options: DropdownOption[];
+  value: SelectValue | SelectValue[];
+  onChange: (value: SelectValue | SelectValue[]) => void;
+  placeholder: string;
+  isFetching?: boolean | undefined;
+  displayKey: string;
+  valueKey: string;
+  searchKeys: string[];
+  isMultiSelect?: boolean | undefined;
+  error?: string | undefined;
+  disabled?: boolean | undefined;
+}
+
+const getOptionValue = (option: DropdownOption, key: string): SelectValue | null => {
+  const raw = option[key];
+  if (typeof raw === "string" || typeof raw === "number") {
+    return raw;
+  }
+  return null;
+};
+
+const getOptionLabel = (option: DropdownOption, key: string): string => {
+  const raw = option[key];
+  if (typeof raw === "string" || typeof raw === "number") {
+    return String(raw);
+  }
+  return "";
+};
 
 export const DropdownSelect = ({
   options,
@@ -14,20 +47,29 @@ export const DropdownSelect = ({
   isMultiSelect = false,
   error,
   disabled = false,
-}) => {
+}: DropdownSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
-  const normalizedValue = isMultiSelect ? (Array.isArray(value) ? value : []) : value;
+  const normalizedValues = Array.isArray(value) ? value : [];
+  const normalizedValue = Array.isArray(value) ? value[0] : value;
 
-  const selectedDisplayValue = isMultiSelect
-    ? options.filter((option: any) => normalizedValue.includes(option[valueKey]))
-    : options.find((option) => option[valueKey] === normalizedValue);
+  const selectedDisplayValues = isMultiSelect
+    ? options.filter((option) => {
+        const optionValue = getOptionValue(option, valueKey);
+        return optionValue !== null && normalizedValues.includes(optionValue);
+      })
+    : [];
+
+  const selectedDisplayValue = !isMultiSelect
+    ? options.find((option) => getOptionValue(option, valueKey) === normalizedValue)
+    : null;
 
   useEffect(() => {
-    const handleClickOutside = (event: any) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target instanceof Node ? event.target : null;
+      if (dropdownRef.current && target && !dropdownRef.current.contains(target)) {
         setIsOpen(false);
       }
     };
@@ -37,35 +79,41 @@ export const DropdownSelect = ({
     };
   }, []);
 
-  const handleSelect = (option: any) => {
+  const handleSelect = (option: DropdownOption) => {
+    const optionValue = getOptionValue(option, valueKey);
+    if (optionValue === null) {
+      return;
+    }
+
     if (isMultiSelect) {
-      const newSelectedValues = normalizedValue.includes(option[valueKey])
-        ? normalizedValue.filter((val: any) => val !== option[valueKey])
-        : [...normalizedValue, option[valueKey]];
+      const newSelectedValues = normalizedValues.includes(optionValue)
+        ? normalizedValues.filter((val) => val !== optionValue)
+        : [...normalizedValues, optionValue];
       onChange(newSelectedValues);
     } else {
-      onChange(option[valueKey]);
+      onChange(optionValue);
       setIsOpen(false);
     }
     setSearchTerm(""); // Clear search term after selection
   };
 
-  const handleRemoveMultiSelect = (itemValue: any) => {
-    const newSelectedValues = normalizedValue.filter((val: any) => val !== itemValue);
+  const handleRemoveMultiSelect = (itemValue: SelectValue) => {
+    const newSelectedValues = normalizedValues.filter((val) => val !== itemValue);
     onChange(newSelectedValues);
   };
 
-  const filteredOptions = options.filter((option: any) => {
+  const filteredOptions = options.filter((option) => {
     if (disabled) {
       return false;
     }
 
-    if (isMultiSelect && normalizedValue.includes(option[valueKey])) {
+    const optionValue = getOptionValue(option, valueKey);
+    if (isMultiSelect && optionValue !== null && normalizedValues.includes(optionValue)) {
       return false;
     }
 
     return searchKeys.some((key) =>
-      String(option[key]).toLowerCase().includes(searchTerm.toLowerCase())
+      getOptionLabel(option, key).toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
 
@@ -75,7 +123,7 @@ export const DropdownSelect = ({
       <div
         className={`input-field flex items-center justify-between ${
           error ? "border-red-500" : "border-gray-300"
-        } ${isOpen ? "ring-1 ring-[#288DD1] border-[#288DD1]" : ""} ${
+        } ${isOpen ? "ring-1 ring-[var(--theme-color)] border-[var(--theme-color)]" : ""} ${
           disabled ? "bg-gray-100 cursor-not-allowed opacity-70" : "cursor-pointer"
         }`}
         onClick={() => {
@@ -88,18 +136,21 @@ export const DropdownSelect = ({
       >
         {isMultiSelect ? (
           <div className="flex flex-wrap gap-2 py-1">
-            {selectedDisplayValue.length > 0 ? (
-              selectedDisplayValue.map((item: any) => (
+            {selectedDisplayValues.length > 0 ? (
+              selectedDisplayValues.map((item) => (
                 <span
-                  key={item[valueKey]}
-                  className="flex items-center bg-[#288DD1] text-white text-xs px-2 py-1 rounded-full"
+                  key={getOptionValue(item, valueKey) ?? getOptionLabel(item, displayKey)}
+                  className="flex items-center bg-[var(--theme-color)] text-white text-xs px-2 py-1 rounded-full"
                 >
-                  {item[displayKey]}
+                  {getOptionLabel(item, displayKey)}
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation(); // Prevent dropdown from closing
-                      handleRemoveMultiSelect(item[valueKey]);
+                      const optionValue = getOptionValue(item, valueKey);
+                      if (optionValue !== null) {
+                        handleRemoveMultiSelect(optionValue);
+                      }
                     }}
                     className="ml-1 text-white hover:text-gray-200"
                   >
@@ -113,7 +164,7 @@ export const DropdownSelect = ({
           </div>
         ) : (
           <span className={value ? "text-gray-700" : "text-gray-500"}>
-            {selectedDisplayValue ? selectedDisplayValue[displayKey] : placeholder}
+            {selectedDisplayValue ? getOptionLabel(selectedDisplayValue, displayKey) : placeholder}
           </span>
         )}
         <ChevronDown
@@ -130,7 +181,7 @@ export const DropdownSelect = ({
             <input
               type="text"
               placeholder="Search..."
-              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-[#288DD1] disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--theme-color)] disabled:bg-gray-100 disabled:cursor-not-allowed"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onClick={(e) => e.stopPropagation()}
@@ -142,15 +193,24 @@ export const DropdownSelect = ({
               <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading...
             </div>
           ) : filteredOptions.length > 0 ? (
-            filteredOptions.map((option: any) => (
-              <div
-                key={option[valueKey]}
-                className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-gray-700 text-sm"
-                onClick={() => handleSelect(option)}
-              >
-                {option[displayKey]}
-              </div>
-            ))
+            filteredOptions.map((option) => {
+              const optionValue = getOptionValue(option, valueKey);
+              const optionLabel = getOptionLabel(option, displayKey);
+
+              if (optionValue === null) {
+                return null;
+              }
+
+              return (
+                <div
+                  key={optionValue}
+                  className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-gray-700 text-sm"
+                  onClick={() => handleSelect(option)}
+                >
+                  {optionLabel || placeholder}
+                </div>
+              );
+            })
           ) : (
             <div className="px-3 py-2 text-gray-500 text-sm">No options found.</div>
           )}

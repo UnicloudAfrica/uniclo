@@ -38,7 +38,7 @@ const createConfiguration = (): Configuration => ({
   subnet_id: "",
   subnet_label: "",
   tags: "",
-  assignment_scope: "internal",
+  assignment_scope: "tenant",
   member_user_ids: [],
 });
 

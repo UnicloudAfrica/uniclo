@@ -40,7 +40,7 @@ export const useCreateLoadBalancer = () => {
       );
       return data;
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_: any, { projectId }: any) => {
       ToastUtils.success("Load Balancer created successfully");
       queryClient.invalidateQueries({ queryKey: ["load-balancers", projectId] });
     },
@@ -56,7 +56,7 @@ export const useDeleteLoadBalancer = () => {
     mutationFn: async ({ projectId, lbId }: { projectId: string; lbId: string }) => {
       await adminApi.delete(`${API_BASE}/projects/${projectId}/load-balancers/${lbId}`);
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_: any, { projectId }: any) => {
       ToastUtils.success("Load Balancer deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["load-balancers", projectId] });
     },
@@ -89,7 +89,7 @@ export const useCreateListener = () => {
       const { data } = await adminApi.post(`${API_BASE}/projects/${projectId}/listeners`, payload);
       return data;
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_: any, { projectId }: any) => {
       ToastUtils.success("Listener created successfully");
       queryClient.invalidateQueries({ queryKey: ["listeners", projectId] });
     },
@@ -105,7 +105,7 @@ export const useDeleteListener = () => {
     mutationFn: async ({ projectId, listenerId }: { projectId: string; listenerId: string }) => {
       await adminApi.delete(`${API_BASE}/projects/${projectId}/listeners/${listenerId}`);
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_: any, { projectId }: any) => {
       ToastUtils.success("Listener deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["listeners", projectId] });
     },
@@ -138,7 +138,7 @@ export const useCreateTargetGroup = () => {
       );
       return data;
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_: any, { projectId }: any) => {
       ToastUtils.success("Target Group created successfully");
       queryClient.invalidateQueries({ queryKey: ["target-groups", projectId] });
     },
@@ -154,7 +154,7 @@ export const useDeleteTargetGroup = () => {
     mutationFn: async ({ projectId, tgId }: { projectId: string; tgId: string }) => {
       await adminApi.delete(`${API_BASE}/projects/${projectId}/target-groups/${tgId}`);
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_: any, { projectId }: any) => {
       ToastUtils.success("Target Group deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["target-groups", projectId] });
     },
@@ -174,7 +174,7 @@ export const useRegisterTargets = () => {
     }: {
       projectId: string;
       tgId: string;
-      targets: any[];
+      targets: unknown;
     }) => {
       const { data } = await adminApi.post(
         `${API_BASE}/projects/${projectId}/target-groups/${tgId}/register`,
@@ -182,7 +182,7 @@ export const useRegisterTargets = () => {
       );
       return data;
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_: any, { projectId }: any) => {
       ToastUtils.success("Targets registered successfully");
       queryClient.invalidateQueries({ queryKey: ["target-groups", projectId] });
     },

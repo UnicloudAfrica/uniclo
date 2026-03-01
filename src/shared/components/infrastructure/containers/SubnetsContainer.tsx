@@ -1,5 +1,5 @@
-// @ts-nocheck
 import React, { useState } from "react";
+import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 import { Plus, RefreshCw } from "lucide-react";
 import { SubnetsOverview } from "../index";
 import CreateSubnetModal from "../modals/CreateSubnetModal";
@@ -12,18 +12,11 @@ import {
 import type { Subnet } from "../types";
 
 interface SubnetHooks {
-  useList: (
-    projectId: string,
-    region: string
-  ) => { data: Subnet[]; isLoading: boolean; refetch: () => void };
-  useCreate: () => {
-    mutate: (params: any, options?: any) => void;
-    mutateAsync: (params: any) => Promise<any>;
-    isPending: boolean;
-  };
-  useDelete: () => { mutate: (params: any) => void; mutateAsync: (params: any) => Promise<any> };
+  useList: (projectId: string, region?: string, options?: any) => UseQueryResult<Subnet[], Error>;
+  useCreate: () => UseMutationResult<any, any, any, unknown>;
+  useDelete: () => UseMutationResult<any, any, any, unknown>;
   /** Optional - only needed for hierarchies that can create subnets */
-  useVpcs?: (projectId: string, region: string) => { data: any[] };
+  useVpcs?: (projectId: string, region?: string, options?: any) => UseQueryResult<any[], Error>;
 }
 
 interface SubnetsContainerProps {

@@ -6,6 +6,16 @@ export const useContextAwareSettings = () => {
   const queryClient = useQueryClient();
   const { api, type } = detectApiContext();
 
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+    if (typeof error === "string" && error.trim()) {
+      return error;
+    }
+    return fallback;
+  };
+
   // Helper to get endpoint prefix if needed
   // Assuming standard /settings/profile for now, but can be customized per 'type'
   const getEndpoint = (path: string) => {
@@ -23,7 +33,7 @@ export const useContextAwareSettings = () => {
     return res.data;
   };
 
-  const updateProfileSettings = async (data: any) => {
+  const updateProfileSettings = async (data: Record<string, unknown>) => {
     const endpoint = getEndpoint("/settings/profile");
     const res = await api("PUT", endpoint, data);
     if (!res.data) throw new Error("Failed to update profile settings");
@@ -39,7 +49,7 @@ export const useContextAwareSettings = () => {
     return res.data;
   };
 
-  const resetProfileSettings = async (data: any = {}) => {
+  const resetProfileSettings = async (data: Record<string, unknown> = {}) => {
     const endpoint = getEndpoint("/settings/profile/reset");
     const res = await api("POST", endpoint, data);
     if (!res.data) throw new Error("Failed to reset profile settings");
@@ -53,7 +63,7 @@ export const useContextAwareSettings = () => {
     return res.data;
   };
 
-  const importProfileSettings = async (payload: any) => {
+  const importProfileSettings = async (payload: Record<string, unknown>) => {
     const endpoint = getEndpoint("/settings/profile/import");
     const res = await api("POST", endpoint, payload);
     if (!res.data) throw new Error("Failed to import profile settings");
@@ -76,9 +86,9 @@ export const useContextAwareSettings = () => {
         queryClient.invalidateQueries({ queryKey: ["context-profile-settings", type] });
         ToastUtils.success("Settings updated successfully");
       },
-      onError: (error: any) => {
+      onError: (error: unknown) => {
         console.error("Error updating settings:", error);
-        ToastUtils.error(error.message || "Failed to update settings");
+        ToastUtils.error(getErrorMessage(error, "Failed to update settings"));
       },
     });
   };
@@ -90,9 +100,9 @@ export const useContextAwareSettings = () => {
         queryClient.invalidateQueries({ queryKey: ["context-profile-settings", type] });
         ToastUtils.success("Settings reset successfully");
       },
-      onError: (error: any) => {
+      onError: (error: unknown) => {
         console.error("Error resetting settings:", error);
-        ToastUtils.error(error.message || "Failed to reset settings");
+        ToastUtils.error(getErrorMessage(error, "Failed to reset settings"));
       },
     });
   };
@@ -103,9 +113,9 @@ export const useContextAwareSettings = () => {
       onSuccess: () => {
         ToastUtils.success("Settings exported successfully");
       },
-      onError: (error: any) => {
+      onError: (error: unknown) => {
         console.error("Error exporting settings:", error);
-        ToastUtils.error(error.message || "Failed to export settings");
+        ToastUtils.error(getErrorMessage(error, "Failed to export settings"));
       },
     });
   };
@@ -117,14 +127,14 @@ export const useContextAwareSettings = () => {
         queryClient.invalidateQueries({ queryKey: ["context-profile-settings", type] });
         ToastUtils.success("Settings imported successfully");
       },
-      onError: (error: any) => {
+      onError: (error: unknown) => {
         console.error("Error importing settings:", error);
-        ToastUtils.error(error.message || "Failed to import settings");
+        ToastUtils.error(getErrorMessage(error, "Failed to import settings"));
       },
     });
   };
 
-  const updatePassword = async (data: any) => {
+  const updatePassword = async (data: Record<string, unknown>) => {
     // Both Admin and Business APIs have /profile/password for password updates
     // Admin: PUT /admin/profile/password
     // Business: PUT /api/v1/business/profile/password
@@ -139,9 +149,9 @@ export const useContextAwareSettings = () => {
       onSuccess: () => {
         ToastUtils.success("Password updated successfully");
       },
-      onError: (error: any) => {
+      onError: (error: unknown) => {
         console.error("Error updating password:", error);
-        ToastUtils.error(error.message || "Failed to update password");
+        ToastUtils.error(getErrorMessage(error, "Failed to update password"));
       },
     });
   };

@@ -1,15 +1,16 @@
-// @ts-nocheck
 import React, { useState, useEffect } from "react";
-import ModernModal from "../../ui/ModernModal";
+import ModernModal, { ModalAction } from "../../ui/ModernModal";
 import ModernSelect from "../../ui/ModernSelect";
+
+import { Vpc } from "../types";
 
 interface AttachInternetGatewayModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAttach: (vpcId: string) => void;
-  vpcs: any[];
+  vpcs: Vpc[];
   gatewayId: string;
-  isLoading?: boolean;
+  isLoading?: boolean | undefined;
 }
 
 const AttachInternetGatewayModal: React.FC<AttachInternetGatewayModalProps> = ({
@@ -41,7 +42,7 @@ const AttachInternetGatewayModal: React.FC<AttachInternetGatewayModalProps> = ({
     }));
   };
 
-  const actions = [
+  const actions: ModalAction[] = [
     {
       label: "Cancel",
       variant: "ghost",

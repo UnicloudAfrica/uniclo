@@ -153,6 +153,11 @@ export interface InvoiceFormData {
   cross_connect_id: number | null;
 }
 
+export type UpdateInvoiceFormData = (
+  field: keyof InvoiceFormData,
+  value: InvoiceFormData[keyof InvoiceFormData]
+) => void;
+
 export interface Totals {
   subtotal: number;
   discount: number;

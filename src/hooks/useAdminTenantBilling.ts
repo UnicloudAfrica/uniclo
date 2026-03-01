@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentAdminApi from "../index/admin/silent";
 import adminApi from "../index/admin/api";
@@ -75,7 +74,11 @@ const updateTenantBillingConfig = async ({
     allow_client_gateway?: boolean;
   };
 }) => {
-  const res = await adminApi("PUT", `/tenants/${tenantId}/billing`, data);
+  const res = await adminApi<{ data: TenantBillingConfig }>(
+    "PUT",
+    `/tenants/${tenantId}/billing`,
+    data
+  );
   if (!res.data) throw new Error("Failed to update tenant billing config");
   return res.data;
 };
@@ -89,10 +92,14 @@ const addTenantCredit = async ({
   amount_cents: number;
   description?: string;
 }) => {
-  const res = await adminApi("POST", `/tenants/${tenantId}/billing/credit`, {
-    amount_cents,
-    description,
-  });
+  const res = await adminApi<{ data: Record<string, unknown> }>(
+    "POST",
+    `/tenants/${tenantId}/billing/credit`,
+    {
+      amount_cents,
+      description,
+    }
+  );
   if (!res.data) throw new Error("Failed to add credit");
   return res.data;
 };

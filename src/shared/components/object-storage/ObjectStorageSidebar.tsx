@@ -1,51 +1,64 @@
-// @ts-nocheck
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
+  X,
   Database,
-  Key,
+  Trash2,
+  HardDrive,
+  Plus,
   Copy,
   Check,
   ChevronDown,
   ChevronRight,
-  Plus,
-  Loader2,
-  Trash2,
+  Key,
   Globe,
   Calendar,
-  HardDrive,
   BarChart3,
-  CreditCard,
+  Loader2,
   Eye,
   EyeOff,
+  Shield,
   Download,
   AlertTriangle,
-  Shield,
-  X,
+  CreditCard,
 } from "lucide-react";
-import StorageGauge3D from "./StorageGauge3D";
-import ExtendStorageModal from "./ExtendStorageModal";
 import objectStorageApi from "../../../services/objectStorageApi";
 import ToastUtils from "../../../utils/toastUtil";
+import StorageGauge3D from "./StorageGauge3D";
 import ObjectStorageCredentials from "./ObjectStorageCredentials";
+import ExtendStorageModal from "./ExtendStorageModal";
 
-interface Bucket {
-  id: string;
+interface Silo {
+  id: string | number;
   name: string;
+}
+
+interface AccessKey {
+  id: string | number;
+  key_id: string;
+  secret_once?: string;
+  can_reveal_secret?: boolean;
+}
+
+interface ObjectStorageAccount {
+  id: string | number;
+  name: string;
+  region?: string;
+  endpoint?: string;
   created_at?: string;
-  storage_class?: string;
+  access_keys?: AccessKey[];
 }
 
 interface ObjectStorageSidebarProps {
-  account: any;
-  buckets: Bucket[];
+  account: ObjectStorageAccount | null;
+  buckets: Silo[];
   selectedBucket: string | null;
   onSelectBucket: (bucketName: string | null) => void;
-  onCreateBucket: (name: string) => Promise<void>;
-  onDeleteBucket: (bucket: Bucket) => Promise<void>;
+  onDeleteBucket: (bucket: Silo) => void;
+  deletingBucketId: string | number | null;
   onRefresh: () => void;
-  bucketsLoading?: boolean;
-  creatingBucket?: boolean;
-  deletingBucketId?: string | null;
+  objectCount: number;
+  usedGb: number;
+  quotaGb: number;
 }
 
 const ObjectStorageSidebar: React.FC<ObjectStorageSidebarProps> = ({
@@ -53,122 +66,86 @@ const ObjectStorageSidebar: React.FC<ObjectStorageSidebarProps> = ({
   buckets,
   selectedBucket,
   onSelectBucket,
-  onCreateBucket,
   onDeleteBucket,
+  deletingBucketId,
   onRefresh,
-  bucketsLoading = false,
-  creatingBucket = false,
-  deletingBucketId = null,
+  objectCount,
+  usedGb,
+  quotaGb,
 }) => {
-  const [showCredentials, setShowCredentials] = useState(false);
   const [showBucketForm, setShowBucketForm] = useState(false);
   const [newBucketName, setNewBucketName] = useState("");
+  const [creatingBucket, setCreatingBucket] = useState(false);
+  const [showCredentials, setShowCredentials] = useState(true);
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [newAccessKey, setNewAccessKey] = useState<any>(null);
-  const [rotationConfirmed, setRotationConfirmed] = useState(false);
-  const [rotatingKeyId, setRotatingKeyId] = useState<string | null>(null);
-  const [rotationError, setRotationError] = useState<string | null>(null);
-  const [isRotating, setIsRotating] = useState(false);
-  const [isRevokingOldKey, setIsRevokingOldKey] = useState(false);
 
-  // Secret reveal state
+  // Rotation state
+  const [isRotating, setIsRotating] = useState(false);
+  const [newAccessKey, setNewAccessKey] = useState<AccessKey | null>(null);
+  const [rotationError, setRotationError] = useState<string | null>(null);
+  const [rotationConfirmed, setRotationConfirmed] = useState(false);
+  const [isRevokingOldKey, setIsRevokingOldKey] = useState(false);
+  const [, setRotatingKeyId] = useState<string | number | null>(null);
+
+  // Reveal state
   const [showRevealModal, setShowRevealModal] = useState(false);
-  const [revealedSecret, setRevealedSecret] = useState<string | null>(null);
   const [revealingSecret, setRevealingSecret] = useState(false);
+  const [revealedSecret, setRevealedSecret] = useState<string | null>(null);
   const [secretViewed, setSecretViewed] = useState(false);
 
-  // Extend storage modal state
-  const [showExtendModal, setShowExtendModal] = useState(false);
+  const endpoint = account?.endpoint;
+  const accessKey = account?.access_keys?.[0];
+  const accessKeyId = accessKey?.key_id;
+  const canRevealSecret = accessKey?.can_reveal_secret;
 
   useEffect(() => {
-    setRevealedSecret(null);
-    setSecretViewed(false);
-    setNewAccessKey(null);
-    setRotationConfirmed(false);
-    setRotatingKeyId(null);
-    setRotationError(null);
-  }, [account?.id]);
-
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      setRevealedSecret(null);
-      setSecretViewed(false);
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, []);
-
-  // Extract account details
-  const endpoint = account?.meta?.public_url || account?.meta?.provisioning?.result?.public_url;
-  const accessKeyId = account?.default_access_key?.key_id;
-  const accessKey = account?.default_access_key;
-  const canRevealSecret = accessKey?.can_reveal_secret && !accessKey?.secret_viewed_at;
-  const usedGb = account?.used_gb || 0;
-  const quotaGb = account?.quota_gb || 100;
-  const objectCount = account?.object_count || 0;
-
-  const copyToClipboard = async (text: string, field: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedField(field);
-      setTimeout(() => setCopiedField(null), 2000);
-    } catch (err) {
-      ToastUtils.error("Failed to copy");
+    if (copiedField) {
+      const timer = setTimeout(() => setCopiedField(null), 2000);
+      return () => clearTimeout(timer);
     }
+  }, [copiedField]);
+
+  const copyToClipboard = (text: string | undefined, field: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    ToastUtils.success(`${field.charAt(0).toUpperCase() + field.slice(1)} copied to clipboard`);
   };
 
-  const handleRevealSecret = async () => {
-    if (!account?.id || !accessKey?.id) return;
-
-    setRevealingSecret(true);
-    try {
-      const result = await objectStorageApi.revealSecretKey(account.id, accessKey.id);
-      if (result.success && result.secret_key) {
-        setRevealedSecret(result.secret_key);
-        setSecretViewed(true);
-      } else {
-        ToastUtils.error(result.message || "Failed to reveal secret");
-      }
-    } catch (err: any) {
-      ToastUtils.error(err.message || "Failed to reveal secret key");
-    } finally {
-      setRevealingSecret(false);
-    }
+  const downloadCredentials = () => {
+    if (!revealedSecret) return;
+    downloadCredentialsFor({
+      endpoint,
+      accessKeyId,
+      secretKey: revealedSecret,
+      label: account?.name || "storage",
+    });
   };
 
   const downloadCredentialsFor = ({
-    endpoint: endpointValue,
-    accessKeyId: accessKeyValue,
-    secretKey: secretValue,
+    endpoint,
+    accessKeyId,
+    secretKey,
     label,
   }: {
-    endpoint?: string;
-    accessKeyId?: string;
-    secretKey?: string;
-    label?: string;
+    endpoint?: string | undefined;
+    accessKeyId?: string | undefined;
+    secretKey?: string | undefined;
+    label?: string | undefined;
   }) => {
     const normalizedLabel = String(label || account?.name || "storage")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
-    const credentials = {
-      endpoint: endpointValue || "",
-      access_key_id: accessKeyValue || "",
-      secret_access_key: secretValue || "",
-      account_name: label || account?.name || "",
-      created_at: new Date().toISOString(),
-      warning: "KEEP THIS FILE SECURE! The secret key cannot be recovered if lost.",
-    };
 
     const content = `# Silo Storage Credentials
-# Account: ${credentials.account_name}
-# Downloaded: ${credentials.created_at}
+# Account: ${label || account?.name || "Storage"}
+# Downloaded: ${new Date().toISOString()}
 # ⚠️ WARNING: Keep this file secure and never share it!
 
-ENDPOINT=${credentials.endpoint}
-ACCESS_KEY_ID=${credentials.access_key_id}
-SECRET_ACCESS_KEY=${credentials.secret_access_key}
+ENDPOINT=${endpoint || ""}
+ACCESS_KEY_ID=${accessKeyId || ""}
+SECRET_ACCESS_KEY=${secretKey || ""}
 `;
 
     const blob = new Blob([content], { type: "text/plain" });
@@ -178,102 +155,130 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
     a.download = `s3-credentials-${normalizedLabel || "storage"}.txt`;
     document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
+    a.remove();
     URL.revokeObjectURL(url);
 
     ToastUtils.success("Credentials downloaded. Store this file securely!");
   };
 
-  const downloadCredentials = () => {
-    downloadCredentialsFor({
-      endpoint,
-      accessKeyId,
-      secretKey: revealedSecret || "",
-      label: account?.name || "storage",
-    });
+  const handleCreateBucket = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!account?.id || !newBucketName.trim()) return;
+
+    setCreatingBucket(true);
+    try {
+      await objectStorageApi.createBucket(account.id, { name: newBucketName.trim() });
+      setNewBucketName("");
+      setShowBucketForm(false);
+      onRefresh();
+      ToastUtils.success("Silo created successfully!");
+    } catch (err) {
+      ToastUtils.error(err instanceof Error ? err.message : "Failed to create silo");
+    } finally {
+      setCreatingBucket(false);
+    }
   };
 
-  const normalizeAccessKeyPayload = (payload: any) => {
-    if (!payload) return null;
-    if (payload.key_id || payload.id) return payload;
-    if (payload.data) return normalizeAccessKeyPayload(payload.data);
-    return payload;
+  const handleRevealSecret = async () => {
+    if (!account?.id || !accessKey?.id) return;
+    setRevealingSecret(true);
+    try {
+      const data = (await objectStorageApi.revealSecretKey(account.id, accessKey.id)) as any;
+      setRevealedSecret(data.secret_key);
+      setSecretViewed(true);
+    } catch (err) {
+      ToastUtils.error(err instanceof Error ? err.message : "Failed to reveal secret key");
+    } finally {
+      setRevealingSecret(false);
+    }
   };
 
   const handleRotateAccessKey = async () => {
     if (!account?.id) return;
-    setRotationError(null);
     setIsRotating(true);
+    setRotationError(null);
     try {
-      const data = await objectStorageApi.createAccessKey(account.id, { label: "rotated" });
-      const created = normalizeAccessKeyPayload(data);
-      if (!created) {
-        throw new Error("Access key created but no credentials were returned.");
-      }
-
-      if (!created.secret_once && created.id) {
-        try {
-          const revealed = await objectStorageApi.revealSecretKey(account.id, created.id);
-          created.secret_once = revealed?.secret_key || revealed?.secret_once || null;
-        } catch (revealError: any) {
-          setRotationError(
-            revealError?.message ||
-              "Access key created, but the secret could not be revealed. Please rotate again."
-          );
-        }
-      }
-
-      if (!created.secret_once) {
-        setRotationError(
-          (prev) =>
-            prev ||
-            "Access key created, but the secret is unavailable. Rotate again to generate new credentials."
-        );
-      }
-
-      setNewAccessKey(created);
-      setRotationConfirmed(false);
+      const data = await objectStorageApi.createAccessKey(account.id);
+      setNewAccessKey(data as AccessKey);
       setRotatingKeyId(accessKey?.id || null);
-      ToastUtils.success("New access key created. Save it now.");
-      onRefresh();
-    } catch (err: any) {
-      const message = err?.message || "Failed to create access key.";
-      setRotationError(message);
-      ToastUtils.error(message);
+      ToastUtils.success("New access key created. Please save it before deactivating the old one.");
+    } catch (err) {
+      setRotationError(err instanceof Error ? err.message : "Failed to rotate access key");
     } finally {
       setIsRotating(false);
     }
   };
 
   const handleRevokeOldKey = async () => {
-    const oldKeyId = rotatingKeyId || accessKey?.id;
-    if (!account?.id || !oldKeyId) return;
+    if (!account?.id || !accessKey?.id) return;
     setIsRevokingOldKey(true);
     try {
-      await objectStorageApi.revokeAccessKey(account.id, oldKeyId);
-      ToastUtils.success("Old access key revoked.");
+      await objectStorageApi.revokeAccessKey(account.id, accessKey.id);
       setNewAccessKey(null);
       setRotationConfirmed(false);
       setRotatingKeyId(null);
       onRefresh();
-    } catch (err: any) {
-      ToastUtils.error(err?.message || "Failed to revoke access key.");
+      ToastUtils.success("Old access key deactivated successfully.");
+    } catch (err) {
+      ToastUtils.error(err instanceof Error ? err.message : "Failed to deactivate old access key");
     } finally {
       setIsRevokingOldKey(false);
     }
   };
 
-  const handleCreateBucket = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newBucketName.trim()) return;
+  const [showExtendModal, setShowExtendModal] = useState(false);
 
-    try {
-      await onCreateBucket(newBucketName.toLowerCase().trim());
-      setNewBucketName("");
-      setShowBucketForm(false);
-    } catch (err) {
-      // Error handled by parent
+  const renderBucketList = () => {
+    if (buckets.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+          <Database className="h-8 w-8 text-gray-300 mb-2" />
+          <p className="mt-2 text-sm text-gray-500">No silos yet</p>
+        </div>
+      );
     }
+
+    return (
+      <div>
+        {buckets.map((bucket) => (
+          <button
+            key={bucket.id}
+            onClick={() => onSelectBucket(bucket.name ?? null)}
+            onKeyDown={(e) => e.key === "Enter" && onSelectBucket(bucket.name ?? null)}
+            className={`w-full flex items-center justify-between px-4 py-3 cursor-pointer transition-colors border-b border-gray-100 ${
+              selectedBucket === bucket.name
+                ? "bg-primary-50 border-l-2 border-l-primary-500"
+                : "hover:bg-gray-50"
+            }`}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <Database
+                className={`h-4 w-4 flex-shrink-0 ${selectedBucket === bucket.name ? "text-primary-600" : "text-gray-400"}`}
+              />
+              <span
+                className={`text-sm truncate ${selectedBucket === bucket.name ? "font-medium text-primary-700" : "text-gray-700"}`}
+              >
+                {bucket.name}
+              </span>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDeleteBucket(bucket);
+              }}
+              disabled={deletingBucketId === bucket.id}
+              className="p-1 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              {deletingBucketId === bucket.id ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Trash2 className="h-3.5 w-3.5" />
+              )}
+            </button>
+          </button>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -327,27 +332,18 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
           </div>
         </div>
 
-        {/* Extend Storage CTA */}
-        {usedGb / quotaGb > 0.8 && (
-          <button
-            onClick={() => setShowExtendModal(true)}
-            className="w-full mt-4 flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:from-primary-600 hover:to-primary-700 transition-all shadow-sm"
-          >
-            <CreditCard className="h-4 w-4" />
-            Extend Storage
-          </button>
-        )}
-
-        {/* Always show extend option (smaller) */}
-        {usedGb / quotaGb <= 0.8 && (
-          <button
-            onClick={() => setShowExtendModal(true)}
-            className="w-full mt-4 flex items-center justify-center gap-2 rounded-lg border border-primary-200 text-primary-600 px-4 py-2 text-sm font-medium hover:bg-primary-50 transition-all"
-          >
-            <CreditCard className="h-4 w-4" />
-            Add More Storage
-          </button>
-        )}
+        {/* Extend Storage Actions */}
+        <button
+          onClick={() => setShowExtendModal(true)}
+          className={`w-full mt-4 flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+            usedGb / quotaGb > 0.8
+              ? "bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:from-primary-600 hover:to-primary-700 shadow-sm"
+              : "border border-primary-200 text-primary-600 hover:bg-primary-50"
+          }`}
+        >
+          <CreditCard className="h-4 w-4" />
+          {usedGb / quotaGb > 0.8 ? "Extend Storage" : "Add More Storage"}
+        </button>
       </div>
 
       {/* Credentials Section (Collapsible) */}
@@ -371,9 +367,14 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
           <div className="px-4 pb-4 space-y-3">
             {endpoint && (
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Endpoint</label>
+                <label htmlFor="s3-endpoint" className="block text-xs text-gray-500 mb-1">
+                  Endpoint
+                </label>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 text-xs bg-gray-100 px-2 py-1.5 rounded font-mono truncate">
+                  <code
+                    id="s3-endpoint"
+                    className="flex-1 text-xs bg-gray-100 px-2 py-1.5 rounded font-mono truncate"
+                  >
                     {endpoint}
                   </code>
                   <button
@@ -391,9 +392,14 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
             )}
             {accessKeyId && (
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Access Key ID</label>
+                <label htmlFor="s3-access-key" className="block text-xs text-gray-500 mb-1">
+                  Access Key ID
+                </label>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 text-xs bg-gray-100 px-2 py-1.5 rounded font-mono truncate">
+                  <code
+                    id="s3-access-key"
+                    className="flex-1 text-xs bg-gray-100 px-2 py-1.5 rounded font-mono truncate"
+                  >
                     {accessKeyId}
                   </code>
                   <button
@@ -410,9 +416,10 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
               </div>
             )}
 
-            {/* Secret Key Section */}
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Secret Access Key</label>
+              <label htmlFor="s3-secret-key" className="block text-xs text-gray-500 mb-1">
+                Secret Access Key
+              </label>
               {canRevealSecret && !secretViewed ? (
                 <button
                   onClick={() => setShowRevealModal(true)}
@@ -460,9 +467,9 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
                   </div>
 
                   <ObjectStorageCredentials
-                    endpoint={endpoint}
-                    accessKeyId={newAccessKey?.key_id}
-                    secretKey={newAccessKey?.secret_once}
+                    endpoint={endpoint ?? undefined}
+                    accessKeyId={newAccessKey?.key_id ?? undefined}
+                    secretKey={newAccessKey?.secret_once ?? undefined}
                     showSecretOnce={true}
                     confirmLabel="I have downloaded and copied these credentials"
                     onSecretDismissed={() => setRotationConfirmed(true)}
@@ -471,14 +478,14 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
                   <button
                     onClick={() =>
                       downloadCredentialsFor({
-                        endpoint,
-                        accessKeyId: newAccessKey?.key_id,
-                        secretKey: newAccessKey?.secret_once,
-                        label: `${account?.name || "storage"}-rotated`,
+                        endpoint: endpoint ?? undefined,
+                        accessKeyId: (newAccessKey?.key_id as string) ?? undefined,
+                        secretKey: (newAccessKey?.secret_once as string) ?? undefined,
+                        label: `${account?.name ?? "storage"}-rotated`,
                       })
                     }
                     disabled={!newAccessKey?.secret_once}
-                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary-500 px-3 py-2 text-sm font-medium text-white hover:bg-primary-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary-500 px-4 py-3 text-white font-medium hover:bg-primary-600 disabled:opacity-50 transition-colors disabled:cursor-not-allowed"
                   >
                     <Download className="h-4 w-4" />
                     Download new credentials
@@ -532,7 +539,7 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
               type="text"
               value={newBucketName}
               onChange={(e) =>
-                setNewBucketName(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))
+                setNewBucketName(e.target.value.toLowerCase().replaceAll(/[^a-z0-9-]/g, ""))
               }
               placeholder="silo-name"
               className="w-full text-sm rounded-lg border border-gray-300 px-3 py-2 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
@@ -561,66 +568,7 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
         )}
 
         {/* Silo List */}
-        <div>
-          {bucketsLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-primary-500" />
-            </div>
-          ) : buckets.length === 0 ? (
-            <div className="text-center py-8 px-4">
-              <Database className="mx-auto h-8 w-8 text-gray-300" />
-              <p className="mt-2 text-sm text-gray-500">No silos yet</p>
-            </div>
-          ) : (
-            <div>
-              {buckets.map((bucket) => (
-                <div
-                  key={bucket.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => onSelectBucket(bucket.name)}
-                  onKeyPress={(e) => e.key === "Enter" && onSelectBucket(bucket.name)}
-                  className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors border-b border-gray-100 ${
-                    selectedBucket === bucket.name
-                      ? "bg-primary-50 border-l-2 border-l-primary-500"
-                      : "hover:bg-gray-50"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Database
-                      className={`h-4 w-4 flex-shrink-0 ${
-                        selectedBucket === bucket.name ? "text-primary-600" : "text-gray-400"
-                      }`}
-                    />
-                    <span
-                      className={`text-sm truncate ${
-                        selectedBucket === bucket.name
-                          ? "font-medium text-primary-700"
-                          : "text-gray-700"
-                      }`}
-                    >
-                      {bucket.name}
-                    </span>
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteBucket(bucket);
-                    }}
-                    disabled={deletingBucketId === bucket.id}
-                    className="p-1 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    {deletingBucketId === bucket.id ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-3.5 w-3.5" />
-                    )}
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <div>{renderBucketList()}</div>
       </div>
 
       {/* Secret Reveal Modal */}
@@ -647,7 +595,56 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
             </div>
 
             <div className="p-6">
-              {!revealedSecret ? (
+              {revealedSecret ? (
+                <>
+                  {/* Success - Show Secret */}
+                  <div className="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Check className="h-5 w-5 text-emerald-600" />
+                      <span className="font-medium text-emerald-800">Secret Key Revealed</span>
+                    </div>
+                    <p className="text-sm text-emerald-700">
+                      Save this key now! It will not be shown again.
+                    </p>
+                  </div>
+
+                  <div className="mb-4">
+                    <label htmlFor="reveal-secret-key" className="block text-xs text-gray-500 mb-1">
+                      Secret Access Key
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <code
+                        id="reveal-secret-key"
+                        className="flex-1 text-xs bg-gray-100 px-3 py-2.5 rounded-lg font-mono break-all select-all"
+                      >
+                        {revealedSecret}
+                      </code>
+                      <button
+                        onClick={() => copyToClipboard(revealedSecret, "secret")}
+                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+                      >
+                        {copiedField === "secret" ? (
+                          <Check className="h-4 w-4 text-emerald-500" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={downloadCredentials}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary-500 px-4 py-3 text-white font-medium hover:bg-primary-600 transition-colors"
+                  >
+                    <Download className="h-5 w-5" />
+                    Download All Credentials
+                  </button>
+
+                  <p className="mt-4 text-xs text-center text-gray-500">
+                    The credentials file will include endpoint, access key ID, and secret key.
+                  </p>
+                </>
+              ) : (
                 <>
                   {/* Warning */}
                   <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
@@ -685,50 +682,6 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
                       </>
                     )}
                   </button>
-                </>
-              ) : (
-                <>
-                  {/* Success - Show Secret */}
-                  <div className="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Check className="h-5 w-5 text-emerald-600" />
-                      <span className="font-medium text-emerald-800">Secret Key Revealed</span>
-                    </div>
-                    <p className="text-sm text-emerald-700">
-                      Save this key now! It will not be shown again.
-                    </p>
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-xs text-gray-500 mb-1">Secret Access Key</label>
-                    <div className="flex items-center gap-2">
-                      <code className="flex-1 text-xs bg-gray-100 px-3 py-2.5 rounded-lg font-mono break-all select-all">
-                        {revealedSecret}
-                      </code>
-                      <button
-                        onClick={() => copyToClipboard(revealedSecret, "secret")}
-                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
-                      >
-                        {copiedField === "secret" ? (
-                          <Check className="h-4 w-4 text-emerald-500" />
-                        ) : (
-                          <Copy className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={downloadCredentials}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary-500 px-4 py-3 text-white font-medium hover:bg-primary-600 transition-colors"
-                  >
-                    <Download className="h-5 w-5" />
-                    Download All Credentials
-                  </button>
-
-                  <p className="mt-4 text-xs text-center text-gray-500">
-                    The credentials file will include endpoint, access key ID, and secret key.
-                  </p>
                 </>
               )}
             </div>

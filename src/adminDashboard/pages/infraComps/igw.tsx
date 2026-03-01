@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useMemo, useState } from "react";
 import { Eye, Trash2, RefreshCw, Plus, Link2, Link2Off } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -15,12 +14,12 @@ import { ResourceSection } from "../../../shared/components/ui";
 import { ResourceEmptyState } from "../../../shared/components/ui";
 import { ResourceListCard } from "../../../shared/components/ui";
 import { ModernButton } from "../../../shared/components/ui";
-import StatusPill from "../../../shared/components/ui/StatusPill";
 import ToastUtils from "../../../utils/toastUtil";
+import type { MetaItem, Tone } from "../../../shared/components/ui/ResourceSection";
 
 const ITEMS_PER_PAGE = 6;
 
-const getToneForStatus = (status = "") => {
+const getToneForStatus = (status = ""): Tone => {
   const normalized = status.toString().toLowerCase();
   if (["available", "attached"].includes(normalized)) return "success";
   if (["pending", "attaching", "detaching"].includes(normalized)) return "warning";
@@ -37,27 +36,33 @@ const IGWs = ({ projectId = "", region = "" }: any) => {
   const { mutate: deleteIgw, isPending: isDeleting } = useDeleteIgw();
 
   const [isCreateModalOpen, setCreateModal] = useState(false);
-  const [deleteModal, setDeleteModal] = useState(null);
-  const [viewModal, setViewModal] = useState(null);
-  const [attachModal, setAttachModal] = useState(null);
+  const [deleteModal, setDeleteModal] = useState<any>(null);
+  const [viewModal, setViewModal] = useState<any>(null);
+  const [attachModal, setAttachModal] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const totalItems = igws?.length || 0;
+  const igwList = Array.isArray(igws) ? igws : [];
+  const totalItems = igwList.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const currentIgws = (igws || []).slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  const attachedCount = (igws || []).filter((igw: any) => igw.attached_vpc_id).length;
+  const currentIgws = igwList.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const attachedCount = igwList.filter((igw: any) => igw.attached_vpc_id).length;
 
-  const stats = [
-    { label: "Total IGWs", value: totalItems, tone: "primary" },
-    {
-      label: "Attached",
-      value: attachedCount,
-      tone: attachedCount ? "success" : "neutral",
-    },
-    selectedRegion ? { label: "Region", value: selectedRegion, tone: "info" } : null,
-  ].filter(Boolean);
+  const stats = useMemo<MetaItem[]>(() => {
+    const items: MetaItem[] = [
+      { label: "Total IGWs", value: totalItems, tone: "primary" },
+      {
+        label: "Attached",
+        value: attachedCount,
+        tone: attachedCount ? "success" : "neutral",
+      },
+    ];
+    if (selectedRegion) {
+      items.push({ label: "Region", value: selectedRegion, tone: "info" });
+    }
+    return items;
+  }, [totalItems, attachedCount, selectedRegion]);
 
   const openCreateModal = () => setCreateModal(true);
   const closeCreateModal = () => setCreateModal(false);
@@ -90,7 +95,9 @@ const IGWs = ({ projectId = "", region = "" }: any) => {
           closeDeleteModal();
         },
         onError: (err) => {
-          ToastUtils.error(err?.message || "Failed to delete Internet Gateway");
+          ToastUtils.error(
+            err instanceof Error ? err.message : "Failed to delete Internet Gateway"
+          );
           closeDeleteModal();
         },
       }
@@ -110,7 +117,9 @@ const IGWs = ({ projectId = "", region = "" }: any) => {
       });
       ToastUtils.success("Internet Gateways synced successfully!");
     } catch (error) {
-      ToastUtils.error(error?.message || "Failed to sync Internet Gateways.");
+      ToastUtils.error(
+        error instanceof Error ? error.message : "Failed to sync Internet Gateways."
+      );
     } finally {
       setIsSyncing(false);
     }
@@ -147,21 +156,23 @@ const IGWs = ({ projectId = "", region = "" }: any) => {
     const attachedVpc = igw.attached_vpc_id || "None";
     const publicIp = igw.public_ip || igw.meta?.public_ip || igw.meta?.router_ip || null;
 
+    const metadata = [
+      { label: "Region", value: igw.region || selectedRegion || "—" },
+      { label: "Attached VPC", value: attachedVpc },
+      publicIp
+        ? {
+            label: "Edge Public IP",
+            value: publicIp,
+          }
+        : null,
+    ].filter((item): item is { label: string; value: string | number } => Boolean(item));
+
     return (
       <ResourceListCard
         key={igw.id}
         title={displayName}
-        subtitle={igw.id}
-        metadata={[
-          { label: "Region", value: igw.region || selectedRegion || "—" },
-          { label: "Attached VPC", value: attachedVpc },
-          publicIp
-            ? {
-                label: "Edge Public IP",
-                value: publicIp,
-              }
-            : null,
-        ]}
+        subtitle={igw.id != null ? String(igw.id) : "—"}
+        metadata={metadata}
         statuses={[{ label: status, tone: getToneForStatus(status) }]}
         actions={[
           {

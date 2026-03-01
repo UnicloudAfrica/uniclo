@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { X } from "lucide-react";
 
 const DetailedModules = ({ selectedItem, isModalOpen, closeModal }: any) => {
@@ -7,7 +6,9 @@ const DetailedModules = ({ selectedItem, isModalOpen, closeModal }: any) => {
     return (
       <span
         className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-          isActive ? "bg-[#00BF6B14] text-[#00BF6B]" : "bg-[#EB417833] text-[#EB4178]"
+          isActive
+            ? "bg-[rgb(var(--theme-success-500) / 0.08)] text-[rgb(var(--theme-success-500))]"
+            : "bg-[rgb(var(--theme-danger-500) / 0.2)] text-[rgb(var(--theme-danger-500))]"
         }`}
       >
         {status}
@@ -21,7 +22,7 @@ const DetailedModules = ({ selectedItem, isModalOpen, closeModal }: any) => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1001] p-4 font-Outfit">
           <div className="bg-white rounded-[30px] shadow-xl max-w-md w-full">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 bg-[#F2F2F2] border-b rounded-t-[30px] border-gray-200">
+            <div className="flex items-center justify-between p-4 bg-[var(--theme-surface-alt)] border-b rounded-t-[30px] border-gray-200">
               <h3 className="text-lg font-medium text-gray-900">Details</h3>
               <button
                 onClick={closeModal}
@@ -34,30 +35,38 @@ const DetailedModules = ({ selectedItem, isModalOpen, closeModal }: any) => {
             {/* Modal Content */}
             <div className="p-6 space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-light text-[#575758]">Module:</span>
-                <span className="text-sm text-[#575758]">{selectedItem.module}</span>
+                <span className="text-sm font-light text-[var(--theme-text-color)]">Module:</span>
+                <span className="text-sm text-[var(--theme-text-color)]">
+                  {selectedItem.module}
+                </span>
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-sm font-light text-[#575758]">Status:</span>
+                <span className="text-sm font-light text-[var(--theme-text-color)]">Status:</span>
                 <StatusBadge status={selectedItem.status} />
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-sm font-light text-[#575758]">Plan:</span>
-                <span className="text-sm text-[#575758]">
+                <span className="text-sm font-light text-[var(--theme-text-color)]">Plan:</span>
+                <span className="text-sm text-[var(--theme-text-color)]">
                   {selectedItem.plan} (Up to 20 Extensions)
                 </span>
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-sm font-light text-[#575758]">Start Date:</span>
-                <span className="text-sm text-[#575758]">{selectedItem.startDate}</span>
+                <span className="text-sm font-light text-[var(--theme-text-color)]">
+                  Start Date:
+                </span>
+                <span className="text-sm text-[var(--theme-text-color)]">
+                  {selectedItem.startDate}
+                </span>
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-sm font-light text-[#575758]">End Date:</span>
-                <span className="text-sm text-[#575758]">{selectedItem.endDate}</span>
+                <span className="text-sm font-light text-[var(--theme-text-color)]">End Date:</span>
+                <span className="text-sm text-[var(--theme-text-color)]">
+                  {selectedItem.endDate}
+                </span>
               </div>
             </div>
 
@@ -66,11 +75,11 @@ const DetailedModules = ({ selectedItem, isModalOpen, closeModal }: any) => {
               <div className=" grid grid-cols-2 gap-3 items-center px-6 py-4 border-t  rounded-b-[24px]">
                 <button
                   onClick={closeModal}
-                  className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
+                  className="px-6 py-2 text-[var(--theme-text-color)] bg-[var(--theme-surface-alt)] border border-[var(--theme-surface-alt)] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
                 >
                   Close
                 </button>
-                <button className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <button className="px-8 py-3 bg-[var(--theme-color)] text-white font-medium rounded-full hover:bg-[var(--theme-color)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                   Repurchase
                 </button>
               </div>

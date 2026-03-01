@@ -52,7 +52,7 @@ const Projects: React.FC = () => {
 
   // Single project operations
   const handleArchiveProject = async (project: Project) => {
-    if (!window.confirm(`Are you sure you want to archive "${project.name}"?`)) {
+    if (!globalThis.window.confirm(`Are you sure you want to archive "${project.name}"?`)) {
       return;
     }
 
@@ -77,7 +77,7 @@ const Projects: React.FC = () => {
 
   const handleDeleteProject = async (project: Project) => {
     if (
-      !window.confirm(
+      !globalThis.window.confirm(
         `Are you sure you want to delete "${project.name}"? This action cannot be undone.`
       )
     ) {
@@ -95,7 +95,9 @@ const Projects: React.FC = () => {
 
   // Bulk operations
   const handleBulkArchive = async (selectedIds: string[]) => {
-    if (!window.confirm(`Are you sure you want to archive ${selectedIds.length} projects?`)) {
+    if (
+      !globalThis.window.confirm(`Are you sure you want to archive ${selectedIds.length} projects?`)
+    ) {
       return;
     }
     ToastUtils.info(`Bulk archive for ${selectedIds.length} projects coming soon`);
@@ -107,7 +109,7 @@ const Projects: React.FC = () => {
 
   const handleBulkDelete = async (selectedIds: string[]) => {
     if (
-      !window.confirm(
+      !globalThis.window.confirm(
         `Are you sure you want to delete ${selectedIds.length} projects? This action cannot be undone.`
       )
     ) {

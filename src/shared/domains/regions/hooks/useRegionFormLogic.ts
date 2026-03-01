@@ -2,10 +2,10 @@
  * useRegionFormLogic Hook
  * Shared form state management for region creation/editing
  */
-// @ts-nocheck
 import { useState, useEffect, useCallback, useRef } from "react";
 import type {
   RegionFormData,
+  RegionFormChangeHandler,
   ServiceConfigState,
   ProviderServicesSchema,
   DEFAULT_REGION_FORM_DATA,
@@ -24,7 +24,7 @@ export interface UseRegionFormLogicOptions {
 export interface UseRegionFormLogicReturn {
   // Region data
   regionData: RegionFormData;
-  handleRegionChange: (field: keyof RegionFormData, value: any) => void;
+  handleRegionChange: RegionFormChangeHandler;
 
   // Service configuration
   serviceConfigs: Record<string, ServiceConfigState>;
@@ -47,17 +47,6 @@ export interface UseRegionFormLogicReturn {
   getEnabledServices: () => [string, ServiceConfigState][];
 }
 
-const DEFAULT_FORM_DATA: RegionFormData = {
-  name: "",
-  code: "",
-  country_code: "",
-  city: "",
-  provider: "zadara",
-  is_active: true,
-  visibility: "public",
-  fast_track_mode: "disabled",
-};
-
 export function useRegionFormLogic({
   initialData,
   fetchProviderServices,
@@ -65,7 +54,7 @@ export function useRegionFormLogic({
 }: UseRegionFormLogicOptions): UseRegionFormLogicReturn {
   // Basic region info
   const [regionData, setRegionData] = useState<RegionFormData>({
-    ...DEFAULT_FORM_DATA,
+    ...DEFAULT_REGION_FORM_DATA,
     ...initialData,
   });
 
@@ -119,8 +108,8 @@ export function useRegionFormLogic({
     loadServices();
   }, [regionData.provider]); // Only re-run when provider changes
 
-  const handleRegionChange = useCallback(
-    (field: keyof RegionFormData, value: any) => {
+  const handleRegionChange = useCallback<RegionFormChangeHandler>(
+    (field, value) => {
       setRegionData((prev) => ({ ...prev, [field]: value }));
 
       // Track manual edits to the code field
@@ -129,7 +118,7 @@ export function useRegionFormLogic({
       }
 
       // Auto-generate code from name ONLY if code hasn't been manually edited
-      if (field === "name" && !codeManuallyEdited) {
+      if (field === "name" && !codeManuallyEdited && typeof value === "string") {
         const code = value
           .toLowerCase()
           .replace(/\s+/g, "-")
@@ -218,7 +207,7 @@ export function useRegionFormLogic({
   }, [regionData]);
 
   const getEnabledServices = useCallback((): [string, ServiceConfigState][] => {
-    return Object.entries(serviceConfigs).filter(([_, cfg]) => cfg.enabled);
+    return Object.entries(serviceConfigs).filter(([, cfg]) => cfg.enabled);
   }, [serviceConfigs]);
 
   const validateStep2 = useCallback((): boolean => {
@@ -226,7 +215,7 @@ export function useRegionFormLogic({
     if (enabledServices.length === 0) return false;
 
     // Check if automated services have verified connections
-    const automatedServices = enabledServices.filter(([_, cfg]) => cfg.mode === "automated");
+    const automatedServices = enabledServices.filter(([, cfg]) => cfg.mode === "automated");
     if (automatedServices.length > 0 && connectedServices.size === 0) {
       return false;
     }

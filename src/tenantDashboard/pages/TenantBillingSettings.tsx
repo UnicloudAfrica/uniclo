@@ -1,6 +1,4 @@
-// @ts-nocheck
 import React, { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   CreditCard,
   Wallet,
@@ -24,6 +22,7 @@ import {
   useSelectBillingModel,
   useSavePaymentGateway,
   useDeletePaymentGateway,
+  type Settlement,
 } from "../../hooks/useTenantBilling";
 
 const BILLING_MODEL_INFO = {
@@ -57,7 +56,21 @@ const BILLING_MODEL_INFO = {
     icon: Clock,
     color: "yellow",
   },
-};
+} as const;
+
+type BillingModel = keyof typeof BILLING_MODEL_INFO;
+type GatewayProvider = "paystack" | "stripe" | "flutterwave";
+
+interface GatewayFormState {
+  provider: GatewayProvider;
+  public_key: string;
+  secret_key: string;
+  subaccount_code: string;
+  is_test_mode: boolean;
+}
+
+const toBillingModel = (value: string): BillingModel | null =>
+  value in BILLING_MODEL_INFO ? (value as BillingModel) : null;
 
 const formatCurrency = (cents: number, currency = "NGN") => {
   return new Intl.NumberFormat("en-NG", {
@@ -68,10 +81,9 @@ const formatCurrency = (cents: number, currency = "NGN") => {
 };
 
 const TenantBillingSettings: React.FC = () => {
-  const queryClient = useQueryClient();
   const [isGatewayModalOpen, setIsGatewayModalOpen] = useState(false);
   const [showSecretKey, setShowSecretKey] = useState(false);
-  const [gatewayForm, setGatewayForm] = useState({
+  const [gatewayForm, setGatewayForm] = useState<GatewayFormState>({
     provider: "paystack",
     public_key: "",
     secret_key: "",
@@ -81,13 +93,15 @@ const TenantBillingSettings: React.FC = () => {
 
   const { data: config, isLoading: isLoadingConfig } = useTenantBillingConfig();
   const { data: balanceData, isLoading: isLoadingBalance } = useTenantBillingBalance();
-  const { data: gatewayData, isLoading: isLoadingGateways } = useTenantPaymentGateways();
+  const { data: gatewayData, isLoading: isLoadingGateways } = useTenantPaymentGateways({
+    enabled: Boolean(config?.allow_client_gateway),
+  });
 
   const selectModelMutation = useSelectBillingModel();
   const saveGatewayMutation = useSavePaymentGateway();
   const deleteGatewayMutation = useDeletePaymentGateway();
 
-  const handleSelectModel = (model: string) => {
+  const handleSelectModel = (model: BillingModel) => {
     if (config?.billing_model === model) return;
     selectModelMutation.mutate(model);
   };
@@ -106,7 +120,7 @@ const TenantBillingSettings: React.FC = () => {
   };
 
   const handleDeleteGateway = (id: number) => {
-    if (confirm("Are you sure you want to remove this payment gateway?")) {
+    if (globalThis.window.confirm("Are you sure you want to remove this payment gateway?")) {
       deleteGatewayMutation.mutate(id);
     }
   };
@@ -170,42 +184,47 @@ const TenantBillingSettings: React.FC = () => {
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Billing Model</h2>
         {config?.can_change_billing_model ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {(config?.allowed_billing_models || []).map((model) => {
-              const info = BILLING_MODEL_INFO[model];
-              if (!info) return null;
-              const Icon = info.icon;
-              const isSelected = config?.billing_model === model;
+            {(config?.allowed_billing_models || [])
+              .map((model) => toBillingModel(model))
+              .filter((model): model is BillingModel => Boolean(model))
+              .map((model) => {
+                const info = BILLING_MODEL_INFO[model];
+                if (!info) return null;
+                const Icon = info.icon;
+                const isSelected = config?.billing_model === model;
 
-              return (
-                <button
-                  key={model}
-                  onClick={() => handleSelectModel(model)}
-                  disabled={selectModelMutation.isPending}
-                  className={`p-4 rounded-xl border-2 text-left transition-all ${
-                    isSelected
-                      ? `border-${info.color}-500 bg-${info.color}-50`
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        isSelected ? `bg-${info.color}-500 text-white` : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium text-gray-900">{info.label}</h3>
-                        {isSelected && <CheckCircle className="w-4 h-4 text-green-500" />}
+                return (
+                  <button
+                    key={model}
+                    onClick={() => handleSelectModel(model)}
+                    disabled={selectModelMutation.isPending}
+                    className={`p-4 rounded-xl border-2 text-left transition-all ${
+                      isSelected
+                        ? `border-${info.color}-500 bg-${info.color}-50`
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                          isSelected
+                            ? `bg-${info.color}-500 text-white`
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        <Icon className="w-5 h-5" />
                       </div>
-                      <p className="text-sm text-gray-500 mt-1">{info.description}</p>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium text-gray-900">{info.label}</h3>
+                          {isSelected && <CheckCircle className="w-4 h-4 text-green-500" />}
+                        </div>
+                        <p className="text-sm text-gray-500 mt-1">{info.description}</p>
+                      </div>
                     </div>
-                  </div>
-                </button>
-              );
-            })}
+                  </button>
+                );
+              })}
           </div>
         ) : (
           <div className="p-4 bg-gray-50 rounded-lg text-center text-gray-600">
@@ -236,9 +255,9 @@ const TenantBillingSettings: React.FC = () => {
             <div className="animate-pulse space-y-3">
               <div className="h-16 bg-gray-200 rounded" />
             </div>
-          ) : gatewayData?.gateways?.length > 0 ? (
+          ) : (gatewayData?.gateways?.length ?? 0) > 0 ? (
             <div className="space-y-3">
-              {gatewayData.gateways.map((gateway) => (
+              {gatewayData?.gateways.map((gateway) => (
                 <div
                   key={gateway.id}
                   className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
@@ -289,7 +308,7 @@ const TenantBillingSettings: React.FC = () => {
       )}
 
       {/* Outstanding Settlements */}
-      {balanceData?.settlements?.length > 0 && (
+      {(balanceData?.settlements?.length ?? 0) > 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Outstanding Settlements</h2>
           <div className="overflow-x-auto">
@@ -302,7 +321,7 @@ const TenantBillingSettings: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {balanceData.settlements.map((settlement) => (
+                {(balanceData?.settlements ?? []).map((settlement: Settlement) => (
                   <tr key={settlement.id} className="text-sm">
                     <td className="py-3 text-gray-900">
                       {settlement.description || "Service charge"}

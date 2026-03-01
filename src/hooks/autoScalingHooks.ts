@@ -24,8 +24,8 @@ export const useLaunchConfigurations = (projectId?: string, region?: string) => 
     queryKey: ["launch-configurations", projectId || "tenant", region || "default"],
     queryFn: async () => {
       const params: Record<string, string> = {};
-      if (projectId) params.project_id = projectId;
-      if (region) params.region = region;
+      if (projectId) params["project_id"] = projectId;
+      if (region) params["region"] = region;
 
       const { data } = await axios.get(`${apiBaseUrl}${prefix}/launch-configurations`, {
         params,
@@ -49,11 +49,11 @@ export const useCreateLaunchConfiguration = () => {
       region: string;
       name: string;
       instance_type: string;
-      image_id?: string;
-      key_pair?: string;
-      security_groups?: string[];
-      user_data?: string;
-      description?: string;
+      image_id?: string | undefined;
+      key_pair?: string | undefined;
+      security_groups?: string[] | undefined;
+      user_data?: string | undefined;
+      description?: string | undefined;
     }) => {
       const { data } = await axios.post(`${apiBaseUrl}${prefix}/launch-configurations`, payload, {
         headers: authHeaders,
@@ -115,8 +115,8 @@ export const useAutoScalingGroups = (projectId?: string, region?: string) => {
     queryKey: ["autoscaling-groups", projectId || "tenant", region || "default"],
     queryFn: async () => {
       const params: Record<string, string> = {};
-      if (projectId) params.project_id = projectId;
-      if (region) params.region = region;
+      if (projectId) params["project_id"] = projectId;
+      if (region) params["region"] = region;
 
       const { data } = await axios.get(`${apiBaseUrl}${prefix}/autoscaling-groups`, {
         params,
@@ -160,12 +160,12 @@ export const useCreateAutoScalingGroup = () => {
       min_size: number;
       max_size: number;
       launch_configuration_id: string;
-      desired_capacity?: number;
-      subnets?: string[];
-      target_group_ids?: string[];
-      health_check_type?: "vm_monitor" | "load_balancer";
-      health_check_grace_period?: number;
-      default_cooldown?: number;
+      desired_capacity?: number | undefined;
+      subnets?: string[] | undefined;
+      target_group_ids?: string[] | undefined;
+      health_check_type?: "vm_monitor" | "load_balancer" | undefined;
+      health_check_grace_period?: number | undefined;
+      default_cooldown?: number | undefined;
     }) => {
       const { data } = await axios.post(`${apiBaseUrl}${prefix}/autoscaling-groups`, payload, {
         headers: authHeaders,
@@ -198,11 +198,11 @@ export const useUpdateAutoScalingGroup = () => {
       id: string;
       projectId: string;
       region: string;
-      name?: string;
-      min_size?: number;
-      max_size?: number;
-      desired_capacity?: number;
-      launch_configuration_id?: string;
+      name?: string | undefined;
+      min_size?: number | undefined;
+      max_size?: number | undefined;
+      desired_capacity?: number | undefined;
+      launch_configuration_id?: string | undefined;
     }) => {
       const { data } = await axios.patch(
         `${apiBaseUrl}${prefix}/autoscaling-groups/${id}`,
@@ -293,8 +293,8 @@ export const useCreateScalingPolicy = () => {
       group_id: string;
       metric_type: string;
       target_value: string;
-      disable_scale_in?: boolean;
-      estimated_warmup?: number;
+      disable_scale_in?: boolean | undefined;
+      estimated_warmup?: number | undefined;
     }) => {
       const { data } = await axios.post(`${apiBaseUrl}${prefix}/scaling-policies`, payload, {
         headers: authHeaders,

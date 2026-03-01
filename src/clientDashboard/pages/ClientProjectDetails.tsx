@@ -1,24 +1,29 @@
-// @ts-nocheck
-import React, { useMemo, useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { Layers, Lock, Network, Zap, GitMerge } from "lucide-react";
 import ClientPageShell from "../components/ClientPageShell";
 import { ModernButton } from "../../shared/components/ui";
 import {
   useFetchClientProjectById,
   useClientProjectNetworkStatus,
   useClientEnableInternetAccess,
+  useClientProjectStatus,
+  useSetupInfrastructure,
+  Project as HookProject,
 } from "../../hooks/clientHooks/projectHooks";
 import { useClientProjectInfrastructureStatus } from "../../hooks/clientHooks/projectInfrastructureHooks";
-import ProjectDetailsOverview from "../../shared/components/projects/details/ProjectDetailsOverview";
-
-// Shared Components
+import ProjectDetailsLayout from "../../shared/components/projects/details/ProjectDetailsLayout";
+import { useProjectDetailsAdapter } from "../../shared/components/projects/details/ProjectDetailsView";
+import ProjectNetworkingContent, {
+  NetworkingRendererMap,
+} from "../../shared/components/projects/details/ProjectNetworkingContent";
+import { normalizeListResponse } from "../../shared/components/projects/details/projectDetailsUtils";
+import type { KeyPairHooks } from "../../shared/components/infrastructure/containers/KeyPairsContainer";
 
 // Infrastructure Components
 import VPCs from "./infraComps/Vpcs";
-import Networks from "./infraComps/Networks";
 import SecurityGroup from "./infraComps/SecurityGroup";
 import Subnet from "./infraComps/Subnet";
-import KeyPairs from "./infraComps/KeyPairs";
 import RouteTables from "./infraComps/RouteTables";
 import InternetGateways from "./infraComps/InternetGateways";
 import ENIs from "./infraComps/ENIs";
@@ -26,59 +31,81 @@ import ElasticIPs from "./infraComps/ElasticIPs";
 import ProvisioningFullScreen from "../../shared/components/provisioning/ProvisioningFullScreen";
 import ToastUtils from "../../utils/toastUtil";
 import api from "../../index/client/api";
-import {
-  useClientProjectStatus,
-  useSetupInfrastructure,
-} from "../../hooks/clientHooks/projectHooks";
 import InfrastructureSetupWizard from "../../adminDashboard/components/provisioning/InfrastructureSetupWizard";
+import { useFetchClientPurchasedInstances } from "../../hooks/clientHooks/instanceHooks";
+import {
+  useFetchKeyPairs,
+  useSyncKeyPairs,
+  useDeleteKeyPair,
+} from "../../hooks/clientHooks/keyPairsHook";
+import type { StatusResponse, NetworkStatusResponse } from "../../hooks/clientHooks/projectHooks";
 
 interface ProjectUser {
   id: string | number;
   name?: string;
-  email: string;
+  email?: string;
   role?: string;
 }
 
 interface Instance {
   id: string | number;
-  status?: string;
-  created_at?: string;
-  [key: string]: any;
-}
-
-interface SummaryItem {
-  title?: string;
-  key?: string;
-  completed?: boolean;
-  complete?: boolean;
-}
-
-interface Project {
   identifier?: string;
   name?: string;
   status?: string;
-  type?: string;
+  created_at?: string;
+  metadata?: { private_ip?: string; public_ip?: string };
+  private_ip?: string;
+  public_ip?: string;
+  floatingIp?: { address: string };
+  compute?: { name?: string; vcpus?: number; memory_mb?: number; memory_gb?: number };
+  osImage?: { name?: string };
+  memory_mb?: number;
+  ram_mb?: number;
+  memory_gb?: number;
+  ram_gb?: number;
+  memoryGb?: number;
+  flavor?: { memory_mb?: number; ram?: number };
+  [key: string]: unknown;
+}
+
+// Extend or use the HookProject if possible, but for now local interface is fine if it matches
+interface ClientProject extends Partial<HookProject> {
+  id?: string | number;
+  identifier?: string;
+  name?: string;
+  status?: string;
+  tenant_id?: number;
   region?: string;
+  region_name?: string;
   provider?: string;
   created_at?: string;
+  updated_at?: string;
+  description?: string;
+  resources_count?: Record<string, number>;
+  mode?: string;
+  vpc_enabled_at?: string;
   vpc_enabled?: boolean;
   users?: ProjectUser[];
   instances?: Instance[];
-  summary?: SummaryItem[];
-  [key: string]: any;
+  provisioning_status?: string;
 }
 
 interface InfraComponent {
-  status?: string;
   count?: number;
 }
 
 interface InfraStatusData {
   data?: {
     components?: Record<string, InfraComponent>;
-    counts?: Record<string, number>;
+    counts?: Record<string, number | null>;
+    completion_percentage?: number;
   };
 }
+
+type EnableInternetResult = {
+  already_enabled?: boolean;
+  data?: { already_enabled?: boolean };
+};
 
 const decodeId = (encodedId: string): string | null => {
   try {
@@ -100,73 +127,67 @@ const ClientProjectDetails: React.FC = () => {
       ? (decodeId(encodedProjectId) ?? undefined)
       : undefined;
 
-  const [activeSection, setActiveSection] = useState("vpcs");
-  const [isInProvisioningMode, setIsInProvisioningMode] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const [isSyncingResources, setIsSyncingResources] = useState(false);
+  const [forceHideProvisioning, setForceHideProvisioning] = useState(false);
 
-  const {
-    data: projectResponse,
-    isLoading,
-    isError,
-    refetch: refetchProject,
-  } = useFetchClientProjectById(projectId, { enabled: Boolean(projectId) }) as {
-    data: Project | undefined;
-    isLoading: boolean;
-    isError: boolean;
-    refetch: () => void;
-  };
-  const project: Project = projectResponse || {};
+  const { data: projectResponse, refetch: refetchProject } = useFetchClientProjectById(
+    projectId || "",
+    { enabled: Boolean(projectId) }
+  );
+  const project: ClientProject = projectResponse ?? {};
 
-  const {
-    data: statusData,
-    isFetching: isStatusFetching,
-    refetch: refetchStatus,
-  } = useClientProjectStatus(projectId);
-  const projectStatus = statusData?.project || statusData?.data?.project || statusData;
+  const statusQuery = useClientProjectStatus(projectId || "");
+  const statusData = statusQuery.data as StatusResponse | undefined;
+  const { isFetching: isStatusFetching, refetch: refetchStatus } = statusQuery;
   const setupMutation = useSetupInfrastructure();
 
-  const handleGenericAction = async ({ method, endpoint, label, payload = {} }) => {
+  const infraStatusQuery = useClientProjectInfrastructureStatus(projectId || "", {
+    enabled: Boolean(projectId),
+  });
+  const infraStatusData = infraStatusQuery.data as InfraStatusData | undefined;
+  const { refetch: refetchInfraStatus } = infraStatusQuery;
+
+  const networkStatusQuery = useClientProjectNetworkStatus(projectId || "", {
+    enabled: Boolean(projectId),
+  });
+  const networkStatusDataResponse = networkStatusQuery.data as NetworkStatusResponse | undefined;
+  const { refetch: refetchNetworkStatus } = networkStatusQuery;
+
+  const { mutateAsync: enableInternet, isPending: isEnablingInternet } =
+    useClientEnableInternetAccess();
+
+  const getErrorMessage = (error: unknown, fallback: string): string => {
+    if (error instanceof Error) return error.message;
+    if (typeof error === "string") return error;
+    return fallback;
+  };
+
+  const handleGenericAction = async ({
+    method,
+    endpoint,
+    label,
+    payload = {},
+  }: {
+    method: string;
+    endpoint?: string;
+    label: string;
+    payload?: Record<string, unknown>;
+  }) => {
+    if (!endpoint) {
+      ToastUtils.error("Missing action endpoint.");
+      return null;
+    }
     try {
       ToastUtils.info(`Executing ${label}...`);
       const res = await api(method.toUpperCase(), endpoint, payload);
       ToastUtils.success(`${label} completed successfully!`);
       await Promise.all([refetchStatus(), refetchProject()]);
       return res;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`Action error [${label}]:`, error);
-      ToastUtils.error(error?.message || `Failed to execute ${label}`);
+      ToastUtils.error(getErrorMessage(error, `Failed to execute ${label}`));
       throw error;
     }
-  };
-
-  const { data: infraStatusData, refetch: refetchInfraStatus } =
-    useClientProjectInfrastructureStatus(projectId, {
-      enabled: Boolean(projectId),
-    }) as {
-      data: InfraStatusData | undefined;
-      refetch: () => void;
-    };
-  const { data: networkStatusData, refetch: refetchNetworkStatus } =
-    useClientProjectNetworkStatus(projectId, { enabled: Boolean(projectId) });
-
-  const networkData = useMemo(() => {
-    if (!networkStatusData) return undefined;
-    return networkStatusData.network || networkStatusData?.data?.network || networkStatusData;
-  }, [networkStatusData]);
-
-  const { mutateAsync: enableInternet, isPending: isEnablingInternet } =
-    useClientEnableInternetAccess();
-
-  const [isSyncingResources, setIsSyncingResources] = useState(false);
-
-  const requiredActions = useMemo(() => {
-    const summary = projectStatus?.summary;
-    if (!Array.isArray(summary)) return [];
-    return summary.filter((item: any) => !item?.completed && item?.action);
-  }, [projectStatus?.summary]);
-
-  const handleSectionClick = (key: string) => {
-    setActiveSection(key);
   };
 
   const handleSyncResources = async () => {
@@ -182,9 +203,9 @@ const ClientProjectDetails: React.FC = () => {
         refetchInfraStatus?.(),
         refetchNetworkStatus?.(),
       ]);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to sync resources:", error);
-      ToastUtils.error(error?.message || "Failed to sync resources.");
+      ToastUtils.error(getErrorMessage(error, "Failed to sync resources."));
     } finally {
       setIsSyncingResources(false);
     }
@@ -193,8 +214,8 @@ const ClientProjectDetails: React.FC = () => {
   const handleEnableInternet = async () => {
     if (!projectId) return;
     try {
-      const result = await enableInternet(projectId);
-      const alreadyEnabled = result?.already_enabled || result?.data?.already_enabled;
+      const result = (await enableInternet(projectId)) as EnableInternetResult;
+      const alreadyEnabled = Boolean(result?.already_enabled || result?.data?.already_enabled);
       if (alreadyEnabled) {
         ToastUtils.info("Internet access is already enabled for this project.");
       } else {
@@ -206,193 +227,114 @@ const ClientProjectDetails: React.FC = () => {
         refetchProject(),
         refetchInfraStatus?.(),
       ]);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Enable internet error:", error);
-      ToastUtils.error(error?.message || "Failed to enable internet access");
+      ToastUtils.error(getErrorMessage(error, "Failed to enable internet access"));
     }
   };
 
-  const renderSectionContent = (): React.ReactNode => {
-    switch (activeSection) {
-      case "user-provisioning":
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium text-gray-900">Team Access</h3>
-              <ModernButton size="sm" variant="outline" isDisabled>
-                Manage Team
-              </ModernButton>
-            </div>
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Role
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {project?.users && project.users.length > 0 ? (
-                    project.users.map((user: any) => (
-                      <tr key={user.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {user.name || "Unknown"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {user.email}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {user.role || "Member"}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">
-                        No team members found.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      case "vpcs":
-        return <VPCs {...({ projectId, region: project?.region } as any)} />;
-      case "networks":
-        return (
-          <Networks {...({ projectId, region: project?.region, onStatsUpdate: () => {} } as any)} />
-        );
-      case "keypairs":
-        return (
-          <KeyPairs {...({ projectId, region: project?.region, onStatsUpdate: () => {} } as any)} />
-        );
-      case "security-groups":
-        return (
-          <SecurityGroup
-            {...({ projectId, region: project?.region, onStatsUpdate: () => {} } as any)}
-          />
-        );
-      case "edge":
-        return (
-          <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-600">
-            Edge Network configuration is managed by your administrator.
-          </div>
-        );
-      case "subnets":
-        return <Subnet {...({ projectId, region: project?.region } as any)} />;
-      case "igws":
-        return <InternetGateways {...({ projectId, region: project?.region } as any)} />;
-      case "route-tables":
-        return <RouteTables {...({ projectId, region: project?.region } as any)} />;
-      case "enis":
-        return <ENIs {...({ projectId, region: project?.region } as any)} />;
-      case "eips":
-        return <ElasticIPs {...({ projectId, region: project?.region } as any)} />;
-      default:
-        return null;
-    }
+  const networkingRenderers: NetworkingRendererMap = {
+    vpcs: () => <VPCs projectId={projectId} region={project?.region} />,
+    subnets: () => <Subnet projectId={projectId} region={project?.region} />,
+    routes: () => <RouteTables projectId={projectId} region={project?.region} />,
+    sgs: () => <SecurityGroup projectId={projectId} region={project?.region} />,
+    igw: () => <InternetGateways projectId={projectId} region={project?.region} />,
+    enis: () => <ENIs projectId={projectId} region={project?.region} />,
+    eips: () => <ElasticIPs projectId={projectId} region={project?.region} />,
   };
 
-  // Instance Stats Calculation
-  const projectInstances = useMemo<Instance[]>(() => {
-    return Array.isArray(project?.instances) ? project.instances : [];
-  }, [project]);
-
-  const instanceStats = useMemo(() => {
-    const base = { total: projectInstances.length, running: 0, provisioning: 0, paymentPending: 0 };
-    projectInstances.forEach((instance: any) => {
-      const normalized = (instance.status || "").toLowerCase();
-      if (["running", "active", "ready"].includes(normalized)) base.running += 1;
-      else if (
-        ["pending", "processing", "provisioning", "initializing", "creating"].some((token) =>
-          normalized.includes(token)
-        )
-      )
-        base.provisioning += 1;
-      else if (
-        ["payment_pending", "awaiting_payment", "payment_required"].some((token) =>
-          normalized.includes(token)
-        )
-      )
-        base.paymentPending += 1;
-    });
-    return base;
-  }, [projectInstances]);
-
-  const resourceCounts = useMemo(() => {
-    const counts = infraStatusData?.data?.counts || {};
-    const components = infraStatusData?.data?.components || {};
-    return {
-      vpcs: counts.vpcs ?? components?.vpc?.count ?? 0,
-      subnets: counts.subnets ?? components?.subnets?.count ?? 0,
-      security_groups: counts.security_groups ?? components?.security_groups?.count ?? 0,
-      key_pairs: counts.keypairs ?? components?.keypairs?.count ?? 0,
-      route_tables: counts.route_tables ?? components?.route_tables?.count ?? 0,
-      elastic_ips: counts.elastic_ips ?? components?.elastic_ips?.count ?? 0,
-      network_interfaces: counts.network_interfaces ?? components?.network_interfaces?.count ?? 0,
-      internet_gateways: counts.internet_gateways ?? components?.internet_gateways?.count ?? 0,
-      users: project?.users?.length ?? 0,
-    };
-  }, [infraStatusData, project?.users?.length]);
-
-  const canCreateInstances = project?.status === "active";
-
-  const edgeNetworkConnected = Boolean(
-    infraStatusData?.data?.components?.edge_networks?.count
+  const renderNetworkingContent = (resourceId: string): React.ReactNode => (
+    <ProjectNetworkingContent
+      resourceId={resourceId}
+      renderers={networkingRenderers}
+      placeholderMessage="This resource is not available in the client console yet."
+    />
   );
-  const edgeNetworkName = undefined;
 
-  // Compute setupSteps for provisioning screen
-  const setupSteps = useMemo(() => {
-    if (Array.isArray(projectStatus?.provisioning_progress)) {
-      return projectStatus.provisioning_progress.map((step: any) => ({
-        id: step.id || step.label?.toLowerCase()?.replace(/\s+/g, "_") || "step",
-        label: step.label || "Step",
-        status: step.status as any,
-        description: step.status === "completed" ? "Completed" : "Action in progress",
-        updated_at: step.updated_at,
-      }));
-    }
-    return [];
-  }, [projectStatus?.provisioning_progress]);
+  const useClientInstances = (params: { project_id?: string }, options?: { enabled?: boolean }) => {
+    const query = useFetchClientPurchasedInstances(params, options);
+    return {
+      data: normalizeListResponse<Instance>(query.data),
+      isFetching: query.isFetching,
+      refetch: query.refetch,
+    };
+  };
 
-  // Sticky provisioning mode
-  const allStepsComplete =
-    setupSteps.length > 0 && setupSteps.every((s: any) => s.status === "completed");
+  const clientKeyPairHooks: KeyPairHooks = {
+    useList: (projectIdValue, regionValue, options) => {
+      const query = useFetchKeyPairs(projectIdValue, regionValue, options);
+      return {
+        data: Array.isArray(query.data) ? query.data : [],
+        isFetching: query.isFetching ?? false,
+        refetch: query.refetch,
+      };
+    },
+    useSync: useSyncKeyPairs,
+    useDelete: useDeleteKeyPair,
+  };
 
-  useEffect(() => {
-    if (project?.status === "provisioning" && !isInProvisioningMode) {
-      setIsInProvisioningMode(true);
-    }
-    if (isInProvisioningMode && (project?.status === "active" || allStepsComplete)) {
-      const timer = setTimeout(() => {
-        setIsInProvisioningMode(false);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [project?.status, allStepsComplete, isInProvisioningMode]);
+  const projectDetails = useProjectDetailsAdapter({
+    project,
+    projectId,
+    projectStatus: statusData,
+    infraStatusData,
+    networkStatusData: networkStatusDataResponse,
+    setupProgressPercent: infraStatusData?.data?.completion_percentage ?? 0,
+    isStatusFetching,
+    isSyncing: isSyncingResources,
+    isEnablingInternet,
+    onAddInstance: () =>
+      navigate(
+        `/client-dashboard/instances/provision?project=${encodeURIComponent(
+          project?.identifier || projectId || ""
+        )}`
+      ),
+    onEnableInternet: handleEnableInternet,
+    onSyncResources: handleSyncResources,
+    onRequiredAction: (action) =>
+      handleGenericAction({
+        method: action?.method || "POST",
+        endpoint: action?.endpoint,
+        label: action?.label,
+      }),
+    computeTab: {
+      hierarchy: "client",
+      useInstances: useClientInstances,
+      keyPairHooks: clientKeyPairHooks,
+      onProvisionInstance: () =>
+        navigate(
+          `/client-dashboard/instances/provision?project=${encodeURIComponent(
+            project?.identifier || projectId || ""
+          )}`
+        ),
+    },
+    networkingTab: {
+      navTitle: "Networking Resources",
+      renderContent: renderNetworkingContent,
+    },
+  });
 
-  // Phase 8: Dedicated Provisioning Screen
-  if (isInProvisioningMode || project?.status === "provisioning") {
+  if (projectDetails.shouldShowProvisioning && !forceHideProvisioning) {
     return (
       <ProvisioningFullScreen
         project={project}
-        setupSteps={setupSteps}
+        setupSteps={projectDetails.setupSteps}
         onRefresh={() => refetchStatus()}
+        onViewProject={() => {
+          // Force hide overlay immediately to prevent the loop
+          setForceHideProvisioning(true);
+          // Clear the "new=true" from URL to escape provisioning view
+          navigate(`/client-dashboard/projects/details?id=${queryParams.get("id")}`, {
+            replace: true,
+          });
+          refetchProject();
+          refetchStatus();
+        }}
       />
     );
   }
 
-  if (project?.status === "created" || project?.provisioning_status === "created") {
+  if (projectDetails.shouldShowSetupWizard) {
     return (
       <ClientPageShell
         title={project?.name || "Infrastructure Setup"}
@@ -437,73 +379,16 @@ const ClientProjectDetails: React.FC = () => {
           </ModernButton>
         </div>
       }
+      disableContentPadding={true}
+      contentClassName=""
     >
-      <div className="space-y-6 animate-in fade-in duration-500" ref={contentRef}>
-        <ProjectDetailsOverview
-          requiredActions={requiredActions}
-          onRequiredAction={(action) =>
-            handleGenericAction({
-              method: action?.method || "POST",
-              endpoint: action?.endpoint,
-              label: action?.label,
-            })
-          }
-          unifiedViewProps={{
-            project: {
-              id: project?.id || projectId || "",
-              identifier: project?.identifier || projectId || "",
-              name: project?.name || "Project",
-              status: project?.status || "unknown",
-              region: project?.region,
-              region_name: project?.region_name,
-              provider: project?.provider,
-              created_at: project?.created_at,
-            },
-            instanceStats: {
-              total: instanceStats.total,
-              running: instanceStats.running,
-              stopped: instanceStats.total - instanceStats.running - instanceStats.provisioning,
-              provisioning: instanceStats.provisioning,
-            },
-            resourceCounts,
-            canCreateInstances,
-            networkStatus: networkData,
-            setupSteps,
-            setupProgressPercent: infraStatusData?.data?.completion_percentage ?? 0,
-            edgeNetworkConnected,
-            edgeNetworkName,
-            instances: projectInstances as any,
-            onAddInstance: () =>
-              navigate(
-                `/client-dashboard/instances/provision?project=${encodeURIComponent(
-                  project?.identifier || projectId || ""
-                )}`
-              ),
-            onEnableInternet: handleEnableInternet,
-            onManageMembers: () => handleSectionClick("user-provisioning"),
-            onSyncResources: handleSyncResources,
-            onViewNetworkDetails: () => handleSectionClick("networks"),
-            onViewAllResources: () => handleSectionClick("vpcs"),
-            onViewKeyPairs: () => handleSectionClick("keypairs"),
-            onViewRouteTables: () => handleSectionClick("route-tables"),
-            onViewElasticIps: () => handleSectionClick("eips"),
-            onViewNetworkInterfaces: () => handleSectionClick("enis"),
-            onViewVpcs: () => handleSectionClick("vpcs"),
-            onViewSubnets: () => handleSectionClick("subnets"),
-            onViewSecurityGroups: () => handleSectionClick("security-groups"),
-            onViewInternetGateways: () => handleSectionClick("igws"),
-            onViewUsers: () => handleSectionClick("user-provisioning"),
-            isEnablingInternet,
-            isSyncing: isSyncingResources,
-            isProvisioning: isStatusFetching,
-            showMemberManagement: true,
-            showSyncButton: true,
-          }}
-        >
-          {renderSectionContent()}
-        </ProjectDetailsOverview>
-
-      </div>
+      <ProjectDetailsLayout
+        project={projectDetails.projectForLayout}
+        resourceStats={projectDetails.resourceHeaderStats}
+        tabs={projectDetails.tabs}
+        activeTab={projectDetails.activeTab}
+        onTabChange={projectDetails.setActiveTab}
+      />
     </ClientPageShell>
   );
 };

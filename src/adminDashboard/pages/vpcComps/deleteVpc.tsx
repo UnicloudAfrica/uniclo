@@ -1,9 +1,22 @@
-// @ts-nocheck
-import ModernModal from "../../../shared/components/ui/ModernModal";
+import ModernModal, { ModalAction } from "../../../shared/components/ui/ModernModal";
 import { designTokens } from "../../../styles/designTokens";
 
-const DeleteVpcModal = ({ isOpen, onClose, vpcName, onConfirm, isDeleting }) => {
-  const actions = [
+interface DeleteVpcModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  vpcName: string;
+  onConfirm: () => void;
+  isDeleting: boolean;
+}
+
+const DeleteVpcModal = ({
+  isOpen,
+  onClose,
+  vpcName,
+  onConfirm,
+  isDeleting,
+}: DeleteVpcModalProps) => {
+  const actions: ModalAction[] = [
     {
       label: "Cancel",
       variant: "ghost",

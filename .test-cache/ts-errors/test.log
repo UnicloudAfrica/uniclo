@@ -1,0 +1,4 @@
+src/clientDashboard/pages/ClientDashboard.tsx(113,25): error TS1005: ';' expected.
+src/clientDashboard/pages/ClientDashboard.tsx(113,31): error TS1434: Unexpected keyword or identifier.
+src/clientDashboard/pages/ClientDashboard.tsx(113,37): error TS1434: Unexpected keyword or identifier.
+src/hooks/adminHooks/instancesHook.ts(47,1): error TS1128: Declaration or statement expected.

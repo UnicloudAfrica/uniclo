@@ -1,13 +1,23 @@
-// @ts-nocheck
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useCreateAdmin } from "../../../hooks/adminHooks/adminHooks";
 import ToastUtils from "../../../utils/toastUtil";
 import FormLayout, { formAccent, getAccentRgba } from "../../components/FormLayout";
 
+type AdminFormData = {
+  first_name: string;
+  last_name: string;
+  phone: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
+};
+
+type AdminFormErrors = Partial<Record<keyof AdminFormData, string>>;
+
 export const AddAdminModal = ({ isOpen, onClose, mode = "modal" }: any) => {
   const isPageMode = mode === "page";
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<AdminFormData>({
     first_name: "",
     last_name: "",
     phone: "",
@@ -15,7 +25,7 @@ export const AddAdminModal = ({ isOpen, onClose, mode = "modal" }: any) => {
     password: "",
     password_confirmation: "",
   });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<AdminFormErrors>({});
 
   const { mutate: createAdmin, isPending, isError, error, isSuccess } = useCreateAdmin();
 
@@ -44,17 +54,18 @@ export const AddAdminModal = ({ isOpen, onClose, mode = "modal" }: any) => {
 
   const handleChange = (e: any) => {
     const { name, value } = e.target;
+    const field = name as keyof AdminFormData;
     setFormData((prevData) => ({
       ...prevData,
-      [name]: value,
+      [field]: value,
     }));
-    if (errors[name]) {
-      setErrors((prevErrors) => ({ ...prevErrors, [name]: null }));
+    if (errors[field]) {
+      setErrors((prevErrors) => ({ ...prevErrors, [field]: null }));
     }
   };
 
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors: AdminFormErrors = {};
     if (!formData.first_name.trim()) newErrors.first_name = "First name is required.";
     if (!formData.last_name.trim()) newErrors.last_name = "Last name is required.";
     if (!formData.phone.trim()) newErrors.phone = "Phone number is required.";

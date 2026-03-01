@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { X, Trash2 } from "lucide-react";
 
 const DeleteIgwModal = ({ isOpen, onClose, igwName = "", onConfirm, isDeleting = false }: any) => {

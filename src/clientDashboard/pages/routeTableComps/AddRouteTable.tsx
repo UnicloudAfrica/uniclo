@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { useFetchClientVpcs } from "../../../hooks/clientHooks/vpcHooks";
@@ -67,7 +66,7 @@ const AddRouteTable: React.FC<AddRouteTableProps> = ({
 
   const vpcList = (
     Array.isArray(vpcs?.data) ? vpcs.data : Array.isArray(vpcs) ? vpcs : []
-  ) as any[];
+  ) as unknown;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
@@ -143,7 +142,7 @@ const AddRouteTable: React.FC<AddRouteTableProps> = ({
             <button
               type="submit"
               disabled={isPending}
-              className="px-4 py-2 rounded bg-[#288DD1] text-white text-sm disabled:opacity-50"
+              className="px-4 py-2 rounded bg-[var(--theme-color)] text-white text-sm disabled:opacity-50"
             >
               {isPending ? "Creating..." : "Create"}
             </button>

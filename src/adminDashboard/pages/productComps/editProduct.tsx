@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
 import { useUpdateProduct } from "../../../hooks/adminHooks/adminProductHooks";
@@ -59,10 +58,10 @@ const EditProduct = ({ isOpen, onClose, product, onUpdated }: any) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[600px] mx-4 w-full p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-[#575758]">Edit Product</h2>
+          <h2 className="text-lg font-semibold text-[var(--theme-text-color)]">Edit Product</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-[#1E1E1EB2]"
+            className="text-gray-400 hover:text-[rgb(var(--theme-neutral-900) / 0.7)]"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -76,7 +75,7 @@ const EditProduct = ({ isOpen, onClose, product, onUpdated }: any) => {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#288DD1] input-field"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)] input-field"
               required
             />
           </div>
@@ -86,7 +85,7 @@ const EditProduct = ({ isOpen, onClose, product, onUpdated }: any) => {
               name="region"
               value={formData.region}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#288DD1] input-field"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)] input-field"
               disabled={isRegionsFetching}
               required
             >
@@ -108,13 +107,13 @@ const EditProduct = ({ isOpen, onClose, product, onUpdated }: any) => {
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px]"
+              className="px-6 py-2 bg-[var(--theme-surface-alt)] border border-[var(--theme-surface-alt)] rounded-[30px]"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-8 py-3 bg-[#288DD1] text-white rounded-full flex items-center"
+              className="px-8 py-3 bg-[var(--theme-color)] text-white rounded-full flex items-center"
               disabled={isPending}
             >
               Update Product

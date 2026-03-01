@@ -11,7 +11,39 @@ import NetworkPresetSelector, {
 import { useNetworkPresets } from "../../hooks/networkPresetHooks";
 import { useAsyncAction } from "../../shared/hooks/useAsyncAction";
 
-const INITIAL_FORM_STATE = {
+import { NormalizedRegion } from "../../shared/utils/regionApi";
+import { Client } from "../../types/client";
+import { ProjectUser } from "../../types/project";
+
+interface FormState {
+  name: string;
+  description: string;
+  region: string;
+  type: string;
+  assignment_scope: string;
+  network_preset: string;
+  client_id: string;
+}
+
+interface FormErrors {
+  name?: string | undefined;
+  description?: string | undefined;
+  region?: string | undefined;
+  type?: string | undefined;
+  assignment_scope?: string | undefined;
+  network_preset?: string | undefined;
+  client_id?: string | undefined;
+  member_user_ids?: string | undefined;
+  general?: string | undefined;
+}
+
+interface CreateProjectModalProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+  mode?: "modal" | "page";
+}
+
+const INITIAL_FORM_STATE: FormState = {
   name: "",
   description: "",
   region: "",
@@ -21,7 +53,11 @@ const INITIAL_FORM_STATE = {
   client_id: "",
 };
 
-const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
+const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
+  isOpen = false,
+  onClose,
+  mode = "modal",
+}) => {
   const isPageMode = mode === "page";
   const navigate = useNavigate();
   const { mutateAsync: createProjectAsync } = useCreateProject();
@@ -34,10 +70,10 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
   const { isFetching: isRegionsFetching, data: regions } = useFetchGeneralRegions();
   const { data: clients, isFetching: isClientsFetching } = useFetchClients();
   const { data: networkPresets = DEFAULT_PRESETS } = useNetworkPresets();
-  const [formData, setFormData] = useState(INITIAL_FORM_STATE);
-  const [errors, setErrors] = useState<Record<string, any>>({});
-  const [selectedMembers, setSelectedMembers] = useState<any[]>([]);
-  const membersFetchKeyRef = useRef<any>(null);
+  const [formData, setFormData] = useState<FormState>(INITIAL_FORM_STATE);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [selectedMembers, setSelectedMembers] = useState<ProjectUser[]>([]);
+  const membersFetchKeyRef = useRef<{ key: string; defaultSignature: string | null } | null>(null);
   const presetCatalog = useMemo(
     () =>
       Array.isArray(networkPresets) && networkPresets.length > 0 ? networkPresets : DEFAULT_PRESETS,
@@ -62,7 +98,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
     onClose?.();
   };
 
-  const resolveProjectIdentifier = (payload) => {
+  const resolveProjectIdentifier = (payload: any): string | number | null => {
     if (!payload || typeof payload !== "object") {
       return null;
     }
@@ -78,7 +114,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
     return null;
   };
 
-  const redirectToProjectDetails = (projectPayload) => {
+  const redirectToProjectDetails = (projectPayload: any) => {
     const identifier = resolveProjectIdentifier(projectPayload);
     if (!identifier) {
       ToastUtils.warning(
@@ -100,7 +136,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
   }, [isOpen, isPageMode, resetState]);
 
   const validateForm = () => {
-    const newErrors: Record<string, any> = {};
+    const newErrors: FormErrors = {};
     if (!formData.name) {
       newErrors.name = "Project Name is required";
     }
@@ -118,7 +154,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field, value) => {
+  const updateFormData = (field: keyof FormState, value: string) => {
     setFormData((prev) => {
       let next = { ...prev, [field]: value };
 
@@ -144,9 +180,9 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
 
     setErrors((prev) => ({
       ...prev,
-      [field]: null,
-      ...(field === "assignment_scope" ? { client_id: null, member_user_ids: null } : {}),
-      ...(field === "client_id" ? { member_user_ids: null } : {}),
+      [field]: undefined,
+      ...(field === "assignment_scope" ? { client_id: undefined, member_user_ids: undefined } : {}),
+      ...(field === "client_id" ? { member_user_ids: undefined } : {}),
     }));
   };
 
@@ -199,15 +235,19 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
 
     const scopeKey = JSON.stringify([formData.assignment_scope, formData.client_id || null]);
 
-    const newDefaultSignature = suggestedMembers?.length
+    const newDefaultSignature = (suggestedMembers as ProjectUser[])?.length
       ? JSON.stringify(
-          [...suggestedMembers.map((member) => Number(member.id))].sort((a, b) => a - b)
+          suggestedMembers
+            .map((member: ProjectUser) => Number(member.id))
+            .sort((a: number, b: number) => a - b)
         )
       : null;
 
     const currentSignature = selectedMembers.length
       ? JSON.stringify(
-          [...selectedMembers.map((member) => Number(member.id))].sort((a, b) => a - b)
+          selectedMembers
+            .map((member: ProjectUser) => Number(member.id))
+            .sort((a: number, b: number) => a - b)
         )
       : null;
 
@@ -237,13 +277,13 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
   ]);
 
   const handleRestoreMembers = () => {
-    if (suggestedMembers?.length) {
+    if ((suggestedMembers as ProjectUser[])?.length) {
       setSelectedMembers(suggestedMembers);
-      setErrors((prev) => ({ ...prev, member_user_ids: null }));
+      setErrors((prev) => ({ ...prev, member_user_ids: undefined }));
     }
   };
 
-  const handleToggleMember = (member) => {
+  const handleToggleMember = (member: ProjectUser) => {
     setSelectedMembers((prev) => {
       const exists = prev.some((item) => item.id === member.id);
       if (exists) {
@@ -252,7 +292,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
       return [...prev, member];
     });
 
-    setErrors((prev) => ({ ...prev, member_user_ids: null }));
+    setErrors((prev) => ({ ...prev, member_user_ids: undefined }));
   };
 
   const handleSubmit = async () => {
@@ -279,7 +319,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
       errorToast: false,
       fallbackErrorMessage: "Failed to create project.",
       rethrow: false,
-      onSuccess: (project) => {
+      onSuccess: (project: any) => {
         redirectToProjectDetails(project);
       },
       onError: () => {},
@@ -304,16 +344,16 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
   const showCloseButton = !isPageMode;
   const closeButtonLabel = isPageMode ? "Cancel" : "Close";
 
-  const getClientLabel = (client) => {
+  const getClientLabel = (client: Client) => {
     const parts = [client.first_name, client.middle_name, client.last_name].filter(Boolean);
     const fullName = parts.join(" ").trim();
-    return fullName || client.name || client.email || `Client ${client.id}`;
+    return fullName || (client["name"] as string) || client.email || `Client ${client.id}`;
   };
 
   const renderSummaryPanel = () => {
     const selectedClientLabel = formData.client_id
       ? (() => {
-          const match = (clients || []).find(
+          const match = (clients as Client[] | undefined)?.find(
             (client) => String(client.id) === String(formData.client_id)
           );
           return match ? getClientLabel(match) : formData.client_id;
@@ -432,7 +472,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
               value={formData.description}
               onChange={(e) => updateFormData("description", e.target.value)}
               placeholder="Enter project description (optional)"
-              rows="3"
+              rows={3}
               className={`w-full input-field ${
                 errors.description ? "border-red-500" : "border-gray-300"
               }`}
@@ -467,7 +507,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
               <option value="" disabled>
                 {isRegionsFetching ? "Loading regions..." : "Select a region"}
               </option>
-              {regions?.map((region) => (
+              {(regions as NormalizedRegion[] | undefined)?.map((region) => (
                 <option key={region.region} value={region.region}>
                   {region.label}
                 </option>
@@ -476,13 +516,14 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
             {errors.region && <p className="text-red-500 text-xs mt-1">{errors.region}</p>}
           </div>
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
+            <span className="block text-sm font-medium text-gray-700">
               Project type<span className="text-red-500">*</span>
-            </label>
-            <div className="grid grid-cols-2 gap-3">
+            </span>
+            <div className="grid grid-cols-2 gap-3" role="radiogroup">
               {["vpc", "dvs"].map((type) => (
                 <label
                   key={type}
+                  htmlFor={`type-${type}`}
                   className={`flex cursor-pointer flex-col rounded-xl border px-3 py-2 text-sm ${
                     formData.type === type
                       ? "border-[var(--theme-color)] bg-primary/5 text-primary-700"
@@ -490,6 +531,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
                   }`}
                 >
                   <input
+                    id={`type-${type}`}
                     type="radio"
                     name="projectType"
                     value={type}
@@ -509,9 +551,9 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
         </div>
         {formData.type === "vpc" && (
           <div className="mt-5">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <span className="block text-sm font-medium text-gray-700 mb-2">
               Network preset <span className="text-gray-400 text-xs">(optional)</span>
-            </label>
+            </span>
             <p className="text-xs text-gray-500 mb-3">
               Pick a default network layout so provisioning starts immediately.
             </p>
@@ -541,12 +583,13 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
           Decide who should access this project
         </h3>
         <div className="mt-4 flex flex-col gap-3">
-          <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="flex flex-col gap-2 sm:flex-row" role="radiogroup">
             {scopeOptions.map((option) => {
               const isActive = formData.assignment_scope === option.value;
               return (
                 <label
                   key={option.value}
+                  htmlFor={`scope-${option.value}`}
                   className={`flex-1 rounded-[12px] border transition-colors ${
                     isActive
                       ? "border-[var(--theme-color)] bg-[var(--theme-surface-alt)]"
@@ -554,6 +597,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
                   }`}
                 >
                   <input
+                    id={`scope-${option.value}`}
                     type="radio"
                     name="assignmentScope"
                     value={option.value}
@@ -588,7 +632,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
                 <option value="" disabled>
                   {isClientsFetching ? "Loading clients..." : "Select a client"}
                 </option>
-                {(clients || []).map((client) => (
+                {(clients as Client[] | undefined)?.map((client) => (
                   <option key={client.id} value={client.id}>
                     {getClientLabel(client)}
                   </option>
@@ -662,7 +706,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
                 </div>
               ) : suggestedMembers.length > 0 ? (
                 <div className="max-h-48 overflow-y-auto divide-y divide-gray-100">
-                  {suggestedMembers.map((member) => {
+                  {(suggestedMembers as ProjectUser[]).map((member) => {
                     const isSelected = selectedMembers.some((item) => item.id === member.id);
                     return (
                       <label

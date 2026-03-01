@@ -18,7 +18,6 @@ interface Instance {
   flavor?: string;
   instance_type?: string;
   created_at?: string;
-  [key: string]: any;
 }
 
 interface ProjectInstancesOverviewProps {
@@ -48,7 +47,7 @@ const ProjectInstancesOverview: React.FC<ProjectInstancesOverviewProps> = ({
       {
         key: "name",
         header: "Instance",
-        render: (_: any, row: Instance) => (
+        render: (_: unknown, row: Instance) => (
           <div className="space-y-1">
             <p className="font-medium text-gray-900">
               {row.name || row.identifier || "Unnamed Instance"}
@@ -60,14 +59,14 @@ const ProjectInstancesOverview: React.FC<ProjectInstancesOverviewProps> = ({
       {
         key: "type",
         header: "Type",
-        render: (_: any, row: Instance) => (
+        render: (_: unknown, row: Instance) => (
           <span className="text-gray-700">{row.flavor || row.instance_type || "—"}</span>
         ),
       },
       {
         key: "status",
         header: "Status",
-        render: (_: any, row: Instance) => <StatusPill status={row.status || "unknown"} />,
+        render: (_: unknown, row: Instance) => <StatusPill status={row.status || "unknown"} />,
       },
       {
         key: "created_at",
@@ -80,7 +79,7 @@ const ProjectInstancesOverview: React.FC<ProjectInstancesOverviewProps> = ({
         key: "actions",
         header: <div className="text-right">Action</div>,
         align: "right" as const,
-        render: (_: any, row: Instance) => (
+        render: (_: unknown, row: Instance) => (
           <div className="flex justify-end">
             <ModernButton
               size="sm"

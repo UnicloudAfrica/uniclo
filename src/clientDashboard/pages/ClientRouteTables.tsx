@@ -1,9 +1,10 @@
-// @ts-nocheck
 import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Route as RouteIcon } from "lucide-react";
 import ClientPageShell from "../components/ClientPageShell";
-import RouteTablesContainer from "../../shared/components/infrastructure/containers/RouteTablesContainer";
+import RouteTablesContainer, {
+  RouteTableHooks,
+} from "../../shared/components/infrastructure/containers/RouteTablesContainer";
 import {
   useRouteTables,
   useSubnets,
@@ -20,15 +21,15 @@ const ClientRouteTables: React.FC = () => {
   const projectId = searchParams.get("project") || "";
   const region = searchParams.get("region") || "";
 
-  const hooks = {
-    useList: useRouteTables,
-    useSubnets: useSubnets,
-    useInternetGateways: useInternetGateways,
-    useNatGateways: useNatGateways,
-    useCreateRoute: useCreateRoute,
-    useDeleteRoute: useDeleteRoute,
-    useAssociate: useAssociateRouteTable,
-    useDisassociate: useDisassociateRouteTable,
+  const hooks: RouteTableHooks = {
+    useList: useRouteTables as RouteTableHooks["useList"],
+    useSubnets: useSubnets as RouteTableHooks["useSubnets"],
+    useInternetGateways: useInternetGateways as RouteTableHooks["useInternetGateways"],
+    useNatGateways: useNatGateways as RouteTableHooks["useNatGateways"],
+    useCreate: useCreateRoute as RouteTableHooks["useCreate"],
+    useDelete: useDeleteRoute as RouteTableHooks["useDelete"],
+    useAssociate: useAssociateRouteTable as RouteTableHooks["useAssociate"],
+    useDisassociate: useDisassociateRouteTable as RouteTableHooks["useDisassociate"],
   };
 
   return (
@@ -37,7 +38,7 @@ const ClientRouteTables: React.FC = () => {
       projectId={projectId}
       region={region}
       hooks={hooks}
-      wrapper={({ headerActions, children }) => (
+      wrapper={({ children }) => (
         <ClientPageShell
           title={
             <span className="flex items-center gap-2">
@@ -46,7 +47,6 @@ const ClientRouteTables: React.FC = () => {
             </span>
           }
           description="Routing rules for your VPC subnets"
-          actions={headerActions}
         >
           {children}
         </ClientPageShell>

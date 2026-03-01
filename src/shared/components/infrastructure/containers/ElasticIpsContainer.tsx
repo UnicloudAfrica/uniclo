@@ -1,5 +1,5 @@
-// @ts-nocheck
 import React, { useState } from "react";
+import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 import { Plus, RefreshCw } from "lucide-react";
 import { ElasticIpsOverview } from "../index";
 import AssociateElasticIpModal from "../modals/AssociateElasticIpModal";
@@ -14,12 +14,13 @@ import type { ElasticIp } from "../types";
 interface ElasticIpHooks {
   useList: (
     projectId: string,
-    region: string
-  ) => { data: ElasticIp[]; isLoading: boolean; refetch: () => void };
-  useCreate: () => { mutate: (params: any) => void; isPending: boolean };
-  useDelete: () => { mutate: (params: any) => void };
-  useAssociate: () => { mutate: (params: any, options?: any) => void; isPending: boolean };
-  useDisassociate: () => { mutate: (params: any) => void };
+    region?: string,
+    options?: { enabled?: boolean }
+  ) => UseQueryResult<ElasticIp[], Error>;
+  useCreate: () => UseMutationResult<any, any, any, unknown>;
+  useDelete: () => UseMutationResult<any, any, any, unknown>;
+  useAssociate: () => UseMutationResult<any, any, any, unknown>;
+  useDisassociate: () => UseMutationResult<any, any, any, unknown>;
 }
 
 interface HeaderActionsState {

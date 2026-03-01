@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import logo from "./assets/logo.png";
 
@@ -8,7 +7,7 @@ import VerificationCodeInput from "../../utils/VerificationCodeInput";
 import useAdminAuthStore from "../../stores/adminAuthStore";
 import useTenantAuthStore from "../../stores/tenantAuthStore";
 import useClientAuthStore from "../../stores/clientAuthStore";
-// @ts-ignore
+
 import { clearAuthSessionsExcept } from "../../stores/sessionUtils";
 import { useVerifyAdminMail } from "../../hooks/adminHooks/authHooks";
 import {
@@ -17,6 +16,7 @@ import {
   useApplyBrandingTheme,
 } from "../../hooks/useBrandingTheme";
 import useImageFallback from "../../hooks/useImageFallback";
+import AuthShell from "../../components/auth/AuthShell";
 
 interface VerifyErrors {
   otp?: string;
@@ -26,7 +26,7 @@ interface VerifyErrors {
 }
 
 export default function VerifyAdminMail() {
-  const [code, setCode] = useState<string[]>(Array(6).fill("")); // Six-digit OTP input
+  const [code, setCode] = useState<string[]>(new Array(6).fill("")); // Six-digit OTP input
   const {
     userEmail,
     clearUserEmail,
@@ -38,42 +38,62 @@ export default function VerifyAdminMail() {
   const tenantAuth = useTenantAuthStore.getState();
   const clientAuth = useClientAuthStore.getState();
   const [errors, setErrors] = useState<VerifyErrors>({});
-  const [twoFactorCode, setTwoFactorCode] = useState("");
   const { mutate: verifyEmail, isPending: isVerifyPending } = useVerifyAdminMail();
   const navigate = useNavigate();
   const { data: branding } = usePlatformBrandingTheme();
   useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
-  const logoSrc = resolveBrandLogo(branding, logo);
-  const logoAlt = branding?.company?.name ? `${branding.company.name} Logo` : "Logo";
+  const fallbackBrand = {
+    name: "Unicloud",
+    logo,
+    color: "var(--theme-color)",
+  };
+  const accentColor = branding?.accentColor || fallbackBrand.color;
+  const logoSrc = resolveBrandLogo(branding, fallbackBrand.logo);
+  const brandingCompanyName = branding?.company?.["name"];
+  const logoAlt = brandingCompanyName
+    ? `${brandingCompanyName} Logo`
+    : `${fallbackBrand.name} Logo`;
   const { src: resolvedLogoSrc, onError: handleLogoError } = useImageFallback(logoSrc, logo);
 
   // Handle OTP code changes from VerificationCodeInput
   const handleCodeChange = (updatedCode: string[]) => {
-    setCode(updatedCode);
+    setCode((prev) => {
+      if (!Array.isArray(updatedCode)) return prev;
+      if (
+        prev.length === updatedCode.length &&
+        prev.every((value, index) => value === updatedCode[index])
+      ) {
+        return prev;
+      }
+      return updatedCode;
+    });
   };
+
+  useEffect(() => {
+    setCode(new Array(6).fill(""));
+  }, [twoFactorRequired]);
 
   // Validation function for OTP and email
   const validateForm = () => {
     const newErrors: VerifyErrors = {};
 
-    const otp = code.join(""); // Join array into a string
-    if (!otp || otp.length !== 6) {
-      newErrors.otp = "Please enter a 6-digit code";
-    } else if (!/^\d{6}$/.test(otp)) {
-      newErrors.otp = "Code must be 6 digits";
+    const joinedCode = code.join("");
+    if (!joinedCode || joinedCode.length !== 6) {
+      if (twoFactorRequired) {
+        newErrors.twoFactor = "Authenticator code is required";
+      } else {
+        newErrors.otp = "Please enter a 6-digit code";
+      }
+    } else if (!/^\d{6}$/.test(joinedCode)) {
+      if (twoFactorRequired) {
+        newErrors.twoFactor = "Authenticator code must be 6 digits";
+      } else {
+        newErrors.otp = "Code must be 6 digits";
+      }
     }
 
     if (!userEmail) {
       newErrors.email = "Email is required";
-    }
-
-    if (twoFactorRequired) {
-      const authCode = twoFactorCode.trim();
-      if (!authCode || authCode.length !== 6) {
-        newErrors.twoFactor = "Authenticator code is required";
-      }
-    } else if (twoFactorCode && twoFactorCode.trim().length !== 6) {
-      newErrors.twoFactor = "Authenticator codes are 6 digits";
     }
 
     setErrors(newErrors);
@@ -92,22 +112,22 @@ export default function VerifyAdminMail() {
     if (!validateForm()) return;
 
     const email = userEmail;
-    const trimmedTwoFactor = twoFactorCode.trim();
     const userData: any = {
       email,
-      otp: resolvedOtp,
     };
-    if (trimmedTwoFactor) {
-      userData.google2fa_code = trimmedTwoFactor;
-      userData.two_factor_code = trimmedTwoFactor;
-      userData.code = trimmedTwoFactor;
+    if (!twoFactorRequired) {
+      userData.otp = resolvedOtp;
+    }
+    if (twoFactorRequired) {
+      userData.google2fa_code = resolvedOtp;
+      userData.two_factor_code = resolvedOtp;
+      userData.code = resolvedOtp;
     }
 
     verifyEmail(userData, {
       onSuccess: (res: any) => {
         clearUserEmail();
         clearTwoFactorRequirement();
-        setTwoFactorCode("");
 
         const userRole = res?.data?.role ?? res?.role;
         const domainInfo =
@@ -172,81 +192,62 @@ export default function VerifyAdminMail() {
   };
 
   return (
-    <div className="min-h-screen flex p-8 font-Outfit">
-      {/* Left Side - Login Form */}
-      <div className="flex-1 flex flex-col justify-center py bg-white">
-        <div className="max-w-md mx-auto w-full">
-          {/* Logo */}
-          <div className="mb-8">
-            <div className="flex items-center justify-center">
-              <img
-                src={resolvedLogoSrc}
-                className="w-[100px]"
-                alt={logoAlt}
-                onError={handleLogoError}
-              />
-            </div>
-          </div>
-
-          {/* Welcome Title */}
-          <div className="mb-8 w-full text-center">
-            <h1 className="text-2xl font-semibold text-[#121212] mb-2">Verify Account</h1>
-            <p className="text-[#676767] text-sm">
+    <AuthShell>
+      <div className="max-w-md mx-auto w-full bg-white p-6 rounded-xl shadow-md">
+        <div className="mb-6 text-center">
+          <img
+            src={resolvedLogoSrc}
+            className="w-[100px] mx-auto mb-4 rounded"
+            alt={logoAlt}
+            onError={handleLogoError}
+          />
+          <h1 className="text-2xl font-semibold text-[var(--theme-heading-color)] mb-2">
+            {twoFactorRequired ? "Enter Authenticator Code" : "Verify Account"}
+          </h1>
+          {twoFactorRequired ? (
+            <p className="text-[var(--theme-text-color)] text-sm">
+              Open your authenticator app and enter the 6-digit code to continue.
+            </p>
+          ) : (
+            <p className="text-[var(--theme-text-color)] text-sm">
               An authentication code has been sent to{" "}
               <span className="underline underline-offset-1">{userEmail || "your email"}</span>
             </p>
-          </div>
+          )}
+        </div>
 
-          {/* Verification Form */}
-          <div className="space-y-5">
-            <VerificationCodeInput
-              userEmail={userEmail}
-              length={6}
-              code={code}
-              onCodeChange={handleCodeChange}
-              onComplete={handleSubmit} // Pass handleSubmit directly
-            />
+        <div className="space-y-5">
+          <VerificationCodeInput
+            userEmail={userEmail}
+            length={6}
+            code={code}
+            onCodeChange={handleCodeChange}
+            onComplete={handleSubmit}
+            showResend={!twoFactorRequired}
+          />
 
-            {errors.otp && <p className="text-red-500 text-xs mt-1">{errors.otp}</p>}
+          {!twoFactorRequired && errors.otp ? (
+            <p className="text-red-500 text-xs mt-1">{errors.otp}</p>
+          ) : null}
+          {twoFactorRequired && errors.twoFactor ? (
+            <p className="text-red-500 text-xs mt-1">{errors.twoFactor}</p>
+          ) : null}
 
-            {twoFactorRequired ? (
-              <div className="space-y-2">
-                <label
-                  htmlFor="two-factor-code"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Authenticator code
-                </label>
-                <input
-                  id="two-factor-code"
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={twoFactorCode}
-                  onChange={(event) => setTwoFactorCode(event.target.value.replace(/\D/g, ""))}
-                  placeholder="Enter 6-digit code"
-                  className="w-full input-field"
-                />
-                {errors.twoFactor && <p className="text-red-500 text-xs">{errors.twoFactor}</p>}
-              </div>
-            ) : null}
+          {errors.general && <p className="text-red-500 text-xs mt-1">{errors.general}</p>}
 
-            {errors.general && <p className="text-red-500 text-xs mt-1">{errors.general}</p>}
-
-            {/* Submit Button */}
-            <button
-              onClick={handleSubmit}
-              disabled={isVerifyPending}
-              className="w-full bg-[#288DD1] hover:bg-[#6db1df] text-white font-semibold py-3 px-4 rounded-[30px] transition-colors focus:outline-none focus:ring-1 focus:ring-[#288DD1] focus:ring-offset-2 flex items-center justify-center"
-            >
-              {isVerifyPending ? <Loader2 className="w-4 text-white animate-spin" /> : "Submit"}
-            </button>
-          </div>
+          <button
+            onClick={handleSubmit}
+            disabled={isVerifyPending}
+            className="w-full hover:opacity-80 text-white font-semibold py-3 px-4 rounded-lg transition-opacity focus:outline-none focus:ring-1 focus:ring-offset-2 flex items-center justify-center"
+            style={{
+              backgroundColor: accentColor,
+              transition: "opacity 0.3s",
+            }}
+          >
+            {isVerifyPending ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : "Submit"}
+          </button>
         </div>
       </div>
-
-      {/* Right Side - Illustration */}
-      <div className="flex-1 side-bg hidden lg:flex items-center justify-center relative overflow-hidden"></div>
-    </div>
+    </AuthShell>
   );
 }

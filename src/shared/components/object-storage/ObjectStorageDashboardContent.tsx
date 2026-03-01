@@ -1,5 +1,10 @@
 import React, { useMemo } from "react";
-import ObjectStorageTable from "./ObjectStorageTable";
+import ObjectStorageTable, {
+  Account,
+  PaginationMeta,
+  PaginationState,
+  Silo,
+} from "./ObjectStorageTable";
 import ObjectStoragePlanActions from "./ObjectStoragePlanActions";
 import type {
   ObjectStoragePreset,
@@ -16,20 +21,20 @@ interface ObjectStoragePlanHandlers {
 }
 
 interface ObjectStorageTableProps {
-  accounts: any[];
+  accounts: Account[];
   loading: boolean;
   error: string | null;
   onRetry?: () => void;
   onRefresh?: () => void;
-  onRowClick?: (account: any) => void;
-  silosByAccount?: Record<string, any[]>;
+  onRowClick?: (account: Account) => void;
+  silosByAccount?: Record<string, Silo[]>;
   siloLoading?: Record<string, boolean>;
   siloErrors?: Record<string, string | null>;
-  onLoadSilos?: (accountId: any) => Promise<any>;
-  onCreateSilo?: (accountId: any, payload: any) => void;
-  onDeleteSilo?: (accountId: any, silo: any) => void;
-  paginationMeta?: any;
-  paginationState?: any;
+  onLoadSilos?: (accountId: string | number) => Promise<unknown> | void;
+  onCreateSilo?: (accountId: string | number, payload: { name: string }) => Promise<unknown> | void;
+  onDeleteSilo?: (accountId: string | number, silo: Silo) => Promise<unknown> | void;
+  paginationMeta?: PaginationMeta | null;
+  paginationState?: PaginationState | null;
   onPageChange?: (page: number) => void;
   onPerPageChange?: (perPage: number) => void;
 }
@@ -41,7 +46,12 @@ interface ObjectStorageDashboardContentProps {
   emptyState?: {
     title: string;
     description: string;
-    actions?: Array<{ label: string; onClick?: () => void; variant?: string; disabled?: boolean }>;
+    actions?: Array<{
+      label: string;
+      onClick?: () => void;
+      variant?: "primary" | "secondary";
+      disabled?: boolean;
+    }>;
   };
 }
 

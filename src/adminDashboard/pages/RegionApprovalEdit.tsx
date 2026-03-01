@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Loader2,
@@ -13,7 +12,7 @@ import {
 } from "lucide-react";
 import adminRegionApi from "../../services/adminRegionApi";
 import ToastUtils from "../../utils/toastUtil";
-import AdminPageShell from "../components/AdminPageShell.tsx";
+import AdminPageShell from "../components/AdminPageShell";
 import { ModernCard } from "../../shared/components/ui";
 import { ModernButton } from "../../shared/components/ui";
 import { designTokens } from "../../styles/designTokens";
@@ -120,7 +119,7 @@ const RegionApprovalEdit = () => {
   const [searchParams] = useSearchParams();
   const action = searchParams.get("action") || "approve";
 
-  const [region, setRegion] = useState(null);
+  const [region, setRegion] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 

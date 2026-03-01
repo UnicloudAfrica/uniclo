@@ -1,14 +1,9 @@
-// @ts-nocheck
 import React from "react";
 import { DashboardHeadbar } from "../../shared/components/headbar";
 import { useDashboardProfile } from "../../shared/hooks/useDashboardProfile";
 import useSidebarStore from "../../stores/sidebarStore";
 import { buildTenantHeadbarPreset } from "../../shared/config/headbarPresets";
-import {
-  resolveBrandLogo,
-  useApplyBrandingTheme,
-  useTenantBrandingTheme,
-} from "../../hooks/useBrandingTheme";
+import { resolveBrandLogo, useTenantBrandingTheme } from "../../hooks/useBrandingTheme";
 
 interface TenantHeadbarProps {
   tenantData?: {
@@ -24,7 +19,6 @@ const TenantHeadbar: React.FC<TenantHeadbarProps> = ({ tenantData, onMenuClick }
   const { profile, isFetching: isProfileFetching } = useDashboardProfile("tenant");
   const { toggleMobile } = useSidebarStore();
   const { data: branding } = useTenantBrandingTheme();
-  useApplyBrandingTheme(branding, { fallbackLogo: tenantData?.logo, updateFavicon: true });
   const resolvedTenantData = {
     name: branding?.company?.name || tenantData?.name,
     logo: resolveBrandLogo(branding, tenantData?.logo),

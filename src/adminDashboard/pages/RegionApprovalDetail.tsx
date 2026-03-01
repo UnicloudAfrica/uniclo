@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -20,72 +19,172 @@ import {
 import adminRegionApi from "../../services/adminRegionApi";
 import { useFetchTenants } from "../../hooks/adminHooks/tenantHooks";
 import ToastUtils from "../../utils/toastUtil";
-import AdminPageShell from "../components/AdminPageShell.tsx";
-import { ModernCard } from "../../shared/components/ui";
-import { ModernButton } from "../../shared/components/ui";
-import ModernTable from "../../shared/components/ui/ModernTable";
-import StatusPill from "../../shared/components/ui/StatusPill";
+import AdminPageShell from "../components/AdminPageShell";
+import { ModernCard, ModernButton, ModernTable, StatusPill } from "../../shared/components/ui";
 
-const statusToneMap = {
+type ApprovalStatus = "pending" | "approved" | "rejected" | "suspended";
+type FastTrackMode = "owner_only" | "grant_only" | "disabled";
+
+interface TenantOption {
+  id?: string | number | null;
+  name?: string;
+  email?: string;
+  slug?: string;
+  identifier?: string;
+}
+
+interface CredentialForm {
+  username: string;
+  password: string;
+  domain: string;
+  domain_id: string;
+  [key: string]: string;
+}
+
+interface CredentialSummary {
+  domain?: string;
+  default_project?: string;
+  username_preview?: string;
+}
+
+interface RevenueShare {
+  id?: string | number | null;
+  created_at?: string;
+  gross_amount?: number | string;
+  platform_fee_amount?: number | string;
+  tenant_share_amount?: number | string;
+  status?: string;
+}
+
+interface FastTrackGrant {
+  id?: string | number | null;
+  tenant_id?: string | number | null;
+  tenant_name?: string;
+  granted_at?: string;
+  notes?: string;
+}
+
+interface RegionOwnerTenant {
+  id?: string | number | null;
+  name?: string;
+  email?: string;
+}
+
+interface RegionApproval {
+  id?: string | number | null;
+  name?: string;
+  code?: string;
+  country_code?: string;
+  city?: string;
+  platform_fee_percentage?: number | string | null;
+  base_url?: string;
+  ownership_type?: string;
+  fulfillment_mode?: string;
+  approval_status?: string;
+  has_msp_credentials?: boolean;
+  msp_credentials_verified_at?: string | null;
+  msp_credential_summary?: CredentialSummary;
+  owner_tenant?: RegionOwnerTenant | null;
+  recent_revenue_shares?: RevenueShare[];
+  fast_track_mode?: FastTrackMode;
+  fast_track_notes?: string;
+  fast_track_grants?: FastTrackGrant[];
+  admin_notes?: string;
+  rejection_reason?: string;
+}
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof (error as { message?: unknown }).message === "string"
+  ) {
+    return (error as { message: string }).message;
+  }
+  return fallback;
+};
+
+const statusToneMap: Record<ApprovalStatus, "warning" | "success" | "danger" | "neutral"> = {
   pending: "warning",
   approved: "success",
   rejected: "danger",
   suspended: "neutral",
 };
-const statusLabelMap = {
+const statusLabelMap: Record<ApprovalStatus, string> = {
   pending: "Pending Approval",
   approved: "Approved",
   rejected: "Rejected",
   suspended: "Suspended",
 };
-const formatSegment = (value: any) =>
-  value ? value.replace(/[_-]/g, " ").replace(/\b\w/g, (char) => char.toUpperCase()) : "—";
+const formatSegment = (value: string | null | undefined) =>
+  value
+    ? value.replaceAll(/[_-]/g, " ").replace(/\b\w/g, (char: string) => char.toUpperCase())
+    : "—";
 
 const RegionApprovalDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [region, setRegion] = useState(null);
+  const [region, setRegion] = useState<RegionApproval | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [showCredentialModal, setShowCredentialModal] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  const [fastTrackMode, setFastTrackMode] = useState("owner_only");
+  const [fastTrackMode, setFastTrackMode] = useState<FastTrackMode>("owner_only");
   const [fastTrackNotes, setFastTrackNotes] = useState("");
   const [updatingFastTrack, setUpdatingFastTrack] = useState(false);
   const [grantTenantId, setGrantTenantId] = useState("");
   const [grantingFastTrack, setGrantingFastTrack] = useState(false);
-  const [credentials, setCredentials] = useState({
+  const [credentials, setCredentials] = useState<CredentialForm>({
     username: "",
     password: "",
     domain: "",
     domain_id: "",
   });
-  const { data: allTenants = [] } = useFetchTenants();
+  const { data: allTenantsData } = useFetchTenants();
+  const allTenants = useMemo<TenantOption[]>(() => {
+    return Array.isArray(allTenantsData) ? (allTenantsData as TenantOption[]) : [];
+  }, [allTenantsData]);
 
-  useEffect(() => {
-    fetchRegionDetail();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
-
-  const fetchRegionDetail = async () => {
+  const fetchRegionDetail = React.useCallback(async () => {
+    if (!id) {
+      setRegion(null);
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
-      const response = await adminRegionApi.fetchRegionApprovalById(id);
-      setRegion(response.data);
-      setFastTrackMode(response.data?.fast_track_mode || "owner_only");
-      setFastTrackNotes(response.data?.fast_track_notes || "");
-    } catch (error) {
+      const response = (await adminRegionApi.fetchRegionApprovalById(id)) as {
+        data?: RegionApproval;
+      };
+      const regionData = response.data ?? null;
+      setRegion(regionData);
+      setFastTrackMode(regionData?.fast_track_mode || "owner_only");
+      setFastTrackNotes(regionData?.fast_track_notes || "");
+    } catch (error: unknown) {
       console.error("Error fetching region:", error);
       ToastUtils.error("Failed to load region details");
     } finally {
       setLoading(false);
     }
-  };
-  const handleVerifyCredentials = async (e) => {
+  }, [id]);
+
+  useEffect(() => {
+    fetchRegionDetail();
+  }, [fetchRegionDetail]);
+
+  const handleVerifyCredentials = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!credentials.username || !credentials.password || !credentials.domain) {
       ToastUtils.error("Please fill in all required fields");
+      return;
+    }
+    if (!id) {
+      ToastUtils.error("Missing region identifier");
       return;
     }
 
@@ -96,9 +195,9 @@ const RegionApprovalDetail = () => {
       setCredentials({ username: "", password: "", domain: "", domain_id: "" });
       fetchRegionDetail();
       ToastUtils.success("Credentials verified successfully");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error verifying credentials:", error);
-      ToastUtils.error(error?.message || "Verification failed");
+      ToastUtils.error(getErrorMessage(error, "Verification failed"));
     } finally {
       setVerifying(false);
     }
@@ -113,22 +212,30 @@ const RegionApprovalDetail = () => {
     navigate(`/admin-dashboard/region-approvals/${id}/edit?action=suspend`);
   };
   const handleReactivate = async () => {
-    if (!window.confirm("Are you sure you want to reactivate this region?")) {
+    if (!globalThis.window.confirm("Are you sure you want to reactivate this region?")) {
+      return;
+    }
+    if (!id) {
+      ToastUtils.error("Missing region identifier");
       return;
     }
     try {
       await adminRegionApi.reactivateRegion(id);
       fetchRegionDetail();
       ToastUtils.success("Region reactivated");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error reactivating region:", error);
-      ToastUtils.error(error?.message || "Unable to reactivate region");
+      ToastUtils.error(getErrorMessage(error, "Unable to reactivate region"));
     }
   };
   const handleUpdateFee = () => {
     navigate(`/admin-dashboard/region-approvals/${id}/edit?action=update_fee`);
   };
   const handleFastTrackSave = async () => {
+    if (!id) {
+      ToastUtils.error("Missing region identifier");
+      return;
+    }
     try {
       setUpdatingFastTrack(true);
       await adminRegionApi.updateFastTrackSettings(id, {
@@ -137,9 +244,9 @@ const RegionApprovalDetail = () => {
       });
       await fetchRegionDetail();
       ToastUtils.success("Fast-track settings updated");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error updating fast track:", error);
-      ToastUtils.error(error?.message || "Failed to update fast-track settings");
+      ToastUtils.error(getErrorMessage(error, "Failed to update fast-track settings"));
     } finally {
       setUpdatingFastTrack(false);
     }
@@ -149,33 +256,46 @@ const RegionApprovalDetail = () => {
       ToastUtils.error("Select a tenant to grant access.");
       return;
     }
+    if (!id) {
+      ToastUtils.error("Missing region identifier");
+      return;
+    }
     try {
       setGrantingFastTrack(true);
       await adminRegionApi.grantFastTrack(id, grantTenantId);
       setGrantTenantId("");
       await fetchRegionDetail();
       ToastUtils.success("Fast-track access granted");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error granting fast track:", error);
-      ToastUtils.error(error?.message || "Failed to grant fast-track access");
+      ToastUtils.error(getErrorMessage(error, "Failed to grant fast-track access"));
     } finally {
       setGrantingFastTrack(false);
     }
   };
-  const handleRevokeFastTrack = async (tenantId) => {
-    if (!window.confirm("Revoke fast-track access for this tenant?")) return;
+  const handleRevokeFastTrack = async (tenantId: string | number | null | undefined) => {
+    if (!tenantId) {
+      return;
+    }
+    if (!globalThis.window.confirm("Revoke fast-track access for this tenant?")) return;
+    if (!id) {
+      ToastUtils.error("Missing region identifier");
+      return;
+    }
     try {
       await adminRegionApi.revokeFastTrack(id, tenantId);
       await fetchRegionDetail();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error revoking fast track:", error);
     }
   };
   const credentialSummary = region?.msp_credential_summary || {};
   const hasMspCredentials = Boolean(region?.has_msp_credentials);
-  const recentRevenue = region?.recent_revenue_shares || [];
+  const recentRevenue: RevenueShare[] = Array.isArray(region?.recent_revenue_shares)
+    ? region.recent_revenue_shares
+    : [];
 
-  const formatCurrency = (value: any) =>
+  const formatCurrency = (value: number | string | null | undefined) =>
     new Intl.NumberFormat(undefined, {
       style: "currency",
       currency: "USD",
@@ -225,12 +345,15 @@ const RegionApprovalDetail = () => {
     ];
   }, [region]);
 
-  const statusTone = statusToneMap[region?.approval_status] || "warning";
-  const statusLabel = statusLabelMap[region?.approval_status] || "Pending Approval";
-  const fastTrackGrants = region?.fast_track_grants || [];
+  const approvalStatus = (region?.approval_status ?? "pending") as ApprovalStatus;
+  const statusTone = statusToneMap[approvalStatus] || "warning";
+  const statusLabel = statusLabelMap[approvalStatus] || "Pending Approval";
+  const fastTrackGrants = useMemo<FastTrackGrant[]>(() => {
+    return Array.isArray(region?.fast_track_grants) ? region.fast_track_grants : [];
+  }, [region?.fast_track_grants]);
   const grantOptions = useMemo(() => {
-    const grantedIds = new Set(fastTrackGrants.map((grant: any) => grant.tenant_id));
-    return (allTenants || []).filter((tenant: any) => !grantedIds.has(tenant.id));
+    const grantedIds = new Set(fastTrackGrants.map((grant: FastTrackGrant) => grant.tenant_id));
+    return allTenants.filter((tenant: TenantOption) => !grantedIds.has(tenant.id));
   }, [fastTrackGrants, allTenants]);
 
   const renderFastTrackSection = () => (
@@ -245,19 +368,27 @@ const RegionApprovalDetail = () => {
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="space-y-2 rounded-2xl border border-gray-100 bg-gray-50/60 p-4">
-          <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+          <label
+            htmlFor="fast-track-mode"
+            className="text-xs font-semibold uppercase tracking-wide text-gray-500"
+          >
             Fast-track mode
           </label>
           <select
+            id="fast-track-mode"
             value={fastTrackMode}
-            onChange={(event) => setFastTrackMode(event.target.value)}
+            onChange={(event) => setFastTrackMode(event.target.value as FastTrackMode)}
             className="w-full rounded-2xl border border-gray-200 px-4 py-2 text-sm focus:border-primary-300 focus:ring-primary-200"
           >
             <option value="owner_only">Owner only</option>
             <option value="grant_only">Grants only</option>
             <option value="disabled">Disabled</option>
           </select>
+          <label htmlFor="fast-track-notes" className="sr-only">
+            Fast-track notes
+          </label>
           <textarea
+            id="fast-track-notes"
             value={fastTrackNotes}
             onChange={(event) => setFastTrackNotes(event.target.value)}
             placeholder="Notes for ops teams (optional)"
@@ -274,18 +405,22 @@ const RegionApprovalDetail = () => {
           </ModernButton>
         </div>
         <div className="space-y-2 rounded-2xl border border-gray-100 bg-gray-50/60 p-4">
-          <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+          <label
+            htmlFor="fast-track-grant"
+            className="text-xs font-semibold uppercase tracking-wide text-gray-500"
+          >
             Add fast-track grant
           </label>
           <select
+            id="fast-track-grant"
             value={grantTenantId}
             onChange={(event) => setGrantTenantId(event.target.value)}
             disabled={fastTrackMode === "disabled"}
             className="w-full rounded-2xl border border-gray-200 px-4 py-2 text-sm focus:border-primary-300 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <option value="">Select tenant</option>
-            {grantOptions.map((tenant: any) => (
-              <option key={tenant.id} value={tenant.id}>
+            {grantOptions.map((tenant: TenantOption) => (
+              <option key={String(tenant.id ?? "")} value={tenant.id ?? ""}>
                 {tenant.name || tenant.slug || tenant.identifier || tenant.id}
               </option>
             ))}
@@ -307,34 +442,39 @@ const RegionApprovalDetail = () => {
         {fastTrackGrants.length === 0 ? (
           <p className="text-sm text-gray-500">No tenants have explicit fast-track access.</p>
         ) : (
-          <ModernTable
-            data={fastTrackGrants.map((g) => ({ ...g, id: g.id }))}
+          <ModernTable<FastTrackGrant>
+            data={fastTrackGrants.map((grant: FastTrackGrant, index: number) => ({
+              ...grant,
+              id: grant.id ?? `${grant.tenant_id ?? "grant"}-${index}`,
+            }))}
             columns={[
               {
                 key: "tenant_name",
                 header: "TENANT",
-                render: (_, grant) => (
+                render: (_: unknown, grant: FastTrackGrant) => (
                   <span className="text-gray-800">{grant.tenant_name || grant.tenant_id}</span>
                 ),
               },
               {
                 key: "granted_at",
                 header: "GRANTED AT",
-                render: (val) => (
+                render: (val: unknown) => (
                   <span className="text-gray-600">
-                    {val ? new Date(val).toLocaleString() : "—"}
+                    {val ? new Date(val as string | number | Date).toLocaleString() : "—"}
                   </span>
                 ),
               },
               {
                 key: "notes",
                 header: "NOTES",
-                render: (val) => <span className="text-gray-600">{val || "—"}</span>,
+                render: (val: unknown) => (
+                  <span className="text-gray-600">{String(val || "—")}</span>
+                ),
               },
               {
                 key: "actions",
                 header: "ACTIONS",
-                render: (_, grant) => (
+                render: (_: unknown, grant: FastTrackGrant) => (
                   <button
                     type="button"
                     className="text-xs font-semibold text-rose-600 hover:text-rose-700"
@@ -528,36 +668,47 @@ const RegionApprovalDetail = () => {
           <p className="text-sm text-gray-500">Latest disbursements recorded for this region.</p>
         </div>
         <ModernTable
-          data={recentRevenue.map((r) => ({ ...r, id: r.id }))}
+          data={recentRevenue.map((r: RevenueShare, index: number) => ({
+            ...r,
+            id: r.id ?? `revenue-${index}`,
+          }))}
           columns={[
             {
               key: "created_at",
               header: "DATE",
-              render: (val) => (
+              render: (val: unknown) => (
                 <span className="text-gray-700">
-                  {val ? new Date(val).toLocaleString() : "N/A"}
+                  {val ? new Date(val as string | number | Date).toLocaleString() : "N/A"}
                 </span>
               ),
             },
             {
               key: "gross_amount",
               header: "GROSS",
-              render: (val) => <span className="text-gray-700">{formatCurrency(val)}</span>,
+              render: (val: unknown) => (
+                <span className="text-gray-700">{formatCurrency(val as number | string)}</span>
+              ),
             },
             {
               key: "platform_fee_amount",
               header: "PLATFORM FEE",
-              render: (val) => <span className="text-gray-700">{formatCurrency(val)}</span>,
+              render: (val: unknown) => (
+                <span className="text-gray-700">{formatCurrency(val as number | string)}</span>
+              ),
             },
             {
               key: "tenant_share_amount",
               header: "TENANT SHARE",
-              render: (val) => <span className="text-gray-700">{formatCurrency(val)}</span>,
+              render: (val: unknown) => (
+                <span className="text-gray-700">{formatCurrency(val as number | string)}</span>
+              ),
             },
             {
               key: "status",
               header: "STATUS",
-              render: (val) => <span className="text-gray-700 capitalize">{val || "pending"}</span>,
+              render: (val: unknown) => (
+                <span className="text-gray-700 capitalize">{String(val || "pending")}</span>
+              ),
             },
           ]}
           searchable={false}
@@ -593,7 +744,7 @@ const RegionApprovalDetail = () => {
       >
         <ModernCard padding="lg">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {overviewItems.map(({ label, value, icon: Icon }: any) => (
+            {overviewItems.map(({ label, value, icon: Icon }) => (
               <div
                 key={label}
                 className="rounded-2xl border border-gray-100 bg-gray-50/60 px-4 py-3"
@@ -617,7 +768,7 @@ const RegionApprovalDetail = () => {
               <p className="text-sm text-gray-500">Tenant responsible for operating this region.</p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              {ownerItems.map(({ label, value }: any) => (
+              {ownerItems.map(({ label, value }) => (
                 <div key={label} className="rounded-xl border border-gray-100 px-4 py-3">
                   <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
                     {label}
@@ -762,10 +913,14 @@ const RegionApprovalDetail = () => {
             <form onSubmit={handleVerifyCredentials} className="space-y-4">
               <div className="space-y-3">
                 <div>
-                  <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                  <label
+                    htmlFor="modal-username"
+                    className="text-xs font-medium uppercase tracking-wide text-gray-500"
+                  >
                     Username<span className="text-red-500">*</span>
                   </label>
                   <input
+                    id="modal-username"
                     type="text"
                     value={credentials.username}
                     onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
@@ -775,10 +930,14 @@ const RegionApprovalDetail = () => {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                  <label
+                    htmlFor="modal-password"
+                    className="text-xs font-medium uppercase tracking-wide text-gray-500"
+                  >
                     Password<span className="text-red-500">*</span>
                   </label>
                   <input
+                    id="modal-password"
                     type="password"
                     value={credentials.password}
                     onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
@@ -788,10 +947,14 @@ const RegionApprovalDetail = () => {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                  <label
+                    htmlFor="modal-domain"
+                    className="text-xs font-medium uppercase tracking-wide text-gray-500"
+                  >
                     Domain<span className="text-red-500">*</span>
                   </label>
                   <input
+                    id="modal-domain"
                     type="text"
                     value={credentials.domain}
                     onChange={(e) => setCredentials({ ...credentials, domain: e.target.value })}
@@ -801,10 +964,14 @@ const RegionApprovalDetail = () => {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                  <label
+                    htmlFor="modal-domain-id"
+                    className="text-xs font-medium uppercase tracking-wide text-gray-500"
+                  >
                     Domain ID <span className="text-gray-400">(optional)</span>
                   </label>
                   <input
+                    id="modal-domain-id"
                     type="text"
                     value={credentials.domain_id}
                     onChange={(e) => setCredentials({ ...credentials, domain_id: e.target.value })}

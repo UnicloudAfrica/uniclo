@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import { RefreshCw } from "lucide-react";
 import ModernButton from "../../ui/ModernButton";
@@ -9,7 +8,7 @@ interface LoadBalancerHooks {
     projectId: string,
     region?: string
   ) => {
-    data: any[];
+    data: unknown;
     isLoading: boolean;
     refetch: () => void;
   };

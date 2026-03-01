@@ -6,7 +6,6 @@
   "dependencies": {
     "@paystack/inline-js": "^2.22.6",
     "@tanstack/react-query": "^5.81.2",
-    "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "@tinymce/tinymce-react": "^4.3.2",
@@ -45,10 +44,35 @@
     "dev": "vite",
     "start": "vite",
     "build": "NODE_OPTIONS='--max-old-space-size=4096' vite build",
+    "build:client": "NODE_OPTIONS='--max-old-space-size=4096' vite build",
+    "build:ssr": "NODE_OPTIONS='--max-old-space-size=4096' vite build --ssr src/entry-server.tsx --outDir dist-ssr",
+    "prerender": "node scripts/prerender.mjs",
+    "build:static": "npm run build:client && npm run build:ssr && npm run prerender",
     "preview": "vite preview",
-    "lint": "eslint src/**/*.{js,jsx,ts,tsx}",
+    "typecheck": "npm run typecheck:full",
+    "typecheck:full": "node scripts/typecheck-runner.mjs --label full",
+    "typecheck:admin": "node scripts/typecheck-runner.mjs --label admin --project tsconfig.typecheck.admin.json",
+    "typecheck:dashboards": "node scripts/typecheck-runner.mjs --label dashboards --project tsconfig.typecheck.dashboard.json",
+    "typecheck:core": "node scripts/typecheck-runner.mjs --label core --project tsconfig.typecheck.core.json",
+    "typecheck:all": "npm run typecheck:admin && npm run typecheck:dashboards && npm run typecheck:core",
+    "typecheck:all:parallel": "node scripts/typecheck-parallel.mjs",
+    "typecheck:rank": "node scripts/ts-error-rank.mjs",
+    "typecheck:rank:full": "node scripts/ts-error-rank.mjs .cache/ts-errors/full.log",
+    "typecheck:rank:admin": "node scripts/ts-error-rank.mjs .cache/ts-errors/admin.log",
+    "typecheck:rank:dashboards": "node scripts/ts-error-rank.mjs .cache/ts-errors/dashboards.log",
+    "typecheck:rank:core": "node scripts/ts-error-rank.mjs .cache/ts-errors/core.log",
+    "typecheck:clean": "rm -rf .cache/ts-errors .cache/tsc*.tsbuildinfo",
+    "lint": "eslint --cache --cache-location .cache/eslint --ext .ts,.tsx src",
+    "lint:fix": "eslint --cache --cache-location .cache/eslint --fix --ext .ts,.tsx src",
+    "lint:full": "eslint --ext .ts,.tsx src",
+    "lint:clean": "rm -rf .cache/eslint",
+    "theme:audit": "node scripts/theme-audit.mjs",
+    "theme:audit:strict": "node scripts/theme-audit.mjs --strict",
     "format": "prettier --write src/**/*.{js,jsx,ts,tsx,css,md}",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "lint-staged": {
     "src/**/*.{js,jsx,ts,tsx}": [
@@ -57,50 +81,6 @@
     ],
     "src/**/*.{css,md}": [
       "prettier --write"
-    ]
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ],
-    "overrides": [
-      {
-        "files": [
-          "src/adminDashboard/**/*.*"
-        ],
-        "rules": {
-          "no-restricted-imports": [
-            "error",
-            {
-              "patterns": [
-                "src/index/tenant/*",
-                "src/index/tenant/**",
-                "src/stores/tenantAuthStore"
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "files": [
-          "src/dashboard/**/*.*",
-          "src/clientDashboard/**/*.*",
-          "src/tenantDashboard/**/*.*"
-        ],
-        "rules": {
-          "no-restricted-imports": [
-            "error",
-            {
-              "patterns": [
-                "src/index/admin/*",
-                "src/index/admin/**",
-                "src/stores/adminAuthStore"
-              ]
-            }
-          ]
-        }
-      }
     ]
   },
   "browserslist": {
@@ -119,10 +99,13 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@babel/register": "^7.25.9",
     "@faker-js/faker": "^10.0.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.10.1",
     "@types/react": "^18.3.27",
     "@types/react-dom": "^18.3.7",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
     "@typescript-eslint/parser": "^8.49.0",
     "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.4.22",
@@ -132,11 +115,13 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "faker": "^6.6.6",
     "husky": "^9.1.7",
+    "jsdom": "^28.1.0",
     "lint-staged": "^16.2.7",
     "msw": "^2.11.5",
     "prettier": "^3.7.4",
     "tailwindcss": "^3.3.5",
     "typescript": "^5.9.3",
-    "vite": "^6.4.1"
+    "vite": "^6.4.1",
+    "vitest": "^4.0.18"
   }
 }

@@ -68,7 +68,7 @@ const DashboardPageShell: React.FC<DashboardPageShellProps> = ({
   contentWrapper: ContentWrapper = "section",
   contentStyle = {},
   disableContentPadding = false,
-  backgroundColor = "var(--theme-surface-alt, #f9fafb)",
+  backgroundColor = "var(--theme-surface-alt, var(--theme-surface-alt))",
   customHeader,
 }) => {
   const location = useLocation();

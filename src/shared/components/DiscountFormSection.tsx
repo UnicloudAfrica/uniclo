@@ -1,6 +1,5 @@
-// @ts-nocheck
-import React, { useState } from "react";
-import { Calendar, Percent, DollarSign, ToggleLeft, ToggleRight, Info } from "lucide-react";
+import React from "react";
+import { Percent, Info } from "lucide-react";
 
 interface DiscountFormData {
   enabled: boolean;
@@ -23,7 +22,7 @@ const DiscountFormSection: React.FC<DiscountFormSectionProps> = ({
   onChange,
   errors = {},
 }) => {
-  const handleChange = (field: keyof DiscountFormData, value: any) => {
+  const handleChange = <K extends keyof DiscountFormData>(field: K, value: DiscountFormData[K]) => {
     onChange({ [field]: value });
   };
 

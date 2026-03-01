@@ -47,6 +47,6 @@ export interface Option {
   value: string | number;
   label: string;
   currency?: string;
-  raw?: any;
+  raw?: unknown;
   disabled?: boolean;
 }

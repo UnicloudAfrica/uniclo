@@ -6,11 +6,11 @@ import type { NatGateway } from "./types";
 
 interface NatGatewaysOverviewProps {
   natGateways: NatGateway[];
-  isLoading?: boolean;
-  emptyMessage?: string;
-  availableSubnetsCount?: number;
-  onDelete?: (nat: NatGateway) => void;
-  showActions?: boolean;
+  isLoading?: boolean | undefined;
+  emptyMessage?: string | undefined;
+  availableSubnetsCount?: number | undefined;
+  onDelete?: ((nat: NatGateway) => void) | undefined;
+  showActions?: boolean | undefined;
 }
 
 const NatGatewaysOverview: React.FC<NatGatewaysOverviewProps> = ({

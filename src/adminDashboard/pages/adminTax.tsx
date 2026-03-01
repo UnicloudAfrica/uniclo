@@ -1,7 +1,6 @@
-// @ts-nocheck
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Calculator, Flag, Globe, Loader2, Percent, Pencil, Plus } from "lucide-react";
-import AdminPageShell from "../components/AdminPageShell.tsx";
+import AdminPageShell from "../components/AdminPageShell";
 import { ModernButton } from "../../shared/components/ui";
 import { ModernCard } from "../../shared/components/ui";
 import ResourceHero from "../../shared/components/ui/ResourceHero";
@@ -9,6 +8,61 @@ import ResourceDataExplorer from "../components/ResourceDataExplorer";
 import AddTaxTypeModal from "./taxComponents/addTax";
 import EditTaxTypeModal from "./taxComponents/editTax";
 import { useFetchTaxConfigurations } from "../../hooks/adminHooks/taxConfigurationHooks";
+
+interface TaxCountry {
+  id?: string | number;
+  name?: string;
+  code?: string;
+  iso2?: string;
+  [key: string]: unknown;
+}
+
+interface CountryRate {
+  id?: string | number;
+  rate?: number | string | null;
+  country?: TaxCountry;
+}
+
+interface TaxConfiguration {
+  id?: string | number;
+  name?: string;
+  slug?: string;
+  country_rates?: CountryRate[];
+}
+
+interface CountryTaxType {
+  id: string;
+  taxTypeId: string | number;
+  name: string;
+  slug?: string;
+  rate: number;
+}
+
+interface CountryCatalogueEntry {
+  countryId: number;
+  country: TaxCountry;
+  name: string;
+  code: string;
+  taxCount: number;
+  taxTypes: CountryTaxType[];
+}
+
+interface CountryTaxRow extends Record<string, unknown> {
+  id: string;
+  taxTypeId: string | number;
+  name: string;
+  slug?: string;
+  rate: number;
+  taxType?: TaxConfiguration;
+}
+
+interface ExplorerColumn {
+  key?: string;
+  accessorKey?: string;
+  header: React.ReactNode;
+  align?: "left" | "center" | "right";
+  render?: (row: Record<string, unknown>) => React.ReactNode;
+}
 
 const formatRate = (rate: any) => {
   if (rate === null || rate === undefined) return "—";
@@ -19,35 +73,44 @@ const formatRate = (rate: any) => {
 export default function AdminTax() {
   const [isAddTaxTypeModalOpen, setIsAddTaxTypeModalOpen] = useState(false);
   const [isEditTaxTypeModalOpen, setIsEditTaxTypeModalOpen] = useState(false);
-  const [selectedTaxType, setSelectedTaxType] = useState(null);
-  const [selectedCountryId, setSelectedCountryId] = useState(null);
+  const [selectedTaxType, setSelectedTaxType] = useState<TaxConfiguration | null>(null);
+  const [selectedCountryId, setSelectedCountryId] = useState<number | null>(null);
   const [countrySearch, setCountrySearch] = useState("");
 
   const {
-    data: taxConfigurations = [],
+    data: taxConfigurationsData = [],
     isFetching: isTaxFetching,
     refetch,
   } = useFetchTaxConfigurations({
-    onError: (error) => {
+    onError: (error: unknown) => {
       console.error("Failed to fetch tax configurations", error);
     },
   });
+  const taxConfigurations = useMemo<TaxConfiguration[]>(
+    () =>
+      Array.isArray(taxConfigurationsData) ? (taxConfigurationsData as TaxConfiguration[]) : [],
+    [taxConfigurationsData]
+  );
 
   const taxTypeMap = useMemo(() => {
-    const map = new Map();
-    (taxConfigurations || []).forEach((taxType: any) => {
+    const map = new Map<string | number, TaxConfiguration>();
+    taxConfigurations.forEach((taxType) => {
       if (!taxType || typeof taxType !== "object") return;
+      if (taxType.id === undefined || taxType.id === null) return;
       map.set(taxType.id, taxType);
     });
     return map;
   }, [taxConfigurations]);
 
   const countryCatalogue = useMemo(() => {
-    const catalogueMap = new Map();
+    const catalogueMap = new Map<
+      string | number,
+      { country: TaxCountry; taxTypes: CountryTaxType[] }
+    >();
 
-    (taxConfigurations || []).forEach((taxType: any) => {
-      const rates = taxType?.country_rates || [];
-      rates.forEach((rate: any) => {
+    taxConfigurations.forEach((taxType) => {
+      const rates = Array.isArray(taxType?.country_rates) ? taxType.country_rates : [];
+      rates.forEach((rate) => {
         const country = rate?.country;
         if (!country?.id) return;
 
@@ -59,25 +122,31 @@ export default function AdminTax() {
         }
 
         const entry = catalogueMap.get(country.id);
-        entry.taxTypes.push({
+        if (!entry) return;
+        const taxEntry: CountryTaxType = {
           id: `${taxType.id}-${rate.id ?? "rate"}`,
-          taxTypeId: taxType.id,
+          taxTypeId: taxType.id ?? "unknown",
           name: taxType.name || "Untitled tax",
-          slug: taxType.slug,
           rate: Number(rate.rate ?? 0),
-        });
+        };
+        if (typeof taxType.slug === "string" && taxType.slug.trim()) {
+          taxEntry.slug = taxType.slug;
+        }
+        entry.taxTypes.push(taxEntry);
       });
     });
 
     return Array.from(catalogueMap.entries())
-      .map(([countryId, entry]) => ({
-        countryId: Number(countryId),
-        country: entry.country,
-        name: entry.country?.name || "Unknown country",
-        code: entry.country?.code || entry.country?.iso2 || "",
-        taxCount: entry.taxTypes.length,
-        taxTypes: entry.taxTypes,
-      }))
+      .map(
+        ([countryId, entry]): CountryCatalogueEntry => ({
+          countryId: Number(countryId),
+          country: entry.country,
+          name: entry.country?.name || "Unknown country",
+          code: entry.country?.code || entry.country?.iso2 || "",
+          taxCount: entry.taxTypes.length,
+          taxTypes: entry.taxTypes,
+        })
+      )
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [taxConfigurations]);
 
@@ -90,7 +159,10 @@ export default function AdminTax() {
     const stillValid = countryCatalogue.some((entry) => entry.countryId === selectedCountryId);
 
     if (!stillValid) {
-      setSelectedCountryId(countryCatalogue[0].countryId);
+      const firstCountry = countryCatalogue[0];
+      if (firstCountry) {
+        setSelectedCountryId(firstCountry.countryId);
+      }
     }
   }, [countryCatalogue, selectedCountryId]);
 
@@ -111,14 +183,22 @@ export default function AdminTax() {
 
   const countryRows = useMemo(() => {
     if (!selectedCountry) return [];
-    return selectedCountry.taxTypes.map((item: any) => ({
-      id: item.id,
-      taxTypeId: item.taxTypeId,
-      name: item.name,
-      slug: item.slug,
-      rate: item.rate,
-      taxType: taxTypeMap.get(item.taxTypeId),
-    }));
+    return selectedCountry.taxTypes.map((item): CountryTaxRow => {
+      const taxType = taxTypeMap.get(item.taxTypeId);
+      const row: CountryTaxRow = {
+        id: item.id,
+        taxTypeId: item.taxTypeId,
+        name: item.name,
+        rate: item.rate,
+      };
+      if (taxType) {
+        row.taxType = taxType;
+      }
+      if (typeof item.slug === "string" && item.slug.trim()) {
+        row.slug = item.slug;
+      }
+      return row;
+    });
   }, [selectedCountry, taxTypeMap]);
 
   const totalRates = useMemo(
@@ -131,7 +211,10 @@ export default function AdminTax() {
     const sum = countryCatalogue.reduce((rateSum, entry) => {
       return (
         rateSum +
-        entry.taxTypes.reduce((innerSum, value) => innerSum + (Number(value.rate) || 0), 0)
+        entry.taxTypes.reduce(
+          (innerSum: number, value: CountryTaxType) => innerSum + (Number(value.rate) || 0),
+          0
+        )
       );
     }, 0);
     return (sum / totalRates) * 100;
@@ -165,59 +248,68 @@ export default function AdminTax() {
     setIsAddTaxTypeModalOpen(true);
   }, []);
 
-  const handleOpenEditTaxType = useCallback((taxType) => {
+  const handleOpenEditTaxType = useCallback((taxType: TaxConfiguration | undefined) => {
     if (!taxType) return;
     setSelectedTaxType(taxType);
     setIsEditTaxTypeModalOpen(true);
   }, []);
 
-  const columns = useMemo(
+  const columns = useMemo<ExplorerColumn[]>(
     () => [
       {
         key: "name",
         header: "Tax type",
-        render: (row) => (
-          <div className="flex items-center gap-3">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500/10 text-primary-500">
-              <Calculator className="h-4 w-4" />
-            </span>
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-slate-900">{row.name}</span>
-              {row.slug && (
-                <span className="text-xs uppercase tracking-wide text-slate-400">{row.slug}</span>
-              )}
+        render: (rowData: Record<string, unknown>) => {
+          const row = rowData as CountryTaxRow;
+          return (
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500/10 text-primary-500">
+                <Calculator className="h-4 w-4" />
+              </span>
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold text-slate-900">{row.name}</span>
+                {row.slug && (
+                  <span className="text-xs uppercase tracking-wide text-slate-400">{row.slug}</span>
+                )}
+              </div>
             </div>
-          </div>
-        ),
+          );
+        },
       },
       {
         key: "rate",
         header: "Rate",
         align: "right",
-        render: (row) => (
-          <span className="inline-flex items-center justify-end gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-primary-500/10 px-3 py-1 text-xs font-semibold text-primary-600">
-              <Percent className="h-3 w-3" />
-              {formatRate(row.rate)}
+        render: (rowData: Record<string, unknown>) => {
+          const row = rowData as CountryTaxRow;
+          return (
+            <span className="inline-flex items-center justify-end gap-2">
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary-500/10 px-3 py-1 text-xs font-semibold text-primary-600">
+                <Percent className="h-3 w-3" />
+                {formatRate(row.rate)}
+              </span>
             </span>
-          </span>
-        ),
+          );
+        },
       },
       {
         key: "actions",
         header: "",
         align: "right",
-        render: (row) => (
-          <button
-            type="button"
-            onClick={() => handleOpenEditTaxType(row.taxType)}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:border-primary-200 hover:text-primary-600"
-            title="Edit tax type"
-            aria-label="Edit tax type"
-          >
-            <Pencil className="h-4 w-4" />
-          </button>
-        ),
+        render: (rowData: Record<string, unknown>) => {
+          const row = rowData as CountryTaxRow;
+          return (
+            <button
+              type="button"
+              onClick={() => handleOpenEditTaxType(row.taxType)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:border-primary-200 hover:text-primary-600"
+              title="Edit tax type"
+              aria-label="Edit tax type"
+            >
+              <Pencil className="h-4 w-4" />
+            </button>
+          );
+        },
       },
     ],
     [handleOpenEditTaxType]
@@ -271,7 +363,7 @@ export default function AdminTax() {
           </div>
         ) : (
           <ul className="divide-y divide-slate-100">
-            {filteredCountries.map((entry: any) => {
+            {filteredCountries.map((entry) => {
               const isActive = entry.countryId === selectedCountryId;
               return (
                 <li key={entry.countryId}>

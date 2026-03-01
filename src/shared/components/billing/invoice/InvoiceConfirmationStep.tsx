@@ -242,7 +242,7 @@ const InvoiceConfirmationStep: React.FC<InvoiceConfirmationStepProps> = ({ apiRe
           variant="outline"
           size="lg"
           leftIcon={<Plus className="h-5 w-5" />}
-          onClick={() => window.location.reload()}
+          onClick={() => globalThis.window.location.reload()}
         >
           Create Another Invoice
         </ModernButton>

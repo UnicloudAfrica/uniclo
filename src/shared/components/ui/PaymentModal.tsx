@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   X,
   CreditCard,
   Clock,
   CheckCircle,
   AlertCircle,
-  ExternalLink,
   RefreshCw,
   Server,
   DollarSign,
@@ -28,8 +27,151 @@ import { formatCurrencyValue, toNumber } from "../../../utils/instanceCreationUt
  */
 
 type ApiContext = "admin" | "tenant" | "client";
+type PaymentModeId = "card" | "bank_transfer" | "saved_card";
 
-const normalizeReference = (value: any) => {
+type PaymentGatewayDetails = {
+  account_name?: string;
+  account_number?: string;
+  bank_name?: string;
+};
+
+type PaymentGatewayChargeBreakdown = {
+  base_amount?: number;
+  tax?: number;
+  total_fees?: number;
+  grand_total?: number;
+};
+
+type PaymentGatewayOption = {
+  id?: string | number;
+  name?: string;
+  payment_type?: string;
+  transaction_reference?: string;
+  public_key?: string;
+  publicKey?: string;
+  gateway?: string;
+  provider?: string;
+  charge_breakdown?: PaymentGatewayChargeBreakdown;
+  subtotal?: number;
+  tax?: number;
+  fees?: number;
+  total?: number;
+  currency?: string;
+  details?: PaymentGatewayDetails;
+};
+
+type SavedCard = {
+  id?: string | number;
+  identifier?: string;
+  card_type?: string;
+  last4?: string;
+  exp_month?: string | number;
+  exp_year?: string | number;
+  bank?: string;
+  payment_gateway?: string;
+};
+
+type PaymentAccount = {
+  id?: string | number;
+};
+
+type StorageProfile = {
+  id?: string | number | undefined;
+  name?: string | undefined;
+  tierName?: string | undefined;
+  tier_key?: string | undefined;
+  tierKey?: string | undefined;
+  region?: string | undefined;
+  regionLabel?: string | undefined;
+  currency?: string | undefined;
+  months?: number | undefined;
+  subtotal?: number | undefined;
+  account?: PaymentAccount | undefined;
+  account_id?: string | number | undefined;
+};
+
+type InstanceSummary = {
+  id?: string | number;
+  name?: string;
+  provider?: string;
+  region?: string;
+  status?: string;
+};
+
+type TransactionUser = {
+  email?: string;
+};
+
+type TransactionSummary = {
+  identifier?: string | undefined;
+  reference?: string | undefined;
+  id?: string | number | undefined;
+  amount?: number | undefined;
+  currency?: string | undefined;
+  third_party_fee?: number | undefined;
+  transaction_fee?: number | undefined;
+  payment_gateway?: string | undefined;
+  status?: string | undefined;
+  user?: TransactionUser | undefined;
+};
+
+type PaymentSummary = {
+  payment_gateway_options?: PaymentGatewayOption[] | undefined;
+  saved_cards?: SavedCard[] | undefined;
+  public_key?: string | undefined;
+  customer_context?:
+    | {
+        email?: string | undefined;
+      }
+    | undefined;
+  reference?: string | undefined;
+  transaction_reference?: string | undefined;
+  gateway?: string | undefined;
+  expires_at?: string | undefined;
+};
+
+type OrderSummary = {
+  storage_profiles?: StorageProfile[];
+  items?: StorageProfile[];
+};
+
+type TransactionContext = {
+  transaction?: TransactionSummary;
+  order?: OrderSummary;
+  instances?: InstanceSummary[];
+  payment?: PaymentSummary;
+  accounts?: PaymentAccount[];
+  order_items?: StorageProfile[];
+};
+
+type TransactionPayload = {
+  data?: TransactionContext;
+};
+
+type PaymentModeOption = {
+  id: PaymentModeId;
+  label: string;
+};
+
+type ConfirmTransactionOptions = {
+  gatewayOverride?: string;
+  body?: Record<string, unknown>;
+  includeSaveCardDetails?: boolean;
+};
+
+type ConfirmTransactionPayload = {
+  payment_gateway: string;
+  save_card_details?: boolean;
+} & Record<string, unknown>;
+
+type ApiResponse<T = unknown> = {
+  success?: boolean;
+  status?: string;
+  data?: T;
+  cards?: SavedCard[];
+} & Record<string, unknown>;
+
+const normalizeReference = (value: unknown): string | null => {
   if (value === null || value === undefined) return null;
   const trimmed = String(value).trim();
   return trimmed.length > 0 ? trimmed : null;
@@ -43,7 +185,7 @@ const isNumericReference = (value: string | null) => {
 // Detect API context from URL
 const detectApiContext = (): ApiContext => {
   if (typeof window === "undefined") return "client";
-  const path = window.location.pathname;
+  const path = globalThis.window.location.pathname;
   if (path.startsWith("/admin-dashboard") || path.startsWith("/admin")) return "admin";
   if (path.startsWith("/dashboard")) return "tenant";
   return "client";
@@ -68,7 +210,7 @@ const getApiPrefixForContext = (context: ApiContext): string => {
   return "";
 };
 
-const resolveCardIdentifier = (card: any, fallback = "") => {
+const resolveCardIdentifier = (card?: SavedCard | null, fallback = "") => {
   if (!card) return fallback;
   if (card.identifier) return card.identifier;
   if (card.id !== undefined && card.id !== null) return String(card.id);
@@ -86,22 +228,22 @@ interface PricingSummaryData {
 interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  transactionData?: any;
-  onPaymentComplete?: (payload: any) => void;
-  mode?: "modal" | "inline";
-  className?: string;
-  onPaymentOptionChange?: (option: any) => void;
-  apiBaseUrl?: string;
-  amount?: number;
-  currency?: string;
-  email?: string;
-  transactionReference?: string;
-  paymentOptions?: any[];
-  publicKey?: string;
-  pricingSummary?: PricingSummaryData;
+  transactionData?: TransactionPayload | undefined;
+  onPaymentComplete?: ((payload: unknown) => void) | undefined;
+  mode?: "modal" | "inline" | undefined;
+  className?: string | undefined;
+  onPaymentOptionChange?: ((option: PaymentGatewayOption | null) => void) | undefined;
+  apiBaseUrl?: string | undefined;
+  amount?: number | undefined;
+  currency?: string | undefined;
+  email?: string | undefined;
+  transactionReference?: string | undefined;
+  paymentOptions?: PaymentGatewayOption[] | null;
+  publicKey?: string | undefined;
+  pricingSummary?: PricingSummaryData | undefined;
 }
 
-const PaymentModal: React.FC<PaymentModalProps> = ({
+const PaymentModal = ({
   isOpen,
   onClose,
   transactionData,
@@ -117,7 +259,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   paymentOptions: propPaymentOptions,
   publicKey: propPublicKey,
   pricingSummary: propPricingSummary,
-}) => {
+}: PaymentModalProps) => {
   // Auto-detect context from URL
   const context = useMemo(() => detectApiContext(), []);
   const appPaths = useMemo(() => {
@@ -195,19 +337,31 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     seconds: number;
   } | null>(null);
   const [isPolling, setIsPolling] = useState(false);
-  const [selectedPaymentOption, setSelectedPaymentOption] = useState<any>(null);
+  const [selectedPaymentOption, setSelectedPaymentOption] = useState<PaymentGatewayOption | null>(
+    null
+  );
   const [isConfirming, setIsConfirming] = useState(false);
   const [shouldSaveCard, setShouldSaveCard] = useState(false);
-  const [paymentMode, setPaymentMode] = useState<string | null>(null);
+  const [paymentMode, setPaymentMode] = useState<PaymentModeId | null>(null);
   const [selectedSavedCard, setSelectedSavedCard] = useState<string | null>(null);
-  const [confirmedAccounts, setConfirmedAccounts] = useState<any[]>([]);
-  const hasTriggeredConfirmRef = useRef(false);
+  const [confirmedAccounts, setConfirmedAccounts] = useState<PaymentAccount[]>([]);
   const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const confirmAttemptsRef = useRef(0);
 
-  const { transaction, order, instances, payment, accounts, order_items } =
-    transactionData?.data || {};
-  const storageProfiles = order?.storage_profiles || order_items || order?.items || [];
+  const transactionContext = transactionData?.data;
+  const transaction = transactionContext?.transaction;
+  const order = transactionContext?.order;
+  const instances = transactionContext?.instances;
+  const payment = transactionContext?.payment;
+  const accounts = transactionContext?.accounts;
+  const order_items = transactionContext?.order_items;
+  const storageProfiles = Array.isArray(order?.storage_profiles)
+    ? order.storage_profiles
+    : Array.isArray(order_items)
+      ? order_items
+      : Array.isArray(order?.items)
+        ? order.items
+        : [];
   const isStorageOrder =
     (Array.isArray(storageProfiles) && storageProfiles.length > 0) ||
     (Array.isArray(accounts) && accounts.length > 0);
@@ -222,15 +376,23 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     storageProfiles?.[0]?.account_id ||
     null;
 
-  const paymentGatewayOptions = propPaymentOptions || payment?.payment_gateway_options || [];
+  const paymentGatewayOptions = useMemo<PaymentGatewayOption[]>(() => {
+    if (Array.isArray(propPaymentOptions)) {
+      return propPaymentOptions;
+    }
+    if (Array.isArray(payment?.payment_gateway_options)) {
+      return payment.payment_gateway_options;
+    }
+    return [];
+  }, [propPaymentOptions, payment?.payment_gateway_options]);
 
-  const [savedCards, setSavedCards] = useState<any[]>(
+  const [savedCards, setSavedCards] = useState<SavedCard[]>(
     Array.isArray(payment?.saved_cards) ? payment.saved_cards : []
   );
 
   const cardPaymentOptions = useMemo(
     () =>
-      paymentGatewayOptions.filter((option: any) => {
+      paymentGatewayOptions.filter((option) => {
         const type = (option.payment_type || "").toLowerCase();
         const name = (option.name || "").toLowerCase();
         return type.includes("card") || (!type && name.includes("card"));
@@ -240,7 +402,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const bankTransferOptions = useMemo(
     () =>
-      paymentGatewayOptions.filter((option: any) => {
+      paymentGatewayOptions.filter((option) => {
         const type = (option.payment_type || "").toLowerCase();
         const name = (option.name || "").toLowerCase();
         return (
@@ -252,8 +414,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     [paymentGatewayOptions]
   );
 
-  const availablePaymentModes = useMemo(() => {
-    const modes = [];
+  const availablePaymentModes = useMemo<PaymentModeOption[]>(() => {
+    const modes: PaymentModeOption[] = [];
     if (cardPaymentOptions.length > 0) {
       modes.push({ id: "card", label: "Card Payment" });
     }
@@ -338,7 +500,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       if (prev && availablePaymentModes.some((mode) => mode.id === prev)) {
         return prev;
       }
-      return availablePaymentModes[0].id;
+      return availablePaymentModes[0]?.id ?? null;
     });
   }, [shouldRender, availablePaymentModes]);
 
@@ -347,7 +509,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     if (paymentMode === "card") {
       const currentId = selectedPaymentOption ? String(selectedPaymentOption.id) : null;
       const nextOption =
-        cardPaymentOptions.find((option: any) => String(option.id) === currentId) ||
+        cardPaymentOptions.find((option) => String(option.id) === currentId) ||
         cardPaymentOptions[0] ||
         null;
       if ((nextOption?.id ?? null) !== (selectedPaymentOption?.id ?? null)) {
@@ -357,7 +519,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     } else if (paymentMode === "bank_transfer") {
       const currentId = selectedPaymentOption ? String(selectedPaymentOption.id) : null;
       const nextOption =
-        bankTransferOptions.find((option: any) => String(option.id) === currentId) ||
+        bankTransferOptions.find((option) => String(option.id) === currentId) ||
         bankTransferOptions[0] ||
         null;
       if ((nextOption?.id ?? null) !== (selectedPaymentOption?.id ?? null)) {
@@ -389,9 +551,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           headers: authHeaders,
           credentials: "include",
         });
-        const payload = await response.json().catch(() => ({}));
+        const payload = (await response.json().catch(() => ({}))) as ApiResponse;
 
-        if (!response.ok || payload?.success === false) {
+        if (!response.ok || payload.success === false) {
           console.error("Failed to remove card", payload);
           return;
         }
@@ -421,9 +583,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         credentials: "include",
       });
 
-      const payload = await response.json().catch(() => ({}));
+      const payload = (await response.json().catch(() => ({}))) as ApiResponse;
 
-      if (!response.ok || payload?.success === false) {
+      if (!response.ok || payload.success === false) {
         console.error("Failed to fetch saved cards", payload);
         return;
       }
@@ -463,31 +625,36 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   // Calculate time remaining for payment
   useEffect(() => {
-    if (shouldRender && payment?.expires_at) {
-      const updateCountdown = () => {
-        const now = new Date().getTime();
-        const expiry = new Date(payment.expires_at).getTime();
-        const remaining = expiry - now;
-
-        if (remaining > 0) {
-          const hours = Math.floor(remaining / (1000 * 60 * 60));
-          const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-          const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
-          setTimeRemaining({ hours, minutes, seconds });
-        } else {
-          setTimeRemaining(null);
-          setPaymentStatus("expired");
-        }
-      };
-
-      updateCountdown();
-      const interval = setInterval(updateCountdown, 1000);
-      return () => clearInterval(interval);
+    const expiresAt = payment?.expires_at;
+    if (!shouldRender || !expiresAt) {
+      return undefined;
     }
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const expiry = new Date(expiresAt).getTime();
+      const remaining = expiry - now;
+
+      if (remaining > 0) {
+        const hours = Math.floor(remaining / (1000 * 60 * 60));
+        const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+        setTimeRemaining({ hours, minutes, seconds });
+      } else {
+        setTimeRemaining(null);
+        setPaymentStatus("expired");
+      }
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
   }, [payment?.expires_at, shouldRender]);
 
   const resolvePaymentGateway = useCallback(() => {
-    const option = selectedPaymentOption || paymentGatewayOptions[0] || {};
+    const option = selectedPaymentOption || paymentGatewayOptions[0];
+    if (!option) {
+      return null;
+    }
     const baseName = (
       option.name ||
       option.gateway ||
@@ -514,7 +681,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   }, [selectedPaymentOption, paymentGatewayOptions, transaction, payment]);
 
   const confirmTransaction = useCallback(
-    async (options: any = {}) => {
+    async (options: ConfirmTransactionOptions = {}) => {
       if (!transactionIdentifier || !isAuthenticated || isConfirming) {
         return false;
       }
@@ -522,7 +689,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       const gateway = options.gatewayOverride || resolvePaymentGateway();
       if (!gateway) return false;
 
-      const payload: any = {
+      const payload: ConfirmTransactionPayload = {
         payment_gateway: gateway,
         ...(options.body || {}),
       };
@@ -549,7 +716,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           body: JSON.stringify(payload),
         });
 
-        const body = await response.json().catch(() => ({}));
+        const body = (await response.json().catch(() => ({}))) as ApiResponse<{
+          status?: string;
+          transaction?: { status?: string };
+        }>;
 
         if (!response.ok) {
           console.error("[PaymentModal] Failed to confirm transaction", {
@@ -560,12 +730,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           return false;
         }
 
-        const txStatus = (
-          body?.data?.status ||
-          body?.status ||
-          body?.data?.transaction?.status ||
-          ""
-        )
+        const txStatus = (body.data?.status || body.status || body.data?.transaction?.status || "")
           .toString()
           .toLowerCase();
         const successStatuses = ["successful", "completed", "paid", "success", "approved"];
@@ -598,7 +763,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   );
 
   const handlePaymentCompletion = useCallback(
-    (payload: any) => {
+    (payload: unknown) => {
       setPaymentStatus("completed");
       onPaymentComplete?.(payload);
     },
@@ -655,45 +820,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     confirmAttemptsRef.current = 0;
   }, []);
 
-  const scheduleConfirmLoop = useCallback(() => {
-    stopConfirmLoop();
-    confirmAttemptsRef.current = 0;
-
-    const attemptConfirm = async () => {
-      confirmAttemptsRef.current += 1;
-      console.info("[PaymentModal] Scheduled confirm attempt", {
-        attempt: confirmAttemptsRef.current,
-        transactionIdentifier,
-      });
-
-      const confirmed = await confirmTransaction({
-        gatewayOverride: "Paystack",
-        includeSaveCardDetails: true,
-      });
-
-      if (confirmed) {
-        await fetchSavedCards();
-        handlePaymentCompletion({ channel: "card", reference: transactionIdentifier });
-        stopConfirmLoop();
-        return;
-      }
-
-      if (confirmAttemptsRef.current < 6) {
-        confirmTimerRef.current = setTimeout(attemptConfirm, 5000);
-      } else {
-        stopConfirmLoop();
-      }
-    };
-
-    attemptConfirm();
-  }, [
-    confirmTransaction,
-    fetchSavedCards,
-    handlePaymentCompletion,
-    stopConfirmLoop,
-    transactionIdentifier,
-  ]);
-
   // Poll transaction status (manual or interval)
   const pollTransactionStatus = useCallback(async () => {
     const identifier = statusLookupIdentifier;
@@ -706,7 +832,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         headers: authHeaders,
         credentials: "include",
       });
-      const data = await response.json();
+      const data = (await response.json().catch(() => ({}))) as ApiResponse<{
+        status?: string;
+        accounts?: PaymentAccount[];
+      }>;
 
       if (data.success && data.data) {
         if (data.data.status === "successful") {
@@ -737,10 +866,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   // Auto-poll every 10 seconds when modal is open and payment is pending
   useEffect(() => {
-    if (isActive && paymentStatus === "pending" && statusLookupIdentifier && isAuthenticated) {
-      const interval = setInterval(pollTransactionStatus, 10000);
-      return () => clearInterval(interval);
+    if (!isActive || paymentStatus !== "pending" || !statusLookupIdentifier || !isAuthenticated) {
+      return undefined;
     }
+    const interval = setInterval(pollTransactionStatus, 10000);
+    return () => clearInterval(interval);
   }, [isActive, paymentStatus, statusLookupIdentifier, isAuthenticated, pollTransactionStatus]);
 
   useEffect(() => {
@@ -762,7 +892,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const handlePaymentOptionChange = (optionId: string) => {
     const selectedId = String(optionId);
-    const option = paymentGatewayOptions.find((opt: any) => String(opt.id) === selectedId) || null;
+    const option = paymentGatewayOptions.find((opt) => String(opt.id) === selectedId) || null;
     setSelectedPaymentOption(option);
     onPaymentOptionChange?.(option || null);
   };
@@ -780,7 +910,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     paymentGatewayOptions[0] ||
     null;
 
-  const pricingSummary = propPricingSummary || {};
+  const pricingSummary: PricingSummaryData = propPricingSummary ?? {};
 
   const amountDetails = useMemo(() => {
     const resolvedSubtotal = toNumber(
@@ -855,6 +985,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     const total = Number(displayPayableTotal ?? 0);
     return Math.max(0, Math.round(total * 100));
   }, [displayPayableTotal]);
+  const paystackReferenceProps = transactionIdentifier
+    ? { reference: String(transactionIdentifier) }
+    : {};
 
   const handleModalClose = () => {
     onClose?.();
@@ -890,14 +1023,14 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   };
 
   const statusBadgeColor = useMemo(() => {
-    const successBg = designTokens?.colors?.success?.[100] || "#e6f4ea";
-    const successText = designTokens?.colors?.success?.[700] || "#256c3b";
-    const dangerBg = designTokens?.colors?.error?.[100] || "#fdecea";
-    const dangerText = designTokens?.colors?.error?.[700] || "#b91c1c";
-    const warningBg = designTokens?.colors?.warning?.[100] || "#fff7e6";
-    const warningText = designTokens?.colors?.warning?.[700] || "#92400e";
-    const neutralBg = designTokens?.colors?.neutral?.[100] || "#f1f5f9";
-    const neutralText = designTokens?.colors?.neutral?.[700] || "#334155";
+    const successBg = designTokens?.colors?.success?.[100] || "var(--theme-surface-alt)";
+    const successText = designTokens?.colors?.success?.[700] || "rgb(var(--theme-success-700))";
+    const dangerBg = designTokens?.colors?.error?.[100] || "rgb(var(--theme-danger-100))";
+    const dangerText = designTokens?.colors?.error?.[700] || "rgb(var(--theme-danger-700))";
+    const warningBg = designTokens?.colors?.warning?.[100] || "rgb(var(--theme-warning-100))";
+    const warningText = designTokens?.colors?.warning?.[700] || "rgb(var(--theme-warning-700))";
+    const neutralBg = designTokens?.colors?.neutral?.[100] || "var(--theme-surface-alt)";
+    const neutralText = designTokens?.colors?.neutral?.[700] || "var(--theme-heading-color)";
 
     if (paymentStatus === "completed") {
       return { bg: successBg, text: successText, label: "Completed" };
@@ -1221,7 +1354,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                     backgroundColor: designTokens.colors.neutral[0],
                   }}
                 >
-                  {currentSelectableOptions.map((option: any) => (
+                  {currentSelectableOptions.map((option) => (
                     <option key={option.id} value={option.id}>
                       {option.name} ({option.payment_type})
                     </option>
@@ -1347,7 +1480,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             Storage profiles ({storageProfiles.length})
           </h4>
           <div className="max-h-48 space-y-2 overflow-y-auto">
-            {storageProfiles.map((profile: any, index: number) => (
+            {storageProfiles.map((profile, index) => (
               <div
                 key={profile.id || index}
                 className="rounded-lg p-3 text-sm"
@@ -1383,7 +1516,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         </div>
       )}
 
-      {instances?.length > 0 && (
+      {(instances?.length ?? 0) > 0 && (
         <div className="space-y-4">
           <h4
             className="flex items-center font-semibold"
@@ -1393,31 +1526,35 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             Instances ({instances?.length || 0})
           </h4>
           <div className="max-h-48 space-y-2 overflow-y-auto">
-            {instances?.map((instance: any, index: number) => (
-              <div
-                key={instance.id}
-                className="rounded-lg p-3 text-sm"
-                style={{ backgroundColor: designTokens.colors.neutral[50] }}
-              >
-                <div className="mb-1 flex items-center justify-between">
-                  <span className="font-medium" style={{ color: designTokens.colors.neutral[900] }}>
-                    {instance.name || `Instance ${index + 1}`}
-                  </span>
-                  <span
-                    className="rounded px-2 py-1 text-xs"
-                    style={{
-                      backgroundColor: designTokens.colors.primary[100],
-                      color: designTokens.colors.primary[800],
-                    }}
-                  >
-                    {instance.provider} • {instance.region}
-                  </span>
+            {Array.isArray(instances) &&
+              instances.map((instance, index) => (
+                <div
+                  key={instance.id}
+                  className="rounded-lg p-3 text-sm"
+                  style={{ backgroundColor: designTokens.colors.neutral[50] }}
+                >
+                  <div className="mb-1 flex items-center justify-between">
+                    <span
+                      className="font-medium"
+                      style={{ color: designTokens.colors.neutral[900] }}
+                    >
+                      {instance.name || `Instance ${index + 1}`}
+                    </span>
+                    <span
+                      className="rounded px-2 py-1 text-xs"
+                      style={{
+                        backgroundColor: designTokens.colors.primary[100],
+                        color: designTokens.colors.primary[800],
+                      }}
+                    >
+                      {instance.provider} • {instance.region}
+                    </span>
+                  </div>
+                  <div className="text-xs" style={{ color: designTokens.colors.neutral[600] }}>
+                    Status: <span className="font-medium">{instance.status}</span>
+                  </div>
                 </div>
-                <div className="text-xs" style={{ color: designTokens.colors.neutral[600] }}>
-                  Status: <span className="font-medium">{instance.status}</span>
-                </div>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
       )}
@@ -1450,14 +1587,14 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 </p>
               )}
               <PaystackButton
+                {...paystackReferenceProps}
                 email={paystackEmail}
                 amount={paystackAmount}
-                reference={transactionIdentifier || undefined}
                 publicKey={paystackPublicKey}
                 text={paymentStatus === "processing" ? "Processing…" : "Pay with Card"}
-                className="w-full inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-70 bg-[#2563eb] border border-[#2563eb] min-h-[48px]"
+                className="w-full inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-70 bg-[var(--theme-color)] border border-[var(--theme-color)] min-h-[48px]"
                 disabled={!isPaystackReady}
-                onSuccess={async (response: any) => {
+                onSuccess={async (response: Record<string, unknown>) => {
                   console.info("[Paystack][Admin] PaystackButton success", response);
                   setPaymentStatus("processing");
                   const confirmed = await confirmTransaction({
@@ -1535,12 +1672,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 setTimeout(() => {
                   if (isStorageOrder && firstStorageAccountId) {
                     // Navigate to specific storage account
-                    window.location.href = `${appPaths.storage}/${firstStorageAccountId}`;
+                    globalThis.window.location.href = `${appPaths.storage}/${firstStorageAccountId}`;
                   } else if (isStorageOrder) {
                     // Fallback to storage list
-                    window.location.href = appPaths.storage;
+                    globalThis.window.location.href = appPaths.storage;
                   } else {
-                    window.location.href = appPaths.instances;
+                    globalThis.window.location.href = appPaths.instances;
                   }
                 }, 500);
               }}

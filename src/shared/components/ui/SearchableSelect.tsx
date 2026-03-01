@@ -59,10 +59,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
   );
 
   const selectedOption = useMemo(
-    () =>
-      parsedOptions.find(
-        (option) => String(option.value) === String(value)
-      ) || null,
+    () => parsedOptions.find((option) => String(option.value) === String(value)) || null,
     [parsedOptions, value]
   );
 
@@ -128,9 +125,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
         : `1px solid ${
             isOpen ? designTokens.colors.primary[500] : designTokens.colors.neutral[300]
           }`,
-    backgroundColor: disabled
-      ? designTokens.colors.neutral[100]
-      : designTokens.colors.neutral[50],
+    backgroundColor: disabled ? designTokens.colors.neutral[100] : designTokens.colors.neutral[50],
     color: disabled ? designTokens.colors.neutral[400] : designTokens.colors.neutral[800],
     appearance: "none",
     outline: "none",

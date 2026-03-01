@@ -9,16 +9,100 @@ import {
   GLOBAL_TIER_KEY,
 } from "./objectStorageUtils";
 
+type UnknownRecord = Record<string, unknown>;
+type RegionLike = UnknownRecord;
+type TierRow = UnknownRecord & { product?: UnknownRecord };
+
+type PricingBreakdown = {
+  pre_discount_subtotal?: number;
+  subtotal?: number;
+  tax?: number;
+  tax_rate?: number;
+  applied_tax_rate?: number;
+  total?: number;
+  currency?: string;
+  lines?: UnknownRecord[];
+};
+
+type TransactionSummary = {
+  metadata?: { pricing_breakdown?: PricingBreakdown };
+  transaction_fee?: number;
+  third_party_fee?: number;
+  status?: string;
+  identifier?: string | number;
+  reference?: string | number;
+  id?: string | number;
+  payment_gateway_options?: unknown;
+};
+
+type PaymentSummary = {
+  required?: boolean;
+  status?: string;
+  payment_gateway_options?: PaymentOptionLike[];
+  gateway?: string;
+};
+
+type OrderSummaryData = {
+  identifier?: string | number;
+  id?: string | number;
+  items?: UnknownRecord[];
+  pricing_breakdown?: PricingBreakdown;
+};
+
+export type ObjectStorageOrderSummary = UnknownRecord & {
+  transaction?: TransactionSummary;
+  order?: OrderSummaryData;
+  payment?: PaymentSummary;
+  paymentOptions?: unknown;
+  accounts?: UnknownRecord[];
+  account?: UnknownRecord;
+  order_items?: UnknownRecord[];
+  serviceProfiles?: unknown[];
+  object_storage_account_id?: string | number;
+  order_id?: string | number;
+};
+
+export type PaymentOptionLike = {
+  id?: string | number;
+  name?: string;
+  payment_type?: string;
+  transaction_reference?: string;
+  public_key?: string;
+  publicKey?: string;
+  gateway?: string;
+  provider?: string;
+  charge_breakdown?: {
+    total_fees?: number;
+    subtotal?: number;
+    tax?: number;
+  };
+  subtotal?: number;
+  tax?: number;
+  fees?: number;
+  total_fees?: number;
+  total?: number;
+  currency?: string;
+  details?: {
+    account_name?: string;
+    account_number?: string;
+    bank_name?: string;
+  };
+  reference?: string;
+};
+
+const isRecord = (value: unknown): value is UnknownRecord =>
+  typeof value === "object" && value !== null;
+
 // ResolvedProfile extends ServiceProfile with computed fields
 export interface ResolvedProfile extends Omit<ServiceProfile, "months" | "storageGb"> {
   months: number; // Override as number for calculations
   storageGb: number;
   regionKey: string;
-  regionData: any;
+  regionData: RegionLike | null;
   tierOptions: Option[];
   usingFallbackCatalog: boolean;
-  tierRow: any | null;
-  tierData: any | null; // Alias for tierRow
+  tierRow: TierRow | null;
+  tierData: TierRow | null; // Alias for tierRow
   tierQuotaGb: number;
   fallbackUnitPrice: number;
   unitPrice: number;
@@ -65,11 +149,11 @@ export interface UseObjectStoragePricingReturn {
 
 export const useObjectStoragePricing = (
   serviceProfiles: ServiceProfile[],
-  regionMap: Map<string, any>,
-  tierCatalog: Map<string, { options: Option[]; map: Map<string, any> }>,
+  regionMap: Map<string, RegionLike>,
+  tierCatalog: Map<string, { options: Option[]; map: Map<string, TierRow> }>,
   selectedCurrency: string = "USD",
-  lastOrderSummary: any = null,
-  selectedPaymentOption: any = null
+  lastOrderSummary: ObjectStorageOrderSummary | null = null,
+  selectedPaymentOption: PaymentOptionLike | null = null
 ): UseObjectStoragePricingReturn => {
   // Resolve profiles with pricing data
   const resolvedProfiles = useMemo((): ResolvedProfile[] => {
@@ -173,18 +257,23 @@ export const useObjectStoragePricing = (
       null;
     const lines = Array.isArray(raw?.lines) ? raw.lines : [];
     if (!lines.length) return null;
-    return lines.map((line: any, index: number) => {
-      const currency = line.currency || raw?.currency || summaryTotals.currency;
+    return lines.map((line, index) => {
+      const lineRecord = isRecord(line) ? line : {};
+      const currency = lineRecord.currency?.toString() || raw?.currency || summaryTotals.currency;
+      const meta = isRecord(lineRecord.meta) ? lineRecord.meta : {};
+      const metaObjectStorage = isRecord(meta.object_storage) ? meta.object_storage : {};
       const storageGb = Number(
-        line.storage_gb ?? line?.meta?.object_storage?.storage_gb ?? line?.meta?.storage_gb ?? 0
+        lineRecord.storage_gb ?? metaObjectStorage.storage_gb ?? meta.storage_gb ?? 0
       );
+      const monthsValue = Number(lineRecord.months ?? lineRecord.term);
+      const months = Number.isFinite(monthsValue) && monthsValue > 0 ? monthsValue : null;
       return {
-        id: line.slug || line.name || String(index),
-        region: line.region || line.region_code || "",
-        name: line.name || line.label || "Object storage tier",
-        months: line.months || line.term || null,
-        subtotal: Number(line.total_local ?? line.total ?? 0),
-        unitPrice: Number(line.unit_price ?? line.unit_amount ?? line.price ?? 0),
+        id: String(lineRecord.slug || lineRecord.name || index),
+        region: String(lineRecord.region || lineRecord.region_code || ""),
+        name: String(lineRecord.name || lineRecord.label || "Object storage tier"),
+        months,
+        subtotal: Number(lineRecord.total_local ?? lineRecord.total ?? 0),
+        unitPrice: Number(lineRecord.unit_price ?? lineRecord.unit_amount ?? lineRecord.price ?? 0),
         storageGb: storageGb > 0 ? storageGb : null,
         currency,
       };

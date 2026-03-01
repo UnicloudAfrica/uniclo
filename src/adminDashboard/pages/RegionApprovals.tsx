@@ -1,20 +1,46 @@
-// @ts-nocheck
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import type { ChangeEvent } from "react";
 import { Link } from "react-router-dom";
 import { Loader2, Eye, Edit, Plus, CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
 import adminRegionApi from "../../services/adminRegionApi";
 import ToastUtils from "../../utils/toastUtil";
 import { ModernCard } from "../../shared/components/ui";
 import ModernTable from "../../shared/components/ui/ModernTable";
+import type { Column } from "../../shared/components/ui/ModernTable";
 import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
 import { ModernButton } from "../../shared/components/ui";
 import { designTokens } from "../../styles/designTokens";
-import AdminPageShell from "../components/AdminPageShell.tsx";
+import AdminPageShell from "../components/AdminPageShell";
+
+type RegionApprovalStatus = "pending" | "approved" | "rejected" | "suspended";
+
+type RegionApprovalOwner = {
+  name?: string;
+};
+
+type RegionApprovalRow = {
+  id: string | number;
+  name?: string;
+  code?: string;
+  city?: string;
+  country_code?: string;
+  owner_tenant?: RegionApprovalOwner | null;
+  fulfillment_mode?: string;
+  msp_credentials_verified_at?: string | null;
+  approval_status?: RegionApprovalStatus | string;
+  ownership_type?: string;
+  platform_fee_percentage?: number | string;
+};
+
+type RegionApprovalFilters = {
+  ownership_type: string;
+  approval_status: string;
+};
 
 const RegionApprovals = () => {
-  const [regions, setRegions] = useState([]);
+  const [regions, setRegions] = useState<RegionApprovalRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<RegionApprovalFilters>({
     ownership_type: "",
     approval_status: "",
   });
@@ -29,14 +55,14 @@ const RegionApprovals = () => {
     try {
       setLoading(true);
       const response = await adminRegionApi.fetchRegionApprovals(filters);
-      setRegions(response.data || []);
+      setRegions(Array.isArray(response.data) ? (response.data as RegionApprovalRow[]) : []);
     } catch (error) {
       console.error("Error fetching regions:", error);
     } finally {
       setLoading(false);
     }
   };
-  const handleFilterChange = (e: any) => {
+  const handleFilterChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
@@ -64,11 +90,11 @@ const RegionApprovals = () => {
   });
 
   // Define columns for ModernTable
-  const columns = [
+  const columns: Column<RegionApprovalRow>[] = [
     {
       key: "serialNumber",
       header: "S/N",
-      render: (value, row, index) => index + 1,
+      render: (_value, _row, index) => index + 1,
     },
     {
       key: "name",
@@ -87,9 +113,12 @@ const RegionApprovals = () => {
     {
       key: "owner_tenant",
       header: "Owner Tenant",
-      render: (value) => (
-        <span style={{ color: designTokens.colors.neutral[700] }}>{value?.name || "-"}</span>
-      ),
+      render: (value: unknown) => {
+        const owner = value as RegionApprovalOwner | null | undefined;
+        return (
+          <span style={{ color: designTokens.colors.neutral[700] }}>{owner?.name || "-"}</span>
+        );
+      },
     },
     {
       key: "city",
@@ -171,7 +200,8 @@ const RegionApprovals = () => {
             icon: <AlertCircle size={12} />,
           },
         };
-        const config = statusConfig[value] || statusConfig.pending;
+        const statusKey = typeof value === "string" ? value : "pending";
+        const config = statusConfig[statusKey as keyof typeof statusConfig] || statusConfig.pending;
         return (
           <span
             className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium capitalize"
@@ -186,7 +216,9 @@ const RegionApprovals = () => {
     {
       key: "platform_fee_percentage",
       header: "Fee %",
-      render: (value) => <span style={{ color: designTokens.colors.neutral[700] }}>{value}%</span>,
+      render: (value) => (
+        <span style={{ color: designTokens.colors.neutral[700] }}>{String(value)}%</span>
+      ),
     },
   ];
 
@@ -195,16 +227,17 @@ const RegionApprovals = () => {
     {
       icon: <Eye size={16} />,
       label: "",
-      onClick: (item) => (window.location.href = `/admin-dashboard/region-approvals/${item.id}`),
+      onClick: (item: RegionApprovalRow) =>
+        (globalThis.window.location.href = `/admin-dashboard/region-approvals/${item.id}`),
     },
     {
       icon: <Edit size={16} />,
       label: "",
-      onClick: (item) => {
+      onClick: (item: RegionApprovalRow) => {
         if (item.approval_status === "pending") {
-          window.location.href = `/admin-dashboard/region-approvals/${item.id}/edit?action=approve`;
+          globalThis.window.location.href = `/admin-dashboard/region-approvals/${item.id}/edit?action=approve`;
         } else {
-          window.location.href = `/admin-dashboard/region-approvals/${item.id}/edit?action=update_fee`;
+          globalThis.window.location.href = `/admin-dashboard/region-approvals/${item.id}/edit?action=update_fee`;
         }
       },
     },
@@ -280,8 +313,8 @@ const RegionApprovals = () => {
             exportable
             sortable
             loading={loading}
-            onRowClick={(region) =>
-              (window.location.href = `/admin-dashboard/region-approvals/${region.id}`)
+            onRowClick={(region: RegionApprovalRow) =>
+              (globalThis.window.location.href = `/admin-dashboard/region-approvals/${region.id}`)
             }
             emptyMessage="No region requests found"
           />

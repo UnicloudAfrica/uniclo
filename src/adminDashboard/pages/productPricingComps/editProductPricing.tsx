@@ -1,12 +1,11 @@
-// @ts-nocheck
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useUpdateProductPricing } from "../../../hooks/adminHooks/adminproductPricingHook";
 
 const EditProductPricingModal = ({ isOpen, onClose, pricing }: any) => {
   const [priceUsd, setPriceUsd] = useState("");
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, any>>({});
   const { mutate: updatePricing, isPending } = useUpdateProductPricing();
 
   useEffect(() => {
@@ -25,7 +24,7 @@ const EditProductPricingModal = ({ isOpen, onClose, pricing }: any) => {
   }
 
   const validate = () => {
-    const nextErrors = {};
+    const nextErrors: Record<string, any> = {};
     const numericPrice = Number(priceUsd);
     if (!priceUsd || Number.isNaN(numericPrice)) {
       nextErrors.price_usd = "Enter a valid price.";
@@ -66,12 +65,14 @@ const EditProductPricingModal = ({ isOpen, onClose, pricing }: any) => {
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 px-4 font-Outfit">
       <div className="w-full max-w-[520px] rounded-[24px] bg-white shadow-xl">
-        <div className="flex items-center justify-between rounded-t-[24px] border-b bg-[#F2F2F2] px-6 py-4">
-          <h2 className="text-lg font-semibold text-[#575758]">Edit Pricing Entry</h2>
+        <div className="flex items-center justify-between rounded-t-[24px] border-b bg-[var(--theme-surface-alt)] px-6 py-4">
+          <h2 className="text-lg font-semibold text-[var(--theme-text-color)]">
+            Edit Pricing Entry
+          </h2>
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 transition hover:text-[#1E1E1EB2]"
+            className="text-gray-400 transition hover:text-[rgb(var(--theme-neutral-900) / 0.7)]"
             aria-label="Close"
             disabled={isPending}
           >
@@ -130,7 +131,7 @@ const EditProductPricingModal = ({ isOpen, onClose, pricing }: any) => {
             </button>
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-full bg-[#288DD1] px-6 py-2 text-sm font-semibold text-white transition hover:bg-[#1f7ab6] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-full bg-[var(--theme-color)] px-6 py-2 text-sm font-semibold text-white transition hover:bg-[rgb(var(--theme-color-500))] disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isPending}
             >
               Save changes

@@ -1,5 +1,3 @@
-// @ts-nocheck
-import React from "react";
 import { X, Loader2 } from "lucide-react";
 import { useDeleteProduct } from "../../../hooks/adminHooks/adminProductHooks";
 
@@ -25,10 +23,10 @@ const DeleteProduct = ({ isOpen, onClose, productId, productName, refetch }: any
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[600px] mx-4 w-full p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-[#575758]">Delete Product</h2>
+          <h2 className="text-lg font-semibold text-[var(--theme-text-color)]">Delete Product</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-[#1E1E1EB2]"
+            className="text-gray-400 hover:text-[rgb(var(--theme-neutral-900) / 0.7)]"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -41,7 +39,7 @@ const DeleteProduct = ({ isOpen, onClose, productId, productName, refetch }: any
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2 bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] text-gray-700"
+            className="px-6 py-2 bg-[var(--theme-surface-alt)] border border-[var(--theme-surface-alt)] rounded-[30px] text-gray-700"
             disabled={isPending}
           >
             Cancel

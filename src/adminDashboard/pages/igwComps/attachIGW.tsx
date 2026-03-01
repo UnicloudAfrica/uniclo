@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useMemo, useState } from "react";
 import { Loader2, X } from "lucide-react";
 import {
@@ -8,7 +7,15 @@ import {
 import { useFetchTenantVpcs } from "../../../hooks/vpcHooks";
 import ToastUtils from "../../../utils/toastUtil";
 
-const AttachIgwModal = ({ isOpen, onClose, projectId, region = "", igw, mode = "attach" }) => {
+interface VpcOption {
+  id?: string | number;
+  uuid?: string;
+  name?: string;
+  region?: string;
+  provider_resource_id?: string;
+}
+
+const AttachIgwModal = ({ isOpen, onClose, projectId, region = "", igw, mode = "attach" }: any) => {
   const [selectedVpc, setSelectedVpc] = useState("");
   const isAttach = mode === "attach";
   const actionLabel = isAttach ? "Attach" : "Detach";
@@ -17,9 +24,12 @@ const AttachIgwModal = ({ isOpen, onClose, projectId, region = "", igw, mode = "
   const { data: vpcRaw, isFetching } = useFetchTenantVpcs(projectId, region, {
     enabled: isOpen && !!projectId && !!region,
   });
-  const vpcs = useMemo(() => {
-    if (Array.isArray(vpcRaw?.data)) return vpcRaw.data;
-    if (Array.isArray(vpcRaw)) return vpcRaw;
+  const vpcs = useMemo<VpcOption[]>(() => {
+    if (vpcRaw && typeof vpcRaw === "object" && "data" in vpcRaw) {
+      const payload = vpcRaw as { data?: unknown };
+      if (Array.isArray(payload.data)) return payload.data as VpcOption[];
+    }
+    if (Array.isArray(vpcRaw)) return vpcRaw as VpcOption[];
     return [];
   }, [vpcRaw]);
 
@@ -55,9 +65,9 @@ const AttachIgwModal = ({ isOpen, onClose, projectId, region = "", igw, mode = "
         onClose();
         setSelectedVpc("");
       },
-      onError: (err) => {
+      onError: (err: unknown) => {
         console.error(`Failed to ${mode} IGW:`, err);
-        ToastUtils.error(err?.message || `Failed to ${mode} IGW.`);
+        ToastUtils.error(err instanceof Error ? err.message : `Failed to ${mode} IGW.`);
       },
     });
   };
@@ -67,14 +77,16 @@ const AttachIgwModal = ({ isOpen, onClose, projectId, region = "", igw, mode = "
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[520px] w-full mx-4">
-        <div className="flex items-center justify-between px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
-          <h2 className="text-lg font-semibold text-[#575758]">{actionLabel} Internet Gateway</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b bg-[var(--theme-surface-alt)] rounded-t-[24px]">
+          <h2 className="text-lg font-semibold text-[var(--theme-text-color)]">
+            {actionLabel} Internet Gateway
+          </h2>
           <button
             onClick={() => {
               setSelectedVpc("");
               onClose();
             }}
-            className="text-gray-400 hover:text-[#1E1E1EB2] transition-colors"
+            className="text-gray-400 hover:text-[rgb(var(--theme-neutral-900) / 0.7)] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -100,7 +112,7 @@ const AttachIgwModal = ({ isOpen, onClose, projectId, region = "", igw, mode = "
                 disabled={isFetching}
               >
                 <option value="">{isFetching ? "Loading VPCs..." : "Select VPC"}</option>
-                {vpcs.map((vpc: any) => {
+                {vpcs.map((vpc) => {
                   const value = String(vpc.provider_resource_id || vpc.id || vpc.uuid || "");
                   return (
                     <option key={value} value={value}>
@@ -126,7 +138,7 @@ const AttachIgwModal = ({ isOpen, onClose, projectId, region = "", igw, mode = "
               setSelectedVpc("");
               onClose();
             }}
-            className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
+            className="px-6 py-2 text-[var(--theme-text-color)] bg-[var(--theme-surface-alt)] border border-[var(--theme-surface-alt)] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
             type="button"
             disabled={busy}
           >
@@ -135,7 +147,7 @@ const AttachIgwModal = ({ isOpen, onClose, projectId, region = "", igw, mode = "
           <button
             onClick={handleSubmit}
             disabled={busy || (isAttach && !selectedVpc)}
-            className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            className="px-8 py-3 bg-[var(--theme-color)] text-white font-medium rounded-[30px] hover:bg-[var(--theme-color)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
             {busy ? (
               <>

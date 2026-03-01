@@ -1,20 +1,58 @@
-// @ts-nocheck
 import { useState, useEffect } from "react";
+import type { FormEvent } from "react";
 import { Loader2, X } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useFetchVpcs, useFetchAvailableCidrs } from "../../../hooks/adminHooks/vcpHooks";
 import { useCreateSubnet, useFetchSubnets } from "../../../hooks/adminHooks/subnetHooks";
 
-const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: any) => {
+type AddSubnetProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  projectId?: string;
+  region?: string;
+};
+
+type SubnetFormData = {
+  name: string;
+  cidr_block: string;
+  vpc_id: string;
+  region: string;
+  description: string;
+};
+
+type VpcOption = {
+  id: string | number;
+  name?: string;
+  cidr_block?: string;
+};
+
+type ExistingSubnet = {
+  vpc_id?: string | number;
+  network_id?: string | number;
+  vpc?: {
+    id?: string | number;
+  };
+  cidr?: string;
+  cidr_block?: string;
+};
+
+type CidrRange = {
+  start: number;
+  end: number;
+  prefix: number;
+  base: number;
+};
+
+const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: AddSubnetProps) => {
   // Form state first so hooks can safely reference it
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<SubnetFormData>({
     name: "",
     cidr_block: "",
     vpc_id: "",
     region: defaultRegion || "",
     description: "",
   });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, any>>({});
 
   const { data: vpcs, isFetching: isFetchingVpcs } = useFetchVpcs(projectId, formData.region, {
     enabled: !!projectId && !!formData.region,
@@ -25,7 +63,7 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: a
     formData.region,
     { enabled: !!projectId && !!formData.region }
   );
-  const [suggestions, setSuggestions] = useState([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [suggestPrefix, setSuggestPrefix] = useState(24);
   const { data: availableCidrs, isFetching: isFetchingAvailableCidrs } = useFetchAvailableCidrs(
     projectId,
@@ -35,9 +73,12 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: a
     8,
     { enabled: !!projectId && !!formData.region && !!formData.vpc_id }
   );
+  const vpcList = Array.isArray(vpcs) ? (vpcs as VpcOption[]) : [];
+  const subnetList = Array.isArray(existingSubnets) ? (existingSubnets as ExistingSubnet[]) : [];
+  const providerSuggestions = Array.isArray(availableCidrs) ? (availableCidrs as string[]) : [];
 
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors: Record<string, any> = {};
     if (!formData.name.trim()) newErrors.name = "Subnet name is required";
     if (!formData.vpc_id) newErrors.vpc_id = "VPC is required";
     if (!formData.region) newErrors.region = "Region is required";
@@ -52,16 +93,17 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: a
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field: any, value: any) => {
+  const updateFormData = <K extends keyof SubnetFormData>(field: K, value: SubnetFormData[K]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
   // --- IPv4 helpers & suggestions ---
-  const ipToInt = (ip: any) =>
-    ip.split(".").reduce((acc, o) => (acc << 8) + (parseInt(o, 10) & 255), 0) >>> 0;
-  const intToIp = (n: any) => [24, 16, 8, 0].map((s: any) => (n >>> s) & 255).join(".");
-  const parseCidr = (cidr: any) => {
+  const ipToInt = (ip: string): number =>
+    ip.split(".").reduce((acc: number, o: string) => (acc << 8) + (parseInt(o, 10) & 255), 0) >>> 0;
+  const intToIp = (n: number): string =>
+    [24, 16, 8, 0].map((s: number) => (n >>> s) & 255).join(".");
+  const parseCidr = (cidr: string): CidrRange => {
     const [ip, prefix] = cidr.split("/");
     const p = parseInt(prefix, 10);
     const base = ipToInt(ip) & (p === 0 ? 0 : (~0 << (32 - p)) >>> 0);
@@ -69,24 +111,25 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: a
     const end = (base + Math.pow(2, 32 - p) - 1) >>> 0;
     return { start, end, prefix: p, base };
   };
-  const overlaps = (aStart, aEnd, bStart, bEnd) => !(aEnd < bStart || bEnd < aStart);
+  const overlaps = (aStart: number, aEnd: number, bStart: number, bEnd: number) =>
+    !(aEnd < bStart || bEnd < aStart);
 
   const computeSuggestions = () => {
     setSuggestions([]);
     try {
-      const selectedVpc = vpcs?.find((v) => String(v.id) === String(formData.vpc_id));
+      const selectedVpc = vpcList.find((v) => String(v.id) === String(formData.vpc_id));
       if (!selectedVpc?.cidr_block) return;
       const v = parseCidr(selectedVpc.cidr_block);
-      const used = (existingSubnets || [])
-        .filter(
-          (s: any) => String(s.vpc_id || s.network_id || s.vpc?.id) === String(formData.vpc_id)
-        )
-        .map((s: any) => parseCidr(s.cidr || s.cidr_block))
+      const used = subnetList
+        .filter((s) => String(s.vpc_id || s.network_id || s.vpc?.id) === String(formData.vpc_id))
+        .map((s) => s.cidr || s.cidr_block)
+        .filter((cidr): cidr is string => typeof cidr === "string" && cidr.includes("/"))
+        .map((cidr) => parseCidr(cidr))
         .sort((a, b) => a.start - b.start);
       const blockSize = Math.pow(2, 32 - suggestPrefix);
       if (suggestPrefix < v.prefix) return; // cannot suggest blocks larger than VPC
       const alignedStart = (v.start + ((blockSize - (v.start % blockSize)) % blockSize)) >>> 0;
-      let out = [];
+      const out: string[] = [];
       for (let cur = alignedStart; cur + blockSize - 1 <= v.end; cur += blockSize) {
         const curEnd = (cur + blockSize - 1) >>> 0;
         const hasOverlap = used.some((r) => overlaps(cur, curEnd, r.start, r.end));
@@ -95,8 +138,7 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: a
           if (out.length >= 8) break;
         }
       }
-      const back = Array.isArray(availableCidrs) ? availableCidrs : [];
-      const merged = [...out, ...back.filter((s: any) => !out.includes(s))];
+      const merged = [...out, ...providerSuggestions.filter((r) => !out.includes(r))];
       setSuggestions(merged);
     } catch (e) {
       // noop
@@ -114,8 +156,9 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: a
     formData.region,
     suggestPrefix,
     isFetchingSubnets,
-    existingSubnets,
-    availableCidrs,
+    subnetList,
+    providerSuggestions,
+    vpcList,
   ]);
 
   // If a default region was provided, ensure it's set on first open
@@ -125,7 +168,7 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: a
     }
   }, [defaultRegion]);
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e?: FormEvent<HTMLFormElement>) => {
     if (e) e.preventDefault();
     if (!validateForm()) return;
 
@@ -143,7 +186,7 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: a
         // ToastUtils.success("Subnet created successfully!");
         onClose();
       },
-      onError: (error) => {
+      onError: (error: unknown) => {
         console.error("Failed to create subnet:", error);
         // ToastUtils.error(
         //   error.response?.data?.message || "Failed to create subnet."
@@ -157,11 +200,11 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: a
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full">
-        <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
-          <h2 className="text-lg font-semibold text-[#575758]">Add New Subnet</h2>
+        <div className="flex justify-between items-center px-6 py-4 border-b bg-[var(--theme-surface-alt)] rounded-t-[24px]">
+          <h2 className="text-lg font-semibold text-[var(--theme-text-color)]">Add New Subnet</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-[#1E1E1EB2] transition-colors"
+            className="text-gray-400 hover:text-[rgb(var(--theme-neutral-900) / 0.7)] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -207,7 +250,7 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: a
                     onChange={(e) => setSuggestPrefix(parseInt(e.target.value, 10))}
                     className="border rounded px-2 py-1"
                   >
-                    {[20, 21, 22, 23, 24, 25, 26, 27, 28].map((p: any) => (
+                    {[20, 21, 22, 23, 24, 25, 26, 27, 28].map((p: number) => (
                       <option key={p} value={p}>
                         /{p}
                       </option>
@@ -216,7 +259,7 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: a
                   <button
                     type="button"
                     onClick={computeSuggestions}
-                    className="text-[#288DD1] hover:text-[#1976D2]"
+                    className="text-[var(--theme-color)] hover:text-[var(--theme-color)]"
                     title="Compute suggestions"
                   >
                     Suggest
@@ -231,12 +274,12 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: a
               )}
               {suggestions.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                  {suggestions.map((s: any) => (
+                  {suggestions.map((s: string) => (
                     <button
                       key={s}
                       type="button"
                       onClick={() => updateFormData("cidr_block", s)}
-                      className="px-2 py-1 rounded-full border border-[#288DD1] text-[#288DD1] hover:bg-primary-50"
+                      className="px-2 py-1 rounded-full border border-[var(--theme-color)] text-[var(--theme-color)] hover:bg-primary-50"
                       title="Use this CIDR"
                     >
                       {s}
@@ -260,8 +303,8 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: a
                 disabled={isFetchingVpcs}
               >
                 <option value="">{isFetchingVpcs ? "Loading VPCs..." : "Select a VPC"}</option>
-                {vpcs?.map((vpc: any) => (
-                  <option key={vpc.id} value={vpc.id}>
+                {vpcList.map((vpc) => (
+                  <option key={vpc.id} value={String(vpc.id)}>
                     {vpc.name} ({vpc.cidr_block})
                   </option>
                 ))}
@@ -279,7 +322,7 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: a
                 id="description"
                 value={formData.description}
                 onChange={(e) => updateFormData("description", e.target.value)}
-                rows="3"
+                rows={3}
                 className="w-full rounded-[10px] border px-3 py-2 text-sm input-field border-gray-300"
               ></textarea>
             </div>
@@ -289,14 +332,14 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: a
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
+              className="px-6 py-2 text-[var(--theme-text-color)] bg-[var(--theme-surface-alt)] border border-[var(--theme-surface-alt)] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
             >
               Cancel
             </button>
             <button
-              onClick={handleSubmit}
+              onClick={() => handleSubmit()}
               disabled={isCreating || isFetchingVpcs}
-              className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="px-8 py-3 bg-[var(--theme-color)] text-white font-medium rounded-[30px] hover:bg-[var(--theme-color)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Create Subnet
               {isCreating && <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />}

@@ -1,5 +1,3 @@
-// @ts-nocheck
-import React from "react";
 /**
  * @typedef {Object} PricingMenuItem
  * @property {string} id
@@ -19,7 +17,7 @@ import React from "react";
 /**
  * @param {PricingSideMenuProps} props
  */
-const PricingSideMenu = ({ activeTab, onTabChange, items = [], className = "" }) => {
+const PricingSideMenu = ({ activeTab, onTabChange, items = [], className = "" }: any) => {
   const menuItems =
     Array.isArray(items) && items.length
       ? items

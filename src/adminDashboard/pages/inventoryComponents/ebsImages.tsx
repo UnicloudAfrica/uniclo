@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Database, Gauge, Activity, Pencil, Trash2, Plus } from "lucide-react";
 import { useFetchEbsVolumes } from "../../../hooks/adminHooks/ebsHooks";
 import ResourceDataExplorer from "../../components/ResourceDataExplorer";
@@ -23,7 +22,7 @@ const EBSVolumes = ({ selectedRegion, onMetricsChange }: any) => {
   const [isAddEBSModalOpen, setIsAddEBSModalOpen] = useState(false);
   const [isEditEBSModalOpen, setIsEditEBSModalOpen] = useState(false);
   const [isDeleteEBSModalOpen, setIsDeleteEBSModalOpen] = useState(false);
-  const [selectedEBSVolume, setSelectedEBSVolume] = useState(null);
+  const [selectedEBSVolume, setSelectedEBSVolume] = useState<any>(null);
 
   useEffect(() => {
     setPage(1);

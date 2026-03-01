@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from "react";
 import { Eye, Trash2, RefreshCw } from "lucide-react";
 import {
@@ -15,10 +14,11 @@ import { ResourceSection } from "../../../shared/components/ui";
 import { ResourceEmptyState } from "../../../shared/components/ui";
 import { ResourceListCard } from "../../../shared/components/ui";
 import { ModernButton } from "../../../shared/components/ui";
+import type { Tone } from "../../../shared/components/ui/ResourceSection";
 
 const ITEMS_PER_PAGE = 6;
 
-const getToneForStatus = (status = "") => {
+const getToneForStatus = (status = ""): Tone => {
   const normalized = status.toString().toLowerCase();
   if (["available", "active"].includes(normalized)) return "success";
   if (["pending", "associating", "provisioning"].includes(normalized)) return "warning";
@@ -32,15 +32,16 @@ const Subnets = ({ projectId = "", region = "" }: any) => {
 
   const [isCreateModalOpen, setCreateModal] = useState(false);
   const queryClient = useQueryClient();
-  const [deleteModal, setDeleteModal] = useState(null);
-  const [viewModal, setViewModal] = useState(null);
+  const [deleteModal, setDeleteModal] = useState<any>(null);
+  const [viewModal, setViewModal] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const totalItems = subnets?.length || 0;
+  const subnetList = Array.isArray(subnets) ? subnets : [];
+  const totalItems = subnetList.length;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const currentSubnets = subnets?.slice(startIndex, startIndex + ITEMS_PER_PAGE) || [];
+  const currentSubnets = subnetList.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const handleDelete = () => {
     if (!deleteModal) return;
@@ -53,7 +54,7 @@ const Subnets = ({ projectId = "", region = "" }: any) => {
           setDeleteModal(null);
         },
         onError: (err) => {
-          ToastUtils.error(err?.message || "Failed to delete subnet");
+          ToastUtils.error(err instanceof Error ? err.message : "Failed to delete subnet");
           setDeleteModal(null);
         },
       }
@@ -73,7 +74,7 @@ const Subnets = ({ projectId = "", region = "" }: any) => {
       ToastUtils.success("Subnets synced successfully!");
     } catch (error) {
       console.error("Failed to sync Subnets:", error);
-      ToastUtils.error(error?.message || "Failed to sync subnets.");
+      ToastUtils.error(error instanceof Error ? error.message : "Failed to sync subnets.");
     } finally {
       setIsSyncing(false);
     }
@@ -125,7 +126,7 @@ const Subnets = ({ projectId = "", region = "" }: any) => {
                 <ResourceListCard
                   key={subnet.id}
                   title={displayName}
-                  subtitle={subnet.id}
+                  subtitle={subnet.id != null ? String(subnet.id) : "—"}
                   metadata={[
                     { label: "CIDR", value: cidr },
                     { label: "VPC", value: vpcDisplay },
@@ -148,7 +149,9 @@ const Subnets = ({ projectId = "", region = "" }: any) => {
                       label: "Default Subnet",
                       value: isDefault ? "Yes" : "No",
                     },
-                  ].filter(Boolean)}
+                  ].filter((item): item is { label: string; value: string | number } =>
+                    Boolean(item)
+                  )}
                   statuses={[{ label: status, tone: getToneForStatus(status) }]}
                   actions={[
                     {

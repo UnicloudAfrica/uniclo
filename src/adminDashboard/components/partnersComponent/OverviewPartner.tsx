@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { CalendarClock, SquarePen, Trash2 } from "lucide-react";
 import EditPartnerModal from "../../pages/tenantComps/EditTenant";
 import DeletePartnerModal from "../../pages/tenantComps/DeleteTenant";
@@ -11,11 +10,18 @@ import SetupProgressCard from "../../../shared/components/projects/details/Setup
 interface OverviewPartnerProps {
   partnerDetails: any;
   tenantId?: string;
+  openEditOnLoad?: boolean;
 }
 
-const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails }) => {
+const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails, openEditOnLoad }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (openEditOnLoad) {
+      setIsEditModalOpen(true);
+    }
+  }, [openEditOnLoad]);
 
   const formatDate = (value: string) => {
     if (!value) return "—";
@@ -173,7 +179,7 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails }) => 
           </div>
         )}
 
-        <div className="rounded-3xl border border-[#EAECF0] bg-gradient-to-br from-white via-[#F4F7FB] to-white p-6 shadow-sm">
+        <div className="rounded-3xl border border-[var(--theme-surface-alt)] bg-gradient-to-br from-white via-[var(--theme-surface-alt)] to-white p-6 shadow-sm">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -227,7 +233,7 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails }) => 
 
         <div className="grid gap-6 xl:grid-cols-[320px,1fr]">
           <div className="space-y-6">
-            <div className="rounded-3xl border border-[#EAECF0] bg-white p-5 shadow-sm">
+            <div className="rounded-3xl border border-[var(--theme-surface-alt)] bg-white p-5 shadow-sm">
               <h3 className="text-sm font-semibold text-slate-900">Key Contacts</h3>
               <ul className="mt-4 space-y-3">
                 {contactItems.map(({ iconKey, tone, label, value, type }: any) => (
@@ -245,7 +251,7 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails }) => 
                       {type === "mailto" && value && value !== "Not provided" ? (
                         <a
                           href={`mailto:${value}`}
-                          className="text-sm font-semibold text-[#288DD1] hover:underline"
+                          className="text-sm font-semibold text-[var(--theme-color)] hover:underline"
                         >
                           {value}
                         </a>
@@ -254,7 +260,7 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails }) => 
                           href={value.startsWith("http") ? value : `https://${value}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm font-semibold text-[#288DD1] hover:underline"
+                          className="text-sm font-semibold text-[var(--theme-color)] hover:underline"
                         >
                           {value}
                         </a>
@@ -267,14 +273,14 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails }) => 
               </ul>
             </div>
 
-            <div className="rounded-3xl border border-dashed border-[#D8DFE8] bg-white p-5 shadow-sm">
+            <div className="rounded-3xl border border-dashed border-[rgb(var(--theme-neutral-300))] bg-white p-5 shadow-sm">
               <h3 className="text-sm font-semibold text-slate-900">Compliance Library</h3>
               {documents.length > 0 ? (
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   {documents.map((doc, index) => (
                     <div
                       key={`${doc.title}-${index}`}
-                      className="rounded-2xl border border-[#EAECF0] bg-[#F8FAFC] p-4 text-center"
+                      className="rounded-2xl border border-[var(--theme-surface-alt)] bg-[var(--theme-surface-alt)] p-4 text-center"
                     >
                       <img
                         src={doc.path}
@@ -300,7 +306,7 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails }) => 
           </div>
 
           <div className="space-y-6">
-            <div className="rounded-3xl border border-[#EAECF0] bg-white p-5 shadow-sm">
+            <div className="rounded-3xl border border-[var(--theme-surface-alt)] bg-white p-5 shadow-sm">
               <div className="flex items-center gap-2">
                 <IconBadge iconKey="business.companyType" tone="primary" size="sm" />
                 <h3 className="text-sm font-semibold text-slate-900">Business Profile</h3>
@@ -309,7 +315,7 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails }) => 
                 {businessItems.map(({ iconKey, tone, label, value, type }: any) => (
                   <div
                     key={label}
-                    className="flex items-start gap-3 rounded-2xl border border-[#EEF2F6] bg-[#F9FAFB] p-3"
+                    className="flex items-start gap-3 rounded-2xl border border-[var(--theme-surface-alt)] bg-[var(--theme-surface-alt)] p-3"
                   >
                     <IconBadge iconKey={iconKey as any} tone={tone as any} />
                     <div>
@@ -321,7 +327,7 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails }) => 
                           href={value.startsWith("http") ? value : `https://${value}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm font-semibold text-[#288DD1] hover:underline"
+                          className="text-sm font-semibold text-[var(--theme-color)] hover:underline"
                         >
                           {value}
                         </a>
@@ -334,14 +340,17 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails }) => 
               </dl>
             </div>
 
-            <div className="rounded-3xl border border-[#EAECF0] bg-white p-5 shadow-sm">
+            <div className="rounded-3xl border border-[var(--theme-surface-alt)] bg-white p-5 shadow-sm">
               <div className="flex items-center gap-2">
                 <IconBadge icon={CalendarClock as any} tone="indigo" size="sm" />
                 <h3 className="text-sm font-semibold text-slate-900">Compliance & Lifecycle</h3>
               </div>
               <dl className="mt-4 grid gap-3 sm:grid-cols-2">
                 {complianceItems.map(({ label, value }: any) => (
-                  <div key={label} className="rounded-2xl border border-[#EEF2F6] bg-[#F9FAFB] p-3">
+                  <div
+                    key={label}
+                    className="rounded-2xl border border-[var(--theme-surface-alt)] bg-[var(--theme-surface-alt)] p-3"
+                  >
                     <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                       {label}
                     </dt>
@@ -369,7 +378,7 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails }) => 
 };
 
 const InfoStat = ({ label, value }: { label: string; value: any }) => (
-  <div className="rounded-2xl border border-[#EEF2F6] bg-white p-4 shadow-sm">
+  <div className="rounded-2xl border border-[var(--theme-surface-alt)] bg-white p-4 shadow-sm">
     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
     <p className="mt-1 text-sm font-semibold text-slate-900">{value}</p>
   </div>

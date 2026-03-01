@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle, ArrowUpRight, ClipboardList, Loader2, RefreshCw } from "lucide-react";
@@ -238,8 +237,8 @@ const OnboardingStatusBoard: React.FC<OnboardingStatusBoardProps> = ({
           <span>{error}</span>
         </div>
       ) : isLoading ? (
-        <div className="flex h-48 flex-col items-center justify-center gap-3 rounded-3xl border border-[#EAECF0] bg-white">
-          <Loader2 className="h-6 w-6 animate-spin text-[#288DD1]" />
+        <div className="flex h-48 flex-col items-center justify-center gap-3 rounded-3xl border border-[var(--theme-surface-alt)] bg-white">
+          <Loader2 className="h-6 w-6 animate-spin text-[var(--theme-color)]" />
           <p className="text-sm text-slate-600">Pulling the latest onboarding submissions…</p>
         </div>
       ) : (
@@ -251,12 +250,12 @@ const OnboardingStatusBoard: React.FC<OnboardingStatusBoardProps> = ({
               reviewed_at: null,
             };
             const statusLabel = STATUS_LABELS[snapshot.status] ?? snapshot.status ?? "Unknown";
-            const statusTone = STATUS_TONES[snapshot.status] ?? STATUS_TONES.not_started;
+            const statusTone = STATUS_TONES[snapshot.status] ?? STATUS_TONES["not_started"];
 
             return (
               <div
                 key={step.id}
-                className="rounded-3xl border border-[#EAECF0] bg-gradient-to-br from-white via-[#F8FAFC] to-white p-5 shadow-sm transition hover:border-primary/40"
+                className="rounded-3xl border border-[var(--theme-surface-alt)] bg-gradient-to-br from-white via-[var(--theme-surface-alt)] to-white p-5 shadow-sm transition hover:border-primary/40"
               >
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   <div>
@@ -343,7 +342,9 @@ const OnboardingSummaryCard = ({
     } as any);
 
   return (
-    <div className={`rounded-3xl border border-[#EAECF0] ${palette.bg} p-4 shadow-sm`}>
+    <div
+      className={`rounded-3xl border border-[var(--theme-surface-alt)] ${palette.bg} p-4 shadow-sm`}
+    >
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
       <p className={`mt-2 text-2xl font-semibold ${palette.text}`}>{value}</p>
     </div>

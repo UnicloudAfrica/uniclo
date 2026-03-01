@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Eye, MapPin, Plus, RefreshCw, Trash2 } from "lucide-react";
@@ -108,7 +107,7 @@ const VPCs: React.FC<VpcsProps> = ({ projectId = "", region = "" }) => {
         value: defaults,
         tone: defaults ? "info" : "neutral",
       },
-    ] as any[];
+    ] as unknown;
 
     if (region) {
       baseStats.push({

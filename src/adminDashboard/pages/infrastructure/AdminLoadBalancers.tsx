@@ -1,6 +1,6 @@
 import React from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { Zap, Plus, Trash2, RefreshCw, Layers, Shield, Globe } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { Zap, Trash2, RefreshCw, Layers, Shield, Globe } from "lucide-react";
 import AdminPageShell from "../../components/AdminPageShell";
 import ModernCard from "../../../shared/components/ui/ModernCard";
 import ModernButton from "../../../shared/components/ui/ModernButton";
@@ -12,14 +12,12 @@ import {
 const AdminLoadBalancers: React.FC = () => {
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get("project") || "";
-  const navigate = useNavigate();
-
   const { data: loadBalancers = [], isLoading, refetch } = useLoadBalancers(projectId);
   const deleteMutation = useDeleteLoadBalancer();
 
   const handleDelete = async (lbId: string) => {
     if (
-      window.confirm(
+      globalThis.window.confirm(
         "Are you sure you want to delete this Load Balancer? This action cannot be undone."
       )
     ) {

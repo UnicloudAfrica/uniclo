@@ -1,4 +1,49 @@
-import { Configuration, Option } from "../types/InstanceConfiguration";
+import { AdditionalVolume, Configuration } from "../types/InstanceConfiguration";
+
+type UnknownRecord = Record<string, unknown>;
+
+type ProductableLike = {
+  id?: unknown;
+  identifier?: unknown;
+  name?: unknown;
+};
+
+type EntityLike = UnknownRecord & {
+  id?: unknown;
+  identifier?: unknown;
+  name?: unknown;
+  label?: unknown;
+  code?: unknown;
+  slug?: unknown;
+  productable_id?: unknown;
+  productable?: ProductableLike;
+  memory_mb?: unknown;
+  memory_gb?: unknown;
+  vcpus?: unknown;
+};
+
+const isRecord = (value: unknown): value is UnknownRecord =>
+  typeof value === "object" && value !== null;
+
+const asRecord = (value: unknown): UnknownRecord => (isRecord(value) ? value : {});
+
+const toStringValue = (value: unknown): string =>
+  value === null || value === undefined ? "" : String(value);
+
+const toNumberValue = (value: unknown): number => {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : 0;
+};
+
+const toNumberOrString = (value: unknown): number | string => {
+  if (typeof value === "number" || typeof value === "string") {
+    return value;
+  }
+  if (value === null || value === undefined) {
+    return "";
+  }
+  return String(value);
+};
 
 export {
   COUNTRY_FALLBACK,
@@ -10,7 +55,7 @@ export {
 /**
  * Checks if a value is not null/undefined/empty
  */
-export const hasValue = (value: any) =>
+export const hasValue = (value: unknown) =>
   value !== null && value !== undefined && String(value).trim() !== "";
 
 /**
@@ -40,23 +85,25 @@ export const evaluateConfigurationCompleteness = (cfg: Configuration) => {
 /**
  * Normalizes payment options from various formats
  */
-export const normalizePaymentOptions = (options: any): any[] => {
+export const normalizePaymentOptions = (options: unknown): unknown[] => {
   if (!options) return [];
   if (Array.isArray(options)) return options;
   if (typeof options === "string") {
     try {
       const parsed = JSON.parse(options);
       return normalizePaymentOptions(parsed);
-    } catch (error) {
+    } catch {
       return [];
     }
   }
-  if (typeof options === "object") {
-    if (Array.isArray(options.payment_gateway_options)) {
-      return options.payment_gateway_options;
+  if (isRecord(options)) {
+    const gatewayOptions = options["payment_gateway_options"];
+    if (Array.isArray(gatewayOptions)) {
+      return gatewayOptions;
     }
-    if (Array.isArray(options.options)) {
-      return options.options;
+    const nestedOptions = options["options"];
+    if (Array.isArray(nestedOptions)) {
+      return nestedOptions;
     }
     return [options];
   }
@@ -66,8 +113,8 @@ export const normalizePaymentOptions = (options: any): any[] => {
 /**
  * Formats a number as currency with 2 decimal places
  */
-export const formatCurrencyValue = (amount: any) => {
-  const numeric = Number(amount);
+export const formatCurrencyValue = (amount: unknown) => {
+  const numeric = toNumberValue(amount);
   if (!Number.isFinite(numeric)) {
     return "0.00";
   }
@@ -80,7 +127,7 @@ export const formatCurrencyValue = (amount: any) => {
 /**
  * Finds a label from a collection by ID
  */
-export const findLabel = (collection: any[], id: string, fallbackPrefix?: string) => {
+export const findLabel = (collection: EntityLike[], id: string, fallbackPrefix?: string) => {
   if (!id) return "Not selected";
   const match = collection.find((item) => {
     const candidates = [
@@ -94,23 +141,22 @@ export const findLabel = (collection: any[], id: string, fallbackPrefix?: string
       item.productable?.identifier,
       item.productable?.name,
     ]
-      .map((value) => (value ?? "").toString())
+      .map((value) => toStringValue(value))
       .filter(Boolean);
-    return candidates.some((candidate) => candidate === String(id));
+    return candidates.includes(String(id));
   });
   if (!match) return fallbackPrefix ? `${fallbackPrefix} selected` : "Selected";
-  return (
-    match.name ||
-    match.label ||
-    match.productable?.name ||
-    (fallbackPrefix ? `${fallbackPrefix} selected` : "Selected")
-  );
+  const resolved =
+    toStringValue(match.name) ||
+    toStringValue(match.label) ||
+    toStringValue(match.productable?.name);
+  return resolved || (fallbackPrefix ? `${fallbackPrefix} selected` : "Selected");
 };
 
 /**
  * Formats compute instance label with specs
  */
-export const formatComputeLabel = (id: string, instanceTypes: any[]) => {
+export const formatComputeLabel = (id: string, instanceTypes: EntityLike[]) => {
   const match = instanceTypes.find((item) => {
     const candidates = [
       item.id,
@@ -123,28 +169,30 @@ export const formatComputeLabel = (id: string, instanceTypes: any[]) => {
       item.productable?.identifier,
       item.productable?.name,
     ]
-      .map((value) => (value ?? "").toString())
+      .map((value) => toStringValue(value))
       .filter(Boolean);
-    return candidates.some((candidate) => candidate === String(id));
+    return candidates.includes(String(id));
   });
   if (!match) return id ? "Instance selected" : "Not selected";
-  const memoryGb = match.memory_mb ? Math.round(Number(match.memory_mb) / 1024) : match.memory_gb;
+  const memoryMb = toNumberValue(match.memory_mb);
+  const memoryGb = memoryMb ? Math.round(memoryMb / 1024) : toNumberValue(match.memory_gb);
   const meta = [];
-  if (match.vcpus) meta.push(`${match.vcpus} vCPU`);
+  const vcpus = toNumberValue(match.vcpus);
+  if (vcpus) meta.push(`${vcpus} vCPU`);
   if (memoryGb) meta.push(`${memoryGb} GB RAM`);
-  const baseName = match.name || match.productable?.name || "Instance selected";
+  const baseName = toStringValue(match.name || match.productable?.name || "Instance selected");
   return meta.length ? `${baseName} • ${meta.join(" • ")}` : baseName;
 };
 
 /**
  * Formats OS image label
  */
-export const formatOsLabel = (id: string, osImages: any[]) => findLabel(osImages, id, "OS");
+export const formatOsLabel = (id: string, osImages: EntityLike[]) => findLabel(osImages, id, "OS");
 
 /**
  * Formats volume label with size
  */
-export const formatVolumeLabel = (id: string, size: number | string, volumeTypes: any[]) => {
+export const formatVolumeLabel = (id: string, size: number | string, volumeTypes: EntityLike[]) => {
   if (!id) return "Volume not selected";
   const match = volumeTypes.find((item) => {
     const candidates = [
@@ -158,25 +206,26 @@ export const formatVolumeLabel = (id: string, size: number | string, volumeTypes
       item.productable?.identifier,
       item.productable?.name,
     ]
-      .map((value) => (value ?? "").toString())
+      .map((value) => toStringValue(value))
       .filter(Boolean);
-    return candidates.some((candidate) => candidate === String(id));
+    return candidates.includes(String(id));
   });
-  const label = match?.name || match?.productable?.name || "Volume selected";
+  const label = toStringValue(match?.name || match?.productable?.name) || "Volume selected";
   return size ? `${label} • ${size} GB` : label;
 };
 
 /**
  * Formats keypair label
  */
-export const formatKeypairLabel = (value: string, keyPairs: any[], explicitLabel = "") => {
+export const formatKeypairLabel = (value: string, keyPairs: EntityLike[], explicitLabel = "") => {
   if (explicitLabel) return explicitLabel;
   if (!value) return "No key pair";
   const match = keyPairs.find((kp) => {
     const candidate = kp.name || kp.id;
-    return candidate && String(candidate) === String(value);
+    return candidate !== undefined && String(candidate) === String(value);
   });
-  return match?.name || match?.label || value || "No key pair";
+  const resolved = toStringValue(match?.name || match?.label);
+  return resolved || value || "No key pair";
 };
 
 /**
@@ -191,17 +240,19 @@ export const formatSubnetLabel = (cfg: Configuration) => {
 /**
  * Converts value to number safely
  */
-export const toNumber = (value: any) => {
-  const num = Number(value);
-  return Number.isFinite(num) ? num : 0;
-};
+export const toNumber = (value: unknown) => toNumberValue(value);
 
-const normalizeTemplateIdList = (value: any): string[] => {
+const normalizeTemplateIdList = (value: unknown): string[] => {
   if (!value) return [];
   if (Array.isArray(value)) {
     return value
-      .map((item) => item?.value ?? item?.id ?? item?.identifier ?? item)
-      .map((item) => (item ?? "").toString().trim())
+      .map((item) => {
+        if (isRecord(item)) {
+          return item["value"] ?? item["id"] ?? item["identifier"] ?? item;
+        }
+        return item;
+      })
+      .map((item) => toStringValue(item).trim())
       .filter(Boolean);
   }
   if (typeof value === "string") {
@@ -216,136 +267,188 @@ const normalizeTemplateIdList = (value: any): string[] => {
   return [];
 };
 
-const pickDefined = (...values: any[]) =>
+const pickDefined = (...values: unknown[]) =>
   values.find((value) => value !== undefined && value !== null && value !== "");
 
-const buildTemplateVolume = (volume: any, index: number) => ({
-  id: volume?.id || `tmpl_${index}_${Math.random().toString(36).slice(2, 8)}`,
-  volume_type_id: pickDefined(volume?.volume_type_id, volume?.id, volume?.identifier) || "",
-  storage_size_gb: pickDefined(volume?.storage_size_gb, volume?.size_gb, volume?.size) || 0,
-});
+const buildTemplateVolume = (volume: unknown, index: number): AdditionalVolume => {
+  const record = asRecord(volume);
+  const storageSize = pickDefined(record["storage_size_gb"], record["size_gb"], record["size"]);
+  const resolvedStorageSize =
+    typeof storageSize === "number" || typeof storageSize === "string" ? storageSize : 0;
+  return {
+    id: toStringValue(record["id"]) || `tmpl_${index}_${Math.random().toString(36).slice(2, 8)}`,
+    volume_type_id:
+      toStringValue(pickDefined(record["volume_type_id"], record["id"], record["identifier"])) ||
+      "",
+    storage_size_gb: resolvedStorageSize,
+  };
+};
 
-export const buildConfigurationFromTemplate = (template: any): Partial<Configuration> => {
-  const config = template?.configuration || {};
-  const patch: Partial<Configuration> = {};
+// --- buildConfigurationFromTemplate Helper Extractors ---
 
-  const templateId = template?.id || template?.identifier;
+const extractTemplateBasicInfo = (
+  templateRecord: UnknownRecord,
+  config: UnknownRecord,
+  patch: Partial<Configuration>
+) => {
+  const templateId = templateRecord["id"] || templateRecord["identifier"];
   if (templateId) patch.template_id = String(templateId);
-  if (template?.name) patch.template_name = String(template.name);
+  if (templateRecord["name"]) patch.template_name = String(templateRecord["name"]);
   patch.template_locked = true;
   patch.project_mode = "new";
   patch.project_id = "";
+
   const uniqueSuffix = Math.random().toString(36).slice(2, 6).toUpperCase();
-  const baseProjectName = pickDefined(config.project_name, template?.name, "Template");
+  const baseProjectName = pickDefined(config["project_name"], templateRecord["name"], "Template");
   const normalizedBase = String(baseProjectName || "Template").trim() || "Template";
   patch.project_name = normalizedBase.toLowerCase().includes("project")
     ? `${normalizedBase} ${uniqueSuffix}`
     : `${normalizedBase} Project ${uniqueSuffix}`;
 
-  const region = pickDefined(config.region, config.region_code, config.location);
+  const region = pickDefined(config["region"], config["region_code"], config["location"]);
   if (region) patch.region = String(region);
+};
 
+const extractComputeInfo = (config: UnknownRecord, patch: Partial<Configuration>) => {
   const instanceCount = pickDefined(
-    config.instance_count,
-    config.number_of_instances,
-    config.quantity
+    config["instance_count"],
+    config["number_of_instances"],
+    config["quantity"]
   );
-  if (instanceCount !== undefined) patch.instance_count = instanceCount;
+  if (instanceCount !== undefined) {
+    patch.instance_count = toNumberOrString(instanceCount);
+  }
 
-  const months = pickDefined(config.months, config.term_months, config.billing_months);
-  if (months !== undefined) patch.months = months;
+  const months = pickDefined(config["months"], config["term_months"], config["billing_months"]);
+  if (months !== undefined) {
+    patch.months = toNumberOrString(months);
+  }
 
+  const compute = asRecord(config["compute"]);
   const computeId = pickDefined(
-    config.compute_instance_id,
-    config.compute?.instance_type_id,
-    config.compute?.id,
-    config.compute?.instance_id
+    config["compute_instance_id"],
+    compute["instance_type_id"],
+    compute["id"],
+    compute["instance_id"]
   );
   if (computeId) patch.compute_instance_id = String(computeId);
+};
 
+const extractOsAndStorageInfo = (
+  config: UnknownRecord,
+  primaryVolume: UnknownRecord,
+  patch: Partial<Configuration>
+) => {
+  const osImage = asRecord(config["os_image"]);
   const osImageId = pickDefined(
-    config.os_image_id,
-    config.os_image?.os_image_id,
-    config.os_image?.id,
-    config.os_image?.identifier
+    config["os_image_id"],
+    osImage["os_image_id"],
+    osImage["id"],
+    osImage["identifier"]
   );
   if (osImageId) patch.os_image_id = String(osImageId);
 
-  const rawVolumeEntries = Array.isArray(config.volume_types)
-    ? config.volume_types
-    : Array.isArray(config.volumes)
-      ? config.volumes
-      : [];
-  const primaryVolume = rawVolumeEntries[0] || {};
-
   const volumeTypeId = pickDefined(
-    config.volume_type_id,
-    primaryVolume.volume_type_id,
-    primaryVolume.id,
-    primaryVolume.identifier
+    config["volume_type_id"],
+    primaryVolume["volume_type_id"],
+    primaryVolume["id"],
+    primaryVolume["identifier"]
   );
   if (volumeTypeId) patch.volume_type_id = String(volumeTypeId);
 
   const storageSize = pickDefined(
-    config.storage_size_gb,
-    primaryVolume.storage_size_gb,
-    primaryVolume.size_gb,
-    primaryVolume.size
+    config["storage_size_gb"],
+    primaryVolume["storage_size_gb"],
+    primaryVolume["size_gb"],
+    primaryVolume["size"]
   );
-  if (storageSize !== undefined) patch.storage_size_gb = storageSize;
+  if (storageSize !== undefined) {
+    patch.storage_size_gb = toNumberOrString(storageSize);
+  }
+};
+
+const extractNetworkingInfo = (config: UnknownRecord, patch: Partial<Configuration>) => {
+  const networking = asRecord(config["networking"]);
+  const bandwidth = asRecord(networking["bandwidth"]);
 
   const bandwidthId = pickDefined(
-    config.bandwidth_id,
-    config.networking?.bandwidth_id,
-    config.networking?.bandwidth?.id
+    config["bandwidth_id"],
+    networking["bandwidth_id"],
+    bandwidth["id"]
   );
   if (bandwidthId) patch.bandwidth_id = String(bandwidthId);
 
-  const bandwidthCount = pickDefined(config.bandwidth_count, config.networking?.bandwidth_count);
-  if (bandwidthCount !== undefined) patch.bandwidth_count = bandwidthCount;
+  const bandwidthCount = pickDefined(config["bandwidth_count"], networking["bandwidth_count"]);
+  if (bandwidthCount !== undefined) {
+    patch.bandwidth_count = toNumberOrString(bandwidthCount);
+  }
 
-  const floatingIpCount = pickDefined(
-    config.floating_ip_count,
-    config.networking?.floating_ip_count
-  );
-  if (floatingIpCount !== undefined) patch.floating_ip_count = floatingIpCount;
+  const floatingIpCount = pickDefined(config["floating_ip_count"], networking["floating_ip_count"]);
+  if (floatingIpCount !== undefined) {
+    patch.floating_ip_count = toNumberOrString(floatingIpCount);
+  }
 
   const securityGroups = pickDefined(
-    config.security_group_ids,
-    config.security_groups,
-    config.networking?.security_group_ids,
-    config.networking?.security_groups
+    config["security_group_ids"],
+    config["security_groups"],
+    networking["security_group_ids"],
+    networking["security_groups"]
   );
   const normalizedSecurityGroups = normalizeTemplateIdList(securityGroups);
   if (normalizedSecurityGroups.length > 0) patch.security_group_ids = normalizedSecurityGroups;
 
-  const keypairName = pickDefined(
-    config.keypair_name,
-    config.keypair?.name,
-    config.auth?.keypair_name
-  );
-  if (keypairName) patch.keypair_name = String(keypairName);
-
-  const networkId = pickDefined(config.network_id, config.networking?.network_id, config.vpc_id);
+  const networkId = pickDefined(config["network_id"], networking["network_id"], config["vpc_id"]);
   if (networkId) patch.network_id = String(networkId);
 
-  const subnetId = pickDefined(config.subnet_id, config.networking?.subnet_id, config.subnet?.id);
+  const subnet = asRecord(config["subnet"]);
+  const subnetId = pickDefined(config["subnet_id"], networking["subnet_id"], subnet["id"]);
   if (subnetId) patch.subnet_id = String(subnetId);
 
-  const tags = pickDefined(config.tags, config.tag_list, config.networking?.tags);
-  if (Array.isArray(tags)) {
-    patch.tags = tags.join(",");
-  } else if (tags) {
-    patch.tags = String(tags);
-  }
-
   const networkPreset = pickDefined(
-    config.network_preset,
-    config.metadata?.network_preset,
-    config.networking?.preset
+    config["network_preset"],
+    asRecord(config["metadata"])["network_preset"],
+    networking["preset"]
   );
   const normalizedPreset = networkPreset ? String(networkPreset) : "standard";
   patch.network_preset = normalizedPreset === "empty" ? "standard" : normalizedPreset;
+};
+
+const extractAdditionalInfo = (config: UnknownRecord, patch: Partial<Configuration>) => {
+  const keypair = asRecord(config["keypair"]);
+  const auth = asRecord(config["auth"]);
+  const keypairName = pickDefined(config["keypair_name"], keypair["name"], auth["keypair_name"]);
+  if (keypairName) patch.keypair_name = String(keypairName);
+
+  const tags = pickDefined(
+    config["tags"],
+    config["tag_list"],
+    asRecord(config["networking"])["tags"]
+  );
+  if (Array.isArray(tags)) {
+    patch.tags = tags.map((tag) => toStringValue(tag)).join(",");
+  } else if (tags) {
+    patch.tags = String(tags);
+  }
+};
+
+export const buildConfigurationFromTemplate = (template: unknown): Partial<Configuration> => {
+  const templateRecord = asRecord(template);
+  const config = asRecord(templateRecord["configuration"]);
+  const patch: Partial<Configuration> = {};
+
+  extractTemplateBasicInfo(templateRecord, config, patch);
+  extractComputeInfo(config, patch);
+
+  const rawVolumeEntries = Array.isArray(config["volume_types"])
+    ? config["volume_types"]
+    : Array.isArray(config["volumes"])
+      ? config["volumes"]
+      : [];
+  const primaryVolume = isRecord(rawVolumeEntries[0]) ? rawVolumeEntries[0] : {};
+
+  extractOsAndStorageInfo(config, primaryVolume, patch);
+  extractNetworkingInfo(config, patch);
+  extractAdditionalInfo(config, patch);
 
   if (patch.project_mode === "new") {
     patch.network_id = "";
@@ -353,41 +456,51 @@ export const buildConfigurationFromTemplate = (template: any): Partial<Configura
     patch.security_group_ids = [];
   }
 
-  const existingAdditionalVolumes = Array.isArray(config.additional_volumes)
-    ? config.additional_volumes.map(buildTemplateVolume)
+  const additionalVolumes = asRecord(config)["additional_volumes"];
+  const existingAdditionalVolumes = Array.isArray(additionalVolumes)
+    ? additionalVolumes.map((volume, index) => buildTemplateVolume(volume, index))
     : [];
+
   if (existingAdditionalVolumes.length > 0) {
     patch.additional_volumes = existingAdditionalVolumes;
   } else if (rawVolumeEntries.length > 1) {
-    patch.additional_volumes = rawVolumeEntries.slice(1).map(buildTemplateVolume);
+    patch.additional_volumes = rawVolumeEntries
+      .slice(1)
+      .map((volume, index) => buildTemplateVolume(volume, index + 1));
   }
 
   return patch;
 };
 
-export const hasProjectNetworkFromStatus = (status: any, project?: any): boolean => {
-  const projectStatus = status?.project || status?.data?.project || status || {};
+export const hasProjectNetworkFromStatus = (status: unknown, project?: unknown): boolean => {
+  const statusRecord = asRecord(status);
+  const projectRecord = asRecord(project);
 
-  if (projectStatus?.vpc_enabled || project?.vpc_enabled) return true;
+  const data = asRecord(statusRecord["data"]);
+  const projectStatus = asRecord(statusRecord["project"] || data["project"] || statusRecord);
 
-  const summary = Array.isArray(projectStatus?.summary) ? projectStatus.summary : [];
-  const summaryHasVpc = summary.some(
-    (item: any) =>
-      item?.completed && typeof item?.title === "string" && item.title.toLowerCase().includes("vpc")
-  );
+  if (projectStatus["vpc_enabled"] || projectRecord["vpc_enabled"]) return true;
+
+  const summary = Array.isArray(projectStatus["summary"]) ? projectStatus["summary"] : [];
+  const summaryHasVpc = summary.some((item: unknown) => {
+    const record = asRecord(item);
+    const title = toStringValue(record["title"]).toLowerCase();
+    return record["completed"] === true && title.includes("vpc");
+  });
   if (summaryHasVpc) return true;
 
-  const progress = projectStatus?.provisioning_progress;
-  if (progress?.vpc_enabled) return true;
+  const progress = asRecord(projectStatus["provisioning_progress"]);
+  if (progress["vpc_enabled"]) return true;
 
-  const progressSteps = Array.isArray(progress?.steps)
-    ? progress.steps
+  const progressSteps = Array.isArray(progress["steps"])
+    ? progress["steps"]
     : Array.isArray(progress)
       ? progress
       : [];
-  return progressSteps.some((step: any) => {
-    const key = String(step?.key || step?.id || step?.label || "").toLowerCase();
-    const statusValue = String(step?.status || "").toLowerCase();
-    return key.includes("vpc") && (step?.completed === true || statusValue === "completed");
+  return progressSteps.some((step: unknown) => {
+    const record = asRecord(step);
+    const key = toStringValue(record["key"] || record["id"] || record["label"]).toLowerCase();
+    const statusValue = toStringValue(record["status"]).toLowerCase();
+    return key.includes("vpc") && (record["completed"] === true || statusValue === "completed");
   });
 };

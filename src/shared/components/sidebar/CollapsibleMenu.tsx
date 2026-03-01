@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ChevronDown, ChevronRight, LucideIcon } from "lucide-react";
+import { ChevronDown, LucideIcon } from "lucide-react";
 
 // ============= Types =============
 
@@ -27,7 +27,7 @@ export interface CollapsibleMenuProps {
   isCollapsed?: boolean;
   isMobile?: boolean;
   onItemClick?: (path: string) => void;
-  themeColor?: string;
+  themeColor?: string | undefined;
 }
 
 // ============= Helper Functions =============
@@ -44,7 +44,7 @@ interface MenuItemComponentProps {
   isCollapsed?: boolean;
   isMobile?: boolean;
   onClick: () => void;
-  themeColor?: string;
+  themeColor?: string | undefined;
   isNested?: boolean;
 }
 
@@ -134,7 +134,7 @@ interface MenuGroupComponentProps {
   isMobile?: boolean;
   activePath: string;
   onItemClick: (path: string) => void;
-  themeColor?: string;
+  themeColor?: string | undefined;
 }
 
 const MenuGroupComponent: React.FC<MenuGroupComponentProps> = ({

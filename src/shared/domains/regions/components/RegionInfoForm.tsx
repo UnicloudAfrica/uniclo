@@ -2,11 +2,15 @@
  * Region Information Form
  * Reusable form component for basic region details (name, code, country, city, provider)
  */
-// @ts-nocheck
 import React from "react";
 import { MapPin, Globe, Building, ChevronRight } from "lucide-react";
 import ModernInput from "../../../components/ui/ModernInput";
-import type { RegionFormData, ProviderOption, CLOUD_PROVIDERS } from "../types/serviceConfig.types";
+import type {
+  RegionFormChangeHandler,
+  RegionFormData,
+  ProviderOption,
+} from "../types/serviceConfig.types";
+import { CLOUD_PROVIDERS } from "../types/serviceConfig.types";
 
 export interface Country {
   id?: number;
@@ -17,7 +21,7 @@ export interface Country {
 
 export interface RegionInfoFormProps {
   regionData: RegionFormData;
-  onChange: (field: keyof RegionFormData, value: any) => void;
+  onChange: RegionFormChangeHandler;
   countries: Country[];
   providers?: ProviderOption[];
   showProviderSelection?: boolean;
@@ -27,12 +31,7 @@ const RegionInfoForm: React.FC<RegionInfoFormProps> = ({
   regionData,
   onChange,
   countries,
-  providers = [
-    { value: "zadara", label: "Zadara" },
-    { value: "aws", label: "AWS" },
-    { value: "azure", label: "Azure" },
-    { value: "gcp", label: "Google Cloud" },
-  ],
+  providers = CLOUD_PROVIDERS,
   showProviderSelection = true,
 }) => {
   return (

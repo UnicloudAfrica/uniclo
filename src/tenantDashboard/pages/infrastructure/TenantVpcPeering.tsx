@@ -46,19 +46,19 @@ const TenantVpcPeering: React.FC = () => {
   };
 
   const handleAccept = async (id: string) => {
-    if (window.confirm("Accept this peering connection?")) {
+    if (globalThis.window.confirm("Accept this peering connection?")) {
       await acceptMutation.mutateAsync({ projectId, region, peeringId: id });
     }
   };
 
   const handleReject = async (id: string) => {
-    if (window.confirm("Reject this peering connection?")) {
+    if (globalThis.window.confirm("Reject this peering connection?")) {
       await rejectMutation.mutateAsync({ projectId, region, peeringId: id });
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("Delete this peering connection?")) {
+    if (globalThis.window.confirm("Delete this peering connection?")) {
       await deleteMutation.mutateAsync({ projectId, region, peeringId: id });
     }
   };

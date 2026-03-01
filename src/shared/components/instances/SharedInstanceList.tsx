@@ -71,9 +71,7 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
 
     if (context === "client") {
       const encodedId = encodeURIComponent(btoa(identifier));
-      const instanceName = encodeURIComponent(
-        instance.name || `Instance-${identifier.slice(-8)}`
-      );
+      const instanceName = encodeURIComponent(instance.name || `Instance-${identifier.slice(-8)}`);
       navigate(`${basePath}/instances/details?id=${encodedId}&name=${instanceName}`);
     } else {
       navigate(`${basePath}/instances/details?identifier=${encodeURIComponent(identifier)}`);
@@ -235,9 +233,7 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
   }, [context, navigateToDetails]);
 
   const provisioningCount = instances.filter((i: any) =>
-    ["provisioning", "building", "reboot", "hard_reboot"].includes(
-      (i.status || "").toLowerCase()
-    )
+    ["provisioning", "building", "reboot", "hard_reboot"].includes((i.status || "").toLowerCase())
   ).length;
 
   return (
@@ -300,7 +296,7 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
               size="sm"
               onClick={() =>
                 context === "client"
-                  ? (window.location.href = `${basePath}/instances/provision`)
+                  ? (globalThis.window.location.href = `${basePath}/instances/provision`)
                   : navigate(`${basePath}/create-instance`)
               }
               leftIcon={<Plus className="w-4 h-4" />}

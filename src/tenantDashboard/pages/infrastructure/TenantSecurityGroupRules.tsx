@@ -84,7 +84,7 @@ const TenantSecurityGroupRules: React.FC = () => {
       description={`Manage inbound and outbound rules for ${sgId}`}
       actions={
         <div className="flex gap-2">
-          <ModernButton variant="secondary" onClick={() => window.history.back()}>
+          <ModernButton variant="secondary" onClick={() => globalThis.window.history.back()}>
             <ArrowLeft className="w-4 h-4" />
             Back
           </ModernButton>

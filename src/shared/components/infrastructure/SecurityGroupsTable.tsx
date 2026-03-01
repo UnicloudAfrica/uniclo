@@ -5,12 +5,12 @@ import type { SecurityGroup } from "./types";
 
 interface SecurityGroupsTableProps {
   securityGroups: SecurityGroup[];
-  isLoading?: boolean;
-  emptyMessage?: string;
-  onViewRules?: (sg: SecurityGroup) => void;
-  onDelete?: (sg: SecurityGroup) => void;
-  deleteLabel?: string;
-  showActions?: boolean;
+  isLoading?: boolean | undefined;
+  emptyMessage?: string | undefined;
+  onViewRules?: ((sg: SecurityGroup) => void) | undefined;
+  onDelete?: ((sg: SecurityGroup) => void) | undefined;
+  deleteLabel?: string | undefined;
+  showActions?: boolean | undefined;
 }
 
 const SecurityGroupsTable: React.FC<SecurityGroupsTableProps> = ({

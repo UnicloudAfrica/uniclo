@@ -2,7 +2,7 @@ import React from "react";
 import { Menu } from "lucide-react";
 import BreadcrumbTrail from "./BreadcrumbTrail";
 
-const DEFAULT_BREADCRUMB_COLOR = "var(--theme-color, #288DD1)";
+const DEFAULT_BREADCRUMB_COLOR = "var(--theme-color, var(--theme-color))";
 
 interface Breadcrumb {
   label: string;
@@ -15,6 +15,7 @@ interface SubheaderBlockProps {
   description?: React.ReactNode;
   actions?: React.ReactNode;
   subHeaderContent?: React.ReactNode;
+  icon?: React.ReactNode;
   onOpenMobileMenu?: () => void;
   className?: string;
   breadcrumbColor?: string;
@@ -26,6 +27,7 @@ const SubheaderBlock: React.FC<SubheaderBlockProps> = ({
   description,
   actions,
   subHeaderContent,
+  icon,
   onOpenMobileMenu,
   className = "",
   breadcrumbColor = DEFAULT_BREADCRUMB_COLOR,
@@ -56,13 +58,22 @@ const SubheaderBlock: React.FC<SubheaderBlockProps> = ({
       {(title || description || actions || subHeaderContent) && (
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-3">
-            {title && <h1 className="text-2xl font-bold text-gray-900">{title}</h1>}
-            {description &&
-              (typeof description === "string" ? (
-                <p className="mt-1 text-sm text-gray-500">{description}</p>
-              ) : (
-                <div className="mt-1">{description}</div>
-              ))}
+            <div className="flex items-start gap-3">
+              {icon && (
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+                  {icon}
+                </div>
+              )}
+              <div>
+                {title && <h1 className="text-2xl font-bold text-gray-900">{title}</h1>}
+                {description &&
+                  (typeof description === "string" ? (
+                    <p className="mt-1 text-sm text-gray-500">{description}</p>
+                  ) : (
+                    <div className="mt-1">{description}</div>
+                  ))}
+              </div>
+            </div>
             {subHeaderContent ? (
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 {subHeaderContent}

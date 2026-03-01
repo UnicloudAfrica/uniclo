@@ -1,10 +1,13 @@
 import { FieldConfig } from "../types/settings";
 
-export const flattenSettings = (settings: Record<string, any> = {}) => {
-  const flattened: Record<string, any> = {};
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+export const flattenSettings = (settings: Record<string, unknown> = {}) => {
+  const flattened: Record<string, unknown> = {};
 
   Object.entries(settings).forEach(([category, value]) => {
-    if (value && typeof value === "object" && !Array.isArray(value)) {
+    if (isRecord(value) && !Array.isArray(value)) {
       Object.entries(value).forEach(([key, inner]) => {
         flattened[`${category}.${key}`] = inner;
       });
@@ -16,7 +19,7 @@ export const flattenSettings = (settings: Record<string, any> = {}) => {
   return flattened;
 };
 
-export const normalizeFieldValue = (field: FieldConfig, raw: any) => {
+export const normalizeFieldValue = (field: FieldConfig, raw: unknown) => {
   if (field?.type === "toggle") {
     return Boolean(raw);
   }
@@ -32,7 +35,7 @@ export const normalizeFieldValue = (field: FieldConfig, raw: any) => {
   return raw;
 };
 
-export const transformValueForSave = (field: FieldConfig, raw: any) => {
+export const transformValueForSave = (field: FieldConfig, raw: unknown) => {
   if (field?.cast) {
     return field.cast(raw);
   }
@@ -45,7 +48,7 @@ export const transformValueForSave = (field: FieldConfig, raw: any) => {
   return raw;
 };
 
-export const buildSavePayload = (fields: FieldConfig[], formState: Record<string, any>) => {
+export const buildSavePayload = (fields: FieldConfig[], formState: Record<string, unknown>) => {
   return fields
     .filter((field) => field.stateKey && !field.readOnly && field.type !== "description")
     .map((field) => {
@@ -61,11 +64,16 @@ export const buildSavePayload = (fields: FieldConfig[], formState: Record<string
         value: transformValueForSave(field, currentValue !== undefined ? currentValue : null),
       };
     })
-    .filter(Boolean);
+    .filter((item): item is { category: string; key: string; value: unknown } => Boolean(item));
 };
 
-export const normalizeTwoFactorSetup = (response: any) => {
-  const data = response?.data ?? response?.message ?? response ?? {};
+export const normalizeTwoFactorSetup = (response: unknown) => {
+  const record = isRecord(response) ? response : {};
+  const data = isRecord(record.data)
+    ? record.data
+    : isRecord(record.message)
+      ? record.message
+      : record;
   const rawQrCode = data.qrCode ?? data.qr_code ?? null;
   const qrCodeSvg =
     data.qrCodeSvg ||
@@ -98,10 +106,10 @@ export const normalizeTwoFactorSetup = (response: any) => {
   return { qrCodeSvg, qrCodeUrl, secret };
 };
 
-export const flattenObjectToSettingsArray = (settingsObject: Record<string, any> = {}) => {
-  const payload: any[] = [];
+export const flattenObjectToSettingsArray = (settingsObject: Record<string, unknown> = {}) => {
+  const payload: Array<{ category: string; key: string; value: unknown }> = [];
   Object.entries(settingsObject).forEach(([category, values]) => {
-    if (values && typeof values === "object" && !Array.isArray(values)) {
+    if (isRecord(values) && !Array.isArray(values)) {
       Object.entries(values).forEach(([key, value]) => {
         payload.push({ category, key, value });
       });

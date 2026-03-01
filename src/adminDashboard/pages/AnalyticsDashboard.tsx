@@ -1,10 +1,7 @@
-// @ts-nocheck
 import React, { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   DollarSign,
-  TrendingUp,
-  TrendingDown,
   Users,
   Package,
   CreditCard,
@@ -18,39 +15,6 @@ import AdminPageShell from "../components/AdminPageShell";
 import adminApi from "../../index/admin/api";
 
 // Types
-interface AnalyticsData {
-  revenue: {
-    total: number;
-    this_month: number;
-    last_month: number;
-    growth_percent: number;
-  };
-  users: {
-    total: number;
-    new_this_month: number;
-    active: number;
-  };
-  subscriptions: {
-    active: number;
-    canceled: number;
-    revenue: number;
-  };
-  payouts: {
-    pending: number;
-    completed: number;
-    total_amount: number;
-  };
-  top_tenants: Array<{
-    id: number;
-    name: string;
-    revenue: number;
-  }>;
-  monthly_revenue: Array<{
-    month: string;
-    revenue: number;
-  }>;
-}
-
 // API hooks
 const useAnalytics = () => {
   return useQuery({

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -31,11 +30,11 @@ const AdminObjectStorageDetail: React.FC = () => {
   const { accountId } = useParams<{ accountId: string }>();
   const navigate = useNavigate();
 
-  const [account, setAccount] = useState(null);
-  const [buckets, setBuckets] = useState([]);
+  const [account, setAccount] = useState<any>(null);
+  const [buckets, setBuckets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [bucketsLoading, setBucketsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<any>(null);
   const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
   const [creatingBucket, setCreatingBucket] = useState(false);
   const [deletingBucketId, setDeletingBucketId] = useState<string | null>(null);
@@ -99,7 +98,7 @@ const AdminObjectStorageDetail: React.FC = () => {
   };
 
   const handleDeleteBucket = async (bucket: any) => {
-    if (!window.confirm(`Delete silo "${bucket.name}"? This cannot be undone.`)) return;
+    if (!globalThis.window.confirm(`Delete silo "${bucket.name}"? This cannot be undone.`)) return;
     try {
       setDeletingBucketId(bucket.id);
       await objectStorageApi.deleteBucket(accountId!, bucket.id);
@@ -133,11 +132,9 @@ const AdminObjectStorageDetail: React.FC = () => {
 
   if (!accountId) {
     return (
-      <>
-        <AdminPageShell title="Silo Storage">
-          <div className="p-8 text-center text-rose-600">Account ID is required</div>
-        </AdminPageShell>
-      </>
+      <AdminPageShell title="Silo Storage">
+        <div className="p-8 text-center text-rose-600">Account ID is required</div>
+      </AdminPageShell>
     );
   }
 
@@ -148,55 +145,38 @@ const AdminObjectStorageDetail: React.FC = () => {
     { label: account?.name || "Access" },
   ];
 
+  const getTabClass = (tab: string) => {
+    const isActive = activeTab === tab;
+    return `flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+      isActive ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
+    }`;
+  };
+
   // Action buttons for the page header
   const headerActions = (
     <div className="flex items-center gap-3">
       {/* Tabs */}
       <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
-        <button
-          onClick={() => setActiveTab("files")}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-            activeTab === "files"
-              ? "bg-white text-slate-900 shadow-sm"
-              : "text-slate-600 hover:text-slate-900"
-          }`}
-        >
-          <FolderOpen className="h-4 w-4" />
-          Files
-        </button>
-        <button
-          onClick={() => setActiveTab("analytics")}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-            activeTab === "analytics"
-              ? "bg-white text-slate-900 shadow-sm"
-              : "text-slate-600 hover:text-slate-900"
-          }`}
-        >
-          <BarChart3 className="h-4 w-4" />
-          Analytics
-        </button>
-        <button
-          onClick={() => setActiveTab("subscription")}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-            activeTab === "subscription"
-              ? "bg-white text-slate-900 shadow-sm"
-              : "text-slate-600 hover:text-slate-900"
-          }`}
-        >
-          <CreditCard className="h-4 w-4" />
-          Subscription
-        </button>
-        <button
-          onClick={() => setActiveTab("transactions")}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-            activeTab === "transactions"
-              ? "bg-white text-slate-900 shadow-sm"
-              : "text-slate-600 hover:text-slate-900"
-          }`}
-        >
-          <Receipt className="h-4 w-4" />
-          Transactions
-        </button>
+        {(
+          [
+            { id: "files", label: "Files", icon: FolderOpen },
+            { id: "analytics", label: "Analytics", icon: BarChart3 },
+            { id: "subscription", label: "Subscription", icon: CreditCard },
+            { id: "transactions", label: "Transactions", icon: Receipt },
+          ] as const
+        ).map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={getTabClass(tab.id)}
+            >
+              <Icon className="h-4 w-4" />
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       <button
@@ -224,6 +204,166 @@ const AdminObjectStorageDetail: React.FC = () => {
     </div>
   );
 
+  const renderTabContent = (isMobile: boolean = false) => {
+    const paddingClass = isMobile ? "p-4" : "p-6";
+
+    switch (activeTab) {
+      case "files":
+        return (
+          <ObjectStorageFileBrowser
+            accountId={accountId}
+            bucketName={selectedBucket}
+            buckets={buckets}
+            onSelectBucket={setSelectedBucket}
+          />
+        );
+      case "analytics":
+        return (
+          <ObjectStorageAnalytics
+            accountId={accountId}
+            accountName={account.name}
+            onExtendStorage={() => setShowExtendModal(true)}
+          />
+        );
+      case "subscription":
+        return (
+          <div className={paddingClass}>
+            <ObjectStorageSubscription
+              accountId={accountId}
+              accountName={account.name}
+              onRenewSuccess={fetchAccountDetails}
+            />
+          </div>
+        );
+      case "transactions":
+        return (
+          <div className={paddingClass}>
+            <ObjectStorageTransactions accountId={accountId} accountName={account.name} />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const renderMainContent = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center py-16">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
+        </div>
+      );
+    }
+
+    if (error || !account) {
+      return (
+        <div className="flex items-center justify-center py-16 px-4">
+          <div className="text-center max-w-md w-full">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 mb-6">
+              <svg
+                className="h-8 w-8 text-slate-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">Storage Account Not Found</h3>
+            <p className="text-sm text-slate-500 mb-6">
+              This storage account may have been deleted or you don't have permission to view it.
+            </p>
+            <button
+              onClick={() =>
+                navigate("/admin-dashboard/object-storage", { state: { refresh: true } })
+              }
+              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Silo Storage
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        {/* Mobile Toggle Button */}
+        <div className="lg:hidden sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200">
+          <button
+            onClick={() => setShowMobileSidebar(!showMobileSidebar)}
+            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200"
+          >
+            {showMobileSidebar ? (
+              <span>Hide Storage Details</span>
+            ) : (
+              <span>Show Storage & Silos</span>
+            )}
+          </button>
+          {selectedBucket && (
+            <span className="text-sm text-slate-500">
+              Silo: <span className="font-medium text-slate-700">{selectedBucket}</span>
+            </span>
+          )}
+        </div>
+
+        {/* Mobile Sidebar (collapsible) */}
+        {showMobileSidebar && (
+          <div className="lg:hidden border-b border-slate-200 max-h-[50vh] overflow-y-auto bg-white">
+            <ObjectStorageSidebar
+              account={account}
+              buckets={buckets}
+              selectedBucket={selectedBucket}
+              onSelectBucket={(name) => {
+                setSelectedBucket(name);
+                setShowMobileSidebar(false);
+              }}
+              onCreateBucket={handleCreateBucket}
+              onDeleteBucket={handleDeleteBucket}
+              onRefresh={handleRefresh}
+              bucketsLoading={bucketsLoading}
+              creatingBucket={creatingBucket}
+              deletingBucketId={deletingBucketId}
+            />
+          </div>
+        )}
+
+        {/* Desktop: 1/4 - 3/4 Grid Layout */}
+        <div className="hidden lg:grid lg:grid-cols-4 h-[calc(100vh-180px)]">
+          {/* Left Sidebar (1/4) */}
+          <div className="col-span-1 border-r border-slate-200 overflow-y-auto bg-white">
+            <ObjectStorageSidebar
+              account={account}
+              buckets={buckets}
+              selectedBucket={selectedBucket}
+              onSelectBucket={setSelectedBucket}
+              onCreateBucket={handleCreateBucket}
+              onDeleteBucket={handleDeleteBucket}
+              onRefresh={handleRefresh}
+              bucketsLoading={bucketsLoading}
+              creatingBucket={creatingBucket}
+              deletingBucketId={deletingBucketId}
+            />
+          </div>
+
+          {/* Main Content Area (3/4) */}
+          <div className="col-span-3 overflow-hidden bg-slate-50">{renderTabContent(false)}</div>
+        </div>
+
+        {/* Mobile: Full width content */}
+        <div className="lg:hidden h-[calc(100vh-250px)] overflow-hidden bg-slate-50">
+          {renderTabContent(true)}
+        </div>
+      </>
+    );
+  };
+
   return (
     <>
       <AdminPageShell
@@ -234,171 +374,7 @@ const AdminObjectStorageDetail: React.FC = () => {
         disableContentPadding
         contentClassName=""
       >
-        {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
-          </div>
-        ) : error || !account ? (
-          <div className="flex items-center justify-center py-16 px-4">
-            <div className="text-center max-w-md w-full">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 mb-6">
-                <svg
-                  className="h-8 w-8 text-slate-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                Storage Account Not Found
-              </h3>
-              <p className="text-sm text-slate-500 mb-6">
-                This storage account may have been deleted or you don't have permission to view it.
-              </p>
-              <button
-                onClick={() =>
-                  navigate("/admin-dashboard/object-storage", { state: { refresh: true } })
-                }
-                className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Silo Storage
-              </button>
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Mobile Toggle Button */}
-            <div className="lg:hidden sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200">
-              <button
-                onClick={() => setShowMobileSidebar(!showMobileSidebar)}
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200"
-              >
-                {showMobileSidebar ? (
-                  <>
-                    <span>Hide Storage Details</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Show Storage & Silos</span>
-                  </>
-                )}
-              </button>
-              {selectedBucket && (
-                <span className="text-sm text-slate-500">
-                  Silo: <span className="font-medium text-slate-700">{selectedBucket}</span>
-                </span>
-              )}
-            </div>
-
-            {/* Mobile Sidebar (collapsible) */}
-            {showMobileSidebar && (
-              <div className="lg:hidden border-b border-slate-200 max-h-[50vh] overflow-y-auto bg-white">
-                <ObjectStorageSidebar
-                  account={account}
-                  buckets={buckets}
-                  selectedBucket={selectedBucket}
-                  onSelectBucket={(name) => {
-                    setSelectedBucket(name);
-                    setShowMobileSidebar(false);
-                  }}
-                  onCreateBucket={handleCreateBucket}
-                  onDeleteBucket={handleDeleteBucket}
-                  onRefresh={handleRefresh}
-                  bucketsLoading={bucketsLoading}
-                  creatingBucket={creatingBucket}
-                  deletingBucketId={deletingBucketId}
-                />
-              </div>
-            )}
-
-            {/* Desktop: 1/4 - 3/4 Grid Layout */}
-            <div className="hidden lg:grid lg:grid-cols-4 h-[calc(100vh-180px)]">
-              {/* Left Sidebar (1/4) */}
-              <div className="col-span-1 border-r border-slate-200 overflow-y-auto bg-white">
-                <ObjectStorageSidebar
-                  account={account}
-                  buckets={buckets}
-                  selectedBucket={selectedBucket}
-                  onSelectBucket={setSelectedBucket}
-                  onCreateBucket={handleCreateBucket}
-                  onDeleteBucket={handleDeleteBucket}
-                  onRefresh={handleRefresh}
-                  bucketsLoading={bucketsLoading}
-                  creatingBucket={creatingBucket}
-                  deletingBucketId={deletingBucketId}
-                />
-              </div>
-
-              {/* Main Content Area (3/4) */}
-              <div className="col-span-3 overflow-hidden bg-slate-50">
-                {activeTab === "files" ? (
-                  <ObjectStorageFileBrowser
-                    accountId={accountId}
-                    bucketName={selectedBucket}
-                    buckets={buckets}
-                    onSelectBucket={setSelectedBucket}
-                  />
-                ) : activeTab === "analytics" ? (
-                  <ObjectStorageAnalytics
-                    accountId={accountId}
-                    accountName={account.name}
-                    onExtendStorage={() => setShowExtendModal(true)}
-                  />
-                ) : activeTab === "subscription" ? (
-                  <div className="p-6">
-                    <ObjectStorageSubscription
-                      accountId={accountId}
-                      accountName={account.name}
-                      onRenewSuccess={fetchAccountDetails}
-                    />
-                  </div>
-                ) : (
-                  <div className="p-6">
-                    <ObjectStorageTransactions accountId={accountId} accountName={account.name} />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Mobile: Full width content */}
-            <div className="lg:hidden h-[calc(100vh-250px)] overflow-hidden bg-slate-50">
-              {activeTab === "files" ? (
-                <ObjectStorageFileBrowser
-                  accountId={accountId}
-                  bucketName={selectedBucket}
-                  buckets={buckets}
-                  onSelectBucket={setSelectedBucket}
-                />
-              ) : activeTab === "analytics" ? (
-                <ObjectStorageAnalytics
-                  accountId={accountId}
-                  accountName={account?.name}
-                  onExtendStorage={() => setShowExtendModal(true)}
-                />
-              ) : activeTab === "subscription" ? (
-                <div className="p-4">
-                  <ObjectStorageSubscription
-                    accountId={accountId}
-                    accountName={account?.name}
-                    onRenewSuccess={fetchAccountDetails}
-                  />
-                </div>
-              ) : (
-                <div className="p-4">
-                  <ObjectStorageTransactions accountId={accountId} accountName={account?.name} />
-                </div>
-              )}
-            </div>
-          </>
-        )}
+        {renderMainContent()}
       </AdminPageShell>
 
       {/* Extend Storage Modal */}

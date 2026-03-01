@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState } from "react";
 import DetailedModules from "./detailsModules";
 import ModernTable from "../../../shared/components/ui/ModernTable";
@@ -108,7 +107,9 @@ const ClientModules: React.FC<ClientModulesProps> = () => {
     return (
       <span
         className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-          isActive ? "bg-[#00BF6B14] text-[#00BF6B]" : "bg-[#EB417833] text-[#EB4178]"
+          isActive
+            ? "bg-[rgb(var(--theme-success-500) / 0.08)] text-[rgb(var(--theme-success-500))]"
+            : "bg-[rgb(var(--theme-danger-500) / 0.2)] text-[rgb(var(--theme-danger-500))]"
         }`}
       >
         {status}
@@ -120,7 +121,7 @@ const ClientModules: React.FC<ClientModulesProps> = () => {
     {
       key: "module",
       header: "MODULE",
-      className: "text-[#575758] font-normal",
+      className: "text-[var(--theme-text-color)] font-normal",
     },
     {
       key: "status",
@@ -130,17 +131,17 @@ const ClientModules: React.FC<ClientModulesProps> = () => {
     {
       key: "plan",
       header: "PLAN",
-      className: "text-[#575758] font-normal",
+      className: "text-[var(--theme-text-color)] font-normal",
     },
     {
       key: "startDate",
       header: "START DATE",
-      className: "text-[#575758] font-normal",
+      className: "text-[var(--theme-text-color)] font-normal",
     },
     {
       key: "endDate",
       header: "END DATE",
-      className: "text-[#575758] font-normal",
+      className: "text-[var(--theme-text-color)] font-normal",
     },
   ];
 

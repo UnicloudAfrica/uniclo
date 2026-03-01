@@ -1,7 +1,6 @@
-// @ts-nocheck
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import AdminPageShell from "../components/AdminPageShell.tsx";
+import AdminPageShell from "../components/AdminPageShell";
 import { ModernButton } from "../../shared/components/ui";
 import PricingSideMenu from "../components/pricingSideMenu";
 import ColocationSetting from "./inventoryComponents/colocation";
@@ -48,7 +47,7 @@ const computeStats = (rows: any) => {
   }
 
   const prices = rows.map((item: any) => Number(item.price_usd || 0));
-  const sum = prices.reduce((acc, price) => acc + price, 0);
+  const sum = prices.reduce((acc: number, price: number) => acc + price, 0);
   const highest = Math.max(...prices);
   const uniqueRegions = new Set(rows.map((item: any) => item.region || "global")).size;
 
@@ -71,7 +70,7 @@ const PRICING_TAB_CONFIG = [
     tableTitle: "Bandwidth pricing catalogue",
     tableDescription: "Review committed data rate SKUs and their monthly pricing per region.",
     icon: Wifi,
-    metrics: (stats) => [
+    metrics: (stats: any) => [
       {
         label: "Throughput tiers",
         value: stats.total,
@@ -106,7 +105,7 @@ const PRICING_TAB_CONFIG = [
     tableTitle: "OS image pricing",
     tableDescription: "Monitor licence costs for curated operating system templates.",
     icon: HardDrive,
-    metrics: (stats) => [
+    metrics: (stats: any) => [
       {
         label: "Licensed templates",
         value: stats.total,
@@ -139,7 +138,7 @@ const PRICING_TAB_CONFIG = [
     tableTitle: "Volume pricing",
     tableDescription: "Review block storage profiles and their configured price points.",
     icon: Database,
-    metrics: (stats) => [
+    metrics: (stats: any) => [
       {
         label: "Volume profiles",
         value: stats.total,
@@ -173,7 +172,7 @@ const PRICING_TAB_CONFIG = [
     tableTitle: "Object storage pricing",
     tableDescription: "Review per-GB-month pricing for Silo Storage across each region.",
     icon: HardDrive,
-    metrics: (stats) => [
+    metrics: (stats: any) => [
       {
         label: "Storage SKUs",
         value: stats.total,
@@ -208,7 +207,7 @@ const PRICING_TAB_CONFIG = [
     tableTitle: "Compute pricing",
     tableDescription: "Track compute classes and their per-instance pricing across regions.",
     icon: Cpu,
-    metrics: (stats) => [
+    metrics: (stats: any) => [
       {
         label: "Instance classes",
         value: stats.total,
@@ -241,7 +240,7 @@ const PRICING_TAB_CONFIG = [
     tableTitle: "Floating IP pricing",
     tableDescription: "Manage routable IP pools and the rates exposed to tenants.",
     icon: Globe,
-    metrics: (stats) => [
+    metrics: (stats: any) => [
       {
         label: "IP pools",
         value: stats.total,
@@ -274,7 +273,7 @@ const PRICING_TAB_CONFIG = [
     tableTitle: "Cross connect pricing",
     tableDescription: "Review carrier cross connect offers and their monthly pricing.",
     icon: Cable,
-    metrics: (stats) => [
+    metrics: (stats: any) => [
       {
         label: "Cross connect SKUs",
         value: stats.total,
@@ -309,12 +308,15 @@ const PRICING_TAB_CONFIG = [
   },
 ];
 
-const TAB_MAP = PRICING_TAB_CONFIG.reduce((acc, tab) => {
-  acc[tab.id] = tab;
-  return acc;
-}, {});
+const TAB_MAP = PRICING_TAB_CONFIG.reduce(
+  (acc: Record<string, any>, tab: any) => {
+    acc[tab.id] = tab;
+    return acc;
+  },
+  {} as Record<string, any>
+);
 
-const DEFAULT_TAB_ID = PRICING_TAB_CONFIG[0].id;
+const DEFAULT_TAB_ID = PRICING_TAB_CONFIG[0]?.id ?? "compute";
 
 export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
   const location = useLocation();
@@ -338,7 +340,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
   });
   const [isAddProductPricingOpen, setAddProductPricing] = useState(false);
   const [isUploadModalOpen, setUploadModalOpen] = useState(false);
-  const [selectedPricing, setSelectedPricing] = useState(null);
+  const [selectedPricing, setSelectedPricing] = useState<any>(null);
   const [isEditPricingOpen, setEditPricingOpen] = useState(false);
   const [isDeletePricingOpen, setDeletePricingOpen] = useState(false);
 
@@ -364,6 +366,8 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
     }
   );
   const { mutate: exportTemplate, isPending: isExporting } = useExportProductPricingTemplate();
+  const regionsList = Array.isArray(regions) ? regions : [];
+  const pricingPayload: any = pricingData;
 
   const menuItems = useMemo(
     () =>
@@ -398,21 +402,21 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
   }, [activeTab]);
 
   useEffect(() => {
-    if (!isRegionsFetching && regions?.length && !selectedRegion) {
-      setSelectedRegion(regions[0].code);
+    if (!isRegionsFetching && regionsList.length && !selectedRegion) {
+      setSelectedRegion(regionsList[0].code);
     }
-  }, [isRegionsFetching, regions, selectedRegion]);
+  }, [isRegionsFetching, regionsList, selectedRegion]);
 
-  const pricingRows = useMemo(() => {
+  const pricingRows = useMemo<any[]>(() => {
     if (isColocationTab) return [];
-    const rows = pricingData?.data ?? [];
+    const rows = pricingPayload?.data ?? [];
     return rows.map((item: any) => ({
       ...item,
       product_name: item.product_name || item.name || "Unnamed product",
     }));
-  }, [pricingData, isColocationTab]);
+  }, [pricingPayload, isColocationTab]);
 
-  const filteredRows = useMemo(() => {
+  const filteredRows = useMemo<any[]>(() => {
     if (isColocationTab) return [];
     if (!activeConfig?.productType) return pricingRows;
     return pricingRows.filter((row: any) =>
@@ -420,7 +424,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
     );
   }, [pricingRows, activeConfig, isColocationTab]);
 
-  const meta = !isColocationTab ? (pricingData?.meta ?? null) : null;
+  const meta = !isColocationTab ? (pricingPayload?.meta ?? null) : null;
   const total = !isColocationTab ? filteredRows.length : 0;
 
   const pricingStats = useMemo(() => {
@@ -450,7 +454,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
     setSelectedRegion(regionCode);
     setPage(1);
   };
-  const handleSearch = useCallback((value) => {
+  const handleSearch = useCallback((value: any) => {
     setSearch(value);
     setPage(1);
   }, []);
@@ -472,7 +476,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
     navigate({ search: params.toString() }, { replace: true });
   };
   const handleColocationSummary = useCallback(
-    (payload) => {
+    (payload: any) => {
       if (!isColocationTab) return;
       setHeroState((prev) => ({
         title: activeConfig.heroTitle,
@@ -499,13 +503,13 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
     setDeletePricingOpen(false);
     setSelectedPricing(null);
   };
-  const columns = useMemo(() => {
+  const columns = useMemo<any[]>(() => {
     if (isColocationTab) return [];
     return [
       {
         header: "Product",
         key: "product_name",
-        render: (row) => (
+        render: (row: any) => (
           <div className="flex items-center gap-3">
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500/10 text-primary-500">
               <Package className="h-4 w-4" />
@@ -523,7 +527,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
         header: "Region",
         key: "region",
         align: "center",
-        render: (row) => (
+        render: (row: any) => (
           <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
             {row.region || "Global"}
           </span>
@@ -533,7 +537,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
         header: "Price (USD)",
         key: "price_usd",
         align: "right",
-        render: (row) => (
+        render: (row: any) => (
           <span className="font-semibold text-slate-900">{formatCurrency(row.price_usd)}</span>
         ),
       },
@@ -541,7 +545,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
         header: "",
         key: "actions",
         align: "right",
-        render: (row) => (
+        render: (row: any) => (
           <div className="flex items-center justify-end gap-2">
             <button
               type="button"
@@ -614,7 +618,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
             Loading regions...
           </option>
         ) : (
-          regions?.map((region: any) => (
+          regionsList.map((region: any) => (
             <option key={region.code} value={region.code}>
               {region.name}
             </option>
@@ -636,7 +640,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
       total={total}
       meta={meta}
       onPageChange={setPage}
-      onPerPageChange={(next) => {
+      onPerPageChange={(next: number) => {
         setPerPage(next);
         setPage(1);
       }}

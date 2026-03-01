@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Activity, MapPin, RefreshCw, Trash2 } from "lucide-react";

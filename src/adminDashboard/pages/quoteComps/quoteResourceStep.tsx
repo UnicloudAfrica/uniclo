@@ -1,12 +1,39 @@
-// @ts-nocheck
-import React from "react";
 import { Loader2, Plus, Trash2, Server, HardDrive, Network, Layers } from "lucide-react";
 import ModernCard from "../../../shared/components/ui/ModernCard";
 import { ModernButton } from "../../../shared/components/ui";
 import ModernInput from "../../../shared/components/ui/ModernInput";
+import type { MultiQuoteFormData, MultiQuoteFormErrors, UpdateFormData } from "./quoteTypes";
 
 const selectBaseClass =
   "w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400";
+
+type QuoteResourceStepProps = {
+  formData: MultiQuoteFormData;
+  errors: MultiQuoteFormErrors;
+  updateFormData: UpdateFormData;
+  regions: any[];
+  isRegionsFetching: boolean;
+  computerInstances: any[];
+  isComputerInstancesFetching: boolean;
+  ebsVolumes: any[];
+  isEbsVolumesFetching: boolean;
+  osImages: any[];
+  isOsImagesFetching: boolean;
+  bandwidths?: any[];
+  isBandwidthsFetching: boolean;
+  floatingIps?: any[];
+  isFloatingIpsFetching: boolean;
+  crossConnects?: any[];
+  isCrossConnectsFetching: boolean;
+  onAddRequest: () => void;
+  pricingRequests: any[];
+  onRemoveRequest: (index: number) => void;
+  objectStorageProducts: any[];
+  isObjectStorageProductsFetching: boolean;
+  onAddObjectStorageRequest: () => void;
+  objectStorageRequests: any[];
+  onRemoveObjectStorageRequest: (index: number) => void;
+};
 
 const QuoteResourceStep = ({
   formData,
@@ -20,11 +47,11 @@ const QuoteResourceStep = ({
   isEbsVolumesFetching,
   osImages,
   isOsImagesFetching,
-  bandwidths = [],
+  bandwidths = [] as any[],
   isBandwidthsFetching,
-  floatingIps = [],
+  floatingIps = [] as any[],
   isFloatingIpsFetching,
-  crossConnects = [],
+  crossConnects = [] as any[],
   isCrossConnectsFetching,
   onAddRequest,
   pricingRequests,
@@ -35,7 +62,7 @@ const QuoteResourceStep = ({
   onAddObjectStorageRequest,
   objectStorageRequests,
   onRemoveObjectStorageRequest,
-}) => {
+}: QuoteResourceStepProps) => {
   const formatCurrency = (amount: any, currency: any) => {
     if (amount === null || amount === undefined) return "N/A";
     return new Intl.NumberFormat("en-US", {

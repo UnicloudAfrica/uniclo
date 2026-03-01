@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useMemo, useState } from "react";
 import { Eye, Trash2, RefreshCw, ShieldCheck } from "lucide-react";
 import {
@@ -15,10 +14,11 @@ import { ResourceSection } from "../../../shared/components/ui";
 import { ResourceEmptyState } from "../../../shared/components/ui";
 import { ResourceListCard } from "../../../shared/components/ui";
 import { ModernButton } from "../../../shared/components/ui";
+import type { MetaItem, Tone } from "../../../shared/components/ui/ResourceSection";
 
 const ITEMS_PER_PAGE = 6;
 
-const getToneForStatus = (status = "") => {
+const getToneForStatus = (status = ""): Tone => {
   const normalized = status.toString().toLowerCase();
   if (["active", "available", "in-use"].includes(normalized)) return "success";
   if (["pending", "creating", "syncing"].includes(normalized)) return "warning";
@@ -31,18 +31,19 @@ const SecurityGroup = ({ projectId = "", region = "" }: any) => {
   const { data: securityGroups, isFetching } = useFetchSecurityGroups(projectId, region);
   const { mutate: deleteSecurityGroup, isPending: isDeleting } = useDeleteSecurityGroup();
   const [isCreateModalOpen, setCreateModal] = useState(false);
-  const [deleteModal, setDeleteModal] = useState(null);
-  const [viewModal, setViewModal] = useState(null);
+  const [deleteModal, setDeleteModal] = useState<any>(null);
+  const [viewModal, setViewModal] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const totalItems = securityGroups?.length ?? 0;
+  const securityGroupList = Array.isArray(securityGroups) ? securityGroups : [];
+  const totalItems = securityGroupList.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
 
   const currentSecurityGroups = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return (securityGroups ?? []).slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [securityGroups, currentPage]);
+    return securityGroupList.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [securityGroupList, currentPage]);
 
   const handleDelete = () => {
     if (!deleteModal) return;
@@ -71,7 +72,7 @@ const SecurityGroup = ({ projectId = "", region = "" }: any) => {
       ToastUtils.success("Security groups synced successfully!");
     } catch (error) {
       console.error("Failed to sync Security Groups:", error);
-      ToastUtils.error(error?.message || "Failed to sync security groups.");
+      ToastUtils.error(error instanceof Error ? error.message : "Failed to sync security groups.");
     } finally {
       setIsSyncing(false);
     }
@@ -94,8 +95,8 @@ const SecurityGroup = ({ projectId = "", region = "" }: any) => {
     </ModernButton>,
   ];
 
-  const stats = useMemo(() => {
-    const base = [
+  const stats = useMemo<MetaItem[]>(() => {
+    const base: MetaItem[] = [
       {
         label: "Total Security Groups",
         value: totalItems,
@@ -130,7 +131,7 @@ const SecurityGroup = ({ projectId = "", region = "" }: any) => {
       <ResourceListCard
         key={securityGroup.id}
         title={securityGroup.name || securityGroup.id}
-        subtitle={securityGroup.id}
+        subtitle={securityGroup.id != null ? String(securityGroup.id) : "—"}
         metadata={[
           {
             label: "Region",
@@ -150,7 +151,7 @@ const SecurityGroup = ({ projectId = "", region = "" }: any) => {
                 value: securityGroup.description,
               }
             : null,
-        ].filter(Boolean)}
+        ].filter((item): item is { label: string; value: string | number } => Boolean(item))}
         statuses={[
           {
             label: status,

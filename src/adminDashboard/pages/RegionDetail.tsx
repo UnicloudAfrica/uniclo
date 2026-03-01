@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   Activity,
@@ -23,7 +22,7 @@ import {
 } from "lucide-react";
 import adminRegionApi from "../../services/adminRegionApi";
 import ToastUtils from "../../utils/toastUtil";
-import AdminPageShell from "../components/AdminPageShell.tsx";
+import AdminPageShell from "../components/AdminPageShell";
 import { ModernCard } from "../../shared/components/ui";
 import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
 import { ModernButton } from "../../shared/components/ui";
@@ -71,9 +70,9 @@ const AttributeTile = ({ label, value, hint, icon: Icon }: any) => {
 const RegionDetail = () => {
   const { id: code } = useParams();
   const navigate = useNavigate();
-  const [region, setRegion] = useState(null);
+  const [region, setRegion] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [credentialStatus, setCredentialStatus] = useState({});
+  const [credentialStatus, setCredentialStatus] = useState<Record<string, any>>({});
 
   useEffect(() => {
     fetchRegionDetail();

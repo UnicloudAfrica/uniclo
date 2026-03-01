@@ -54,10 +54,14 @@ const SetupProgressCard: React.FC<SetupProgressCardProps> = ({
       s.label?.toLowerCase().includes("delete")
   );
 
-  const themeColor = isCleanup ? "amber" : "blue";
-  const themeBg = isCleanup ? "bg-amber-50" : "bg-blue-50";
-  const themeText = isCleanup ? "text-amber-600" : "text-blue-600";
-  const themeBar = isCleanup ? "bg-amber-500" : "bg-blue-600";
+  const themeColor = allComplete ? "green" : isCleanup ? "amber" : "blue";
+  const themeBg = allComplete ? "bg-green-50" : isCleanup ? "bg-amber-50" : "bg-blue-50";
+  const themeText = allComplete ? "text-green-600" : isCleanup ? "text-amber-600" : "text-blue-600";
+  const themeBar = allComplete
+    ? "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.3)]"
+    : isCleanup
+      ? "bg-amber-500"
+      : "bg-blue-600";
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm h-full flex flex-col overflow-hidden">
@@ -86,7 +90,7 @@ const SetupProgressCard: React.FC<SetupProgressCardProps> = ({
       </div>
 
       {/* Steps Checklist */}
-      <div className="p-6 space-y-4 flex-grow overflow-y-auto max-h-[300px]">
+      <div className="p-6 space-y-4 flex-grow overflow-y-auto max-h-[500px]">
         {steps.map((step) => {
           const hasContext = step.context && Object.keys(step.context).length > 0;
           const isExpanded = expandedSteps[step.id];

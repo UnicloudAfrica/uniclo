@@ -16,10 +16,15 @@ export const useTenantCustomerContext = (options: { enabled?: boolean } = {}) =>
     selfTenantId ? String(selfTenantId) : ""
   );
   const [selectedUserId, setSelectedUserId] = useState("");
-
   const { data: partnerTenants = [], isFetching: isTenantsFetching } = useFetchTenantPartners({
     enabled,
   });
+
+  useEffect(() => {
+    if (selfTenantId && !selectedTenantId) {
+      setSelectedTenantId(String(selfTenantId));
+    }
+  }, [selfTenantId]);
 
   const partners = Array.isArray(partnerTenants)
     ? partnerTenants

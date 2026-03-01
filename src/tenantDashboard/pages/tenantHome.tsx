@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import logo from "./assets/logo.png"; // Default logo as fallback
 import {
@@ -9,17 +8,21 @@ import {
 import useImageFallback from "../../hooks/useImageFallback";
 import { getSubdomain } from "../../utils/getSubdomain";
 
-const TenantHome = ({ tenant = "Tenant" }: any) => {
+interface TenantHomeProps {
+  tenant?: string;
+}
+
+const TenantHome: React.FC<TenantHomeProps> = ({ tenant = "Tenant" }) => {
   const fallbackBrand = {
     name: tenant,
     logo,
-    color: "#288DD1",
+    color: "var(--theme-color)",
   };
-  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+  const hostname = typeof window !== "undefined" ? globalThis.window.location.hostname : "";
   const subdomain = typeof window !== "undefined" ? getSubdomain() : null;
   const { data: branding } = usePublicBrandingTheme({
     domain: hostname,
-    subdomain,
+    subdomain: subdomain ?? undefined,
   });
 
   useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
@@ -27,7 +30,7 @@ const TenantHome = ({ tenant = "Tenant" }: any) => {
   const accentColor = branding?.accentColor || fallbackBrand.color;
   const accentTint = /^#([0-9A-F]{6}|[0-9A-F]{3})$/i.test(accentColor)
     ? `${accentColor}20`
-    : "#288DD120";
+    : "rgb(var(--theme-color-rgb) / 0.13)";
   const brandName = branding?.company?.name || fallbackBrand.name;
   const logoSrc = resolveBrandLogo(branding, fallbackBrand.logo);
   const logoAlt = branding?.company?.name
@@ -38,7 +41,7 @@ const TenantHome = ({ tenant = "Tenant" }: any) => {
     fallbackBrand.logo
   );
 
-  const shadeColor = (color: any, percent: any) => {
+  const shadeColor = (color: string, percent: number) => {
     let R = parseInt(color.substring(1, 3), 16);
     let G = parseInt(color.substring(3, 5), 16);
     let B = parseInt(color.substring(5, 7), 16);
@@ -87,8 +90,10 @@ const TenantHome = ({ tenant = "Tenant" }: any) => {
               backgroundColor: accentColor,
               transition: "background-color 0.3s",
             }}
-            onMouseOver={(e) => (e.target.style.backgroundColor = shadeColor(accentColor, 20))}
-            onMouseOut={(e) => (e.target.style.backgroundColor = accentColor)}
+            onMouseOver={(e) =>
+              (e.currentTarget.style.backgroundColor = shadeColor(accentColor, 20))
+            }
+            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = accentColor)}
           >
             Login
           </a>
@@ -100,8 +105,8 @@ const TenantHome = ({ tenant = "Tenant" }: any) => {
               color: accentColor,
               transition: "background-color 0.3s",
             }}
-            onMouseOver={(e) => (e.target.style.backgroundColor = accentColor)}
-            onMouseOut={(e) => (e.target.style.backgroundColor = "transparent")}
+            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = accentColor)}
+            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
           >
             Register
           </a>

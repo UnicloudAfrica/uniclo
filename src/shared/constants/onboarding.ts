@@ -8,10 +8,7 @@ export const STATUS_LABELS: Record<string, string> = {
   rejected: "Rejected",
 };
 
-export const STATUS_TONES: Record<
-  string,
-  "info" | "neutral" | "warning" | "success" | "danger" | "primary" | "secondary"
-> = {
+export const STATUS_TONES: Record<string, "info" | "neutral" | "warning" | "success" | "danger"> = {
   not_started: "info",
   draft: "neutral",
   submitted: "info",

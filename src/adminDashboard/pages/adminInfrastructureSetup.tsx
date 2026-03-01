@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import AdminActiveTab from "../components/adminActiveTab";
@@ -7,9 +6,17 @@ import InfrastructureSetupFlow from "./infraComps/InfrastructureSetupFlow";
 import { useFetchProjectById } from "../../hooks/adminHooks/projectHooks";
 import ToastUtils from "../../utils/toastUtil";
 
+interface ProjectDetails {
+  identifier: string;
+  name: string;
+}
+
 // Function to decode the ID from URL
-const decodeId = (encodedId: any) => {
+const decodeId = (encodedId: string | null) => {
   try {
+    if (!encodedId) {
+      return null;
+    }
     return atob(decodeURIComponent(encodedId));
   } catch (e) {
     console.error("Error decoding ID:", e);
@@ -29,9 +36,19 @@ const AdminInfrastructureSetup = () => {
     data: projectDetails,
     isFetching: isProjectFetching,
     error: projectError,
-  } = useFetchProjectById(projectId);
+  } = useFetchProjectById(projectId ?? "");
+  const project =
+    projectDetails && typeof projectDetails === "object"
+      ? (projectDetails as Partial<ProjectDetails>)
+      : null;
+  const projectName = project?.name || "";
+  const projectIdentifier = project?.identifier || "";
 
   const handleBackToProject = () => {
+    if (!projectId) {
+      navigate("/admin-dashboard/projects");
+      return;
+    }
     const encodedId = encodeURIComponent(btoa(projectId));
     navigate(`/admin-dashboard/projects/details?id=${encodedId}`);
   };
@@ -41,18 +58,18 @@ const AdminInfrastructureSetup = () => {
     // Show welcome message for new projects
   };
   useEffect(() => {
-    if (isNewProject && projectDetails) {
+    if (isNewProject && projectName) {
       ToastUtils.success(
-        `Project "${projectDetails.name}" created successfully! Configure your infrastructure below.`
+        `Project "${projectName}" created successfully! Configure your infrastructure below.`
       );
     }
-  }, [isNewProject, projectDetails]);
+  }, [isNewProject, projectName]);
 
   if (isProjectFetching) {
     return (
       <>
         <AdminActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center flex-col">
+        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[var(--theme-surface-alt)] min-h-full p-6 md:p-8 flex items-center justify-center flex-col">
           <div className="animate-pulse">
             <div className="w-8 h-8 bg-blue-200 rounded-full mb-4"></div>
             <div className="h-4 bg-gray-200 rounded w-48 mb-2"></div>
@@ -67,7 +84,7 @@ const AdminInfrastructureSetup = () => {
     return (
       <>
         <AdminActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center flex-col text-center">
+        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[var(--theme-surface-alt)] min-h-full p-6 md:p-8 flex items-center justify-center flex-col text-center">
           <div className="max-w-md">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Project Not Found</h2>
             <p className="text-sm md:text-base font-normal text-gray-700 mb-6">
@@ -77,12 +94,12 @@ const AdminInfrastructureSetup = () => {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
                 onClick={handleGoToProjects}
-                className="px-6 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors"
+                className="px-6 py-3 bg-[var(--theme-color)] text-white font-medium rounded-full hover:bg-[var(--theme-color)] transition-colors"
               >
                 Go to Projects
               </button>
               <button
-                onClick={() => window.history.back()}
+                onClick={() => globalThis.window.history.back()}
                 className="px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-full hover:bg-gray-200 transition-colors"
               >
                 Go Back
@@ -97,7 +114,7 @@ const AdminInfrastructureSetup = () => {
   return (
     <>
       <AdminActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
+      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[var(--theme-surface-alt)] min-h-full p-6 md:p-8">
         {/* Header Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
@@ -112,8 +129,7 @@ const AdminInfrastructureSetup = () => {
               <div>
                 <h1 className="text-2xl font-bold text-gray-800">Infrastructure Setup</h1>
                 <p className="text-sm text-gray-600">
-                  Configure infrastructure for:{" "}
-                  <span className="font-medium">{projectDetails.name}</span>
+                  Configure infrastructure for: <span className="font-medium">{projectName}</span>
                 </p>
               </div>
             </div>
@@ -148,10 +164,7 @@ const AdminInfrastructureSetup = () => {
 
         {/* Infrastructure Setup Flow */}
         <div>
-          <InfrastructureSetupFlow
-            projectId={projectDetails.identifier}
-            projectName={projectDetails.name}
-          />
+          <InfrastructureSetupFlow projectId={projectIdentifier} projectName={projectName} />
         </div>
       </main>
     </>

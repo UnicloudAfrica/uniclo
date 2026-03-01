@@ -1,10 +1,80 @@
-// @ts-nocheck
 import React, { useMemo } from "react";
 import { Cpu, HardDrive, Network, ListChecks, Tag, BadgePercent } from "lucide-react";
 import ModernCard from "../../../shared/components/ui/ModernCard";
 import ModernTable from "../../../shared/components/ui/ModernTable";
+import type { Column } from "../../../shared/components/ui/ModernTable";
 
-const SummaryTile = ({ icon: Icon, label, value, tone }: any) => (
+type SummaryTone = "primary" | "success" | "neutral";
+
+type SummaryTileProps = {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string | number;
+  tone?: SummaryTone;
+};
+
+type PricingRequest = {
+  region?: string;
+  months?: number;
+  number_of_instances?: number;
+  bandwidth_count?: number | string | null;
+  floating_ip_count?: number | string | null;
+  cross_connect_id?: string | number | null;
+  _display?: {
+    compute?: string;
+    os?: string;
+    storage?: string;
+  };
+};
+
+type GroupedItem = {
+  id: string;
+  index: number;
+  region: string;
+  months: number;
+  instances: number;
+  compute: string;
+  os: string;
+  storage: string;
+  bandwidth: string | null;
+  floatingIps: string | null;
+  label: string;
+  highlight: string;
+  description: string;
+};
+
+type GroupedItems = {
+  compute: GroupedItem[];
+  storage: GroupedItem[];
+  network: GroupedItem[];
+  other: GroupedItem[];
+};
+
+type ObjectStorageRequest = {
+  id?: string | number;
+  region?: string;
+  quantity?: number | string;
+  months?: number | string;
+  _display?: {
+    name?: string;
+  };
+  [key: string]: unknown;
+};
+
+type ProductSummaryFormData = {
+  apply_total_discount?: boolean;
+  total_discount_value?: string | number;
+  total_discount_type?: string;
+  total_discount_label?: string;
+};
+
+type ProductSummaryStepProps = {
+  pricingRequests: PricingRequest[];
+  objectStorageRequests?: ObjectStorageRequest[];
+  formData: ProductSummaryFormData;
+};
+
+const SummaryTile = ({ icon: Icon, label, value, tone }: SummaryTileProps) => (
   <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
     <div className="flex items-center gap-3">
       <div
@@ -26,23 +96,27 @@ const SummaryTile = ({ icon: Icon, label, value, tone }: any) => (
   </div>
 );
 
-const ProductSummaryStep = ({ pricingRequests, objectStorageRequests, formData }: any) => {
+const ProductSummaryStep = ({
+  pricingRequests,
+  objectStorageRequests = [],
+  formData,
+}: ProductSummaryStepProps) => {
   const hasItems = pricingRequests.length > 0 || objectStorageRequests?.length > 0;
   const groupedItems = useMemo(() => {
-    const groups = {
+    const groups: GroupedItems = {
       compute: [],
       storage: [],
       network: [],
       other: [],
     };
 
-    pricingRequests.forEach((req, index) => {
+    pricingRequests.forEach((req: PricingRequest, index: number) => {
       const base = {
         id: `pricing-${index}`,
         index,
-        region: req.region,
-        months: req.months,
-        instances: req.number_of_instances,
+        region: req.region || "Unknown region",
+        months: req.months || 1,
+        instances: req.number_of_instances || 1,
         compute: req._display?.compute || "Unknown Compute",
         os: req._display?.os || "Unknown OS",
         storage: req._display?.storage || "Unknown Storage",
@@ -105,7 +179,14 @@ const ProductSummaryStep = ({ pricingRequests, objectStorageRequests, formData }
 
   const discountApplied = formData.apply_total_discount && formData.total_discount_value;
 
-  const Section = ({ icon: Icon, title, items, tone }: any) => {
+  type SectionProps = {
+    icon: React.ComponentType<{ className?: string }>;
+    title: string;
+    items: GroupedItem[];
+    tone?: SummaryTone;
+  };
+
+  const Section = ({ icon: Icon, title, items, tone }: SectionProps) => {
     if (!items.length) return null;
     return (
       <ModernCard padding="none" variant="outlined" className="space-y-4 p-4 md:p-6 lg:p-8">
@@ -130,7 +211,7 @@ const ProductSummaryStep = ({ pricingRequests, objectStorageRequests, formData }
         </header>
 
         <div className="space-y-4">
-          {items.map((item, idx) => (
+          {items.map((item: GroupedItem, idx: number) => (
             <div
               key={`${item.label}-${idx}`}
               className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4"
@@ -152,11 +233,11 @@ const ProductSummaryStep = ({ pricingRequests, objectStorageRequests, formData }
     );
   };
 
-  const objectStorageColumns = [
+  const objectStorageColumns: Column<ObjectStorageRequest & { id: string }>[] = [
     {
       key: "name",
       header: "CONFIGURATION",
-      render: (_, item) => (
+      render: (_: unknown, item: ObjectStorageRequest) => (
         <span className="text-sm font-medium text-slate-900">
           {item._display?.name || "Silo Storage"}
         </span>
@@ -165,12 +246,12 @@ const ProductSummaryStep = ({ pricingRequests, objectStorageRequests, formData }
     {
       key: "region",
       header: "REGION",
-      render: (val) => <span className="text-sm text-slate-500">{val}</span>,
+      render: (val: unknown) => <span className="text-sm text-slate-500">{String(val || "")}</span>,
     },
     {
       key: "details",
       header: "DETAILS",
-      render: (_, item) => (
+      render: (_: unknown, item: ObjectStorageRequest) => (
         <span className="text-sm text-slate-500">
           {item.quantity} GB for {item.months} month{item.months === 1 ? "" : "s"}
         </span>
@@ -179,7 +260,11 @@ const ProductSummaryStep = ({ pricingRequests, objectStorageRequests, formData }
   ];
 
   const objectStorageData = useMemo(
-    () => (objectStorageRequests || []).map((item, idx) => ({ ...item, id: `os-${idx}` })),
+    () =>
+      objectStorageRequests.map((item: ObjectStorageRequest, idx: number) => ({
+        ...item,
+        id: `os-${idx}`,
+      })),
     [objectStorageRequests]
   );
 

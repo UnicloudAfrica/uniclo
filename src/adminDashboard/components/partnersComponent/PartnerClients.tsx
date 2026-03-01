@@ -1,37 +1,49 @@
-// @ts-nocheck
 import React from "react";
 import { Eye, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useFetchSubTenantByTenantID } from "../../../hooks/adminHooks/tenantHooks";
 import { ModernButton } from "../../../shared/components/ui";
-import ModernTable from "../../../shared/components/ui/ModernTable";
+import ModernTable, { Column } from "../../../shared/components/ui/ModernTable";
 
-const encodeId = (id: string) => {
-  return encodeURIComponent(btoa(id));
+const encodeId = (id: string | number) => {
+  return encodeURIComponent(btoa(String(id)));
 };
 
 interface PartnerClientsProps {
   tenantId?: string;
 }
 
-const PartnerClients: React.FC<PartnerClientsProps> = ({ tenantId }: any) => {
+interface PartnerClientRecord {
+  id?: string | number;
+  identifier?: string | number;
+  name?: string;
+  email?: string;
+}
+
+const PartnerClients: React.FC<PartnerClientsProps> = ({ tenantId }) => {
   const navigate = useNavigate();
-  const { data: partnerClients, isFetching: isClientsFetching } =
+  const { data: partnerClientsData, isFetching: isClientsFetching } =
     useFetchSubTenantByTenantID(tenantId);
 
-  const clientData = partnerClients || [];
+  const clientData: PartnerClientRecord[] = Array.isArray(partnerClientsData)
+    ? (partnerClientsData as PartnerClientRecord[])
+    : [];
 
-  const handleViewDetails = (client: any) => {
-    const encodedId = encodeId(client.id || client.identifier);
+  const handleViewDetails = (client: PartnerClientRecord) => {
+    const identifier = client.id ?? client.identifier;
+    if (identifier === undefined || identifier === null) {
+      return;
+    }
+    const encodedId = encodeId(identifier);
     const clientFullName = encodeURIComponent(`${client.name || ""}`.trim() || "Unknown Client");
     navigate(`/admin-dashboard/clients/details?id=${encodedId}&name=${clientFullName}`);
   };
 
-  const columns = [
+  const columns: Column<PartnerClientRecord>[] = [
     {
       key: "sn",
       header: "S/N",
-      render: (_: any, __: any, index: number) => index + 1,
+      render: (_: unknown, __: PartnerClientRecord, index: number) => index + 1,
     },
     {
       key: "name",
@@ -44,12 +56,12 @@ const PartnerClients: React.FC<PartnerClientsProps> = ({ tenantId }: any) => {
     {
       key: "action",
       header: "ACTION",
-      render: (_: any, item: any) => (
+      render: (_: unknown, item: PartnerClientRecord) => (
         <ModernButton
           variant="ghost"
           size="sm"
           className="gap-2 text-xs"
-          onClick={(e) => {
+          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
             e.stopPropagation();
             handleViewDetails(item);
           }}
@@ -65,7 +77,7 @@ const PartnerClients: React.FC<PartnerClientsProps> = ({ tenantId }: any) => {
     <div className="font-Outfit">
       {isClientsFetching ? (
         <div className="flex justify-center items-center h-40">
-          <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[var(--theme-color)]" />
           <p className="ml-2 text-gray-600">Loading clients...</p>
         </div>
       ) : (

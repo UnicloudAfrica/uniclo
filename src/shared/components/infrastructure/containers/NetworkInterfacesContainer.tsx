@@ -1,13 +1,8 @@
-// @ts-nocheck
 import React, { useState } from "react";
 import { RefreshCw, RefreshCcw } from "lucide-react";
 import NetworkInterfacesOverview from "../NetworkInterfacesOverview";
 import ModernButton from "../../ui/ModernButton";
-import {
-  getNetworkInterfacePermissions,
-  type Hierarchy,
-  type NetworkInterfacePermissions,
-} from "../../../config/permissionPresets";
+import { getNetworkInterfacePermissions, type Hierarchy } from "../../../config/permissionPresets";
 import type { NetworkInterface } from "../NetworkInterfacesTable";
 
 interface NetworkInterfaceHooks {
@@ -15,7 +10,7 @@ interface NetworkInterfaceHooks {
     projectId: string,
     region: string,
     options?: any
-  ) => { data: NetworkInterface[]; isLoading: boolean; refetch: () => void };
+  ) => { data?: NetworkInterface[] | unknown; isLoading: boolean; refetch: () => void };
   /** Optional sync function - triggers refresh/sync */
   onSync?: () => Promise<void>;
 }
@@ -49,7 +44,8 @@ const NetworkInterfacesContainer: React.FC<NetworkInterfacesContainerProps> = ({
   const [isSyncing, setIsSyncing] = useState(false);
 
   // Hook call
-  const { data: networkInterfaces = [], isLoading, refetch } = hooks.useList(projectId, region);
+  const { data, isLoading, refetch } = hooks.useList(projectId, region);
+  const networkInterfaces = Array.isArray(data) ? (data as NetworkInterface[]) : [];
 
   const handleSync = async () => {
     if (!permissions.canSync || !hooks.onSync) return;

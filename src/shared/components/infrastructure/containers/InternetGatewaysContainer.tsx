@@ -1,5 +1,5 @@
-// @ts-nocheck
 import React from "react";
+import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
 import {
   getInternetGatewayPermissions,
@@ -11,17 +11,13 @@ import ToastUtils from "../../../../utils/toastUtil";
 import ModernButton from "../../ui/ModernButton";
 
 interface InternetGatewayHooks {
-  useList: (
-    projectId: string,
-    region?: string,
-    options?: any
-  ) => { data: any[]; isLoading: boolean; refetch: () => void };
-  useVpcs: (projectId: string, region?: string) => { data: any[] };
+  useList: (projectId: string, region?: string, options?: any) => UseQueryResult<any[], Error>;
+  useVpcs: (projectId: string, region?: string, options?: any) => UseQueryResult<any[], Error>;
 
-  useCreate: () => { mutateAsync: (input: any) => Promise<any>; isPending: boolean };
-  useDelete: () => { mutateAsync: (input: any) => Promise<any>; isPending: boolean };
-  useAttach: () => { mutateAsync: (input: any) => Promise<any>; isPending: boolean };
-  useDetach: () => { mutateAsync: (input: any) => Promise<any>; isPending: boolean };
+  useCreate: () => UseMutationResult<any, any, any, unknown>;
+  useDelete: () => UseMutationResult<any, any, any, unknown>;
+  useAttach: () => UseMutationResult<any, any, any, unknown>;
+  useDetach: () => UseMutationResult<any, any, any, unknown>;
 }
 
 interface InternetGatewaysContainerProps {
@@ -33,7 +29,6 @@ interface InternetGatewaysContainerProps {
     headerActions: React.ReactNode;
     children: React.ReactNode;
   }) => React.ReactElement;
-  onStatsUpdate?: (count: number) => void;
 }
 
 const InternetGatewaysContainer: React.FC<InternetGatewaysContainerProps> = ({

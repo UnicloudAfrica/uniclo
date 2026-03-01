@@ -1,16 +1,61 @@
-// @ts-nocheck
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
 import { X } from "lucide-react";
 import { useFetchVpcs } from "../../../hooks/adminHooks/vcpHooks";
 import { useCreateRouteTable } from "../../../hooks/adminHooks/routeTableHooks";
 
-const AddRouteTable = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: any) => {
-  const [form, setForm] = useState({ name: "", vpc_id: "", region: defaultRegion || "", tags: "" });
-  const [errors, setErrors] = useState({});
+type AddRouteTableProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  projectId?: string;
+  region?: string;
+};
+
+type AddRouteTableForm = {
+  name: string;
+  vpc_id: string;
+  region: string;
+  tags: string;
+};
+
+type VpcOption = {
+  id?: string | number;
+  uuid?: string | number;
+  provider_resource_id?: string | number;
+  name?: string;
+  identifier?: string;
+};
+
+type VpcResponseLike = {
+  data?: unknown;
+};
+
+const AddRouteTable = ({
+  isOpen,
+  onClose,
+  projectId,
+  region: defaultRegion = "",
+}: AddRouteTableProps) => {
+  const [form, setForm] = useState<AddRouteTableForm>({
+    name: "",
+    vpc_id: "",
+    region: defaultRegion || "",
+    tags: "",
+  });
+  const [errors, setErrors] = useState<Record<string, any>>({});
 
   const { data: vpcs } = useFetchVpcs(projectId, form.region, {
     enabled: !!projectId && !!form.region,
   });
+  const vpcOptions = useMemo<VpcOption[]>(() => {
+    if (Array.isArray(vpcs)) {
+      return vpcs as VpcOption[];
+    }
+    if (vpcs && typeof vpcs === "object" && Array.isArray((vpcs as VpcResponseLike).data)) {
+      return (vpcs as { data: VpcOption[] }).data;
+    }
+    return [];
+  }, [vpcs]);
   const { mutate: createRouteTable, isPending } = useCreateRouteTable();
 
   useEffect(() => {
@@ -22,7 +67,7 @@ const AddRouteTable = ({ isOpen, onClose, projectId, region: defaultRegion = "" 
   if (!isOpen) return null;
 
   const validate = () => {
-    const e = {};
+    const e: Record<string, any> = {};
     if (!form.name.trim()) e.name = "Name is required";
     if (!form.vpc_id) e.vpc_id = "VPC is required";
     if (!form.region) e.region = "Region is required";
@@ -30,13 +75,13 @@ const AddRouteTable = ({ isOpen, onClose, projectId, region: defaultRegion = "" 
     return Object.keys(e).length === 0;
   };
 
-  const submit = (e: any) => {
+  const submit = (e: FormEvent<HTMLFormElement>) => {
     if (e) e.preventDefault();
     if (!validate()) return;
 
     createRouteTable(
       {
-        project_id: projectId,
+        project_id: projectId || "",
         region: form.region,
         name: form.name,
         vpc_id: form.vpc_id,
@@ -84,7 +129,7 @@ const AddRouteTable = ({ isOpen, onClose, projectId, region: defaultRegion = "" 
               <option value="" disabled>
                 {!form.region ? "Select region first" : "Select VPC"}
               </option>
-              {(vpcs?.data || vpcs || []).map((v: any) => (
+              {vpcOptions.map((v) => (
                 <option
                   key={v.id || v.uuid || v.provider_resource_id}
                   value={String(v.id || v.uuid || v.provider_resource_id)}
@@ -118,7 +163,7 @@ const AddRouteTable = ({ isOpen, onClose, projectId, region: defaultRegion = "" 
             <button
               type="submit"
               disabled={isPending}
-              className="px-4 py-2 rounded bg-[#288DD1] text-white text-sm disabled:opacity-50"
+              className="px-4 py-2 rounded bg-[var(--theme-color)] text-white text-sm disabled:opacity-50"
             >
               {isPending ? "Creating..." : "Create"}
             </button>

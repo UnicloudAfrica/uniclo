@@ -1,4 +1,3 @@
-import React from "react";
 import AdminPageShell from "../components/AdminPageShell";
 import SharedInstanceList from "../../shared/components/instances/SharedInstanceList";
 

@@ -1,6 +1,10 @@
 import React, { useMemo, useState } from "react";
 import { LayoutTemplate, Plus, Pencil, Trash2, Loader2, Eye, EyeOff } from "lucide-react";
-import { useInstanceTemplates, InstanceTemplate } from "../../../hooks/useInstanceTemplates";
+import {
+  useInstanceTemplates,
+  InstanceTemplate,
+  TemplateConfiguration,
+} from "../../../hooks/useInstanceTemplates";
 import { useInstanceResources } from "../../../hooks/useInstanceResources";
 import { useApiContext } from "../../../hooks/useApiContext";
 import adminSilentApi from "../../../index/admin/silent";
@@ -65,7 +69,7 @@ const buildTemplateForm = (
   template: InstanceTemplate,
   regionProviderMap: Map<string, string>
 ): TemplateFormState => {
-  const config = template.configuration || {};
+  const config: TemplateConfiguration = template.configuration ?? {};
   const region = normalizeId(config.region || config.region_code || config.location);
   const provider = normalizeId(
     config.provider || regionProviderMap.get(region) || config.provider_code || ""
@@ -378,7 +382,7 @@ const TemplateManager: React.FC = () => {
   };
 
   const handleDelete = (template: InstanceTemplate) => {
-    if (!window.confirm(`Delete template "${template.name}"?`)) return;
+    if (!globalThis.window.confirm(`Delete template "${template.name}"?`)) return;
     deleteTemplate(template.id);
   };
 

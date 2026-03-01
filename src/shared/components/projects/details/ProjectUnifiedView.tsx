@@ -5,17 +5,11 @@ import AdvancedQuickActionsCard from "./AdvancedQuickActionsCard";
 import SetupProgressCard from "./SetupProgressCard";
 import ResourceSummaryCard from "./ResourceSummaryCard";
 import ProjectDetailsHero from "./ProjectDetailsHero";
+import { Project } from "../../../../types/project";
 
 // TypeScript interfaces for reusability across Admin/Tenant/Client
-export interface ProjectData {
-  id: string;
-  identifier: string;
-  name: string;
-  status: string;
-  region?: string;
+export interface ProjectData extends Project {
   region_name?: string;
-  provider?: string;
-  created_at?: string;
   mode?: string;
   vpc_enabled_at?: string;
 }
@@ -41,6 +35,10 @@ export interface ResourceCounts {
   internet_gateways?: number;
   load_balancers?: number;
   users?: number;
+  volumes?: number;
+  images?: number;
+  snapshots?: number;
+  [key: string]: number | undefined;
 }
 
 export interface IGWDetails {
@@ -56,6 +54,7 @@ export interface NetworkStatus {
   internet_gateway?: { configured: boolean; can_enable?: boolean; details?: IGWDetails | null };
   subnets?: { configured: boolean };
   security_groups?: { configured: boolean };
+  [key: string]: any;
 }
 
 export interface SetupStep {
@@ -79,10 +78,19 @@ export interface ProjectUnifiedViewProps {
   setupProgressPercent?: number;
 
   // Infrastructure Data for Graph
-  vpcs?: any[];
-  subnets?: any[];
-  igws?: any[];
-  instances?: any[];
+  vpcs?: Array<{ id?: string | number; name?: string }>;
+  subnets?: Array<{ id?: string | number; name?: string; cidr?: string }>;
+  igws?: Array<{
+    id?: string | number;
+    name?: string;
+    provider_resource_id?: string;
+    label?: string;
+    state?: string;
+    status?: string;
+    created_at?: string;
+    external_id?: string;
+  }>;
+  instances?: Array<{ id?: string | number; name?: string; status?: string }>;
 
   // Edge network
   edgeNetworkConnected?: boolean;
@@ -166,13 +174,13 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
 }) => {
   const fallbackIgw = Array.isArray(igws) && igws.length > 0 ? igws[0] : null;
   const fallbackIgwDetails = fallbackIgw
-    ? {
-        id: fallbackIgw.id ?? fallbackIgw.provider_resource_id,
+    ? ({
+        id: String(fallbackIgw.id ?? fallbackIgw.provider_resource_id ?? ""),
         name: fallbackIgw.name ?? fallbackIgw.label,
         external_id: fallbackIgw.provider_resource_id ?? fallbackIgw.external_id,
         state: fallbackIgw.state ?? fallbackIgw.status,
         created_at: fallbackIgw.created_at,
-      }
+      } as IGWDetails)
     : null;
 
   const hasInternetGateway =

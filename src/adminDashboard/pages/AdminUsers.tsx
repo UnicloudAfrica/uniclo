@@ -1,15 +1,14 @@
-// @ts-nocheck
 import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, ShieldCheck, UserCog, Plus, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Users, ShieldCheck, UserCog, Plus } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
 import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
 import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
-import { ModernCard } from "../../shared/components/ui";
 import { ModernButton } from "../../shared/components/ui";
 import ModernTable from "../../shared/components/ui/ModernTable";
 import { useFetchAdmins } from "../../hooks/adminHooks/adminHooks";
-// @ts-ignore
+import adminFileApi from "../../index/admin/fileapi";
+
 import { DeleteAdminModal } from "./adminComps/deleteAdmin";
 import { TableActionButtons } from "../../shared/components/tables";
 import ToastUtils from "../../utils/toastUtil";
@@ -32,7 +31,11 @@ export default function AdminUsers() {
   const [selectedAdmin, setSelectedAdmin] = React.useState<AdminUser | null>(null);
 
   const navigate = useNavigate();
-  const { data: adminUsers = [], isFetching: isUsersFetching } = useFetchAdmins();
+  const { data: adminUsersData = [], isFetching: isUsersFetching } = useFetchAdmins();
+  const adminUsers = useMemo<AdminUser[]>(
+    () => (Array.isArray(adminUsersData) ? (adminUsersData as AdminUser[]) : []),
+    [adminUsersData]
+  );
 
   const handleAddAdmin = () => navigate("/admin-dashboard/admin-users/create");
 
@@ -69,17 +72,16 @@ export default function AdminUsers() {
 
   // Bulk operations using ModernTable's selection
   const handleBulkDelete = async (selectedIds: string[]) => {
-    if (!window.confirm(`Delete ${selectedIds.length} admin(s)?`)) return;
+    if (!globalThis.window.confirm(`Delete ${selectedIds.length} admin(s)?`)) return;
 
     try {
-      // @ts-ignore
       const { adminSilentApi } = await import("../../index/admin/api");
       await adminSilentApi("DELETE", "/admins/bulk-delete", {
         admin_ids: selectedIds,
       });
 
       ToastUtils.success(`Successfully deleted ${selectedIds.length} admin(s)`);
-      window.location.reload();
+      globalThis.window.location.reload();
     } catch (error) {
       ToastUtils.error("Failed to delete admins");
       console.error("Bulk delete error:", error);
@@ -88,22 +90,17 @@ export default function AdminUsers() {
 
   const handleBulkExport = async (selectedIds: string[], format = "csv") => {
     try {
-      // @ts-ignore
-      const { adminSilentApi } = await import("../../index/admin/api");
-      const response = await adminSilentApi(
-        "POST",
-        "/admins/bulk-export",
-        {
-          admin_ids: selectedIds,
-          format: format,
-        },
-        {
-          responseType: "blob",
-        }
-      );
+      const response = await adminFileApi<ArrayBuffer>("POST", "/admins/bulk-export", {
+        admin_ids: selectedIds,
+        format,
+      });
 
       // Create download link
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const buffer =
+        response instanceof ArrayBuffer
+          ? response
+          : new TextEncoder().encode(String(response)).buffer;
+      const url = globalThis.window.URL.createObjectURL(new Blob([buffer]));
       const link = document.createElement("a");
       link.href = url;
       link.setAttribute("download", `admins_${Date.now()}.${format}`);
@@ -119,17 +116,16 @@ export default function AdminUsers() {
   };
 
   const handleBulkDuplicate = async (selectedIds: string[]) => {
-    if (!window.confirm(`Duplicate ${selectedIds.length} admin(s)?`)) return;
+    if (!globalThis.window.confirm(`Duplicate ${selectedIds.length} admin(s)?`)) return;
 
     try {
-      // @ts-ignore
       const { adminSilentApi } = await import("../../index/admin/api");
       await adminSilentApi("POST", "/admins/bulk-duplicate", {
         admin_ids: selectedIds,
       });
 
       ToastUtils.success(`Successfully duplicated ${selectedIds.length} admin(s)`);
-      window.location.reload();
+      globalThis.window.location.reload();
     } catch (error) {
       ToastUtils.error("Failed to duplicate admins");
       console.error("Bulk duplicate error:", error);
@@ -137,17 +133,16 @@ export default function AdminUsers() {
   };
 
   const handleBulkArchive = async (selectedIds: string[]) => {
-    if (!window.confirm(`Archive ${selectedIds.length} admin(s)?`)) return;
+    if (!globalThis.window.confirm(`Archive ${selectedIds.length} admin(s)?`)) return;
 
     try {
-      // @ts-ignore
       const { adminSilentApi } = await import("../../index/admin/api");
       await adminSilentApi("POST", "/admins/bulk-archive", {
         admin_ids: selectedIds,
       });
 
       ToastUtils.success(`Successfully archived ${selectedIds.length} admin(s)`);
-      window.location.reload();
+      globalThis.window.location.reload();
     } catch (error) {
       ToastUtils.error("Failed to archive admins");
       console.error("Bulk archive error:", error);
@@ -156,15 +151,14 @@ export default function AdminUsers() {
 
   // Single item operations
   const handleDuplicateAdmin = async (admin: AdminUser) => {
-    if (!window.confirm(`Duplicate ${admin.first_name} ${admin.last_name}?`)) return;
+    if (!globalThis.window.confirm(`Duplicate ${admin.first_name} ${admin.last_name}?`)) return;
 
     try {
-      // @ts-ignore
       const { adminSilentApi } = await import("../../index/admin/api");
       await adminSilentApi("POST", `/admins/${admin.identifier}/duplicate`);
 
       ToastUtils.success("Admin duplicated successfully");
-      window.location.reload();
+      globalThis.window.location.reload();
     } catch (error) {
       ToastUtils.error("Failed to duplicate admin");
       console.error("Duplicate error:", error);
@@ -172,15 +166,14 @@ export default function AdminUsers() {
   };
 
   const handleArchiveAdmin = async (admin: AdminUser) => {
-    if (!window.confirm(`Archive ${admin.first_name} ${admin.last_name}?`)) return;
+    if (!globalThis.window.confirm(`Archive ${admin.first_name} ${admin.last_name}?`)) return;
 
     try {
-      // @ts-ignore
       const { adminSilentApi } = await import("../../index/admin/api");
       await adminSilentApi("POST", `/admins/${admin.identifier}/archive`);
 
       ToastUtils.success("Admin archived successfully");
-      window.location.reload();
+      globalThis.window.location.reload();
     } catch (error) {
       ToastUtils.error("Failed to archive admin");
       console.error("Archive error:", error);
@@ -280,23 +273,27 @@ export default function AdminUsers() {
   const bulkActions = [
     {
       label: "Export CSV",
+      variant: "outline" as const,
       onClick: (selectedIds: string[]) => handleBulkExport(selectedIds, "csv"),
     },
     {
       label: "Export Excel",
+      variant: "outline" as const,
       onClick: (selectedIds: string[]) => handleBulkExport(selectedIds, "xlsx"),
     },
     {
       label: "Duplicate",
+      variant: "outline" as const,
       onClick: handleBulkDuplicate,
     },
     {
       label: "Archive",
+      variant: "outline" as const,
       onClick: handleBulkArchive,
     },
     {
       label: "Delete",
-      variant: "danger" as const,
+      variant: "outlineDanger" as const,
       onClick: handleBulkDelete,
     },
   ];
@@ -308,7 +305,6 @@ export default function AdminUsers() {
           <AdminPageShell
             title="Admin Users"
             description="Manage system administrators and their permissions"
-            icon={Users as any}
             actions={headerActions}
           >
             <TenantClientsSideMenu activeTab="admin-users" {...({} as any)} />

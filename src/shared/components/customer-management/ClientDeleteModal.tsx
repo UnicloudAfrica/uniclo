@@ -1,18 +1,34 @@
-// @ts-nocheck
 import React from "react";
 import { X, Loader2 } from "lucide-react";
 import { useDeleteClient as useAdminDeleteClient } from "../../../hooks/adminHooks/clientHooks";
 import { useDeleteClient as useTenantDeleteClient } from "../../../hooks/clientHooks";
 import ToastUtils from "../../../utils/toastUtil";
+import { Client } from "../../../types/client";
 
-const resolveClientId = (client) => client?.identifier || client?.id || client?.uuid || "";
+interface ClientDeleteModalProps {
+  context?: "admin" | "tenant";
+  isOpen: boolean;
+  onClose: () => void;
+  client: Client | null;
+  onDeleteConfirm?: () => void;
+}
 
-const ClientDeleteModal = ({ context = "admin", isOpen, onClose, client, onDeleteConfirm }) => {
+const resolveClientId = (client: Client | null | undefined): string | number =>
+  client?.identifier || client?.id || client?.uuid || "";
+
+const ClientDeleteModal: React.FC<ClientDeleteModalProps> = ({
+  context = "admin",
+  isOpen,
+  onClose,
+  client,
+  onDeleteConfirm,
+}) => {
   const adminMutation = useAdminDeleteClient();
   const tenantMutation = useTenantDeleteClient();
-  const { mutate, isPending } = context === "tenant" ? tenantMutation : adminMutation;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { mutate, isPending } = (context === "tenant" ? tenantMutation : adminMutation) as any;
 
-  const handleDeleteConfirm = (e) => {
+  const handleDeleteConfirm = (e: React.MouseEvent) => {
     if (e) e.preventDefault();
 
     const clientId = resolveClientId(client);
@@ -35,11 +51,11 @@ const ClientDeleteModal = ({ context = "admin", isOpen, onClose, client, onDelet
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[500px] mx-4 w-full">
-        <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] w-full">
+        <div className="flex justify-between items-center px-6 py-4 border-b bg-[var(--theme-surface-alt)] rounded-t-[24px] w-full">
           <h2 className="text-lg font-semibold text-red-600">Confirm Delete Client</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
+            className="text-gray-400 hover:text-[rgb(var(--theme-neutral-900) / 0.7)] font-medium transition-colors"
             disabled={isPending}
           >
             <X className="w-5 h-5" />
@@ -58,7 +74,7 @@ const ClientDeleteModal = ({ context = "admin", isOpen, onClose, client, onDelet
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
+              className="px-6 py-2 text-[var(--theme-text-color)] bg-[var(--theme-surface-alt)] border border-[var(--theme-surface-alt)] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
               disabled={isPending}
             >
               Cancel

@@ -7,6 +7,69 @@ import ToastUtils from "../utils/toastUtil";
 import { useApiContext } from "./useApiContext";
 
 // Type definitions
+export type TemplateComputeConfig = {
+  instance_type_id?: string | number;
+  id?: string | number;
+  instance_id?: string | number;
+};
+
+export type TemplateOsImageConfig = {
+  os_image_id?: string | number;
+  id?: string | number;
+  identifier?: string | number;
+};
+
+export type TemplateBandwidthConfig = {
+  id?: string | number;
+};
+
+export type TemplateNetworkingConfig = {
+  bandwidth_id?: string | number;
+  bandwidth?: TemplateBandwidthConfig;
+  bandwidth_count?: number | string;
+  floating_ip_count?: number | string;
+};
+
+export type TemplateAddOnsConfig = {
+  floating_ips?: { count?: number | string };
+};
+
+export type TemplateVolumeConfig = {
+  id?: string | number;
+  volume_type_id?: string | number;
+  identifier?: string | number;
+  storage_size_gb?: number | string;
+  size_gb?: number | string;
+  size?: number | string;
+};
+
+export type TemplateConfiguration = {
+  region?: string | number;
+  region_code?: string | number;
+  location?: string | number;
+  provider?: string | number;
+  provider_code?: string | number;
+  compute_instance_id?: string | number;
+  compute?: TemplateComputeConfig;
+  os_image_id?: string | number;
+  os_image?: TemplateOsImageConfig;
+  bandwidth_id?: string | number;
+  bandwidth_count?: number | string;
+  floating_ip_count?: number | string;
+  networking?: TemplateNetworkingConfig;
+  add_ons?: TemplateAddOnsConfig;
+  volume_types?: TemplateVolumeConfig[];
+  volumes?: TemplateVolumeConfig[];
+  volume_type_id?: string | number;
+  storage_size_gb?: number | string;
+};
+
+type ApiResponse<T = unknown> = {
+  data?: T;
+  message?: string | { message: string };
+  error?: string;
+} & Record<string, unknown>;
+
 export interface InstanceTemplate {
   id: string;
   user_id: string;
@@ -14,7 +77,7 @@ export interface InstanceTemplate {
   name: string;
   description?: string;
   category?: string;
-  configuration: Record<string, any>;
+  configuration: TemplateConfiguration;
   pricing_cache?: {
     monthly_total_usd?: number;
     yearly_total_usd?: number;
@@ -28,20 +91,20 @@ export interface InstanceTemplate {
 
 export interface CreateTemplatePayload {
   name: string;
-  description?: string;
-  configuration: Record<string, any>;
-  is_public?: boolean;
-  category?: string;
+  description?: string | undefined;
+  configuration: TemplateConfiguration;
+  is_public?: boolean | undefined;
+  category?: string | undefined;
 }
 
 export interface UpdateTemplatePayload {
   id: string;
   payload: {
     name?: string;
-    description?: string;
-    configuration?: Record<string, any>;
-    is_public?: boolean;
-    category?: string;
+    description?: string | undefined;
+    configuration?: TemplateConfiguration;
+    is_public?: boolean | undefined;
+    category?: string | undefined;
   };
 }
 
@@ -69,7 +132,7 @@ export const useInstanceTemplates = () => {
   } = useQuery({
     queryKey,
     queryFn: async () => {
-      const response = await api("GET", "/instance-templates");
+      const response = await api<ApiResponse>("GET", "/instance-templates");
       // API utility returns the JSON body directly
       const items = response.data || response || [];
       return items as InstanceTemplate[];
@@ -80,7 +143,7 @@ export const useInstanceTemplates = () => {
   // 2. CREATE Template
   const createMutation = useMutation({
     mutationFn: async (payload: CreateTemplatePayload) => {
-      const response = await api("POST", "/instance-templates", payload);
+      const response = await api<ApiResponse>("POST", "/instance-templates", payload);
       return response.data || response;
     },
     onSuccess: () => {
@@ -96,14 +159,14 @@ export const useInstanceTemplates = () => {
   // 3. DELETE Template
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await api("DELETE", `/instance-templates/${id}`);
+      await api<ApiResponse>("DELETE", `/instance-templates/${id}`);
       return id;
     },
-    onSuccess: (id) => {
+    onSuccess: () => {
       ToastUtils.success("Template deleted.");
       queryClient.invalidateQueries({ queryKey });
     },
-    onError: (err: any) => {
+    onError: () => {
       ToastUtils.error("Failed to delete template.");
     },
   });
@@ -111,7 +174,7 @@ export const useInstanceTemplates = () => {
   // 4. UPDATE Template
   const updateMutation = useMutation({
     mutationFn: async ({ id, payload }: UpdateTemplatePayload) => {
-      const response = await api("PUT", `/instance-templates/${id}`, payload);
+      const response = await api<ApiResponse>("PUT", `/instance-templates/${id}`, payload);
       return response.data || response;
     },
     onSuccess: () => {

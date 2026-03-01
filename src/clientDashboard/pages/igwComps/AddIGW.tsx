@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useEffect, useState } from "react";
 import { ModernModal, ModernInput } from "../../../shared/components/ui";
 import ToastUtils from "../../../utils/toastUtil";

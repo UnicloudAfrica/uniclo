@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { X, Loader2, Trash2 } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useUpdateTaxConfiguration } from "../../../hooks/adminHooks/taxConfigurationHooks";
@@ -11,7 +10,7 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }: any) => {
     name: "",
     countryRates: [], // Array to manage rates
   });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, any>>({});
 
   // Populate form data when the modal opens or when the taxType prop changes
   useEffect(() => {
@@ -41,7 +40,7 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }: any) => {
   }, [isOpen, taxType]);
 
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors: Record<string, any> = {};
     if (!formData.name.trim()) {
       newErrors.name = "Tax Type Name is required";
     }
@@ -119,13 +118,13 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }: any) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[700px] mx-4 w-full">
         {/* Header */}
-        <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] w-full">
-          <h2 className="text-lg font-semibold text-[#575758]">
+        <div className="flex justify-between items-center px-6 py-4 border-b bg-[var(--theme-surface-alt)] rounded-t-[24px] w-full">
+          <h2 className="text-lg font-semibold text-[var(--theme-text-color)]">
             Edit Tax Type: {taxType?.name || "N/A"}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
+            className="text-gray-400 hover:text-[rgb(var(--theme-neutral-900) / 0.7)] font-medium transition-colors"
             disabled={isPending}
           >
             <X className="w-5 h-5" />
@@ -211,7 +210,7 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }: any) => {
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
+              className="px-6 py-2 text-[var(--theme-text-color)] bg-[var(--theme-surface-alt)] border border-[var(--theme-surface-alt)] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
               disabled={isPending}
             >
               Cancel
@@ -219,7 +218,7 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }: any) => {
             <button
               onClick={handleSubmit}
               disabled={isPending}
-              className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="px-8 py-3 bg-[var(--theme-color)] text-white font-medium rounded-full hover:bg-[var(--theme-color)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Save Changes
               {isPending && <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />}

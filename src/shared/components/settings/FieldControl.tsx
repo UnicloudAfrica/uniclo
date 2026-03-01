@@ -4,8 +4,8 @@ import SettingsToggle from "./SettingsToggle";
 
 interface FieldControlProps {
   field: FieldConfig;
-  value: any;
-  onChange: (value: any) => void;
+  value: string | number | boolean | null | undefined;
+  onChange: (value: string | number | boolean | null | undefined) => void;
 }
 
 const FieldControl: React.FC<FieldControlProps> = ({ field, value, onChange }) => {
@@ -44,7 +44,13 @@ const FieldControl: React.FC<FieldControlProps> = ({ field, value, onChange }) =
     }
 
     if (type === "toggle") {
-      return <SettingsToggle value={value} onChange={onChange} disabled={readOnly} />;
+      return (
+        <SettingsToggle
+          value={typeof value === "boolean" ? value : Boolean(value)}
+          onChange={onChange}
+          disabled={readOnly}
+        />
+      );
     }
 
     const inputType = type === "number" ? "number" : type === "password" ? "password" : "text";

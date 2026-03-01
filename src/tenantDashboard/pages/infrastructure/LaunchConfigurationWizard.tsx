@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Settings, ArrowLeft, ArrowRight, Check, Server, Key, Shield } from "lucide-react";
+import { Settings, ArrowLeft, ArrowRight, Check, Server, Key } from "lucide-react";
 import TenantPageShell from "../../components/TenantPageShell";
 import ModernCard from "../../../shared/components/ui/ModernCard";
 import ModernButton from "../../../shared/components/ui/ModernButton";
@@ -123,7 +123,7 @@ const LaunchConfigurationWizard: React.FC = () => {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Instance Type</label>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {INSTANCE_TYPES.map((type) => (
+            {INSTANCE_TYPES.map((type: any) => (
               <button
                 key={type.id}
                 onClick={() => setFormData({ ...formData, instance_type: type.id })}
@@ -201,7 +201,7 @@ const LaunchConfigurationWizard: React.FC = () => {
                   if (exists) {
                     setFormData({
                       ...formData,
-                      security_groups: formData.security_groups.filter((id) => id !== sg.id),
+                      security_groups: formData.security_groups.filter((id: any) => id !== sg.id),
                     });
                   } else {
                     setFormData({
@@ -292,7 +292,7 @@ const LaunchConfigurationWizard: React.FC = () => {
               Security Groups ({formData.security_groups.length})
             </div>
             <div className="flex flex-wrap gap-2">
-              {formData.security_groups.map((id) => (
+              {formData.security_groups.map((id: any) => (
                 <span
                   key={id}
                   className="px-2 py-1 bg-white border border-gray-200 rounded text-xs font-mono"
@@ -335,7 +335,7 @@ const LaunchConfigurationWizard: React.FC = () => {
         {/* Stepper */}
         <div className="flex items-center justify-between mb-12 relative px-4">
           <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-100 -translate-y-1/2 z-0"></div>
-          {[1, 2, 3, 4].map((num) => (
+          {[1, 2, 3, 4].map((num: any) => (
             <div
               key={num}
               className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${

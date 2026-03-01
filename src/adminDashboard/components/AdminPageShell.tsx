@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import AdminPageHeader from "./AdminPageHeader";
@@ -52,7 +51,11 @@ const buildBreadcrumbs = (pathname = "") => {
     const label = friendlyPathMap[segment] || toTitleCase(segment);
     const href =
       index === segments.length - 1 ? undefined : `/${segments.slice(0, index + 1).join("/")}`;
-    return { label, href };
+    const crumb: { label: string; href?: string } = { label };
+    if (href !== undefined) {
+      crumb.href = href;
+    }
+    return crumb;
   });
 
   if (crumbs.length) {
@@ -70,6 +73,7 @@ interface AdminPageShellProps {
   breadcrumbs?: { label: string; href?: string }[];
   actions?: React.ReactNode;
   subHeaderContent?: React.ReactNode;
+  icon?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
   mainClassName?: string;
@@ -79,7 +83,6 @@ interface AdminPageShellProps {
   disableContentPadding?: boolean;
   contentWrapper?: React.ElementType;
   onOpenMobileMenu?: () => void;
-  icon?: React.ReactNode;
 }
 
 const AdminPageShell: React.FC<AdminPageShellProps> = ({
@@ -88,6 +91,7 @@ const AdminPageShell: React.FC<AdminPageShellProps> = ({
   breadcrumbs,
   actions,
   subHeaderContent,
+  icon,
   children,
   className = "",
   mainClassName = "",
@@ -97,18 +101,14 @@ const AdminPageShell: React.FC<AdminPageShellProps> = ({
   disableContentPadding = false,
   contentWrapper = "section",
   onOpenMobileMenu,
-  icon,
 }) => {
   const location = useLocation();
   const autoBreadcrumbs = useMemo(() => buildBreadcrumbs(location?.pathname), [location?.pathname]);
 
   const resolvedBreadcrumbs = breadcrumbs && breadcrumbs.length ? breadcrumbs : autoBreadcrumbs;
 
-  const headerTitle =
-    title ||
-    (resolvedBreadcrumbs.length
-      ? resolvedBreadcrumbs[resolvedBreadcrumbs.length - 1].label
-      : "Dashboard");
+  const lastCrumb = resolvedBreadcrumbs.at(-1);
+  const headerTitle = title || lastCrumb?.label || "Dashboard";
 
   const sectionClasses = [!disableContentPadding && "p-6 md:p-8", contentClassName]
     .filter(Boolean)
@@ -131,12 +131,13 @@ const AdminPageShell: React.FC<AdminPageShellProps> = ({
         description={description}
         actions={actions}
         subHeaderContent={subHeaderContent}
-        onOpenMobileMenu={onOpenMobileMenu}
+        icon={icon}
+        {...(onOpenMobileMenu ? { onOpenMobileMenu } : {})}
       />
       <ContentTag
         className={sectionClasses}
         style={{
-          backgroundColor: contentBackground ?? designTokens.colors.neutral[50],
+          backgroundColor: contentBackground ?? designTokens.colors["neutral"]?.[50],
           ...contentStyle,
         }}
       >

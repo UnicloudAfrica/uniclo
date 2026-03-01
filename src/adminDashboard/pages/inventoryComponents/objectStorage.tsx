@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   HardDrive,
@@ -47,7 +46,7 @@ const parseQuota = (product: any) => {
   return null;
 };
 
-const formatNumber = (value, suffix = "") =>
+const formatNumber = (value: any, suffix = "") =>
   typeof value === "number" && !Number.isNaN(value)
     ? `${value.toLocaleString()}${suffix}`
     : value
@@ -67,11 +66,11 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [search, setSearch] = useState("");
-  const [selectedTier, setSelectedTier] = useState(null);
+  const [selectedTier, setSelectedTier] = useState<any>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [removedKeys, setRemovedKeys] = useState([]);
-  const [priceOverrides, setPriceOverrides] = useState({});
+  const [removedKeys, setRemovedKeys] = useState<any[]>([]);
+  const [priceOverrides, setPriceOverrides] = useState<Record<string, any>>({});
 
   useEffect(() => {
     setPage(1);
@@ -92,10 +91,14 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
     },
     { keepPreviousData: true }
   );
+  const productList = Array.isArray(products) ? products : [];
+  const pricingRows = Array.isArray((pricingPayload as any)?.data)
+    ? (pricingPayload as any).data
+    : [];
+  const pricingMeta = (pricingPayload as any)?.meta;
 
   const pricingMap = useMemo(() => {
-    const entries = pricingPayload?.data || [];
-    return entries.reduce((acc, item) => {
+    return pricingRows.reduce((acc: Record<string, any>, item: any) => {
       const productMeta = item.product || {};
       const region = productMeta.region || item.region;
       const key = makeKey(region, {
@@ -106,28 +109,30 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
       acc[key] = item;
       return acc;
     }, {});
-  }, [pricingPayload]);
+  }, [pricingRows]);
 
   const removalSet = useMemo(() => new Set(removedKeys), [removedKeys]);
 
   const filteredProducts = useMemo(() => {
-    if (!products) return [];
-    return products.filter((product: any) => {
+    if (!productList.length) return [];
+    return productList.filter((product: any) => {
       const key = makeKey(product.region, product);
       return !removalSet.has(key);
     });
-  }, [products, removalSet]);
+  }, [productList, removalSet]);
 
   useEffect(() => {
-    if (!products) return;
-    const productKeys = new Set(products.map((product: any) => makeKey(product.region, product)));
+    if (!productList.length) return;
+    const productKeys = new Set(
+      productList.map((product: any) => makeKey(product.region, product))
+    );
     setRemovedKeys((prev) => {
       if (!prev.some((key) => !productKeys.has(key))) {
         return prev;
       }
       return prev.filter((key: any) => productKeys.has(key));
     });
-  }, [products]);
+  }, [productList]);
 
   useEffect(() => {
     setPriceOverrides((prev) => {
@@ -170,7 +175,7 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
   const filteredByRegion = useMemo(() => {
     if (!selectedRegion) return enrichedProducts;
     return enrichedProducts.filter(
-      (item) => (item.region || "").toLowerCase() === selectedRegion.toLowerCase()
+      (item: any) => (item.region || "").toLowerCase() === selectedRegion.toLowerCase()
     );
   }, [enrichedProducts, selectedRegion]);
 
@@ -187,7 +192,7 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
 
   const total = searchedRows.length;
   const totalQuota = useMemo(() => {
-    return searchedRows.reduce((acc, item) => {
+    return searchedRows.reduce((acc: number, item: any) => {
       const quota = parseQuota(item);
       return acc + (quota || 0);
     }, 0);
@@ -195,8 +200,8 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
 
   const baseRate = useMemo(() => {
     const baseRow =
-      searchedRows.find((row) => parseQuota(row) === 1) ||
-      filteredByRegion.find((row) => parseQuota(row) === 1);
+      searchedRows.find((row: any) => parseQuota(row) === 1) ||
+      filteredByRegion.find((row: any) => parseQuota(row) === 1);
     if (!baseRow?.pricing?.price_usd) return null;
     return Number(baseRow.pricing.price_usd);
   }, [filteredByRegion, searchedRows]);
@@ -290,7 +295,7 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
       "",
       "object_storage_configuration",
     ];
-    queryClient.setQueryData(pricingKey, (payload) => {
+    queryClient.setQueryData(pricingKey, (payload: any) => {
       if (!payload || !Array.isArray(payload.data)) {
         return payload;
       }
@@ -305,7 +310,7 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
           });
           return productKey !== key;
         }),
-        meta: payload.meta,
+        meta: payload.meta ?? pricingMeta,
       };
     });
   };
@@ -336,7 +341,7 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
       "",
       "object_storage_configuration",
     ];
-    queryClient.setQueryData(pricingKey, (payload) => {
+    queryClient.setQueryData(pricingKey, (payload: any) => {
       if (!payload || !Array.isArray(payload.data)) {
         return payload;
       }
@@ -358,7 +363,7 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
       return {
         ...payload,
         data: updated,
-        meta: payload.meta,
+        meta: payload.meta ?? pricingMeta,
       };
     });
   };
@@ -459,9 +464,9 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
                 {
                   key: "name",
                   header: "SKU",
-                  render: (_, row) => (
+                  render: (_: any, row: any) => (
                     <div className="flex items-start gap-3">
-                      <IconBadge iconKey="business.companyType" tone="indigo" size="sm" />
+                      <IconBadge iconKey="business.companyType" tone={"indigo" as any} size="sm" />
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-slate-900">
                           {row.name || row.pricing?.product_name || "Unnamed tier"}
@@ -476,7 +481,7 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
                 {
                   key: "region",
                   header: "REGION",
-                  render: (val) => (
+                  render: (val: any) => (
                     <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
                       {val || "Global"}
                     </span>
@@ -486,19 +491,21 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
                   key: "_quotaValue",
                   header: "QUOTA (GIB)",
                   align: "center",
-                  render: (val) => <span className="font-semibold text-slate-900">{val}</span>,
+                  render: (val: any) => <span className="font-semibold text-slate-900">{val}</span>,
                 },
                 {
                   key: "_perGiB",
                   header: "PER GIB (USD)",
                   align: "right",
-                  render: (val) => <span className="text-slate-700">{val ? `$${val}` : "—"}</span>,
+                  render: (val: any) => (
+                    <span className="text-slate-700">{val ? `$${val}` : "—"}</span>
+                  ),
                 },
                 {
                   key: "_totalPrice",
                   header: "TOTAL (USD)",
                   align: "right",
-                  render: (val) => (
+                  render: (val: any) => (
                     <span className="font-semibold text-slate-900">{val ? `$${val}` : "—"}</span>
                   ),
                 },
@@ -506,7 +513,7 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
                   key: "actions",
                   header: "ACTIONS",
                   align: "right",
-                  render: (_, row) => (
+                  render: (_: any, row: any) => (
                     <div className="flex items-center justify-end gap-2">
                       <ModernButton
                         variant="outline"
@@ -586,7 +593,7 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
         isOpen={isEditOpen}
         onClose={closeModals}
         tier={selectedTier}
-        onUpdated={(updatedTier, totalPrice) => {
+        onUpdated={(updatedTier: any, totalPrice: any) => {
           handleTierUpdated(updatedTier || selectedTier, totalPrice);
         }}
       />
@@ -594,7 +601,7 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
         isOpen={isDeleteOpen}
         onClose={closeModals}
         tier={selectedTier}
-        onDeleted={(deletedTier) => {
+        onDeleted={(deletedTier: any) => {
           handleTierDeleted(deletedTier || selectedTier);
         }}
       />

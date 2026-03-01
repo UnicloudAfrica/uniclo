@@ -12,13 +12,13 @@ export interface ObjectStorageOrderSummaryProps {
   assignmentLabel: string;
   countryLabel: string;
   workflowLabel: string;
-  transactionId?: string;
-  isPaymentComplete?: boolean;
-  isPaymentFailed?: boolean;
-  backendPricingLines?: BackendPricingLine[] | null;
-  gatewayFees?: number;
-  grandTotalWithFees?: number;
-  showDetailedBreakdown?: boolean;
+  transactionId?: string | undefined;
+  isPaymentComplete?: boolean | undefined;
+  isPaymentFailed?: boolean | undefined;
+  backendPricingLines?: BackendPricingLine[] | null | undefined;
+  gatewayFees?: number | undefined;
+  grandTotalWithFees?: number | undefined;
+  showDetailedBreakdown?: boolean | undefined;
 }
 
 export const ObjectStorageOrderSummary: React.FC<ObjectStorageOrderSummaryProps> = ({
@@ -126,7 +126,7 @@ export const ObjectStorageOrderSummary: React.FC<ObjectStorageOrderSummaryProps>
                     {line.storageGb && <span>{line.storageGb} GB</span>}
                     {showDetailedBreakdown && line.months && (
                       <span>
-                        {line.months} month{line.months !== 1 ? "s" : ""}
+                        {line.months} month{line.months === 1 ? "" : "s"}
                       </span>
                     )}
                     {showDetailedBreakdown && line.unitPrice > 0 && (

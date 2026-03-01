@@ -1,5 +1,5 @@
 import React from "react";
-import { Info, Layers, Cpu, Database, Network } from "lucide-react";
+import { Info, Layers, Network } from "lucide-react";
 
 interface ResourceHeaderProps {
   project: any;

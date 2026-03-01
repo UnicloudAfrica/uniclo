@@ -1,13 +1,5 @@
-// @ts-nocheck
-import React, { useState, useEffect } from "react";
-import {
-  CheckCircle,
-  AlertCircle,
-  Loader2,
-  ArrowRight,
-  ExternalLink,
-  RefreshCw,
-} from "lucide-react";
+import { useState, useEffect } from "react";
+import { CheckCircle, AlertCircle, Loader2, ArrowRight, RefreshCw } from "lucide-react";
 import {
   useProjectInfrastructureStatus,
   useSetupInfrastructureComponent,
@@ -65,7 +57,7 @@ const ActionButton = ({ onClick, disabled, isLoading, children, variant = "prima
     <button
       onClick={onClick}
       disabled={disabled || isLoading}
-      className={`${baseClasses} ${variants[variant]}`}
+      className={`${baseClasses} ${variants[variant as keyof typeof variants]}`}
     >
       {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
       {children}
@@ -83,7 +75,7 @@ const InfrastructureStep = ({
   details,
   actionText,
   canProceed,
-}) => {
+}: any) => {
   const getStatusColor = () => {
     switch (status) {
       case StepStatus.COMPLETED:
@@ -133,7 +125,7 @@ const InfrastructureStep = ({
               <div className="text-sm text-gray-600 mb-2">
                 <strong>Prerequisites:</strong>
                 <ul className="list-disc list-inside ml-2">
-                  {step.prerequisites.map((prereq, index) => (
+                  {step.prerequisites.map((prereq: any, index: number) => (
                     <li key={index}>{prereq}</li>
                   ))}
                 </ul>
@@ -180,6 +172,7 @@ const InfrastructureSetupFlow = ({ projectId, projectName }: any) => {
     refetchInterval: pollingEnabled ? 5000 : false, // Poll every 5 seconds
     refetchIntervalInBackground: false,
   });
+  const infrastructureStatus = (infraStatus as any)?.data ?? infraStatus;
 
   const { mutate: setupComponent, isPending: isSettingUp } = useSetupInfrastructureComponent();
   const { mutate: ensureDomain, isPending: isEnsuringDomain } = useEnsureRootDomain();
@@ -229,8 +222,10 @@ const InfrastructureSetupFlow = ({ projectId, projectName }: any) => {
   ];
 
   // Calculate progress percentage
-  const completedSteps = infraStatus?.components
-    ? Object.values(infraStatus.components).filter((comp) => comp.status === "completed").length
+  const completedSteps = infrastructureStatus?.components
+    ? Object.values(infrastructureStatus.components).filter(
+        (comp: any) => comp.status === "completed"
+      ).length
     : 0;
   const totalSteps = infrastructureSteps.length;
   const progress = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0;
@@ -254,7 +249,7 @@ const InfrastructureSetupFlow = ({ projectId, projectName }: any) => {
     setupComponent(
       { projectId, componentType },
       {
-        onSuccess: (response) => {
+        onSuccess: () => {
           ToastUtils.success(`${componentType.toUpperCase()} setup initiated successfully`);
           refetchStatus();
 
@@ -271,14 +266,13 @@ const InfrastructureSetupFlow = ({ projectId, projectName }: any) => {
 
   // Determine if a step can proceed based on prerequisites
   const canStepProceed = (stepIndex: any) => {
-    const step = infrastructureSteps[stepIndex];
-
     if (stepIndex === 0) return true; // Domain setup can always proceed
 
     // Check if previous steps are completed
     for (let i = 0; i < stepIndex; i++) {
       const prevStep = infrastructureSteps[i];
-      const prevStepStatus = infraStatus?.components?.[prevStep.component]?.status;
+      if (!prevStep) continue;
+      const prevStepStatus = infrastructureStatus?.components?.[prevStep.component]?.status;
       if (prevStepStatus !== "completed") {
         return false;
       }
@@ -289,9 +283,9 @@ const InfrastructureSetupFlow = ({ projectId, projectName }: any) => {
 
   // Get step status from API response
   const getStepStatus = (step: any) => {
-    if (!infraStatus?.components) return StepStatus.PENDING;
+    if (!infrastructureStatus?.components) return StepStatus.PENDING;
 
-    const component = infraStatus.components[step.component];
+    const component = infrastructureStatus.components[step.component];
     if (!component) return StepStatus.PENDING;
 
     switch (component.status) {
@@ -310,7 +304,7 @@ const InfrastructureSetupFlow = ({ projectId, projectName }: any) => {
 
   // Auto-advance to next incomplete step
   useEffect(() => {
-    if (infraStatus?.components) {
+    if (infrastructureStatus?.components) {
       for (let i = 0; i < infrastructureSteps.length; i++) {
         const step = infrastructureSteps[i];
         const status = getStepStatus(step);
@@ -325,7 +319,7 @@ const InfrastructureSetupFlow = ({ projectId, projectName }: any) => {
         setPollingEnabled(false);
       }
     }
-  }, [infraStatus, completedSteps, totalSteps]);
+  }, [infrastructureStatus, completedSteps, totalSteps]);
 
   if (isLoadingStatus) {
     return (
@@ -400,8 +394,8 @@ const InfrastructureSetupFlow = ({ projectId, projectName }: any) => {
             const status = getStepStatus(step);
             const canProceed = canStepProceed(index);
             const isCurrentlyLoading = isSettingUp || isEnsuringDomain;
-            const stepError = infraStatus?.components?.[step.component]?.error;
-            const stepDetails = infraStatus?.components?.[step.component]?.details;
+            const stepError = infrastructureStatus?.components?.[step.component]?.error;
+            const stepDetails = infrastructureStatus?.components?.[step.component]?.details;
 
             return (
               <InfrastructureStep
@@ -420,15 +414,17 @@ const InfrastructureSetupFlow = ({ projectId, projectName }: any) => {
           })}
         </div>
 
-        {infraStatus?.overall_status && (
+        {infrastructureStatus?.overall_status && (
           <div className="mt-6 p-4 bg-gray-50 rounded-lg">
             <h4 className="font-medium text-gray-800 mb-2">Overall Status</h4>
             <p className="text-sm text-gray-600">
-              Status: <span className="font-medium capitalize">{infraStatus.overall_status}</span>
+              Status:{" "}
+              <span className="font-medium capitalize">{infrastructureStatus.overall_status}</span>
             </p>
-            {infraStatus.estimated_completion && (
+            {infrastructureStatus.estimated_completion && (
               <p className="text-sm text-gray-600">
-                Estimated Completion: {new Date(infraStatus.estimated_completion).toLocaleString()}
+                Estimated Completion:{" "}
+                {new Date(infrastructureStatus.estimated_completion).toLocaleString()}
               </p>
             )}
           </div>

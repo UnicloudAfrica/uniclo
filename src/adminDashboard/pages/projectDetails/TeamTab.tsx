@@ -1,21 +1,34 @@
 import React, { useState } from "react";
-import { User, XCircle } from "lucide-react";
+import { XCircle } from "lucide-react";
 import { ModernButton, ModernTable } from "../../../shared/components/ui";
 import ToastUtils from "../../../utils/toastUtil";
+import { ApiResponse } from "src/shared/types/resource";
+import { ProjectUser, CloudPolicy } from "../../../types/project";
 
 interface TeamTabProps {
-  project: any;
-  allProjectUsers: any[];
-  cloudPolicies: any[];
-  assignPolicy: any;
-  revokePolicy: any;
-  handleUserAction: (user: any, actionKey: string) => Promise<void>;
-  refetchProjectDetails: () => Promise<any>;
-  refetchProjectStatus: () => Promise<any>;
+  project: {
+    id: string | number;
+    identifier?: string;
+  };
+  allProjectUsers: ProjectUser[];
+  cloudPolicies: CloudPolicy[];
+  assignPolicy: (args: {
+    projectId: string | number;
+    userId: string | number;
+    policyId: number;
+  }) => Promise<ApiResponse<any>>;
+  revokePolicy: (args: {
+    projectId: string | number;
+    userId: string | number;
+    policyId: number;
+  }) => Promise<ApiResponse<any>>;
+  handleUserAction: (user: ProjectUser, actionKey: string) => Promise<void>;
+  refetchProjectDetails: () => Promise<unknown>;
+  refetchProjectStatus: () => Promise<unknown>;
   isAssigningPolicy: boolean;
   isRevokingPolicy: boolean;
   setIsMemberModalOpen: (open: boolean) => void;
-  formatMemberName: (user: any) => string;
+  formatMemberName: (user: ProjectUser) => string;
   handleInviteSubmit: (e: React.FormEvent) => Promise<void>;
   inviteForm: {
     name: string;
@@ -23,7 +36,7 @@ interface TeamTabProps {
     role: string;
     note: string;
   };
-  setInviteForm: (form: any) => void;
+  setInviteForm: (form: { name: string; email: string; role: string; note: string }) => void;
 }
 
 const TeamTab: React.FC<TeamTabProps> = ({
@@ -87,12 +100,12 @@ const TeamTab: React.FC<TeamTabProps> = ({
           </div>
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             <ModernTable
-              data={allProjectUsers.map((user: any) => ({ ...user, id: user.id }))}
+              data={allProjectUsers.map((user) => ({ ...user, id: user.id }))}
               columns={[
                 {
                   key: "user_info",
                   header: "MEMBER",
-                  render: (_, user: any) => (
+                  render: (_, user: ProjectUser) => (
                     <div className="flex flex-col">
                       <span className="font-bold text-gray-900 leading-tight">
                         {formatMemberName(user)}
@@ -104,7 +117,7 @@ const TeamTab: React.FC<TeamTabProps> = ({
                 {
                   key: "role",
                   header: "ROLE",
-                  render: (_, user: any) => (
+                  render: (_, user: ProjectUser) => (
                     <div className="flex flex-col">
                       <span className="text-gray-900 border px-2 py-0.5 rounded-full text-[10px] w-fit font-mono font-bold uppercase mb-1">
                         {user.status?.role ||
@@ -144,11 +157,11 @@ const TeamTab: React.FC<TeamTabProps> = ({
                 {
                   key: "policies",
                   header: "CLOUD POLICIES",
-                  render: (_, user: any) => (
+                  render: (_, user: ProjectUser) => (
                     <div className="flex flex-col gap-2 min-w-[180px]">
                       <div className="flex flex-wrap gap-1.5">
                         {user.status?.cloud_policies && user.status.cloud_policies.length > 0 ? (
-                          user.status.cloud_policies.map((policy: any) => (
+                          user.status.cloud_policies.map((policy) => (
                             <div
                               key={policy.id}
                               className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold border transition-all ${
@@ -270,11 +283,11 @@ const TeamTab: React.FC<TeamTabProps> = ({
                 {
                   key: "actions",
                   header: "ACTIONS",
-                  render: (_, user: any) => {
+                  render: (_, user: ProjectUser) => {
                     const userActions = user.actions || {};
                     return (
                       <div className="flex flex-wrap gap-2">
-                        {Object.entries(userActions).map(([key, action]: [string, any]) => {
+                        {Object.entries(userActions).map(([key, action]) => {
                           if (!action.show) return null;
                           return (
                             <ModernButton

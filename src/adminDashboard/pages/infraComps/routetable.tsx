@@ -1,5 +1,5 @@
-// @ts-nocheck
 import { useMemo, useState } from "react";
+import type { FormEvent } from "react";
 import { RefreshCw, Plus } from "lucide-react";
 import {
   useFetchRouteTables,
@@ -14,11 +14,66 @@ import { useQueryClient } from "@tanstack/react-query";
 import AddRouteTable from "../routeTableComps/addRouteTable";
 import AddRoute from "../routeTableComps/addRoute";
 import { ResourceSection } from "../../../shared/components/ui";
+import type { MetaItem, Tone } from "../../../shared/components/ui/ResourceSection";
 import { ResourceEmptyState } from "../../../shared/components/ui";
 import { ResourceListCard } from "../../../shared/components/ui";
 import { ModernButton } from "../../../shared/components/ui";
 
-const formatAssociationLabel = (assoc: any) => {
+type RouteAssociation = {
+  subnet_id?: string;
+  network_id?: string;
+  route_table_association_id?: string;
+  route_table_id?: string;
+  main?: boolean;
+  gateway_id?: string;
+  network_interface_id?: string;
+  [key: string]: unknown;
+};
+
+type RouteEntry = {
+  destination_cidr_block?: string;
+  destination_prefix_list_id?: string;
+  gateway_id?: string;
+  nat_gateway_id?: string;
+  instance_id?: string;
+  network_interface_id?: string;
+};
+
+type RouteTableEntry = {
+  id: string;
+  name?: string;
+  vpc_id?: string;
+  routes?: RouteEntry[];
+  associations?: RouteAssociation[];
+  main?: boolean;
+  is_main?: boolean;
+  status?: string;
+};
+
+type SubnetEntry = {
+  id: string;
+  name?: string;
+  cidr?: string;
+  cidr_block?: string;
+};
+
+type GatewayEntry = {
+  id: string;
+  name?: string;
+};
+
+type ResourceStatusTone = "neutral" | "success" | "warning" | "danger" | "info" | "primary";
+type ResourceStatusItem = {
+  label: string;
+  tone?: ResourceStatusTone;
+};
+
+type RouteTablesProps = {
+  projectId?: string;
+  region?: string;
+};
+
+const formatAssociationLabel = (assoc: RouteAssociation | string | number | null | undefined) => {
   if (assoc == null) {
     return "Unknown";
   }
@@ -42,7 +97,7 @@ const formatAssociationLabel = (assoc: any) => {
   return "Unknown";
 };
 
-const RouteTables = ({ projectId = "", region = "" }: any) => {
+const RouteTables = ({ projectId = "", region = "" }: RouteTablesProps) => {
   const queryClient = useQueryClient();
   const { data: routeTables, isFetching } = useFetchRouteTables(projectId, region);
   const { mutate: associateRouteTable, isPending: associating } = useCreateRouteTableAssociation();
@@ -55,25 +110,36 @@ const RouteTables = ({ projectId = "", region = "" }: any) => {
     enabled: !!projectId && !!region,
   });
   const { data: igws } = useFetchIgws(projectId, region, { enabled: !!projectId && !!region });
-  const [igwChoice, setIgwChoice] = useState({});
+  const [igwChoice, setIgwChoice] = useState<Record<string, string>>({});
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const tables = useMemo(() => routeTables || [], [routeTables]);
+  const tables = useMemo<RouteTableEntry[]>(
+    () => (Array.isArray(routeTables) ? (routeTables as RouteTableEntry[]) : []),
+    [routeTables]
+  );
+  const subnetOptions = useMemo<SubnetEntry[]>(
+    () => (Array.isArray(subnets) ? (subnets as SubnetEntry[]) : []),
+    [subnets]
+  );
+  const igwOptions = useMemo<GatewayEntry[]>(
+    () => (Array.isArray(igws) ? (igws as GatewayEntry[]) : []),
+    [igws]
+  );
   const stats = useMemo(() => {
-    const totalRoutes = tables.reduce((sum, rt) => sum + ((rt.routes || []).length ?? 0), 0);
+    const totalRoutes = tables.reduce((sum, rt) => sum + (rt.routes?.length ?? 0), 0);
     const mainTablesCount = tables.filter(
-      (rt) => rt.main || rt.is_main || (rt.associations || []).some((assoc) => assoc?.main)
+      (rt) => rt.main || rt.is_main || (rt.associations || []).some((assoc) => assoc.main)
     ).length;
-    const summary = [
+    const summary: MetaItem[] = [
       {
         label: "Route Tables",
         value: tables.length,
-        tone: tables.length ? "primary" : "neutral",
+        tone: (tables.length ? "primary" : "neutral") as Tone,
       },
       {
         label: "Routes",
         value: totalRoutes,
-        tone: totalRoutes ? "info" : "neutral",
+        tone: (totalRoutes ? "info" : "neutral") as Tone,
       },
     ];
     if (mainTablesCount) {
@@ -93,7 +159,7 @@ const RouteTables = ({ projectId = "", region = "" }: any) => {
     return summary;
   }, [tables, region]);
 
-  const handleAssociate = (e: any) => {
+  const handleAssociate = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!assocForm.route_table_id || !assocForm.subnet_id) {
       ToastUtils.error("Select both a route table and subnet");
@@ -116,7 +182,7 @@ const RouteTables = ({ projectId = "", region = "" }: any) => {
     );
   };
 
-  const handleAddRoute = (routeTableId: any) => {
+  const handleAddRoute = (routeTableId: string) => {
     setSelectedRtId(routeTableId);
     setAddRouteOpen(true);
   };
@@ -134,7 +200,8 @@ const RouteTables = ({ projectId = "", region = "" }: any) => {
       ToastUtils.success("Route tables synced successfully!");
     } catch (error) {
       console.error("Failed to sync route tables:", error);
-      ToastUtils.error(error?.message || "Failed to sync route tables.");
+      const message = error instanceof Error ? error.message : "Failed to sync route tables.";
+      ToastUtils.error(message);
     } finally {
       setIsSyncing(false);
     }
@@ -204,7 +271,7 @@ const RouteTables = ({ projectId = "", region = "" }: any) => {
             onChange={(e) => setAssocForm({ ...assocForm, route_table_id: e.target.value })}
           >
             <option value="">Select Route Table</option>
-            {tables.map((rt: any) => (
+            {tables.map((rt) => (
               <option key={rt.id} value={rt.id}>
                 {rt.name || rt.id}
               </option>
@@ -216,7 +283,7 @@ const RouteTables = ({ projectId = "", region = "" }: any) => {
             onChange={(e) => setAssocForm({ ...assocForm, subnet_id: e.target.value })}
           >
             <option value="">Select Subnet</option>
-            {(subnets || []).map((sn: any) => (
+            {subnetOptions.map((sn) => (
               <option key={sn.id} value={sn.id}>
                 {sn.name || sn.id} ({sn.cidr || sn.cidr_block || "—"})
               </option>
@@ -238,15 +305,15 @@ const RouteTables = ({ projectId = "", region = "" }: any) => {
         emptyState
       ) : (
         <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-          {tables.map((rt: any) => {
-            const rtId = rt.id;
-            const routes = rt.routes || [];
-            const associations = rt.associations || [];
+          {tables.map((rt) => {
+            const rtId = String(rt.id);
+            const routes = rt.routes ?? [];
+            const associations = rt.associations ?? [];
             const gatewayPreference = igwChoice[rtId] || "";
             const isMainTable =
-              Boolean(rt.main) || Boolean(rt.is_main) || associations.some((assoc) => assoc?.main);
+              Boolean(rt.main) || Boolean(rt.is_main) || associations.some((assoc) => assoc.main);
             const statusLabel = rt.status || (isMainTable ? "Main Table" : "");
-            const statuses = [];
+            const statuses: ResourceStatusItem[] = [];
             if (statusLabel) {
               statuses.push({
                 label: statusLabel,
@@ -255,18 +322,21 @@ const RouteTables = ({ projectId = "", region = "" }: any) => {
             } else if (isMainTable) {
               statuses.push({ label: "Main Table", tone: "primary" });
             }
+            const metadata = [
+              { label: "VPC", value: rt.vpc_id || "—" },
+              { label: "Routes", value: routes.length },
+              { label: "Associations", value: associations.length },
+            ];
+            if (region) {
+              metadata.push({ label: "Region", value: region });
+            }
 
             return (
               <ResourceListCard
                 key={rtId}
                 title={rt.name || rtId}
                 subtitle={rtId}
-                metadata={[
-                  { label: "VPC", value: rt.vpc_id || "—" },
-                  { label: "Routes", value: routes.length },
-                  { label: "Associations", value: associations.length },
-                  region ? { label: "Region", value: region } : null,
-                ].filter(Boolean)}
+                metadata={metadata}
                 statuses={statuses}
                 actions={[
                   {
@@ -294,7 +364,7 @@ const RouteTables = ({ projectId = "", region = "" }: any) => {
                         className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-100"
                       >
                         <option value="">Auto select</option>
-                        {(igws || []).map((g: any) => (
+                        {igwOptions.map((g) => (
                           <option key={g.id} value={g.id}>
                             {g.name || g.id}
                           </option>
@@ -307,7 +377,7 @@ const RouteTables = ({ projectId = "", region = "" }: any) => {
                         <p className="text-sm text-slate-500">No routes defined</p>
                       ) : (
                         <ul className="space-y-2">
-                          {routes.map((route, idx) => {
+                          {routes.map((route: RouteEntry, idx: number) => {
                             const destination =
                               route.destination_cidr_block ||
                               route.destination_prefix_list_id ||
@@ -365,7 +435,7 @@ const RouteTables = ({ projectId = "", region = "" }: any) => {
                         <p className="text-sm text-slate-500">No associations</p>
                       ) : (
                         <div className="flex flex-wrap gap-2">
-                          {associations.map((assoc, idx) => (
+                          {associations.map((assoc: RouteAssociation, idx: number) => (
                             <span
                               key={`${rtId}-assoc-${idx}`}
                               className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600"

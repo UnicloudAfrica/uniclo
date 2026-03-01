@@ -1,9 +1,50 @@
-// @ts-nocheck
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
 import { X } from "lucide-react";
 import { useCreateRoute } from "../../../hooks/adminHooks/routeTableHooks";
 import { useFetchIgws } from "../../../hooks/adminHooks/igwHooks";
 import { useFetchNetworkInterfaces } from "../../../hooks/adminHooks/networkHooks";
+
+type RouteTargetType = "gateway_id" | "network_interface_id" | "instance_id" | "nat_gateway_id";
+
+type RouteTableOption = {
+  id?: string | number;
+  name?: string;
+  route_table?: {
+    id?: string | number;
+    name?: string;
+  };
+};
+
+type GatewayOption = {
+  id: string;
+  name?: string;
+};
+
+type NetworkInterfaceOption = {
+  id?: string | number;
+  network_interface?: {
+    id?: string | number;
+  };
+};
+
+type AddRouteProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  projectId?: string;
+  region?: string;
+  routeTableId?: string;
+  routeTables?: RouteTableOption[];
+  defaultGatewayId?: string;
+};
+
+type AddRouteFormState = {
+  region: string;
+  route_table_id: string;
+  destination_cidr_block: string;
+  target_type: RouteTargetType;
+  target_id: string;
+};
 
 const AddRoute = ({
   isOpen,
@@ -13,15 +54,15 @@ const AddRoute = ({
   routeTableId = "",
   routeTables = [],
   defaultGatewayId = "",
-}) => {
-  const [form, setForm] = useState({
+}: AddRouteProps) => {
+  const [form, setForm] = useState<AddRouteFormState>({
     region: defaultRegion || "",
     route_table_id: routeTableId || "",
     destination_cidr_block: "0.0.0.0/0",
     target_type: "gateway_id",
     target_id: "",
   });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, any>>({});
   const { mutate: createRoute, isPending } = useCreateRoute();
   const { data: igws } = useFetchIgws(projectId, form.region, {
     enabled: !!projectId && !!form.region,
@@ -29,6 +70,18 @@ const AddRoute = ({
   const { data: enis } = useFetchNetworkInterfaces(projectId, form.region, {
     enabled: !!projectId && !!form.region,
   });
+  const igwOptions = useMemo<GatewayOption[]>(
+    () => (Array.isArray(igws) ? (igws as GatewayOption[]) : []),
+    [igws]
+  );
+  const eniOptions = useMemo<NetworkInterfaceOption[]>(
+    () => (Array.isArray(enis) ? (enis as NetworkInterfaceOption[]) : []),
+    [enis]
+  );
+  const routeTableOptions = useMemo<RouteTableOption[]>(
+    () => (Array.isArray(routeTables) ? routeTables : []),
+    [routeTables]
+  );
 
   useEffect(() => {
     if (defaultRegion && !form.region) setForm((p) => ({ ...p, region: defaultRegion }));
@@ -48,7 +101,7 @@ const AddRoute = ({
   if (!isOpen) return null;
 
   const validate = () => {
-    const e = {};
+    const e: Record<string, any> = {};
     if (!form.region) e.region = "Region is required";
     if (!form.route_table_id) e.route_table_id = "Route Table ID is required";
     if (!form.destination_cidr_block) e.destination_cidr_block = "Destination CIDR is required";
@@ -57,16 +110,16 @@ const AddRoute = ({
     return Object.keys(e).length === 0;
   };
 
-  const submit = (e: any) => {
+  const submit = (e: FormEvent<HTMLFormElement>) => {
     if (e) e.preventDefault();
     if (!validate()) return;
-    const payload = {
-      project_id: projectId,
+    const payload: Record<string, string> = {
+      project_id: projectId || "",
       region: form.region,
       route_table_id: form.route_table_id,
       destination_cidr_block: form.destination_cidr_block,
-      [form.target_type]: form.target_id,
     };
+    payload[form.target_type] = form.target_id;
     createRoute(payload, { onSuccess: () => onClose() });
   };
 
@@ -89,12 +142,11 @@ const AddRoute = ({
               className={`w-full border rounded px-3 py-2 text-sm ${errors.route_table_id ? "border-red-500" : "border-gray-300"}`}
             >
               <option value="">Select Route Table</option>
-              {Array.isArray(routeTables) &&
-                routeTables.map((rt: any) => (
-                  <option key={rt.id || rt.route_table?.id} value={rt.id || rt.route_table?.id}>
-                    {rt.name || rt.route_table?.name || rt.id || rt.route_table?.id}
-                  </option>
-                ))}
+              {routeTableOptions.map((rt) => (
+                <option key={rt.id || rt.route_table?.id} value={rt.id || rt.route_table?.id}>
+                  {rt.name || rt.route_table?.name || rt.id || rt.route_table?.id}
+                </option>
+              ))}
             </select>
             {errors.route_table_id && (
               <p className="text-xs text-red-500 mt-1">{errors.route_table_id}</p>
@@ -119,7 +171,11 @@ const AddRoute = ({
               <select
                 value={form.target_type}
                 onChange={(e) =>
-                  setForm((p) => ({ ...p, target_type: e.target.value, target_id: "" }))
+                  setForm((p) => ({
+                    ...p,
+                    target_type: e.target.value as RouteTargetType,
+                    target_id: "",
+                  }))
                 }
                 className="w-full border rounded px-3 py-2 text-sm border-gray-300"
               >
@@ -138,7 +194,7 @@ const AddRoute = ({
                   className={`w-full border rounded px-3 py-2 text-sm ${errors.target_id ? "border-red-500" : "border-gray-300"}`}
                 >
                   <option value="">Select Internet Gateway</option>
-                  {(igws || []).map((g: any) => (
+                  {igwOptions.map((g) => (
                     <option key={g.id} value={g.id}>
                       {g.name || g.id}
                     </option>
@@ -151,7 +207,7 @@ const AddRoute = ({
                   className={`w-full border rounded px-3 py-2 text-sm ${errors.target_id ? "border-red-500" : "border-gray-300"}`}
                 >
                   <option value="">Select ENI</option>
-                  {(enis || []).map((n: any) => (
+                  {eniOptions.map((n) => (
                     <option
                       key={n.id || n.network_interface?.id}
                       value={n.id || n.network_interface?.id}
@@ -183,7 +239,7 @@ const AddRoute = ({
             <button
               type="submit"
               disabled={isPending}
-              className="px-4 py-2 rounded bg-[#288DD1] text-white text-sm disabled:opacity-50"
+              className="px-4 py-2 rounded bg-[var(--theme-color)] text-white text-sm disabled:opacity-50"
             >
               {isPending ? "Creating..." : "Create"}
             </button>

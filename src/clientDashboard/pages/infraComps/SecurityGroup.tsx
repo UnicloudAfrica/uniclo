@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useMemo, useState } from "react";
 import { Eye, Trash2, RefreshCw, ShieldCheck } from "lucide-react";
 import {
@@ -41,13 +40,13 @@ interface SecurityGroupType {
   status?: string;
   state?: string;
   rules?: {
-    inbound?: any[];
-    outbound?: any[];
+    inbound?: unknown;
+    outbound?: unknown;
   };
-  ingress_rules?: any[];
-  egress_rules?: any[];
-  inbound_rules?: any[];
-  outbound_rules?: any[];
+  ingress_rules?: unknown;
+  egress_rules?: unknown;
+  inbound_rules?: unknown;
+  outbound_rules?: unknown;
   [key: string]: any;
 }
 
@@ -142,7 +141,7 @@ const SecurityGroup: React.FC<SecurityGroupProps> = ({ projectId = "", region = 
         tone: totalItems ? "primary" : "neutral",
         icon: <ShieldCheck size={16} />,
       },
-    ] as any[];
+    ] as unknown;
     if (region) {
       base.push({
         label: "Region",

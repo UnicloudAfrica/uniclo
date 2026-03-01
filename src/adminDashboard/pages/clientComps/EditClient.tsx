@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useUpdateClient } from "../../../hooks/adminHooks/clientHooks";
@@ -11,6 +10,11 @@ interface EditClientModalProps {
   onClose: () => void;
   onClientUpdated?: (client: any) => void;
   isOpen?: boolean; // Added for consistency, though not strictly used in the original component logic directly but good for modal patterns
+}
+
+interface CountryOption {
+  id?: string | number;
+  name?: string;
 }
 
 export const EditClientModal: React.FC<EditClientModalProps> = ({
@@ -33,7 +37,11 @@ export const EditClientModal: React.FC<EditClientModalProps> = ({
   const [errors, setErrors] = useState<any>({});
 
   const { mutate: updateClient, isPending } = useUpdateClient();
-  const { data: countries, isFetching: isCountriesFetching } = useFetchCountries();
+  const { data: countriesData, isFetching: isCountriesFetching } = useFetchCountries();
+  const countries = useMemo<CountryOption[]>(
+    () => (Array.isArray(countriesData) ? (countriesData as CountryOption[]) : []),
+    [countriesData]
+  );
 
   // Populate form data when client details change
   useEffect(() => {
@@ -78,8 +86,8 @@ export const EditClientModal: React.FC<EditClientModalProps> = ({
   const handleSubmit = () => {
     if (validateForm()) {
       // Find the country ID based on the selected country name
-      const selectedCountry = countries?.find(
-        (countryOption: any) => countryOption.name === formData.country
+      const selectedCountry = countries.find(
+        (countryOption) => countryOption.name === formData.country
       );
       const countryId = selectedCountry ? selectedCountry.id : null;
 
@@ -107,7 +115,7 @@ export const EditClientModal: React.FC<EditClientModalProps> = ({
             }
             onClose();
           },
-          onError: (err: any) => {
+          onError: () => {
             // ToastUtils.error(err?.message || "Failed to update client.");
           },
         }
@@ -286,7 +294,7 @@ export const EditClientModal: React.FC<EditClientModalProps> = ({
         type="submit"
         form={formId}
         disabled={isPending}
-        className="inline-flex w-full items-center justify-center rounded-full bg-[#047857] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#036149] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#047857] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+        className="inline-flex w-full items-center justify-center rounded-full bg-[rgb(var(--theme-success-700))] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[rgb(var(--theme-success-700))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[rgb(var(--theme-success-700))] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
       >
         {isPending ? (
           <>

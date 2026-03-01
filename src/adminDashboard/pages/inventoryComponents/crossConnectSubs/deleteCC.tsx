@@ -1,5 +1,3 @@
-// @ts-nocheck
-import React from "react";
 import { X, Loader2 } from "lucide-react";
 import { useDeleteCrossConnect } from "../../../../hooks/adminHooks/crossConnectHooks";
 import ToastUtils from "../../../../utils/toastUtil";
@@ -32,11 +30,11 @@ const DeleteCrossConnect = ({ isOpen, onClose, crossConnect }: any) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[500px] mx-4 w-full">
-        <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] w-full">
+        <div className="flex justify-between items-center px-6 py-4 border-b bg-[var(--theme-surface-alt)] rounded-t-[24px] w-full">
           <h2 className="text-lg font-semibold text-red-600">Confirm Delete Cross Connect</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
+            className="text-gray-400 hover:text-[rgb(var(--theme-neutral-900) / 0.7)] font-medium transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -52,7 +50,7 @@ const DeleteCrossConnect = ({ isOpen, onClose, crossConnect }: any) => {
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
+              className="px-6 py-2 text-[var(--theme-text-color)] bg-[var(--theme-surface-alt)] border border-[var(--theme-surface-alt)] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
               disabled={isPending}
             >
               Cancel

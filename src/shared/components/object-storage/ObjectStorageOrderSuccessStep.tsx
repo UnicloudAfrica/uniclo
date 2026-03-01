@@ -18,6 +18,62 @@ interface ObjectStorageOrderSuccessStepProps {
   onCreateAnother?: () => void;
 }
 
+type ProvisioningStatus = "completed" | "pending" | "not_started" | "failed";
+
+type ProvisioningStep = {
+  id?: string | number;
+  key?: string | number;
+  label?: string;
+  name?: string | number;
+  status?: string;
+  description?: string;
+  updated_at?: string;
+  context?: Record<string, unknown>;
+};
+
+type StorageAccount = Record<string, unknown> & {
+  id?: string | number;
+  name?: string;
+  region?: string;
+  meta?: {
+    provisioning_progress?: ProvisioningStep[];
+    provisioning?: {
+      steps?: ProvisioningStep[];
+    };
+  };
+  provisioning_progress?: ProvisioningStep[];
+};
+
+type NormalizedStep = {
+  id: string;
+  label: string;
+  status: ProvisioningStatus;
+  description?: string;
+  updated_at?: string;
+  context?: Record<string, unknown>;
+};
+
+type ProvisioningEvent = {
+  accountId?: string | number;
+  account_id?: string | number;
+  account?: { id?: string | number; uuid?: string | number };
+};
+
+type CredentialEntry = {
+  id: string;
+  label: string;
+  region?: string;
+  endpoint?: string;
+  accessKeyId?: string;
+  secretKey?: string;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const readString = (value: unknown): string | undefined =>
+  typeof value === "string" && value.trim() !== "" ? value : undefined;
+
 const resolveStoragePaths = (context: ObjectStorageOrderSuccessStepProps["dashboardContext"]) => {
   if (context === "admin") {
     return {
@@ -37,9 +93,7 @@ const resolveStoragePaths = (context: ObjectStorageOrderSuccessStepProps["dashbo
   };
 };
 
-const normalizeStatus = (
-  status?: string | null
-): "completed" | "pending" | "not_started" | "failed" => {
+const normalizeStatus = (status?: string | null): ProvisioningStatus => {
   const normalized = String(status || "").toLowerCase();
   if (["completed", "complete", "success", "successful", "done"].includes(normalized)) {
     return "completed";
@@ -54,7 +108,7 @@ const normalizeStatus = (
   return "pending";
 };
 
-const resolveProvisioningSteps = (account: any) => {
+const resolveProvisioningSteps = (account?: StorageAccount | null): NormalizedStep[] => {
   const rawSteps =
     account?.meta?.provisioning_progress ||
     account?.provisioning_progress ||
@@ -63,21 +117,27 @@ const resolveProvisioningSteps = (account: any) => {
 
   if (!Array.isArray(rawSteps)) return [];
 
-  return rawSteps.map((step: any, index: number) => ({
-    id: step.id || step.key || step.label || `step-${index}`,
-    label: step.label || step.name || step.id || `Step ${index + 1}`,
-    status: normalizeStatus(step.status),
-    description: step.description,
-    updated_at: step.updated_at,
-    context: step.context,
-  }));
+  return rawSteps.map((step, index) => {
+    const description = step.description;
+    const updatedAt = step.updated_at;
+    const context = step.context;
+
+    return {
+      id: String(step.id || step.key || step.label || `step-${index}`),
+      label: String(step.label || step.name || step.id || `Step ${index + 1}`),
+      status: normalizeStatus(step.status),
+      ...(description !== undefined && { description }),
+      ...(updatedAt !== undefined && { updatedAt }),
+      ...(context !== undefined && { context }),
+    };
+  });
 };
 
 const buildCredentialFilename = (label: string, id: string) => {
   const base = String(label || id || "storage")
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replaceAll(/[^a-z0-9]+/g, "-")
+    .replaceAll(/^-+|-+$/g, "");
   return `s3-credentials-${base || "storage"}.txt`;
 };
 
@@ -91,7 +151,7 @@ export const ObjectStorageOrderSuccessStep: React.FC<ObjectStorageOrderSuccessSt
   onCreateAnother,
 }) => {
   const navigate = useNavigate();
-  const [accountsById, setAccountsById] = useState<Record<string, any>>({});
+  const [accountsById, setAccountsById] = useState<Record<string, StorageAccount>>({});
   const [loadingIds, setLoadingIds] = useState<Record<string, boolean>>({});
   const [confirmations, setConfirmations] = useState<Record<string, boolean>>({});
 
@@ -108,7 +168,7 @@ export const ObjectStorageOrderSuccessStep: React.FC<ObjectStorageOrderSuccessSt
     if (!id) return;
     setLoadingIds((prev) => ({ ...prev, [id]: true }));
     try {
-      const data = await objectStorageApi.fetchAccount(id);
+      const data = (await objectStorageApi.fetchAccount(id)) as StorageAccount;
       setAccountsById((prev) => ({ ...prev, [id]: data }));
     } catch (error) {
       console.error("Failed to load storage account:", error);
@@ -127,12 +187,13 @@ export const ObjectStorageOrderSuccessStep: React.FC<ObjectStorageOrderSuccessSt
     fetchAllAccounts();
   }, [fetchAllAccounts, resolvedAccountIds]);
 
+  const accountIdsKey = resolvedAccountIds.join("|");
   useEffect(() => {
     setConfirmations({});
-  }, [resolvedAccountIds.join("|")]);
+  }, [accountIdsKey]);
 
   const handleProvisioningUpdate = useCallback(
-    (event: any) => {
+    (event: ProvisioningEvent) => {
       const updatedId =
         event?.accountId || event?.account_id || event?.account?.id || event?.account?.uuid;
       if (updatedId) {
@@ -175,14 +236,15 @@ export const ObjectStorageOrderSuccessStep: React.FC<ObjectStorageOrderSuccessSt
   const credentialEntries = useMemo(() => {
     if (!credentialsReady) return [];
     return accountSummaries.map((entry) => {
-      const context = entry.accessKeyStep?.context || {};
+      const context = entry.accessKeyStep?.context;
+      const contextRecord = isRecord(context) ? context : {};
       return {
         id: entry.id,
         label: entry.label,
         region: entry.region,
-        endpoint: context.endpoint,
-        accessKeyId: context.key_id,
-        secretKey: context.secret,
+        endpoint: readString(contextRecord["endpoint"]),
+        accessKeyId: readString(contextRecord["key_id"]),
+        secretKey: readString(contextRecord["secret"]),
       };
     });
   }, [accountSummaries, credentialsReady]);
@@ -230,7 +292,7 @@ export const ObjectStorageOrderSuccessStep: React.FC<ObjectStorageOrderSuccessSt
 
   const primaryAccountId = resolvedAccountIds.length === 1 ? resolvedAccountIds[0] : null;
 
-  const handleDownloadCredentials = useCallback((entry: any) => {
+  const handleDownloadCredentials = useCallback((entry: CredentialEntry) => {
     const credentials = {
       endpoint: entry.endpoint || "",
       access_key_id: entry.accessKeyId || "",
@@ -259,11 +321,31 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
     link.download = buildCredentialFilename(credentials.account_name, entry.id);
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    link.remove();
     URL.revokeObjectURL(url);
 
     ToastUtils.success("Credentials downloaded. Store this file securely!");
   }, []);
+
+  const renderProvisioningStatus = (entry: (typeof accountSummaries)[number]) => {
+    if (entry.steps.length > 0) {
+      return <SetupProgressCard steps={entry.steps} isLoading={Boolean(loadingIds[entry.id])} />;
+    }
+
+    if (isLoading) {
+      return (
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading provisioning status...
+        </div>
+      );
+    }
+
+    return (
+      <p className="text-sm text-gray-500">
+        Provisioning updates will appear once the workflow starts.
+      </p>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -352,20 +434,7 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
                   )}
                 </div>
 
-                {entry.steps.length > 0 ? (
-                  <SetupProgressCard
-                    steps={entry.steps}
-                    isLoading={Boolean(loadingIds[entry.id])}
-                  />
-                ) : isLoading ? (
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Loader2 className="h-4 w-4 animate-spin" /> Loading provisioning status...
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500">
-                    Provisioning updates will appear once the workflow starts.
-                  </p>
-                )}
+                {renderProvisioningStatus(entry)}
               </div>
             ))
           )}
@@ -399,7 +468,7 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
                     variant="outline"
                     size="sm"
                     leftIcon={<Download size={16} />}
-                    onClick={() => handleDownloadCredentials(entry)}
+                    onClick={() => handleDownloadCredentials(entry as CredentialEntry)}
                     isDisabled={!entry.accessKeyId || !entry.secretKey}
                   >
                     Download credentials
@@ -407,9 +476,9 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
                 </div>
 
                 <ObjectStorageCredentials
-                  endpoint={entry.endpoint}
-                  accessKeyId={entry.accessKeyId}
-                  secretKey={entry.secretKey}
+                  endpoint={entry.endpoint || ""}
+                  accessKeyId={entry.accessKeyId || ""}
+                  secretKey={entry.secretKey || ""}
                   showSecretOnce={true}
                   confirmLabel="I have downloaded and copied these credentials"
                   onSecretDismissed={() =>

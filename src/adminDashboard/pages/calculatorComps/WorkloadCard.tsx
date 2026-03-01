@@ -1,14 +1,59 @@
-// @ts-nocheck
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { HardDrive, Network, Plus, Trash2, Loader2 } from "lucide-react";
 import ModernCard from "../../../shared/components/ui/ModernCard";
 import { ModernButton } from "../../../shared/components/ui";
 import ModernInput from "../../../shared/components/ui/ModernInput";
-import SelectableInput from "../../../shared/components/ui/SelectableInput.jsx";
+import SelectableInput, { SelectableOption } from "../../../shared/components/ui/SelectableInput";
 import { useFetchProductPricing } from "../../../hooks/resource";
 import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
 import { useFormattedRegions } from "../../../utils/regionUtils";
+
+type WorkloadVolume = {
+  volume_type_id?: string | number | null;
+  storage_size_gb?: number | string | null;
+};
+
+type WorkloadData = {
+  region?: string | null;
+  compute_instance_id?: string | number | null;
+  os_image_id?: string | number | null;
+  volume_type_id?: string | number | null;
+  volumes?: WorkloadVolume[];
+  bandwidth_id?: string | number | null;
+  bandwidth_count?: number | string | null;
+  floating_ip_id?: string | number | null;
+  floating_ip_count?: number | string | null;
+  cross_connect_id?: string | number | null;
+  months?: number | string | null;
+  number_of_instances?: number | string | null;
+  storage_size_gb?: number | string | null;
+  [key: string]: any;
+};
+
+type PricingProduct = {
+  product: {
+    productable_id: string | number;
+    name?: string;
+  };
+  pricing?: {
+    effective?: {
+      price_local?: number;
+      currency?: string;
+    };
+  };
+  [key: string]: any;
+};
+
+type WorkloadCardProps = {
+  data: WorkloadData;
+  onChange: (next: WorkloadData) => void;
+  onRemove: () => void;
+  index: number;
+  countryCode?: string;
+  currencyCode?: string;
+  errors?: Record<string, string | null>;
+};
 
 const formatCurrency = (amount: any, currency: any) => {
   if (amount === null || amount === undefined || Number.isNaN(amount)) {
@@ -41,51 +86,57 @@ const WorkloadCard = ({
   onRemove,
   index,
   countryCode,
-  currencyCode,
   errors = {},
-}) => {
+}: WorkloadCardProps) => {
   const [searchTerms, setSearchTerms] = useState(createInitialSearchState);
   const [isNetworkingOpen, setIsNetworkingOpen] = useState(false);
-  const [itemErrors, setItemErrors] = useState(errors);
+  const [itemErrors, setItemErrors] = useState<Record<string, any>>(errors);
 
   useEffect(() => {
     setItemErrors(errors);
   }, [errors]);
 
   const { data: rawRegions, isFetching: isRegionsFetching } = useFetchRegions();
-  const regions = useFormattedRegions(rawRegions);
+  const regions = useFormattedRegions((Array.isArray(rawRegions) ? rawRegions : []) as any);
 
-  const { data: computerInstances, isFetching: isComputerInstancesFetching } =
+  const { data: computerInstancesData, isFetching: isComputerInstancesFetching } =
     useFetchProductPricing(data.region, "compute_instance", {
       enabled: !!data.region,
       countryCode,
     });
+  const computerInstances: PricingProduct[] = Array.isArray(computerInstancesData)
+    ? computerInstancesData
+    : [];
 
-  const { data: osImages, isFetching: isOsImagesFetching } = useFetchProductPricing(
+  const { data: osImagesData, isFetching: isOsImagesFetching } = useFetchProductPricing(
     data.region,
     "os_image",
     { enabled: !!data.region, countryCode }
   );
+  const osImages: PricingProduct[] = Array.isArray(osImagesData) ? osImagesData : [];
 
-  const { data: ebsVolumes, isFetching: isEbsVolumesFetching } = useFetchProductPricing(
+  const { data: ebsVolumesData, isFetching: isEbsVolumesFetching } = useFetchProductPricing(
     data.region,
     "volume_type",
     { enabled: !!data.region, countryCode }
   );
+  const ebsVolumes: PricingProduct[] = Array.isArray(ebsVolumesData) ? ebsVolumesData : [];
 
-  const { data: bandwidths, isFetching: isBandwidthsFetching } = useFetchProductPricing(
+  const { data: bandwidthsData, isFetching: isBandwidthsFetching } = useFetchProductPricing(
     data.region,
     "bandwidth",
     { enabled: !!data.region, countryCode }
   );
+  const bandwidths: PricingProduct[] = Array.isArray(bandwidthsData) ? bandwidthsData : [];
 
-  const { data: floatingIps, isFetching: isFloatingIpsFetching } = useFetchProductPricing(
+  const { data: floatingIpsData, isFetching: isFloatingIpsFetching } = useFetchProductPricing(
     data.region,
     "ip",
     { enabled: !!data.region, countryCode }
   );
+  const floatingIps: PricingProduct[] = Array.isArray(floatingIpsData) ? floatingIpsData : [];
 
-  const { data: crossConnects, isFetching: isCrossConnectsFetching } = useFetchProductPricing(
+  const { data: crossConnectsData, isFetching: isCrossConnectsFetching } = useFetchProductPricing(
     data.region,
     "cross_connect",
     {
@@ -93,9 +144,10 @@ const WorkloadCard = ({
       countryCode,
     }
   );
+  const crossConnects: PricingProduct[] = Array.isArray(crossConnectsData) ? crossConnectsData : [];
 
-  const findSelectedItem = (collection: any, id: any) =>
-    collection?.find(({ product }) => String(product.productable_id) === String(id));
+  const findSelectedItem = (collection: PricingProduct[], id: any) =>
+    collection.find(({ product }) => String(product.productable_id) === String(id));
 
   const selectedCompute = findSelectedItem(computerInstances, data.compute_instance_id);
   const selectedOs = findSelectedItem(osImages, data.os_image_id);
@@ -103,6 +155,7 @@ const WorkloadCard = ({
   const selectedBandwidth = findSelectedItem(bandwidths, data.bandwidth_id);
   const selectedFloatingIp = findSelectedItem(floatingIps, data.floating_ip_id);
   const selectedCrossConnect = findSelectedItem(crossConnects, data.cross_connect_id);
+  const volumes = data.volumes || [];
 
   const renderPricePill = (label: any) =>
     label ? (
@@ -111,14 +164,14 @@ const WorkloadCard = ({
       </span>
     ) : null;
 
-  const updateField = (field: any, value: any) => {
+  const updateField = (field: string, value: any) => {
     onChange({ ...data, [field]: value });
     setItemErrors((prev) => ({ ...prev, [field]: null }));
   };
 
   const handleNumericChange =
-    (field, min = 0) =>
-    (event) => {
+    (field: string, min = 0) =>
+    (event: React.ChangeEvent<HTMLInputElement>) => {
       const rawValue = event.target.value;
       if (rawValue === "") {
         updateField(field, "");
@@ -129,60 +182,59 @@ const WorkloadCard = ({
       updateField(field, Math.max(numericValue, min));
     };
 
-  const handleSelectableChange =
-    (field: any) =>
-    (option = null) => {
-      const value = option ? String(option.id) : null;
+  const handleSelectableChange = (field: string) => (option: SelectableOption | null) => {
+    const value = option ? String(option.id) : null;
 
-      if (field === "region") {
-        onChange({
-          ...data,
-          region: value,
-          compute_instance_id: null,
-          os_image_id: null,
-          volume_type_id: null,
-          volumes: [],
-          bandwidth_id: null,
-          bandwidth_count: "",
-          floating_ip_id: null,
-          floating_ip_count: "",
-          cross_connect_id: null,
-        });
-        // Reset other search terms but keep region
-        setSearchTerms({
-          ...createInitialSearchState(),
-          region: option ? option.name : "",
-        });
-        return;
-      }
+    if (field === "region") {
+      onChange({
+        ...data,
+        region: value,
+        compute_instance_id: null,
+        os_image_id: null,
+        volume_type_id: null,
+        volumes: [],
+        bandwidth_id: null,
+        bandwidth_count: "",
+        floating_ip_id: null,
+        floating_ip_count: "",
+        cross_connect_id: null,
+      });
+      // Reset other search terms but keep region
+      setSearchTerms({
+        ...createInitialSearchState(),
+        region: option ? option.name : "",
+      });
+      return;
+    }
 
-      updateField(field, value);
+    updateField(field, value);
 
-      setSearchTerms((prev) => ({
-        ...prev,
-        [field === "compute_instance_id"
-          ? "compute"
-          : field === "os_image_id"
-            ? "os"
-            : field === "volume_type_id"
-              ? "volume"
-              : field === "bandwidth_id"
-                ? "bandwidth"
-                : field === "floating_ip_id"
-                  ? "floatingIp"
-                  : "crossConnect"]: option ? option.name : "",
-      }));
+    setSearchTerms((prev) => ({
+      ...prev,
+      [field === "compute_instance_id"
+        ? "compute"
+        : field === "os_image_id"
+          ? "os"
+          : field === "volume_type_id"
+            ? "volume"
+            : field === "bandwidth_id"
+              ? "bandwidth"
+              : field === "floating_ip_id"
+                ? "floatingIp"
+                : "crossConnect"]: option ? option.name : "",
+    }));
 
-      if (["bandwidth_id", "floating_ip_id", "cross_connect_id"].includes(field)) {
-        setIsNetworkingOpen((prev) => prev || Boolean(option));
-      }
-    };
+    if (["bandwidth_id", "floating_ip_id", "cross_connect_id"].includes(field)) {
+      setIsNetworkingOpen((prev) => prev || Boolean(option));
+    }
+  };
 
   const validateVolumeInput = () => {
-    const newErrors = {};
-    if (!data.volume_type_id) newErrors.volume_type_id = "Volume type is required.";
-    if (!data.storage_size_gb || data.storage_size_gb < 1)
-      newErrors.storage_size_gb = "Storage size must be at least 1 GB.";
+    const newErrors: Record<string, any> = {};
+    const storageSize = Number(data.storage_size_gb);
+    if (!data.volume_type_id) newErrors["volume_type_id"] = "Volume type is required.";
+    if (!data.storage_size_gb || Number.isNaN(storageSize) || storageSize < 1)
+      newErrors["storage_size_gb"] = "Storage size must be at least 1 GB.";
 
     setItemErrors((prev) => ({ ...prev, ...newErrors }));
     return Object.keys(newErrors).length === 0;
@@ -191,9 +243,9 @@ const WorkloadCard = ({
   const addVolume = () => {
     if (!validateVolumeInput()) return;
 
-    const newVolume = {
-      volume_type_id: data.volume_type_id,
-      storage_size_gb: data.storage_size_gb,
+    const newVolume: WorkloadVolume = {
+      volume_type_id: data.volume_type_id ?? null,
+      storage_size_gb: data.storage_size_gb ?? null,
     };
 
     onChange({
@@ -209,7 +261,7 @@ const WorkloadCard = ({
   const removeVolume = (volIndex: any) => {
     onChange({
       ...data,
-      volumes: data.volumes.filter((_, i) => i !== volIndex),
+      volumes: (data.volumes || []).filter((_: WorkloadVolume, i: number) => i !== volIndex),
     });
   };
 
@@ -251,23 +303,23 @@ const WorkloadCard = ({
           </div>
           <SelectableInput
             options={
-              regions?.map((region: any) => ({
+              regions.map((region: any) => ({
                 id: region.code,
                 name: region.name,
               })) || []
             }
-            value={data.region}
+            value={data.region ?? ""}
             searchValue={searchTerms.region}
             onSearchChange={(value) => setSearchTerms((prev) => ({ ...prev, region: value }))}
             onSelect={handleSelectableChange("region")}
             placeholder="Search regions"
             isLoading={isRegionsFetching}
             disabled={isRegionsFetching}
-            hasError={Boolean(itemErrors.region)}
+            hasError={Boolean(itemErrors["region"])}
             emptyMessage="No regions found"
           />
-          {itemErrors.region && (
-            <p className="text-xs font-medium text-red-600">{itemErrors.region}</p>
+          {itemErrors["region"] && (
+            <p className="text-xs font-medium text-red-600">{itemErrors["region"]}</p>
           )}
         </div>
 
@@ -290,7 +342,7 @@ const WorkloadCard = ({
             </div>
             <SelectableInput
               options={
-                computerInstances?.map(({ product, pricing }: any) => ({
+                computerInstances.map(({ product, pricing }: any) => ({
                   id: product.productable_id,
                   name: `${product.name} • ${
                     formatCurrency(pricing?.effective?.price_local, pricing?.effective?.currency) ||
@@ -298,18 +350,20 @@ const WorkloadCard = ({
                   }`,
                 })) || []
               }
-              value={data.compute_instance_id}
+              value={data.compute_instance_id ?? ""}
               searchValue={searchTerms.compute}
               onSearchChange={(value) => setSearchTerms((prev) => ({ ...prev, compute: value }))}
               onSelect={handleSelectableChange("compute_instance_id")}
               placeholder="Search compute profiles"
               disabled={!data.region}
               isLoading={isComputerInstancesFetching}
-              hasError={Boolean(itemErrors.compute_instance_id)}
+              hasError={Boolean(itemErrors["compute_instance_id"])}
               emptyMessage="No compute options"
             />
-            {itemErrors.compute_instance_id && (
-              <p className="text-xs font-medium text-red-600">{itemErrors.compute_instance_id}</p>
+            {itemErrors["compute_instance_id"] && (
+              <p className="text-xs font-medium text-red-600">
+                {itemErrors["compute_instance_id"]}
+              </p>
             )}
           </div>
           <div className="space-y-2">
@@ -330,7 +384,7 @@ const WorkloadCard = ({
             </div>
             <SelectableInput
               options={
-                osImages?.map(({ product, pricing }: any) => ({
+                osImages.map(({ product, pricing }: any) => ({
                   id: product.productable_id,
                   name: `${product.name} • ${
                     formatCurrency(pricing?.effective?.price_local, pricing?.effective?.currency) ||
@@ -338,53 +392,54 @@ const WorkloadCard = ({
                   }`,
                 })) || []
               }
-              value={data.os_image_id}
+              value={data.os_image_id ?? ""}
               searchValue={searchTerms.os}
               onSearchChange={(value) => setSearchTerms((prev) => ({ ...prev, os: value }))}
               onSelect={handleSelectableChange("os_image_id")}
               placeholder="Search OS images"
               disabled={!data.region}
               isLoading={isOsImagesFetching}
-              hasError={Boolean(itemErrors.os_image_id)}
+              hasError={Boolean(itemErrors["os_image_id"])}
               emptyMessage="No OS images"
             />
-            {itemErrors.os_image_id && (
-              <p className="text-xs font-medium text-red-600">{itemErrors.os_image_id}</p>
+            {itemErrors["os_image_id"] && (
+              <p className="text-xs font-medium text-red-600">{itemErrors["os_image_id"]}</p>
             )}
           </div>
           <ModernInput
             label="Term (months)"
             type="number"
             min="1"
-            value={data.months}
+            value={data.months ?? ""}
             onChange={handleNumericChange("months", 1)}
-            error={itemErrors.months}
+            error={itemErrors["months"] || ""}
             helper="Min 1 month"
           />
           <ModernInput
             label="Number of instances"
             type="number"
             min="1"
-            value={data.number_of_instances}
+            value={data.number_of_instances ?? ""}
             onChange={handleNumericChange("number_of_instances", 1)}
-            error={itemErrors.number_of_instances}
+            error={itemErrors["number_of_instances"] || ""}
             helper="Min 1 instance"
           />
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-slate-700">Volumes</label>
-              {data.volumes?.length > 0 && (
-                <span className="text-xs text-slate-500">{data.volumes.length} added</span>
+              {volumes.length > 0 && (
+                <span className="text-xs text-slate-500">{volumes.length} added</span>
               )}
             </div>
 
             {/* List of added volumes */}
-            {data.volumes?.length > 0 && (
+            {volumes.length > 0 && (
               <div className="space-y-2 mb-3">
-                {data.volumes.map((vol, idx) => {
-                  const volProduct = ebsVolumes?.find(
-                    (v) => String(v.product.productable_id) === String(vol.volume_type_id)
+                {volumes.map((vol: WorkloadVolume, idx: number) => {
+                  const volProduct = ebsVolumes.find(
+                    (v: PricingProduct) =>
+                      String(v.product.productable_id) === String(vol.volume_type_id)
                   );
                   return (
                     <div
@@ -431,7 +486,7 @@ const WorkloadCard = ({
                 </div>
                 <SelectableInput
                   options={
-                    ebsVolumes?.map(({ product, pricing }: any) => ({
+                    ebsVolumes.map(({ product, pricing }: any) => ({
                       id: product.productable_id,
                       name: `${product.name} • ${
                         formatCurrency(
@@ -441,18 +496,18 @@ const WorkloadCard = ({
                       }`,
                     })) || []
                   }
-                  value={data.volume_type_id}
+                  value={data.volume_type_id ?? ""}
                   searchValue={searchTerms.volume}
                   onSearchChange={(value) => setSearchTerms((prev) => ({ ...prev, volume: value }))}
                   onSelect={handleSelectableChange("volume_type_id")}
                   placeholder="Search volume types"
                   disabled={!data.region}
                   isLoading={isEbsVolumesFetching}
-                  hasError={Boolean(itemErrors.volume_type_id)}
+                  hasError={Boolean(itemErrors["volume_type_id"])}
                   emptyMessage="No volume types"
                 />
-                {itemErrors.volume_type_id && (
-                  <p className="text-xs font-medium text-red-600">{itemErrors.volume_type_id}</p>
+                {itemErrors["volume_type_id"] && (
+                  <p className="text-xs font-medium text-red-600">{itemErrors["volume_type_id"]}</p>
                 )}
               </div>
               <div className="flex items-start gap-3">
@@ -461,9 +516,9 @@ const WorkloadCard = ({
                     label="Storage size (GB)"
                     type="number"
                     min="1"
-                    value={data.storage_size_gb}
+                    value={data.storage_size_gb ?? ""}
                     onChange={handleNumericChange("storage_size_gb", 1)}
-                    error={itemErrors.storage_size_gb}
+                    error={itemErrors["storage_size_gb"] || ""}
                     helper="Min 1 GB"
                   />
                 </div>
@@ -532,7 +587,7 @@ const WorkloadCard = ({
                   </div>
                   <SelectableInput
                     options={
-                      bandwidths?.map(({ product, pricing }: any) => ({
+                      bandwidths.map(({ product, pricing }: any) => ({
                         id: product.productable_id,
                         name: `${product.name} • ${
                           formatCurrency(
@@ -542,7 +597,7 @@ const WorkloadCard = ({
                         }`,
                       })) || []
                     }
-                    value={data.bandwidth_id}
+                    value={data.bandwidth_id ?? ""}
                     searchValue={searchTerms.bandwidth}
                     onSearchChange={(value) =>
                       setSearchTerms((prev) => ({ ...prev, bandwidth: value }))
@@ -557,7 +612,7 @@ const WorkloadCard = ({
                     label="Bandwidth units"
                     type="number"
                     min="0"
-                    value={data.bandwidth_count}
+                    value={data.bandwidth_count ?? ""}
                     onChange={handleNumericChange("bandwidth_count", 0)}
                     helper="Leave blank to skip"
                   />
@@ -578,7 +633,7 @@ const WorkloadCard = ({
                   </div>
                   <SelectableInput
                     options={
-                      floatingIps?.map(({ product, pricing }: any) => ({
+                      floatingIps.map(({ product, pricing }: any) => ({
                         id: product.productable_id,
                         name: `${product.name} • ${
                           formatCurrency(
@@ -588,7 +643,7 @@ const WorkloadCard = ({
                         }`,
                       })) || []
                     }
-                    value={data.floating_ip_id}
+                    value={data.floating_ip_id ?? ""}
                     searchValue={searchTerms.floatingIp}
                     onSearchChange={(value) =>
                       setSearchTerms((prev) => ({ ...prev, floatingIp: value }))
@@ -603,7 +658,7 @@ const WorkloadCard = ({
                     label="Floating IP count"
                     type="number"
                     min="0"
-                    value={data.floating_ip_count}
+                    value={data.floating_ip_count ?? ""}
                     onChange={handleNumericChange("floating_ip_count", 0)}
                     helper="Leave blank to skip"
                   />
@@ -624,7 +679,7 @@ const WorkloadCard = ({
                   </div>
                   <SelectableInput
                     options={
-                      crossConnects?.map(({ product, pricing }: any) => ({
+                      crossConnects.map(({ product, pricing }: any) => ({
                         id: product.productable_id,
                         name: `${product.name} • ${
                           formatCurrency(
@@ -634,7 +689,7 @@ const WorkloadCard = ({
                         }`,
                       })) || []
                     }
-                    value={data.cross_connect_id}
+                    value={data.cross_connect_id ?? ""}
                     searchValue={searchTerms.crossConnect}
                     onSearchChange={(value) =>
                       setSearchTerms((prev) => ({ ...prev, crossConnect: value }))

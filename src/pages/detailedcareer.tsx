@@ -108,7 +108,7 @@ const DetailedCareer = () => {
   //func to copy link
   const [buttonText, setButtonText] = useState("Refer a friend");
   const handleLinkCopy = () => {
-    const currentLink = window.location.href;
+    const currentLink = globalThis.window.location.href;
 
     navigator.clipboard
       .writeText(currentLink)
@@ -384,13 +384,13 @@ const DetailedCareer = () => {
   return (
     <>
       <Navbar />
-      <div className=" mt-[10em] mb-[4em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
+      <div className=" mt-[10em] mb-[4em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[var(--theme-heading-color)]">
         <p className="font-medium text-2xl md:text-[40px] md:leading-[50px] mt-3 md:px-[12%] text-center">
           {resolvedCareer.title}
         </p>
         {resolvedCareer.details && (
           <div className=" w-full  items-center flex justify-center ">
-            <div className=" flex space-x-8 mt-3 text-[#676767]">
+            <div className=" flex space-x-8 mt-3 text-[var(--theme-text-color)]">
               <p className="">{resolvedCareer.location}</p>
               <p className="text-center font-medium text-base">{"Posted " + resolvedCareer.date}</p>
             </div>
@@ -403,22 +403,26 @@ const DetailedCareer = () => {
                 <div className=" flex space-x-4 md:space-x-8 mt-6">
                   <button
                     onClick={handleLinkCopy}
-                    className=" flex px-4 py-1 md:px-6 md:py-2 border border-[#EAEBF0] rounded-[30px] justify-center items-center"
+                    className=" flex px-4 py-1 md:px-6 md:py-2 border border-[var(--theme-surface-alt)] rounded-[30px] justify-center items-center"
                   >
-                    <p className=" text-sm md:text-base font-medium text-[#121212]">{buttonText}</p>
+                    <p className=" text-sm md:text-base font-medium text-[var(--theme-heading-color)]">
+                      {buttonText}
+                    </p>
                   </button>
                   <button
                     onClick={handleinterest}
                     className=" flex px-4 py-1 md:px-6 md:py-2 bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] rounded-[30px] justify-center items-center"
                   >
-                    <p className="text-sm md:text-base font-medium text-[#fff]">I am interested</p>
+                    <p className="text-sm md:text-base font-medium text-[var(--theme-card-bg)]">
+                      I am interested
+                    </p>
                   </button>
                 </div>
               </div>
             )}
             <div className=" mt-16">
               <p className=" text-center font-medium text-xl md:text-2xl">Job Description</p>
-              <p className=" mt-3 text-justify text-[#676767] font-normal text-base">
+              <p className=" mt-3 text-justify text-[var(--theme-text-color)] font-normal text-base">
                 {resolvedCareer.desc}
               </p>
               {resolvedCareer.details && (
@@ -426,22 +430,22 @@ const DetailedCareer = () => {
                   <p className=" text-left md:text-center font-medium text-xl md:text-2xl">
                     Job Information
                   </p>
-                  <div className=" flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-8 mt-6 md:mt-3 text-[#676767]">
+                  <div className=" flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-8 mt-6 md:mt-3 text-[var(--theme-text-color)]">
                     <span className=" flex flex-row space-x-2 items-center">
                       <img src={time} className="" alt="" />
-                      <p className=" font-Outfit text-[#121212] md:text-base text-sm font-medium">
+                      <p className=" font-Outfit text-[var(--theme-heading-color)] md:text-base text-sm font-medium">
                         {resolvedCareer.duration}
                       </p>
                     </span>
                     <span className=" flex flex-row space-x-2 items-center">
                       <img src={dollar} className="" alt="" />
-                      <p className=" font-Outfit text-[#121212] md:text-base text-sm font-medium">
+                      <p className=" font-Outfit text-[var(--theme-heading-color)] md:text-base text-sm font-medium">
                         {resolvedCareer.pay}
                       </p>
                     </span>
                     <span className=" flex flex-row space-x-2 selectedCareer items-center">
-                      <p className=" font-Outfit text-[#676767]">Location:</p>
-                      <p className=" font-Outfit text-[#121212] md:text-base text-sm font-medium">
+                      <p className=" font-Outfit text-[var(--theme-text-color)]">Location:</p>
+                      <p className=" font-Outfit text-[var(--theme-heading-color)] md:text-base text-sm font-medium">
                         {resolvedCareer.location}
                       </p>
                     </span>
@@ -450,7 +454,7 @@ const DetailedCareer = () => {
               )}
               <p
                 style={{ whiteSpace: "pre-line" }}
-                className=" px-4 mt-6 text-base text-[#676767] text- font-normal whitespace-pre-line"
+                className=" px-4 mt-6 text-base text-[var(--theme-text-color)] text- font-normal whitespace-pre-line"
                 dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(resolvedCareer.details) }}
               />
             </div>
@@ -459,7 +463,9 @@ const DetailedCareer = () => {
                 onClick={handleinterest}
                 className=" flex px-6 py-2 bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] rounded-[30px] justify-center items-center my-6 "
               >
-                <p className=" text-base font-medium text-[#fff]">I am interested</p>
+                <p className=" text-base font-medium text-[var(--theme-card-bg)]">
+                  I am interested
+                </p>
               </button>
             )}
           </div>
@@ -472,18 +478,18 @@ const DetailedCareer = () => {
               <div className=" w-full flex mt-8 flex-col md:flex-row justify-between md:mb- space-y-3 md:space-y-0">
                 <span className="w-full md:w-[48%]">
                   <label
-                    className="font-Outfit text-base text-[#1E1E1EB2] font-medium"
+                    className="font-Outfit text-base text-[rgb(var(--theme-neutral-900) / 0.7)] font-medium"
                     htmlFor="phone"
                   >
                     Phone
                   </label>
-                  <div className="mt-2 flex h-[45px] w-full bg-[#F5F5F4] text-base rounded-lg font-normal shadow-md shadow-[#1018280D]">
+                  <div className="mt-2 flex h-[45px] w-full bg-[var(--theme-surface-alt)] text-base rounded-lg font-normal shadow-md shadow-[rgb(var(--theme-neutral-900) / 0.05)]">
                     <select
                       onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                         setTitle(e.target.value);
                         setTitleError("");
                       }}
-                      className={`text-[#1E1E1E33] text-sm w-[20%] p-2.5 bg-transparent focus:border-0 focus:border-[#DAE0E6]${
+                      className={`text-[rgb(var(--theme-neutral-900) / 0.2)] text-sm w-[20%] p-2.5 bg-transparent focus:border-0 focus:border-[var(--border-default)]${
                         titleError ? "border border-red-500" : ""
                       }`}
                     >
@@ -502,7 +508,7 @@ const DetailedCareer = () => {
                         setLastNameError("");
                       }}
                       placeholder="Last Name"
-                      className={`w-[80%] p-2.5 bg-transparent text-sm text-[#1E1E1E33] ${
+                      className={`w-[80%] p-2.5 bg-transparent text-sm text-[rgb(var(--theme-neutral-900) / 0.2)] ${
                         lastNameError ? "border border-red-500" : ""
                       }`}
                     />
@@ -512,7 +518,7 @@ const DetailedCareer = () => {
 
                 <span className=" w-full md:w-[48%]">
                   <label
-                    className=" font-Outfit text-base text-[#1E1E1EB2] font-medium"
+                    className=" font-Outfit text-base text-[rgb(var(--theme-neutral-900) / 0.7)] font-medium"
                     htmlFor="first-name"
                   >
                     First name
@@ -525,7 +531,7 @@ const DetailedCareer = () => {
                       setFirstNameError("");
                     }}
                     placeholder="First Name"
-                    className={`h-[45px] bg-[#F5F5F4] shadow-md shadow-[#1018280D] mt-2 text-gray-900 font-Outfit font-normal placeholder:font-Outfit placeholder:text-[#1E1E1E33] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${
+                    className={`h-[45px] bg-[var(--theme-surface-alt)] shadow-md shadow-[rgb(var(--theme-neutral-900) / 0.05)] mt-2 text-gray-900 font-Outfit font-normal placeholder:font-Outfit placeholder:text-[rgb(var(--theme-neutral-900) / 0.2)] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${
                       firstNameError ? "border border-red-500" : ""
                     }`}
                   />
@@ -535,7 +541,7 @@ const DetailedCareer = () => {
 
               <span className="w-full block mt-3 ">
                 <label
-                  className="font-Outfit text-base text-[#1E1E1EB2] font-medium"
+                  className="font-Outfit text-base text-[rgb(var(--theme-neutral-900) / 0.7)] font-medium"
                   htmlFor="country-of-residence"
                 >
                   Country of Residence
@@ -550,11 +556,14 @@ const DetailedCareer = () => {
                     setCode(selectedCountryCode);
                     setCountryError("");
                   }}
-                  className={`h-[45px] bg-[#F5F5F4] shadow-md shadow-[#1018280D] mt-2 text-[#1e1e1e33] font-Outfit font-normal placeholder:font-Outfit placeholder:text-[#1E1E1E33] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${
+                  className={`h-[45px] bg-[var(--theme-surface-alt)] shadow-md shadow-[rgb(var(--theme-neutral-900) / 0.05)] mt-2 text-[rgb(var(--theme-neutral-900) / 0.2)] font-Outfit font-normal placeholder:font-Outfit placeholder:text-[rgb(var(--theme-neutral-900) / 0.2)] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${
                     countryError ? "border border-red-500" : ""
                   }`}
                 >
-                  <option className="text-[#1e1e1e33] placeholder:text-[#1E1E1E33]" value="">
+                  <option
+                    className="text-[rgb(var(--theme-neutral-900) / 0.2)] placeholder:text-[rgb(var(--theme-neutral-900) / 0.2)]"
+                    value=""
+                  >
                     Select Country
                   </option>
                   {countryList.map((country, index) => (
@@ -569,7 +578,7 @@ const DetailedCareer = () => {
 
               <span className="w-full block mt-3 ">
                 <label
-                  className="font-Outfit text-base text-[#1E1E1EB2] font-medium"
+                  className="font-Outfit text-base text-[rgb(var(--theme-neutral-900) / 0.7)] font-medium"
                   htmlFor="state"
                 >
                   State
@@ -579,11 +588,14 @@ const DetailedCareer = () => {
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                     setState(e.target.value);
                   }}
-                  className={`h-[45px] bg-[#F5F5F4] shadow-md shadow-[#1018280D] mt-2 text-gray-900 font-Outfit font-normal placeholder:font-Outfit placeholder:text-[#1E1E1E33] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${
+                  className={`h-[45px] bg-[var(--theme-surface-alt)] shadow-md shadow-[rgb(var(--theme-neutral-900) / 0.05)] mt-2 text-gray-900 font-Outfit font-normal placeholder:font-Outfit placeholder:text-[rgb(var(--theme-neutral-900) / 0.2)] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${
                     stateError ? "border border-red-500" : ""
                   }`}
                 >
-                  <option className="text-[#1e1e1e33] placeholder:text-[#1E1E1E33]" value="">
+                  <option
+                    className="text-[rgb(var(--theme-neutral-900) / 0.2)] placeholder:text-[rgb(var(--theme-neutral-900) / 0.2)]"
+                    value=""
+                  >
                     Select State
                   </option>
                   {stateList.map((state, index) => (
@@ -598,7 +610,7 @@ const DetailedCareer = () => {
 
               <span className="w-full block mt-3 ">
                 <label
-                  className="font-Outfit text-base text-[#1E1E1EB2] font-medium"
+                  className="font-Outfit text-base text-[rgb(var(--theme-neutral-900) / 0.7)] font-medium"
                   htmlFor="email"
                 >
                   Email
@@ -611,7 +623,7 @@ const DetailedCareer = () => {
                     setEmailError("");
                   }}
                   placeholder="Enter email address"
-                  className={`h-[45px] bg-[#F5F5F4] shadow-md shadow-[#1018280D] mt-2 text-gray-900 font-Outfit font-normal placeholder:font-Outfit placeholder:text-[#1E1E1E33] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${
+                  className={`h-[45px] bg-[var(--theme-surface-alt)] shadow-md shadow-[rgb(var(--theme-neutral-900) / 0.05)] mt-2 text-gray-900 font-Outfit font-normal placeholder:font-Outfit placeholder:text-[rgb(var(--theme-neutral-900) / 0.2)] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${
                     emailError ? "border border-red-500" : ""
                   }`}
                 />
@@ -620,16 +632,16 @@ const DetailedCareer = () => {
 
               <span className="w-full block mt-3">
                 <label
-                  className="font-Outfit text-base text-[#1E1E1EB2] font-medium"
+                  className="font-Outfit text-base text-[rgb(var(--theme-neutral-900) / 0.7)] font-medium"
                   htmlFor="phone"
                 >
                   Phone
                 </label>
-                <div className="mt-2 flex h-[45px] w-full bg-[#F5F5F4] text-base rounded-lg font-normal shadow-md shadow-[#1018280D]">
+                <div className="mt-2 flex h-[45px] w-full bg-[var(--theme-surface-alt)] text-base rounded-lg font-normal shadow-md shadow-[rgb(var(--theme-neutral-900) / 0.05)]">
                   <select
                     value={selectedCountry}
                     onChange={handleCountryChange}
-                    className="text-gray-900 placeholder:text-[#1e1e1e33] text-sm w-[20%] p-2.5 bg-transparent focus:border-0 focus:border-[#DAE0E6]"
+                    className="text-gray-900 placeholder:text-[rgb(var(--theme-neutral-900) / 0.2)] text-sm w-[20%] p-2.5 bg-transparent focus:border-0 focus:border-[var(--border-default)]"
                   >
                     <option value="">Select Country</option>
                     {countryList.map((country, index) => (
@@ -657,7 +669,7 @@ const DetailedCareer = () => {
 
               <span className="w-full mt-3 flex flex-col">
                 <label
-                  className="font-Outfit text-base text-[#1E1E1EB2] font-medium"
+                  className="font-Outfit text-base text-[rgb(var(--theme-neutral-900) / 0.7)] font-medium"
                   htmlFor="date-of-birth"
                 >
                   Date of Birth
@@ -665,7 +677,7 @@ const DetailedCareer = () => {
                 <DatePicker
                   selected={dob}
                   onChange={(date: Date | null) => setDOB(date)}
-                  className={`h-[45px] bg-[#F5F5F4] shadow-md shadow-[#1018280D] mt-2 text-gray-900 font-Outfit font-normal placeholder:font-Outfit placeholder:text-[#1E1E1E33] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${
+                  className={`h-[45px] bg-[var(--theme-surface-alt)] shadow-md shadow-[rgb(var(--theme-neutral-900) / 0.05)] mt-2 text-gray-900 font-Outfit font-normal placeholder:font-Outfit placeholder:text-[rgb(var(--theme-neutral-900) / 0.2)] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${
                     dateError ? "border border-red-500" : ""
                   }`}
                   dateFormat="dd/MM/yyyy" // Customize the date format as needed
@@ -678,7 +690,7 @@ const DetailedCareer = () => {
 
               <span className="w-full block mt-3 ">
                 <label
-                  className="font-Outfit text-base text-[#1E1E1EB2] font-medium"
+                  className="font-Outfit text-base text-[rgb(var(--theme-neutral-900) / 0.7)] font-medium"
                   htmlFor="linkedin"
                 >
                   Linkedin
@@ -690,21 +702,21 @@ const DetailedCareer = () => {
                     setLinkedin(e.target.value);
                   }}
                   placeholder="Enter Linkedin Link"
-                  className=" h-[45px] bg-[#F5F5F4] shadow-md shadow-[#1018280D] mt-2 text-gray-900 font-Outfit font-normal placeholder:font-Outfit placeholder:text-[#1E1E1E33] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                  className=" h-[45px] bg-[var(--theme-surface-alt)] shadow-md shadow-[rgb(var(--theme-neutral-900) / 0.05)] mt-2 text-gray-900 font-Outfit font-normal placeholder:font-Outfit placeholder:text-[rgb(var(--theme-neutral-900) / 0.2)] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                 />
               </span>
 
               <div className=" w-full flex mt-3 md:mt-3 flex-col md:flex-row justify-between md:mb-3 space-y-12 md:space-y-0">
                 <div className="relative w-full h-[45px] md:w-[48%]">
                   <label
-                    className="font-Outfit text-base text-[#1E1E1EB2] font-medium"
+                    className="font-Outfit text-base text-[rgb(var(--theme-neutral-900) / 0.7)] font-medium"
                     htmlFor="highest-education"
                   >
                     Highest education
                   </label>
                   <select
                     name=""
-                    className={`appearance-none text-gray-900 h-[45px] w-full text-sm px-4 py-[10px] bg-[#F5F5F4] shadow-md shadow-[#1018280D] rounded-lg mt-2 ${
+                    className={`appearance-none text-gray-900 h-[45px] w-full text-sm px-4 py-[10px] bg-[var(--theme-surface-alt)] shadow-md shadow-[rgb(var(--theme-neutral-900) / 0.05)] rounded-lg mt-2 ${
                       educationLevelError ? "border border-red-500" : ""
                     }`}
                     id="reasonForContact"
@@ -742,7 +754,7 @@ const DetailedCareer = () => {
 
                 <span className="w-full md:w-[48%]">
                   <label
-                    className="font-Outfit text-base text-[#1E1E1EB2] font-medium"
+                    className="font-Outfit text-base text-[rgb(var(--theme-neutral-900) / 0.7)] font-medium"
                     htmlFor="year-of-completion"
                   >
                     Year of completion of Highest education
@@ -754,7 +766,7 @@ const DetailedCareer = () => {
                       setYocError("");
                     }}
                     placeholder="Enter Year"
-                    className={`h-[45px] bg-[#F5F5F4] shadow-md shadow-[#1018280D] mt-2 text-gray-900 font-Outfit font-normal placeholder:font-Outfit placeholder:text-[#1E1E1E33] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${
+                    className={`h-[45px] bg-[var(--theme-surface-alt)] shadow-md shadow-[rgb(var(--theme-neutral-900) / 0.05)] mt-2 text-gray-900 font-Outfit font-normal placeholder:font-Outfit placeholder:text-[rgb(var(--theme-neutral-900) / 0.2)] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${
                       yocError ? "border border-red-500" : ""
                     }`}
                   />
@@ -764,7 +776,7 @@ const DetailedCareer = () => {
 
               <span className="w-full block mt-3 md:mt-0 ">
                 <label
-                  className="font-Outfit text-base text-[#1E1E1EB2] font-medium"
+                  className="font-Outfit text-base text-[rgb(var(--theme-neutral-900) / 0.7)] font-medium"
                   htmlFor="experience-in-years"
                 >
                   Experience in Years
@@ -776,7 +788,7 @@ const DetailedCareer = () => {
                     setExperienceinYearsError("");
                   }}
                   placeholder=""
-                  className={`h-[45px] bg-[#F5F5F4] shadow-md shadow-[#1018280D] mt-2 text-gray-900 font-Outfit font-normal placeholder:font-Outfit placeholder:text-[#1E1E1E33] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${
+                  className={`h-[45px] bg-[var(--theme-surface-alt)] shadow-md shadow-[rgb(var(--theme-neutral-900) / 0.05)] mt-2 text-gray-900 font-Outfit font-normal placeholder:font-Outfit placeholder:text-[rgb(var(--theme-neutral-900) / 0.2)] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${
                     experienceinYearsError ? "border border-red-500" : ""
                   }`}
                 />
@@ -787,7 +799,7 @@ const DetailedCareer = () => {
 
               <span className="w-full block mt-3 ">
                 <label
-                  className="font-Outfit text-base text-[#1E1E1EB2] font-medium"
+                  className="font-Outfit text-base text-[rgb(var(--theme-neutral-900) / 0.7)] font-medium"
                   htmlFor="area-of-specialization"
                 >
                   Area of specialization
@@ -800,7 +812,7 @@ const DetailedCareer = () => {
                     setAosError("");
                   }}
                   placeholder="Enter area of specialization"
-                  className={`h-[45px] bg-[#F5F5F4] shadow-md shadow-[#1018280D] mt-2 text-gray-900 font-Outfit font-normal placeholder:font-Outfit placeholder:text-[#1E1E1E33] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${
+                  className={`h-[45px] bg-[var(--theme-surface-alt)] shadow-md shadow-[rgb(var(--theme-neutral-900) / 0.05)] mt-2 text-gray-900 font-Outfit font-normal placeholder:font-Outfit placeholder:text-[rgb(var(--theme-neutral-900) / 0.2)] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${
                     aosError ? "border border-red-500" : ""
                   }`}
                 />
@@ -809,7 +821,7 @@ const DetailedCareer = () => {
 
               <span className="w-full block mt-3 ">
                 <label
-                  className="font-Outfit text-base text-[#1E1E1EB2] font-medium"
+                  className="font-Outfit text-base text-[rgb(var(--theme-neutral-900) / 0.7)] font-medium"
                   htmlFor="preferred-job-location"
                 >
                   Preferred job location
@@ -820,11 +832,14 @@ const DetailedCareer = () => {
                     setPreferredLocation(e.target.value);
                     setPreferredLocationError("");
                   }}
-                  className={`h-[45px] bg-[#F5F5F4] shadow-md shadow-[#1018280D] mt-2 text-gray-900 font-Outfit font-normal placeholder:font-Outfit placeholder:text-[#1E1E1E33] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${
+                  className={`h-[45px] bg-[var(--theme-surface-alt)] shadow-md shadow-[rgb(var(--theme-neutral-900) / 0.05)] mt-2 text-gray-900 font-Outfit font-normal placeholder:font-Outfit placeholder:text-[rgb(var(--theme-neutral-900) / 0.2)] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${
                     preferredLocationError ? "border border-red-500" : ""
                   }`}
                 >
-                  <option className="text-[#1e1e1e33] placeholder:text-[#1E1E1E33]" value="">
+                  <option
+                    className="text-[rgb(var(--theme-neutral-900) / 0.2)] placeholder:text-[rgb(var(--theme-neutral-900) / 0.2)]"
+                    value=""
+                  >
                     Select
                   </option>
                   <option value="Nigeria">Nigeria</option>
@@ -840,7 +855,7 @@ const DetailedCareer = () => {
 
               <span className="w-full block mt-3 ">
                 <label
-                  className="font-Outfit text-base text-[#1E1E1EB2] font-medium"
+                  className="font-Outfit text-base text-[rgb(var(--theme-neutral-900) / 0.7)] font-medium"
                   htmlFor="resume-link"
                 >
                   Link to Resume
@@ -853,7 +868,7 @@ const DetailedCareer = () => {
                     setResumeLinkError("");
                   }}
                   placeholder="Please Provide link to resume"
-                  className={`h-[45px] bg-[#F5F5F4] shadow-md shadow-[#1018280D] mt-2 text-gray-900 font-Outfit font-normal placeholder:font-Outfit placeholder:text-[#1E1E1E33] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${
+                  className={`h-[45px] bg-[var(--theme-surface-alt)] shadow-md shadow-[rgb(var(--theme-neutral-900) / 0.05)] mt-2 text-gray-900 font-Outfit font-normal placeholder:font-Outfit placeholder:text-[rgb(var(--theme-neutral-900) / 0.2)] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${
                     resumeLinkError ? "border border-red-500" : ""
                   }`}
                 />
@@ -874,10 +889,12 @@ const DetailedCareer = () => {
         )}
       </div>
       {successMessage && (
-        <div className=" w-full h-[100vh] fixed top-0 left-0 bg-[#00000057] flex justify-center items-center z-[99999] px-5 md:px-0">
-          <div className="w-full md:w-[450px] rounded-[30px] h-[250px] flex flex-col justify-center items-center bg-[#f5f5f4] relative">
+        <div className=" w-full h-[100vh] fixed top-0 left-0 bg-[rgb(var(--theme-neutral-900) / 0.34)] flex justify-center items-center z-[99999] px-5 md:px-0">
+          <div className="w-full md:w-[450px] rounded-[30px] h-[250px] flex flex-col justify-center items-center bg-[var(--theme-surface-alt)] relative">
             <img src={checked} className=" w-[64px]" alt="" />
-            <p className=" text-2xl font-medium font-Outfit text-[#121212] mt-3">Thank You</p>
+            <p className=" text-2xl font-medium font-Outfit text-[var(--theme-heading-color)] mt-3">
+              Thank You
+            </p>
             <p className=" text-base font-normal font-Outfit">
               Your Application has been submitted
             </p>
@@ -894,10 +911,10 @@ const DetailedCareer = () => {
       )}
 
       {errorMessage && (
-        <div className=" w-full h-[100vh] fixed top-0 left-0 bg-[#00000057] flex justify-center items-center z-[99999] px-5 md:px-0">
-          <div className="w-full md:w-[450px] rounded-[30px] h-[300px] flex text-center flex-col justify-center items-center bg-[#f5f5f4] relative">
+        <div className=" w-full h-[100vh] fixed top-0 left-0 bg-[rgb(var(--theme-neutral-900) / 0.34)] flex justify-center items-center z-[99999] px-5 md:px-0">
+          <div className="w-full md:w-[450px] rounded-[30px] h-[300px] flex text-center flex-col justify-center items-center bg-[var(--theme-surface-alt)] relative">
             <img src={warning} className=" w-[64px]" alt="" />
-            <p className=" text-xl font-medium font-Outfit text-[#121212] mt-3">
+            <p className=" text-xl font-medium font-Outfit text-[var(--theme-heading-color)] mt-3">
               There was an error submitting your application.
             </p>
             <p className=" text-base font-normal font-Outfit">Please try again later</p>

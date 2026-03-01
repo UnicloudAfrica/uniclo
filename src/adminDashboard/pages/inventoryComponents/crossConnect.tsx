@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Cable, MapPinned, DollarSign, Pencil, Trash2, Plus } from "lucide-react";
 import { useFetchCrossConnects } from "../../../hooks/adminHooks/crossConnectHooks";
 import ResourceDataExplorer from "../../components/ResourceDataExplorer";
@@ -41,7 +40,7 @@ const CrossConnect = ({ selectedRegion, onMetricsChange }: any) => {
   const [isAddCrossConnectModalOpen, setIsAddCrossConnectModalOpen] = useState(false);
   const [isEditCrossConnectModalOpen, setIsEditCrossConnectModalOpen] = useState(false);
   const [isDeleteCrossConnectModalOpen, setIsDeleteCrossConnectModalOpen] = useState(false);
-  const [selectedCrossConnect, setSelectedCrossConnect] = useState(null);
+  const [selectedCrossConnect, setSelectedCrossConnect] = useState<any>(null);
 
   useEffect(() => {
     setPage(1);

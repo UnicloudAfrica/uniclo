@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { Upload, X, CheckCircle2, AlertCircle, FileIcon, Loader2, FolderUp } from "lucide-react";
@@ -34,6 +33,18 @@ const formatBytes = (bytes: number) => {
 
 const formatSpeed = (bytesPerSecond: number) => {
   return formatBytes(bytesPerSecond) + "/s";
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === "string" && error.trim()) return error;
+  if (isRecord(error) && typeof error.message === "string" && error.message.trim()) {
+    return error.message;
+  }
+  return fallback;
 };
 
 const DropzoneUploader: React.FC<DropzoneUploaderProps> = ({
@@ -90,12 +101,12 @@ const DropzoneUploader: React.FC<DropzoneUploaderProps> = ({
         const apiBase = import.meta.env.VITE_API_USER_BASE_URL || "";
         let baseUrl: string;
 
-        if (window.location.pathname.includes("admin-dashboard")) {
+        if (globalThis.window.location.pathname.includes("admin-dashboard")) {
           // Admin routes: admin/v1/object-storage (no /api prefix)
           baseUrl = `${apiBase}/admin/v1/object-storage`;
         } else if (
-          window.location.pathname.includes("dashboard") &&
-          !window.location.pathname.includes("client")
+          globalThis.window.location.pathname.includes("dashboard") &&
+          !globalThis.window.location.pathname.includes("client")
         ) {
           // Tenant routes: tenant/v1/admin/object-storage (no /api prefix)
           baseUrl = `${apiBase}/tenant/v1/admin/object-storage`;
@@ -109,9 +120,10 @@ const DropzoneUploader: React.FC<DropzoneUploaderProps> = ({
         xhr.withCredentials = true;
         xhr.send(formData);
       });
-    } catch (error: any) {
+    } catch (error) {
+      const message = getErrorMessage(error, "Upload failed");
       setUploads((prev) =>
-        prev.map((u) => (u.id === id ? { ...u, status: "error", error: error.message } : u))
+        prev.map((u) => (u.id === id ? { ...u, status: "error", error: message } : u))
       );
     }
   };

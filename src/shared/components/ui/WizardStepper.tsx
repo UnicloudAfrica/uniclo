@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import { CheckCircle } from "lucide-react";
 
@@ -11,7 +10,7 @@ export interface WizardStep {
 export interface WizardStepperProps {
   steps: WizardStep[];
   activeStep: number;
-  onStepChange?: (index: number) => void;
+  onStepChange?: ((index: number) => void) | undefined;
   className?: string;
 }
 
@@ -32,7 +31,7 @@ const WizardStepper: React.FC<WizardStepperProps> = ({
       {steps.map((step, idx) => {
         const isActive = idx === activeStep;
         const isCompleted = idx < activeStep;
-        const isClickable = (isCompleted || isActive) && onStepChange;
+        const isClickable = (isCompleted || isActive) && !!onStepChange;
         const isLast = idx === steps.length - 1;
 
         return (

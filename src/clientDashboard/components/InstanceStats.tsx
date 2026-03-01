@@ -1,5 +1,3 @@
-// @ts-nocheck
-import React from "react";
 import { Server, Play, Square, Network } from "lucide-react";
 import { ModernStatsCard } from "../../shared/components/ui";
 

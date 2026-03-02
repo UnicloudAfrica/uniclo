@@ -267,7 +267,7 @@ export function useUpdateNotificationPreferences() {
         key,
         value,
       }));
-      // eslint-disable-next-line
+
       return await (apiClient as any)("PUT", "/settings/profile/batch", {
         settings: settingsArray,
       });

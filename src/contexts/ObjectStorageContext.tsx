@@ -283,15 +283,15 @@ export const ObjectStorageProvider = ({ children }: ObjectStorageProviderProps):
 
       try {
         const data = await objectStorageApi.fetchBuckets(accountId);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        /* eslint-disable @typescript-eslint/no-explicit-any */
         setAccountBuckets(
           (prev) =>
             ({
               ...prev,
               [accountKey]: data,
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
             }) as any
         );
+        /* eslint-enable @typescript-eslint/no-explicit-any */
         return data;
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unable to load silos.";
@@ -530,7 +530,7 @@ export const ObjectStorageProvider = ({ children }: ObjectStorageProviderProps):
 
   return (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    <ObjectStorageContext.Provider value={value as any}>{children}</ObjectStorageContext.Provider>
+    <ObjectStorageContext.Provider value={value as any}> {children}</ObjectStorageContext.Provider>
   );
 };
 

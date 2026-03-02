@@ -155,7 +155,7 @@ const AdminProductCreate = () => {
         ToastUtils.error(
           `Import completed with ${errors.length} errors. Check console for details.`
         );
-        console.table(errors);
+        logger.error("Import errors:", errors);
       }
 
       if (nextEntries.length > 0) {

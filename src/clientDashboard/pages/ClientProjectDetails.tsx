@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Layers, Lock, Network, Zap, GitMerge } from "lucide-react";
 import ClientPageShell from "../components/ClientPageShell";
 import { ModernButton } from "../../shared/components/ui";
 import {
@@ -39,6 +38,7 @@ import {
   useSyncKeyPairs,
 } from "../../hooks/clientHooks/keyPairsHook";
 import type { StatusResponse, NetworkStatusResponse } from "../../hooks/clientHooks/projectHooks";
+import logger from "../../utils/logger";
 
 interface ProjectUser {
   id: string | number;
@@ -184,7 +184,7 @@ const ClientProjectDetails: React.FC = () => {
       await Promise.all([refetchStatus(), refetchProject()]);
       return res;
     } catch (error: unknown) {
-      console.error(`Action error [${label}]:`, error);
+      logger.error(`Action error [${label}]:`, error);
       ToastUtils.error(getErrorMessage(error, `Failed to execute ${label}`));
       throw error;
     }
@@ -204,7 +204,7 @@ const ClientProjectDetails: React.FC = () => {
         refetchNetworkStatus?.(),
       ]);
     } catch (error: unknown) {
-      console.error("Failed to sync resources:", error);
+      logger.error("Failed to sync resources:", error);
       ToastUtils.error(getErrorMessage(error, "Failed to sync resources."));
     } finally {
       setIsSyncingResources(false);
@@ -228,7 +228,7 @@ const ClientProjectDetails: React.FC = () => {
         refetchInfraStatus?.(),
       ]);
     } catch (error: unknown) {
-      console.error("Enable internet error:", error);
+      logger.error("Enable internet error:", error);
       ToastUtils.error(getErrorMessage(error, "Failed to enable internet access"));
     }
   };

@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useUpdateFloatingIP } from "../../../../hooks/adminHooks/floatingIPHooks";
 import ToastUtils from "../../../../utils/toastUtil";
-import logger from "../../../../utils/logger";
 
 const EditFloatingIP = ({ isOpen, onClose, floatingIP }: any) => {
   const [formData, setFormData] = useState({
@@ -70,7 +69,7 @@ const EditFloatingIP = ({ isOpen, onClose, floatingIP }: any) => {
             ToastUtils.success("Floating IP updated successfully");
             onClose();
           },
-          onError: (err) => {
+          onError: (_err) => {
             // logger.error("Failed to update Floating IP:", err);
             // ToastUtils.error("Failed to update Floating IP. Please try again.");
           },

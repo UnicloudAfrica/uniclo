@@ -5,7 +5,7 @@ const StepProgress = ({ currentStep, steps }: any) => (
     {steps.map((step: any, index: any) => {
       const isCompleted = index < currentStep;
       const isActive = index === currentStep;
-      const isPending = index > currentStep;
+      const _isPending = index > currentStep;
 
       return (
         <React.Fragment key={step}>

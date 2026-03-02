@@ -550,7 +550,7 @@ export default function AdminLeadDetails() {
       try {
         const decodedId = atob(decodeURIComponent(encodedId));
         setDataState((prev) => ({ ...prev, leadId: decodedId }));
-      } catch (error) {
+      } catch (_error) {
         setDataState((prev) => ({ ...prev, leadId: null }));
       }
     }

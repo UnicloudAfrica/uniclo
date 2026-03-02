@@ -8,7 +8,7 @@ import {
   CheckCircle,
   Plus,
   Settings,
-  DollarSign,
+  _DollarSign,
   Key,
   Loader2,
 } from "lucide-react";
@@ -48,7 +48,7 @@ export default function TenantBillingTab({ tenantId }: Props) {
   });
 
   const { data: config, isLoading: isLoadingConfig } = useAdminTenantBillingConfig(tenantId);
-  const { data: summary, isLoading: isLoadingSummary } = useAdminTenantBillingSummary(tenantId);
+  const { data: summary, isLoading: _isLoadingSummary } = useAdminTenantBillingSummary(tenantId);
   const updateConfigMutation = useUpdateTenantBillingConfig();
   const addCreditMutation = useAddTenantCredit();
 

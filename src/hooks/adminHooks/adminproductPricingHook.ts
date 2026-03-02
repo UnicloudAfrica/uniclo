@@ -42,7 +42,7 @@ const normaliseCollectionResponse = (res: any) => {
 
 const fetchProductPricing = async ({
   region,
-  provider,
+  _provider,
   page,
   perPage,
   search,

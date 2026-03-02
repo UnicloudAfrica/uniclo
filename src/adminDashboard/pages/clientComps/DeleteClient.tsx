@@ -2,7 +2,6 @@ import React from "react";
 import { X, Loader2 } from "lucide-react";
 import { useDeleteClient } from "../../../hooks/adminHooks/clientHooks";
 import ToastUtils from "../../../utils/toastUtil";
-import logger from "../../../utils/logger";
 
 interface DeleteClientModalProps {
   isOpen: boolean;

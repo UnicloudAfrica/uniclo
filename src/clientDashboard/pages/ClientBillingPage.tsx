@@ -16,7 +16,7 @@ import {
   useBillingSummary,
   usePayInvoice,
   Invoice,
-  getStatusColor,
+  _getStatusColor,
   getStatusLabel,
   formatCurrency,
 } from "../../hooks/useClientInvoices";
@@ -145,7 +145,7 @@ const ClientBillingPage: React.FC = () => {
     per_page: 10,
   });
 
-  const { data: summaryData, isLoading: summaryLoading } = useBillingSummary();
+  const { data: summaryData, isLoading: _summaryLoading } = useBillingSummary();
   const payInvoice = usePayInvoice();
 
   const handlePayInvoice = async (invoiceId: number) => {

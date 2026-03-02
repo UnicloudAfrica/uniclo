@@ -4,7 +4,6 @@ import NetworkConfigurationCard from "./NetworkConfigurationCard";
 import AdvancedQuickActionsCard from "./AdvancedQuickActionsCard";
 import SetupProgressCard from "./SetupProgressCard";
 import ResourceSummaryCard from "./ResourceSummaryCard";
-import ProjectDetailsHero from "./ProjectDetailsHero";
 import { Project } from "../../../../types/project";
 
 // TypeScript interfaces for reusability across Admin/Tenant/Client
@@ -131,7 +130,7 @@ export interface ProjectUnifiedViewProps {
 }
 
 const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
-  project,
+  _project,
   instanceStats,
   resourceCounts,
   canCreateInstances = true,
@@ -170,7 +169,7 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
   isLoading = false,
   showMemberManagement = true,
   showSyncButton = true,
-  showHero = true,
+  _showHero = true,
 }) => {
   const fallbackIgw = Array.isArray(igws) && igws.length > 0 ? igws[0] : null;
   const fallbackIgwDetails = fallbackIgw

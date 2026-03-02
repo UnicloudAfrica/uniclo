@@ -13,7 +13,7 @@ import {
   Phone,
   PlusCircle,
   User,
-  UserCheck,
+  _UserCheck,
   Building,
 } from "lucide-react";
 import TenantPageShell from "../components/TenantPageShell";

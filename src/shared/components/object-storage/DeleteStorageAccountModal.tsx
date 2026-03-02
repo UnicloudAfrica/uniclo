@@ -20,7 +20,7 @@ const DeleteStorageAccountModal: React.FC<DeleteStorageAccountModalProps> = ({
   onClose,
   onConfirm,
   accountName,
-  accountId,
+  _accountId,
   bucketCount = 0,
   accessKeyCount = 0,
 }) => {
@@ -37,7 +37,7 @@ const DeleteStorageAccountModal: React.FC<DeleteStorageAccountModalProps> = ({
     try {
       await onConfirm();
       onClose();
-    } catch (error) {
+    } catch (_error) {
       // Error handling done in parent
     } finally {
       setIsDeleting(false);

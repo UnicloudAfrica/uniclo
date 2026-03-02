@@ -149,7 +149,7 @@ const KeyPairCreateModal: React.FC<KeyPairCreateModalProps> = ({
     try {
       await navigator.clipboard.writeText(successState.material);
       ToastUtils.success("Private key copied to clipboard.");
-    } catch (error) {
+    } catch (_error) {
       ToastUtils.error("Unable to copy the private key.");
     }
   };
@@ -164,7 +164,7 @@ const KeyPairCreateModal: React.FC<KeyPairCreateModalProps> = ({
       anchor.download = `${formData.name.replace(/[^a-zA-Z0-9-_]/g, "_") || "keypair"}.pem`;
       anchor.click();
       URL.revokeObjectURL(url);
-    } catch (error) {
+    } catch (_error) {
       ToastUtils.error("Unable to download the private key.");
     }
   };

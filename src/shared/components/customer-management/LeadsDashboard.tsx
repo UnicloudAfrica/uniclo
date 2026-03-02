@@ -36,6 +36,7 @@ import adminFileApi from "../../../index/admin/fileapi";
 import tenantFileApi from "../../../index/tenant/fileapi";
 import ToastUtil from "../../../utils/toastUtil";
 import { Lead } from "../../../types/lead";
+import logger from "../../../utils/logger";
 
 const formatCreatedAt = (dateString: string | undefined) => {
   if (!dateString) return "—";
@@ -519,7 +520,7 @@ const LeadsDashboard: React.FC<LeadsDashboardProps> = ({ context = "admin" }) =>
       }
     } catch (error) {
       ToastUtil.error("Failed to assign lead(s)");
-      console.error("Assign error:", error);
+      logger.error("Assign error:", error);
     } finally {
       setAssignTarget(null);
       setShowAssignModal(false);
@@ -554,7 +555,7 @@ const LeadsDashboard: React.FC<LeadsDashboardProps> = ({ context = "admin" }) =>
         queryClient.setQueryData(key, data);
       });
       ToastUtil.error("Failed to delete leads");
-      console.error("Bulk delete error:", error);
+      logger.error("Bulk delete error:", error);
     }
   };
   const handleBulkExport = async () => {
@@ -578,7 +579,7 @@ const LeadsDashboard: React.FC<LeadsDashboardProps> = ({ context = "admin" }) =>
       ToastUtil.success(`Successfully exported ${selectedLeads.length} lead(s)`);
     } catch (error) {
       ToastUtil.error(getErrorMessage(error, "Failed to export leads"));
-      console.error("Bulk export error:", error);
+      logger.error("Bulk export error:", error);
     }
   };
   // Filter handlers
@@ -656,7 +657,7 @@ const LeadsDashboard: React.FC<LeadsDashboardProps> = ({ context = "admin" }) =>
         queryClient.setQueryData(key as any, data);
       });
       ToastUtil.error("Failed to delete lead");
-      console.error("Delete error:", error);
+      logger.error("Delete error:", error);
     }
   };
   const handleAssignLead = (lead: Lead) => {
@@ -675,7 +676,7 @@ const LeadsDashboard: React.FC<LeadsDashboardProps> = ({ context = "admin" }) =>
       await refetchLeads();
     } catch (error) {
       ToastUtil.error("Failed to update favorite status");
-      console.error("Toggle favorite error:", error);
+      logger.error("Toggle favorite error:", error);
     }
   };
 

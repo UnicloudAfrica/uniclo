@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import { Users, Server, Plus, Activity, ArrowRight, ShieldCheck, Zap } from "lucide-react";
+import { Users, Server, Activity, ArrowRight, Zap } from "lucide-react";
 import TenantPageShell from "../components/TenantPageShell";
-import { ModernStatsCard, ModernButton, ModernCard } from "../../shared/components/ui";
+import { ModernStatsCard, ModernCard } from "../../shared/components/ui";
 import { useFetchClients } from "../../hooks/clientHooks";
 import { useFetchTenantProjects } from "../../hooks/tenantHooks/projectHooks";
 

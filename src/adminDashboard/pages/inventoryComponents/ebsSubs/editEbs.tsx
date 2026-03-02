@@ -4,7 +4,6 @@ import { X, Loader2 } from "lucide-react";
 
 import ToastUtils from "../../../../utils/toastUtil"; // Ensure ToastUtils is
 import { useUpdateEbsVolume } from "../../../../hooks/adminHooks/ebsHooks";
-import logger from "../../../../utils/logger";
 
 type EbsVolume = {
   id?: string | number;

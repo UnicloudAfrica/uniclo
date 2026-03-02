@@ -2,7 +2,6 @@ import { X, Loader2 } from "lucide-react";
 
 import ToastUtils from "../../../../utils/toastUtil";
 import { useDeleteVmInstance } from "../../../../hooks/adminHooks/vmHooks";
-import logger from "../../../../utils/logger";
 const DeleteVMModal = ({ isOpen, onClose, vm }: any) => {
   const { mutate, isPending } = useDeleteVmInstance();
 
@@ -14,7 +13,7 @@ const DeleteVMModal = ({ isOpen, onClose, vm }: any) => {
           ToastUtils.success("VM deleted successfully");
           onClose();
         },
-        onError: (err) => {
+        onError: (_err) => {
           //   logger.error("Failed to delete VM Instance:", err);
           ToastUtils.error("Failed to delete VM Instance. Please try again.");
         },

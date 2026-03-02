@@ -12,6 +12,7 @@ import useAuthRedirect from "../../utils/adminAuthRedirect";
 import { useFetchCountries as useAdminFetchCountries } from "../../hooks/adminHooks/countriesHooks";
 import { STEP_CONFIG } from "../../dashboard/onboarding/stepConfig";
 import ModernTable from "../../shared/components/ui/ModernTable";
+import logger from "../../utils/logger";
 
 type EnforcementMode = "required" | "grace" | "optional";
 
@@ -144,7 +145,7 @@ const AdminOnboardingSettings = () => {
       await deleteMutation.mutateAsync(id);
       ToastUtils.success("Setting deleted");
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       ToastUtils.error(error instanceof Error ? error.message : "Failed to delete setting.");
     }
   };
@@ -185,7 +186,7 @@ const AdminOnboardingSettings = () => {
       resetForm();
       refetch();
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       ToastUtils.error(error instanceof Error ? error.message : "Unable to save setting.");
     }
   };

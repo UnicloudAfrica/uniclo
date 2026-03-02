@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Building2, Loader2, Mail, Phone, ShieldCheck, Users2 } from "lucide-react";
+import { Loader2, ShieldCheck, Users2 } from "lucide-react";
 import TenantPageShell from "../../components/TenantPageShell";
 import { ModernCard } from "../../../shared/components/ui";
 import { ModernButton } from "../../../shared/components/ui";

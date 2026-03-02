@@ -1,5 +1,5 @@
 // Shared Thread/Support Types and Utilities
-import { User, Building2, Users, Server, Flag, AlertTriangle } from "lucide-react";
+import { User, Building2, Users, Server, Flag } from "lucide-react";
 
 // ========================================
 // TYPES

@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Loader2, X } from "lucide-react";
 import { useFetchTenantRegions } from "../../../hooks/regionHooks";
 import { useCreateTenantSecurityGroup } from "../../../hooks/securityGroupHooks";
-import logger from "../../../utils/logger";
 
 interface TenantAddSGProps {
   isOpen: boolean;

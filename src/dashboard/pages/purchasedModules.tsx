@@ -5,7 +5,7 @@ import { useFetchPurchasedInstances } from "../../hooks/instancesHook";
 import { ModernTable } from "../../shared/components";
 
 export default function PurchasedModules() {
-  const { isLoading } = useAuthRedirect();
+  const { _isLoading } = useAuthRedirect();
 
   const { data: fetchedInstances = { data: [], meta: {} }, isFetching: isInstancesFetching } =
     useFetchPurchasedInstances();

@@ -31,7 +31,7 @@ interface DetailRowProps {
   isCopyable?: boolean;
 }
 
-const DetailRow: React.FC<DetailRowProps> = ({ label, value, children, isCopyable = false }) => {
+const _DetailRow: React.FC<DetailRowProps> = ({ label, value, children, isCopyable = false }) => {
   const handleCopy = () => {
     if (value) {
       navigator.clipboard.writeText(String(value));

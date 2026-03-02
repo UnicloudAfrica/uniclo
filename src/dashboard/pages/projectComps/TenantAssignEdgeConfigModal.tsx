@@ -84,7 +84,7 @@ const TenantAssignEdgeConfigModal = ({
       if (formData.edge_network_id) {
         await refetchPools();
       }
-    } catch (e) {
+    } catch (_e) {
       // ignore; errors surface via networksError/poolsError
     }
   };

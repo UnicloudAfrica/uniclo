@@ -135,7 +135,7 @@ const AddSubnet: React.FC<AddSubnetProps> = ({ isOpen, onClose, projectId }: any
       const back = Array.isArray(availableCidrs) ? availableCidrs : [];
       const merged = [...out, ...back.filter((s: string) => !out.includes(s))];
       setSuggestions(merged);
-    } catch (e) {
+    } catch (_e) {
       // swallow; suggestions optional
     }
   };
@@ -169,7 +169,7 @@ const AddSubnet: React.FC<AddSubnetProps> = ({ isOpen, onClose, projectId }: any
           } else {
             ToastUtils.error(message);
           }
-        } catch (e) {
+        } catch (_e) {
           ToastUtils.error(message);
         }
       },

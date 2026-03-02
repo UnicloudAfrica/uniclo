@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { _useMemo } from "react";
 import { useInstanceTemplates, InstanceTemplate } from "../../../hooks/useInstanceTemplates";
 import { LayoutTemplate, Loader2, Trash2, Zap, Settings } from "lucide-react";
 

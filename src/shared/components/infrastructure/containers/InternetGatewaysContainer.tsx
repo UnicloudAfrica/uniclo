@@ -4,7 +4,7 @@ import { RefreshCw } from "lucide-react";
 import {
   getInternetGatewayPermissions,
   type Hierarchy,
-  type InternetGatewayPermissions,
+  type _InternetGatewayPermissions,
 } from "../../../config/permissionPresets";
 import { InternetGatewaysOverview } from "..";
 import ToastUtils from "../../../../utils/toastUtil";

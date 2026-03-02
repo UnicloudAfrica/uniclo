@@ -2,7 +2,6 @@ import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import ToastUtils from "../../../../utils/toastUtil";
 import { useCreateCrossConnect } from "../../../../hooks/adminHooks/crossConnectHooks";
-import logger from "../../../../utils/logger";
 
 const AddCrossConnect = ({ isOpen, onClose }: any) => {
   const { mutate, isPending } = useCreateCrossConnect();
@@ -56,7 +55,7 @@ const AddCrossConnect = ({ isOpen, onClose }: any) => {
           description: "",
         });
       },
-      onError: (err) => {
+      onError: (_err) => {
         // logger.error("Failed to create Cross Connect:", err);
         // ToastUtils.error("Failed to create Cross Connect. Please try again.");
       },

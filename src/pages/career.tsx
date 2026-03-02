@@ -1,12 +1,7 @@
 import { useState, useContext } from "react";
 import Footer from "../components/footer";
 import Navbar from "../components/navbar";
-import time from "./assets/time.svg";
-import dollar from "./assets/dollar.svg";
-import pin from "./assets/map-pin.svg";
-import arrow from "./assets/arrow-down.svg";
-import { PageContext, CareerContext } from "../contexts/contextprovider";
-import { Link } from "react-router-dom";
+import { CareerContext } from "../contexts/contextprovider";
 
 interface CareerItem {
   id: string | number;
@@ -26,18 +21,18 @@ const Career = () => {
   const [careerArray] = useContext(CareerContext) as [CareerItem[]];
   const [selectedLocation, setSelectedLocation] = useState("all"); // Initialize with 'all'
 
-  const handleSelectClick = () => {
+  const _handleSelectClick = () => {
     setIsSelectOpen(!isSelectOpen);
   };
 
-  const handleSelectBlur = () => {
+  const _handleSelectBlur = () => {
     setIsSelectOpen(false);
   };
-  const handleLocationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const _handleLocationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedLocation(e.target.value);
   };
 
-  const filteredCareers = careerArray.filter((item) => {
+  const _filteredCareers = careerArray.filter((item) => {
     if (selectedLocation === "all") {
       return true; // Show all items when 'all' is selected
     } else {

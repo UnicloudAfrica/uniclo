@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import {
-  useFetchCitiesById,
+  _useFetchCitiesById,
   useFetchCountries,
   useFetchStatesById,
   useFetchProfile,
@@ -194,7 +194,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }: any) => {
   };
 
   // Simplified handleCityChange for direct text input
-  const handleCityChange = (e: any) => {
+  const _handleCityChange = (e: any) => {
     const { value } = e.target;
     setFormData((prev) => ({
       ...prev,

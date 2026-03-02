@@ -1,8 +1,7 @@
 import React from "react";
-import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
+import type { UseMutationResult } from "@tanstack/react-query";
 import { getKeyPairPermissions, type Hierarchy } from "../../../config/permissionPresets";
 import KeyPairsOverview from "../KeyPairsOverview";
-import { KeyPair } from "../types";
 import ToastUtils from "../../../../utils/toastUtil";
 
 interface KeyPairHooks {

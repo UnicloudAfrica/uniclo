@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Camera, Disc, Plus } from "lucide-react";
+import { Camera, Disc } from "lucide-react";
 import SnapshotList from "./SnapshotList";
 import ImageList from "./ImageList";
 import {

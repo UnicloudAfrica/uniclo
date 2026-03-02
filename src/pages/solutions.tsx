@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 // import { initializeApp } from "firebase/app";
 // import { getAnalytics } from "firebase/analytics";
 // import { getFirestore, collection, query, orderBy, onSnapshot} from 'firebase/firestore';
-import arrowdown from "./assets/Arrow_Down_Right_LG.svg";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 // import DetailedSolution from "./detailedSolu";
@@ -54,7 +53,7 @@ const Solutions = () => {
                 .filter((item) => typeof item.order === "number")
                 // Sort the array based on the 'order' property
                 .sort((a, b) => (a?.order ?? 0) - (b?.order ?? 0))
-                .map((item, index) => (
+                .map((item, _index) => (
                   <Link to={`/solutions/${item.id}`}>
                     <div key={item.id} id={item.id} className="w-full text-center">
                       <div

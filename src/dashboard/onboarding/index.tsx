@@ -18,12 +18,12 @@ import type {
   OnboardingFieldDefinition,
   OnboardingFileValue,
   OnboardingStateData,
-  OnboardingStatus,
+  _OnboardingStatus,
   OnboardingSubmissionData,
   OnboardingThread,
   StatusMeta,
 } from "../../types/onboarding";
-import type { PartnerRegionPayload } from "./PartnerRegionQualificationForm";
+import type { _PartnerRegionPayload } from "./PartnerRegionQualificationForm";
 
 type FormValues = Record<string, unknown>;
 type SubmitAction = "save" | "submit" | "resubmit";

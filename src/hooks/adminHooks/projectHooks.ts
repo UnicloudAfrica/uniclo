@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
+import logger from "../../utils/logger";
 
 type Id = string | number;
 type ApiPayload = Record<string, unknown> | FormData | null | undefined;
@@ -289,7 +290,7 @@ export const useCreateProject = () => {
       if (context?.previousProjects) {
         queryClient.setQueryData(["admin-projects"], context.previousProjects);
       }
-      console.error("Error creating project:", error);
+      logger.error("Error creating project:", error);
     }) as any,
     onSettled: () => {
       // Always refetch after error or success to ensure server state
@@ -310,7 +311,7 @@ export const useUpdateProject = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-project", variables.id] });
     },
     onError: (error: unknown) => {
-      console.error("Error updating project:", error);
+      logger.error("Error updating project:", error);
     },
   });
 };
@@ -325,7 +326,7 @@ export const useDeleteProject = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-projects"] });
     },
     onError: (error: unknown) => {
-      console.error("Error deleting project:", error);
+      logger.error("Error deleting project:", error);
     },
   });
 };
@@ -422,7 +423,7 @@ export const useProvisionProject = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-project", projectId] });
     },
     onError: (error: unknown) => {
-      console.error("Error provisioning project:", error);
+      logger.error("Error provisioning project:", error);
     },
   });
 };
@@ -432,7 +433,7 @@ export const useSimulateProvision = () => {
   return useMutation({
     mutationFn: simulateProvision,
     onError: (error: unknown) => {
-      console.error("Error simulating provision:", error);
+      logger.error("Error simulating provision:", error);
     },
   });
 };
@@ -460,7 +461,7 @@ export const useEnableVpc = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-project", projectId] });
     },
     onError: (error: unknown) => {
-      console.error("Error enabling VPC:", error);
+      logger.error("Error enabling VPC:", error);
     },
   });
 };
@@ -475,7 +476,7 @@ export const useSyncProjectUser = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-project", variables.projectId] });
     },
     onError: (error: unknown) => {
-      console.error("Error syncing project user:", error);
+      logger.error("Error syncing project user:", error);
     },
   });
 };
@@ -491,7 +492,7 @@ export const useRevokeProjectUserPolicy = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-project-status", variables.projectId] });
     },
     onError: (error: unknown) => {
-      console.error("Error revoking project user policy:", error);
+      logger.error("Error revoking project user policy:", error);
     },
   });
 };
@@ -507,7 +508,7 @@ export const useAssignProjectUserPolicy = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-project-status", variables.projectId] });
     },
     onError: (error: unknown) => {
-      console.error("Error assigning project user policy:", error);
+      logger.error("Error assigning project user policy:", error);
     },
   });
 };
@@ -573,7 +574,7 @@ export const useEnableInternetAccess = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-project-status", projectId] });
     },
     onError: (error: unknown) => {
-      console.error("Error enabling internet access:", error);
+      logger.error("Error enabling internet access:", error);
     },
   });
 };
@@ -591,7 +592,7 @@ export const useAddSubnet = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-subnets"] });
     },
     onError: (error: unknown) => {
-      console.error("Error adding subnet:", error);
+      logger.error("Error adding subnet:", error);
     },
   });
 };
@@ -609,7 +610,7 @@ export const useAddSecurityGroup = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-security-groups"] });
     },
     onError: (error: unknown) => {
-      console.error("Error adding security group:", error);
+      logger.error("Error adding security group:", error);
     },
   });
 };
@@ -644,7 +645,7 @@ export const useSetupInfrastructure = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-projects"] });
     },
     onError: (error: unknown) => {
-      console.error("Error setting up infrastructure:", error);
+      logger.error("Error setting up infrastructure:", error);
     },
   });
 };
@@ -678,7 +679,7 @@ export const useSyncProjectStatus = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-project-status", projectId] });
     },
     onError: (error: unknown) => {
-      console.error("Error syncing project status:", error);
+      logger.error("Error syncing project status:", error);
     },
   });
 };
@@ -692,7 +693,7 @@ export const useBulkSyncProjectStatus = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-projects"] });
     },
     onError: (error: unknown) => {
-      console.error("Error bulk syncing project statuses:", error);
+      logger.error("Error bulk syncing project statuses:", error);
     },
   });
 };

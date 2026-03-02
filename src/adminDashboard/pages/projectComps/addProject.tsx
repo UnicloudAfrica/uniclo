@@ -16,7 +16,6 @@ import NetworkPresetSelector, {
 } from "../../../shared/components/network/NetworkPresetSelector";
 import { useNetworkPresets } from "../../../hooks/networkPresetHooks";
 import { useCloudPolicies } from "../../../hooks/adminHooks/cloudPolicyHooks";
-import logger from "../../../utils/logger";
 const MAX_ATTEMPTS = 10;
 
 type AssignmentScope = "internal" | "tenant" | "client";

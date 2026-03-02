@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useUpdateCrossConnect } from "../../../../hooks/adminHooks/crossConnectHooks";
 import ToastUtils from "../../../../utils/toastUtil";
-import logger from "../../../../utils/logger";
 
 const EditCrossConnect = ({ isOpen, onClose, crossConnect }: any) => {
   const [formData, setFormData] = useState({
@@ -69,7 +68,7 @@ const EditCrossConnect = ({ isOpen, onClose, crossConnect }: any) => {
             ToastUtils.success("Cross Connect updated successfully");
             onClose();
           },
-          onError: (err) => {
+          onError: (_err) => {
             // logger.error("Failed to update Cross Connect:", err);
             // ToastUtils.error(
             //   "Failed to update Cross Connect. Please try again."

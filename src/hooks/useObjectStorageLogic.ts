@@ -425,8 +425,8 @@ export const useObjectStorageLogic = (
   });
 
   // Order State
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [profileErrors, setProfileErrors] = useState<Record<string, Record<string, string>>>({});
+  const [_errors, setErrors] = useState<Record<string, string>>({});
+  const [_profileErrors, setProfileErrors] = useState<Record<string, Record<string, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingPayment, setIsGeneratingPayment] = useState(false);
   const [lastOrderSummary, setLastOrderSummary] = useState<ObjectStorageOrderSummary | null>(null);

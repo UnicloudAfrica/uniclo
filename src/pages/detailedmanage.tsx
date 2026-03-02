@@ -1,11 +1,10 @@
 import Footer from "../components/footer";
 import Navbar from "../components/navbar";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useContext, useEffect, useMemo, useState } from "react";
 import { getApps, initializeApp } from "firebase/app";
 import { getFirestore, getDocs, collection, query, where } from "firebase/firestore";
 import { motion } from "framer-motion";
-import copy from "./assets/copy.svg";
 import adbg from "./assets/adBG.svg";
 import admob from "./assets/adMob.svg";
 import DOMPurify from "dompurify";

@@ -65,7 +65,7 @@ const formatCurrency = (amount: any, currency: any) => {
       currency: currency || "USD",
       maximumFractionDigits: 2,
     }).format(amount);
-  } catch (error) {
+  } catch (_error) {
     return `${currency || ""} ${amount}`.trim();
   }
 };

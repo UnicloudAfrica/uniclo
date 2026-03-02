@@ -19,7 +19,7 @@ const renderAdminRoutes = AdminRoutes as () => React.ReactElement;
 
 const App: React.FC = () => {
   const location = useLocation();
-  const subdomain = getSubdomain();
+  const _subdomain = getSubdomain();
   const isAdminRoute = location.pathname.startsWith("/admin-dashboard");
   // const isTenant = !!subdomain; // True for xyz.unicloudafrica.com, false for unicloudafrica.com
 

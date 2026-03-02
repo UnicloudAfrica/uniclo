@@ -3,6 +3,7 @@ import { X, Loader2 } from "lucide-react";
 
 import ToastUtils from "../../../../utils/toastUtil";
 import { useUpdateVmInstance } from "../../../../hooks/adminHooks/vmHooks";
+import logger from "../../../../utils/logger";
 
 const EditVMModal = ({ isOpen, onClose, vm }: any) => {
   const [formData, setFormData] = useState({
@@ -102,13 +103,13 @@ const EditVMModal = ({ isOpen, onClose, vm }: any) => {
             onClose();
           },
           onError: (err) => {
-            console.error("Failed to update VM Instance:", err);
+            logger.error("Failed to update VM Instance:", err);
             ToastUtils.error("Failed to update VM Instance. Please try again.");
           },
         }
       );
     } else {
-      console.error("No VM Instance ID provided for update.");
+      logger.error("No VM Instance ID provided for update.");
       ToastUtils.error("Cannot update: VM Instance ID is missing.");
     }
   };

@@ -17,8 +17,8 @@ const CreateImageModal: React.FC<CreateImageModalProps> = ({
   onClose,
   instanceId,
   instanceName,
-  projectId,
-  region,
+  _projectId,
+  _region,
 }) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");

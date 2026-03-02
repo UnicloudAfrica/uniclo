@@ -39,6 +39,7 @@ import {
   useDeleteKeyPair,
 } from "../../hooks/tenantHooks/keyPairsHook";
 import type { KeyPairHooks } from "../../shared/components/infrastructure/containers/KeyPairsContainer";
+import logger from "../../utils/logger";
 
 interface User {
   id: number | string;
@@ -152,7 +153,7 @@ const ProjectDetails: React.FC = () => {
       await Promise.all([refetchStatus(), refetchProject()]);
       return res;
     } catch (error: any) {
-      console.error(`Action error [${label}]:`, error);
+      logger.error(`Action error [${label}]:`, error);
       ToastUtils.error(error?.message || `Failed to execute ${label}`);
       throw error;
     }
@@ -180,7 +181,7 @@ const ProjectDetails: React.FC = () => {
         refetchNetworkStatus?.(),
       ]);
     } catch (error: any) {
-      console.error("Failed to sync resources:", error);
+      logger.error("Failed to sync resources:", error);
       ToastUtils.error(error?.message || "Failed to sync resources.");
     } finally {
       setIsSyncingResources(false);
@@ -204,7 +205,7 @@ const ProjectDetails: React.FC = () => {
         refetchInfraStatus?.(),
       ]);
     } catch (error: any) {
-      console.error("Enable internet error:", error);
+      logger.error("Enable internet error:", error);
       ToastUtils.error(error?.message || "Failed to enable internet access");
     }
   };

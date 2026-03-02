@@ -140,7 +140,7 @@ const ProductForm = () => {
   };
 
   // Skeleton Loader for Form
-  const FormSkeleton = () => (
+  const _FormSkeleton = () => (
     <div className="space-y-4 animate-pulse">
       {[...Array(3)].map((_, index) => (
         <div key={index}>

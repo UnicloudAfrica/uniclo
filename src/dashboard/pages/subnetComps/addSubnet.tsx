@@ -215,7 +215,7 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: A
         ...back.filter((r): r is string => typeof r === "string" && !out.includes(r)),
       ];
       setSuggestions(merged);
-    } catch (error_) {
+    } catch (_error_) {
       // swallow; suggestions optional
     }
   };
@@ -261,7 +261,7 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: A
           } else {
             ToastUtils.error(message);
           }
-        } catch (error_) {
+        } catch (_error_) {
           ToastUtils.error(message);
         }
       },

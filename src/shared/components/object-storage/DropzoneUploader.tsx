@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { Upload, X, CheckCircle2, AlertCircle, FileIcon, Loader2, FolderUp } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
 
 interface UploadFile {
   id: string;
@@ -55,7 +54,7 @@ const DropzoneUploader: React.FC<DropzoneUploaderProps> = ({
   compact = false,
 }) => {
   const [uploads, setUploads] = useState<UploadFile[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
+  const [_isUploading, setIsUploading] = useState(false);
 
   const uploadFile = async (uploadFile: UploadFile) => {
     const { id, file } = uploadFile;

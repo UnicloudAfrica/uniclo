@@ -10,7 +10,7 @@ import {
   DollarSign,
   Edit,
   KeyRound,
-  Link as LinkIcon,
+  Link as _LinkIcon,
   Loader2,
   MapPin,
   RefreshCw,
@@ -282,7 +282,7 @@ const RegionDetail = () => {
       ? `${region.platform_fee_percentage}%`
       : "—";
 
-  const shouldShowAutomationCard = region.fulfillment_mode === "automated";
+  const _shouldShowAutomationCard = region.fulfillment_mode === "automated";
 
   return (
     <>

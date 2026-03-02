@@ -43,7 +43,7 @@ const Contact = () => {
   const [countryList, setCountryList] = useState<Country[]>([]);
   const [successMessage, setSuccessMessage] = useState(false);
   const [errorMessage, setErrorMessage] = useState(false);
-  const [loading, setLoading] = useState("No");
+  const [loading, _setLoading] = useState("No");
 
   //contact form states
   const [firstName, setFirstName] = useState("");
@@ -63,8 +63,8 @@ const Contact = () => {
   const [reasonForContactError, setReasonForContactError] = useState("");
   const [messageError, setMessageError] = useState("");
   const [privacyPolicyError, setPrivacyPolicyError] = useState("");
-  const [companyNameError, setCompanyNameError] = useState("");
-  const [companyWebsiteError, setCompanyWebsiteError] = useState("");
+  const [_companyNameError, _setCompanyNameError] = useState("");
+  const [_companyWebsiteError, _setCompanyWebsiteError] = useState("");
 
   const handleSelectClick = () => {
     setIsSelectOpen(!isSelectOpen);

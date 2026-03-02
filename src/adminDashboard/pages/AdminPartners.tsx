@@ -12,6 +12,7 @@ import DeleteTenantModal from "./tenantComps/DeleteTenant";
 import EditTenantModal from "./tenantComps/EditTenant";
 import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
 import AdminPageShell from "../components/AdminPageShell";
+import logger from "../../utils/logger";
 
 const encodeId = (id: string) => encodeURIComponent(btoa(id));
 const decodeId = (encodedId: string) => {
@@ -125,7 +126,7 @@ const AdminPartners = () => {
     } catch (error) {
       const ToastUtil = (await import("../../utils/toastUtil")).default;
       ToastUtil.error("Failed to delete partners");
-      console.error("Bulk delete error:", error);
+      logger.error("Bulk delete error:", error);
     }
   };
 
@@ -153,7 +154,7 @@ const AdminPartners = () => {
     } catch (error) {
       const ToastUtil = (await import("../../utils/toastUtil")).default;
       ToastUtil.error("Failed to export partners");
-      console.error("Bulk export error:", error);
+      logger.error("Bulk export error:", error);
     }
   };
 
@@ -173,7 +174,7 @@ const AdminPartners = () => {
     } catch (error) {
       const ToastUtil = (await import("../../utils/toastUtil")).default;
       ToastUtil.error("Failed to duplicate partners");
-      console.error("Bulk duplicate error:", error);
+      logger.error("Bulk duplicate error:", error);
     }
   };
 
@@ -193,7 +194,7 @@ const AdminPartners = () => {
     } catch (error) {
       const ToastUtil = (await import("../../utils/toastUtil")).default;
       ToastUtil.error("Failed to archive partners");
-      console.error("Bulk archive error:", error);
+      logger.error("Bulk archive error:", error);
     }
   };
 
@@ -212,7 +213,7 @@ const AdminPartners = () => {
     } catch (error) {
       const ToastUtil = (await import("../../utils/toastUtil")).default;
       ToastUtil.error("Failed to duplicate partner");
-      console.error("Duplicate error:", error);
+      logger.error("Duplicate error:", error);
     }
   };
 
@@ -230,7 +231,7 @@ const AdminPartners = () => {
     } catch (error) {
       const ToastUtil = (await import("../../utils/toastUtil")).default;
       ToastUtil.error("Failed to archive partner");
-      console.error("Archive error:", error);
+      logger.error("Archive error:", error);
     }
   };
 

@@ -32,8 +32,6 @@ import { useFetchClientProjects } from "../../hooks/clientHooks/projectHooks";
 import { useFetchClientPurchasedInstances } from "../../hooks/clientHooks/instanceHooks";
 import clientSilentApi from "../../index/client/silent";
 import { useQuery } from "@tanstack/react-query";
-import { InstanceData } from "../../hooks/clientHooks/instanceHooks";
-import { Project } from "../../hooks/clientHooks/projectHooks";
 
 // Define fallback for types if not exported from hooks
 interface Profile {
@@ -95,7 +93,7 @@ interface Ticket {
   status: string;
 }
 
-interface DashboardStats {
+interface _DashboardStats {
   message?: {
     projects: number;
     active_instances: number;

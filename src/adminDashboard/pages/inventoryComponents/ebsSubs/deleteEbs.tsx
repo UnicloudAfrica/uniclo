@@ -2,7 +2,6 @@ import { X, Loader2 } from "lucide-react";
 
 import ToastUtils from "../../../../utils/toastUtil"; // Ensure ToastUtils is
 import { useDeleteEbsVolume } from "../../../../hooks/adminHooks/ebsHooks";
-import logger from "../../../../utils/logger";
 const DeleteEBSModal = ({ isOpen, onClose, ebsVolume }: any) => {
   // Use the useDeleteEbsVolume hook
   const { mutate, isPending } = useDeleteEbsVolume();
@@ -17,7 +16,7 @@ const DeleteEBSModal = ({ isOpen, onClose, ebsVolume }: any) => {
           ToastUtils.success("EBS Volume deleted successfully");
           onClose();
         },
-        onError: (err) => {
+        onError: (_err) => {
           //   logger.error("Failed to delete EBS Volume:", err);
           //   ToastUtils.error("Failed to delete EBS Volume. Please try again.");
         },

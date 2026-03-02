@@ -10,7 +10,7 @@ import PricingCalculatorConfig from "./calculator/PricingCalculatorConfig";
 import CalculatorSummaryStep from "./calculator/CalculatorSummaryStep";
 import { CustomerContextSelector } from "../../components";
 import { ModernButton } from "../ui";
-import { CalculatorData, ObjectStorageRequest, PricingRequest } from "./types";
+import { CalculatorData, ObjectStorageRequest } from "./types";
 import logger from "../../../utils/logger";
 
 interface SharedPricingCalculatorProps {
@@ -57,7 +57,7 @@ const SharedPricingCalculator: React.FC<SharedPricingCalculatorProps> = ({
     enabled: mode === "admin",
   });
 
-  const { mutateAsync: calculatePricing, isPending: isCalculatingMutation } =
+  const { mutateAsync: calculatePricing, isPending: _isCalculatingMutation } =
     useSharedCalculatorPricing();
 
   // Fetch Client Profile if Client Mode

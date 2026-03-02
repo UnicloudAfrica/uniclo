@@ -3,7 +3,6 @@ import type { ChangeEvent } from "react";
 import { Link } from "react-router-dom";
 import { Loader2, Eye, Edit, Plus, CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
 import adminRegionApi from "../../services/adminRegionApi";
-import ToastUtils from "../../utils/toastUtil";
 import { ModernCard } from "../../shared/components/ui";
 import ModernTable from "../../shared/components/ui/ModernTable";
 import type { Column } from "../../shared/components/ui/ModernTable";
@@ -46,7 +45,7 @@ const RegionApprovals = () => {
     approval_status: "",
   });
 
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, _setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchRegions();
@@ -63,7 +62,7 @@ const RegionApprovals = () => {
       setLoading(false);
     }
   };
-  const handleFilterChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const _handleFilterChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
   };

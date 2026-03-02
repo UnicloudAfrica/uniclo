@@ -13,7 +13,7 @@ const AdminAutoScaling: React.FC = () => {
     if (!rawProjectId) return "";
     try {
       return atob(rawProjectId);
-    } catch (e) {
+    } catch (_e) {
       return rawProjectId;
     }
   }, [rawProjectId]);

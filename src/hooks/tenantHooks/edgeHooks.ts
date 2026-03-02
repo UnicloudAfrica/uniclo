@@ -129,7 +129,7 @@ const fetchTenantProjectEdgeConfig = async (projectId: string, region: string, r
     if (refresh) params.append("refresh", "1");
     const res = await silentTenantApi("GET", `/admin/edge-config?${params.toString()}`);
     return res?.data ?? res;
-  } catch (e) {
+  } catch (_e) {
     return null;
   }
 };

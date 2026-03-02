@@ -21,7 +21,7 @@ interface InvoiceItemQueueProps {
 const InvoiceItemQueue: React.FC<InvoiceItemQueueProps> = ({
   items = [],
   onRemove,
-  onEdit,
+  _onEdit,
   readOnly = false,
   type = "compute",
 }) => {

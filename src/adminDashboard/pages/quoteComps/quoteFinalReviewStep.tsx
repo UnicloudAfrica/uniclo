@@ -35,7 +35,7 @@ const QuoteFinalReviewStep = ({
   formData,
   pricingRequests,
   objectStorageRequests,
-  tenants,
+  _tenants,
   updateFormData,
   errors = {},
   assignmentDetails = {},

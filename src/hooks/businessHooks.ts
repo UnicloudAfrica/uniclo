@@ -10,7 +10,7 @@ const verifyBusiness = async (businessData: any): Promise<any> => {
 
 // Hook to verify a business
 export const useVerifyBusiness = (): UseMutationResult<any, Error, any> => {
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
   return useMutation({
     mutationFn: verifyBusiness,
     onSuccess: () => {

@@ -15,7 +15,7 @@ const DeleteFloatingIP = ({ isOpen, onClose, floatingIP }: any) => {
           ToastUtils.success("Floating IP deleted successfully");
           onClose();
         },
-        onError: (err) => {
+        onError: (_err) => {
           //   logger.error("Failed to delete Floating IP:", err);
           //   ToastUtils.error("Failed to delete Floating IP. Please try again.");
         },

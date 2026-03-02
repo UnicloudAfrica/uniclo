@@ -101,7 +101,7 @@ const ProductSummaryStep = ({
   objectStorageRequests = [],
   formData,
 }: ProductSummaryStepProps) => {
-  const hasItems = pricingRequests.length > 0 || objectStorageRequests?.length > 0;
+  const _hasItems = pricingRequests.length > 0 || objectStorageRequests?.length > 0;
   const groupedItems = useMemo(() => {
     const groups: GroupedItems = {
       compute: [],

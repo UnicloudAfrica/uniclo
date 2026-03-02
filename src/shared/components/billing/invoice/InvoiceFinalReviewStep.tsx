@@ -1,7 +1,7 @@
 import React from "react";
-import { FileText, User, Building, Phone, Mail, ShieldCheck, Tag, Package } from "lucide-react";
+import { FileText, Building, ShieldCheck, Tag, Package } from "lucide-react";
 import { useFetchCountries } from "../../../../hooks/adminHooks/countriesHooks";
-import { ModernButton, ModernCard, ModernInput, ModernTable } from "../../ui";
+import { ModernCard, ModernInput } from "../../ui";
 import {
   AssignmentDetails,
   InvoiceFormData,

@@ -10,6 +10,7 @@ import { ModernCard, ModernButton } from "../../shared/components/ui";
 import ModernInput from "../../shared/components/ui/ModernInput";
 import StatusPill from "../../shared/components/ui/StatusPill";
 import { designTokens } from "../../styles/designTokens";
+import logger from "../../utils/logger";
 
 const statusOptions = [
   { value: "healthy", label: "Healthy" },
@@ -404,7 +405,7 @@ const RegionEdit = () => {
         setConnectedServices(verifiedSet);
       }
     } catch (error) {
-      console.error("Error fetching region:", error);
+      logger.error("Error fetching region:", error);
       ToastUtils.error("Failed to load region details");
     } finally {
       setLoading(false);
@@ -498,7 +499,7 @@ const RegionEdit = () => {
         setConnectedServices((prev) => new Set(prev).add(serviceType));
       }
     } catch (error: any) {
-      console.error(`Verification failed for ${serviceType}:`, error);
+      logger.error(`Verification failed for ${serviceType}:`, error);
       ToastUtils.error(error.message || "Verification failed");
       setConnectedServices((prev) => {
         const next = new Set(prev);
@@ -591,7 +592,7 @@ const RegionEdit = () => {
       ToastUtils.success("Region updated successfully");
       navigate(`/admin-dashboard/regions/${formData.code}`);
     } catch (error: any) {
-      console.error("Error updating region:", error);
+      logger.error("Error updating region:", error);
       ToastUtils.error(error.message || "Failed to update region");
     } finally {
       setSubmitting(false);
@@ -604,7 +605,7 @@ const RegionEdit = () => {
       ToastUtils.success("Fast Track access revoked successfully");
       fetchRegionDetail();
     } catch (error: any) {
-      console.error("Error revoking Fast Track:", error);
+      logger.error("Error revoking Fast Track:", error);
       ToastUtils.error(error.message || "Failed to revoke Fast Track access");
     }
   };
@@ -956,7 +957,7 @@ const RegionEdit = () => {
                         }));
                         ToastUtils.success("Region approved successfully");
                       } catch (e) {
-                        console.error(e);
+                        logger.error(e);
                         ToastUtils.error("Failed to approve region");
                       }
                     }}
@@ -990,7 +991,7 @@ const RegionEdit = () => {
                             }));
                           }
                         } catch (error: any) {
-                          console.error("Error revoking region:", error);
+                          logger.error("Error revoking region:", error);
                           ToastUtils.error(error.message || "Failed to revoke region");
                         } finally {
                           setSubmitting(false);
@@ -1032,7 +1033,7 @@ const RegionEdit = () => {
                           setRegion((prev: any) => ({ ...prev, fast_track_mode: "disabled" }));
                           ToastUtils.success("Fast Track disabled");
                         } catch (e) {
-                          console.error(e);
+                          logger.error(e);
                         }
                       }}
                       className="mt-1"
@@ -1059,7 +1060,7 @@ const RegionEdit = () => {
                           setRegion((prev: any) => ({ ...prev, fast_track_mode: "owner_only" }));
                           ToastUtils.success("Set to Owner Only");
                         } catch (e) {
-                          console.error(e);
+                          logger.error(e);
                         }
                       }}
                       className="mt-1"
@@ -1088,7 +1089,7 @@ const RegionEdit = () => {
                           setRegion((prev: any) => ({ ...prev, fast_track_mode: "grant_only" }));
                           ToastUtils.success("Set to Grant Based");
                         } catch (e) {
-                          console.error(e);
+                          logger.error(e);
                         }
                       }}
                       className="mt-1"
@@ -1230,7 +1231,7 @@ const RegionEdit = () => {
                               `Granted access to ${selectedTenantsToGrant.length} tenant(s)`
                             );
                           } catch (e) {
-                            console.error(e);
+                            logger.error(e);
                             ToastUtils.error("Failed to grant access");
                           }
                         }}

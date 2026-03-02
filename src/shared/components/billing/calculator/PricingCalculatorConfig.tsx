@@ -3,11 +3,11 @@ import {
   BadgePercent,
   CircleDollarSign,
   Inbox,
-  Layers,
+  _Layers,
   Plus,
   Server,
   Trash2,
-  HardDrive,
+  _HardDrive,
   Globe,
   CreditCard,
   Lock,
@@ -23,7 +23,7 @@ import { useFormattedRegions } from "../../../../utils/regionUtils";
 import { getCurrencySymbol } from "../../../../utils/resource";
 import PricingWorkloadCard from "./PricingWorkloadCard";
 import PricingLiveSummary from "./PricingLiveSummary";
-import { BillingRegion, CalculatorData, ObjectStorageRequest, PricingRequest } from "../types";
+import { CalculatorData, ObjectStorageRequest, PricingRequest } from "../types";
 
 const createInitialItemState = (): PricingRequest => ({
   region: "",
@@ -50,7 +50,7 @@ const formatCurrency = (amount: number | null | undefined, currency: string = "U
       currency: currency || "USD",
       maximumFractionDigits: 2,
     }).format(amount);
-  } catch (error) {
+  } catch (_error) {
     return `${currency || ""} ${amount}`.trim();
   }
 };
@@ -151,7 +151,7 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
     }
   );
 
-  const handlePricingChange = (index: number, value: any) => {
+  const _handlePricingChange = (index: number, value: any) => {
     if (!onCountryChange) return;
     const upper = value ? value.toUpperCase() : "";
     onCountryChange(upper, resolveCurrencyForCountry(upper));

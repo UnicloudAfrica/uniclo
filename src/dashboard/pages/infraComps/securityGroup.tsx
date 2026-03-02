@@ -14,6 +14,7 @@ import { ResourceSection } from "../../../shared/components/ui";
 import { ResourceEmptyState } from "../../../shared/components/ui";
 import { ResourceListCard } from "../../../shared/components/ui";
 import { ModernButton } from "../../../shared/components/ui";
+import logger from "../../../utils/logger";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -54,7 +55,7 @@ const SecurityGroup = ({ projectId = "", region = "" }) => {
         setDeleteModal(null);
       },
       onError: (err) => {
-        console.error("Failed to delete Security Group:", err);
+        logger.error("Failed to delete Security Group:", err);
         setDeleteModal(null);
       },
     });
@@ -72,7 +73,7 @@ const SecurityGroup = ({ projectId = "", region = "" }) => {
       });
       ToastUtils.success("Security groups synced successfully!");
     } catch (error) {
-      console.error("Failed to sync Security Groups:", error);
+      logger.error("Failed to sync Security Groups:", error);
       ToastUtils.error((error as any)?.message || "Failed to sync security groups.");
     }
   };

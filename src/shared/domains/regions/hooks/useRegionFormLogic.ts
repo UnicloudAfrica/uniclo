@@ -10,6 +10,7 @@ import type {
   ProviderServicesSchema,
 } from "../types/serviceConfig.types";
 import { DEFAULT_REGION_FORM_DATA } from "../types/serviceConfig.types";
+import logger from "../../../../utils/logger";
 
 export interface UseRegionFormLogicOptions {
   initialData?: Partial<RegionFormData>;
@@ -99,7 +100,7 @@ export function useRegionFormLogic({
           setServiceConfigs(initialConfigs);
         }
       } catch (error) {
-        console.error("Failed to fetch provider services:", error);
+        logger.error("Failed to fetch provider services:", error);
       } finally {
         setLoadingServices(false);
       }
@@ -189,7 +190,7 @@ export function useRegionFormLogic({
           setConnectedServices((prev) => new Set(prev).add(serviceType));
         }
       } catch (error) {
-        console.error(`Verification failed for ${serviceType}:`, error);
+        logger.error(`Verification failed for ${serviceType}:`, error);
         setConnectedServices((prev) => {
           const next = new Set(prev);
           next.delete(serviceType);

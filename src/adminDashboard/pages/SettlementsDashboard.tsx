@@ -1,12 +1,12 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   DollarSign,
   TrendingUp,
   TrendingDown,
-  Clock,
+  _Clock,
   CheckCircle,
-  AlertCircle,
+  _AlertCircle,
   Filter,
   Download,
   RefreshCw,
@@ -169,13 +169,13 @@ const SettlementsDashboard: React.FC = () => {
     page: 1,
   });
 
-  const { data: summary, isLoading: summaryLoading } = useSettlementSummary();
+  const { data: summary, isLoading: _summaryLoading } = useSettlementSummary();
   const { data: settlementData, isLoading: settlementsLoading, refetch } = useSettlements(filters);
   const markSettled = useMarkSettled();
   const sendReminder = useSendReminder();
 
   const settlements = (settlementData as any)?.data?.data || [];
-  const pagination = (settlementData as any)?.data || {};
+  const _pagination = (settlementData as any)?.data || {};
 
   const handleMarkSettled = async (id: number) => {
     if (globalThis.window.confirm("Mark this settlement as paid?")) {

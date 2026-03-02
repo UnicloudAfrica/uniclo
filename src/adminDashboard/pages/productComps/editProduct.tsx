@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
 import { useUpdateProduct } from "../../../hooks/adminHooks/adminProductHooks";
+import logger from "../../../utils/logger";
 
 const EditProduct = ({ isOpen, onClose, product, onUpdated }: any) => {
   const [formData, setFormData] = useState({
@@ -42,7 +43,7 @@ const EditProduct = ({ isOpen, onClose, product, onUpdated }: any) => {
             onUpdated();
           }
         },
-        onError: (error) => console.error("Error updating product:", error.message),
+        onError: (error) => logger.error("Error updating product:", error.message),
       }
     );
   };

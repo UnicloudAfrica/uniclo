@@ -98,7 +98,7 @@ export const useCreateAccount = (): UseMutationResult<unknown, Error, AuthPayloa
     onError: (error) => {
       logger.error(error);
     },
-    onSuccess: (data) => {
+    onSuccess: (_data) => {
       // logger.log(data);
     },
   });
@@ -108,7 +108,7 @@ export const useCreateAccount = (): UseMutationResult<unknown, Error, AuthPayloa
 export const useLoginAccount = (): UseMutationResult<unknown, Error, AuthPayload> => {
   return useMutation({
     mutationFn: loginAccount,
-    onError: (error: Error) => {
+    onError: (_error: Error) => {
       //   logger.error(error);
     },
     onSuccess: () => {
@@ -124,7 +124,7 @@ export const useVerifyMail = (): UseMutationResult<unknown, Error, AuthPayload> 
     onError: (error) => {
       logger.error(error);
     },
-    onSuccess: (data) => {
+    onSuccess: (_data) => {
       // logger.log(data);
     },
   });
@@ -137,7 +137,7 @@ export const useForgotPassword = (): UseMutationResult<unknown, Error, AuthPaylo
     onError: (error) => {
       logger.error(error);
     },
-    onSuccess: (data) => {
+    onSuccess: (_data) => {
       // logger.log(data);
     },
   });
@@ -149,7 +149,7 @@ export const useResetPassword = (): UseMutationResult<unknown, Error, AuthPayloa
     onError: (error) => {
       logger.error(error);
     },
-    onSuccess: (data) => {
+    onSuccess: (_data) => {
       // logger.log(data);
     },
   });
@@ -161,7 +161,7 @@ export const useResendOTP = (): UseMutationResult<unknown, Error, AuthPayload> =
     onError: (error) => {
       logger.error(error);
     },
-    onSuccess: (data) => {
+    onSuccess: (_data) => {
       // logger.log(data);
     },
   });

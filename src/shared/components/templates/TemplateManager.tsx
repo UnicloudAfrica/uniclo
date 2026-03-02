@@ -146,7 +146,7 @@ const formatCurrency = (amount?: number, currency = "USD") => {
       currency: currency || "USD",
       maximumFractionDigits: 2,
     }).format(Number(amount));
-  } catch (error) {
+  } catch (_error) {
     return `$${Number(amount).toFixed(2)}`;
   }
 };

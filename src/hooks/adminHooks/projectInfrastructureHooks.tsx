@@ -290,7 +290,7 @@ export const useProjectStatusPolling = (projectId: any, options: any = {}) => {
       return response.data || response;
     },
     enabled: enabled && !!projectId && !shouldStop,
-    refetchInterval: (data: any, query: any) => {
+    refetchInterval: (data: any, _query: any) => {
       // Stop polling if we've reached max time
       if (Date.now() - pollingStartTime > maxPollingTime) {
         setShouldStop(true);
@@ -308,7 +308,7 @@ export const useProjectStatusPolling = (projectId: any, options: any = {}) => {
     },
     refetchIntervalInBackground: false,
     staleTime: 0, // Always consider data stale to trigger refetches
-    retry: (failureCount: any, error: any) => {
+    retry: (failureCount: any, _error: any) => {
       // Stop retrying after 3 failures
       return failureCount < 3;
     },
@@ -360,7 +360,7 @@ export const useBulkSetupInfrastructure = () => {
         queryKey: ["project-details", variables.projectId],
       });
     },
-    onError: (error: any, variables: any) => {
+    onError: (error: any, _variables: any) => {
       logger.error("Failed to setup infrastructure components:", error);
     },
   });

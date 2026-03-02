@@ -3,7 +3,7 @@ import useAuthRedirect from "../../utils/authRedirect";
 import ProductForm from "../components/productform";
 
 export default function Requests() {
-  const { isLoading } = useAuthRedirect();
+  const { _isLoading } = useAuthRedirect();
 
   return (
     <TenantPageShell

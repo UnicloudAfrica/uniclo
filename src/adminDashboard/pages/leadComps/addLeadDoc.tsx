@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { X, Loader2, Upload, CheckCircle } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
-import { useMutation } from "@tanstack/react-query";
 import { FileInput } from "../../../utils/fileInput";
 import { useAddLeadDocument } from "../../../hooks/adminHooks/leadsHook";
 
@@ -94,7 +93,7 @@ const AddLeadDocument = ({ isOpen, onClose, lead }: any) => {
         ToastUtils.success("Lead document added successfully!");
         onClose();
       },
-      onError: (error) => {
+      onError: (_error) => {
         // ToastUtils.error("Failed to add lead document. Please try again.");
       },
     });

@@ -1,6 +1,5 @@
 import Footer from "../components/footer";
 import Navbar from "../components/navbar";
-import arrowdown from "./assets/Arrow_Down_Right_LG.svg";
 import adbg from "./assets/adBG.svg";
 import admob from "./assets/adMob.svg";
 import { motion } from "framer-motion";

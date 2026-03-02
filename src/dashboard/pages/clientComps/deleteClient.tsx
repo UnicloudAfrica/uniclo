@@ -1,7 +1,6 @@
 import { X, Loader2 } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useDeleteClient } from "../../../hooks/clientHooks";
-import logger from "../../../utils/logger";
 
 const DeleteClientModal = ({ isOpen, onClose, client, onDeleteConfirm }: any) => {
   // Use the useDeleteClient hook
@@ -18,7 +17,7 @@ const DeleteClientModal = ({ isOpen, onClose, client, onDeleteConfirm }: any) =>
           onClose(); // Close modal on success
           onDeleteConfirm(); // Notify parent component (AdminClients) for potential refetching
         },
-        onError: (err) => {
+        onError: (_err) => {
           //   logger.error("Failed to delete client:", err);
           //   ToastUtils.error("Failed to delete client. Please try again.");
         },

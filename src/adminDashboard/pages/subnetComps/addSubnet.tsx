@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import type { FormEvent } from "react";
 import { Loader2, X } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
 import { useFetchVpcs, useFetchAvailableCidrs } from "../../../hooks/adminHooks/vcpHooks";
 import { useCreateSubnet, useFetchSubnets } from "../../../hooks/adminHooks/subnetHooks";
 import logger from "../../../utils/logger";
@@ -145,7 +144,7 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: A
       }
       const merged = [...out, ...providerSuggestions.filter((r) => !out.includes(r))];
       setSuggestions(merged);
-    } catch (e) {
+    } catch (_e) {
       // noop
     }
   };

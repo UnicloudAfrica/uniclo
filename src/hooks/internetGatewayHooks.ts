@@ -37,7 +37,7 @@ const deleteInternetGateway = async (arg: any) => {
       payload = arg.payload || undefined;
     } else if ("internet_gateway_id" in arg) {
       id = arg.internet_gateway_id;
-      const { internet_gateway_id, ...rest } = arg;
+      const { _internet_gateway_id, ...rest } = arg;
       payload = rest;
     }
   }

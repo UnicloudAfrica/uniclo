@@ -78,7 +78,7 @@ const decodeId = (encodedId: string | null): string | null => {
       return null;
     }
     return decoded;
-  } catch (e) {
+  } catch (_e) {
     return null;
   }
 };

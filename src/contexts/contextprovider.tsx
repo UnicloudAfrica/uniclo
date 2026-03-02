@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useEffect, useState, type JSX } from "react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { initializeApp, getApp, getApps } from "firebase/app";
 import { getFirestore, collection, query, onSnapshot } from "firebase/firestore";

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { type JSX } from "react";
 import { Route, Outlet } from "react-router-dom";
 import ObjectStorageProvider from "../contexts/ObjectStorageContext";
 import AdminDashboard from "../adminDashboard/pages/AdminDashboard";

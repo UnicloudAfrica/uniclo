@@ -30,7 +30,7 @@ interface VpcsContainerProps {
   wrapper: (props: {
     headerActions: React.ReactNode;
     children: React.ReactNode;
-  }) => React.ReactElement;
+  }) => React.ReactElement<any>;
 }
 
 /**

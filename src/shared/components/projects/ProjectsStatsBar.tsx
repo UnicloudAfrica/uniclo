@@ -22,7 +22,7 @@ const ProjectsStatsBar: React.FC<ProjectsStatsBarProps> = ({ stats, isLoading = 
   const statsCards: {
     title: string;
     value: number;
-    icon: React.ReactElement;
+    icon: React.ReactElement<any>;
     color: "primary" | "success" | "warning" | "error" | "info";
     description: string;
   }[] = [

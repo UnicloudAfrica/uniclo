@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type JSX,
 } from "react";
 import type { ReactNode } from "react";
 import objectStorageApi from "../services/objectStorageApi";
@@ -283,7 +284,14 @@ export const ObjectStorageProvider = ({ children }: ObjectStorageProviderProps):
       try {
         const data = await objectStorageApi.fetchBuckets(accountId);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setAccountBuckets((prev) => ({ ...prev, [accountKey]: data }) as any);
+        setAccountBuckets(
+          (prev) =>
+            ({
+              ...prev,
+              [accountKey]: data,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            }) as any
+        );
         return data;
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unable to load silos.";

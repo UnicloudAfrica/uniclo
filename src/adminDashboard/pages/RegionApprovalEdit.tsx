@@ -4,9 +4,9 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle,
-  _Ban,
-  _PauseCircle,
-  _PlayCircle,
+  Ban,
+  PauseCircle,
+  PlayCircle,
   DollarSign,
   Info,
 } from "lucide-react";

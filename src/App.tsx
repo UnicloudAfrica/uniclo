@@ -12,10 +12,10 @@ import AdminShell from "./adminDashboard/components/AdminShell";
 import { AdminShellProvider } from "./adminDashboard/components/AdminShellContext";
 
 // Helper types so we can inject the rendered <Route> elements directly.
-const renderPublicRoutes = PublicRoutes as () => React.ReactElement;
-const renderTenantRoutes = TenantRoutes as () => React.ReactElement;
-const renderClientRoutes = ClientRoutes as () => React.ReactElement;
-const renderAdminRoutes = AdminRoutes as () => React.ReactElement;
+const renderPublicRoutes = PublicRoutes as () => React.ReactElement<any>;
+const renderTenantRoutes = TenantRoutes as () => React.ReactElement<any>;
+const renderClientRoutes = ClientRoutes as () => React.ReactElement<any>;
+const renderAdminRoutes = AdminRoutes as () => React.ReactElement<any>;
 
 const App: React.FC = () => {
   const location = useLocation();

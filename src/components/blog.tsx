@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, type JSX } from "react";
 import { BlogContext } from "../contexts/contextprovider";
 import { Link } from "react-router-dom";
 

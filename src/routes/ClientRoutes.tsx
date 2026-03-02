@@ -38,6 +38,8 @@ import ClientImages from "../clientDashboard/pages/ClientImages";
 import ClientAutoScaling from "../clientDashboard/pages/ClientAutoScaling";
 import ClientTicketDetail from "../clientDashboard/pages/ClientTicketDetail";
 
+import type { JSX } from "react";
+
 const ObjectStorageRouteProvider = (): JSX.Element => (
   <ObjectStorageProvider>
     <div className="object-storage-theme">

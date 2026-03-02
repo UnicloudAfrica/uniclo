@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type JSX } from "react";
 import { motion } from "framer-motion";
 import arrowDown from "./assets/arrowdown.svg";
 

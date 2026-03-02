@@ -1,4 +1,4 @@
-import React from "react";
+import React, { type JSX } from "react";
 import { Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import useClientAuthStore from "../stores/clientAuthStore";

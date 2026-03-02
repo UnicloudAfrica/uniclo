@@ -1,4 +1,4 @@
-import React from "react";
+import React, { type JSX } from "react";
 import { Navigate, useLocation, Outlet } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import useTenantAuthStore from "../stores/tenantAuthStore";

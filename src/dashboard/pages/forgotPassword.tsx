@@ -18,7 +18,7 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState<Record<string, any>>({});
   const { mutate: forgotPassword, isPending } = useForgotPassword();
-  const { _userEmail, setUserEmail } = useTenantAuthStore.getState();
+  const { userEmail, setUserEmail } = useTenantAuthStore.getState();
   const hostname = globalThis.window !== undefined ? globalThis.window.location.hostname : "";
   const subdomain = globalThis.window !== undefined ? getSubdomain() : null;
   const { data: branding } = usePublicBrandingTheme({

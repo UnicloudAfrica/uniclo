@@ -8,6 +8,8 @@ import {
 import useImageFallback from "../hooks/useImageFallback";
 import { getSubdomain } from "../utils/getSubdomain";
 
+import type { JSX } from "react";
+
 const Topbar = (): JSX.Element => {
   const hostname = globalThis.window !== undefined ? globalThis.window.location.hostname : "";
   const subdomain = globalThis.window !== undefined ? (getSubdomain() ?? undefined) : undefined;

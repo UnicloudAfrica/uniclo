@@ -1,5 +1,7 @@
 import map from "./assets/map.svg";
 
+import type { JSX } from "react";
+
 const Carousel = (): JSX.Element => (
   <section aria-label="Company mission" className="px-0 md:px-8 lg:px-6">
     <div className="flex flex-col w-full mt-8 mb-10 rounded-[20px] border border-[rgb(var(--theme-color-rgb) / 0.1)]">

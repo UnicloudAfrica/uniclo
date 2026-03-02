@@ -224,7 +224,7 @@ const TenantAddPartnerWizard = ({ onClose }: any) => {
     setFormData,
     errors,
     setErrors,
-  } as any);
+  } as any) as React.JSX.Element;
 
   const summarySections = useMemo(
     () => [

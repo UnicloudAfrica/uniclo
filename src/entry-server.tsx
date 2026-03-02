@@ -1,6 +1,6 @@
 import { renderToString } from "react-dom/server";
 import { StaticRouter } from "react-router-dom/server";
-import { HelmetProvider } from "react-helmet-async";
+import { HelmetProvider } from "@dr.pogodin/react-helmet";
 import App from "./App";
 import QueryProvider from "./utils/queryProvider";
 import StaticMarketingProvider from "./contexts/StaticMarketingProvider";

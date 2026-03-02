@@ -7,6 +7,8 @@ import certiSix from "./assets/newcert6.png";
 import certiSeven from "./assets/newcert7.png";
 import certiEight from "./assets/newcert8.png";
 
+import type { JSX } from "react";
+
 const Certifications = (): JSX.Element => {
   return (
     <section

@@ -4,7 +4,7 @@ import { designTokens } from "../../../../styles/designTokens";
 interface InfrastructureSection {
   key: string;
   label: string;
-  icon: React.ReactElement;
+  icon: React.ReactElement<any>;
 }
 
 interface ProjectInfrastructureJourneyProps {

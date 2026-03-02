@@ -8,7 +8,7 @@ import box from "./assets/box.svg";
 import reciept from "./assets/receipt.svg";
 import trades from "./assets/trades.svg";
 import logout from "./assets/logout.svg";
-import { useContext, useState } from "react";
+import { useContext, useState, type JSX } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { initializeApp } from "firebase/app";
 import { getAuth, signOut } from "firebase/auth";

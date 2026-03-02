@@ -24,7 +24,7 @@ interface NatGatewaysContainerProps {
   wrapper: (props: {
     headerActions: React.ReactNode;
     children: React.ReactNode;
-  }) => React.ReactElement;
+  }) => React.ReactElement<any>;
   // Hooks to fetch dependencies for passing to Overview if needed?
   // Overview needs 'availableSubnetsCount'. We can pass that from the list data or fetch it here if needed.
   // Actually, Overview takes 'availableSubnetsCount'.

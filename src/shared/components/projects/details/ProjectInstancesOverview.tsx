@@ -38,7 +38,7 @@ const ProjectInstancesOverview: React.FC<ProjectInstancesOverviewProps> = ({
   onViewInstance,
   onAddInstance,
   onViewAllInstances,
-  _canCreateInstances,
+  canCreateInstances,
   resolvedProjectId,
 }) => {
   // Define columns for ModernTable

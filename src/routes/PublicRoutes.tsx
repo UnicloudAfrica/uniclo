@@ -35,6 +35,8 @@ import TenantLogin from "../tenantDashboard/pages/tenant-signin";
 
 import Press from "../pages/press";
 
+import type { JSX } from "react";
+
 const PublicRoutes = (): JSX.Element => (
   <>
     <Route path="/" element={<Landing />} />

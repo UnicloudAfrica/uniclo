@@ -26,7 +26,7 @@ interface LoadBalancersContainerProps {
   wrapper: (props: {
     headerActions: React.ReactNode;
     children: React.ReactNode;
-  }) => React.ReactElement;
+  }) => React.ReactElement<any>;
   onManage?: (lb: any) => void;
 }
 

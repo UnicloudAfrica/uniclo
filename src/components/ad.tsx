@@ -3,6 +3,8 @@ import adbg from "./assets/adBG.svg";
 import admob from "./assets/adMob.svg";
 import { Link } from "react-router-dom";
 
+import type { JSX } from "react";
+
 const Ads = (): JSX.Element => {
   return (
     <section

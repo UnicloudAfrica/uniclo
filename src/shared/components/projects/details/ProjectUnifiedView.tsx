@@ -130,7 +130,7 @@ export interface ProjectUnifiedViewProps {
 }
 
 const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
-  _project,
+  project,
   instanceStats,
   resourceCounts,
   canCreateInstances = true,
@@ -169,7 +169,7 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
   isLoading = false,
   showMemberManagement = true,
   showSyncButton = true,
-  _showHero = true,
+  showHero = true,
 }) => {
   const fallbackIgw = Array.isArray(igws) && igws.length > 0 ? igws[0] : null;
   const fallbackIgwDetails = fallbackIgw

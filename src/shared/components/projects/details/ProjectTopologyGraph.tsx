@@ -1,6 +1,13 @@
 import React, { useMemo } from "react";
-import ReactFlow, { Background, Controls, Panel, MarkerType, BackgroundVariant } from "reactflow";
-import "reactflow/dist/style.css";
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  Panel,
+  MarkerType,
+  BackgroundVariant,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
 import { Globe, Box } from "lucide-react";
 
 /**
@@ -25,8 +32,8 @@ const ProjectTopologyGraph: React.FC<ProjectTopologyGraphProps> = ({
 }) => {
   // 1. Transform Backend Data to Nodes/Edges
   const { nodes, edges } = useMemo(() => {
-    const nodes: import("reactflow").Node[] = [];
-    const edges: import("reactflow").Edge[] = [];
+    const nodes: import("@xyflow/react").Node[] = [];
+    const edges: import("@xyflow/react").Edge[] = [];
 
     // Core VPC Node (The Container)
     nodes.push({
@@ -70,7 +77,7 @@ const ProjectTopologyGraph: React.FC<ProjectTopologyGraphProps> = ({
       const xPos = 50 + idx * 200;
       nodes.push({
         id: `subnet-${s.id || idx}`,
-        parentNode: "vpc",
+        parentId: "vpc",
         extent: "parent",
         data: {
           label: (

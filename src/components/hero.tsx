@@ -1,6 +1,8 @@
 import heroImg from "./assets/hero.webm";
 import { Link } from "react-router-dom";
 
+import type { JSX } from "react";
+
 const Hero = (): JSX.Element => {
   //   const isMobile = globalThis.window.innerWidth <= 768;
 

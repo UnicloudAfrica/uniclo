@@ -59,7 +59,7 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({
   taxLabelSuffix,
   backendPricingData,
   onBack,
-  _onEditConfiguration,
+  onEditConfiguration,
   onConfirm,
   confirmLabel,
   fastTrackSummary,

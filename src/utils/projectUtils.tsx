@@ -6,7 +6,7 @@ import logger from "./logger";
 export interface StatusDisplayConfig {
   backgroundColor: string;
   color: string;
-  icon: React.ReactElement;
+  icon: React.ReactElement<unknown>;
   label: string;
   animate: boolean;
 }

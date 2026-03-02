@@ -75,6 +75,8 @@ import {
   AutoScalingGroupWizard,
 } from "../tenantDashboard/pages/infrastructure";
 
+import type { JSX } from "react";
+
 const ObjectStorageRouteProvider = (): JSX.Element => (
   <ObjectStorageProvider>
     <div className="object-storage-theme">

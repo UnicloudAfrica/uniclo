@@ -17,8 +17,8 @@ const CreateSnapshotModal: React.FC<CreateSnapshotModalProps> = ({
   onClose,
   instanceId,
   instanceName,
-  _projectId,
-  _region,
+  projectId,
+  region,
 }) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");

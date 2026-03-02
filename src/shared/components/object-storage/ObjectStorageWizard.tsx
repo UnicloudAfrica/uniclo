@@ -127,17 +127,17 @@ const ObjectStorageOrderSummaryCompact: React.FC<OrderSummaryCompactProps> = ({
 };
 
 export const ObjectStorageWizard: React.FC<ObjectStorageWizardProps> = ({
-  _mode,
+  mode,
   isFastTrack,
   activeStep,
   steps,
-  _onModeChange,
+  onModeChange,
   onStepChange,
   onNextStep,
   onPreviousStep,
   isFirstStep,
   isLastStep,
-  _dashboardContext,
+  dashboardContext,
   profiles,
   summaryTotals,
   assignmentLabel,

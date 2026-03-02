@@ -3,7 +3,9 @@ import { useEffect, useRef, useState, RefObject, ComponentType } from "react";
 // Hook for managing element animations and micro-interactions
 export const useAnimations = () => {
   // Intersection Observer for scroll animations
-  const useInView = <T extends Element = HTMLElement>(threshold = 0.1): [RefObject<T>, boolean] => {
+  const useInView = <T extends Element = HTMLElement>(
+    threshold = 0.1
+  ): [RefObject<T | null>, boolean] => {
     const [isInView, setIsInView] = useState(false);
     const ref = useRef<T | null>(null);
 

@@ -8,7 +8,7 @@ import {
   CheckCircle,
   Plus,
   Settings,
-  _DollarSign,
+  DollarSign,
   Key,
   Loader2,
 } from "lucide-react";

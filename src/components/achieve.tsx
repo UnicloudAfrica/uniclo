@@ -1,5 +1,7 @@
 import map from "./assets/mapBig.svg";
 
+import type { JSX } from "react";
+
 const Acheive = (): JSX.Element => {
   return (
     <section

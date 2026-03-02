@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   Bell,
-  _Check,
+  Check,
   CheckCheck,
-  _Trash2,
+  Trash2,
   X,
   CreditCard,
   Server,

@@ -6,6 +6,8 @@ import benefive from "./assets/benefive.svg";
 import benesix from "./assets/benesix.svg";
 import { motion } from "framer-motion";
 
+import type { JSX } from "react";
+
 const Features = (): JSX.Element => {
   return (
     <>

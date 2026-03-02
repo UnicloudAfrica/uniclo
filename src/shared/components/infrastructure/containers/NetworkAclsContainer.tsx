@@ -37,7 +37,7 @@ interface NetworkAclsContainerProps {
   wrapper: (props: {
     headerActions: React.ReactNode;
     children: React.ReactNode;
-  }) => React.ReactElement;
+  }) => React.ReactElement<any>;
   onManageRules: (acl: NetworkAcl) => void;
 }
 

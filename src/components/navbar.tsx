@@ -1,7 +1,7 @@
 import arrowDown from "./assets/arrow-down.svg";
 import outline from "./assets/outline.svg";
 import { Link } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type JSX } from "react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 import logo from "./assets/logo.png";
 import {

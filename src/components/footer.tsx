@@ -2,7 +2,7 @@ import linkin from "./assets/linkedin.png";
 import twi from "./assets/twitter.png";
 import ig from "./assets/ig.svg";
 import { Link } from "react-router-dom";
-import { useContext } from "react";
+import { useContext, type JSX } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { GeneralContext } from "../contexts/contextprovider";
 

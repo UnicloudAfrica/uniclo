@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import {
-  _useFetchCitiesById,
+  useFetchCitiesById,
   useFetchCountries,
   useFetchStatesById,
   useFetchProfile,

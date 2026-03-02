@@ -6,7 +6,7 @@ import { BrowserRouter as Router } from "react-router-dom";
 import ContextProvider from "./contexts/contextprovider";
 import { Toaster } from "sonner";
 import QueryProvider from "./utils/queryProvider";
-import { HelmetProvider } from "react-helmet-async";
+import { HelmetProvider } from "@dr.pogodin/react-helmet";
 
 const root = ReactDOM.createRoot(document.getElementById("root")!);
 root.render(

@@ -4,7 +4,7 @@ import { RefreshCw } from "lucide-react";
 import {
   getInternetGatewayPermissions,
   type Hierarchy,
-  type _InternetGatewayPermissions,
+  type InternetGatewayPermissions,
 } from "../../../config/permissionPresets";
 import { InternetGatewaysOverview } from "..";
 import ToastUtils from "../../../../utils/toastUtil";
@@ -28,7 +28,7 @@ interface InternetGatewaysContainerProps {
   wrapper: (props: {
     headerActions: React.ReactNode;
     children: React.ReactNode;
-  }) => React.ReactElement;
+  }) => React.ReactElement<any>;
 }
 
 const InternetGatewaysContainer: React.FC<InternetGatewaysContainerProps> = ({

@@ -16,7 +16,7 @@ import {
   useBillingSummary,
   usePayInvoice,
   Invoice,
-  _getStatusColor,
+  getStatusColor,
   getStatusLabel,
   formatCurrency,
 } from "../../hooks/useClientInvoices";

@@ -39,13 +39,13 @@ const Vms = ({ selectedRegion, onMetricsChange }: any) => {
 
   const totalVCpus = useMemo(() => {
     if (!rows.length) return 0;
-    return rows.reduce((acc, vm) => acc + Number(vm.vcpus || 0), 0);
+    return rows.reduce((acc, vm) => (acc as any) + Number((vm as any).vcpus || 0), 0);
   }, [rows]);
 
   const avgMemory = useMemo(() => {
     if (!rows.length) return 0;
-    const sum = rows.reduce((acc, vm) => acc + Number(vm.memory_mb || 0), 0);
-    return sum / rows.length;
+    const sum = rows.reduce((acc, vm) => (acc as any) + Number((vm as any).memory_mb || 0), 0);
+    return (sum as any) / rows.length;
   }, [rows]);
 
   useEffect(() => {
@@ -94,7 +94,7 @@ const Vms = ({ selectedRegion, onMetricsChange }: any) => {
     {
       header: "Compute profile",
       key: "name",
-      render: (vm) => (
+      render: (vm: any) => (
         <div className="flex flex-col">
           <span className="font-semibold text-slate-900">{vm.name || "Unnamed profile"}</span>
           <span className="text-xs text-slate-500">
@@ -107,7 +107,7 @@ const Vms = ({ selectedRegion, onMetricsChange }: any) => {
       header: "Memory",
       key: "memory_mb",
       align: "center",
-      render: (vm) => (
+      render: (vm: any) => (
         <span className="font-semibold text-slate-800">{formatMemory(vm.memory_mb)}</span>
       ),
     },
@@ -115,7 +115,7 @@ const Vms = ({ selectedRegion, onMetricsChange }: any) => {
       header: "vCPU / cores",
       key: "vcpus",
       align: "center",
-      render: (vm) => (
+      render: (vm: any) => (
         <div className="flex flex-col items-center text-xs text-slate-500">
           <span className="font-medium text-slate-700">{vm.vcpus ?? "—"} vCPU</span>
           <span>
@@ -128,7 +128,7 @@ const Vms = ({ selectedRegion, onMetricsChange }: any) => {
       header: "",
       key: "actions",
       align: "right",
-      render: (vm) => (
+      render: (vm: any) => (
         <div className="flex items-center justify-end gap-2">
           <button
             type="button"
@@ -176,7 +176,7 @@ const Vms = ({ selectedRegion, onMetricsChange }: any) => {
     ),
   };
 
-  const handleSearch = useCallback((value) => {
+  const handleSearch = useCallback((value: any) => {
     setSearch(value);
     setPage(1);
   }, []);
@@ -186,13 +186,13 @@ const Vms = ({ selectedRegion, onMetricsChange }: any) => {
       <ResourceDataExplorer
         title="Compute catalogue"
         description="Balance CPU, memory, and sockets to deliver consistent performance tiers for customers."
-        columns={columns}
-        rows={rows}
+        columns={columns as any}
+        rows={rows as any}
         loading={isFetching}
-        page={meta?.current_page ?? page}
-        perPage={meta?.per_page ?? perPage}
-        total={total}
-        meta={meta}
+        page={meta?.current_page ?? (page as any)}
+        perPage={meta?.per_page ?? (perPage as any)}
+        total={total as any}
+        meta={meta as any}
         onPageChange={setPage}
         onPerPageChange={(next) => {
           setPerPage(next);

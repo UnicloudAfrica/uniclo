@@ -20,6 +20,7 @@ import {
   getStatusLabel,
   formatCurrency,
 } from "../../hooks/useClientInvoices";
+import logger from "../../utils/logger";
 
 // Status badge component
 const StatusBadge: React.FC<{ status: Invoice["status"] }> = ({ status }: any) => {
@@ -34,7 +35,7 @@ const StatusBadge: React.FC<{ status: Invoice["status"] }> = ({ status }: any) =
   };
 
   return (
-    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${colorMap[status]}`}>
+    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${(colorMap as any)[status]}`}>
       {getStatusLabel(status)}
     </span>
   );
@@ -151,13 +152,13 @@ const ClientBillingPage: React.FC = () => {
     try {
       const result = await payInvoice.mutateAsync(invoiceId);
       // Handle payment initialization - could redirect to payment gateway
-      console.log("Payment initialized:", result);
+      logger.log("Payment initialized:", result);
       // TODO: Integrate with payment gateway (Paystack/Stripe)
       alert(
         `Payment of ${formatCurrency(result.data.amount, result.data.currency)} initiated. ${result.data.message}`
       );
     } catch (error) {
-      console.error("Payment failed:", error);
+      logger.error("Payment failed:", error);
     }
   };
 

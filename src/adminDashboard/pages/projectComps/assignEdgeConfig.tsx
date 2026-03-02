@@ -91,9 +91,13 @@ const AssignEdgeConfigModal = ({
   const { data: regionsData, isFetching: isFetchingRegions } = useFetchGeneralRegions();
   const regions = asArray<RegionOption>(regionsData);
 
-  const { data: currentConfigData } = useFetchProjectEdgeConfigAdmin(projectId, selectedRegion, {
-    enabled: isOpen && !!selectedRegion,
-  });
+  const { data: currentConfigData } = useFetchProjectEdgeConfigAdmin(
+    projectId as any,
+    selectedRegion,
+    {
+      enabled: isOpen && !!selectedRegion,
+    }
+  );
   const currentConfig =
     currentConfigData && typeof currentConfigData === "object"
       ? (currentConfigData as EdgeConfig)
@@ -104,14 +108,16 @@ const AssignEdgeConfigModal = ({
     isFetching: isFetchingNetworks,
     error: networksError,
     refetch: refetchNetworks,
-  } = useFetchEdgeNetworks(projectId, selectedRegion, { enabled: isOpen && !!selectedRegion });
+  } = useFetchEdgeNetworks(projectId as any, selectedRegion, {
+    enabled: isOpen && !!selectedRegion,
+  });
   const edgeNetworks = asArray<EdgeNetworkOption>(edgeNetworksData);
   const {
     data: ipPoolsData,
     isFetching: isFetchingPools,
     error: poolsError,
     refetch: refetchPools,
-  } = useFetchIpPools(projectId, selectedRegion, formData.edge_network_id, {
+  } = useFetchIpPools(projectId as any, selectedRegion, formData.edge_network_id, {
     enabled: isOpen && !!selectedRegion && !!formData.edge_network_id,
   });
   const ipPools = asArray<IpPoolOption>(ipPoolsData);

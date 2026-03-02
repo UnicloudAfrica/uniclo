@@ -40,8 +40,8 @@ const useAdminBrandingSettingsState = () => {
   const [files, setFiles] = useState<Record<string, File>>({});
 
   useEffect(() => {
-    if (brandingData?.settings) {
-      const { branding, business } = brandingData.settings;
+    if ((brandingData as any)?.settings) {
+      const { branding, business } = (brandingData as any).settings;
       setFormData({
         primary_color: branding?.primary_color || "var(--theme-color)",
         secondary_color: branding?.secondary_color || "var(--secondary-color)",
@@ -72,9 +72,9 @@ const useAdminBrandingSettingsState = () => {
 
   const handleSave = () => {
     const hasExistingFavicon = Boolean(
-      brandingData?.resolved?.favicon ||
-      brandingData?.settings?.branding?.favicon_url ||
-      brandingData?.settings?.branding?.favicon_path
+      (brandingData as any)?.resolved?.favicon ||
+      (brandingData as any)?.settings?.branding?.favicon_url ||
+      (brandingData as any)?.settings?.branding?.favicon_path
     );
     const isLogoUpdate = Boolean(files.logo);
     const isFaviconUpdate = Boolean(files.favicon);

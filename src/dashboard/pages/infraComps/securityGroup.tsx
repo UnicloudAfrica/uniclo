@@ -36,12 +36,15 @@ const SecurityGroup = ({ projectId = "", region = "" }) => {
   const [viewModal, setViewModal] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const totalItems = securityGroups?.length ?? 0;
+  const totalItems = (securityGroups as any)?.length ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
 
   const currentSecurityGroups = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return (securityGroups ?? []).slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    return (((securityGroups as any) ?? []) as any[]).slice(
+      startIndex,
+      startIndex + ITEMS_PER_PAGE
+    );
   }, [securityGroups, currentPage]);
 
   const handleDelete = () => {
@@ -70,7 +73,7 @@ const SecurityGroup = ({ projectId = "", region = "" }) => {
       ToastUtils.success("Security groups synced successfully!");
     } catch (error) {
       console.error("Failed to sync Security Groups:", error);
-      ToastUtils.error(error?.message || "Failed to sync security groups.");
+      ToastUtils.error((error as any)?.message || "Failed to sync security groups.");
     }
   };
 
@@ -92,7 +95,7 @@ const SecurityGroup = ({ projectId = "", region = "" }) => {
   ];
 
   const stats = useMemo(() => {
-    const base = [
+    const base: any[] = [
       {
         label: "Total Security Groups",
         value: totalItems,
@@ -107,10 +110,10 @@ const SecurityGroup = ({ projectId = "", region = "" }) => {
         tone: "info",
       });
     }
-    return base;
+    return base as any;
   }, [totalItems, region]);
 
-  const renderSecurityGroupCard = (securityGroup) => {
+  const renderSecurityGroupCard = (securityGroup: any) => {
     const inboundRules =
       securityGroup.ingress_rules?.length ??
       securityGroup.inbound_rules?.length ??
@@ -185,7 +188,7 @@ const SecurityGroup = ({ projectId = "", region = "" }) => {
         title="Security Groups"
         description="Manage firewall rules that control inbound and outbound access to project resources."
         actions={actions}
-        meta={stats}
+        meta={stats as any}
         isLoading={isFetching}
       >
         {currentSecurityGroups.length > 0 ? (

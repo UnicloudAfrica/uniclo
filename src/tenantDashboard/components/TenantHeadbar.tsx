@@ -21,10 +21,10 @@ const TenantHeadbar: React.FC<TenantHeadbarProps> = ({ tenantData, onMenuClick }
   const { data: branding } = useTenantBrandingTheme();
   const resolvedTenantData = {
     name: branding?.company?.name || tenantData?.name,
-    logo: resolveBrandLogo(branding, tenantData?.logo),
+    logo: resolveBrandLogo(branding, tenantData?.logo as any),
     color: branding?.accentColor || tenantData?.color,
   };
-  const preset = buildTenantHeadbarPreset(resolvedTenantData);
+  const preset = buildTenantHeadbarPreset(resolvedTenantData as any);
 
   const handleMobileMenuToggle = () => {
     toggleMobile();

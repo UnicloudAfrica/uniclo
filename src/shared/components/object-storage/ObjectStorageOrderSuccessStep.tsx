@@ -7,6 +7,7 @@ import SetupProgressCard from "../projects/details/SetupProgressCard";
 import { ModernButton } from "../ui";
 import ToastUtils from "../../../utils/toastUtil";
 import ObjectStorageCredentials from "./ObjectStorageCredentials";
+import logger from "../../../utils/logger";
 
 interface ObjectStorageOrderSuccessStepProps {
   accountId?: string | null;
@@ -171,7 +172,7 @@ export const ObjectStorageOrderSuccessStep: React.FC<ObjectStorageOrderSuccessSt
       const data = (await objectStorageApi.fetchAccount(id)) as StorageAccount;
       setAccountsById((prev) => ({ ...prev, [id]: data }));
     } catch (error) {
-      console.error("Failed to load storage account:", error);
+      logger.error("Failed to load storage account:", error);
     } finally {
       setLoadingIds((prev) => ({ ...prev, [id]: false }));
     }

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
+import logger from "../../utils/logger";
 
 type CollectionResponse = {
   data: unknown[];
@@ -107,7 +108,7 @@ export const useCreateEbsVolume = () => {
       queryClient.invalidateQueries({ queryKey: ["ebsVolumes"] });
     },
     onError: (error: any) => {
-      console.error("Error creating EBS volume:", error);
+      logger.error("Error creating EBS volume:", error);
     },
   });
 };
@@ -123,7 +124,7 @@ export const useUpdateEbsVolume = () => {
       });
     },
     onError: (error: any) => {
-      console.error("Error updating EBS volume:", error);
+      logger.error("Error updating EBS volume:", error);
     },
   });
 };
@@ -136,7 +137,7 @@ export const useDeleteEbsVolume = () => {
       queryClient.invalidateQueries({ queryKey: ["ebsVolumes"] });
     },
     onError: (error: any) => {
-      console.error("Error deleting EBS volume:", error);
+      logger.error("Error deleting EBS volume:", error);
     },
   });
 };

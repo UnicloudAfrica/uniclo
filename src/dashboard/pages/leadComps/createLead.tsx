@@ -3,11 +3,9 @@ import { useCreateNewLead, useFetchLeadTypes } from "../../../hooks/tenantHooks/
 import { useFetchTenantAdmins } from "../../../hooks/adminUserHooks";
 import ToastUtils from "../../../utils/toastUtil";
 import { useFetchCountries } from "../../../hooks/resource";
-import CreateLeadForm, {
-  type CountryOption,
-  type LeadCreatePayload,
-} from "../../../shared/components/leads/CreateLeadForm";
-import { type LeadAssigneeOption } from "../../../shared/components/leads/EditLeadModal";
+import CreateLeadForm from "../../../shared/components/leads/CreateLeadForm";
+import type { CountryOption } from "../../../shared/components/leads/CreateLeadForm";
+import type { LeadCreatePayload, LeadAssigneeOption } from "../../../hooks/adminHooks/leadsHook";
 
 type TenantAdmin = {
   id?: string | number;

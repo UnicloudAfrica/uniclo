@@ -7,7 +7,7 @@ import { ModernInput } from "../../../shared/components/ui";
 import ToastUtils from "../../../utils/toastUtil";
 import { useFetchTenantAdminById, useUpdateTenantAdmin } from "../../../hooks/adminUserHooks";
 
-const Field = ({ label, children }) => (
+const Field = ({ label, children }: any) => (
   <div className="space-y-2">
     <label className="text-sm font-medium text-slate-700">{label}</label>
     {children}
@@ -28,23 +28,23 @@ export default function EditTenantUserPage() {
   });
   const [isDirty, setIsDirty] = useState(false);
 
-  const { data: user, isFetching: isLoading } = useFetchTenantAdminById(userId);
+  const { data: user, isFetching: isLoading } = useFetchTenantAdminById(userId as any);
   const { mutateAsync: updateUser, isPending: isSaving } = useUpdateTenantAdmin();
 
   useEffect(() => {
     if (user) {
       setForm((prev) => ({
         ...prev,
-        first_name: user.first_name ?? "",
-        last_name: user.last_name ?? "",
-        email: user.email ?? "",
-        phone: user.phone ?? "",
-        role: user.pivot?.role ?? user.role ?? "admin",
+        first_name: (user as any).first_name ?? "",
+        last_name: (user as any).last_name ?? "",
+        email: (user as any).email ?? "",
+        phone: (user as any).phone ?? "",
+        role: (user as any).pivot?.role ?? (user as any).role ?? "admin",
       }));
     }
   }, [user]);
 
-  const updateField = (key) => (event) => {
+  const updateField = (key: any) => (event: any) => {
     setIsDirty(true);
     setForm((prev) => ({
       ...prev,
@@ -52,7 +52,7 @@ export default function EditTenantUserPage() {
     }));
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event: any) => {
     event.preventDefault();
     if (!userId) return;
 
@@ -69,8 +69,8 @@ export default function EditTenantUserPage() {
     };
 
     if (form.password) {
-      payload.password = form.password;
-      payload.password_confirmation = form.confirm_password;
+      (payload as any).password = form.password;
+      (payload as any).password_confirmation = form.confirm_password;
     }
 
     try {
@@ -78,7 +78,7 @@ export default function EditTenantUserPage() {
       ToastUtils.success("Tenant user updated.");
       navigate(`/dashboard/tenant-users/${userId}`);
     } catch (error) {
-      ToastUtils.error(error?.response?.data?.message || "Failed to update tenant user.");
+      ToastUtils.error((error as any)?.response?.data?.message || "Failed to update tenant user.");
     }
   };
 

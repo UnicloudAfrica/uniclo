@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import adminSilentApiforUser from "../../index/admin/silentadminforuser";
 import apiAdminforUser from "../../index/admin/apiAdminforUser";
+import logger from "../../utils/logger";
 
 const fetchRouteTables = async ({ project_id, region, refresh = false }: any) => {
   const params = new URLSearchParams();
@@ -61,7 +62,7 @@ export const useCreateRouteTable = () => {
       });
     },
     onError: (error: any) => {
-      console.error("Error creating route table:", error);
+      logger.error("Error creating route table:", error);
     },
   });
 };
@@ -76,7 +77,7 @@ export const useCreateRouteTableAssociation = () => {
       });
     },
     onError: (error: any) => {
-      console.error("Error creating route table association:", error);
+      logger.error("Error creating route table association:", error);
     },
   });
 };

@@ -3,6 +3,7 @@ import { X, Loader2 } from "lucide-react";
 import { useFetchAdmins } from "../../../hooks/adminHooks/adminHooks";
 import ToastUtils from "../../../utils/toastUtil";
 import { useCreateCustomStage } from "../../../hooks/adminHooks/leadsHook";
+import logger from "../../../utils/logger";
 
 const stageOptions = [
   "initial_contact",
@@ -34,7 +35,7 @@ const AddLeadStage = ({ isOpen, onClose }: any) => {
         const decodedId = atob(decodeURIComponent(encodedId));
         setLeadId(decodedId);
       } catch (error) {
-        console.error("Failed to decode lead ID from URL:", error);
+        logger.error("Failed to decode lead ID from URL:", error);
       }
     }
     if (isOpen) {
@@ -90,7 +91,7 @@ const AddLeadStage = ({ isOpen, onClose }: any) => {
   if (!isOpen) return null;
 
   const formatStageNameForDisplay = (name: any) => {
-    return name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    return name.replace(/_/g, " ").replace(/\b\w/g, (c: any) => c.toUpperCase());
   };
 
   return (
@@ -143,7 +144,7 @@ const AddLeadStage = ({ isOpen, onClose }: any) => {
               </label>
               <textarea
                 id="stageDescription"
-                rows="3"
+                rows={3}
                 value={formData.description}
                 onChange={(e) => updateFormData("description", e.target.value)}
                 placeholder="Add a description for this stage..."
@@ -170,7 +171,7 @@ const AddLeadStage = ({ isOpen, onClose }: any) => {
                 {isAdminsLoading ? (
                   <option disabled>Loading admins...</option>
                 ) : (
-                  admins?.map((admin: any) => (
+                  (admins as any)?.map((admin: any) => (
                     <option key={admin.identifier} value={admin.identifier}>
                       {admin.first_name} {admin.last_name} ({admin.email})
                     </option>

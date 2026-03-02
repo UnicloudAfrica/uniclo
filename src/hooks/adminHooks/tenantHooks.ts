@@ -9,6 +9,7 @@ import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
 import { type Tenant } from "../../shared/types/tenant";
 import { type ApiResponse } from "../../shared/types/resource";
+import logger from "../../utils/logger";
 
 // GET: Fetch all tenants
 const fetchTenants = async (): Promise<Tenant[]> => {
@@ -48,7 +49,7 @@ const createTenant = async (tenantData: Partial<Tenant>): Promise<Tenant | undef
   if (res && typeof res.status === "number" && res.status >= 200 && res.status < 300) {
     return res.data;
   } else {
-    console.error(`Tenant creation failed with status ${res?.status || "Unknown"}:`, res);
+    logger.error(`Tenant creation failed with status ${res?.status || "Unknown"}:`, res);
   }
   return undefined;
 };

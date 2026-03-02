@@ -6,7 +6,7 @@ import { KeyPair } from "../types";
 import ToastUtils from "../../../../utils/toastUtil";
 
 interface KeyPairHooks {
-  useList: (projectId: string, region?: string, options?: any) => UseQueryResult<KeyPair[], Error>;
+  useList: (projectId: string, region?: string, options?: any) => any;
   useDelete: () => UseMutationResult<any, any, any, unknown>;
   useSync: () => UseMutationResult<any, any, any, unknown>;
 }

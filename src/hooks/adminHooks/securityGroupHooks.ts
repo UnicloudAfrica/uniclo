@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import adminApi, { adminSilentApi } from "../../index/admin/api";
+import logger from "../../utils/logger";
 
 const fetchSecurityGroups = async ({ project_id, region, refresh = false }: any) => {
   const params = new URLSearchParams();
@@ -69,7 +70,7 @@ export const useCreateSecurityGroup = () => {
       queryClient.invalidateQueries({ queryKey: ["securityGroups"] });
     },
     onError: (error: any) => {
-      console.error("Error creating security group:", error);
+      logger.error("Error creating security group:", error);
     },
   });
 };
@@ -85,7 +86,7 @@ export const useUpdateSecurityGroup = () => {
       });
     },
     onError: (error: any) => {
-      console.error("Error updating security group:", error);
+      logger.error("Error updating security group:", error);
     },
   });
 };
@@ -98,7 +99,7 @@ export const useDeleteSecurityGroup = () => {
       queryClient.invalidateQueries({ queryKey: ["securityGroups"] });
     },
     onError: (error: any) => {
-      console.error("Error deleting security group:", error);
+      logger.error("Error deleting security group:", error);
     },
   });
 };

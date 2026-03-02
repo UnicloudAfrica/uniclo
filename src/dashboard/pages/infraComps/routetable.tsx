@@ -15,10 +15,11 @@ import { ResourceSection } from "../../../shared/components/ui";
 import { ResourceEmptyState } from "../../../shared/components/ui";
 import { ResourceListCard } from "../../../shared/components/ui";
 import { ModernButton } from "../../../shared/components/ui";
+import logger from "../../../utils/logger";
 
 const ITEMS_PER_PAGE = 6;
 
-const formatAssociationLabel = (assoc) => {
+const formatAssociationLabel = (assoc: any) => {
   if (assoc == null) {
     return "Unknown";
   }
@@ -54,6 +55,12 @@ const RouteTables = ({
   actionRequest,
   onActionHandled,
   onStatsUpdate,
+}: {
+  projectId?: string;
+  region?: string;
+  actionRequest?: any;
+  onActionHandled?: (request: any) => void;
+  onStatsUpdate?: (count: number) => void;
 }) => {
   const { data: routeTables, isFetching } = useFetchTenantRouteTables(projectId, region);
   const { mutate: syncRouteTables, isPending: isSyncing } = useSyncTenantRouteTables();
@@ -77,7 +84,8 @@ const RouteTables = ({
   const stats = useMemo(() => {
     const totalRoutes = items.reduce((sum, rt) => sum + ((rt.routes || []).length ?? 0), 0);
     const mainTablesCount = items.filter(
-      (rt) => rt.main || rt.is_main || (rt.associations || []).some((assoc) => assoc?.main)
+      (rt: any) =>
+        rt.main || rt.is_main || (rt.associations || []).some((assoc: any) => assoc?.main)
     ).length;
     const summary = [
       {
@@ -143,7 +151,7 @@ const RouteTables = ({
       {
         onSuccess: () => ToastUtils.success("Route tables synced with provider."),
         onError: (err) => {
-          console.error("Failed to sync route tables:", err);
+          logger.error("Failed to sync route tables:", err);
           ToastUtils.error(err?.message || "Failed to sync route tables.");
         },
       }
@@ -165,7 +173,7 @@ const RouteTables = ({
           setDeleteModal(null);
         },
         onError: (err) => {
-          console.error("Failed to delete route table:", err);
+          logger.error("Failed to delete route table:", err);
           ToastUtils.error(err?.message || "Failed to delete route table.");
           setDeleteModal(null);
         },
@@ -173,9 +181,9 @@ const RouteTables = ({
     );
   };
 
-  const handleDeleteRoute = (rt, route) => {
+  const handleDeleteRoute = (rt: any, route: any) => {
     if (!rt || !route) return;
-    const payload = {
+    const payload: Record<string, any> = {
       project_id: projectId,
       region,
       route_table_id: rt.provider_resource_id || rt.id,
@@ -189,7 +197,7 @@ const RouteTables = ({
     deleteRoute(payload, {
       onSuccess: () => ToastUtils.success("Route deleted."),
       onError: (err) => {
-        console.error("Failed to delete route:", err);
+        logger.error("Failed to delete route:", err);
         ToastUtils.error(err?.message || "Failed to delete route.");
       },
     });
@@ -269,7 +277,7 @@ const RouteTables = ({
     />
   );
 
-  const renderRoutesSection = (rt) => {
+  const renderRoutesSection = (rt: any) => {
     const routes = rt.routes || [];
     return (
       <div className="space-y-3">
@@ -278,7 +286,7 @@ const RouteTables = ({
           <p className="text-sm text-slate-500">No routes defined</p>
         ) : (
           <div className="space-y-2">
-            {routes.map((route, idx) => {
+            {routes.map((route: any, idx: number) => {
               const destination =
                 route.destination_cidr_block || route.destination_ipv6_cidr_block || "—";
               return (
@@ -307,7 +315,7 @@ const RouteTables = ({
     );
   };
 
-  const renderAssociations = (rt) => {
+  const renderAssociations = (rt: any) => {
     const associations = rt.associations || [];
     return (
       <div className="space-y-2">
@@ -316,7 +324,7 @@ const RouteTables = ({
           <p className="text-sm text-slate-500">No associations</p>
         ) : (
           <div className="flex flex-wrap gap-2">
-            {associations.map((assoc, idx) => (
+            {associations.map((assoc: any, idx: number) => (
               <span
                 key={`${rt.id}-assoc-${idx}`}
                 className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600"
@@ -330,12 +338,12 @@ const RouteTables = ({
     );
   };
 
-  const renderCard = (rt) => {
+  const renderCard = (rt: any) => {
     const rtId = rt.id || rt.provider_resource_id;
     const routes = rt.routes || [];
     const associations = rt.associations || [];
     const isMainTable =
-      Boolean(rt.main) || Boolean(rt.is_main) || associations.some((assoc) => assoc?.main);
+      Boolean(rt.main) || Boolean(rt.is_main) || associations.some((assoc: any) => assoc?.main);
     const statusLabel = rt.status || (isMainTable ? "Main Table" : "");
 
     return (
@@ -343,12 +351,14 @@ const RouteTables = ({
         key={rtId}
         title={rt.name || rtId || "Route Table"}
         subtitle={rtId}
-        metadata={[
-          { label: "VPC", value: rt.vpc_id || "—" },
-          { label: "Routes", value: routes.length },
-          { label: "Associations", value: associations.length },
-          region ? { label: "Region", value: region } : null,
-        ].filter(Boolean)}
+        metadata={
+          [
+            { label: "VPC", value: rt.vpc_id || "—" },
+            { label: "Routes", value: routes.length },
+            { label: "Associations", value: associations.length },
+            region ? { label: "Region", value: region } : null,
+          ].filter(Boolean) as any[]
+        }
         statuses={
           statusLabel
             ? [
@@ -406,7 +416,7 @@ const RouteTables = ({
         title="Route Tables"
         description="Control how traffic flows between subnets and the internet."
         actions={actions}
-        meta={stats}
+        meta={stats as any[]}
         isLoading={isFetching}
       >
         {currentItems.length > 0 ? (
@@ -433,7 +443,7 @@ const RouteTables = ({
         projectId={projectId}
         region={region}
         routeTableId={routeModal?.routeTableId || routeModal?.routeTable?.id}
-        routeTables={items}
+        routeTables={items as any}
       />
       <AssociateRouteTableModal
         isOpen={Boolean(associateModal)}

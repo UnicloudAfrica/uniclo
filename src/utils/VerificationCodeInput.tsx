@@ -72,7 +72,7 @@ export default function VerificationCodeInput({
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const handleChange = (element: HTMLInputElement, index: number) => {
+  const handleChange = (element: HTMLInputElement, index: number): boolean => {
     if (isNaN(Number(element.value))) return false;
 
     const newCode = [...code];
@@ -87,6 +87,7 @@ export default function VerificationCodeInput({
     if (element.nextSibling && element.value !== "") {
       (element.nextSibling as HTMLInputElement).focus();
     }
+    return true;
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {

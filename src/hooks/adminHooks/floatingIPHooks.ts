@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
+import logger from "../../utils/logger";
 
 type CollectionResponse = {
   data: unknown[];
@@ -107,7 +108,7 @@ export const useCreateFloatingIP = () => {
       queryClient.invalidateQueries({ queryKey: ["floatingIPs"] });
     },
     onError: (error: any) => {
-      console.error("Error creating Floating IP:", error);
+      logger.error("Error creating Floating IP:", error);
     },
   });
 };
@@ -123,7 +124,7 @@ export const useUpdateFloatingIP = () => {
       });
     },
     onError: (error: any) => {
-      console.error("Error updating Floating IP:", error);
+      logger.error("Error updating Floating IP:", error);
     },
   });
 };
@@ -136,7 +137,7 @@ export const useDeleteFloatingIP = () => {
       queryClient.invalidateQueries({ queryKey: ["floatingIPs"] });
     },
     onError: (error: any) => {
-      console.error("Error deleting Floating IP:", error);
+      logger.error("Error deleting Floating IP:", error);
     },
   });
 };

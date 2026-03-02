@@ -209,7 +209,7 @@ const KeyPairCreateModal: React.FC<KeyPairCreateModalProps> = ({
           ? "Store this private key securely."
           : "Generate a new SSH key pair or register an existing public key for this project."
       }
-      actions={actions}
+      actions={actions as any}
       size="lg"
       loading={isPending}
       contentClassName="space-y-6"

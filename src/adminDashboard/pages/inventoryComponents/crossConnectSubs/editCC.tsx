@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useUpdateCrossConnect } from "../../../../hooks/adminHooks/crossConnectHooks";
 import ToastUtils from "../../../../utils/toastUtil";
+import logger from "../../../../utils/logger";
 
 const EditCrossConnect = ({ isOpen, onClose, crossConnect }: any) => {
   const [formData, setFormData] = useState({
@@ -69,7 +70,7 @@ const EditCrossConnect = ({ isOpen, onClose, crossConnect }: any) => {
             onClose();
           },
           onError: (err) => {
-            // console.error("Failed to update Cross Connect:", err);
+            // logger.error("Failed to update Cross Connect:", err);
             // ToastUtils.error(
             //   "Failed to update Cross Connect. Please try again."
             // );
@@ -77,7 +78,7 @@ const EditCrossConnect = ({ isOpen, onClose, crossConnect }: any) => {
         }
       );
     } else {
-      //   console.error("No Cross Connect ID provided for update.");
+      //   logger.error("No Cross Connect ID provided for update.");
       //   ToastUtils.error("Cannot update: Cross Connect ID is missing.");
     }
   };
@@ -130,7 +131,7 @@ const EditCrossConnect = ({ isOpen, onClose, crossConnect }: any) => {
               </label>
               <textarea
                 id="crossConnectDescription"
-                rows="3"
+                rows={3}
                 value={formData.description}
                 onChange={(e) => updateFormData("description", e.target.value)}
                 placeholder="e.g., Description of the cross connect"

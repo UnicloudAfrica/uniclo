@@ -115,7 +115,7 @@ const SecurityGroupsContainer: React.FC<SecurityGroupsContainerProps> = ({
   // Build header actions
   const headerActions = (
     <div className="flex items-center gap-3">
-      <ModernButton variant="secondary" size="sm" onClick={refetch} disabled={isLoading}>
+      <ModernButton variant="secondary" size="sm" onClick={refetch as any} disabled={isLoading}>
         <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
         Refresh
       </ModernButton>

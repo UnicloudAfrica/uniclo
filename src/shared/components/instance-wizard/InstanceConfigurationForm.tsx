@@ -357,7 +357,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
     updateConfiguration(cfg.id, {
       project_id: value,
       project_mode: "existing",
-      project_name: project?.name || selectedOption?.label || "",
+      project_name: (project as any)?.name || selectedOption?.label || "",
       network_preset: projectPreset || cfg.network_preset || "standard",
       region: resolvedRegion,
       region_label: resolvedRegionLabel || cfg.region_label || "",
@@ -581,15 +581,15 @@ const InstanceConfigurationForm: React.FC<Props> = ({
 
       const response = await apiClient("POST", keyPairEndpoint, payload);
       const data = response?.data || response;
-      const resolvedName = data?.name || trimmedName;
+      const resolvedName = (data as any)?.name || trimmedName;
 
       updateConfiguration(cfg.id, {
         keypair_name: resolvedName,
         keypair_label: resolvedName,
       });
 
-      if (data?.material) {
-        setKeypairMaterial(data.material);
+      if ((data as any)?.material) {
+        setKeypairMaterial((data as any).material);
       }
 
       ToastUtils.success("Key pair created successfully.");
@@ -653,9 +653,9 @@ const InstanceConfigurationForm: React.FC<Props> = ({
             if (
               selectionStart !== null &&
               selectionEnd !== null &&
-              typeof next.setSelectionRange === "function"
+              typeof (next as any).setSelectionRange === "function"
             ) {
-              next.setSelectionRange(selectionStart, selectionEnd);
+              (next as any).setSelectionRange(selectionStart, selectionEnd);
             }
           }
         }
@@ -931,7 +931,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
   const handleAssignmentScopeChange = useCallback(
     (value: string) => {
       updateConfiguration(cfg.id, {
-        assignment_scope: value,
+        assignment_scope: value as any,
         member_user_ids: [],
       });
     },

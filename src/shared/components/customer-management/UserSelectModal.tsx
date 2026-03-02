@@ -32,7 +32,8 @@ const UserSelectModal: React.FC<UserSelectModalProps> = ({
   const adminQuery = useFetchAdmins({ enabled: context === "admin" && isOpen });
   const tenantQuery = useFetchTenantAdmins({ enabled: context === "tenant" && isOpen });
 
-  const users: UserType[] = context === "tenant" ? tenantQuery.data || [] : adminQuery.data || [];
+  const users: UserType[] =
+    context === "tenant" ? (tenantQuery.data as any) || [] : (adminQuery.data as any) || [];
   const loading = context === "tenant" ? tenantQuery.isLoading : adminQuery.isLoading;
 
   const filteredUsers = useMemo(() => {

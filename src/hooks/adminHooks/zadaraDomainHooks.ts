@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
+import logger from "../../utils/logger";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 type ApiResponse<T = unknown> = { data?: T } & Record<string, unknown>;
@@ -148,7 +149,7 @@ export const useEnsureRootDomain = () => {
       queryClient.invalidateQueries({ queryKey: ["tenants"] });
     },
     onError: (error: unknown) => {
-      console.error("Error ensuring root domain:", error);
+      logger.error("Error ensuring root domain:", error);
     },
   });
 };
@@ -205,7 +206,7 @@ export const useCreateSubtenant = () => {
       queryClient.invalidateQueries({ queryKey: ["tenant-hierarchy"] });
     },
     onError: (error: unknown) => {
-      console.error("Error creating subtenant:", error);
+      logger.error("Error creating subtenant:", error);
     },
   });
 };
@@ -236,7 +237,7 @@ export const useUpdateSubtenant = () => {
       queryClient.invalidateQueries({ queryKey: ["tenants"] });
     },
     onError: (error: unknown) => {
-      console.error("Error updating subtenant:", error);
+      logger.error("Error updating subtenant:", error);
     },
   });
 };
@@ -252,7 +253,7 @@ export const useDeleteSubtenant = () => {
       queryClient.invalidateQueries({ queryKey: ["tenants"] });
     },
     onError: (error: unknown) => {
-      console.error("Error deleting subtenant:", error);
+      logger.error("Error deleting subtenant:", error);
     },
   });
 };
@@ -267,7 +268,7 @@ export const useSyncProjectPolicies = () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
     onError: (error: unknown) => {
-      console.error("Error syncing project policies:", error);
+      logger.error("Error syncing project policies:", error);
     },
   });
 };
@@ -281,7 +282,7 @@ export const useAssignUserPolicies = () => {
       queryClient.invalidateQueries({ queryKey: ["user-policies"] });
     },
     onError: (error: unknown) => {
-      console.error("Error assigning user policies:", error);
+      logger.error("Error assigning user policies:", error);
     },
   });
 };

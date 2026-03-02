@@ -16,6 +16,7 @@ import NetworkPresetSelector, {
 } from "../../../shared/components/network/NetworkPresetSelector";
 import { useNetworkPresets } from "../../../hooks/networkPresetHooks";
 import { useCloudPolicies } from "../../../hooks/adminHooks/cloudPolicyHooks";
+import logger from "../../../utils/logger";
 const MAX_ATTEMPTS = 10;
 
 type AssignmentScope = "internal" | "tenant" | "client";
@@ -511,17 +512,17 @@ const CreateProjectModal = ({ onClose, mode = "modal" }: CreateProjectModalProps
       metadata: formData.network_preset ? { network_preset: formData.network_preset } : undefined,
     };
 
-    // console.log("Submitting Project Payload (Attempt ", nextAttempt, "):", payload);
+    // logger.log("Submitting Project Payload (Attempt ", nextAttempt, "):", payload);
 
     createProject(payload as any, {
       onSuccess: (project) => {
-        // console.log("Project creation response:", project);
+        // logger.log("Project creation response:", project);
         ToastUtils.success("Project created successfully!");
         redirectToProjectDetails(project);
       },
       onError: (error) => {
         const errorMessage = getErrorMessage(error);
-        // console.error(`Error creating project (Attempt ${nextAttempt}):`, errorMessage);
+        // logger.error(`Error creating project (Attempt ${nextAttempt}):`, errorMessage);
         setProgressMessage("");
 
         if (errorMessage.toLowerCase().includes("timeout")) {
@@ -563,7 +564,7 @@ const CreateProjectModal = ({ onClose, mode = "modal" }: CreateProjectModalProps
     const identifier = getProjectIdentifier(project);
 
     if (!identifier) {
-      // console.error("Missing identifier in project response:", project);
+      // logger.error("Missing identifier in project response:", project);
       ToastUtils.warning(
         "Project created but identifier is missing. Please check the projects list."
       );

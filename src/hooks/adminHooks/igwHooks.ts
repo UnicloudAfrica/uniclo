@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import adminSilentApiforUser from "../../index/admin/silentadminforuser";
 import apiAdminforUser from "../../index/admin/apiAdminforUser";
+import logger from "../../utils/logger";
 
 const fetchIgws = async ({ project_id, region, refresh = false }: any) => {
   const params = new URLSearchParams();
@@ -50,7 +51,7 @@ export const useCreateIgw = () => {
       });
     },
     onError: (error: any) => {
-      console.error("Error creating Internet Gateway:", error);
+      logger.error("Error creating Internet Gateway:", error);
     },
   });
 };
@@ -66,7 +67,7 @@ export const useDeleteIgw = () => {
       });
     },
     onError: (error: any) => {
-      console.error("Error deleting Internet Gateway:", error);
+      logger.error("Error deleting Internet Gateway:", error);
     },
   });
 };

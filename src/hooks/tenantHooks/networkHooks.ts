@@ -3,17 +3,17 @@ import tenantSilentApi from "../../index/tenant/silentTenant";
 import tenantApi from "../../index/tenant/tenantApi";
 import ToastUtils from "../../utils/toastUtil";
 
-const buildQueryString = (params) => {
+const buildQueryString = (params: any) => {
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") {
-      searchParams.append(key, value);
+      searchParams.append(key, value as any);
     }
   });
   return searchParams.toString();
 };
 
-const fetchTenantNetworks = async ({ project_id, region, refresh = false }) => {
+const fetchTenantNetworks = async ({ project_id, region, refresh = false }: any) => {
   const queryString = buildQueryString({
     project_id,
     region,
@@ -32,19 +32,19 @@ const fetchTenantNetworks = async ({ project_id, region, refresh = false }) => {
   return response.data;
 };
 
-const createTenantNetwork = async (payload) => {
+const createTenantNetwork = async (payload: any) => {
   const response = await tenantApi("POST", "/admin/networks", payload);
   if (!response) throw new Error("Failed to create network");
   return response;
 };
 
-const deleteTenantNetwork = async (networkId) => {
+const deleteTenantNetwork = async (networkId: any) => {
   const response = await tenantApi("DELETE", `/admin/networks/${networkId}`);
   if (!response) throw new Error("Failed to delete network");
   return response;
 };
 
-export const useFetchTenantNetworks = (projectId, region, options = {}) =>
+export const useFetchTenantNetworks = (projectId: any, region: any, options = {}) =>
   useQuery({
     queryKey: ["tenantNetworks", { projectId, region }],
     queryFn: () => fetchTenantNetworks({ project_id: projectId, region }),
@@ -84,5 +84,5 @@ export const useDeleteTenantNetwork = () => {
   });
 };
 
-export const syncTenantNetworksFromProvider = async ({ project_id, region }) =>
+export const syncTenantNetworksFromProvider = async ({ project_id, region }: any) =>
   fetchTenantNetworks({ project_id, region, refresh: true });

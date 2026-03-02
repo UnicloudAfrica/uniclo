@@ -15,6 +15,7 @@ import { ResourceEmptyState } from "../../../shared/components/ui";
 import { ResourceListCard } from "../../../shared/components/ui";
 import { ModernButton } from "../../../shared/components/ui";
 import type { Tone } from "../../../shared/components/ui/ResourceSection";
+import logger from "../../../utils/logger";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -73,7 +74,7 @@ const Subnets = ({ projectId = "", region = "" }: any) => {
       await queryClient.invalidateQueries({ queryKey: ["subnets", { projectId, region }] });
       ToastUtils.success("Subnets synced successfully!");
     } catch (error) {
-      console.error("Failed to sync Subnets:", error);
+      logger.error("Failed to sync Subnets:", error);
       ToastUtils.error(error instanceof Error ? error.message : "Failed to sync subnets.");
     } finally {
       setIsSyncing(false);

@@ -3,8 +3,9 @@ import { Loader2, X } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useCreateTenantRouteTable } from "../../../hooks/routeTable";
 import { useFetchTenantVpcs } from "../../../hooks/vpcHooks";
+import logger from "../../../utils/logger";
 
-const AddRouteTableModal = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) => {
+const AddRouteTableModal = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: any) => {
   const [form, setForm] = useState({
     name: "",
     vpc_id: "",
@@ -41,7 +42,7 @@ const AddRouteTableModal = ({ isOpen, onClose, projectId, region: defaultRegion 
     return Object.keys(next).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: any) => {
     if (e) e.preventDefault();
     if (!validate()) return;
 
@@ -52,7 +53,7 @@ const AddRouteTableModal = ({ isOpen, onClose, projectId, region: defaultRegion 
       vpc_id: form.vpc_id,
     };
     if (form.tags) {
-      payload.tags = form.tags;
+      (payload as any).tags = form.tags;
     }
 
     createRouteTable(payload, {
@@ -62,7 +63,7 @@ const AddRouteTableModal = ({ isOpen, onClose, projectId, region: defaultRegion 
         setForm((prev) => ({ ...prev, name: "", tags: "" }));
       },
       onError: (err) => {
-        console.error("Failed to create route table:", err);
+        logger.error("Failed to create route table:", err);
         ToastUtils.error(err?.message || "Failed to create route table.");
       },
     });

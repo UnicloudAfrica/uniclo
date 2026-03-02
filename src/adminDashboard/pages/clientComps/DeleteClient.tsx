@@ -2,6 +2,7 @@ import React from "react";
 import { X, Loader2 } from "lucide-react";
 import { useDeleteClient } from "../../../hooks/adminHooks/clientHooks";
 import ToastUtils from "../../../utils/toastUtil";
+import logger from "../../../utils/logger";
 
 interface DeleteClientModalProps {
   isOpen: boolean;
@@ -25,18 +26,18 @@ const DeleteClientModal: React.FC<DeleteClientModalProps> = ({
     if (client?.id || client?.identifier) {
       mutate(client.identifier || client.id, {
         onSuccess: () => {
-          //   console.log("Client deleted successfully!");
+          //   logger.log("Client deleted successfully!");
           ToastUtils.success("Client deleted successfully");
           onClose(); // Close modal on success
           onDeleteConfirm(); // Notify parent component (AdminClients) for potential refetching
         },
         onError: () => {
-          //   console.error("Failed to delete client:", err);
+          //   logger.error("Failed to delete client:", err);
           //   ToastUtils.error("Failed to delete client. Please try again.");
         },
       });
     } else {
-      //   console.error("No client ID provided for deletion.");
+      //   logger.error("No client ID provided for deletion.");
       //   ToastUtils.error("Cannot delete: Client ID is missing.");
     }
   };

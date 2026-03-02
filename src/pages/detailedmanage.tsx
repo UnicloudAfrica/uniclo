@@ -10,6 +10,7 @@ import adbg from "./assets/adBG.svg";
 import admob from "./assets/adMob.svg";
 import DOMPurify from "dompurify";
 import { ManageContext } from "../contexts/contextprovider";
+import logger from "../utils/logger";
 
 interface ManageItem {
   id: string;
@@ -61,7 +62,7 @@ const DetailedManage = () => {
 
   const db = useMemo(() => {
     if (typeof window === "undefined") return null;
-    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]!;
     return getFirestore(app);
   }, []);
 
@@ -80,14 +81,14 @@ const DetailedManage = () => {
       .then((querySnapshot) => {
         if (!querySnapshot.empty) {
           const doc = querySnapshot.docs[0];
-          const manages = { id: doc.id, ...doc.data() } as ManageItem;
+          const manages = { id: doc?.id, ...doc?.data() } as ManageItem;
           setSelectedManageItem(manages);
         } else {
-          console.log("Document does not exist for decoded title:", decodedName);
+          logger.log("Document does not exist for decoded title:", decodedName);
         }
       })
       .catch((error) => {
-        console.error("Error getting documents:", error);
+        logger.error("Error getting documents:", error);
       });
 
     // // Fetch all documents in the 'cases' collection
@@ -105,7 +106,7 @@ const DetailedManage = () => {
     //     setOtherManages(otherManageData);
     // })
     // .catch((error) => {
-    //     console.error("Error getting documents:", error);
+    //     logger.error("Error getting documents:", error);
     // });
   }, [decodedName, db, manageArray.length]);
 

@@ -1,6 +1,7 @@
 import { X, Loader2 } from "lucide-react";
 import { useDeleteCrossConnect } from "../../../../hooks/adminHooks/crossConnectHooks";
 import ToastUtils from "../../../../utils/toastUtil";
+import logger from "../../../../utils/logger";
 
 const DeleteCrossConnect = ({ isOpen, onClose, crossConnect }: any) => {
   const { mutate, isPending } = useDeleteCrossConnect();
@@ -15,12 +16,12 @@ const DeleteCrossConnect = ({ isOpen, onClose, crossConnect }: any) => {
           onClose();
         },
         onError: (err) => {
-          //   console.error("Failed to delete Cross Connect:", err);
+          //   logger.error("Failed to delete Cross Connect:", err);
           //   ToastUtils.error("Failed to delete Cross Connect. Please try again.");
         },
       });
     } else {
-      //   console.error("No Cross Connect ID provided for deletion.");
+      //   logger.error("No Cross Connect ID provided for deletion.");
       //   ToastUtils.error("Cannot delete: Cross Connect ID is missing.");
     }
   };

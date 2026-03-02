@@ -122,7 +122,7 @@ const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({
                   <React.Fragment key={action.key}>
                     {index > 0 &&
                       action.key === "delete" &&
-                      mergedActions[index - 1].key !== "delete" && (
+                      mergedActions?.[index - 1].key !== "delete" && (
                         <div className="my-1 border-t border-gray-200" />
                       )}
                     <button

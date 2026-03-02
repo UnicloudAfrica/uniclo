@@ -1,6 +1,7 @@
 import { X, Loader2 } from "lucide-react";
 import { useDeleteRegion } from "../../../hooks/adminHooks/regionHooks"; // Adjust path
 import ToastUtils from "../../../utils/toastUtil"; // Adjust path
+import logger from "../../../utils/logger";
 
 const DeleteRegionModal = ({ isOpen, onClose, regionId, regionName }: any) => {
   const { mutate, isPending } = useDeleteRegion();
@@ -12,7 +13,7 @@ const DeleteRegionModal = ({ isOpen, onClose, regionId, regionName }: any) => {
         onClose();
       },
       onError: (err) => {
-        console.error("Failed to delete region:", err);
+        logger.error("Failed to delete region:", err);
         ToastUtils.error("Failed to delete region. Please try again.");
       },
     });

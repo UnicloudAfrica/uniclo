@@ -53,12 +53,16 @@ interface ObjectStorageSidebarProps {
   buckets: Silo[];
   selectedBucket: string | null;
   onSelectBucket: (bucketName: string | null) => void;
-  onDeleteBucket: (bucket: Silo) => void;
-  deletingBucketId: string | number | null;
+  onDeleteBucket: (bucket: Silo) => void | Promise<void>;
+  deletingBucketId?: string | number | null;
   onRefresh: () => void;
-  objectCount: number;
-  usedGb: number;
-  quotaGb: number;
+  objectCount?: number;
+  usedGb?: number;
+  quotaGb?: number;
+  onCreateBucket?: any;
+  bucketsLoading?: boolean;
+  creatingBucket?: boolean;
+  [key: string]: any;
 }
 
 const ObjectStorageSidebar: React.FC<ObjectStorageSidebarProps> = ({
@@ -69,9 +73,9 @@ const ObjectStorageSidebar: React.FC<ObjectStorageSidebarProps> = ({
   onDeleteBucket,
   deletingBucketId,
   onRefresh,
-  objectCount,
-  usedGb,
-  quotaGb,
+  objectCount = 0,
+  usedGb = 0,
+  quotaGb = 0,
 }) => {
   const [showBucketForm, setShowBucketForm] = useState(false);
   const [newBucketName, setNewBucketName] = useState("");

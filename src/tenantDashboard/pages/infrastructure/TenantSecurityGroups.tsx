@@ -39,7 +39,7 @@ const TenantSecurityGroups: React.FC = () => {
       hierarchy="tenant"
       projectId={projectId}
       region={region}
-      hooks={hooks}
+      hooks={hooks as any}
       onNavigateToRules={handleNavigateToRules}
       wrapper={({ headerActions, children }) => (
         <TenantPageShell

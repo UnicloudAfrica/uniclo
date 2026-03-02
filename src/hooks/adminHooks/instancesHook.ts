@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
+import logger from "../../utils/logger";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 type Id = string | number;
@@ -305,7 +306,7 @@ export const useInstanceManagementAction = () => {
   return useMutation({
     mutationFn: executeInstanceManagementAction,
     onError: (error: unknown) => {
-      console.error("Error executing instance management action:", error);
+      logger.error("Error executing instance management action:", error);
     },
   });
 };
@@ -314,7 +315,7 @@ export const useRefreshInstanceStatus = () => {
   return useMutation({
     mutationFn: refreshInstanceManagementStatus,
     onError: (error: unknown) => {
-      console.error("Error refreshing instance status:", error);
+      logger.error("Error refreshing instance status:", error);
     },
   });
 };
@@ -324,7 +325,7 @@ export const useInstanceUsageStats = (
   period: string = "24h",
   options: QueryOptions = {}
 ) => {
-  const { enabled = true, ...rest } = options;
+  const { enabled = true, ...rest } = options as any;
 
   return useQuery({
     queryKey: ["admin-instance-usage", identifier, period],
@@ -332,8 +333,8 @@ export const useInstanceUsageStats = (
     enabled: !!identifier && enabled,
     staleTime: 1000 * 60,
     refetchOnWindowFocus: false,
-    ...rest,
-  });
+    ...(rest as any),
+  } as any);
 };
 
 export const useInstanceLogs = (
@@ -341,7 +342,7 @@ export const useInstanceLogs = (
   params: InstanceLogsParams = {},
   options: QueryOptions = {}
 ) => {
-  const { enabled = true, ...rest } = options;
+  const { enabled = true, ...rest } = options as any;
 
   return useQuery({
     queryKey: ["admin-instance-logs", identifier, params.lines, params.since],
@@ -354,15 +355,15 @@ export const useInstanceLogs = (
     enabled: !!identifier && enabled,
     staleTime: 0,
     refetchOnWindowFocus: false,
-    ...rest,
-  });
+    ...(rest as any),
+  } as any);
 };
 
 export const useUpdateInstanceMetadata = () => {
   return useMutation({
     mutationFn: updateInstanceMetadata,
     onError: (error: unknown) => {
-      console.error("Error updating instance metadata:", error);
+      logger.error("Error updating instance metadata:", error);
     },
   });
 };
@@ -377,7 +378,7 @@ export const useCreateInstanceRequest = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-instanceRequests"] });
     },
     onError: (error: unknown) => {
-      console.error("Error creating instance request:", error);
+      logger.error("Error creating instance request:", error);
     },
   });
 };
@@ -390,7 +391,7 @@ export const useInitiateMultiInstanceRequest = () => {
       // queryClient.invalidateQueries({ queryKey: ["admin-instanceRequests"] });
     },
     onError: (error: unknown) => {
-      console.error("Error creating instance request:", error);
+      logger.error("Error creating instance request:", error);
     },
   });
 };
@@ -407,7 +408,7 @@ export const useUpdateInstanceRequest = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-instanceRequest", variables.id] });
     },
     onError: (error: unknown) => {
-      console.error("Error updating instance request:", error);
+      logger.error("Error updating instance request:", error);
     },
   });
 };

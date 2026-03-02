@@ -14,6 +14,7 @@ import {
   ResourceListCard,
   ModernButton,
 } from "../../../shared/components/ui";
+import logger from "../../../utils/logger";
 
 interface NetworkInterface {
   id: string;
@@ -58,7 +59,7 @@ const ENIs: React.FC<ENIsProps> = ({ projectId = "", region = "" }) => {
   const [detachModal, setDetachModal] = useState<AttachModalState>({ open: false, eniId: "" });
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const list: NetworkInterface[] = Array.isArray(enis) ? enis : [];
+  const list: NetworkInterface[] = Array.isArray(enis) ? enis : ([] as any);
   const stats = useMemo(() => {
     let totalIps = 0;
     let attachedCount = 0;
@@ -116,7 +117,7 @@ const ENIs: React.FC<ENIsProps> = ({ projectId = "", region = "" }) => {
       });
       ToastUtils.success("Network interfaces synced successfully!");
     } catch (error: any) {
-      console.error("Failed to sync network interfaces:", error);
+      logger.error("Failed to sync network interfaces:", error);
       ToastUtils.error(error?.message || "Failed to sync network interfaces.");
     } finally {
       setIsSyncing(false);

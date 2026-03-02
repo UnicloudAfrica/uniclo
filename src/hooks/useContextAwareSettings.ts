@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { detectApiContext } from "./settingsHooks";
 import ToastUtils from "../utils/toastUtil";
+import logger from "../utils/logger";
 
 export const useContextAwareSettings = () => {
   const queryClient = useQueryClient();
@@ -87,7 +88,7 @@ export const useContextAwareSettings = () => {
         ToastUtils.success("Settings updated successfully");
       },
       onError: (error: unknown) => {
-        console.error("Error updating settings:", error);
+        logger.error("Error updating settings:", error);
         ToastUtils.error(getErrorMessage(error, "Failed to update settings"));
       },
     });
@@ -101,7 +102,7 @@ export const useContextAwareSettings = () => {
         ToastUtils.success("Settings reset successfully");
       },
       onError: (error: unknown) => {
-        console.error("Error resetting settings:", error);
+        logger.error("Error resetting settings:", error);
         ToastUtils.error(getErrorMessage(error, "Failed to reset settings"));
       },
     });
@@ -114,7 +115,7 @@ export const useContextAwareSettings = () => {
         ToastUtils.success("Settings exported successfully");
       },
       onError: (error: unknown) => {
-        console.error("Error exporting settings:", error);
+        logger.error("Error exporting settings:", error);
         ToastUtils.error(getErrorMessage(error, "Failed to export settings"));
       },
     });
@@ -128,7 +129,7 @@ export const useContextAwareSettings = () => {
         ToastUtils.success("Settings imported successfully");
       },
       onError: (error: unknown) => {
-        console.error("Error importing settings:", error);
+        logger.error("Error importing settings:", error);
         ToastUtils.error(getErrorMessage(error, "Failed to import settings"));
       },
     });
@@ -150,7 +151,7 @@ export const useContextAwareSettings = () => {
         ToastUtils.success("Password updated successfully");
       },
       onError: (error: unknown) => {
-        console.error("Error updating password:", error);
+        logger.error("Error updating password:", error);
         ToastUtils.error(getErrorMessage(error, "Failed to update password"));
       },
     });

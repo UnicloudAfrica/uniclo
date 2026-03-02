@@ -50,7 +50,8 @@ const InvoiceFinalReviewStep: React.FC<InvoiceFinalReviewStepProps> = ({
   } = assignmentDetails || {};
 
   const selectedTenant =
-    assignedTenant || tenants?.find((t) => String(t.id) === String(formData.tenant_id));
+    assignedTenant ||
+    (tenants as any)?.find((t: any) => String(t.id) === String(formData.tenant_id));
   const selectedUser = assignedUser || null;
 
   const tenantLabel = selectedTenant
@@ -58,10 +59,12 @@ const InvoiceFinalReviewStep: React.FC<InvoiceFinalReviewStepProps> = ({
     : null;
 
   const userLabel = selectedUser
-    ? selectedUser.business_name ||
-      [selectedUser.first_name, selectedUser.last_name].filter(Boolean).join(" ") ||
-      selectedUser.email ||
-      `User ${selectedUser.id}`
+    ? (selectedUser as any).business_name ||
+      [(selectedUser as any).first_name, (selectedUser as any).last_name]
+        .filter(Boolean)
+        .join(" ") ||
+      (selectedUser as any).email ||
+      `User ${(selectedUser as any).id}`
     : null;
 
   const assignmentType = assignmentMode || (selectedUser ? "user" : selectedTenant ? "tenant" : "");

@@ -8,6 +8,7 @@ import {
 import silentTenantApi from "../index/tenant/silentTenant";
 import tenantApi from "../index/tenant/tenantApi";
 import { Project, ProjectStatus } from "../types/project";
+import logger from "../utils/logger";
 
 const buildQueryString = (params: Record<string, any> = {}) => {
   const searchParams = new URLSearchParams();
@@ -174,7 +175,7 @@ export const useCreateProject = (): UseMutationResult<any, Error, any> => {
       queryClient.invalidateQueries({ queryKey: ["tenant-projects"] });
     },
     onError: (error) => {
-      console.error("Error creating project:", error);
+      logger.error("Error creating project:", error);
     },
   });
 };
@@ -194,7 +195,7 @@ export const useUpdateProject = (): UseMutationResult<
       queryClient.invalidateQueries({ queryKey: ["project", variables.id] });
     },
     onError: (error) => {
-      console.error("Error updating project:", error);
+      logger.error("Error updating project:", error);
     },
   });
 };
@@ -209,7 +210,7 @@ export const useDeleteProject = (): UseMutationResult<any, Error, string | numbe
       queryClient.invalidateQueries({ queryKey: ["tenant-projects"] });
     },
     onError: (error) => {
-      console.error("Error deleting project:", error);
+      logger.error("Error deleting project:", error);
     },
   });
 };

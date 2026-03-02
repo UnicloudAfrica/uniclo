@@ -210,10 +210,10 @@ export const getSlaStatusColor = (status: string): string => {
 
 export const getStatusClasses = (status: string): string => {
   const style = STATUS_STYLES[status] || STATUS_STYLES.open;
-  return `${style.bg} ${style.text}`;
+  return `${style?.bg} ${style?.text}`;
 };
 
 export const getPriorityClasses = (priority: string): string => {
   const style = PRIORITY_STYLES[priority] || PRIORITY_STYLES.medium;
-  return style.color;
+  return style?.color;
 };

@@ -1,6 +1,7 @@
 "use client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Suspense, useState } from "react";
+import logger from "./logger";
 
 interface QueryProviderProps {
   children: React.ReactNode;
@@ -16,7 +17,7 @@ const QueryProvider: React.FC<QueryProviderProps> = ({ children }) => {
           },
           mutations: {
             onError: (error) => {
-              console.error("Mutation Error:", error);
+              logger.error("Mutation Error:", error);
             },
           },
         },

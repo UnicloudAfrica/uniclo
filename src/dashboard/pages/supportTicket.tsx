@@ -17,15 +17,18 @@ import { useNavigate } from "react-router-dom";
 
 export default function SupportTicket() {
   const navigate = useNavigate();
-  const fetchThreads = (filters) => silentTenantApi("GET", `/admin/support${buildQuery(filters)}`);
+  const fetchThreads = (filters: any) =>
+    silentTenantApi("GET", `/admin/support${buildQuery(filters)}`);
 
-  const fetchThread = (id) => silentTenantApi("GET", `/admin/support/${id}`);
+  const fetchThread = (id: any) => silentTenantApi("GET", `/admin/support/${id}`);
 
-  const createThread = (payload) => tenantApi("POST", "/admin/support", payload);
+  const createThread = (payload: any) => tenantApi("POST", "/admin/support", payload);
 
-  const replyThread = (id, payload) => tenantApi("POST", `/admin/support/${id}/reply`, payload);
+  const replyThread = (id: any, payload: any) =>
+    tenantApi("POST", `/admin/support/${id}/reply`, payload);
 
-  const resolveThread = (id) => tenantApi("PUT", `/admin/support/${id}`, { status: "resolved" });
+  const resolveThread = (id: any) =>
+    tenantApi("PUT", `/admin/support/${id}`, { status: "resolved" });
 
   return (
     <TenantPageShell

@@ -145,7 +145,7 @@ const TenantProvisioningWizard: React.FC = () => {
   const paymentStepIndex = useMemo(() => steps.findIndex((step) => step.id === "payment"), [steps]);
   const successStepIndex = useMemo(() => steps.findIndex((step) => step.id === "success"), [steps]);
   const selectedProjectId = configurations[0]?.project_id;
-  const { data: projectStatus } = useTenantProjectStatus(selectedProjectId, {
+  const { data: projectStatus } = useTenantProjectStatus(selectedProjectId as any, {
     enabled: Boolean(selectedProjectId),
   });
   const projectHasNetwork = useMemo(
@@ -202,7 +202,7 @@ const TenantProvisioningWizard: React.FC = () => {
   const summaryConfigurationCount = reviewSummaries.length || configurations.length || 0;
   const summaryPlanLabel = useMemo(() => {
     if (!reviewSummaries.length) return "Instance profile";
-    if (reviewSummaries.length === 1) return reviewSummaries[0].title || "Instance profile";
+    if (reviewSummaries.length === 1) return reviewSummaries?.[0].title || "Instance profile";
     return `${reviewSummaries.length} compute profiles`;
   }, [reviewSummaries]);
   const summaryWorkflowLabel = isFastTrack
@@ -377,12 +377,12 @@ const TenantProvisioningWizard: React.FC = () => {
                 onBack={() => setActiveStep(0)}
                 onSubmit={handleCreateOrder}
                 submitErrorMessage={submissionErrorMessage}
-                useProjectsHook={useFetchTenantProjects}
-                useSecurityGroupsHook={useFetchTenantSecurityGroups}
-                useKeyPairsHook={useFetchTenantKeyPairs}
-                useSubnetsHook={useFetchTenantSubnets}
-                useNetworksHook={useFetchTenantNetworks}
-                useProjectMembershipSuggestionsHook={useTenantProjectMembershipSuggestions}
+                useProjectsHook={useFetchTenantProjects as any}
+                useSecurityGroupsHook={useFetchTenantSecurityGroups as any}
+                useKeyPairsHook={useFetchTenantKeyPairs as any}
+                useSubnetsHook={useFetchTenantSubnets as any}
+                useNetworksHook={useFetchTenantNetworks as any}
+                useProjectMembershipSuggestionsHook={useTenantProjectMembershipSuggestions as any}
                 skipProjectFetch={false}
                 skipNetworkResourcesFetch={false}
                 formVariant="cube"

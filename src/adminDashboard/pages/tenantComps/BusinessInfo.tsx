@@ -183,7 +183,7 @@ const BusinessInfo: React.FC<BusinessInfoProps> & {
               <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
               <span className="text-gray-500 text-sm">Loading industries...</span>
             </div>
-          ) : industries && industries.length > 0 ? (
+          ) : industries && (industries as any).length > 0 ? (
             <select
               id="industry"
               value={formData.business.industry}
@@ -194,7 +194,7 @@ const BusinessInfo: React.FC<BusinessInfoProps> & {
               disabled={isIndustriesFetching || isPending}
             >
               <option value="">Select an industry</option>
-              {industries.map((industry: any) => (
+              {(industries as any).map((industry: any) => (
                 <option key={industry.name} value={industry.name}>
                   {industry.name}
                 </option>

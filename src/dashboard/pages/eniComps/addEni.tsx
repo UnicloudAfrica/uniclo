@@ -3,8 +3,9 @@ import { Loader2, X } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useCreateTenantNetworkInterface } from "../../../hooks/eni";
 import { useFetchTenantVpcs } from "../../../hooks/vpcHooks";
+import logger from "../../../utils/logger";
 
-const AddEniModal = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) => {
+const AddEniModal = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: any) => {
   const [form, setForm] = useState({
     name: "",
     network_id: "",
@@ -45,7 +46,7 @@ const AddEniModal = ({ isOpen, onClose, projectId, region: defaultRegion = "" })
     return Object.keys(next).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: any) => {
     if (e) e.preventDefault();
     if (!validate()) return;
 
@@ -54,7 +55,7 @@ const AddEniModal = ({ isOpen, onClose, projectId, region: defaultRegion = "" })
       region: form.region,
       network_id: form.network_id,
     };
-    if (form.name.trim()) payload.name = form.name.trim();
+    if (form.name.trim()) (payload as any).name = form.name.trim();
 
     createEni(payload, {
       onSuccess: () => {
@@ -62,7 +63,7 @@ const AddEniModal = ({ isOpen, onClose, projectId, region: defaultRegion = "" })
         onClose();
       },
       onError: (err) => {
-        console.error("Failed to create network interface:", err);
+        logger.error("Failed to create network interface:", err);
         ToastUtils.error(err?.message || "Failed to create network interface.");
       },
     });

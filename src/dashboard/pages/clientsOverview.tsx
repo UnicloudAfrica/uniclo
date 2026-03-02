@@ -6,6 +6,7 @@ import OverviewClient from "../components/overviewClient";
 import ClientModules from "../components/clientModules";
 import useAuthRedirect from "../../utils/authRedirect";
 import { useFetchClientById } from "../../hooks/adminHooks/clientHooks";
+import logger from "../../utils/logger";
 
 export default function ClientsOverview() {
   const [activeButton, setActiveButton] = useState("overview");
@@ -13,11 +14,11 @@ export default function ClientsOverview() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const decodeId = (encodedId) => {
+  const decodeId = (encodedId: any) => {
     try {
       return atob(decodeURIComponent(encodedId));
     } catch (error) {
-      console.error("Failed to decode client ID:", error);
+      logger.error("Failed to decode client ID:", error);
       return null;
     }
   };
@@ -30,7 +31,7 @@ export default function ClientsOverview() {
     data: client,
     isFetching: isClientFetching,
     error: clientError,
-  } = useFetchClientById(clientId, {
+  } = useFetchClientById(clientId as any, {
     enabled: !!clientId,
   });
 
@@ -43,11 +44,11 @@ export default function ClientsOverview() {
     {
       label: "Purchased Modules History",
       value: "purchased",
-      component: <ClientModules client={client} />,
+      component: <ClientModules {...({ client: client as any } as any)} />,
     },
   ];
 
-  const handleButtonClick = (value) => {
+  const handleButtonClick = (value: any) => {
     setActiveButton(value);
   };
 
@@ -89,7 +90,7 @@ export default function ClientsOverview() {
           </div>
 
           <div className="w-full mt-6">
-            {buttons.find((button) => button.value === activeButton).component}
+            {buttons?.find((button) => button.value === activeButton).component}
           </div>
         </>
       )}

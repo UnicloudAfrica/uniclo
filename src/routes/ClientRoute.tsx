@@ -22,5 +22,5 @@ export default function ClientRoute({ children }: ClientRouteProps): JSX.Element
   if (!hasHydrated) return <LoaderScreen />;
   if (!isAuthenticated || role !== "client") return <Navigate to="/sign-in" replace />;
 
-  return children;
+  return children as JSX.Element;
 }

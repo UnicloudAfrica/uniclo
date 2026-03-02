@@ -363,14 +363,14 @@ export const ObjectStorageCreateContent: React.FC<ObjectStorageCreateContentProp
         <div className="space-y-6">
           <ObjectStoragePaymentStep
             paymentOptions={paymentOptions}
-            onPaymentComplete={handlePaymentCompleted}
+            onPaymentComplete={handlePaymentCompleted as any}
             onPaymentOptionChange={setSelectedPaymentOption}
             totals={displayedTotals}
             isPaymentComplete={isPaymentComplete}
             isPaymentFailed={isPaymentFailed}
             isProcessing={isSubmitting}
             transactionId={transactionId || undefined}
-            transactionData={paymentTransactionData}
+            transactionData={paymentTransactionData as any}
           />
           <div className="flex flex-wrap items-center justify-between gap-3">
             <ModernButton
@@ -416,7 +416,7 @@ export const ObjectStorageCreateContent: React.FC<ObjectStorageCreateContentProp
           isSubmitting={isSubmitting}
           gatewayFees={gatewayFees}
           grandTotalWithFees={grandTotalWithFees}
-          dashboardContext={dashboardContext}
+          dashboardContext={dashboardContext as any}
           onSubmit={handleReviewSubmit}
           onBack={() => goToStep(resolvedReviewBackIndex)}
         />

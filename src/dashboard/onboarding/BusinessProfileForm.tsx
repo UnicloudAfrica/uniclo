@@ -165,7 +165,7 @@ const setNestedValue = (
     cursor = cursor[key] as Record<string, unknown>;
   });
 
-  cursor[finalKey] = nextValue;
+  cursor[finalKey as any] = nextValue;
 };
 
 interface BusinessProfileFormProps {
@@ -219,7 +219,7 @@ const BusinessProfileForm = ({ value, onChange }: BusinessProfileFormProps) => {
       const stateData =
         nestedData ??
         responseData ??
-        (isRecord(response?.data?.state) ? response.data.state : null);
+        (isRecord((response as any)?.data?.state) ? (response as any).data.state : null);
       const cityCollection =
         (stateData && isRecord(stateData) ? stateData.cities : undefined) ??
         (responseData && isRecord(responseData) ? responseData.cities : undefined) ??

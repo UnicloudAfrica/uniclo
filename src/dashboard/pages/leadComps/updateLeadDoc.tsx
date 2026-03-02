@@ -14,7 +14,7 @@ const documentTypeOptions = [
   "other",
 ];
 
-const UpdateLeadDoc = ({ isOpen, onClose, document }) => {
+const UpdateLeadDoc = ({ isOpen, onClose, document }: any) => {
   const [formData, setFormData] = useState({
     document_type: "",
     name: "",
@@ -47,17 +47,17 @@ const UpdateLeadDoc = ({ isOpen, onClose, document }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field, value) => {
+  const updateFormData = (field: any, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleFileChange = (event) => {
+  const handleFileChange = (event: any) => {
     const fileBase64 = event.target.files[0];
     updateFormData("file", fileBase64 || null);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: any) => {
     if (e) e.preventDefault();
     if (!validateForm()) return;
 
@@ -72,7 +72,7 @@ const UpdateLeadDoc = ({ isOpen, onClose, document }) => {
     };
 
     if (formData.file) {
-      docData.file = formData.file;
+      (docData as any).file = formData.file;
     }
 
     mutate(
@@ -94,8 +94,8 @@ const UpdateLeadDoc = ({ isOpen, onClose, document }) => {
 
   if (!isOpen) return null;
 
-  const formatDocumentNameForDisplay = (name) =>
-    name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const formatDocumentNameForDisplay = (name: any) =>
+    name.replace(/_/g, " ").replace(/\b\w/g, (c: any) => c.toUpperCase());
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
@@ -172,10 +172,12 @@ const UpdateLeadDoc = ({ isOpen, onClose, document }) => {
               </label>
               <FileInput
                 id="documentFileUpdate"
-                icon={Upload}
+                icon={Upload as any}
                 accept=".pdf,.png,.jpg,.jpeg,.svg,.webp"
                 label={
-                  formData.file ? `Selected: ${formData.file.name}` : "Click to upload a new file"
+                  formData.file
+                    ? `Selected: ${(formData.file as any).name}`
+                    : "Click to upload a new file"
                 }
                 onChange={handleFileChange}
               />

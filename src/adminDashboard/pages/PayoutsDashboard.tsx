@@ -54,7 +54,7 @@ const usePayouts = (params: Record<string, any>) => {
   return useQuery({
     queryKey: ["payouts", params],
     queryFn: async () => {
-      const response = await adminApi.get("/payouts", { params });
+      const response = await (adminApi.get as any)("/payouts", { params });
       return response.data;
     },
   });
@@ -65,7 +65,7 @@ const usePayoutSummary = () => {
     queryKey: ["payouts", "summary"],
     queryFn: async () => {
       const response = await adminApi.get("/payouts/summary");
-      return response.data.data as PayoutSummary;
+      return (response as any).data.data as PayoutSummary;
     },
   });
 };
@@ -162,8 +162,8 @@ const PayoutsDashboard: React.FC = () => {
   const cancelPayout = useCancelPayout();
   const generatePayouts = useGeneratePayouts();
 
-  const payouts: Payout[] = payoutsData?.data?.data || [];
-  const pagination = payoutsData?.data || {};
+  const payouts: Payout[] = (payoutsData as any)?.data?.data || [];
+  const pagination = (payoutsData as any)?.data || {};
 
   const handleProcessPayout = async (id: number) => {
     if (
@@ -202,7 +202,7 @@ const PayoutsDashboard: React.FC = () => {
         period_end: generateForm.period_end,
         tenant_id: generateForm.tenant_id ? parseInt(generateForm.tenant_id) : undefined,
       });
-      alert(result.message || "Payouts generated successfully!");
+      alert((result as any).message || "Payouts generated successfully!");
       setShowGenerateModal(false);
       setGenerateForm({ period_start: "", period_end: "", tenant_id: "" });
     } catch (error: any) {

@@ -4,6 +4,7 @@ import ToastUtils from "../../../utils/toastUtil";
 import { useCreateTenantRoute } from "../../../hooks/routeTable";
 import { useFetchTenantInternetGateways } from "../../../hooks/internetGatewayHooks";
 import { useFetchTenantNetworkInterfaces } from "../../../hooks/eni";
+import logger from "../../../utils/logger";
 
 const AddRouteModal = ({
   isOpen,
@@ -65,7 +66,7 @@ const AddRouteModal = ({
     return Object.keys(next).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: any) => {
     if (e) e.preventDefault();
     if (!validate()) return;
 
@@ -77,13 +78,13 @@ const AddRouteModal = ({
     };
 
     if (form.target_type === "gateway_id") {
-      payload.gateway_id = form.target_id;
+      (payload as any).gateway_id = form.target_id;
     } else if (form.target_type === "network_interface_id") {
-      payload.network_interface_id = form.target_id;
+      (payload as any).network_interface_id = form.target_id;
     } else if (form.target_type === "instance_id") {
-      payload.instance_id = form.target_id;
+      (payload as any).instance_id = form.target_id;
     } else if (form.target_type === "nat_gateway_id") {
-      payload.nat_gateway_id = form.target_id;
+      (payload as any).nat_gateway_id = form.target_id;
     }
 
     createRoute(payload, {
@@ -92,7 +93,7 @@ const AddRouteModal = ({
         onClose();
       },
       onError: (err) => {
-        console.error("Failed to create route:", err);
+        logger.error("Failed to create route:", err);
         ToastUtils.error(err?.message || "Failed to create route.");
       },
     });
@@ -109,7 +110,7 @@ const AddRouteModal = ({
           }`}
         >
           <option value="">{isFetchingIgws ? "Loading IGWs..." : "Select Internet Gateway"}</option>
-          {igws.map((g) => {
+          {(igws as any).map((g: any) => {
             const value = g.provider_resource_id || g.id || g.uuid || g.name || "";
             return (
               <option key={value} value={value}>
@@ -133,7 +134,7 @@ const AddRouteModal = ({
           <option value="">
             {isFetchingEnis ? "Loading ENIs..." : "Select Network Interface"}
           </option>
-          {enis.map((eni) => {
+          {(enis as any).map((eni: any) => {
             const value = eni.provider_resource_id || eni.id || eni.uuid || eni.name || "";
             return (
               <option key={value} value={value}>
@@ -205,10 +206,10 @@ const AddRouteModal = ({
               >
                 <option value="">Select Route Table</option>
                 {(routeTables || []).map((rt) => {
-                  const id = rt.provider_resource_id || rt.id || "";
+                  const id = (rt as any).provider_resource_id || (rt as any).id || "";
                   return (
                     <option key={id} value={id}>
-                      {rt.name || id}
+                      {(rt as any).name || id}
                     </option>
                   );
                 })}

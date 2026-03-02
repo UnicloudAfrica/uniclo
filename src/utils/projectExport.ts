@@ -1,3 +1,4 @@
+import logger from "./logger";
 /**
  * Export projects to CSV format
  * @param {Array} projects - Array of projects to export
@@ -191,7 +192,7 @@ export const exportToExcel = async (
     // Write file
     XLSX.writeFile(workbook, filename);
   } catch (error) {
-    console.error("Failed to export to Excel:", error);
+    logger.error("Failed to export to Excel:", error);
     throw new Error("Excel export failed. Please try CSV export instead.");
   }
 };

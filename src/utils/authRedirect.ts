@@ -47,7 +47,7 @@ export const handleAuthRedirect = (
   const targetPath = (activeRole && LOGIN_PATHS[activeRole]) || fallbackPath;
 
   const alreadyOnTarget =
-    typeof window !== "undefined" && globalThis.window.location.pathname === targetPath;
+    globalThis.window !== undefined && globalThis.window.location.pathname === targetPath;
   const message =
     status === 403
       ? "Access denied. Please sign in again."
@@ -57,7 +57,7 @@ export const handleAuthRedirect = (
 
   ToastUtils.error(message, { duration: 3000 });
 
-  if (!alreadyOnTarget && typeof window !== "undefined") {
+  if (!alreadyOnTarget && globalThis.window !== undefined) {
     globalThis.window.location.href = targetPath;
   }
 

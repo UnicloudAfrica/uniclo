@@ -41,7 +41,7 @@ const ClientModules = () => {
     },
   ];
 
-  const handleRowClick = (item) => {
+  const handleRowClick = (item: any) => {
     setSelectedItem(item);
     setIsModalOpen(true);
   };
@@ -55,12 +55,12 @@ const ClientModules = () => {
     {
       key: "module",
       header: "MODULE",
-      render: (val) => <span className="text-[var(--theme-text-color)]">{val}</span>,
+      render: (val: any) => <span className="text-[var(--theme-text-color)]">{val}</span>,
     },
     {
       key: "status",
       header: "STATUS",
-      render: (val) => {
+      render: (val: any) => {
         const isActive = val === "Active";
         return (
           <span
@@ -78,17 +78,17 @@ const ClientModules = () => {
     {
       key: "plan",
       header: "PLAN",
-      render: (val) => <span className="text-[var(--theme-text-color)]">{val}</span>,
+      render: (val: any) => <span className="text-[var(--theme-text-color)]">{val}</span>,
     },
     {
       key: "startDate",
       header: "START DATE",
-      render: (val) => <span className="text-[var(--theme-text-color)]">{val}</span>,
+      render: (val: any) => <span className="text-[var(--theme-text-color)]">{val}</span>,
     },
     {
       key: "endDate",
       header: "END DATE",
-      render: (val) => <span className="text-[var(--theme-text-color)]">{val}</span>,
+      render: (val: any) => <span className="text-[var(--theme-text-color)]">{val}</span>,
     },
   ];
 

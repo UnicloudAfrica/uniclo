@@ -1,7 +1,7 @@
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
 import config from "./config";
-globalThis.window.Pusher = Pusher;
+(globalThis.window as any).Pusher = Pusher;
 
 /**
  * Initialize Laravel Echo for real-time events.

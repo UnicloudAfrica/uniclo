@@ -15,6 +15,7 @@ import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
 import { ModernButton } from "../../shared/components/ui";
 import { ModernCard } from "../../shared/components/ui";
 import { useFetchAdminById } from "../../hooks/adminHooks/adminHooks";
+import logger from "../../utils/logger";
 
 interface AdminRecord {
   id?: string | number;
@@ -45,7 +46,7 @@ const decodeId = (encodedId?: string) => {
   try {
     return atob(decodeURIComponent(encodedId));
   } catch (error) {
-    console.error("Failed to decode admin id", error);
+    logger.error("Failed to decode admin id", error);
     return null;
   }
 };
@@ -60,7 +61,7 @@ const formatDate = (value: any) => {
       minute: "2-digit",
     });
   } catch (error) {
-    console.error("Could not format date", error);
+    logger.error("Could not format date", error);
     return "Unknown";
   }
 };

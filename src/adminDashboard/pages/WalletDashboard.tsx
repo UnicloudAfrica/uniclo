@@ -259,13 +259,13 @@ export default function WalletDashboard() {
       render: (value: unknown) => {
         const type = value as string;
         const config = txTypeConfig[type] || txTypeConfig["credit"];
-        const Icon = config.icon;
+        const Icon = config?.icon as any;
         return (
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg" style={{ backgroundColor: config.bg }}>
-              <Icon size={14} style={{ color: config.color }} />
+            <div className="p-1.5 rounded-lg" style={{ backgroundColor: config?.bg }}>
+              {Icon && <Icon size={14} style={{ color: config?.color }} />}
             </div>
-            <span className="text-sm font-medium">{config.label}</span>
+            <span className="text-sm font-medium">{config?.label}</span>
           </div>
         );
       },

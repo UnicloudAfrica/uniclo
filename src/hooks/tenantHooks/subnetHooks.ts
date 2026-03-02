@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import tenantSilentApi from "../../index/tenant/silentTenant";
 import tenantApi from "../../index/tenant/tenantApi";
+import logger from "../../utils/logger";
 
 const fetchTenantSubnets = async ({
   project_id,
@@ -91,7 +92,7 @@ export const useCreateTenantSubnet = () => {
       });
     },
     onError: (error) => {
-      console.error("Error creating subnet:", error);
+      logger.error("Error creating subnet:", error);
     },
   });
 };
@@ -107,7 +108,7 @@ export const useUpdateTenantSubnet = () => {
       });
     },
     onError: (error) => {
-      console.error("Error updating subnet:", error);
+      logger.error("Error updating subnet:", error);
     },
   });
 };
@@ -122,7 +123,7 @@ export const useDeleteTenantSubnet = () => {
       });
     },
     onError: (error) => {
-      console.error("Error deleting subnet:", error);
+      logger.error("Error deleting subnet:", error);
     },
   });
 };

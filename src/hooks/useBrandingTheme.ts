@@ -177,7 +177,7 @@ export const mapBrandingPayload = (payload: BrandingPayload = {}): BrandingTheme
     hasCustomBranding,
     isLegacyPlatformTheme,
     isFallback: !hasCustomBranding,
-    raw: payload,
+    raw: payload as any,
   };
 };
 
@@ -402,7 +402,7 @@ export const usePublicBrandingTheme = (
 ) => {
   const cacheKey = buildPublicBrandingCacheKey({ tenantId, domain, subdomain });
   const cachedBranding = readPublicBrandingCache(cacheKey);
-  const isBrowser = typeof window !== "undefined";
+  const isBrowser = globalThis.window !== undefined;
   const { onSuccess, enabled = isBrowser, ...restOptions } = options;
 
   const query = useQuery<BrandingTheme>({

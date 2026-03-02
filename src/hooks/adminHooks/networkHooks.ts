@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import adminApi, { adminSilentApi } from "../../index/admin/api";
+import logger from "../../utils/logger";
 
 const fetchNetworkInterfgace = async ({ project_id, region, refresh = false }: any) => {
   const params = new URLSearchParams();
@@ -57,7 +58,7 @@ export const useCreateNetworkInterface = () => {
       });
     },
     onError: (error: any) => {
-      console.error("Error creating network interface:", error);
+      logger.error("Error creating network interface:", error);
     },
   });
 };

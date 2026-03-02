@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import tenantRegionApi from "../../services/tenantRegionApi";
 import ToastUtils from "../../utils/toastUtil";
 import TenantPageShell from "../components/TenantPageShell";
+import logger from "../../utils/logger";
 
 type ApprovalStatus = "pending" | "approved" | "rejected" | "suspended";
 type FulfillmentMode = "manual" | "automated";
@@ -66,7 +67,7 @@ const RegionRequestDetail = () => {
       const response = await tenantRegionApi.fetchRegionRequestById(id);
       setRegion((response?.data as RegionRequest) ?? null);
     } catch (error) {
-      console.error("Error fetching region:", error);
+      logger.error("Error fetching region:", error);
       ToastUtils.error("Failed to load region details");
     } finally {
       setLoading(false);
@@ -92,7 +93,7 @@ const RegionRequestDetail = () => {
       setCredentials(emptyCredentials);
       fetchRegionDetail(); // Refresh to show verification status
     } catch (error) {
-      console.error("Error verifying credentials:", error);
+      logger.error("Error verifying credentials:", error);
     } finally {
       setVerifying(false);
     }
@@ -107,7 +108,7 @@ const RegionRequestDetail = () => {
       await tenantRegionApi.updateFulfillmentMode(id, mode);
       fetchRegionDetail();
     } catch (error) {
-      console.error("Error updating fulfillment mode:", error);
+      logger.error("Error updating fulfillment mode:", error);
     }
   };
 
@@ -124,7 +125,7 @@ const RegionRequestDetail = () => {
       await tenantRegionApi.cancelRegionRequest(id);
       navigate("/tenant/regions");
     } catch (error) {
-      console.error("Error cancelling request:", error);
+      logger.error("Error cancelling request:", error);
     }
   };
 

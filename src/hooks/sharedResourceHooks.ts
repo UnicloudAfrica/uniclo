@@ -8,6 +8,7 @@ import silentTenantApi from "../index/tenant/silentTenant";
 import { type HttpMethod } from "../index/api";
 import config from "../config";
 import useAdminAuthStore from "../stores/adminAuthStore";
+import logger from "../utils/logger";
 
 // --- Interfaces ---
 
@@ -64,7 +65,7 @@ const fetchCountries = async (): Promise<Country[]> => {
     if (!res?.data) throw new Error("Failed to fetch countries");
     return res.data;
   } catch (error: unknown) {
-    console.error("Error fetching countries:", error);
+    logger.error("Error fetching countries:", error);
     throw error;
   }
 };
@@ -217,7 +218,7 @@ export const useCreateMultiInstance = () => {
     mutationFn: (instanceData: Record<string, unknown>) =>
       createMultiInstance(instanceData, clientApi as unknown as ApiClient),
     onError: (error: unknown) => {
-      console.error("Error creating multi instance:", error);
+      logger.error("Error creating multi instance:", error);
     },
   });
 };
@@ -227,7 +228,7 @@ export const usePreviewMultiInstancePricing = () => {
     mutationFn: (pricingData: Record<string, unknown>) =>
       previewMultiInstancePricing(pricingData, clientApi as unknown as ApiClient),
     onError: (error: unknown) => {
-      console.error("Error previewing multi instance pricing:", error);
+      logger.error("Error previewing multi instance pricing:", error);
     },
   });
 };
@@ -247,7 +248,7 @@ export const useValidateMultiInstanceConfiguration = () => {
     mutationFn: (configData: Record<string, unknown>) =>
       validateMultiInstanceConfiguration(configData, clientApi as unknown as ApiClient),
     onError: (error: unknown) => {
-      console.error("Error validating multi instance configuration:", error);
+      logger.error("Error validating multi instance configuration:", error);
     },
   });
 };
@@ -257,7 +258,7 @@ export const useCreateMultiInstancePreview = () => {
     mutationFn: (previewData: Record<string, unknown>) =>
       createMultiInstancePreview(previewData, clientApi as unknown as ApiClient),
     onError: (error: unknown) => {
-      console.error("Error creating multi instance preview:", error);
+      logger.error("Error creating multi instance preview:", error);
     },
   });
 };
@@ -291,7 +292,7 @@ export const useCreateInstanceLifecycle = () => {
       queryClient.invalidateQueries({ queryKey: ["instance-lifecycle", variables.identifier] });
     },
     onError: (error: unknown) => {
-      console.error("Error creating instance lifecycle:", error);
+      logger.error("Error creating instance lifecycle:", error);
     },
   });
 };
@@ -305,7 +306,7 @@ export const useDeleteInstanceLifecycle = () => {
       queryClient.invalidateQueries({ queryKey: ["instance-lifecycle", variables] });
     },
     onError: (error: unknown) => {
-      console.error("Error deleting instance lifecycle:", error);
+      logger.error("Error deleting instance lifecycle:", error);
     },
   });
 };
@@ -336,7 +337,7 @@ export const useAdminCreateMultiInstance = () => {
     mutationFn: (instanceData: Record<string, unknown>) =>
       createMultiInstance(instanceData, adminApi as unknown as ApiClient),
     onError: (error: unknown) => {
-      console.error("Error creating multi instance (admin):", error);
+      logger.error("Error creating multi instance (admin):", error);
     },
   });
 };
@@ -346,7 +347,7 @@ export const useAdminPreviewMultiInstancePricing = () => {
     mutationFn: (pricingData: Record<string, unknown>) =>
       previewMultiInstancePricing(pricingData, adminApi as unknown as ApiClient),
     onError: (error: unknown) => {
-      console.error("Error previewing multi instance pricing (admin):", error);
+      logger.error("Error previewing multi instance pricing (admin):", error);
     },
   });
 };
@@ -366,7 +367,7 @@ export const useAdminValidateMultiInstanceConfiguration = () => {
     mutationFn: (configData: Record<string, unknown>) =>
       validateMultiInstanceConfiguration(configData, adminApi as unknown as ApiClient),
     onError: (error: unknown) => {
-      console.error("Error validating multi instance configuration (admin):", error);
+      logger.error("Error validating multi instance configuration (admin):", error);
     },
   });
 };
@@ -376,7 +377,7 @@ export const useAdminCreateMultiInstancePreview = () => {
     mutationFn: (previewData: Record<string, unknown>) =>
       createMultiInstancePreview(previewData, adminApi as unknown as ApiClient),
     onError: (error: unknown) => {
-      console.error("Error creating multi instance preview (admin):", error);
+      logger.error("Error creating multi instance preview (admin):", error);
     },
   });
 };
@@ -426,7 +427,7 @@ export const useAdminCreateInstanceLifecycle = () => {
       });
     },
     onError: (error: unknown) => {
-      console.error("Error creating instance lifecycle (admin):", error);
+      logger.error("Error creating instance lifecycle (admin):", error);
     },
   });
 };
@@ -440,7 +441,7 @@ export const useAdminDeleteInstanceLifecycle = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-instance-lifecycle", variables] });
     },
     onError: (error: unknown) => {
-      console.error("Error deleting instance lifecycle (admin):", error);
+      logger.error("Error deleting instance lifecycle (admin):", error);
     },
   });
 };
@@ -470,7 +471,7 @@ export const useTenantCreateMultiInstance = () => {
     mutationFn: (instanceData: Record<string, unknown>) =>
       createMultiInstance(instanceData, tenantApi as unknown as ApiClient),
     onError: (error: unknown) => {
-      console.error("Error creating multi instance (tenant):", error);
+      logger.error("Error creating multi instance (tenant):", error);
     },
   });
 };
@@ -480,7 +481,7 @@ export const useTenantPreviewMultiInstancePricing = () => {
     mutationFn: (pricingData: Record<string, unknown>) =>
       previewMultiInstancePricing(pricingData, tenantApi as unknown as ApiClient),
     onError: (error: unknown) => {
-      console.error("Error previewing multi instance pricing (tenant):", error);
+      logger.error("Error previewing multi instance pricing (tenant):", error);
     },
   });
 };
@@ -500,7 +501,7 @@ export const useTenantValidateMultiInstanceConfiguration = () => {
     mutationFn: (configData: Record<string, unknown>) =>
       validateMultiInstanceConfiguration(configData, tenantApi as unknown as ApiClient),
     onError: (error: unknown) => {
-      console.error("Error validating multi instance configuration (tenant):", error);
+      logger.error("Error validating multi instance configuration (tenant):", error);
     },
   });
 };
@@ -510,7 +511,7 @@ export const useTenantCreateMultiInstancePreview = () => {
     mutationFn: (previewData: Record<string, unknown>) =>
       createMultiInstancePreview(previewData, tenantApi as unknown as ApiClient),
     onError: (error: unknown) => {
-      console.error("Error creating multi instance preview (tenant):", error);
+      logger.error("Error creating multi instance preview (tenant):", error);
     },
   });
 };
@@ -546,7 +547,7 @@ export const useTenantCreateInstanceLifecycle = () => {
       });
     },
     onError: (error: unknown) => {
-      console.error("Error creating instance lifecycle (tenant):", error);
+      logger.error("Error creating instance lifecycle (tenant):", error);
     },
   });
 };
@@ -560,7 +561,7 @@ export const useTenantDeleteInstanceLifecycle = () => {
       queryClient.invalidateQueries({ queryKey: ["tenant-instance-lifecycle", variables] });
     },
     onError: (error: unknown) => {
-      console.error("Error deleting instance lifecycle (tenant):", error);
+      logger.error("Error deleting instance lifecycle (tenant):", error);
     },
   });
 };

@@ -92,7 +92,7 @@ export const useTenantProvisioningLogic = () => {
 
   const countryOptions: Option[] = useMemo(
     () =>
-      countriesData.map((c: any) => ({
+      (countriesData as any).map((c: any) => ({
         value: String(c.iso2 || c.code || c.id),
         label: c.name,
       })),
@@ -184,7 +184,7 @@ export const useTenantProvisioningLogic = () => {
   // ─────────────────────────────────────────────────────────────────
   const fastTrackRegions = useMemo(
     () =>
-      generalRegions
+      (generalRegions as any)
         .filter((region: any) => region?.can_fast_track === true)
         .map((region: any) => region?.code || region?.region || region?.slug || region?.id)
         .filter(Boolean),
@@ -199,7 +199,7 @@ export const useTenantProvisioningLogic = () => {
   // ─────────────────────────────────────────────────────────────────
 
   const regionOptions: Option[] = useMemo(() => {
-    const allRegions = generalRegions.map((r: any) => {
+    const allRegions = (generalRegions as any).map((r: any) => {
       const value = r.code || r.region || r.id || r.slug;
       return {
         value,
@@ -237,7 +237,7 @@ export const useTenantProvisioningLogic = () => {
   // All regions for display purposes (even when filtering)
   const allRegionOptions: Option[] = useMemo(
     () =>
-      generalRegions.map((r: any): Option & { canFastTrack: boolean } => {
+      (generalRegions as any).map((r: any): Option & { canFastTrack: boolean } => {
         const value = r.code || r.region || r.id || r.slug;
         return {
           value,
@@ -418,39 +418,41 @@ export const useTenantProvisioningLogic = () => {
         const data = response?.data || response;
 
         const normalizedGatewayOptions = normalizePaymentOptions(
-          data?.payment?.payment_gateway_options || data?.payment?.options || data?.payment_options
+          (data as any)?.payment?.payment_gateway_options ||
+            (data as any)?.payment?.options ||
+            (data as any)?.payment_options
         );
         const pricingBreakdownPayload =
-          data?.pricing_breakdown ||
-          data?.transaction?.metadata?.pricing_breakdown ||
-          data?.order?.pricing_breakdown ||
+          (data as any)?.pricing_breakdown ||
+          (data as any)?.transaction?.metadata?.pricing_breakdown ||
+          (data as any)?.order?.pricing_breakdown ||
           null;
 
-        const mergedTransaction = data?.transaction
+        const mergedTransaction = (data as any)?.transaction
           ? {
-              ...data.transaction,
+              ...(data as any).transaction,
               metadata: {
-                ...(data.transaction.metadata || {}),
+                ...((data as any).transaction.metadata || {}),
                 ...(pricingBreakdownPayload ? { pricing_breakdown: pricingBreakdownPayload } : {}),
               },
             }
           : null;
 
         const mergedResult = {
-          ...data,
+          ...((data as any) || {}),
           transaction: mergedTransaction,
-          payment: data?.payment
-            ? { ...data.payment, payment_gateway_options: normalizedGatewayOptions }
+          payment: (data as any)?.payment
+            ? { ...(data as any).payment, payment_gateway_options: normalizedGatewayOptions }
             : normalizedGatewayOptions.length
               ? { payment_gateway_options: normalizedGatewayOptions }
-              : data?.payment,
-          pricing_breakdown: pricingBreakdownPayload || data?.pricing_breakdown || null,
+              : (data as any)?.payment,
+          pricing_breakdown: pricingBreakdownPayload || (data as any)?.pricing_breakdown || null,
         };
 
         setSubmissionResult(mergedResult);
         setOrderReceipt({
           transaction: mergedResult?.transaction || null,
-          order: mergedResult?.order || null,
+          order: (mergedResult as any)?.order || null,
           payment: mergedResult?.payment || null,
           pricing_breakdown: mergedResult?.pricing_breakdown || null,
         });

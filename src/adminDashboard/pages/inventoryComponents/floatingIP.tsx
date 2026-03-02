@@ -7,7 +7,7 @@ import EditFloatingIP from "./ipSubs/editFloatingIP";
 import DeleteFloatingIP from "./ipSubs/deleteFloatingIP";
 import { ModernButton } from "../../../shared/components/ui";
 
-const formatCurrency = (amount, currency = "USD") => {
+const formatCurrency = (amount: any, currency = "USD") => {
   if (amount === null || amount === undefined || Number.isNaN(amount)) {
     return "—";
   }
@@ -46,7 +46,12 @@ const FloatingIP = ({ selectedRegion, onMetricsChange }: any) => {
 
   const averagePrice = useMemo(() => {
     if (!rows.length) return 0;
-    return rows.reduce((acc, ip) => acc + Number(ip.price || 0), 0) / rows.length;
+    return (
+      (rows as any).reduce(
+        (acc: any, ip: any) => (acc as any) + Number((ip as any).price || 0),
+        0
+      ) / rows.length
+    );
   }, [rows]);
 
   const regionalCoverage = useMemo(() => {
@@ -99,7 +104,7 @@ const FloatingIP = ({ selectedRegion, onMetricsChange }: any) => {
     {
       header: "IP SKU",
       key: "name",
-      render: (ip) => (
+      render: (ip: any) => (
         <div className="flex flex-col">
           <span className="font-semibold text-slate-900">{ip.name || "Floating IP"}</span>
           <span className="text-xs text-slate-500">
@@ -112,7 +117,7 @@ const FloatingIP = ({ selectedRegion, onMetricsChange }: any) => {
       header: "Region",
       key: "region",
       align: "center",
-      render: (ip) => (
+      render: (ip: any) => (
         <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
           {ip.region || "global"}
         </span>
@@ -122,7 +127,7 @@ const FloatingIP = ({ selectedRegion, onMetricsChange }: any) => {
       header: "",
       key: "actions",
       align: "right",
-      render: (ip) => (
+      render: (ip: any) => (
         <div className="flex items-center justify-end gap-2">
           <button
             type="button"
@@ -172,7 +177,7 @@ const FloatingIP = ({ selectedRegion, onMetricsChange }: any) => {
   };
 
   const handleSearch = useCallback(
-    (value) => {
+    (value: any) => {
       setSearch(value);
       setPage(1);
     },
@@ -184,13 +189,13 @@ const FloatingIP = ({ selectedRegion, onMetricsChange }: any) => {
       <ResourceDataExplorer
         title="Floating IP catalogue"
         description="Manage routable IP pools and cost structures that back tenant networking."
-        columns={columns}
-        rows={rows}
+        columns={columns as any}
+        rows={rows as any}
         loading={isFetching}
-        page={meta?.current_page ?? page}
-        perPage={meta?.per_page ?? perPage}
-        total={total}
-        meta={meta}
+        page={meta?.current_page ?? (page as any)}
+        perPage={meta?.per_page ?? (perPage as any)}
+        total={total as any}
+        meta={meta as any}
         onPageChange={setPage}
         onPerPageChange={(next) => {
           setPerPage(next);

@@ -34,6 +34,7 @@ import { useCustomerContext } from "./adminHooks/useCustomerContext";
 import { useFetchRegions } from "./adminHooks/regionHooks";
 import { useFetchClientProfile } from "./clientHooks/resources";
 import { useFetchTenantBusinessSettings } from "./settingsHooks";
+import logger from "../utils/logger";
 
 // Types
 export type ObjectStorageContext = "admin" | "tenant" | "client";
@@ -99,14 +100,14 @@ type SavedCardLike = {
 };
 
 type TransactionSummaryLike = {
-  identifier?: string;
-  reference?: string;
+  identifier?: string | number;
+  reference?: string | number;
   id?: string | number;
   amount?: number;
   currency?: string;
   third_party_fee?: number;
   transaction_fee?: number;
-  payment_gateway?: string;
+  payment_gateway_options?: unknown;
   status?: string;
   user?: { email?: string };
 };
@@ -526,8 +527,8 @@ export const useObjectStorageLogic = (
         product.region ?? rowRecord.region ?? product.region_code ?? GLOBAL_TIER_KEY;
       const regionKey = resolveString(regionCodeRaw).toLowerCase().trim() || GLOBAL_TIER_KEY;
       const key = makeTierKey(regionKey, {
-        productable_type: product.productable_type,
-        productable_id: product.productable_id,
+        productable_type: product.productable_type as any,
+        productable_id: product.productable_id as any,
       });
 
       const ensureBucket = (bucketKey: string) => {
@@ -631,7 +632,7 @@ export const useObjectStorageLogic = (
           raw: tenant,
         };
       })
-      .filter((option): option is Option => Boolean(option));
+      .filter((option): option is any => Boolean(option)) as Option[];
   }, [tenants]);
 
   const clientOptions = useMemo(() => {
@@ -665,17 +666,17 @@ export const useObjectStorageLogic = (
           raw: client,
         };
       })
-      .filter((option): option is Option => Boolean(option));
+      .filter((option): option is any => Boolean(option)) as Option[];
   }, [userPool]);
 
   // Assignment Label
   const assignmentLabel = useMemo(() => {
     if (contextType === "tenant") {
-      const match = tenantOptions.find((t) => t.value === String(selectedTenantId));
+      const match = tenantOptions.find((t) => String(t.value) === String(selectedTenantId));
       return match?.label || "Tenant order";
     }
     if (contextType === "user") {
-      const match = clientOptions.find((c) => c.value === String(selectedUserId));
+      const match = clientOptions.find((c) => String(c.value) === String(selectedUserId));
       return match?.label || "Client order";
     }
     return "Internal order";
@@ -823,7 +824,7 @@ export const useObjectStorageLogic = (
     }
 
     if (contextType === "tenant" && selectedTenantId) {
-      const tenantEntry = tenantOptions.find((t) => t.value === String(selectedTenantId));
+      const tenantEntry = tenantOptions.find((t) => (t as any).value === String(selectedTenantId));
       const tenantCountry = resolveCountryCodeFromEntity(tenantEntry?.raw, countryOptions);
       if (tenantCountry) {
         setIsCountryLocked(true);
@@ -832,7 +833,7 @@ export const useObjectStorageLogic = (
         setIsCountryLocked(false);
       }
     } else if (contextType === "user" && selectedUserId) {
-      const clientEntry = clientOptions.find((c) => c.value === String(selectedUserId));
+      const clientEntry = clientOptions.find((c) => (c as any).value === String(selectedUserId));
       const clientCountry = resolveCountryCodeFromEntity(clientEntry?.raw, countryOptions);
       if (clientCountry) {
         setIsCountryLocked(true);
@@ -1020,8 +1021,8 @@ export const useObjectStorageLogic = (
         serviceProfiles: resolvedProfiles,
         order_items: orderItems,
         accounts,
-        account: dataRecord.account || null,
-        object_storage_account_id: dataRecord.object_storage_account_id,
+        account: (dataRecord.account || null) as any,
+        object_storage_account_id: dataRecord.object_storage_account_id as any,
       };
     },
     [isFastTrack, resolvedProfiles]
@@ -1110,10 +1111,10 @@ export const useObjectStorageLogic = (
           }
           return normalized;
         } else {
-          console.warn("No submitOrderFn provided - order not submitted");
+          logger.warn("No submitOrderFn provided - order not submitted");
         }
       } catch (error) {
-        console.error("Order submission failed:", error);
+        logger.error("Order submission failed:", error);
         return null;
       } finally {
         setIsSubmitting(false);
@@ -1149,14 +1150,15 @@ export const useObjectStorageLogic = (
     const payloadRecord = isRecord(payload) ? payload : {};
     const rawStatus = payloadRecord.status || payloadRecord.transaction_status || "successful";
     const normalizedStatus = String(rawStatus).toLowerCase();
-    setLastOrderSummary((prev) => {
+    setLastOrderSummary((prev: any) => {
       if (!prev) return prev;
       return {
         ...prev,
         transaction: {
           ...(prev.transaction || {}),
           status: normalizedStatus,
-          payment_reference: payloadRecord.reference || prev.transaction?.payment_reference,
+          payment_reference:
+            payloadRecord.reference || (prev.transaction as any)?.payment_reference,
         },
         payment: {
           ...(prev.payment || {}),
@@ -1232,8 +1234,8 @@ export const useObjectStorageLogic = (
 
     // Order State
     lastOrderSummary,
-    orderId,
-    transactionId,
+    orderId: orderId as any,
+    transactionId: transactionId as any,
     accountIds,
     paymentRequired,
     paymentTransactionData,

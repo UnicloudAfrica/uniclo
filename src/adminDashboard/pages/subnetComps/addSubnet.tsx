@@ -4,6 +4,7 @@ import { Loader2, X } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useFetchVpcs, useFetchAvailableCidrs } from "../../../hooks/adminHooks/vcpHooks";
 import { useCreateSubnet, useFetchSubnets } from "../../../hooks/adminHooks/subnetHooks";
+import logger from "../../../utils/logger";
 
 type AddSubnetProps = {
   isOpen: boolean;
@@ -54,9 +55,13 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: A
   });
   const [errors, setErrors] = useState<Record<string, any>>({});
 
-  const { data: vpcs, isFetching: isFetchingVpcs } = useFetchVpcs(projectId, formData.region, {
-    enabled: !!projectId && !!formData.region,
-  });
+  const { data: vpcs, isFetching: isFetchingVpcs } = useFetchVpcs(
+    projectId as any,
+    formData.region,
+    {
+      enabled: !!projectId && !!formData.region,
+    }
+  );
   const { mutate: createSubnet, isPending: isCreating } = useCreateSubnet();
   const { data: existingSubnets, isFetching: isFetchingSubnets } = useFetchSubnets(
     projectId,
@@ -66,7 +71,7 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: A
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [suggestPrefix, setSuggestPrefix] = useState(24);
   const { data: availableCidrs, isFetching: isFetchingAvailableCidrs } = useFetchAvailableCidrs(
-    projectId,
+    projectId as any,
     formData.region,
     formData.vpc_id,
     suggestPrefix,
@@ -105,8 +110,8 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: A
     [24, 16, 8, 0].map((s: number) => (n >>> s) & 255).join(".");
   const parseCidr = (cidr: string): CidrRange => {
     const [ip, prefix] = cidr.split("/");
-    const p = parseInt(prefix, 10);
-    const base = ipToInt(ip) & (p === 0 ? 0 : (~0 << (32 - p)) >>> 0);
+    const p = parseInt(prefix as any, 10);
+    const base = ipToInt(ip as any) & (p === 0 ? 0 : (~0 << (32 - p)) >>> 0);
     const start = base >>> 0;
     const end = (base + Math.pow(2, 32 - p) - 1) >>> 0;
     return { start, end, prefix: p, base };
@@ -187,7 +192,7 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: A
         onClose();
       },
       onError: (error: unknown) => {
-        console.error("Failed to create subnet:", error);
+        logger.error("Failed to create subnet:", error);
         // ToastUtils.error(
         //   error.response?.data?.message || "Failed to create subnet."
         // );

@@ -3,6 +3,7 @@ import { X, Loader2 } from "lucide-react";
 import { useFetchTenantAdmins } from "../../../hooks/adminUserHooks";
 import ToastUtils from "../../../utils/toastUtil";
 import { useCreateCustomStage } from "../../../hooks/tenantHooks/leadsHook";
+import logger from "../../../utils/logger";
 
 const stageOptions = [
   "initial_contact",
@@ -14,7 +15,7 @@ const stageOptions = [
   "approval",
 ];
 
-const AddLeadStage = ({ isOpen, onClose }) => {
+const AddLeadStage = ({ isOpen, onClose }: any) => {
   const [leadId, setLeadId] = useState<any>(null);
   const [formData, setFormData] = useState({
     stage_name: "",
@@ -34,7 +35,7 @@ const AddLeadStage = ({ isOpen, onClose }) => {
         const decodedId = atob(decodeURIComponent(encodedId));
         setLeadId(decodedId);
       } catch (error) {
-        console.error("Failed to decode lead ID from URL:", error);
+        logger.error("Failed to decode lead ID from URL:", error);
       }
     }
     if (isOpen) {
@@ -56,12 +57,12 @@ const AddLeadStage = ({ isOpen, onClose }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field, value) => {
+  const updateFormData = (field: any, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: any) => {
     if (e) e.preventDefault();
 
     if (!validateForm()) return;
@@ -77,7 +78,7 @@ const AddLeadStage = ({ isOpen, onClose }) => {
     };
 
     if (formData.assigned_to) {
-      stageData.assigned_to = formData.assigned_to;
+      (stageData as any).assigned_to = formData.assigned_to;
     }
 
     mutate(stageData, {
@@ -93,8 +94,8 @@ const AddLeadStage = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  const formatStageNameForDisplay = (name) =>
-    name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const formatStageNameForDisplay = (name: any) =>
+    name.replace(/_/g, " ").replace(/\b\w/g, (c: any) => c.toUpperCase());
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
@@ -146,7 +147,7 @@ const AddLeadStage = ({ isOpen, onClose }) => {
               </label>
               <textarea
                 id="stageDescription"
-                rows="3"
+                rows={3}
                 value={formData.description}
                 onChange={(e) => updateFormData("description", e.target.value)}
                 placeholder="Add a description for this stage..."
@@ -169,7 +170,7 @@ const AddLeadStage = ({ isOpen, onClose }) => {
                 {isAdminsLoading ? (
                   <option disabled>Loading admins...</option>
                 ) : (
-                  admins?.map((admin) => (
+                  (admins as any)?.map((admin: any) => (
                     <option key={admin.id} value={admin.identifier || admin.id}>
                       {admin.first_name} {admin.last_name} ({admin.email})
                     </option>

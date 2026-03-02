@@ -7,7 +7,7 @@ import EditCrossConnect from "./crossConnectSubs/editCC";
 import DeleteCrossConnect from "./crossConnectSubs/deleteCC";
 import { ModernButton } from "../../../shared/components/ui";
 
-const formatCurrency = (amount, currency = "USD") => {
+const formatCurrency = (amount: any, currency = "USD") => {
   if (amount === null || amount === undefined || Number.isNaN(amount)) {
     return "—";
   }
@@ -59,7 +59,12 @@ const CrossConnect = ({ selectedRegion, onMetricsChange }: any) => {
 
   const averagePrice = useMemo(() => {
     if (!rows.length) return 0;
-    return rows.reduce((acc, item) => acc + Number(item.price || 0), 0) / rows.length;
+    return (
+      (rows as any).reduce(
+        (acc: any, item: any) => (acc as any) + Number((item as any).price || 0),
+        0
+      ) / rows.length
+    );
   }, [rows]);
 
   const providerCoverage = useMemo(() => {
@@ -112,7 +117,7 @@ const CrossConnect = ({ selectedRegion, onMetricsChange }: any) => {
     {
       header: "Cross connect profile",
       key: "name",
-      render: (item) => (
+      render: (item: any) => (
         <div className="flex flex-col">
           <span className="font-semibold text-slate-900">{item.name || "Cross connect"}</span>
           <span className="text-xs text-slate-500">{item.identifier || "No identifier"}</span>
@@ -123,7 +128,7 @@ const CrossConnect = ({ selectedRegion, onMetricsChange }: any) => {
       header: "Provider",
       key: "provider",
       align: "center",
-      render: (item) => (
+      render: (item: any) => (
         <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
           {item.provider || "Platform"}
         </span>
@@ -133,7 +138,7 @@ const CrossConnect = ({ selectedRegion, onMetricsChange }: any) => {
       header: "Updated",
       key: "updated_at",
       align: "right",
-      render: (item) => (
+      render: (item: any) => (
         <span className="text-xs text-slate-500">
           {formatDate(item.updated_at || item.created_at)}
         </span>
@@ -143,7 +148,7 @@ const CrossConnect = ({ selectedRegion, onMetricsChange }: any) => {
       header: "",
       key: "actions",
       align: "right",
-      render: (item) => (
+      render: (item: any) => (
         <div className="flex items-center justify-end gap-2">
           <button
             type="button"
@@ -193,7 +198,7 @@ const CrossConnect = ({ selectedRegion, onMetricsChange }: any) => {
   };
 
   const handleSearch = useCallback(
-    (value) => {
+    (value: any) => {
       setSearch(value);
       setPage(1);
     },
@@ -205,13 +210,13 @@ const CrossConnect = ({ selectedRegion, onMetricsChange }: any) => {
       <ResourceDataExplorer
         title="Carrier cross connects"
         description="Manage dedicated network cross-connects and pricing for co-located customers."
-        columns={columns}
-        rows={rows}
+        columns={columns as any}
+        rows={rows as any}
         loading={isFetching}
-        page={meta?.current_page ?? page}
-        perPage={meta?.per_page ?? perPage}
-        total={total}
-        meta={meta}
+        page={meta?.current_page ?? (page as any)}
+        perPage={meta?.per_page ?? (perPage as any)}
+        total={total as any}
+        meta={meta as any}
         onPageChange={setPage}
         onPerPageChange={(next) => {
           setPerPage(next);

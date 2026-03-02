@@ -94,14 +94,16 @@ const ProjectDetails: React.FC = () => {
   const [isSyncingResources, setIsSyncingResources] = useState(false);
   const [forceHideProvisioning, setForceHideProvisioning] = useState(false);
 
-  const { data: projectResponse, refetch: refetchProject } = useFetchTenantProjectById(projectId);
+  const { data: projectResponse, refetch: refetchProject } = useFetchTenantProjectById(
+    projectId as any
+  );
   const project = (projectResponse?.data || projectResponse?.project || {}) as Project;
 
   const {
     data: statusData,
     isFetching: isStatusFetching,
     refetch: refetchStatus,
-  } = useTenantProjectStatus(projectId);
+  } = useTenantProjectStatus(projectId as any);
   const setupMutation = useSetupInfrastructure();
 
   const { data: infraStatusData, refetch: refetchInfraStatus } =
@@ -109,14 +111,19 @@ const ProjectDetails: React.FC = () => {
       data: InfraStatusData | undefined;
       refetch: () => void;
     };
-  const { data: edgeConfig } = useFetchTenantProjectEdgeConfig(projectId, project?.region);
-  const edgePayload = edgeConfig?.data ?? edgeConfig;
+  const { data: edgeConfig } = useFetchTenantProjectEdgeConfig(projectId as any, project?.region);
+  const edgePayload = (edgeConfig as any)?.data ?? edgeConfig;
   const edgeNetworkId = edgePayload?.edge_network_id;
-  const { data: ipPools } = useFetchTenantIpPools(projectId, project?.region, edgeNetworkId, {
-    enabled: Boolean(projectId && project?.region && edgeNetworkId),
-  });
+  const { data: ipPools } = useFetchTenantIpPools(
+    projectId as any,
+    project?.region,
+    edgeNetworkId,
+    {
+      enabled: Boolean(projectId && project?.region && edgeNetworkId),
+    }
+  );
   const { data: networkStatusData, refetch: refetchNetworkStatus } = useTenantProjectNetworkStatus(
-    projectId,
+    projectId as any,
     { enabled: Boolean(projectId) }
   );
 
@@ -140,7 +147,7 @@ const ProjectDetails: React.FC = () => {
     }
     try {
       ToastUtils.info(`Executing ${label}...`);
-      const res = await api(method.toUpperCase(), endpoint, payload || {});
+      const res = await api(method.toUpperCase() as any, endpoint, payload || {});
       ToastUtils.success(`${label} completed successfully!`);
       await Promise.all([refetchStatus(), refetchProject()]);
       return res;
@@ -184,7 +191,7 @@ const ProjectDetails: React.FC = () => {
     if (!projectId) return;
     try {
       const result = await enableInternet(projectId);
-      const alreadyEnabled = result?.already_enabled || result?.data?.already_enabled;
+      const alreadyEnabled = result?.already_enabled || (result as any)?.data?.already_enabled;
       if (alreadyEnabled) {
         ToastUtils.info("Internet access is already enabled for this project.");
       } else {
@@ -294,20 +301,21 @@ const ProjectDetails: React.FC = () => {
   };
 
   const tenantKeyPairHooks: KeyPairHooks = {
-    useList: (projectIdValue, regionValue, options) => {
+    useList: ((projectIdValue: string, regionValue: string | undefined, options: any) => {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
       const query = useFetchKeyPairs(projectIdValue, regionValue, options);
       return {
         data: Array.isArray(query.data) ? query.data : [],
         isFetching: query.isFetching ?? false,
         refetch: query.refetch,
       };
-    },
+    }) as any,
     useSync: useSyncKeyPairs,
     useDelete: useDeleteKeyPair,
   };
 
   const projectDetails = useProjectDetailsAdapter({
-    project,
+    project: project as any,
     projectId,
     projectStatus: statusData,
     infraStatusData,
@@ -330,11 +338,11 @@ const ProjectDetails: React.FC = () => {
       handleGenericAction({
         method: action?.method || "POST",
         endpoint: action?.endpoint,
-        label: action?.label,
+        label: action?.label as any,
       }),
     computeTab: {
       hierarchy: "tenant",
-      useInstances: useTenantInstances,
+      useInstances: useTenantInstances as any,
       keyPairHooks: tenantKeyPairHooks,
       onProvisionInstance: () =>
         navigate(
@@ -353,7 +361,7 @@ const ProjectDetails: React.FC = () => {
     return (
       <ProvisioningFullScreen
         project={project}
-        setupSteps={projectDetails.setupSteps}
+        setupSteps={projectDetails.setupSteps as any}
         onRefresh={() => refetchStatus()}
         onViewProject={() => {
           setForceHideProvisioning(true);
@@ -373,7 +381,10 @@ const ProjectDetails: React.FC = () => {
         description={`Initialize infrastructure for ${project?.name || projectId}`}
       >
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 min-h-[600px]">
-          <InfrastructureSetupWizard project={project} setupMutation={setupMutation} />
+          <InfrastructureSetupWizard
+            project={project as any}
+            setupMutation={setupMutation as any}
+          />
         </div>
       </TenantPageShell>
     );
@@ -408,7 +419,7 @@ const ProjectDetails: React.FC = () => {
         isOpen={isAssignEdgeModalOpen}
         onClose={() => setAssignEdgeModalOpen(false)}
         onSuccess={handleAssignEdgeSuccess}
-        projectId={projectId}
+        projectId={projectId as any}
         region={project?.region}
       />
     </TenantPageShell>

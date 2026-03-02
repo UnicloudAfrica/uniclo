@@ -4,6 +4,7 @@ import { X, Loader2 } from "lucide-react";
 
 import ToastUtils from "../../../../utils/toastUtil"; // Ensure ToastUtils is
 import { useUpdateEbsVolume } from "../../../../hooks/adminHooks/ebsHooks";
+import logger from "../../../../utils/logger";
 
 type EbsVolume = {
   id?: string | number;
@@ -142,7 +143,7 @@ const EditEBSModal = ({ isOpen = false, onClose, ebsVolume }: EditEbsModalProps)
         }
       );
     } else {
-      //   console.error("No EBS Volume ID provided for update.");
+      //   logger.error("No EBS Volume ID provided for update.");
       //   ToastUtils.error("Cannot update: EBS Volume ID is missing.");
     }
   };
@@ -272,7 +273,7 @@ const EditEBSModal = ({ isOpen = false, onClose, ebsVolume }: EditEbsModalProps)
                 value={formData.description}
                 onChange={(e) => updateFormData("description", e.target.value)}
                 placeholder="Enter a brief description for the EBS volume"
-                rows="3"
+                rows={3}
                 className={`w-full input-field ${
                   errors["description"] ? "border-red-500" : "border-gray-300"
                 }`}

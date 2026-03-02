@@ -11,6 +11,7 @@ import {
   useFetchAvailableClientCidrs,
   useFetchClientVpcs,
 } from "../../../hooks/clientHooks/vpcHooks";
+import logger from "../../../utils/logger";
 
 interface AddSubnetProps {
   isOpen: boolean;
@@ -72,7 +73,10 @@ const AddSubnet: React.FC<AddSubnetProps> = ({ isOpen, onClose, projectId }: any
       newErrors.cidr_block = "Subnet CIDR cannot be the same as the selected VPC CIDR";
     }
 
-    if (formData.region && (!edgeConfig || !edgeConfig.edge_network_id || !edgeConfig.ip_pool_id)) {
+    if (
+      formData.region &&
+      (!edgeConfig || !(edgeConfig as any).edge_network_id || !(edgeConfig as any).ip_pool_id)
+    ) {
       newErrors.general =
         "Edge configuration is missing. Please contact an admin to assign an edge network and IP pool before creating subnets.";
     }
@@ -92,8 +96,8 @@ const AddSubnet: React.FC<AddSubnetProps> = ({ isOpen, onClose, projectId }: any
   const intToIp = (n: number) => [24, 16, 8, 0].map((s: any) => (n >>> s) & 255).join(".");
   const parseCidr = (cidr: string) => {
     const [ip, prefix] = cidr.split("/");
-    const p = parseInt(prefix, 10);
-    const base = ipToInt(ip) & (p === 0 ? 0 : (~0 << (32 - p)) >>> 0);
+    const p = parseInt(prefix as any, 10);
+    const base = ipToInt(ip as any) & (p === 0 ? 0 : (~0 << (32 - p)) >>> 0);
     const start = base >>> 0;
     const end = (base + Math.pow(2, 32 - p) - 1) >>> 0;
     return { start, end, prefix: p, base };
@@ -155,7 +159,7 @@ const AddSubnet: React.FC<AddSubnetProps> = ({ isOpen, onClose, projectId }: any
         onClose();
       },
       onError: (error: any) => {
-        console.error("Failed to create subnet:", error);
+        logger.error("Failed to create subnet:", error);
         const message = error?.message || "Failed to create subnet.";
         try {
           // Fallback if backend attaches message differently
@@ -206,7 +210,9 @@ const AddSubnet: React.FC<AddSubnetProps> = ({ isOpen, onClose, projectId }: any
         <div className="px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start">
           {/* Edge config warning */}
           {formData.region &&
-            (!edgeConfig || !edgeConfig.edge_network_id || !edgeConfig.ip_pool_id) && (
+            (!edgeConfig ||
+              !(edgeConfig as any).edge_network_id ||
+              !(edgeConfig as any).ip_pool_id) && (
               <div className="w-full mb-4 p-3 rounded-lg bg-yellow-50 border border-yellow-200 text-sm text-yellow-800">
                 Edge configuration is missing for this project. Subnet creation is disabled until an
                 edge network and IP pool are assigned.
@@ -329,7 +335,7 @@ const AddSubnet: React.FC<AddSubnetProps> = ({ isOpen, onClose, projectId }: any
                 <option value="" disabled>
                   {isFetchingRegions ? "Loading regions..." : "Select a region"}
                 </option>
-                {regions?.map((region: any) => (
+                {(regions as any)?.map((region: any) => (
                   <option key={region.region} value={region.region}>
                     {region.label}
                   </option>
@@ -368,8 +374,8 @@ const AddSubnet: React.FC<AddSubnetProps> = ({ isOpen, onClose, projectId }: any
                 isFetchingRegions ||
                 isFetchingEdgeConfig ||
                 !edgeConfig ||
-                !edgeConfig.edge_network_id ||
-                !edgeConfig.ip_pool_id
+                !(edgeConfig as any).edge_network_id ||
+                !(edgeConfig as any).ip_pool_id
               }
               className="px-8 py-3 bg-[--theme-color] text-white font-medium rounded-[30px] hover:bg-[--secondary-color] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >

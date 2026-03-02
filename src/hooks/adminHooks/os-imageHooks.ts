@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
+import logger from "../../utils/logger";
 
 type CollectionResponse = {
   data: unknown[];
@@ -109,7 +110,7 @@ export const useCreateOsImage = () => {
       queryClient.invalidateQueries({ queryKey: ["osImages"] });
     },
     onError: (error: any) => {
-      console.error("Error creating OS image:", error);
+      logger.error("Error creating OS image:", error);
     },
   });
 };
@@ -123,7 +124,7 @@ export const useUpdateOsImage = () => {
       queryClient.invalidateQueries({ queryKey: ["osImage", variables.id] });
     },
     onError: (error: any) => {
-      console.error("Error updating OS image:", error);
+      logger.error("Error updating OS image:", error);
     },
   });
 };
@@ -136,7 +137,7 @@ export const useDeleteOsImage = () => {
       queryClient.invalidateQueries({ queryKey: ["osImages"] });
     },
     onError: (error: any) => {
-      console.error("Error deleting OS image:", error);
+      logger.error("Error deleting OS image:", error);
     },
   });
 };

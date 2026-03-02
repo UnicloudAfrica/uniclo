@@ -13,6 +13,7 @@ import { ResourceEmptyState } from "../../../shared/components/ui";
 import { ResourceListCard } from "../../../shared/components/ui";
 import { ModernButton } from "../../../shared/components/ui";
 import type { MetaItem, Tone } from "../../../shared/components/ui/ResourceSection";
+import logger from "../../../utils/logger";
 
 type IpEntry = string | { private_ip_address?: string } | Record<string, unknown>;
 type SecurityGroupEntry = string | { id?: string; name?: string } | Record<string, unknown>;
@@ -88,7 +89,7 @@ const ENIs = ({ projectId = "", region = "" }: any) => {
       });
       ToastUtils.success("Network interfaces synced successfully!");
     } catch (error) {
-      console.error("Failed to sync network interfaces:", error);
+      logger.error("Failed to sync network interfaces:", error);
       ToastUtils.error(
         error instanceof Error ? error.message : "Failed to sync network interfaces."
       );

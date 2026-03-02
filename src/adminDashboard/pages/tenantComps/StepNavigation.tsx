@@ -29,7 +29,7 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
   if (orientation === "horizontal") {
     return (
       <div className="mb-6 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2 font-Outfit">
-        {steps.map((step, index) => {
+        {(steps as any).map((step: any, index: any) => {
           const isActive = index === currentStep;
           return (
             <button
@@ -62,7 +62,7 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
 
   return (
     <ol className="space-y-3" aria-label="Form progress">
-      {steps.map((step, index) => {
+      {(steps as any).map((step: any, index: any) => {
         const isCompleted = index < currentStep;
         const isActive = index === currentStep;
         const circleColor = isCompleted || isActive ? accentColor : "rgb(var(--theme-color-200))";

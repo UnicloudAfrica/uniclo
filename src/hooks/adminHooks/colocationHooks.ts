@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
+import logger from "../../utils/logger";
 
 const fetchColocationSettings = async (region: any) => {
   const res = await silentApi("GET", `/colocation-settings?region=${region}`);
@@ -37,7 +38,7 @@ export const useCreateColocationSettings = () => {
       queryClient.invalidateQueries({ queryKey: ["colocationSettings"] });
     },
     onError: (error: any) => {
-      console.error("Error creating colocation settings:", error);
+      logger.error("Error creating colocation settings:", error);
     },
   });
 };

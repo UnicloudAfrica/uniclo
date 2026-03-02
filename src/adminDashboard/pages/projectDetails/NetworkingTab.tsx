@@ -294,7 +294,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <VpcsContainer
             {...commonProps}
             hooks={{
-              useList: useVpcsAdapter,
+              useList: useVpcsAdapter as any,
               useCreate: useCreateVpc,
               useDelete: useDeleteVpc,
             }}
@@ -305,10 +305,10 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <SubnetsContainer
             {...commonProps}
             hooks={{
-              useList: useSubnetsAdapter,
+              useList: useSubnetsAdapter as any,
               useCreate: useCreateSubnet,
               useDelete: useDeleteSubnet,
-              useVpcs: useVpcsAdapter,
+              useVpcs: useVpcsAdapter as any,
             }}
           />
         );
@@ -317,10 +317,10 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <SecurityGroupsContainer
             {...commonProps}
             hooks={{
-              useList: useSecurityGroupsAdapter,
-              useCreate: useCreateSecurityGroup,
-              useDelete: useDeleteSecurityGroup,
-              useVpcs: useVpcsAdapter,
+              useList: useSecurityGroupsAdapter as any,
+              useCreate: useCreateSecurityGroup as any,
+              useDelete: useDeleteSecurityGroup as any,
+              useVpcs: useVpcsAdapter as any,
             }}
             onNavigateToRules={(sg: any) =>
               navigate(
@@ -334,10 +334,10 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <RouteTablesContainer
             {...commonProps}
             hooks={{
-              useList: useRouteTablesAdapter,
-              useSubnets: useSubnetsAdapter,
-              useInternetGateways: useInternetGatewaysAdapter,
-              useNatGateways: useNatGatewaysAdapter,
+              useList: useRouteTablesAdapter as any,
+              useSubnets: useSubnetsAdapter as any,
+              useInternetGateways: useInternetGatewaysAdapter as any,
+              useNatGateways: useNatGatewaysAdapter as any,
               useCreate: useCreateRoute,
               useDelete: useDeleteRoute,
               useAssociate: useAssociateRouteTable,
@@ -350,7 +350,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <ElasticIpsContainer
             {...commonProps}
             hooks={{
-              useList: useElasticIpsAdapter,
+              useList: useElasticIpsAdapter as any,
               useCreate: useCreateElasticIp,
               useDelete: useDeleteElasticIp,
               useAssociate: useAssociateElasticIp,
@@ -364,13 +364,13 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
             {...commonProps}
             hooks={{
               useList: useFetchNetworkInterfacesAdapter,
-              onSync: projectId
+              onSync: (projectId
                 ? () =>
                     syncNetworkInterfacesFromProvider({
                       project_id: projectId,
                       region,
                     })
-                : undefined,
+                : undefined) as any,
             }}
           />
         );
@@ -390,8 +390,8 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <InternetGatewaysContainer
             {...commonProps}
             hooks={{
-              useList: useInternetGatewaysAdapter,
-              useVpcs: useVpcsAdapter,
+              useList: useInternetGatewaysAdapter as any,
+              useVpcs: useVpcsAdapter as any,
               useCreate: useCreateInternetGateway,
               useDelete: useDeleteInternetGateway,
               useAttach: useAttachInternetGateway,
@@ -404,10 +404,10 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <NetworkAclsContainer
             {...commonProps}
             hooks={{
-              useList: useNetworkAclsAdapter,
-              useVpcs: useVpcsAdapter,
-              useCreate: useCreateNetworkAcl,
-              useDelete: useDeleteNetworkAcl,
+              useList: useNetworkAclsAdapter as any,
+              useVpcs: useVpcsAdapter as any,
+              useCreate: useCreateNetworkAcl as any,
+              useDelete: useDeleteNetworkAcl as any,
             }}
             onManageRules={(acl: any) =>
               navigate(

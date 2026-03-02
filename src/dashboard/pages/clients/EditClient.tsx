@@ -7,7 +7,7 @@ import { ModernInput } from "../../../shared/components/ui";
 import ToastUtils from "../../../utils/toastUtil";
 import { useFetchClientById, useUpdateClient } from "../../../hooks/clientHooks";
 
-const Field = ({ label, children }) => (
+const Field = ({ label, children }: any) => (
   <div className="space-y-1.5">
     <label className="text-sm font-medium text-slate-700">{label}</label>
     {children}
@@ -38,24 +38,24 @@ export default function EditClientPage() {
     if (client) {
       setForm((prev) => ({
         ...prev,
-        first_name: client.first_name ?? "",
-        last_name: client.last_name ?? "",
-        email: client.email ?? "",
-        phone: client.phone ?? "",
-        country: client.country ?? "",
-        state: client.state ?? "",
-        city: client.city ?? "",
-        address: client.address ?? "",
+        first_name: (client as any).first_name ?? "",
+        last_name: (client as any).last_name ?? "",
+        email: (client as any).email ?? "",
+        phone: (client as any).phone ?? "",
+        country: (client as any).country ?? "",
+        state: (client as any).state ?? "",
+        city: (client as any).city ?? "",
+        address: (client as any).address ?? "",
       }));
     }
   }, [client]);
 
-  const updateField = (key) => (event) => {
+  const updateField = (key: any) => (event: any) => {
     setIsDirty(true);
     setForm((prev) => ({ ...prev, [key]: event.target.value }));
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event: any) => {
     event.preventDefault();
     if (!clientId) return;
 
@@ -75,8 +75,8 @@ export default function EditClientPage() {
     };
 
     if (form.password) {
-      payload.password = form.password;
-      payload.password_confirmation = form.confirm_password;
+      (payload as any).password = form.password;
+      (payload as any).password_confirmation = form.confirm_password;
     }
 
     try {
@@ -84,7 +84,7 @@ export default function EditClientPage() {
       ToastUtils.success("Client updated.");
       navigate(`/dashboard/clients/${clientId}`);
     } catch (error) {
-      ToastUtils.error(error?.response?.data?.message || "Failed to update client.");
+      ToastUtils.error((error as any)?.response?.data?.message || "Failed to update client.");
     }
   };
 

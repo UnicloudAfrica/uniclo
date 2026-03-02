@@ -18,13 +18,65 @@ export const GLOBAL_TIER_KEY = "__all__";
 type UnknownRecord = Record<string, unknown>;
 
 type PricingLike = UnknownRecord & {
-  product?: UnknownRecord;
-  pricing?: UnknownRecord;
-  object_storage?: UnknownRecord;
+  id?: string | number;
+  product?: UnknownRecord & {
+    id?: string | number;
+    name?: string;
+    product_name?: string;
+    region?: string;
+    region_code?: string;
+    provider_region?: string;
+    location?: string;
+    productable_type?: string;
+    product_type?: string;
+    service_type?: string;
+    service_category?: string;
+    quota_gb?: number | string;
+    quota?: number | string;
+    object_storage?: { quota_gb?: number | string };
+  };
+  pricing?: UnknownRecord & {
+    price_local?: number | string;
+    price_usd?: number | string;
+    price?: number | string;
+    total_price?: number | string;
+    currency?: string;
+    currency_code?: string;
+    currencyCode?: string;
+  };
+  object_storage?: { quota_gb?: number | string };
   object_storage_configuration?: UnknownRecord;
+  productable_id?: string | number;
+  product_id?: string | number;
+  productable_type?: string;
+  product_type?: string;
+  product_name?: string;
+  provider_resource_id?: string;
+  region?: string;
+  price_local?: number | string;
+  price_usd?: number | string;
+  price?: number | string;
+  total_price?: number | string;
+  currency?: string;
+  price_currency?: string;
+  currency_code?: string;
+  currencyCode?: string;
+  quota_gb?: number | string;
+  quota?: number | string;
 };
 
-type RegionLike = UnknownRecord;
+type RegionLike = UnknownRecord & {
+  code?: string;
+  region_code?: string;
+  region?: string;
+  identifier?: string;
+  slug?: string;
+  id?: string | number;
+  name?: string;
+  display_name?: string;
+  region_name?: string;
+  provider_label?: string;
+};
 
 const isRecord = (value: unknown): value is UnknownRecord =>
   typeof value === "object" && value !== null;
@@ -80,17 +132,27 @@ export const makeTierKey = (regionKey: string, pricing?: PricingLike | null): st
 /**
  * Convert values to lowercase strings for comparison
  */
-export const toLowerCaseStrings = (values: unknown[] = []): string[] =>
-  values
-    .flatMap((value) => (Array.isArray(value) ? value : [value]))
-    .filter(
-      (value) =>
-        value !== null &&
-        value !== undefined &&
-        (typeof value === "string" || typeof value === "number")
-    )
-    .map((value) => value.toString().toLowerCase().trim())
-    .filter(Boolean);
+export const toLowerCaseStrings = (
+  values: (string | number | undefined | null | unknown)[] = []
+): string[] => {
+  const result: string[] = [];
+  values.forEach((value) => {
+    if (Array.isArray(value)) {
+      value.forEach((v) => {
+        if (v !== null && v !== undefined && (typeof v === "string" || typeof v === "number")) {
+          result.push(v.toString().toLowerCase().trim());
+        }
+      });
+    } else if (
+      value !== null &&
+      value !== undefined &&
+      (typeof value === "string" || typeof value === "number")
+    ) {
+      result.push(value.toString().toLowerCase().trim());
+    }
+  });
+  return result.filter(Boolean);
+};
 
 /**
  * Check if values include object storage keywords
@@ -110,10 +172,8 @@ export const isObjectStoragePricing = (pricing?: PricingLike | null): boolean =>
     pricing.productable_type,
     pricing.product_type,
     pricing.productableType,
-    pricing.productable_type,
     pricing.product?.productable_type,
     pricing.product?.product_type,
-    pricing.product?.productable?.type,
     pricing.product?.service_type,
     pricing.product?.service_category,
   ]);
@@ -171,7 +231,6 @@ export const resolveTierQuota = (tier?: PricingLike | null): number => {
   if (!tier) return 0;
   const candidates = [
     tier.product?.object_storage?.quota_gb,
-    tier.product?.productable?.quota_gb,
     tier.product?.quota_gb,
     tier.product?.quota,
     tier.object_storage?.quota_gb,
@@ -228,15 +287,15 @@ export const resolveTierCurrency = (
  */
 export const getRegionCode = (region?: RegionLike | null): string => {
   if (!region) return "";
-  return (
+  return String(
     region.code ||
-    region.region_code ||
-    region.region ||
-    region.identifier ||
-    region.slug ||
-    region.id ||
-    ""
-  ).toString();
+      region.region_code ||
+      region.region ||
+      region.identifier ||
+      region.slug ||
+      region.id ||
+      ""
+  );
 };
 
 /**
@@ -297,7 +356,7 @@ export const formatCurrency = (amount: number | string, currency?: string): stri
       currency,
       minimumFractionDigits: 2,
     }).format(numericAmount);
-  } catch (error) {
+  } catch {
     return `${currency} ${numericAmount.toFixed(2)}`;
   }
 };
@@ -310,7 +369,7 @@ export const normalizePaymentOptions = (options: unknown): unknown => {
   if (typeof options === "string") {
     try {
       return JSON.parse(options);
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -348,8 +407,10 @@ export const formatRegionOptions = (regions: unknown[] = []): Option[] => {
       const name =
         region.name || region.display_name || region.region_name || region.provider_label || code;
       const label =
-        name && name.toLowerCase() !== code.toLowerCase() ? `${name} (${code})` : name || code;
-      return { value: code, label };
+        name && String(name).toLowerCase() !== code.toLowerCase()
+          ? `${name} (${code})`
+          : name || code;
+      return { value: code, label: String(label) };
     })
     .filter((item): item is Option => Boolean(item));
 };

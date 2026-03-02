@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 
-const DeleteIgwModal = ({ isOpen, onClose, igwName = "", onConfirm, isDeleting = false }) => {
+const DeleteIgwModal = ({ isOpen, onClose, igwName = "", onConfirm, isDeleting = false }: any) => {
   if (!isOpen) return null;
 
   return (

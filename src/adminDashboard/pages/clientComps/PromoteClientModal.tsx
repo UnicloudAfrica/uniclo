@@ -3,6 +3,7 @@ import { ArrowUpRight, Loader2 } from "lucide-react";
 import { ModernInput, ModernModal } from "../../../shared/components/ui";
 import { adminSilentApi } from "../../../index/admin/api";
 import ToastUtils from "../../../utils/toastUtil";
+import logger from "../../../utils/logger";
 
 interface PromoteClientModalProps {
   isOpen: boolean;
@@ -59,7 +60,7 @@ const PromoteClientModal: React.FC<PromoteClientModalProps> = ({
         error?.response?.data?.message ||
         "Failed to promote client.";
       ToastUtils.error(message);
-      console.error("Promote client error:", error);
+      logger.error("Promote client error:", error);
     } finally {
       setIsSubmitting(false);
     }

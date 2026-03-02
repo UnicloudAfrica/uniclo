@@ -43,7 +43,7 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({
   const getGatewayOptions = () => {
     return [
       { value: "", label: "None / Local" },
-      ...internetGateways.map((igw) => ({
+      ...(internetGateways as any).map((igw: any) => ({
         value: igw.id,
         label: `${igw.name || igw.id} (IGW)`,
       })),
@@ -53,7 +53,7 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({
   const getNatOptions = () => {
     return [
       { value: "", label: "None" },
-      ...natGateways.map((nat) => ({
+      ...(natGateways as any).map((nat: any) => ({
         value: nat.id,
         label: `${nat.name || nat.id} (NAT)`,
       })),

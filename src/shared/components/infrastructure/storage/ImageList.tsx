@@ -110,7 +110,7 @@ const ImageList: React.FC<ImageListProps> = ({ images, isLoading, onDelete }) =>
     );
   }
 
-  return <ModernTable columns={columns} data={images} loading={isLoading} />;
+  return <ModernTable columns={columns as any} data={images} loading={isLoading} />;
 };
 
 export default ImageList;

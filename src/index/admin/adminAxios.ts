@@ -34,7 +34,7 @@ export const getAdminApi = (): AxiosInstance => {
     config.headers = {
       ...getAuthHeaders(),
       ...(config.headers || {}),
-    };
+    } as any;
     return config;
   });
 

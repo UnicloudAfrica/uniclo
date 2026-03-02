@@ -42,7 +42,7 @@ export default function TenantRoute({ children }: TenantRouteProps): JSX.Element
   }
 
   if (error) {
-    return children || <Outlet />;
+    return (children || <Outlet />) as JSX.Element;
   }
 
   const status = (onboarding as { status?: string } | undefined)?.status ?? "pending";
@@ -55,5 +55,5 @@ export default function TenantRoute({ children }: TenantRouteProps): JSX.Element
     return <Navigate to="/dashboard" replace />;
   }
 
-  return children || <Outlet />;
+  return (children || <Outlet />) as JSX.Element;
 }

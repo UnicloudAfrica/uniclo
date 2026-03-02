@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Loader2, X } from "lucide-react";
 import { useFetchTenantRegions } from "../../../hooks/regionHooks";
 import { useCreateTenantSecurityGroup } from "../../../hooks/securityGroupHooks";
+import logger from "../../../utils/logger";
 
 interface TenantAddSGProps {
   isOpen: boolean;
@@ -56,7 +57,7 @@ const TenantAddSG: React.FC<TenantAddSGProps> = ({
         onClose();
       },
       onError: () => {
-        // console.error("Failed to create security group:", err);
+        // logger.error("Failed to create security group:", err);
       },
     });
   };

@@ -28,6 +28,7 @@ import {
   HardDrive,
   Layers,
   ChevronRight,
+  Lock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -561,32 +562,32 @@ const UnifiedInstanceDetails: React.FC<{ identifier: string }> = ({ identifier }
                     {
                       header: "Interface",
                       key: "network",
-                      render: (val: string) => (
+                      render: ((val: string) => (
                         <span className="font-bold text-slate-800">{val}</span>
-                      ),
+                      )) as any,
                     },
                     {
                       header: "IP Address",
                       key: "addr",
-                      render: (val: string) => (
+                      render: ((val: string) => (
                         <span className="font-mono text-sm text-indigo-500">{val}</span>
-                      ),
+                      )) as any,
                     },
                     {
                       header: "Stack",
                       key: "version",
-                      render: (val: number) => (
+                      render: ((val: number) => (
                         <span className="text-xs text-slate-400">IPv{val}</span>
-                      ),
+                      )) as any,
                     },
                     {
                       header: "Type",
                       key: "type",
-                      render: (val: string) => (
+                      render: ((val: string) => (
                         <span className="capitalize text-[10px] font-bold px-2 py-0.5 bg-slate-100 rounded text-slate-500">
                           {val || "Public"}
                         </span>
-                      ),
+                      )) as any,
                     },
                   ]}
                   data={
@@ -612,36 +613,36 @@ const UnifiedInstanceDetails: React.FC<{ identifier: string }> = ({ identifier }
                     {
                       header: "Volume ID",
                       key: "id",
-                      render: (val: string) => (
+                      render: ((val: string) => (
                         <span className="font-mono text-[11px] text-slate-400">{val}</span>
-                      ),
+                      )) as any,
                     },
                     {
                       header: "Mount",
                       key: "device",
-                      render: (val: string) => (
+                      render: ((val: string) => (
                         <code className="bg-slate-50 px-1.5 py-0.5 border border-slate-100 rounded text-[11px] font-mono">
                           {val}
                         </code>
-                      ),
+                      )) as any,
                     },
                     {
                       header: "Size",
                       key: "size",
-                      render: (val: number) => (
+                      render: ((val: number) => (
                         <span className="font-bold text-slate-800">{val} GiB</span>
-                      ),
+                      )) as any,
                     },
                     {
                       header: "Label",
                       key: "bootable",
-                      render: (val: boolean) => (
+                      render: ((val: boolean) => (
                         <span
                           className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ${val ? "bg-indigo-50 text-indigo-600" : "bg-slate-50 text-slate-400"}`}
                         >
                           {val ? "System" : "Storage"}
                         </span>
-                      ),
+                      )) as any,
                     },
                   ]}
                   data={(details?.security_info?.volumes as VolumeInfo[]) || []}
@@ -658,7 +659,7 @@ const UnifiedInstanceDetails: React.FC<{ identifier: string }> = ({ identifier }
                       header: "Activity",
                       key: "description",
                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      render: (val: string, row: any) => (
+                      render: ((val: string, row: any) => (
                         <div>
                           <div className="font-bold text-slate-800 text-sm">
                             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
@@ -669,19 +670,19 @@ const UnifiedInstanceDetails: React.FC<{ identifier: string }> = ({ identifier }
                             {(row as any).id || "TXN-ID"}
                           </div>
                         </div>
-                      ),
+                      )) as any,
                     },
                     {
                       header: "Status",
                       key: "status",
-                      render: (val: string) => <StatusPill status={val} />,
+                      render: ((val: string) => <StatusPill status={val} />) as any,
                     },
                     {
                       header: "Logged At",
                       key: "created_at",
-                      render: (val: string) => (
+                      render: ((val: string) => (
                         <span className="text-slate-400 text-xs">{formatDateTime(val)}</span>
-                      ),
+                      )) as any,
                     },
                   ]}
                   data={(instance?.transactions as Transaction[]) || []}

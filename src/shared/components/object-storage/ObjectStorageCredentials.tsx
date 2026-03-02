@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Copy, Check, Key, Eye, EyeOff, AlertTriangle } from "lucide-react";
+import logger from "../../../utils/logger";
 
 interface ObjectStorageCredentialsProps {
   endpoint?: string | undefined;
@@ -31,7 +32,7 @@ const ObjectStorageCredentials: React.FC<ObjectStorageCredentialsProps> = ({
       setCopiedField(field);
       setTimeout(() => setCopiedField(null), 2000);
     } catch {
-      console.error("Failed to copy");
+      logger.error("Failed to copy");
     }
   };
 

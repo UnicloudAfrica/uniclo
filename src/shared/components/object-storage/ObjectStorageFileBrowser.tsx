@@ -111,9 +111,9 @@ const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
     try {
       setLoading(true);
       const data = await objectStorageApi.listObjects(accountId, bucketName, currentPrefix);
-      setFolders(data.folders || []);
+      setFolders((data as any).folders || []);
       // Filter out .keep files - they're just folder placeholders
-      const visibleFiles = (data.files || []).filter(
+      const visibleFiles = ((data as any).files || []).filter(
         (f: FileItem) => !f.name.endsWith(".keep") && f.name !== ".keep"
       );
       setFiles(visibleFiles);
@@ -150,7 +150,7 @@ const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
   const handleDownload = async (item: FileItem) => {
     try {
       const url = await objectStorageApi.getObjectUrl(accountId, bucketName!, item.key);
-      globalThis.window.open(url, "_blank");
+      globalThis.window.open(url as any, "_blank");
     } catch (err) {
       ToastUtils.error(getErrorMessage(err, "Failed to get download URL"));
     }
@@ -159,7 +159,7 @@ const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
   const handlePreview = async (item: FileItem) => {
     try {
       const url = await objectStorageApi.getObjectUrl(accountId, bucketName!, item.key);
-      setPreviewUrl(url);
+      setPreviewUrl(url as any);
       setPreviewName(item.name);
     } catch (err) {
       ToastUtils.error(getErrorMessage(err, "Failed to load preview"));

@@ -14,6 +14,7 @@ import {
 } from "../../hooks/useBrandingTheme";
 import useImageFallback from "../../hooks/useImageFallback";
 import AuthShell from "../../components/auth/AuthShell";
+import logger from "../../utils/logger";
 
 interface LoginErrors {
   email?: string;
@@ -100,7 +101,7 @@ export default function AdminLogin() {
       },
       onError: (err: any) => {
         setErrors({ general: err.message || "Failed to login" });
-        console.log(err);
+        logger.log(err);
       },
     });
   };

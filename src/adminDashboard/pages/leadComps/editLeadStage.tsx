@@ -51,11 +51,11 @@ export const EditLeadStage = ({ isOpen, onClose, stage, lead }: any) => {
       const updatedData = { status: formData.status, lead_id: lead.id };
 
       if (formData.notes) {
-        updatedData.notes = formData.notes;
+        (updatedData as any).notes = formData.notes;
       }
 
       if (formData.assigned_to !== "unassigned") {
-        updatedData.assigned_to = formData.assigned_to;
+        (updatedData as any).assigned_to = formData.assigned_to;
       }
 
       mutate(
@@ -78,7 +78,7 @@ export const EditLeadStage = ({ isOpen, onClose, stage, lead }: any) => {
   if (!isOpen) return null;
 
   const formatStatusForDisplay = (status: any) => {
-    return status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    return status.replace(/_/g, " ").replace(/\b\w/g, (c: any) => c.toUpperCase());
   };
 
   return createPortal(
@@ -126,7 +126,7 @@ export const EditLeadStage = ({ isOpen, onClose, stage, lead }: any) => {
               </label>
               <textarea
                 id="leadNotes"
-                rows="3"
+                rows={3}
                 value={formData.notes}
                 onChange={(e) => updateFormData("notes", e.target.value)}
                 placeholder="Add notes about the lead..."
@@ -154,7 +154,7 @@ export const EditLeadStage = ({ isOpen, onClose, stage, lead }: any) => {
                 {isAdminsLoading ? (
                   <option disabled>Loading admins...</option>
                 ) : (
-                  admins?.map((admin: any) => (
+                  (admins as any)?.map((admin: any) => (
                     <option key={admin.id} value={admin.identifier}>
                       {admin.first_name} {admin.last_name} ({admin.email})
                     </option>

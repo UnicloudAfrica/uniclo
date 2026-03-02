@@ -1,8 +1,9 @@
 import { X } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useDisassociateTenantElasticIp } from "../../../hooks/elasticIPHooks";
+import logger from "../../../utils/logger";
 
-const DisassociateEipModal = ({ isOpen, onClose, projectId, region, elasticIp }) => {
+const DisassociateEipModal = ({ isOpen, onClose, projectId, region, elasticIp }: any) => {
   const { mutate: disassociateEip, isPending } = useDisassociateTenantElasticIp();
 
   if (!isOpen || !elasticIp) return null;
@@ -27,7 +28,7 @@ const DisassociateEipModal = ({ isOpen, onClose, projectId, region, elasticIp })
           onClose();
         },
         onError: (err) => {
-          console.error("Failed to disassociate Elastic IP:", err);
+          logger.error("Failed to disassociate Elastic IP:", err);
           ToastUtils.error(err?.message || "Failed to disassociate Elastic IP.");
         },
       }

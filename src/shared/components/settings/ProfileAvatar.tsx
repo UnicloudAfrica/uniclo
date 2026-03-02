@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import { Camera, Loader2, Upload, Trash2 } from "lucide-react";
 import { ModernButton, ModernCard } from "../ui";
 import ToastUtils from "../../../utils/toastUtil";
+import logger from "../../../utils/logger";
 
 interface ProfileAvatarProps {
   name?: string;
@@ -60,7 +61,7 @@ const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
       onAvatarChange(nextUrl);
       ToastUtils.success("Profile picture updated");
     } catch (error: any) {
-      console.error(error);
+      logger.error(error);
       ToastUtils.error(error.message || "Unable to upload profile picture right now.");
     } finally {
       setIsUploading(false);
@@ -87,7 +88,7 @@ const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
       onAvatarChange(null);
       ToastUtils.success("Profile picture removed");
     } catch (error: any) {
-      console.error(error);
+      logger.error(error);
       ToastUtils.error(error.message || "Unable to remove your profile picture right now.");
     } finally {
       setIsUploading(false);

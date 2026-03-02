@@ -13,6 +13,7 @@ import { ResourceSection } from "../../../shared/components/ui";
 import { ResourceEmptyState } from "../../../shared/components/ui";
 import { ResourceListCard } from "../../../shared/components/ui";
 import { ModernButton } from "../../../shared/components/ui";
+import logger from "../../../utils/logger";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -24,7 +25,13 @@ const getToneForStatus = (status = "") => {
   return "neutral";
 };
 
-const IGWs = ({ projectId = "", region = "", actionRequest, onActionHandled, onStatsUpdate }) => {
+const IGWs = ({
+  projectId = "",
+  region = "",
+  actionRequest,
+  onActionHandled,
+  onStatsUpdate,
+}: any) => {
   const { data: igws, isFetching } = useFetchTenantInternetGateways(projectId, region);
   const { mutate: syncInternetGateways, isPending: isSyncing } = useSyncTenantInternetGateways();
   const { mutate: deleteIgw, isPending: isDeleting } = useDeleteTenantInternetGateway();
@@ -107,7 +114,7 @@ const IGWs = ({ projectId = "", region = "", actionRequest, onActionHandled, onS
           ToastUtils.success("Internet Gateways synced with provider.");
         },
         onError: (err) => {
-          console.error("Failed to sync Internet Gateways:", err);
+          logger.error("Failed to sync Internet Gateways:", err);
           ToastUtils.error(err?.message || "Failed to sync Internet Gateways.");
         },
       }
@@ -134,7 +141,7 @@ const IGWs = ({ projectId = "", region = "", actionRequest, onActionHandled, onS
           setDeleteModal(null);
         },
         onError: (err) => {
-          console.error("Failed to delete IGW:", err);
+          logger.error("Failed to delete IGW:", err);
           ToastUtils.error(err?.message || "Failed to delete IGW.");
           setDeleteModal(null);
         },
@@ -150,7 +157,7 @@ const IGWs = ({ projectId = "", region = "", actionRequest, onActionHandled, onS
     setCurrentPage((prev) => Math.min(totalPages, prev + 1));
   };
 
-  const openAttachModal = (igw, mode = "attach") => {
+  const openAttachModal = (igw: any, mode = "attach") => {
     setAttachModal({ igw, mode });
   };
 
@@ -233,7 +240,7 @@ const IGWs = ({ projectId = "", region = "", actionRequest, onActionHandled, onS
     />
   );
 
-  const renderCard = (igw) => {
+  const renderCard = (igw: any) => {
     const name = igw.name || igw.label || igw.provider_resource_id || igw.id;
     const status = igw.status || igw.state || "unknown";
     const providerLabel =
@@ -302,7 +309,7 @@ const IGWs = ({ projectId = "", region = "", actionRequest, onActionHandled, onS
         title="Internet Gateways"
         description="Manage gateways that expose your VPC networks to public connectivity."
         actions={actions}
-        meta={stats}
+        meta={stats as any}
         isLoading={isFetching}
       >
         {currentItems.length > 0 ? (

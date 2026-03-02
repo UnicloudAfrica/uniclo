@@ -16,6 +16,7 @@ import adminFileApi from "../../../index/admin/fileapi";
 import tenantFileApi from "../../../index/tenant/fileapi";
 import ToastUtil from "../../../utils/toastUtil";
 import { Client } from "../../../types/client";
+import logger from "../../../utils/logger";
 
 const encodeId = (id: string | number) => encodeURIComponent(btoa(String(id)));
 const decodeId = (encodedId: string) => {
@@ -49,7 +50,7 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
   const tenantClientsQuery = useTenantFetchClients(null, { enabled: context === "tenant" });
 
   const clients: Client[] =
-    (context === "tenant" ? tenantClientsQuery.data : adminClientsQuery.data) || [];
+    ((context === "tenant" ? tenantClientsQuery.data : adminClientsQuery.data) as any) || [];
   const isFetching =
     context === "tenant" ? tenantClientsQuery.isFetching : adminClientsQuery.isFetching;
 
@@ -85,7 +86,7 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
       ...Array.from(new Set(clientData.map((item) => item.tenant_id)))
         .map((tenantId) => {
           const tenant = clientData.find((item) => item.tenant_id === tenantId)?.tenant;
-          return tenant ? { id: tenant.id, name: tenant.name } : null;
+          return tenant ? { id: (tenant as any).id, name: (tenant as any).name } : null;
         })
         .filter(Boolean),
     ];
@@ -162,7 +163,7 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
       refreshClients();
     } catch (error) {
       ToastUtil.error("Failed to delete clients");
-      console.error("Bulk delete error:", error);
+      logger.error("Bulk delete error:", error);
     }
   };
 
@@ -188,7 +189,7 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       ToastUtil.error("Failed to export clients");
-      console.error("Bulk export error:", error);
+      logger.error("Bulk export error:", error);
     }
   };
 
@@ -205,7 +206,7 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
       refreshClients();
     } catch (error) {
       ToastUtil.error("Failed to duplicate clients");
-      console.error("Bulk duplicate error:", error);
+      logger.error("Bulk duplicate error:", error);
     }
   };
 
@@ -222,7 +223,7 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
       refreshClients();
     } catch (error) {
       ToastUtil.error("Failed to archive clients");
-      console.error("Bulk archive error:", error);
+      logger.error("Bulk archive error:", error);
     }
   };
 
@@ -235,7 +236,7 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
       refreshClients();
     } catch (error) {
       ToastUtil.error("Failed to duplicate client");
-      console.error("Duplicate error:", error);
+      logger.error("Duplicate error:", error);
     }
   };
 
@@ -248,7 +249,7 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
       refreshClients();
     } catch (error) {
       ToastUtil.error("Failed to archive client");
-      console.error("Archive error:", error);
+      logger.error("Archive error:", error);
     }
   };
 
@@ -275,7 +276,7 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
             key: "tenant_name",
             header: "Tenant Name",
             render: (_value: any, item: Client) => (
-              <div className="text-gray-600">{item.tenant?.name || "N/A"}</div>
+              <div className="text-gray-600">{(item as any).tenant?.name || "N/A"}</div>
             ),
             sortable: true,
           },

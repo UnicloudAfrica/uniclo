@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../index/admin/api";
 import lapapi from "../../index/admin/lapapi";
+import logger from "../../utils/logger";
 
 // **POST**: Create a new account
 const createAdminAccount = async (userData: any) => {
@@ -22,10 +23,10 @@ export const useCreateAdminAccount = () => {
   return useMutation({
     mutationFn: createAdminAccount,
     onError: (error: any) => {
-      console.error(error);
+      logger.error(error);
     },
     onSuccess: () => {
-      // console.log(data);
+      // logger.log(data);
     },
   });
 };
@@ -35,10 +36,10 @@ export const useLoginAdminAccount = () => {
   return useMutation({
     mutationFn: loginAdminAccount,
     onError: () => {
-      //   console.error(error);
+      //   logger.error(error);
     },
     onSuccess: () => {
-      // console.log(data);
+      // logger.log(data);
     },
   });
 };
@@ -48,10 +49,10 @@ export const useVerifyAdminMail = () => {
   return useMutation({
     mutationFn: verifyEmail,
     onError: (error: any) => {
-      console.error(error);
+      logger.error(error);
     },
     onSuccess: () => {
-      // console.log(data);
+      // logger.log(data);
     },
   });
 };

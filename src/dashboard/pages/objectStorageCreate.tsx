@@ -5,7 +5,7 @@ import objectStorageApi from "../../services/objectStorageApi";
 
 const ObjectStorageCreate = () => {
   const tenant = useTenantAuthStore((state) => state?.tenant);
-  const tenantId = tenant?.id || tenant?.identifier || "";
+  const tenantId = String(tenant?.id || tenant?.identifier || "");
 
   return (
     <TenantPageShell

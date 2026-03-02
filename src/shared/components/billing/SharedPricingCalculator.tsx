@@ -11,6 +11,7 @@ import CalculatorSummaryStep from "./calculator/CalculatorSummaryStep";
 import { CustomerContextSelector } from "../../components";
 import { ModernButton } from "../ui";
 import { CalculatorData, ObjectStorageRequest, PricingRequest } from "./types";
+import logger from "../../../utils/logger";
 
 interface SharedPricingCalculatorProps {
   mode?: "admin" | "tenant" | "client";
@@ -180,10 +181,10 @@ const SharedPricingCalculator: React.FC<SharedPricingCalculatorProps> = ({
       }
 
       const response = await calculatePricing(payload);
-      setPricingResult(response);
+      setPricingResult(response as any);
       setActiveStep(2);
     } catch (err) {
-      console.error("Calculation failed:", err);
+      logger.error("Calculation failed:", err);
     } finally {
       setIsCalculating(false);
     }

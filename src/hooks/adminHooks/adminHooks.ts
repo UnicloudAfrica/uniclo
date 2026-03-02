@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
+import logger from "../../utils/logger";
 
 type Id = string | number;
 type ApiPayload = Record<string, unknown> | FormData | null | undefined;
@@ -89,7 +90,7 @@ export const useCreateAdmin = () => {
       queryClient.invalidateQueries({ queryKey: ["admins"] });
     },
     onError: (error: unknown) => {
-      console.error("Error creating admin:", error);
+      logger.error("Error creating admin:", error);
     },
   });
 };
@@ -107,7 +108,7 @@ export const useUpdateAdmin = () => {
       });
     },
     onError: (error: unknown) => {
-      console.error("Error updating admin:", error);
+      logger.error("Error updating admin:", error);
     },
   });
 };
@@ -121,7 +122,7 @@ export const useDeleteAdmin = () => {
       queryClient.invalidateQueries({ queryKey: ["admins"] });
     },
     onError: (error: unknown) => {
-      console.error("Error deleting admin:", error);
+      logger.error("Error deleting admin:", error);
     },
   });
 };

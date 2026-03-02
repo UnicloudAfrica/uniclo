@@ -24,6 +24,7 @@ import ExtendStorageModal from "./ExtendStorageModal";
 import DeleteStorageAccountModal from "./DeleteStorageAccountModal";
 import ToastUtils from "../../../utils/toastUtil";
 import { useObjectStorageBroadcasting } from "../../../hooks/useObjectStorageBroadcasting";
+import logger from "../../../utils/logger";
 
 const statusConfig = {
   active: { label: "Active", icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-50" },
@@ -127,14 +128,14 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
           setLoading(true);
         }
         const data = await objectStorageApi.fetchAccount(accountId);
-        setAccount(data);
+        setAccount(data as any);
         setError(null);
       } catch (err) {
         if (!options.silent) {
           setError(getErrorMessage(err, "Failed to load account details"));
           ToastUtils.error("Failed to load account details");
         } else {
-          console.error("Failed to refresh account details:", err);
+          logger.error("Failed to refresh account details:", err);
         }
       } finally {
         if (!options.silent) {
@@ -151,7 +152,7 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
       const data = await objectStorageApi.fetchBuckets(accountId);
       setBuckets(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Failed to load silos:", err);
+      logger.error("Failed to load silos:", err);
     } finally {
       setBucketsLoading(false);
     }
@@ -176,7 +177,7 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
     [fetchAccountDetails, fetchBuckets]
   );
 
-  useObjectStorageBroadcasting(accountId, handleProvisioningUpdate);
+  useObjectStorageBroadcasting(accountId, handleProvisioningUpdate as any);
 
   const handleCreateBucket = async (name: string) => {
     try {
@@ -391,12 +392,12 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
         {/* Left Sidebar (1/4) */}
         <div className="col-span-1 border-r border-gray-200 overflow-y-auto bg-white">
           <ObjectStorageSidebar
-            account={account}
-            buckets={buckets}
+            account={account as any}
+            buckets={buckets as any}
             selectedBucket={selectedBucket}
             onSelectBucket={setSelectedBucket}
-            onCreateBucket={handleCreateBucket}
-            onDeleteBucket={handleDeleteBucket}
+            onCreateBucket={handleCreateBucket as any}
+            onDeleteBucket={handleDeleteBucket as any}
             onRefresh={handleRefresh}
             bucketsLoading={bucketsLoading}
             creatingBucket={creatingBucket}
@@ -416,7 +417,7 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
           ) : activeTab === "analytics" ? (
             <ObjectStorageAnalytics
               accountId={accountId}
-              accountName={accountName}
+              accountName={accountName as any}
               onExtendStorage={() => setShowExtendModal(true)}
             />
           ) : activeTab === "subscription" ? (

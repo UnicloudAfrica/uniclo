@@ -206,7 +206,7 @@ export const useProjectStatus = (id: Id, options: QueryOptions = {}) => {
 export const useCreateProject = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: createProject,
+    mutationFn: createProject as any,
     onMutate: async (newProject: ProjectCreateInput) => {
       const projectRecord = newProject;
       // Cancel any outgoing refetches
@@ -258,7 +258,7 @@ export const useCreateProject = () => {
       // Return a context object with the snapshotted value
       return { previousProjects };
     },
-    onSuccess: (data: { status: any }, variables: { name: any }) => {
+    onSuccess: ((data: { status: any }, variables: { name: any }) => {
       // Replace the optimistic project with real data
       queryClient.setQueryData<ProjectsListResponse>(
         ["admin-projects"],
@@ -278,8 +278,8 @@ export const useCreateProject = () => {
 
       // Also invalidate to ensure we get the latest data from server
       queryClient.invalidateQueries({ queryKey: ["admin-projects"] });
-    },
-    onError: (
+    }) as any,
+    onError: ((
       error: unknown,
       _variables: { name: any },
       context: { previousProjects: unknown }
@@ -290,7 +290,7 @@ export const useCreateProject = () => {
         queryClient.setQueryData(["admin-projects"], context.previousProjects);
       }
       console.error("Error creating project:", error);
-    },
+    }) as any,
     onSettled: () => {
       // Always refetch after error or success to ensure server state
       queryClient.invalidateQueries({ queryKey: ["admin-projects"] });
@@ -302,7 +302,7 @@ export const useCreateProject = () => {
 export const useUpdateProject = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: updateProject,
+    mutationFn: updateProject as any,
     onSuccess: (_data: unknown, variables: { id: string }) => {
       void _data;
       // Invalidate both admin-projects list and specific project query
@@ -469,7 +469,7 @@ export const useEnableVpc = () => {
 export const useSyncProjectUser = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: syncProjectUser,
+    mutationFn: syncProjectUser as any,
     onSuccess: (_data: any, variables: { projectId: any }) => {
       void _data;
       queryClient.invalidateQueries({ queryKey: ["admin-project", variables.projectId] });
@@ -484,7 +484,7 @@ export const useSyncProjectUser = () => {
 export const useRevokeProjectUserPolicy = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: revokeProjectUserPolicy,
+    mutationFn: revokeProjectUserPolicy as any,
     onSuccess: (_data: any, variables: { projectId: any }) => {
       void _data;
       queryClient.invalidateQueries({ queryKey: ["admin-project", variables.projectId] });
@@ -500,7 +500,7 @@ export const useRevokeProjectUserPolicy = () => {
 export const useAssignProjectUserPolicy = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: assignProjectUserPolicy,
+    mutationFn: assignProjectUserPolicy as any,
     onSuccess: (_data: any, variables: { projectId: any }) => {
       void _data;
       queryClient.invalidateQueries({ queryKey: ["admin-project", variables.projectId] });
@@ -582,7 +582,7 @@ export const useEnableInternetAccess = () => {
 export const useAddSubnet = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: addSubnet,
+    mutationFn: addSubnet as any,
     onSuccess: (_data: any, variables: { projectId: any }) => {
       void _data;
       queryClient.invalidateQueries({
@@ -600,7 +600,7 @@ export const useAddSubnet = () => {
 export const useAddSecurityGroup = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: addSecurityGroup,
+    mutationFn: addSecurityGroup as any,
     onSuccess: (_data: any, variables: { projectId: any }) => {
       void _data;
       queryClient.invalidateQueries({
@@ -635,7 +635,7 @@ const setupInfrastructure = async ({ id, blueprint }: SetupInfrastructureInput) 
 export const useSetupInfrastructure = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: setupInfrastructure,
+    mutationFn: setupInfrastructure as any,
     onSuccess: (_data: any, variables: { id: any }) => {
       void _data;
       // Invalidate project to reflect 'provisioning' status

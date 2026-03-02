@@ -309,7 +309,7 @@ const RegionApprovalCreate = () => {
     try {
       setSubmitting(true);
       const payload = buildPayload();
-      await adminRegionApi.createPlatformRegion(payload);
+      await adminRegionApi.createPlatformRegion(payload as any);
 
       if (isTenantOwned) {
         navigate("/admin-dashboard/region-approvals");

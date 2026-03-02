@@ -59,7 +59,7 @@ const AddEni = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: any)
       });
       ToastUtils.success("Network list refreshed.");
     } catch (error) {
-      ToastUtils.error(error?.message || "Failed to refresh networks.");
+      ToastUtils.error((error as any)?.message || "Failed to refresh networks.");
     } finally {
       setIsSyncingVpcs(false);
     }
@@ -82,8 +82,8 @@ const AddEni = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: any)
     );
   };
 
-  const networksList = Array.isArray(networks?.data)
-    ? networks.data
+  const networksList = Array.isArray((networks as any)?.data)
+    ? (networks as any).data
     : Array.isArray(networks)
       ? networks
       : [];

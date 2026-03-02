@@ -14,6 +14,7 @@ import {
 import useImageFallback from "../../hooks/useImageFallback";
 import { getSubdomain } from "../../utils/getSubdomain";
 import AuthShell from "../../components/auth/AuthShell";
+import logger from "../../utils/logger";
 
 interface Country {
   id: number | string;
@@ -177,7 +178,7 @@ const TenantRegister = ({ tenant = "Tenant" }: any) => {
         },
         onError: (err) => {
           setErrors({ general: err.message || "Failed to create account" });
-          console.log(err);
+          logger.log(err);
         },
       });
     }

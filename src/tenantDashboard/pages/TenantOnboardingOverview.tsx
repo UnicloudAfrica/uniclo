@@ -436,7 +436,7 @@ const TenantOnboardingOverview = () => {
     }
 
     if (!activeStep && Array.isArray(selectedSubject.steps) && selectedSubject.steps.length > 0) {
-      setActiveStep(selectedSubject.current_step ?? selectedSubject.steps[0].id);
+      setActiveStep(selectedSubject.current_step ?? selectedSubject?.steps[0].id);
     }
   }, [selectedSubject, activeStep]);
 
@@ -556,7 +556,7 @@ const TenantOnboardingOverview = () => {
       ),
     };
 
-    setSelectedSubject(fallbackSubject);
+    setSelectedSubject(fallbackSubject as any);
     setActiveStep(fallbackSubject.current_step);
   };
 
@@ -581,7 +581,7 @@ const TenantOnboardingOverview = () => {
         target: selectedSubject.target,
         tenantId: selectedSubject.target === "tenant" ? selectedSubject.id : null,
         userId: selectedSubject.target === "tenant" ? null : selectedSubject.id,
-        step: activeStep,
+        step: activeStep as any,
         status: decision,
         message: decisionMessage.trim() || undefined,
       },

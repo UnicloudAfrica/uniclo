@@ -14,12 +14,14 @@ type FileInputChange =
 interface FileInputProps {
   id: string;
   label: string;
+  icon?: React.ReactNode;
   field?: string;
   onChange: (value: FileInputChange) => void;
   error?: string;
   selectedFile?: File | string | null;
   accept?: string;
   outputAs?: FileInputOutput;
+  [key: string]: unknown;
 }
 
 export const FileInput: React.FC<FileInputProps> = ({

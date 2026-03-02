@@ -25,7 +25,9 @@ const ObjectStorage = () => {
   const sortedAccounts = useMemo(
     () =>
       [...(accounts || [])].sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        (a, b) =>
+          new Date((b as any).created_at as any).getTime() -
+          new Date((a as any).created_at as any).getTime()
       ),
     [accounts]
   );

@@ -3,14 +3,11 @@ import api from "../index/api";
 import silentApi from "../index/silent";
 import adminSettingsApi from "../index/admin/settingsApi";
 import adminSilentSettingsApi from "../index/admin/silentSettingsApi";
-import { mapBrandingPayload } from "./useBrandingTheme";
+
+import { BrandingPayload, BrandingResponse } from "../types/branding";
 
 type BrandingMutationValue = string | number | boolean | File | null | undefined;
 type BrandingMutationPayload = Record<string, BrandingMutationValue>;
-type BrandingResponse = {
-  resolved?: Record<string, unknown>;
-  [key: string]: unknown;
-};
 
 type RgbColor = {
   r: number;
@@ -47,12 +44,13 @@ const appendPayloadToFormData = (formData: FormData, payload: BrandingMutationPa
 // ═══════════════════════════════════════════════════════════════════
 
 // Fetch current branding settings
-export const useFetchBranding = (options: any = {}) => {
-  return useQuery<Record<string, unknown>>({
+export const useFetchBranding = (options: Record<string, unknown> = {}) => {
+  return useQuery<BrandingPayload | BrandingResponse>({
     queryKey: ["tenantBranding"],
     queryFn: async () => {
-      const res = await silentApi("GET", `/tenant/v1/admin/branding`);
-      return res.data?.data || res.data;
+      const res = await silentApi<BrandingResponse>("GET", "/tenant/v1/admin/branding");
+      // res is the response object. It might have branding directly or inside data.
+      return (res as any)?.data?.branding || (res as any)?.branding || res;
     },
     staleTime: 1000 * 60 * 5,
     ...options,
@@ -69,7 +67,7 @@ export const useUpdateBranding = () => {
 
       appendPayloadToFormData(formData, data);
 
-      const res = await api("PUT", `/tenant/v1/admin/branding`, formData);
+      const res = await api<BrandingResponse>("PUT", "/tenant/v1/admin/branding", formData);
       return res.data;
     },
     onSuccess: () => {
@@ -83,8 +81,13 @@ export const useUpdateBranding = () => {
 export const usePreviewBranding = () => {
   return useMutation({
     mutationFn: async (data: Record<string, unknown>) => {
-      const res = await api("POST", `/tenant/v1/admin/branding/preview`, data);
-      return res.data?.data || res.data;
+      const res = await api<BrandingResponse>("POST", "/tenant/v1/admin/branding/preview", data);
+      return (
+        (res as any)?.data?.branding ||
+        (res as any)?.data?.data?.branding ||
+        (res as any)?.data?.resolved ||
+        (res as any)?.data
+      );
     },
   });
 };
@@ -94,7 +97,7 @@ export const useVerifyDomain = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (domain: string) => {
-      const res = await api("POST", `/tenant/v1/admin/branding/verify-domain`, {
+      const res = await api<unknown>("POST", "/tenant/v1/admin/branding/verify-domain", {
         domain,
       });
       return res.data;
@@ -110,7 +113,7 @@ export const useResetBranding = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const res = await api("DELETE", `/tenant/v1/admin/branding/reset`);
+      const res = await api<BrandingResponse>("DELETE", "/tenant/v1/admin/branding/reset");
       return res.data;
     },
     onSuccess: () => {
@@ -123,12 +126,12 @@ export const useResetBranding = () => {
 // ADMIN BRANDING (GLOBAL)
 // ═══════════════════════════════════════════════════════════════════
 
-export const useFetchAdminBranding = (options: any = {}) => {
-  return useQuery<Record<string, unknown>>({
+export const useFetchAdminBranding = (options: Record<string, unknown> = {}) => {
+  return useQuery<BrandingResponse>({
     queryKey: ["adminBranding"],
     queryFn: async () => {
-      const res = await adminSilentSettingsApi("GET", "/settings/admin/branding");
-      return res.data?.data || res.data;
+      const res = await adminSilentSettingsApi<BrandingResponse>("GET", "/settings/admin/branding");
+      return res;
     },
     staleTime: 1000 * 60 * 5,
     ...options,
@@ -143,17 +146,21 @@ export const useUpdateAdminBranding = () => {
 
       appendPayloadToFormData(formData, data);
 
-      const res = await adminSettingsApi("PUT", "/settings/admin/branding", formData);
-      return res.data;
+      const res = await adminSettingsApi<BrandingResponse>(
+        "PUT",
+        "/settings/admin/branding",
+        formData
+      );
+      return res;
     },
     onSuccess: (data: BrandingResponse) => {
       queryClient.invalidateQueries({ queryKey: ["adminBranding"] });
       if (data?.resolved) {
-        queryClient.setQueryData(["branding-theme", "admin"], mapBrandingPayload(data.resolved));
+        queryClient.setQueryData(["branding-theme", "admin"], data.resolved);
       } else {
         queryClient.invalidateQueries({ queryKey: ["branding-theme", "admin"] });
       }
-      if (typeof window !== "undefined") {
+      if (globalThis.window !== undefined) {
         globalThis.window.localStorage.removeItem("auth-branding:v1:admin|");
       }
     },
@@ -164,17 +171,20 @@ export const useResetAdminBranding = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const res = await adminSettingsApi("DELETE", "/settings/admin/branding/reset");
-      return res.data;
+      const res = await adminSettingsApi<BrandingResponse>(
+        "DELETE",
+        "/settings/admin/branding/reset"
+      );
+      return res;
     },
     onSuccess: (data: BrandingResponse) => {
       queryClient.invalidateQueries({ queryKey: ["adminBranding"] });
       if (data?.resolved) {
-        queryClient.setQueryData(["branding-theme", "admin"], mapBrandingPayload(data.resolved));
+        queryClient.setQueryData(["branding-theme", "admin"], data.resolved);
       } else {
         queryClient.invalidateQueries({ queryKey: ["branding-theme", "admin"] });
       }
-      if (typeof window !== "undefined") {
+      if (globalThis.window !== undefined) {
         globalThis.window.localStorage.removeItem("auth-branding:v1:admin|");
       }
     },
@@ -195,9 +205,9 @@ export const generateColorPalette = (hex: string): GeneratedPalette | null => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h);
     return result
       ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16),
+          r: Number.parseInt(result[1] ?? "0", 16),
+          g: Number.parseInt(result[2] ?? "0", 16),
+          b: Number.parseInt(result[3] ?? "0", 16),
         }
       : null;
   };
@@ -251,10 +261,9 @@ export const isLightColor = (hex?: string | null): boolean => {
 
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!result) return true;
-
-  const r = parseInt(result[1], 16);
-  const g = parseInt(result[2], 16);
-  const b = parseInt(result[3], 16);
+  const r = Number.parseInt(result[1] ?? "0", 16);
+  const g = Number.parseInt(result[2] ?? "0", 16);
+  const b = Number.parseInt(result[3] ?? "0", 16);
 
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   return luminance > 0.5;

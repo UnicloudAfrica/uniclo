@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { Eye, EyeOff, ChevronLeft, Loader2 } from "lucide-react";
 import { useCreateProduct } from "../../hooks/adminHooks/productsHook";
 
-const StepProgress = ({ currentStep, steps }) => (
+const StepProgress = ({ currentStep, steps }: any) => (
   <div className="flex items-center justify-between mb-8">
-    {steps.map((step, index) => (
+    {steps.map((step: any, index: any) => (
       <React.Fragment key={step}>
         <div className="flex flex-col items-center text-center">
           <div
@@ -54,7 +54,7 @@ const ProductForm = () => {
   });
   const [errors, setErrors] = useState<Record<string, any>>({});
   const [showPassword, setShowPassword] = useState(false);
-  const { mutate: createProduct, isLoading: isPending } = useCreateProduct();
+  const { mutate: createProduct, isPending } = useCreateProduct() as any;
 
   const steps = ["Solution Selection", "Storage", "Compute", "Personal Info"];
   const computeSteps = ["Solution Selection", "Compute", "Personal Info"];
@@ -66,7 +66,7 @@ const ProductForm = () => {
     } else if (currentStep === 1 && formData.solution !== "Compute") {
       if (!formData.data_type.length) newErrors.data_type = "At least one data type is required";
       if (!formData.usable_capacity) newErrors.usable_capacity = "Usable capacity is required";
-      else if (isNaN(formData.usable_capacity) || formData.usable_capacity <= 0)
+      else if (isNaN(formData.usable_capacity as any) || (formData as any).usable_capacity <= 0)
         newErrors.usable_capacity = "Usable capacity must be a positive number";
       if (!formData.term_of_use) newErrors.term_of_use = "Term of use is required";
     } else if (
@@ -100,16 +100,16 @@ const ProductForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field, value) => {
+  const updateFormData = (field: any, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleCheckboxChange = (field, value) => {
+  const handleCheckboxChange = (field: any, value: any) => {
     setFormData((prev) => {
-      const currentValues = prev[field];
+      const currentValues = (prev as any)[field];
       if (currentValues.includes(value)) {
-        return { ...prev, [field]: currentValues.filter((v) => v !== value) };
+        return { ...prev, [field]: currentValues.filter((v: any) => v !== value) };
       } else {
         return { ...prev, [field]: [...currentValues, value] };
       }
@@ -205,7 +205,7 @@ const ProductForm = () => {
                   <label key={type} className="flex items-center">
                     <input
                       type="checkbox"
-                      checked={formData.data_type.includes(type)}
+                      checked={formData.data_type.includes(type as any)}
                       onChange={() => handleCheckboxChange("data_type", type)}
                       className="h-4 w-4 text-[var(--theme-color)] border-gray-300 rounded focus:ring-[var(--theme-color)]"
                     />
@@ -293,7 +293,7 @@ const ProductForm = () => {
                   <label key={use} className="flex items-center">
                     <input
                       type="checkbox"
-                      checked={formData.application_use.includes(use)}
+                      checked={formData.application_use.includes(use as any)}
                       onChange={() => handleCheckboxChange("application_use", use)}
                       className="h-4 w-4 text-[var(--theme-color)] border-gray-300 rounded focus:ring-[var(--theme-color)]"
                     />

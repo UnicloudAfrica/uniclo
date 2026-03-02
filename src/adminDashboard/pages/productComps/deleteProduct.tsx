@@ -1,5 +1,6 @@
 import { X, Loader2 } from "lucide-react";
 import { useDeleteProduct } from "../../../hooks/adminHooks/adminProductHooks";
+import logger from "../../../utils/logger";
 
 const DeleteProduct = ({ isOpen, onClose, productId, productName, refetch }: any) => {
   const { mutate: deleteProduct, isPending } = useDeleteProduct();
@@ -13,7 +14,7 @@ const DeleteProduct = ({ isOpen, onClose, productId, productName, refetch }: any
           refetch();
         }
       },
-      onError: (error) => console.error("Error deleting product:", error.message),
+      onError: (error) => logger.error("Error deleting product:", error.message),
     });
   };
 

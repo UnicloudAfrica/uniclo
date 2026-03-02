@@ -24,6 +24,7 @@ import {
   type Profile,
   type Workspace,
 } from "../shared/types/resource";
+import logger from "../utils/logger";
 
 // Basic API Response interface (moved to shared/types/resource.ts)
 
@@ -112,7 +113,7 @@ const fetchGeneralRegions = async (
         return fallbackRegions;
       }
     } catch (fallbackError) {
-      console.warn("Fallback region fetch failed:", fallbackError);
+      logger.warn("Fallback region fetch failed:", fallbackError);
       // Keep the original (empty) result if fallback fails.
     }
   }

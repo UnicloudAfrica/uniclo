@@ -108,7 +108,7 @@ const AddRoute: React.FC<AddRouteProps> = ({
               }`}
             >
               <option value="">Select Route Table</option>
-              {tables.map((rt: any) => (
+              {(tables as any).map((rt: any) => (
                 <option key={rt.id || rt.route_table?.id} value={rt.id || rt.route_table?.id}>
                   {rt.name || rt.route_table?.name || rt.id || rt.route_table?.id}
                 </option>
@@ -169,7 +169,7 @@ const AddRoute: React.FC<AddRouteProps> = ({
                   }`}
                 >
                   <option value="">Select Internet Gateway</option>
-                  {igwList.map((g: any) => (
+                  {(igwList as any).map((g: any) => (
                     <option key={g.id} value={g.id}>
                       {g.name || g.id}
                     </option>
@@ -184,7 +184,7 @@ const AddRoute: React.FC<AddRouteProps> = ({
                   }`}
                 >
                   <option value="">Select ENI</option>
-                  {eniList.map((n: any) => (
+                  {(eniList as any).map((n: any) => (
                     <option
                       key={n.id || n.network_interface?.id}
                       value={n.id || n.network_interface?.id}

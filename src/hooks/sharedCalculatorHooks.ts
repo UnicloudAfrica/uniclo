@@ -4,6 +4,7 @@ import { resolveActivePersona } from "../stores/sessionUtils";
 import ToastUtils from "../utils/toastUtil";
 import silentApi from "../index/silent";
 import silentAdminApi from "../index/admin/silent";
+import logger from "../utils/logger";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 type SharedMode = "admin" | "tenant" | "client";
@@ -142,7 +143,7 @@ const sharedApiCall = async <
         errorMessage = getErrorMessage(errorData, errorMessage);
       } catch (jsonError) {
         // Response might not be JSON, use status text
-        console.warn("Could not parse error response as JSON:", jsonError);
+        logger.warn("Could not parse error response as JSON:", jsonError);
       }
 
       if (response.status === 401) {
@@ -158,7 +159,7 @@ const sharedApiCall = async <
     try {
       return (await response.json()) as TResponse;
     } catch (jsonError) {
-      console.error("Failed to parse successful response as JSON:", jsonError);
+      logger.error("Failed to parse successful response as JSON:", jsonError);
       throw new Error("Server returned invalid JSON response");
     }
   } catch (error) {
@@ -221,13 +222,13 @@ export const useSharedCalculatorOptions = (
 // Calculator Pricing (shared endpoint)
 const calculatePricing = async (pricingData: JsonRecord): Promise<unknown> => {
   try {
-    console.log("Calculating pricing with payload:", pricingData);
+    logger.log("Calculating pricing with payload:", pricingData);
     const res = await sharedApiCall<SharedApiResponse<unknown>, JsonRecord>(
       "POST",
       "/calculator/pricing",
       pricingData
     );
-    console.log("Pricing calculation response:", res);
+    logger.log("Pricing calculation response:", res);
 
     // Handle different response structures
     if (res?.data) {
@@ -241,7 +242,7 @@ const calculatePricing = async (pricingData: JsonRecord): Promise<unknown> => {
 
     throw new Error("Invalid pricing calculation response format");
   } catch (error) {
-    console.error("Error in calculatePricing:", error);
+    logger.error("Error in calculatePricing:", error);
     // Re-throw with more descriptive error message
     throw new Error(
       getErrorMessage(
@@ -262,7 +263,7 @@ export const useSharedCalculatorPricing = () => {
       queryClient.invalidateQueries({ queryKey: ["pricing-calculations"] });
     },
     onError: (error) => {
-      console.error("Error calculating pricing:", error);
+      logger.error("Error calculating pricing:", error);
       ToastUtils.error(getErrorMessage(error, "Failed to calculate pricing"));
     },
   });
@@ -293,7 +294,7 @@ export const useSharedMultiQuotes = () => {
       // Don't show automatic success toast here as components handle their own success messages
     },
     onError: (error) => {
-      console.error("Error creating multi-quotes:", error);
+      logger.error("Error creating multi-quotes:", error);
       // Don't show automatic error toast here as components handle their own error messages
     },
   });
@@ -323,7 +324,7 @@ export const useSharedMultiQuotePreviews = () => {
       queryClient.invalidateQueries({ queryKey: ["quote-previews"] });
     },
     onError: (error) => {
-      console.error("Error previewing multi-quotes:", error);
+      logger.error("Error previewing multi-quotes:", error);
     },
   });
 };

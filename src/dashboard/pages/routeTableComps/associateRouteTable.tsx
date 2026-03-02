@@ -3,8 +3,9 @@ import { Loader2, X } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useAssociateTenantRouteTable } from "../../../hooks/routeTable";
 import { useFetchTenantSubnets } from "../../../hooks/subnetHooks";
+import logger from "../../../utils/logger";
 
-const AssociateRouteTableModal = ({ isOpen, onClose, projectId, region = "", routeTable }) => {
+const AssociateRouteTableModal = ({ isOpen, onClose, projectId, region = "", routeTable }: any) => {
   const [selectedSubnet, setSelectedSubnet] = useState("");
   const { mutate: associateRouteTable, isPending } = useAssociateTenantRouteTable();
   const { data: subnetRaw, isFetching } = useFetchTenantSubnets(projectId, region, {
@@ -20,7 +21,7 @@ const AssociateRouteTableModal = ({ isOpen, onClose, projectId, region = "", rou
 
   if (!isOpen || !routeTable) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: any) => {
     if (e) e.preventDefault();
     if (!selectedSubnet) {
       ToastUtils.error("Select a subnet to associate.");
@@ -40,7 +41,7 @@ const AssociateRouteTableModal = ({ isOpen, onClose, projectId, region = "", rou
           onClose();
         },
         onError: (err) => {
-          console.error("Failed to associate route table:", err);
+          logger.error("Failed to associate route table:", err);
           ToastUtils.error(err?.message || "Failed to associate route table.");
         },
       }
@@ -83,7 +84,7 @@ const AssociateRouteTableModal = ({ isOpen, onClose, projectId, region = "", rou
               className="w-full rounded-[10px] border px-3 py-2 text-sm input-field"
             >
               <option value="">{isFetching ? "Loading subnets..." : "Select subnet"}</option>
-              {subnets.map((subnet) => {
+              {(subnets as any).map((subnet: any) => {
                 const value = subnet.provider_resource_id || subnet.id || subnet.uuid || "";
                 return (
                   <option key={value} value={value}>

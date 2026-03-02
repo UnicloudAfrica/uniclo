@@ -17,6 +17,7 @@ import type {
   MetaItem as ResourceMetaItem,
   Tone,
 } from "../../../shared/components/ui/ResourceSection";
+import logger from "../../../utils/logger";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -82,7 +83,7 @@ const EIPs = ({ projectId = "", region = "" }: any) => {
           closeDeleteModal();
         },
         onError: (err) => {
-          console.error("Failed to delete EIP:", err);
+          logger.error("Failed to delete EIP:", err);
           closeDeleteModal();
         },
       }
@@ -148,7 +149,7 @@ const EIPs = ({ projectId = "", region = "" }: any) => {
       });
       ToastUtils.success("Elastic IPs synced successfully!");
     } catch (error) {
-      console.error("Failed to sync Elastic IPs:", error);
+      logger.error("Failed to sync Elastic IPs:", error);
       ToastUtils.error(error instanceof Error ? error.message : "Failed to sync Elastic IPs.");
     } finally {
       setIsSyncing(false);

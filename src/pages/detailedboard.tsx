@@ -9,6 +9,7 @@ import adbg from "./assets/adBG.svg";
 import admob from "./assets/adMob.svg";
 import DOMPurify from "dompurify";
 import { BoardContext } from "../contexts/contextprovider";
+import logger from "../utils/logger";
 
 interface BoardItem {
   id: string;
@@ -60,7 +61,7 @@ const DetailedBoard = () => {
 
   const db = useMemo(() => {
     if (typeof window === "undefined") return null;
-    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]!;
     return getFirestore(app);
   }, []);
 
@@ -79,14 +80,14 @@ const DetailedBoard = () => {
       .then((querySnapshot) => {
         if (!querySnapshot.empty) {
           const doc = querySnapshot.docs[0];
-          const boards = { id: doc.id, ...doc.data() } as BoardItem;
+          const boards = { id: doc?.id, ...doc?.data() } as BoardItem;
           setSelectedBoardItem(boards);
         } else {
-          console.log("Document does not exist for decoded title:", decodedName);
+          logger.log("Document does not exist for decoded title:", decodedName);
         }
       })
       .catch((error) => {
-        console.error("Error getting documents:", error);
+        logger.error("Error getting documents:", error);
       });
 
     // Fetch all documents in the 'cases' collection
@@ -104,7 +105,7 @@ const DetailedBoard = () => {
     //     setOtherBoards(otherBoardData);
     // })
     // .catch((error) => {
-    //     console.error("Error getting documents:", error);
+    //     logger.error("Error getting documents:", error);
     // });
   }, [decodedName, db, boardArray.length]);
 

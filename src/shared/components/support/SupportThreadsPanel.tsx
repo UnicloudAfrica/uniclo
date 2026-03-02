@@ -206,7 +206,7 @@ const CreateTicketModal = ({
 
     if (files.length > 0) {
       const formData = new FormData();
-      Object.keys(payload).forEach((key) => formData.append(key, payload[key]));
+      Object.keys(payload).forEach((key) => formData.append(key, payload[key] as any));
       files.forEach((file) => formData.append("attachments[]", file));
       onSubmit(formData);
     } else {
@@ -369,8 +369,8 @@ export const SupportThreadsPanel: React.FC<SupportThreadsPanelProps> = ({
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
       const meta = lastPage?.meta || lastPage;
-      const current = meta.current_page || 1;
-      const last = meta.last_page || 1;
+      const current = (meta as any).current_page || 1;
+      const last = (meta as any).last_page || 1;
       return current < last ? current + 1 : undefined;
     },
   });
@@ -404,7 +404,7 @@ export const SupportThreadsPanel: React.FC<SupportThreadsPanelProps> = ({
       body: string | FormData | Record<string, unknown>;
     }) => {
       if (!replyThread) return Promise.reject(new Error("replyThread is not defined"));
-      return replyThread(payload.id, payload.body);
+      return replyThread(payload.id, payload.body as any);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [...queryKey, "detail", selectedId] });
@@ -451,7 +451,7 @@ export const SupportThreadsPanel: React.FC<SupportThreadsPanelProps> = ({
   }, [listQuery.data]);
 
   const totalFromMeta =
-    listQuery.data?.pages?.[0]?.meta?.total ?? listQuery.data?.pages?.[0]?.total;
+    (listQuery as any).data?.pages?.[0]?.meta?.total ?? listQuery.data?.pages?.[0]?.total;
   const statusCounts = useMemo(() => {
     const counts: Record<ThreadStatusKey, number> = {
       open: 0,

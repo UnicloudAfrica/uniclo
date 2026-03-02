@@ -9,7 +9,7 @@ export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
 type ApiMessage = string | { message: string };
 
-interface ApiResponse<T = unknown> {
+export interface ApiResponse<T = unknown> {
   data?: T;
   message?: ApiMessage;
   error?: string;
@@ -95,7 +95,7 @@ const api = async <T = unknown>(
           useTenantAuthStore.getState().setTwoFactorRequired(true);
         }
         const targetPath = key === "admin" ? "/verify-admin-mail" : "/verify-mail";
-        if (typeof window !== "undefined" && globalThis.window.location.pathname !== targetPath) {
+        if (globalThis.window !== undefined && globalThis.window.location.pathname !== targetPath) {
           globalThis.window.location.href = targetPath;
         }
         throw new Error(

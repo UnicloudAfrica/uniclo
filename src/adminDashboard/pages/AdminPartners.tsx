@@ -260,47 +260,47 @@ const AdminPartners = () => {
     {
       key: "name",
       header: "Name",
-      render: (value: string | null | undefined) => (
+      render: ((value: string | null | undefined) => (
         <div className="font-medium text-gray-900">{value || "—"}</div>
-      ),
+      )) as any,
       sortable: true,
     },
     {
       key: "company_type",
       header: "Type",
-      render: (value: string | null | undefined) => (
+      render: ((value: string | null | undefined) => (
         <div className="text-gray-500">{formatCompanyType(value)}</div>
-      ),
+      )) as any,
       sortable: true,
     },
     {
       key: "industry",
       header: "Industry",
-      render: (value: string | null | undefined) => (
+      render: ((value: string | null | undefined) => (
         <div className="text-gray-500">{value || "—"}</div>
-      ),
+      )) as any,
       sortable: true,
     },
     {
       key: "email",
       header: "Email",
-      render: (value: string | null | undefined) => (
+      render: ((value: string | null | undefined) => (
         <div className="text-gray-500">{value || "—"}</div>
-      ),
+      )) as any,
       sortable: true,
     },
     {
       key: "phone",
       header: "Phone",
-      render: (value: string | null | undefined) => (
+      render: ((value: string | null | undefined) => (
         <div className="text-gray-500">{value || "—"}</div>
-      ),
+      )) as any,
       sortable: true,
     },
     {
       key: "status",
       header: "Status",
-      render: (value: string | null | undefined) => (
+      render: ((value: string | null | undefined) => (
         <span
           className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
             value === "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
@@ -308,15 +308,15 @@ const AdminPartners = () => {
         >
           {value || "active"}
         </span>
-      ),
+      )) as any,
       sortable: true,
     },
     {
       key: "created_at",
       header: "Created",
-      render: (value: string | null | undefined) => (
+      render: ((value: string | null | undefined) => (
         <div className="text-gray-500">{value ? new Date(value).toLocaleDateString() : "—"}</div>
-      ),
+      )) as any,
       sortable: true,
     },
     {

@@ -84,6 +84,7 @@ export interface SummaryAction {
 export interface SummaryItem {
   title?: string;
   key?: string;
+  count?: number;
   missing_count?: number;
   completed?: boolean;
   complete?: boolean;

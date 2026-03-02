@@ -23,11 +23,11 @@ export default function DashboardLoginV2() {
   const navigate = useNavigate();
   const { setUserEmail, setTwoFactorRequired, clearTwoFactorRequirement } =
     useTenantAuthStore.getState();
-  const hostname = typeof window !== "undefined" ? globalThis.window.location.hostname : "";
-  const subdomain = typeof window !== "undefined" ? getSubdomain() : null;
+  const hostname = globalThis.window !== undefined ? globalThis.window.location.hostname : "";
+  const subdomain = globalThis.window !== undefined ? getSubdomain() : null;
   const { data: branding } = usePublicBrandingTheme({
     domain: hostname,
-    subdomain,
+    subdomain: subdomain ?? undefined,
   });
   useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
   const fallbackBrand = {
@@ -68,7 +68,7 @@ export default function DashboardLoginV2() {
   };
 
   // Handle form submission for login
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: any) => {
     e.preventDefault();
 
     if (!validateForm()) return;
@@ -81,14 +81,14 @@ export default function DashboardLoginV2() {
     mutate(userData, {
       onSuccess: (res) => {
         const requiresTwoFactor =
-          res?.data?.two_factor_enabled ??
-          res?.data?.two_factor_required ??
-          res?.data?.requires_two_factor ??
-          res?.data?.settings?.security?.two_factor_enabled ??
-          res?.data?.profile?.two_factor_enabled ??
-          res?.requires_two_factor ??
-          res?.two_factor_required ??
-          res?.data?.user?.two_factor_enabled ??
+          (res as any)?.data?.two_factor_enabled ??
+          (res as any)?.data?.two_factor_required ??
+          (res as any)?.data?.requires_two_factor ??
+          (res as any)?.data?.settings?.security?.two_factor_enabled ??
+          (res as any)?.data?.profile?.two_factor_enabled ??
+          (res as any)?.requires_two_factor ??
+          (res as any)?.two_factor_required ??
+          (res as any)?.data?.user?.two_factor_enabled ??
           false;
 
         setTwoFactorRequired?.(Boolean(requiresTwoFactor));

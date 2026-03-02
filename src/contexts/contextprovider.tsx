@@ -145,7 +145,8 @@ const ContextProvider = ({ children }: ContextProviderProps): JSX.Element => {
   const initialGeneral =
     Array.isArray(generalData) && generalData.length > 0
       ? (generalData[0] as GeneralItem)
-      : ((generalData as GeneralItem) ?? {});
+      : // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ((generalData as any as GeneralItem) ?? {});
   const [generalitem, setGeneralItem] = useState<GeneralItem>(initialGeneral);
 
   useEffect(() => {

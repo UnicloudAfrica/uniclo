@@ -10,6 +10,7 @@ import {
 } from "../../hooks/tenantHooks/projectHooks";
 import { encodeProjectId } from "../../utils/projectUtils";
 import ToastUtils from "../../utils/toastUtil";
+import logger from "../../utils/logger";
 
 interface Project {
   id: number | string;
@@ -60,7 +61,7 @@ const Projects: React.FC = () => {
       await archiveProjectMutation.mutateAsync(project.identifier);
       ToastUtils.success(`Project "${project.name}" archived successfully`);
     } catch (err: any) {
-      console.error("Failed to archive project:", err);
+      logger.error("Failed to archive project:", err);
       ToastUtils.error(err?.message || "Failed to archive project");
     }
   };
@@ -70,7 +71,7 @@ const Projects: React.FC = () => {
       await activateProjectMutation.mutateAsync(project.identifier);
       ToastUtils.success(`Project "${project.name}" activated successfully`);
     } catch (err: any) {
-      console.error("Failed to activate project:", err);
+      logger.error("Failed to activate project:", err);
       ToastUtils.error(err?.message || "Failed to activate project");
     }
   };
@@ -88,7 +89,7 @@ const Projects: React.FC = () => {
       await deleteProjectMutation.mutateAsync(project.identifier);
       ToastUtils.success(`Project "${project.name}" deleted successfully`);
     } catch (err: any) {
-      console.error("Failed to delete project:", err);
+      logger.error("Failed to delete project:", err);
       ToastUtils.error(err?.message || "Failed to delete project");
     }
   };
@@ -121,10 +122,10 @@ const Projects: React.FC = () => {
   const handleBulkExport = async (selectedIds: string[]) => {
     const { exportSelectedProjects } = await import("../../utils/projectExport");
     try {
-      await exportSelectedProjects(projects, selectedIds, "csv");
+      await exportSelectedProjects(projects as any, selectedIds, "csv");
       ToastUtils.success(`Exported ${selectedIds.length} projects successfully`);
     } catch (err: any) {
-      console.error("Failed to export projects:", err);
+      logger.error("Failed to export projects:", err);
       ToastUtils.error(err?.message || "Failed to export projects");
     }
   };
@@ -132,12 +133,12 @@ const Projects: React.FC = () => {
   return (
     <TenantPageShell title="Projects" description="Manage and monitor your infrastructure projects">
       <ProjectsPageContainer
-        projects={projects}
+        projects={projects as any}
         isLoading={isLoading}
         isFetching={isFetching}
         isError={isError}
         error={error as any}
-        onRefresh={refetch}
+        onRefresh={refetch as any}
         onCreateProject={handleCreateProject}
         onViewProject={handleViewProject}
         onArchiveProject={handleArchiveProject}

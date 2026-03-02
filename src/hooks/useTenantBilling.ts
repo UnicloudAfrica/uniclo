@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { UseQueryOptions } from "@tanstack/react-query";
 import silentTenantApi from "../index/tenant/silentTenant";
 import tenantApi from "../index/tenant/tenantApi";
+import logger from "../utils/logger";
 
 /**
  * Tenant Billing Hooks
@@ -130,7 +131,7 @@ export const useSelectBillingModel = () => {
       queryClient.invalidateQueries({ queryKey: ["tenant-billing-config"] });
     },
     onError: (error) => {
-      console.error("Error selecting billing model:", error);
+      logger.error("Error selecting billing model:", error);
     },
   });
 };
@@ -165,7 +166,7 @@ export const useSavePaymentGateway = () => {
       queryClient.invalidateQueries({ queryKey: ["tenant-payment-gateways"] });
     },
     onError: (error) => {
-      console.error("Error saving payment gateway:", error);
+      logger.error("Error saving payment gateway:", error);
     },
   });
 };
@@ -178,7 +179,7 @@ export const useDeletePaymentGateway = () => {
       queryClient.invalidateQueries({ queryKey: ["tenant-payment-gateways"] });
     },
     onError: (error) => {
-      console.error("Error deleting payment gateway:", error);
+      logger.error("Error deleting payment gateway:", error);
     },
   });
 };
@@ -201,8 +202,8 @@ interface VerifyAccountResult {
 
 const fetchBanks = async () => {
   const res = await silentTenantApi("GET", "/admin/payment-gateway/banks");
-  if (!res.data?.banks) throw new Error("Failed to fetch banks");
-  return res.data.banks as Bank[];
+  if (!(res.data as any)?.banks) throw new Error("Failed to fetch banks");
+  return (res.data as any).banks as Bank[];
 };
 
 const verifyBankAccount = async (data: { account_number: string; bank_code: string }) => {
@@ -240,7 +241,7 @@ export const useVerifyBankAccount = () => {
   return useMutation({
     mutationFn: verifyBankAccount,
     onError: (error) => {
-      console.error("Error verifying bank account:", error);
+      logger.error("Error verifying bank account:", error);
     },
   });
 };
@@ -254,7 +255,7 @@ export const useCreateSubaccount = () => {
       queryClient.invalidateQueries({ queryKey: ["tenant-billing-config"] });
     },
     onError: (error) => {
-      console.error("Error creating subaccount:", error);
+      logger.error("Error creating subaccount:", error);
     },
   });
 };
@@ -308,8 +309,8 @@ const fetchInvoices = async (params: InvoiceQueryParams = {}) => {
   const query = toQueryString(params);
   const url = `/admin/billing/invoices${query ? `?${query}` : ""}`;
   const res = await silentTenantApi("GET", url);
-  if (!res.data?.invoices) throw new Error("Failed to fetch invoices");
-  return res.data.invoices as InvoiceItem[];
+  if (!(res.data as any)?.invoices) throw new Error("Failed to fetch invoices");
+  return (res.data as any).invoices as InvoiceItem[];
 };
 
 const fetchEnforcementSummary = async () => {
@@ -365,7 +366,7 @@ export const usePaySettlements = () => {
       queryClient.invalidateQueries({ queryKey: ["tenant-enforcement-summary"] });
     },
     onError: (error) => {
-      console.error("Error processing settlement payment:", error);
+      logger.error("Error processing settlement payment:", error);
     },
   });
 };

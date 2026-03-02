@@ -110,7 +110,7 @@ const VPCs: React.FC<VpcsProps> = ({ projectId = "", region = "" }) => {
     ] as unknown;
 
     if (region) {
-      baseStats.push({
+      (baseStats as any).push({
         label: "Region",
         value: region,
         tone: "info",
@@ -204,7 +204,7 @@ const VPCs: React.FC<VpcsProps> = ({ projectId = "", region = "" }) => {
         title="Virtual Private Clouds"
         description="Segment your project networking into isolated address spaces that match your infrastructure topology."
         actions={actions}
-        meta={stats}
+        meta={stats as any}
         isLoading={isFetching}
       >
         {totalItems > 0 ? (

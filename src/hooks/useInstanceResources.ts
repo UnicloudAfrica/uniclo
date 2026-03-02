@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import adminSilentApi from "../index/admin/silent";
 import ToastUtils from "../utils/toastUtil";
+import logger from "../utils/logger";
 
 type ResourceList<T = unknown> = T[];
 
@@ -60,7 +61,7 @@ export const useInstanceResources = (options: UseInstanceResourcesOptions = {}) 
     setIsLoadingResources(true);
     try {
       const res = await apiFn("GET", endpoint);
-      const data = res?.data || {};
+      const data = (res as any)?.data || {};
       setResources({
         projects: data.projects || [],
         regions: data.regions || [],
@@ -74,7 +75,7 @@ export const useInstanceResources = (options: UseInstanceResourcesOptions = {}) 
         volumes: data.volumes || [],
       });
     } catch (error) {
-      console.error("Failed to load resources", error);
+      logger.error("Failed to load resources", error);
       ToastUtils.error("Could not load instance resources.");
     } finally {
       setIsLoadingResources(false);

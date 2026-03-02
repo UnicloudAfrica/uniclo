@@ -473,6 +473,8 @@ interface PricingWorkloadCardProps {
   errors?: Record<string, string | null>;
   regions?: BillingRegion[];
   isRegionsFetching?: boolean;
+  isLastItem?: boolean;
+  [key: string]: any;
 }
 
 const PricingWorkloadCard: React.FC<PricingWorkloadCardProps> = ({

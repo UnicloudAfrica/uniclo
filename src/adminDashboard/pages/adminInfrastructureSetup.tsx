@@ -5,6 +5,7 @@ import AdminActiveTab from "../components/adminActiveTab";
 import InfrastructureSetupFlow from "./infraComps/InfrastructureSetupFlow";
 import { useFetchProjectById } from "../../hooks/adminHooks/projectHooks";
 import ToastUtils from "../../utils/toastUtil";
+import logger from "../../utils/logger";
 
 interface ProjectDetails {
   identifier: string;
@@ -19,7 +20,7 @@ const decodeId = (encodedId: string | null) => {
     }
     return atob(decodeURIComponent(encodedId));
   } catch (e) {
-    console.error("Error decoding ID:", e);
+    logger.error("Error decoding ID:", e);
     return null;
   }
 };

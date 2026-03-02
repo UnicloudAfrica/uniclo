@@ -90,10 +90,10 @@ export const PayoutHistoryTable: React.FC<PayoutHistoryTableProps> = ({
                 )}
                 <td className="py-4">
                   <span
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusStyle?.bg} ${statusStyle?.text}`}
                   >
                     {getStatusIcon(payout.status)}
-                    {statusStyle.label}
+                    {statusStyle?.label}
                   </span>
                 </td>
                 <td className="py-4 text-sm text-gray-500 font-mono">

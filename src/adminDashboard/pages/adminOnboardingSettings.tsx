@@ -72,7 +72,7 @@ const AdminOnboardingSettings = () => {
     [settingsData]
   );
   const countries = useMemo<CountryRecord[]>(
-    () => (Array.isArray(countriesData) ? (countriesData as CountryRecord[]) : []),
+    () => (Array.isArray(countriesData) ? (countriesData as unknown as CountryRecord[]) : []),
     [countriesData]
   );
 
@@ -374,7 +374,9 @@ const AdminOnboardingSettings = () => {
                     key: "persona",
                     header: "Persona",
                     sortable: true,
-                    render: (val) => <span className="font-medium text-gray-900">{val}</span>,
+                    render: (val) => (
+                      <span className="font-medium text-gray-900">{val as any}</span>
+                    ),
                   },
                   {
                     key: "step_id",
@@ -385,20 +387,20 @@ const AdminOnboardingSettings = () => {
                     key: "country_code",
                     header: "Country",
                     sortable: true,
-                    render: (val) => val || <span className="text-gray-400">—</span>,
+                    render: (val) => (val as any) || <span className="text-gray-400">—</span>,
                   },
                   {
                     key: "enforcement",
                     header: "Enforcement",
                     sortable: true,
                     render: (val) =>
-                      enforcementOptions.find((opt) => opt.value === val)?.label ?? val,
+                      (enforcementOptions.find((opt) => opt.value === val)?.label ?? val) as any,
                   },
                   {
                     key: "grace_period_days",
                     header: "Grace Days",
                     sortable: true,
-                    render: (val, row) => (row.enforcement === "grace" ? (val ?? 0) : "—"),
+                    render: (val, row) => (row.enforcement === "grace" ? ((val ?? 0) as any) : "—"),
                   },
                   {
                     key: "actions",

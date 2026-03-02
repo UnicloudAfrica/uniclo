@@ -1,13 +1,13 @@
 import { X } from "lucide-react";
 
-const Row = ({ label, value }) => (
+const Row = ({ label, value }: any) => (
   <div className="flex justify-between text-sm text-gray-700">
     <span className="font-medium text-gray-600">{label}</span>
     <span className="text-gray-900">{value ?? "N/A"}</span>
   </div>
 );
 
-const ViewSubnetModal = ({ isOpen, onClose, subnet }) => {
+const ViewSubnetModal = ({ isOpen, onClose, subnet }: any) => {
   if (!isOpen || !subnet) return null;
 
   const details = {

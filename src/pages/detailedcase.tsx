@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 import copy from "./assets/copy.svg";
 import DOMPurify from "dompurify";
 import { CasesContext } from "../contexts/contextprovider";
+import logger from "../utils/logger";
 
 interface CaseItem {
   id: string;
@@ -66,7 +67,7 @@ const DetailedCases = () => {
 
   const db = useMemo(() => {
     if (typeof window === "undefined") return null;
-    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]!;
     return getFirestore(app);
   }, []);
 
@@ -85,11 +86,11 @@ const DetailedCases = () => {
           const reso = { id: doc.id, ...doc.data() } as CaseItem;
           setSelectedCaseItem(reso);
         } else {
-          console.log("Document does not exist");
+          logger.log("Document does not exist");
         }
       })
       .catch((error) => {
-        console.error("Error getting document:", error);
+        logger.error("Error getting document:", error);
       });
   }, [id, db, casesArray.length]);
 
@@ -109,7 +110,7 @@ const DetailedCases = () => {
         setOtherCasesState(otherCasesData);
       })
       .catch((error) => {
-        console.error("Error getting documents:", error);
+        logger.error("Error getting documents:", error);
       });
   }, [id, db, casesArray.length]);
 
@@ -127,7 +128,7 @@ const DetailedCases = () => {
         }, 2000); // Change back to 'Copy link' after 3000 milliseconds (3 seconds)
       })
       .catch((err) => {
-        console.error("Unable to copy link to clipboard", err);
+        logger.error("Unable to copy link to clipboard", err);
       });
   };
 

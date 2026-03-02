@@ -27,7 +27,7 @@ const AdminVpcs: React.FC = () => {
         hierarchy="admin"
         projectId={projectId}
         region={region}
-        hooks={hooks}
+        hooks={hooks as any}
         wrapper={({ headerActions, children }) => (
           <AdminPageShell
             title="VPCs"

@@ -5,12 +5,13 @@ import ModernButton from "./ModernButton";
 
 export interface ModalAction {
   label: string;
-  variant?: "primary" | "secondary" | "outline" | "outlineDanger" | "ghost" | "danger" | "success";
+  variant?: any;
   size?: "sm" | "md" | "lg";
   onClick: () => void;
   disabled?: boolean;
   icon?: React.ReactNode;
   props?: Record<string, any>;
+  [key: string]: any;
 }
 
 export interface ModernModalProps {
@@ -110,9 +111,9 @@ const ModernModal: React.FC<ModernModalProps> = ({
     borderRadius: size === "full" ? 0 : designTokens.borderRadius.xl,
     border: size === "full" ? "none" : `1px solid ${designTokens.colors.neutral[200]}`,
     boxShadow: designTokens.shadows.xl,
-    maxWidth: sizes[size].maxWidth,
-    width: sizes[size].width,
-    height: sizes[size].height || "auto",
+    maxWidth: sizes?.[size].maxWidth,
+    width: sizes?.[size].width,
+    height: sizes?.[size].height || "auto",
     maxHeight: size === "full" ? "100vh" : "calc(100vh - 64px)",
     display: "flex",
     flexDirection: "column",

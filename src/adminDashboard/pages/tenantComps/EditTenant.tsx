@@ -8,6 +8,7 @@ import {
   useFetchIndustries,
 } from "../../../hooks/resource";
 import ToastUtils from "../../../utils/toastUtil";
+import logger from "../../../utils/logger";
 
 interface EditTenantModalProps {
   isOpen: boolean;
@@ -73,7 +74,7 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
   // Update country name when ID changes
   useEffect(() => {
     if (formData.country_id && countries) {
-      const selectedCountry = countries.find(
+      const selectedCountry = (countries as any).find(
         (c: any) => String(c.id) === String(formData.country_id)
       );
       if (selectedCountry && selectedCountry.name !== formData.country) {
@@ -85,7 +86,9 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
   // Update state name when ID changes
   useEffect(() => {
     if (formData.state_id && states) {
-      const selectedState = states.find((s: any) => String(s.id) === String(formData.state_id));
+      const selectedState = (states as any).find(
+        (s: any) => String(s.id) === String(formData.state_id)
+      );
       if (selectedState && selectedState.name !== formData.state) {
         setFormData((prev) => ({ ...prev, state: selectedState.name }));
       }
@@ -95,7 +98,9 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
   // Update city name when ID changes
   useEffect(() => {
     if (formData.city_id && cities) {
-      const selectedCity = cities.find((c: any) => String(c.id) === String(formData.city_id));
+      const selectedCity = (cities as any).find(
+        (c: any) => String(c.id) === String(formData.city_id)
+      );
       if (selectedCity && selectedCity.name !== formData.city) {
         setFormData((prev) => ({ ...prev, city: selectedCity.name }));
       }
@@ -154,7 +159,7 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
           onClose();
         },
         onError: (err: any) => {
-          console.error("Failed to update partner:", err);
+          logger.error("Failed to update partner:", err);
           ToastUtils.error(err.message || "Failed to update partner. Please try again.");
         },
       }
@@ -163,7 +168,7 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
 
   if (!isOpen) return null;
 
-  const showCityDropdown = cities && cities.length > 0 && !isCitiesFetching;
+  const showCityDropdown = cities && (cities as any).length > 0 && !isCitiesFetching;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit overflow-y-auto py-10">
@@ -294,7 +299,7 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
                 }`}
               >
                 <option value="">Select Industry</option>
-                {industries?.map((ind: any) => (
+                {(industries as any)?.map((ind: any) => (
                   <option key={ind.id || ind.name} value={ind.name}>
                     {ind.name}
                   </option>
@@ -356,7 +361,7 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
               >
                 <option value="">Select Country</option>
-                {countries?.map((c: any) => (
+                {(countries as any)?.map((c: any) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
                   </option>
@@ -374,7 +379,7 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white disabled:bg-gray-50 disabled:text-gray-400"
               >
                 <option value="">Select State</option>
-                {states?.map((s: any) => (
+                {(states as any)?.map((s: any) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
                   </option>
@@ -393,7 +398,7 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white disabled:bg-gray-50 disabled:text-gray-400"
                 >
                   <option value="">Select City</option>
-                  {cities?.map((c: any) => (
+                  {(cities as any)?.map((c: any) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
                     </option>

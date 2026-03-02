@@ -2,8 +2,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../index/silent";
 import api from "../index/api";
+import logger from "../utils/logger";
 
-const fetchNetworkInterfaces = async ({ project_id, region }) => {
+const fetchNetworkInterfaces = async ({ project_id, region }: any) => {
   const params = new URLSearchParams();
   if (project_id) params.append("project_id", project_id);
   if (region) params.append("region", region);
@@ -17,19 +18,19 @@ const fetchNetworkInterfaces = async ({ project_id, region }) => {
   return res.data;
 };
 
-const createNetworkInterface = async (payload) => {
+const createNetworkInterface = async (payload: any) => {
   const res = await api("POST", "/business/network-interfaces", payload);
   if (!res.data) throw new Error("Failed to create network interface");
   return res.data;
 };
 
-const deleteNetworkInterface = async ({ id, payload }) => {
+const deleteNetworkInterface = async ({ id, payload }: any) => {
   const res = await api("DELETE", `/business/network-interfaces/${id}`, payload);
   if (!res.data) throw new Error("Failed to delete network interface");
   return res.data;
 };
 
-const attachSecurityGroup = async (params) => {
+const attachSecurityGroup = async (params: any) => {
   // Backward compatibility: support old signature ({ id, securityGroupData })
   let payload = params;
   if (params && typeof params === "object" && "id" in params && "securityGroupData" in params) {
@@ -40,7 +41,7 @@ const attachSecurityGroup = async (params) => {
   return res.data;
 };
 
-const detachSecurityGroup = async (params) => {
+const detachSecurityGroup = async (params: any) => {
   // Backward compatibility: support old signature ({ id, securityGroupData })
   let payload = params;
   if (params && typeof params === "object" && "id" in params && "securityGroupData" in params) {
@@ -51,7 +52,7 @@ const detachSecurityGroup = async (params) => {
   return res.data;
 };
 
-const syncNetworkInterfaces = async ({ project_id, region }) => {
+const syncNetworkInterfaces = async ({ project_id, region }: any) => {
   const params = new URLSearchParams();
   if (project_id) params.append("project_id", project_id);
   if (region) params.append("region", region);
@@ -66,7 +67,7 @@ const syncNetworkInterfaces = async ({ project_id, region }) => {
   return res.data;
 };
 
-export const useFetchTenantNetworkInterfaces = (projectId, region, options = {}) => {
+export const useFetchTenantNetworkInterfaces = (projectId: any, region: any, options = {}) => {
   return useQuery({
     queryKey: ["networkInterfaces", { projectId, region }],
     queryFn: () => fetchNetworkInterfaces({ project_id: projectId, region }),
@@ -84,7 +85,7 @@ export const useCreateTenantNetworkInterface = () => {
       queryClient.invalidateQueries({ queryKey: ["networkInterfaces"] });
     },
     onError: (error) => {
-      console.error("Error creating network interface:", error);
+      logger.error("Error creating network interface:", error);
     },
   });
 };
@@ -97,7 +98,7 @@ export const useDeleteTenantNetworkInterface = () => {
       queryClient.invalidateQueries({ queryKey: ["networkInterfaces"] });
     },
     onError: (error) => {
-      console.error("Error deleting network interface:", error);
+      logger.error("Error deleting network interface:", error);
     },
   });
 };
@@ -110,7 +111,7 @@ export const useAttachTenantSecurityGroup = () => {
       queryClient.invalidateQueries({ queryKey: ["networkInterfaces"] });
     },
     onError: (error) => {
-      console.error("Error attaching security group:", error);
+      logger.error("Error attaching security group:", error);
     },
   });
 };
@@ -123,7 +124,7 @@ export const useDetachTenantSecurityGroup = () => {
       queryClient.invalidateQueries({ queryKey: ["networkInterfaces"] });
     },
     onError: (error) => {
-      console.error("Error detaching security group:", error);
+      logger.error("Error detaching security group:", error);
     },
   });
 };
@@ -136,7 +137,7 @@ export const useSyncTenantNetworkInterfaces = () => {
       queryClient.invalidateQueries({ queryKey: ["networkInterfaces"] });
     },
     onError: (error) => {
-      console.error("Error syncing network interfaces:", error);
+      logger.error("Error syncing network interfaces:", error);
     },
   });
 };

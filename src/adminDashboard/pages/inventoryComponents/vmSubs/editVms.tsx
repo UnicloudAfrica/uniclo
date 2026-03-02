@@ -27,7 +27,7 @@ const EditVMModal = ({ isOpen, onClose, vm }: any) => {
           vm.price !== undefined && vm.price !== null
             ? parseFloat(vm.price).toFixed(2) // Format to 2 decimal places for display
             : "",
-      });
+      } as any);
       setErrors({}); // Clear any previous errors
     } else if (!isOpen) {
       // Reset form when modal closes
@@ -57,8 +57,8 @@ const EditVMModal = ({ isOpen, onClose, vm }: any) => {
     ];
 
     numberFields.forEach((field: any) => {
-      const value = parseFloat(formData[field]);
-      if (isNaN(value) || formData[field] === "") {
+      const value = parseFloat((formData as any)[field]);
+      if (isNaN(value) || (formData as any)[field] === "") {
         newErrors[field] = `${field
           .replace(/_/g, " ")
           .replace("gib", "GiB")

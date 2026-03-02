@@ -12,17 +12,18 @@ import {
 import useImageFallback from "../../hooks/useImageFallback";
 import { getSubdomain } from "../../utils/getSubdomain";
 import AuthShell from "../../components/auth/AuthShell";
+import logger from "../../utils/logger";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState<Record<string, any>>({});
   const { mutate: forgotPassword, isPending } = useForgotPassword();
   const { userEmail, setUserEmail } = useTenantAuthStore.getState();
-  const hostname = typeof window !== "undefined" ? globalThis.window.location.hostname : "";
-  const subdomain = typeof window !== "undefined" ? getSubdomain() : null;
+  const hostname = globalThis.window !== undefined ? globalThis.window.location.hostname : "";
+  const subdomain = globalThis.window !== undefined ? getSubdomain() : null;
   const { data: branding } = usePublicBrandingTheme({
     domain: hostname,
-    subdomain,
+    subdomain: subdomain ?? undefined,
   });
   useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
   const fallbackBrand = {
@@ -53,7 +54,7 @@ export default function ForgotPassword() {
   };
 
   // Handle form submission for forgot password
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: any) => {
     e.preventDefault();
 
     if (!validateForm()) return;
@@ -69,7 +70,7 @@ export default function ForgotPassword() {
       },
       onError: (err) => {
         setErrors({ general: err.message || "Failed to send reset link" });
-        console.log(err);
+        logger.log(err);
       },
     });
   };

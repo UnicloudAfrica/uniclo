@@ -75,7 +75,9 @@ const BusinessAddress: React.FC<BusinessAddressProps> & {
               value={formData.business.country_id || ""}
               onChange={(e) => {
                 const value = e.target.value;
-                const selectedCountry = countries?.find((c) => c.id === parseInt(value));
+                const selectedCountry = (countries as any)?.find(
+                  (c: any) => c.id === parseInt(value)
+                );
                 setFormData({
                   ...formData,
                   business: {
@@ -86,13 +88,13 @@ const BusinessAddress: React.FC<BusinessAddressProps> & {
                 });
               }}
               className="w-full bg-transparent outline-none"
-              disabled={isCountriesFetching || !countries?.length}
+              disabled={isCountriesFetching || !(countries as any)?.length}
             >
               <option value="" disabled>
                 {isCountriesFetching ? "Loading countries..." : "Select country"}
               </option>
-              {countries?.length ? (
-                countries.map((country: any) => (
+              {(countries as any)?.length ? (
+                (countries as any).map((country: any) => (
                   <option key={country.id} value={country.id.toString()}>
                     {country.name}
                   </option>

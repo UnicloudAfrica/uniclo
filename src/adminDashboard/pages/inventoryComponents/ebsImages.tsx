@@ -41,13 +41,21 @@ const EBSVolumes = ({ selectedRegion, onMetricsChange }: any) => {
 
   const avgReadIOPS = useMemo(() => {
     if (!rows.length) return 0;
-    return rows.reduce((acc, volume) => acc + Number(volume.read_iops_limit || 0), 0) / rows.length;
+    return (
+      (rows as any).reduce(
+        (acc: any, volume: any) => (acc as any) + Number((volume as any).read_iops_limit || 0),
+        0
+      ) / rows.length
+    );
   }, [rows]);
 
   const avgWriteIOPS = useMemo(() => {
     if (!rows.length) return 0;
     return (
-      rows.reduce((acc, volume) => acc + Number(volume.write_iops_limit || 0), 0) / rows.length
+      (rows as any).reduce(
+        (acc: any, volume: any) => (acc as any) + Number((volume as any).write_iops_limit || 0),
+        0
+      ) / rows.length
     );
   }, [rows]);
 
@@ -97,7 +105,7 @@ const EBSVolumes = ({ selectedRegion, onMetricsChange }: any) => {
     {
       header: "Volume profile",
       key: "name",
-      render: (volume) => (
+      render: (volume: any) => (
         <div className="flex flex-col">
           <span className="font-semibold text-slate-900">{volume.name || "Unnamed volume"}</span>
           <span className="text-xs text-slate-500">
@@ -110,7 +118,7 @@ const EBSVolumes = ({ selectedRegion, onMetricsChange }: any) => {
       header: "IOPS (R/W)",
       key: "read_iops_limit",
       align: "center",
-      render: (volume) => (
+      render: (volume: any) => (
         <div className="flex flex-col items-center text-xs text-slate-500">
           <span className="font-medium text-slate-700">
             {formatMetric(volume.read_iops_limit, "IOPS")}
@@ -123,7 +131,7 @@ const EBSVolumes = ({ selectedRegion, onMetricsChange }: any) => {
       header: "Bandwidth (R/W)",
       key: "read_bandwidth_limit",
       align: "center",
-      render: (volume) => (
+      render: (volume: any) => (
         <div className="flex flex-col items-center text-xs text-slate-500">
           <span className="font-medium text-slate-700">
             {formatMetric(volume.read_bandwidth_limit, "MB/s")}
@@ -136,7 +144,7 @@ const EBSVolumes = ({ selectedRegion, onMetricsChange }: any) => {
       header: "",
       key: "actions",
       align: "right",
-      render: (volume) => (
+      render: (volume: any) => (
         <div className="flex items-center justify-end gap-2">
           <button
             type="button"
@@ -186,7 +194,7 @@ const EBSVolumes = ({ selectedRegion, onMetricsChange }: any) => {
   };
 
   const handleSearch = useCallback(
-    (value) => {
+    (value: any) => {
       setSearch(value);
       setPage(1);
     },
@@ -198,13 +206,13 @@ const EBSVolumes = ({ selectedRegion, onMetricsChange }: any) => {
       <ResourceDataExplorer
         title="Volume catalog"
         description="Control volume performance tiers and ensure workloads hit the right throughput."
-        columns={columns}
-        rows={rows}
+        columns={columns as any}
+        rows={rows as any}
         loading={isFetching}
-        page={meta?.current_page ?? page}
-        perPage={meta?.per_page ?? perPage}
-        total={total}
-        meta={meta}
+        page={meta?.current_page ?? (page as any)}
+        perPage={meta?.per_page ?? (perPage as any)}
+        total={total as any}
+        meta={meta as any}
         onPageChange={setPage}
         onPerPageChange={(next) => {
           setPerPage(next);

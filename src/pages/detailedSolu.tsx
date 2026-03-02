@@ -10,6 +10,7 @@ import admob from "./assets/adMob.svg";
 import copy from "./assets/copy.svg";
 import { SolutionsContext } from "../contexts/contextprovider";
 import DOMPurify from "dompurify";
+import logger from "../utils/logger";
 
 interface SolutionItem {
   id: string;
@@ -85,11 +86,11 @@ const DetailedSolution = () => {
           const solu = { id: doc.id, ...doc.data() } as SolutionItem;
           setSelectedSolutionItem(solu);
         } else {
-          console.log("Document does not exist");
+          logger.log("Document does not exist");
         }
       })
       .catch((error) => {
-        console.error("Error getting document:", error);
+        logger.error("Error getting document:", error);
       });
   }, [id, db, solutionsArray.length]);
 
@@ -99,7 +100,7 @@ const DetailedSolution = () => {
     const q = query(soluCollectionRef);
     getDocs(q)
       .then((querySnapshot) => {
-        const otherSoluData = [];
+        const otherSoluData: any = [];
         querySnapshot.forEach((doc) => {
           const soluData = { id: doc.id, ...doc.data() } as SolutionItem;
           if (id !== doc.id) {
@@ -109,7 +110,7 @@ const DetailedSolution = () => {
         setOtherSolutionsState(otherSoluData);
       })
       .catch((error) => {
-        console.error("Error getting documents:", error);
+        logger.error("Error getting documents:", error);
       });
   }, [id, db, solutionsArray.length]);
 
@@ -127,7 +128,7 @@ const DetailedSolution = () => {
         }, 2000); // Change back to 'Copy link' after 3000 milliseconds (3 seconds)
       })
       .catch((err) => {
-        console.error("Unable to copy link to clipboard", err);
+        logger.error("Unable to copy link to clipboard", err);
       });
   };
 

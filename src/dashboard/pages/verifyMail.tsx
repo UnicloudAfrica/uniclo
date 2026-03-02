@@ -30,11 +30,11 @@ export default function VerifyMail() {
   const [errors, setErrors] = useState<Record<string, any>>({});
   const { mutate: verifyEmail, isPending: isVerifyPending } = useVerifyMail();
   const navigate = useNavigate();
-  const hostname = typeof window !== "undefined" ? globalThis.window.location.hostname : "";
-  const subdomain = typeof window !== "undefined" ? getSubdomain() : null;
+  const hostname = globalThis.window !== undefined ? globalThis.window.location.hostname : "";
+  const subdomain = globalThis.window !== undefined ? getSubdomain() : null;
   const { data: branding } = usePublicBrandingTheme({
     domain: hostname,
-    subdomain,
+    subdomain: subdomain ?? undefined,
   });
   useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
   const fallbackBrand = {
@@ -54,7 +54,7 @@ export default function VerifyMail() {
   }, [twoFactorRequired]);
 
   // Handle OTP code changes from VerificationCodeInput
-  const handleCodeChange = (updatedCode) => {
+  const handleCodeChange = (updatedCode: any) => {
     setCode((prev) => {
       if (!Array.isArray(updatedCode)) return prev;
       if (
@@ -102,11 +102,11 @@ export default function VerifyMail() {
     const userData = { email };
     const resolvedCode = typeof enteredCode === "string" ? enteredCode : code.join("");
     if (twoFactorRequired) {
-      userData.google2fa_code = resolvedCode;
-      userData.two_factor_code = resolvedCode;
-      userData.code = resolvedCode;
+      (userData as any).google2fa_code = resolvedCode;
+      (userData as any).two_factor_code = resolvedCode;
+      (userData as any).code = resolvedCode;
     } else {
-      userData.otp = resolvedCode;
+      (userData as any).otp = resolvedCode;
     }
 
     verifyEmail(userData, {
@@ -114,20 +114,20 @@ export default function VerifyMail() {
         clearUserEmail();
         clearTwoFactorRequirement?.();
 
-        const userRole = res?.data?.role ?? res?.role;
+        const userRole = (res as any)?.data?.role ?? (res as any)?.role;
         const domainInfo =
-          res?.data?.domain ??
-          res?.data?.tenant?.domain ??
-          res?.data?.domain_account?.account_domain ??
+          (res as any)?.data?.domain ??
+          (res as any)?.data?.tenant?.domain ??
+          (res as any)?.data?.domain_account?.account_domain ??
           null;
 
         const availableTenants =
-          res?.data?.available_tenants ??
-          res?.data?.availableTenants ??
-          res?.data?.tenants ??
+          (res as any)?.data?.available_tenants ??
+          (res as any)?.data?.availableTenants ??
+          (res as any)?.data?.tenants ??
           undefined;
 
-        const userData = res?.data ?? null;
+        const userData = (res as any)?.data ?? null;
         const hasTenantContext = Boolean(userData?.tenant_id || userData?.tenant?.id);
         const normalizedRole = (userRole || "").toLowerCase();
         const resolvedRole = ["admin", "tenant", "client"].includes(normalizedRole)
@@ -227,7 +227,7 @@ export default function VerifyMail() {
           {errors.general && <p className="text-red-500 text-xs mt-1">{errors.general}</p>}
 
           <button
-            onClick={handleSubmit}
+            onClick={handleSubmit as any}
             disabled={isVerifyPending}
             className="w-full hover:opacity-80 text-white font-semibold py-3 px-4 rounded-lg transition-opacity focus:outline-none focus:ring-1 focus:ring-offset-2 flex items-center justify-center"
             style={{

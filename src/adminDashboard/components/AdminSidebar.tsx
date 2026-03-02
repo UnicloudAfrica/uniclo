@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import useSidebarStore from "../../stores/sidebarStore";
 import { useAdminBrandingTheme } from "../../hooks/useBrandingTheme";
 import { useAdminShellContext } from "./AdminShellContext";
+import logger from "../../utils/logger";
 
 interface AdminSidebarProps {
   forceRender?: boolean;
@@ -29,7 +30,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ forceRender = false }) => {
     try {
       await logoutActiveSession();
     } catch (error) {
-      console.error("Admin logout failed:", error);
+      logger.error("Admin logout failed:", error);
     } finally {
       clearUserEmail?.();
       closeMobile();

@@ -68,7 +68,7 @@ const buildInitials = (value = "") => {
   if (!sanitized) return "OS";
   const parts = sanitized.split(/\s+/).filter(Boolean);
   if (parts.length === 1) {
-    return parts[0].slice(0, 2).toUpperCase();
+    return parts[0]!.slice(0, 2).toUpperCase();
   }
   const first = parts[0]?.charAt(0) ?? "";
   const second = parts[1]?.charAt(0) ?? "";
@@ -83,9 +83,9 @@ const getAvatarVisuals = (image: any) => {
   return {
     label: buildInitials(descriptor || image?.name || "OS"),
     style: {
-      borderColor: palette.borderColor,
-      color: palette.textColor,
-      background: palette.background,
+      borderColor: palette?.borderColor,
+      color: palette?.textColor,
+      background: palette?.background,
     },
     className:
       "inline-flex h-10 w-10 items-center justify-center rounded-xl border text-xs font-semibold uppercase tracking-wide shadow-sm",
@@ -210,7 +210,7 @@ const OSImages = ({ selectedRegion, onMetricsChange }: any) => {
     {
       key: "name",
       header: "Image",
-      render: (image) => {
+      render: (image: any) => {
         const { label, className, style } = getAvatarVisuals(image);
         const chips = buildDetailChips(image);
         const platform = image?.platform || image?.os_family;
@@ -245,7 +245,7 @@ const OSImages = ({ selectedRegion, onMetricsChange }: any) => {
       key: "region",
       header: "Region",
       align: "center",
-      render: (image) => (
+      render: (image: any) => (
         <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
           {image.region || "—"}
         </span>
@@ -255,13 +255,13 @@ const OSImages = ({ selectedRegion, onMetricsChange }: any) => {
       key: "is_licenced",
       header: "License",
       align: "center",
-      render: (image) => formatLicenseStatus(image.is_licenced),
+      render: (image: any) => formatLicenseStatus(image.is_licenced),
     },
     {
       key: "actions",
       header: "",
       align: "right",
-      render: (image) => (
+      render: (image: any) => (
         <div className="flex items-center justify-end gap-2">
           <button
             type="button"
@@ -311,7 +311,7 @@ const OSImages = ({ selectedRegion, onMetricsChange }: any) => {
   };
 
   const handleSearch = useCallback(
-    (value) => {
+    (value: any) => {
       setSearch(value);
       setPage(1);
     },
@@ -323,13 +323,13 @@ const OSImages = ({ selectedRegion, onMetricsChange }: any) => {
       <ResourceDataExplorer
         title="Operating system templates"
         description="Curate and maintain the golden images available to provisioning flows across your regions."
-        columns={columns}
-        rows={rows}
+        columns={columns as any}
+        rows={rows as any}
         loading={isFetching}
-        page={meta?.current_page ?? page}
-        perPage={meta?.per_page ?? perPage}
-        total={total}
-        meta={meta}
+        page={meta?.current_page ?? (page as any)}
+        perPage={meta?.per_page ?? (perPage as any)}
+        total={total as any}
+        meta={meta as any}
         onPageChange={setPage}
         onPerPageChange={(next) => {
           setPerPage(next);

@@ -1,6 +1,7 @@
 import { X, Loader2 } from "lucide-react";
 import { useDeleteFloatingIP } from "../../../../hooks/adminHooks/floatingIPHooks";
 import ToastUtils from "../../../../utils/toastUtil";
+import logger from "../../../../utils/logger";
 
 const DeleteFloatingIP = ({ isOpen, onClose, floatingIP }: any) => {
   const { mutate, isPending } = useDeleteFloatingIP();
@@ -15,12 +16,12 @@ const DeleteFloatingIP = ({ isOpen, onClose, floatingIP }: any) => {
           onClose();
         },
         onError: (err) => {
-          //   console.error("Failed to delete Floating IP:", err);
+          //   logger.error("Failed to delete Floating IP:", err);
           //   ToastUtils.error("Failed to delete Floating IP. Please try again.");
         },
       });
     } else {
-      console.error("No Floating IP ID provided for deletion.");
+      logger.error("No Floating IP ID provided for deletion.");
     }
   };
 

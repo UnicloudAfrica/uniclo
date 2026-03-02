@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import tenantSilentApi from "../../index/tenant/silentTenant";
 import tenantApi from "../../index/tenant/tenantApi";
+import logger from "../../utils/logger";
 
 const fetchVpcs = async ({ project_id, region }: { project_id?: string; region?: string }) => {
   const params = new URLSearchParams();
@@ -82,7 +83,7 @@ export const useCreateTenantVpc = () => {
       queryClient.invalidateQueries({ queryKey: ["vpcs"] });
     },
     onError: (error) => {
-      console.error("Error creating VPC:", error);
+      logger.error("Error creating VPC:", error);
     },
   });
 };
@@ -96,7 +97,7 @@ export const useUpdateTenantVpc = () => {
       queryClient.invalidateQueries({ queryKey: ["vpc", variables.id] });
     },
     onError: (error) => {
-      console.error("Error updating VPC:", error);
+      logger.error("Error updating VPC:", error);
     },
   });
 };
@@ -109,7 +110,7 @@ export const useDeleteTenantVpc = () => {
       queryClient.invalidateQueries({ queryKey: ["vpcs"] });
     },
     onError: (error) => {
-      console.error("Error deleting VPC:", error);
+      logger.error("Error deleting VPC:", error);
     },
   });
 };
@@ -122,7 +123,7 @@ export const useSyncTenantVpcs = () => {
       queryClient.invalidateQueries({ queryKey: ["vpcs"] });
     },
     onError: (error) => {
-      console.error("Error syncing VPCs:", error);
+      logger.error("Error syncing VPCs:", error);
     },
   });
 };
@@ -148,7 +149,7 @@ const fetchAvailableCidrs = async ({
   if (prefix_length) params.append("prefix_length", String(prefix_length));
   if (limit) params.append("limit", String(limit));
   const res = await tenantSilentApi("GET", `/admin/vpcs/available-cidrs?${params.toString()}`);
-  const suggestions = res?.data?.suggestions ?? res?.suggestions ?? [];
+  const suggestions = (res as any)?.data?.suggestions ?? (res as any)?.suggestions ?? [];
   return Array.isArray(suggestions) ? suggestions : [];
 };
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import ToastUtils from "../../../../utils/toastUtil";
 import { useUpdateBandwidthProduct } from "../../../../hooks/adminHooks/bandwidthHooks";
+import logger from "../../../../utils/logger";
 
 const EditBandwidthModal = ({ isOpen, onClose, bandwidth }: any) => {
   const [formData, setFormData] = useState({
@@ -73,13 +74,13 @@ const EditBandwidthModal = ({ isOpen, onClose, bandwidth }: any) => {
             onClose(); // Close modal on success
           },
           onError: (err) => {
-            console.error("Failed to update Bandwidth Product:", err);
+            logger.error("Failed to update Bandwidth Product:", err);
             ToastUtils.error("Failed to update bandwidth product. Please try again.");
           },
         }
       );
     } else {
-      console.error("No Bandwidth ID provided for update.");
+      logger.error("No Bandwidth ID provided for update.");
       ToastUtils.error("Cannot update: Bandwidth ID is missing.");
     }
   };

@@ -1,5 +1,6 @@
 import { X, Loader2 } from "lucide-react";
 import { useDeleteAdmin } from "../../../hooks/adminHooks/adminHooks";
+import logger from "../../../utils/logger";
 
 export const DeleteAdminModal = ({ isOpen, onClose, admin }: any) => {
   // Use the useDeleteAdmin hook
@@ -21,14 +22,14 @@ export const DeleteAdminModal = ({ isOpen, onClose, admin }: any) => {
           onClose(); // Close the modal on successful deletion
         },
         onError: () => {
-          //   console.error("Failed to delete admin:", err);
+          //   logger.error("Failed to delete admin:", err);
           //   ToastUtils.error(
           //     err?.message || "Failed to delete admin. Please try again."
           //   );
         },
       });
     } else {
-      //   console.error("No admin ID provided for deletion.");
+      //   logger.error("No admin ID provided for deletion.");
       //   ToastUtils.error("Cannot delete: Admin ID is missing.");
     }
   };
@@ -71,7 +72,7 @@ export const DeleteAdminModal = ({ isOpen, onClose, admin }: any) => {
 
           {isError && (
             <p className="text-red-500 text-sm my-2">
-              Error: {error?.message || "Failed to delete admin."}
+              Error: {(error as any)?.message || "Failed to delete admin."}
             </p>
           )}
         </div>

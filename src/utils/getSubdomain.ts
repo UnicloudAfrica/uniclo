@@ -5,7 +5,7 @@ export const getSubdomain = (): string | null => {
   const parts = hostname.split(".");
   // For unicloudafrica.lvh.me or unicloudafrica.com, return null (public site)
   // For xyz.unicloudafrica.lvh.me or xyz.unicloudafrica.com, return "xyz"
-  return parts.length > 2 ? parts[0] : null;
+  return parts.length > 2 ? (parts[0] ?? null) : null;
 };
 
 export const getBaseDomain = (): string => {

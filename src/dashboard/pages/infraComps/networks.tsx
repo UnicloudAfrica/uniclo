@@ -16,9 +16,9 @@ import ToastUtils from "../../../utils/toastUtil";
 
 const ITEMS_PER_PAGE = 6;
 
-const normalize = (value) => (value ? value.toString().replace(/_/g, " ") : "").toLowerCase();
+const normalize = (value: any) => (value ? value.toString().replace(/_/g, " ") : "").toLowerCase();
 
-const getToneForStatus = (status) => {
+const getToneForStatus = (status: any) => {
   const normalized = normalize(status);
   if (["active", "available"].includes(normalized)) return "success";
   if (["pending", "creating", "updating"].includes(normalized)) return "warning";
@@ -26,7 +26,7 @@ const getToneForStatus = (status) => {
   return "neutral";
 };
 
-const NetworkDetailsModal = ({ network, isOpen, onClose }) => {
+const NetworkDetailsModal = ({ network, isOpen, onClose }: any) => {
   const actions = [
     {
       label: "Close",
@@ -140,7 +140,7 @@ const NetworkDetailsModal = ({ network, isOpen, onClose }) => {
   );
 };
 
-const Networks = ({ projectId = "", region = "", onStatsUpdate }) => {
+const Networks = ({ projectId = "", region = "", onStatsUpdate }: any) => {
   const queryClient = useQueryClient();
   const { data: networks, isFetching } = useFetchTenantNetworks(projectId, region);
 
@@ -149,8 +149,8 @@ const Networks = ({ projectId = "", region = "", onStatsUpdate }) => {
   const [viewNetwork, setViewNetwork] = useState<any>(null);
 
   const filteredNetworks = useMemo(() => {
-    return (networks || []).filter(
-      (net) => (net.type || net?.meta?.network_type) === "vpc_network"
+    return (((networks as any) || []) as any[]).filter(
+      (net: any) => (net.type || net?.meta?.network_type) === "vpc_network"
     );
   }, [networks]);
 
@@ -166,8 +166,10 @@ const Networks = ({ projectId = "", region = "", onStatsUpdate }) => {
   }, [filteredNetworks, currentPage]);
 
   const stats = useMemo(() => {
-    const uniqueVpcs = new Set(filteredNetworks.map((network) => network.vpc_id).filter(Boolean));
-    const baseStats = [
+    const uniqueVpcs = new Set(
+      filteredNetworks.map((network: any) => network.vpc_id).filter(Boolean)
+    );
+    const baseStats: any[] = [
       {
         label: "Total Networks",
         value: totalItems,
@@ -187,7 +189,7 @@ const Networks = ({ projectId = "", region = "", onStatsUpdate }) => {
         icon: <MapPin size={16} />,
       });
     }
-    return baseStats;
+    return baseStats as any;
   }, [filteredNetworks, totalItems, region]);
 
   const handleSync = async () => {
@@ -203,7 +205,7 @@ const Networks = ({ projectId = "", region = "", onStatsUpdate }) => {
       });
       ToastUtils.success("Networks synced successfully.");
     } catch (error) {
-      ToastUtils.error(error?.message || "Failed to sync networks.");
+      ToastUtils.error((error as any)?.message || "Failed to sync networks.");
     } finally {
       setIsSyncing(false);
     }
@@ -233,7 +235,7 @@ const Networks = ({ projectId = "", region = "", onStatsUpdate }) => {
         {totalItems > 0 ? (
           <>
             <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-              {paginatedNetworks.map((network) => (
+              {paginatedNetworks.map((network: any) => (
                 <ResourceListCard
                   key={network.id}
                   title={network.name || "Network"}

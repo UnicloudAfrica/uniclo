@@ -47,7 +47,7 @@ const EditLead = ({ isOpen, onClose, lead }: EditLeadProps) => {
     }
 
     mutate(
-      { id: lead.id, leadData: payload },
+      { id: String(lead.id) as any, leadData: payload },
       {
         onSuccess: () => {
           ToastUtils.success("Lead updated successfully!");

@@ -150,7 +150,7 @@ const AddProductPricing = ({ isOpen, onClose }: AddProductPricingProps) => {
     } else {
       updatedPricing.product_id = value;
     }
-    newPricings[index] = updatedPricing;
+    newPricings[index] = updatedPricing as any;
     setFormData((prev) => ({ ...prev, pricings: newPricings }));
     setErrors((prev) => ({ ...prev, [`pricing_${field}_${index}`]: null }));
   };

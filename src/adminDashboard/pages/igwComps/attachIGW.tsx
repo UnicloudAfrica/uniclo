@@ -6,6 +6,7 @@ import {
 } from "../../../hooks/internetGatewayHooks";
 import { useFetchTenantVpcs } from "../../../hooks/vpcHooks";
 import ToastUtils from "../../../utils/toastUtil";
+import logger from "../../../utils/logger";
 
 interface VpcOption {
   id?: string | number;
@@ -66,7 +67,7 @@ const AttachIgwModal = ({ isOpen, onClose, projectId, region = "", igw, mode = "
         setSelectedVpc("");
       },
       onError: (err: unknown) => {
-        console.error(`Failed to ${mode} IGW:`, err);
+        logger.error(`Failed to ${mode} IGW:`, err);
         ToastUtils.error(err instanceof Error ? err.message : `Failed to ${mode} IGW.`);
       },
     });

@@ -1,6 +1,6 @@
 import { Loader2, X, AlertTriangle } from "lucide-react";
 
-const DeleteEipModal = ({ isOpen, onClose, eipName, onConfirm, isDeleting }) => {
+const DeleteEipModal = ({ isOpen, onClose, eipName, onConfirm, isDeleting }: any) => {
   if (!isOpen) return null;
 
   return (

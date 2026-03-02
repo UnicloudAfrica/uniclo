@@ -6,6 +6,7 @@ import { ModernButton } from "../../../shared/components/ui";
 import StatusPill from "../../../shared/components/ui/StatusPill";
 import IconBadge from "../IconBadge";
 import SetupProgressCard from "../../../shared/components/projects/details/SetupProgressCard";
+import logger from "../../../utils/logger";
 
 interface OverviewPartnerProps {
   partnerDetails: any;
@@ -34,7 +35,7 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails, openE
         minute: "2-digit",
       });
     } catch (error) {
-      console.error("Failed to format date", error);
+      logger.error("Failed to format date", error);
       return "—";
     }
   };

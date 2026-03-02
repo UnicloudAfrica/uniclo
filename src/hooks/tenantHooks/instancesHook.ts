@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import tenantSilentApi from "../../index/tenant/silentTenant";
 import tenantApi from "../../index/tenant/tenantApi";
+import logger from "../../utils/logger";
 
 // GET: Fetch all tenant instances
 const fetchTenantInstances = async (params: any = {}) => {
@@ -28,7 +29,7 @@ const fetchTenantInstances = async (params: any = {}) => {
 };
 
 // GET: Fetch instance by ID
-const fetchTenantInstanceById = async (id) => {
+const fetchTenantInstanceById = async (id: any) => {
   const encodedId = encodeURIComponent(id);
   const res = await tenantSilentApi("GET", `/admin/instances/${encodedId}`);
   if (!res.data) {
@@ -54,7 +55,7 @@ const executeTenantInstanceAction = async ({ identifier, action, params = {} }) 
   });
 
   if (!res?.success) {
-    throw new Error(res?.message || `Failed to execute ${action} action`);
+    throw new Error((res?.message || `Failed to execute ${action} action`) as any);
   }
 
   return res.data ?? res;
@@ -72,7 +73,7 @@ export const useFetchTenantInstances = (params: any = {}, options = {}) => {
 };
 
 // Hook: Fetch instance by ID
-export const useFetchTenantInstanceById = (id, options = {}) => {
+export const useFetchTenantInstanceById = (id: any, options = {}) => {
   return useQuery({
     queryKey: ["tenant-instance", id],
     queryFn: () => fetchTenantInstanceById(id),
@@ -88,7 +89,7 @@ export const useTenantInstanceAction = () => {
   return useMutation({
     mutationFn: executeTenantInstanceAction,
     onError: (error) => {
-      console.error("Error executing instance action:", error);
+      logger.error("Error executing instance action:", error);
     },
   });
 };

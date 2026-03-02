@@ -1397,7 +1397,7 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <StatusPill label={personaConfig?.label ?? "Persona"} tone="info" />
-          {subjectSelected && <StatusPill label={subjectLabel} tone="neutral" />}
+          {subjectSelected && <StatusPill label={subjectLabel as any} tone="neutral" />}
         </div>
       }
     >

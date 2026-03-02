@@ -1,6 +1,12 @@
 import { X } from "lucide-react";
 
-const DeleteSubnetModal = ({ isOpen, onClose, subnetName = "", onConfirm, isDeleting = false }) => {
+const DeleteSubnetModal = ({
+  isOpen,
+  onClose,
+  subnetName = "",
+  onConfirm,
+  isDeleting = false,
+}: any) => {
   if (!isOpen) return null;
 
   return (

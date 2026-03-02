@@ -65,7 +65,7 @@ const AddRouteTable: React.FC<AddRouteTableProps> = ({
   };
 
   const vpcList = (
-    Array.isArray(vpcs?.data) ? vpcs.data : Array.isArray(vpcs) ? vpcs : []
+    Array.isArray((vpcs as any)?.data) ? (vpcs as any).data : Array.isArray(vpcs) ? vpcs : []
   ) as unknown;
 
   return (
@@ -108,7 +108,7 @@ const AddRouteTable: React.FC<AddRouteTableProps> = ({
               <option value="" disabled>
                 {!form.region ? "Select region first" : "Select VPC"}
               </option>
-              {vpcList.map((v: any) => (
+              {(vpcList as any).map((v: any) => (
                 <option
                   key={v.id || v.uuid || v.provider_resource_id}
                   value={String(v.id || v.uuid || v.provider_resource_id)}

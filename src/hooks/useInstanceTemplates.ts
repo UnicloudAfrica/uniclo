@@ -143,7 +143,7 @@ export const useInstanceTemplates = () => {
   // 2. CREATE Template
   const createMutation = useMutation({
     mutationFn: async (payload: CreateTemplatePayload) => {
-      const response = await api<ApiResponse>("POST", "/instance-templates", payload);
+      const response = await api<ApiResponse>("POST", "/instance-templates", payload as any);
       return response.data || response;
     },
     onSuccess: () => {

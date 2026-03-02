@@ -13,6 +13,7 @@ import ToastUtils from "../utils/toastUtil";
 import useAdminAuthStore from "../stores/adminAuthStore";
 import useClientAuthStore from "../stores/clientAuthStore";
 import useTenantAuthStore from "../stores/tenantAuthStore";
+import logger from "../utils/logger";
 
 const STORAGE_KEY = "uc_object_storage_orders_v1";
 
@@ -142,7 +143,7 @@ export const ObjectStorageProvider = ({ children }: ObjectStorageProviderProps):
       const parsed = JSON.parse(stored);
       return Array.isArray(parsed) ? (parsed as ObjectStorageOrder[]) : [];
     } catch (error) {
-      console.error("Failed to read stored Silo Storage orders", error);
+      logger.error("Failed to read stored Silo Storage orders", error);
       return [];
     }
   });
@@ -175,7 +176,7 @@ export const ObjectStorageProvider = ({ children }: ObjectStorageProviderProps):
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
     } catch (error) {
-      console.error("Failed to persist Silo Storage orders", error);
+      logger.error("Failed to persist Silo Storage orders", error);
     }
   }, [orders]);
 
@@ -229,7 +230,8 @@ export const ObjectStorageProvider = ({ children }: ObjectStorageProviderProps):
         }
         const { items, meta } = await objectStorageApi.fetchAccounts(nextQuery);
         setAccounts(Array.isArray(items) ? items : []);
-        setAccountsMeta(meta ?? null);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setAccountsMeta(meta ?? (null as any));
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Unable to load Silo Storage accounts.";
@@ -280,7 +282,8 @@ export const ObjectStorageProvider = ({ children }: ObjectStorageProviderProps):
 
       try {
         const data = await objectStorageApi.fetchBuckets(accountId);
-        setAccountBuckets((prev) => ({ ...prev, [accountKey]: data }));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setAccountBuckets((prev) => ({ ...prev, [accountKey]: data }) as any);
         return data;
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unable to load silos.";
@@ -517,7 +520,10 @@ export const ObjectStorageProvider = ({ children }: ObjectStorageProviderProps):
     ]
   );
 
-  return <ObjectStorageContext.Provider value={value}>{children}</ObjectStorageContext.Provider>;
+  return (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    <ObjectStorageContext.Provider value={value as any}>{children}</ObjectStorageContext.Provider>
+  );
 };
 
 export const useObjectStorage = () => {

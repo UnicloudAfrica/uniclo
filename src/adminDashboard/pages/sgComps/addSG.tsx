@@ -3,6 +3,7 @@ import { Loader2, X } from "lucide-react";
 import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
 import ToastUtils from "../../../utils/toastUtil";
 import { useCreateSecurityGroup } from "../../../hooks/adminHooks/securityGroupHooks";
+import logger from "../../../utils/logger";
 
 const AddSG = ({ isOpen, onClose, projectId = "", region: projectRegion = "" }: any) => {
   const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
@@ -45,7 +46,7 @@ const AddSG = ({ isOpen, onClose, projectId = "", region: projectRegion = "" }: 
         onClose();
       },
       onError: (err) => {
-        // console.error("Failed to create security group:", err);
+        // logger.error("Failed to create security group:", err);
       },
     });
   };

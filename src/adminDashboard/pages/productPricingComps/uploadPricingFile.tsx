@@ -4,6 +4,7 @@ import { X, Loader2, AlertTriangle, CheckCircle } from "lucide-react";
 import { useUploadProductPricingFile } from "../../../hooks/adminHooks/adminproductPricingHook";
 import ToastUtils from "../../../utils/toastUtil";
 import { FileInput } from "../../../utils/fileInput";
+import logger from "../../../utils/logger";
 
 const UploadPricingFileModal = ({ isOpen, onClose }: any) => {
   const queryClient = useQueryClient();
@@ -41,11 +42,11 @@ const UploadPricingFileModal = ({ isOpen, onClose }: any) => {
       { file: selectedFile, dry_run: isDryRun },
       {
         onSuccess: (res) => {
-          setUploadResult(res.data);
+          setUploadResult((res as any).data);
         },
         onError: (err) => {
           // The error toast is already handled by the `multipartApi` utility
-          console.error("Upload failed:", err);
+          logger.error("Upload failed:", err);
         },
       }
     );
@@ -91,11 +92,11 @@ const UploadPricingFileModal = ({ isOpen, onClose }: any) => {
               <div className="mt-6">
                 <h4 className="text-sm font-semibold text-gray-700 mb-2">Error Details</h4>
                 <div className="max-h-40 overflow-y-auto border rounded-lg p-3 space-y-3 bg-red-50">
-                  {errors.map((err, index) => (
+                  {errors.map((err: any, index: any) => (
                     <div key={index} className="text-xs">
                       <p className="font-bold text-red-700">Row {err.row}:</p>
                       <ul className="list-disc list-inside pl-2 text-red-600">
-                        {err.messages.map((msg, msgIndex) => (
+                        {err.messages.map((msg: any, msgIndex: any) => (
                           <li key={msgIndex}>{msg}</li>
                         ))}
                       </ul>

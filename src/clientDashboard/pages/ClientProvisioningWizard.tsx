@@ -161,7 +161,7 @@ const ClientProvisioningWizard: React.FC = () => {
   const summaryConfigurationCount = reviewSummaries.length || configurations.length || 0;
   const summaryPlanLabel = useMemo(() => {
     if (!reviewSummaries.length) return "Instance profile";
-    if (reviewSummaries.length === 1) return reviewSummaries[0].title || "Instance profile";
+    if (reviewSummaries.length === 1) return reviewSummaries[0]!.title || "Instance profile";
     return `${reviewSummaries.length} compute profiles`;
   }, [reviewSummaries]);
   const summaryWorkflowLabel = "Standard Request w/ Payment";
@@ -217,7 +217,7 @@ const ClientProvisioningWizard: React.FC = () => {
   const paymentStepIndex = useMemo(() => steps.findIndex((step) => step.id === "payment"), [steps]);
   const successStepIndex = useMemo(() => steps.findIndex((step) => step.id === "success"), [steps]);
   const selectedProjectId = configurations[0]?.project_id;
-  const { data: projectStatus } = useClientProjectStatus(selectedProjectId, {
+  const { data: projectStatus } = useClientProjectStatus(selectedProjectId as any, {
     enabled: Boolean(selectedProjectId),
   });
   const projectHasNetwork = useMemo(
@@ -369,12 +369,12 @@ const ClientProvisioningWizard: React.FC = () => {
                 onBack={() => setActiveStep(workflowStepIndex >= 0 ? workflowStepIndex : 0)}
                 onSubmit={handleCreateOrder}
                 submitErrorMessage={submissionErrorMessage}
-                useProjectsHook={useFetchClientProjects}
-                useSecurityGroupsHook={useFetchClientSecurityGroups}
-                useKeyPairsHook={useFetchClientKeyPairs}
-                useSubnetsHook={useFetchClientSubnets}
-                useNetworksHook={useFetchClientNetworks}
-                useProjectMembershipSuggestionsHook={useClientProjectMembershipSuggestions}
+                useProjectsHook={useFetchClientProjects as any}
+                useSecurityGroupsHook={useFetchClientSecurityGroups as any}
+                useKeyPairsHook={useFetchClientKeyPairs as any}
+                useSubnetsHook={useFetchClientSubnets as any}
+                useNetworksHook={useFetchClientNetworks as any}
+                useProjectMembershipSuggestionsHook={useClientProjectMembershipSuggestions as any}
                 skipProjectFetch={false}
                 skipNetworkResourcesFetch={false}
                 formVariant="cube"

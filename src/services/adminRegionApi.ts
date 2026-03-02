@@ -7,6 +7,7 @@
 import config from "../config";
 import useAdminAuthStore from "../stores/adminAuthStore";
 import ToastUtils from "../utils/toastUtil";
+import logger from "../utils/logger";
 
 // --- Interfaces ---
 
@@ -138,7 +139,7 @@ class AdminRegionApiService {
         throw new Error(data.message || "Failed to fetch region approvals");
       }
     } catch (error: unknown) {
-      console.error("Error fetching region approvals:", error);
+      logger.error("Error fetching region approvals:", error);
       throw error;
     }
   }
@@ -165,7 +166,7 @@ class AdminRegionApiService {
         throw new Error(data.message || "Failed to fetch region");
       }
     } catch (error: unknown) {
-      console.error(`Error fetching region ${id}:`, error);
+      logger.error(`Error fetching region ${id}:`, error);
       throw error;
     }
   }
@@ -201,7 +202,7 @@ class AdminRegionApiService {
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An unknown error occurred";
-      console.error(`Error approving region ${id}:`, error);
+      logger.error(`Error approving region ${id}:`, error);
       ToastUtils.error(message);
       throw error;
     }
@@ -235,7 +236,7 @@ class AdminRegionApiService {
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An unknown error occurred";
-      console.error(`Error rejecting region ${id}:`, error);
+      logger.error(`Error rejecting region ${id}:`, error);
       ToastUtils.error(message);
       throw error;
     }
@@ -269,7 +270,7 @@ class AdminRegionApiService {
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An unknown error occurred";
-      console.error(`Error suspending region ${id}:`, error);
+      logger.error(`Error suspending region ${id}:`, error);
       ToastUtils.error(message);
       throw error;
     }
@@ -299,7 +300,7 @@ class AdminRegionApiService {
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An unknown error occurred";
-      console.error(`Error reactivating region ${id}:`, error);
+      logger.error(`Error reactivating region ${id}:`, error);
       ToastUtils.error(message);
       throw error;
     }
@@ -333,7 +334,7 @@ class AdminRegionApiService {
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An unknown error occurred";
-      console.error(`Error updating fast-track ${id}:`, error);
+      logger.error(`Error updating fast-track ${id}:`, error);
       ToastUtils.error(message);
       throw error;
     }
@@ -368,7 +369,7 @@ class AdminRegionApiService {
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An unknown error occurred";
-      console.error(`Error granting fast track ${id}:`, error);
+      logger.error(`Error granting fast track ${id}:`, error);
       ToastUtils.error(message);
       throw error;
     }
@@ -401,7 +402,7 @@ class AdminRegionApiService {
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An unknown error occurred";
-      console.error(`Error revoking fast track ${id}:`, error);
+      logger.error(`Error revoking fast track ${id}:`, error);
       ToastUtils.error(message);
       throw error;
     }
@@ -438,7 +439,7 @@ class AdminRegionApiService {
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An unknown error occurred";
-      console.error(`Error updating platform fee for region ${id}:`, error);
+      logger.error(`Error updating platform fee for region ${id}:`, error);
       ToastUtils.error(message);
       throw error;
     }
@@ -468,7 +469,7 @@ class AdminRegionApiService {
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An unknown error occurred";
-      console.error(`Error deleting region ${id}:`, error);
+      logger.error(`Error deleting region ${id}:`, error);
       ToastUtils.error(message);
       throw error;
     }
@@ -509,7 +510,7 @@ class AdminRegionApiService {
               },
             });
           } catch (error: unknown) {
-            console.error("Object storage verification after region creation failed:", error);
+            logger.error("Object storage verification after region creation failed:", error);
           }
         }
 
@@ -522,7 +523,7 @@ class AdminRegionApiService {
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An unknown error occurred";
-      console.error("Error creating platform region:", error);
+      logger.error("Error creating platform region:", error);
       ToastUtils.error(message);
       throw error;
     }
@@ -566,7 +567,7 @@ class AdminRegionApiService {
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An unknown error occurred";
-      console.error(`Error verifying credentials for region ${identifier}:`, error);
+      logger.error(`Error verifying credentials for region ${identifier}:`, error);
       ToastUtils.error(message);
       throw error;
     }
@@ -609,7 +610,7 @@ class AdminRegionApiService {
         throw new Error(data.message || "Failed to fetch region");
       }
     } catch (error: unknown) {
-      console.error(`Error fetching region ${code}:`, error);
+      logger.error(`Error fetching region ${code}:`, error);
       throw error;
     }
   }
@@ -643,7 +644,7 @@ class AdminRegionApiService {
       };
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An unknown error occurred";
-      console.error(`Error updating region ${code}:`, error);
+      logger.error(`Error updating region ${code}:`, error);
       ToastUtils.error(message);
       throw error;
     }
@@ -677,7 +678,7 @@ class AdminRegionApiService {
       throw new Error(data.message || "Failed to verify Silo Storage");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An unknown error occurred";
-      console.error(`Error verifying Silo Storage for region ${regionCode}:`, error);
+      logger.error(`Error verifying Silo Storage for region ${regionCode}:`, error);
       ToastUtils.error(message || "Failed to verify Silo Storage");
       throw error;
     }
@@ -710,7 +711,7 @@ class AdminRegionApiService {
 
       throw new Error(data.message || "Failed to fetch provider services");
     } catch (error: unknown) {
-      console.error(`Error fetching services for provider ${provider}:`, error);
+      logger.error(`Error fetching services for provider ${provider}:`, error);
       throw error;
     }
   }
@@ -738,7 +739,7 @@ class AdminRegionApiService {
 
       throw new Error(data.message || "Failed to fetch credential status");
     } catch (error: unknown) {
-      console.error(`Error fetching credential status for region ${regionId}:`, error);
+      logger.error(`Error fetching credential status for region ${regionId}:`, error);
       throw error;
     }
   }
@@ -788,7 +789,7 @@ class AdminRegionApiService {
       throw new Error(data.message || `Failed to store ${serviceType} credentials`);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An unknown error occurred";
-      console.error(`Error storing ${serviceType} credentials for region ${regionId}:`, error);
+      logger.error(`Error storing ${serviceType} credentials for region ${regionId}:`, error);
       ToastUtils.error(message);
       throw error;
     }
@@ -822,7 +823,7 @@ class AdminRegionApiService {
 
       throw new Error(data.message || "Verification failed");
     } catch (error: unknown) {
-      console.error(`Error verifying ${serviceType} credentials for region ${regionId}:`, error);
+      logger.error(`Error verifying ${serviceType} credentials for region ${regionId}:`, error);
       throw error;
     }
   }
@@ -862,7 +863,7 @@ class AdminRegionApiService {
       throw new Error(data.message || `Failed to delete ${serviceType} credentials`);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An unknown error occurred";
-      console.error(`Error deleting ${serviceType} credentials for region ${regionId}:`, error);
+      logger.error(`Error deleting ${serviceType} credentials for region ${regionId}:`, error);
       ToastUtils.error(message);
       throw error;
     }
@@ -898,7 +899,7 @@ class AdminRegionApiService {
 
       throw new Error(data.message || "Verification failed");
     } catch (error: unknown) {
-      console.error(`Error verifying ${serviceType} credentials for provider ${provider}:`, error);
+      logger.error(`Error verifying ${serviceType} credentials for provider ${provider}:`, error);
       throw error;
     }
   }
@@ -931,7 +932,7 @@ class AdminRegionApiService {
       throw new Error(data.message || "Failed to update visibility");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An unknown error occurred";
-      console.error(`Error updating visibility for region ${regionId}:`, error);
+      logger.error(`Error updating visibility for region ${regionId}:`, error);
       ToastUtils.error(message);
       throw error;
     }
@@ -960,7 +961,7 @@ class AdminRegionApiService {
       throw new Error(data.message || "Failed to verify region");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An unknown error occurred";
-      console.error(`Error verifying region ${regionId}:`, error);
+      logger.error(`Error verifying region ${regionId}:`, error);
       ToastUtils.error(message);
       throw error;
     }
@@ -990,7 +991,7 @@ class AdminRegionApiService {
       throw new Error(data.message || "Failed to unverify region");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An unknown error occurred";
-      console.error(`Error unverifying region ${regionId}:`, error);
+      logger.error(`Error unverifying region ${regionId}:`, error);
       ToastUtils.error(message);
       throw error;
     }

@@ -5,7 +5,7 @@ import ToastUtils from "../../../utils/toastUtil";
 import { useCreateIgw } from "../../../hooks/adminHooks/igwHooks";
 import { designTokens } from "../../../styles/designTokens";
 
-const AddIgw = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) => {
+const AddIgw = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: any) => {
   const [form, setForm] = useState({ name: "", region: defaultRegion || "" });
   const [errors, setErrors] = useState<Record<string, any>>({});
   const { mutate: createIgw, isPending } = useCreateIgw();
@@ -24,7 +24,7 @@ const AddIgw = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) => {
     return Object.keys(validationErrors).length === 0;
   };
 
-  const updateField = (field, value) => {
+  const updateField = (field: any, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
@@ -70,7 +70,7 @@ const AddIgw = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) => {
       isOpen={isOpen}
       onClose={onClose}
       title="Add Internet Gateway"
-      actions={actions}
+      actions={actions as any}
       loading={isPending}
       contentClassName="space-y-5"
     >

@@ -15,7 +15,7 @@ const checkboxStyles = {
   border: `1px solid ${designTokens.colors.neutral[300]}`,
 };
 
-const TenantAddVpcComponent = ({ isOpen, onClose, projectId = "" }) => {
+const TenantAddVpcComponent = ({ isOpen, onClose, projectId = "" }: any) => {
   const queryClient = useQueryClient();
   const { isFetching: isRegionsFetching, data: regions } = useFetchTenantRegions();
   const { mutate, isPending } = useCreateTenantVpc();
@@ -53,7 +53,7 @@ const TenantAddVpcComponent = ({ isOpen, onClose, projectId = "" }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateField = (field, value) => {
+  const updateField = (field: any, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
@@ -103,7 +103,7 @@ const TenantAddVpcComponent = ({ isOpen, onClose, projectId = "" }) => {
       onClose={onClose}
       title="Add Virtual Private Cloud"
       subtitle="Define a network boundary for your project and optionally mark it as the default VPC."
-      actions={actions}
+      actions={actions as any}
       loading={isPending}
       size="lg"
       contentClassName="space-y-6"
@@ -130,7 +130,7 @@ const TenantAddVpcComponent = ({ isOpen, onClose, projectId = "" }) => {
           required
           error={errors.region}
           options={
-            regions?.map((region) => ({
+            (regions as any)?.map((region: any) => ({
               label: region.name,
               value: region.code,
             })) ?? []

@@ -35,7 +35,7 @@ const AdminNetworkAcls: React.FC = () => {
         hierarchy="admin"
         projectId={projectId}
         region={region}
-        hooks={hooks}
+        hooks={hooks as any}
         onManageRules={handleManageRules}
         wrapper={({ headerActions, children }) => (
           <AdminPageShell

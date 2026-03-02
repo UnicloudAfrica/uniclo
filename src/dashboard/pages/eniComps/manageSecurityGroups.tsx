@@ -3,17 +3,21 @@ import { Loader2, X } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useFetchTenantSecurityGroups } from "../../../hooks/securityGroupHooks";
 import { useAttachTenantSecurityGroup, useDetachTenantSecurityGroup } from "../../../hooks/eni";
+import logger from "../../../utils/logger";
 
-const ManageEniSecurityGroupsModal = ({ isOpen, onClose, projectId, region, eni }) => {
+const ManageEniSecurityGroupsModal = ({ isOpen, onClose, projectId, region, eni }: any) => {
   const [selectedAttach, setSelectedAttach] = useState("");
   const { data: securityGroupsRaw, isFetching } = useFetchTenantSecurityGroups(projectId, region, {
     enabled: isOpen && !!projectId && !!region,
   });
-  const securityGroups = useMemo(() => securityGroupsRaw || [], [securityGroupsRaw]);
+  const securityGroups = useMemo(
+    () => (Array.isArray(securityGroupsRaw) ? securityGroupsRaw : []) as any[],
+    [securityGroupsRaw]
+  );
 
   const attachedIds = useMemo(() => {
     const raw = eni?.security_groups || [];
-    return new Set(raw.map((sg) => String(sg.provider_resource_id || sg.id || sg.uuid || sg)));
+    return new Set(raw.map((sg: any) => String(sg.provider_resource_id || sg.id || sg.uuid || sg)));
   }, [eni]);
 
   const { mutate: attachSecurityGroup, isPending: isAttaching } = useAttachTenantSecurityGroup();
@@ -46,14 +50,14 @@ const ManageEniSecurityGroupsModal = ({ isOpen, onClose, projectId, region, eni 
           setSelectedAttach("");
         },
         onError: (err) => {
-          console.error("Failed to attach security group:", err);
+          logger.error("Failed to attach security group:", err);
           ToastUtils.error(err?.message || "Failed to attach security group.");
         },
       }
     );
   };
 
-  const handleDetach = (securityGroupId) => {
+  const handleDetach = (securityGroupId: any) => {
     detachSecurityGroup(
       {
         network_interface_id: eniId,
@@ -64,7 +68,7 @@ const ManageEniSecurityGroupsModal = ({ isOpen, onClose, projectId, region, eni 
           ToastUtils.success("Security group detached.");
         },
         onError: (err) => {
-          console.error("Failed to detach security group:", err);
+          logger.error("Failed to detach security group:", err);
           ToastUtils.error(err?.message || "Failed to detach security group.");
         },
       }
@@ -104,11 +108,11 @@ const ManageEniSecurityGroupsModal = ({ isOpen, onClose, projectId, region, eni 
                   {isFetching ? "Loading security groups..." : "Select group"}
                 </option>
                 {securityGroups
-                  .filter((sg) => {
+                  .filter((sg: any) => {
                     const id = sg.provider_resource_id || sg.id || sg.uuid || sg.name;
                     return !attachedIds.has(String(id));
                   })
-                  .map((sg) => {
+                  .map((sg: any) => {
                     const id = sg.provider_resource_id || sg.id || sg.uuid || sg.name;
                     return (
                       <option key={id} value={id}>
@@ -132,7 +136,7 @@ const ManageEniSecurityGroupsModal = ({ isOpen, onClose, projectId, region, eni 
             <p className="text-sm font-medium text-gray-700 mb-2">Attached Security Groups</p>
             <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
               {Array.isArray(eni.security_groups) && eni.security_groups.length > 0 ? (
-                eni.security_groups.map((sg) => {
+                eni.security_groups.map((sg: any) => {
                   const id = sg.provider_resource_id || sg.id || sg.uuid || sg.name;
                   return (
                     <div

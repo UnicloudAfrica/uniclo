@@ -167,7 +167,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
         value: option.value,
         selectedOptions: [{ text: option.label }],
       },
-    } as React.ChangeEvent<HTMLSelectElement>;
+    } as unknown as React.ChangeEvent<HTMLSelectElement>;
     onChange?.(syntheticEvent);
     setIsOpen(false);
     setSearchTerm("");

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentAdminApi from "../index/admin/silent";
 import adminApi from "../index/admin/api";
+import logger from "../utils/logger";
 
 export interface TenantNetworkSettingsResponse {
   tenant_id: string;
@@ -53,7 +54,7 @@ export const useUpdateAdminTenantNetworkSettings = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-tenant-network", variables.tenantId] });
     },
     onError: (error) => {
-      console.error("Error updating tenant network settings:", error);
+      logger.error("Error updating tenant network settings:", error);
     },
   });
 };

@@ -132,8 +132,8 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
   const { mutateAsync: disableTwoFactor } = useDisableTwoFactor();
 
   const flattenedSettings = useMemo(
-    () => flattenSettings(profileSettingsData?.settings ?? {}),
-    [profileSettingsData?.settings]
+    () => flattenSettings((profileSettingsData as any)?.settings ?? {}),
+    [(profileSettingsData as any)?.settings]
   );
 
   useEffect(() => {
@@ -144,7 +144,7 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
 
   useEffect(() => {
     if (!isAdminContext) return;
-    const rawPolicy = networkPolicyData?.network_policy || {};
+    const rawPolicy = (networkPolicyData as any)?.network_policy || {};
     setNetworkPolicy({
       force_eip_for_public_preset: normalizeBool(
         rawPolicy.force_eip_for_public_preset,
@@ -166,8 +166,8 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
   }, [defaultNetworkPolicy, networkPolicyData, isAdminContext]);
 
   const availableCategories = useMemo(
-    () => profileSettingsData?.available_categories ?? [],
-    [profileSettingsData?.available_categories]
+    () => (profileSettingsData as any)?.available_categories ?? [],
+    [(profileSettingsData as any)?.available_categories]
   );
 
   const networkPolicyTab = useMemo<TabConfig>(
@@ -221,7 +221,7 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
 
   useEffect(() => {
     if (!tabs.find((tab) => tab.id === activeTab) && tabs.length > 0) {
-      setActiveTab(tabs[0].id);
+      setActiveTab(tabs![0].id);
     }
   }, [tabs, activeTab]);
 
@@ -308,7 +308,7 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
     if (isFetchingTwoFactor || isTwoFactorProcessing) return;
     setIsFetchingTwoFactor(true);
     try {
-      const response = await setupTwoFactor({});
+      const response = await setupTwoFactor({} as any);
       const data = normalizeTwoFactorSetup(response);
 
       if (!data?.qrCodeSvg && !data?.qrCodeUrl && !data?.secret) {
@@ -317,9 +317,9 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
       setTwoFactorModal({
         open: true,
         mode: "enable",
-        qrCodeSvg: data.qrCodeSvg || "",
-        qrCodeUrl: data.qrCodeUrl || "",
-        secret: data.secret || "",
+        qrCodeSvg: (data.qrCodeSvg as any) || "",
+        qrCodeUrl: (data.qrCodeUrl as any) || "",
+        secret: (data.secret as any) || "",
       });
       setTwoFactorOtp("");
     } catch (error) {
@@ -483,7 +483,7 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
   const handleExport = async () => {
     try {
       const exportResult = await exportProfileSettings();
-      const payload = exportResult?.settings ?? exportResult ?? {};
+      const payload = (exportResult as any)?.settings ?? exportResult ?? {};
       const json = JSON.stringify(payload, null, 2);
       const blob = new Blob([json], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -701,9 +701,9 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
                   <>
                     {activeTabConfig.id === "profile" && (
                       <ProfileAvatar
-                        name={formState["profile.name"]}
-                        email={formState["contact.email"]}
-                        avatarUrl={formState["profile.profile_picture_url"]}
+                        name={formState["profile.name"] as any}
+                        email={formState["contact.email"] as any}
+                        avatarUrl={formState["profile.profile_picture_url"] as any}
                         onAvatarChange={handleAvatarChange}
                         uploadEndpoint={`${uploadBaseUrl}/settings/profile/avatar`}
                       />
@@ -732,7 +732,9 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
                               <FieldControl
                                 key={field.stateKey}
                                 field={field}
-                                value={normalizeFieldValue(field, formState[field.stateKey!])}
+                                value={
+                                  normalizeFieldValue(field, formState[field.stateKey!]) as any
+                                }
                                 onChange={(nextValue) =>
                                   handleFieldChange(field.stateKey!, nextValue)
                                 }

@@ -16,6 +16,7 @@ import {
   ResourceListCard,
   ModernButton,
 } from "../../../shared/components/ui";
+import logger from "../../../utils/logger";
 
 interface SubnetsProps {
   projectId?: string;
@@ -115,7 +116,7 @@ const Subnets: React.FC<SubnetsProps> = ({ projectId = "", region = "" }) => {
       });
       ToastUtils.success("Subnets synced successfully!");
     } catch (error: any) {
-      console.error("Failed to sync Subnets:", error);
+      logger.error("Failed to sync Subnets:", error);
       ToastUtils.error(error?.message || "Failed to sync subnets.");
     } finally {
       setIsSyncing(false);

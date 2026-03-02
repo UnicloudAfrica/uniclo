@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../index/silent";
 import api from "../index/api";
+import logger from "../utils/logger";
 // import silentTenantApi from "../index/tenant/silentTenant";
 // import tenantApi from "../index/tenant/tenantApi";
 
@@ -108,7 +109,7 @@ export const useCreateTenantSecurityGroup = () => {
       queryClient.invalidateQueries({ queryKey: ["securityGroups"] });
     },
     onError: (error) => {
-      console.error("Error creating security group:", error);
+      logger.error("Error creating security group:", error);
     },
   });
 };
@@ -124,7 +125,7 @@ export const useUpdateTenantSecurityGroup = () => {
       });
     },
     onError: (error) => {
-      console.error("Error updating security group:", error);
+      logger.error("Error updating security group:", error);
     },
   });
 };
@@ -137,7 +138,7 @@ export const useDeleteTenantSecurityGroup = () => {
       queryClient.invalidateQueries({ queryKey: ["securityGroups"] });
     },
     onError: (error) => {
-      console.error("Error deleting security group:", error);
+      logger.error("Error deleting security group:", error);
     },
   });
 };
@@ -150,7 +151,7 @@ export const useSyncTenantSecurityGroups = () => {
       queryClient.invalidateQueries({ queryKey: ["securityGroups"] });
     },
     onError: (error) => {
-      console.error("Error syncing security groups:", error);
+      logger.error("Error syncing security groups:", error);
     },
   });
 };

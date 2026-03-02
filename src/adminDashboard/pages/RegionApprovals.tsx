@@ -11,6 +11,7 @@ import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
 import { ModernButton } from "../../shared/components/ui";
 import { designTokens } from "../../styles/designTokens";
 import AdminPageShell from "../components/AdminPageShell";
+import logger from "../../utils/logger";
 
 type RegionApprovalStatus = "pending" | "approved" | "rejected" | "suspended";
 
@@ -57,7 +58,7 @@ const RegionApprovals = () => {
       const response = await adminRegionApi.fetchRegionApprovals(filters);
       setRegions(Array.isArray(response.data) ? (response.data as RegionApprovalRow[]) : []);
     } catch (error) {
-      console.error("Error fetching regions:", error);
+      logger.error("Error fetching regions:", error);
     } finally {
       setLoading(false);
     }
@@ -102,7 +103,7 @@ const RegionApprovals = () => {
       render: (value, row) => (
         <div>
           <div className="font-medium" style={{ color: designTokens.colors.neutral[900] }}>
-            {value}
+            {value as any}
           </div>
           <div className="text-sm" style={{ color: designTokens.colors.neutral[500] }}>
             {row.code}
@@ -125,7 +126,7 @@ const RegionApprovals = () => {
       header: "Location",
       render: (value, row) => (
         <span style={{ color: designTokens.colors.neutral[700] }}>
-          {value}, {row.country_code}
+          {value as any}, {row.country_code}
         </span>
       ),
     },
@@ -134,7 +135,7 @@ const RegionApprovals = () => {
       header: "Fulfillment",
       render: (value) => (
         <span className="capitalize" style={{ color: designTokens.colors.neutral[700] }}>
-          {value}
+          {value as any}
         </span>
       ),
     },
@@ -208,7 +209,7 @@ const RegionApprovals = () => {
             style={{ backgroundColor: config.bg, color: config.color }}
           >
             {config.icon}
-            {value}
+            {value as any}
           </span>
         );
       },

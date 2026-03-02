@@ -43,7 +43,7 @@ const useClientTheme = (options: UseClientThemeOptions = {}) => {
     enabled: enabled && (!tenantId || tenantQuery.data?.isFallback || tenantQuery.isError),
   });
   const effectiveBranding = tenantId
-    ? resolveEffectiveBrandingTheme(tenantQuery.data, fallbackQuery.data)
+    ? resolveEffectiveBrandingTheme(tenantQuery.data as any, fallbackQuery.data)
     : (fallbackQuery.data ?? tenantQuery.data);
   const data = useMemo(() => mapBrandingToClientTheme(effectiveBranding), [effectiveBranding]);
   const activeQuery = tenantId ? tenantQuery : fallbackQuery;

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import adminSilentApiforUser from "../../index/admin/silentadminforuser";
 import apiAdminforUser from "../../index/admin/apiAdminforUser";
 import { type Vpc, type VpcApiResponse } from "../../shared/types/vpc";
+import logger from "../../utils/logger";
 
 // VPC Interfaces moved to shared/types/vpc.ts
 
@@ -96,7 +97,7 @@ export const useCreateVpc = () => {
       queryClient.invalidateQueries({ queryKey: ["vpcs"] });
     },
     onError: (error: unknown) => {
-      console.error("Error creating VPC:", error);
+      logger.error("Error creating VPC:", error);
     },
   });
 };
@@ -110,7 +111,7 @@ export const useUpdateVpc = () => {
       queryClient.invalidateQueries({ queryKey: ["vpc", variables.id] });
     },
     onError: (error: unknown) => {
-      console.error("Error updating VPC:", error);
+      logger.error("Error updating VPC:", error);
     },
   });
 };
@@ -123,7 +124,7 @@ export const useDeleteVpc = () => {
       queryClient.invalidateQueries({ queryKey: ["vpcs"] });
     },
     onError: (error: unknown) => {
-      console.error("Error deleting VPC:", error);
+      logger.error("Error deleting VPC:", error);
     },
   });
 };

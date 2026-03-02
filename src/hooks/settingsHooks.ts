@@ -7,6 +7,7 @@ import adminSettingsApi from "../index/admin/settingsApi";
 import silentAdminSettingsApi from "../index/admin/silentSettingsApi";
 import clientApi from "../index/client/api";
 import tenantApi from "../index/tenant/tenantApi";
+import logger from "../utils/logger";
 
 type SettingsPayload = Record<string, unknown>;
 type UserId = string | number;
@@ -165,7 +166,12 @@ const fetchTenantBusinessSettings = async () => {
 };
 
 const updateTenantBusinessSettings = async (settingsData: SettingsPayload) => {
-  const res = await requestSettings(api, "PUT", "/business/settings/tenant/business", settingsData);
+  const res = await requestSettings(
+    api as any,
+    "PUT",
+    "/business/settings/tenant/business",
+    settingsData
+  );
   return requireData(res, "Failed to update tenant business settings");
 };
 
@@ -175,7 +181,12 @@ const fetchTenantBillingSettings = async () => {
 };
 
 const updateTenantBillingSettings = async (settingsData: SettingsPayload) => {
-  const res = await requestSettings(api, "PUT", "/business/settings/tenant/billing", settingsData);
+  const res = await requestSettings(
+    api as any,
+    "PUT",
+    "/business/settings/tenant/billing",
+    settingsData
+  );
   return requireData(res, "Failed to update tenant billing settings");
 };
 
@@ -185,7 +196,12 @@ const fetchTenantBrandingSettings = async () => {
 };
 
 const updateTenantBrandingSettings = async (settingsData: SettingsPayload) => {
-  const res = await requestSettings(api, "PUT", "/business/settings/tenant/branding", settingsData);
+  const res = await requestSettings(
+    api as any,
+    "PUT",
+    "/business/settings/tenant/branding",
+    settingsData
+  );
   return requireData(res, "Failed to update tenant branding settings");
 };
 
@@ -200,7 +216,12 @@ const fetchAllTenantSettings = async () => {
 };
 
 const resetTenantCategorySettings = async (resetData: SettingsPayload) => {
-  const res = await requestSettings(api, "POST", "/business/settings/tenant/reset", resetData);
+  const res = await requestSettings(
+    api as any,
+    "POST",
+    "/business/settings/tenant/reset",
+    resetData
+  );
   return requireData(res, "Failed to reset tenant category settings");
 };
 
@@ -226,7 +247,7 @@ export const useUpdateProfileSettings = () => {
       queryClient.invalidateQueries({ queryKey: ["profile-settings"] });
     },
     onError: (error: unknown) => {
-      console.error("Error updating profile settings:", error);
+      logger.error("Error updating profile settings:", error);
     },
   });
 };
@@ -239,7 +260,7 @@ export const useUpdateProfileSettingsBatch = () => {
       queryClient.invalidateQueries({ queryKey: ["profile-settings"] });
     },
     onError: (error: unknown) => {
-      console.error("Error batch updating profile settings:", error);
+      logger.error("Error batch updating profile settings:", error);
     },
   });
 };
@@ -262,7 +283,7 @@ export const useResetProfileSettings = () => {
       queryClient.invalidateQueries({ queryKey: ["profile-settings"] });
     },
     onError: (error: unknown) => {
-      console.error("Error resetting profile settings:", error);
+      logger.error("Error resetting profile settings:", error);
     },
   });
 };
@@ -271,7 +292,7 @@ export const useExportProfileSettings = () => {
   return useMutation({
     mutationFn: exportProfileSettings,
     onError: (error: unknown) => {
-      console.error("Error exporting profile settings:", error);
+      logger.error("Error exporting profile settings:", error);
     },
   });
 };
@@ -284,7 +305,7 @@ export const useImportProfileSettings = () => {
       queryClient.invalidateQueries({ queryKey: ["profile-settings"] });
     },
     onError: (error: unknown) => {
-      console.error("Error importing profile settings:", error);
+      logger.error("Error importing profile settings:", error);
     },
   });
 };
@@ -311,7 +332,7 @@ export const useUpdateSystemSettings = () => {
       queryClient.invalidateQueries({ queryKey: ["system-settings"] });
     },
     onError: (error: unknown) => {
-      console.error("Error updating system settings:", error);
+      logger.error("Error updating system settings:", error);
     },
   });
 };
@@ -355,7 +376,7 @@ export const useUpdateComplianceSettings = () => {
       queryClient.invalidateQueries({ queryKey: ["compliance-settings"] });
     },
     onError: (error: unknown) => {
-      console.error("Error updating compliance settings:", error);
+      logger.error("Error updating compliance settings:", error);
     },
   });
 };
@@ -380,7 +401,7 @@ export const useResetUserSettings = () => {
       queryClient.invalidateQueries({ queryKey: ["users-settings-overview"] });
     },
     onError: (error: unknown) => {
-      console.error("Error resetting user settings:", error);
+      logger.error("Error resetting user settings:", error);
     },
   });
 };
@@ -408,7 +429,7 @@ export const useUpdateTenantBusinessSettings = () => {
       queryClient.invalidateQueries({ queryKey: ["all-tenant-settings"] });
     },
     onError: (error: unknown) => {
-      console.error("Error updating tenant business settings:", error);
+      logger.error("Error updating tenant business settings:", error);
     },
   });
 };
@@ -432,7 +453,7 @@ export const useUpdateTenantBillingSettings = () => {
       queryClient.invalidateQueries({ queryKey: ["all-tenant-settings"] });
     },
     onError: (error: unknown) => {
-      console.error("Error updating tenant billing settings:", error);
+      logger.error("Error updating tenant billing settings:", error);
     },
   });
 };
@@ -456,7 +477,7 @@ export const useUpdateTenantBrandingSettings = () => {
       queryClient.invalidateQueries({ queryKey: ["all-tenant-settings"] });
     },
     onError: (error: unknown) => {
-      console.error("Error updating tenant branding settings:", error);
+      logger.error("Error updating tenant branding settings:", error);
     },
   });
 };
@@ -493,7 +514,7 @@ export const useResetTenantCategorySettings = () => {
       queryClient.invalidateQueries({ queryKey: ["all-tenant-settings"] });
     },
     onError: (error: unknown) => {
-      console.error("Error resetting tenant category settings:", error);
+      logger.error("Error resetting tenant category settings:", error);
     },
   });
 };

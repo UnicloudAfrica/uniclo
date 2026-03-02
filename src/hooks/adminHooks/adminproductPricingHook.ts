@@ -3,6 +3,7 @@ import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
 import fileApi from "../../index/admin/fileapi";
 import multipartApi from "../../index/admin/multipartApi";
+import logger from "../../utils/logger";
 
 const buildQueryString = ({
   region,
@@ -168,7 +169,7 @@ export const useCreateProductPricing = () => {
       queryClient.invalidateQueries({ queryKey: ["product-pricing-admin"] });
     },
     onError: (error: any) => {
-      console.error("Error creating product pricing:", error);
+      logger.error("Error creating product pricing:", error);
     },
   });
 };
@@ -181,7 +182,7 @@ export const useUpdateProductPricing = () => {
       queryClient.invalidateQueries({ queryKey: ["product-pricing-admin"] });
     },
     onError: (error: any) => {
-      console.error("Error updating product pricing:", error);
+      logger.error("Error updating product pricing:", error);
     },
   });
 };
@@ -194,7 +195,7 @@ export const useDeleteProductPricing = () => {
       queryClient.invalidateQueries({ queryKey: ["product-pricing-admin"] });
     },
     onError: (error: any) => {
-      console.error("Error deleting product pricing:", error);
+      logger.error("Error deleting product pricing:", error);
     },
   });
 };
@@ -218,7 +219,7 @@ export const useExportProductPricingTemplate = () => {
       globalThis.window.URL.revokeObjectURL(url);
     },
     onError: (error: any) => {
-      console.error("Error downloading product pricing template:", error);
+      logger.error("Error downloading product pricing template:", error);
     },
   });
 };
@@ -231,7 +232,7 @@ export const useUploadProductPricingFile = () => {
       queryClient.invalidateQueries({ queryKey: ["product-pricing-admin"] });
     },
     onError: (error: any) => {
-      console.error("Error uploading product pricing file:", error);
+      logger.error("Error uploading product pricing file:", error);
     },
   });
 };

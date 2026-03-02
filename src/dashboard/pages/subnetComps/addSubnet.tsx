@@ -5,6 +5,7 @@ import { useCreateTenantSubnet, useFetchTenantSubnets } from "../../../hooks/sub
 import { useFetchTenantVpcs, useFetchAvailableCidrs } from "../../../hooks/vpcHooks";
 import { useFetchGeneralRegions } from "../../../hooks/resource";
 import { useFetchProjectEdgeConfigTenant } from "../../../hooks/edgeHooks";
+import logger from "../../../utils/logger";
 
 interface AddSubnetProps {
   isOpen: boolean;
@@ -91,7 +92,7 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: A
   const { mutate: createSubnet, isPending: isCreating } = useCreateTenantSubnet();
 
   const { data: edgeConfigRaw, isFetching: isFetchingEdgeConfig } = useFetchProjectEdgeConfigTenant(
-    projectId,
+    projectId as any,
     formData.region,
     {
       enabled: !!projectId && !!formData["region"],
@@ -101,7 +102,7 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: A
     edgeConfigRaw && typeof edgeConfigRaw === "object" ? (edgeConfigRaw as EdgeConfig) : null;
 
   const { data: existingSubnets = [], isFetching: isFetchingSubnets } = useFetchTenantSubnets(
-    projectId,
+    projectId as any,
     formData.region,
     {
       enabled: !!projectId && !!formData.region,
@@ -109,7 +110,7 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: A
   );
 
   const { data: availableCidrs = [], isFetching: isFetchingAvailableCidrs } =
-    useFetchAvailableCidrs(projectId, formData.region, formData.vpc_id, suggestPrefix, 8, {
+    useFetchAvailableCidrs(projectId as any, formData.region, formData.vpc_id, suggestPrefix, 8, {
       enabled: !!projectId && !!formData.region && !!formData.vpc_id,
     });
 
@@ -183,7 +184,9 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: A
         selectedVpc?.cidr_block || selectedVpc?.cidr || selectedVpc?.network_cidr;
       if (!selectedVpcCidr) return;
       const v = parseCidr(selectedVpcCidr);
-      const used: Array<{ start: number; end: number }> = (existingSubnets || [])
+      const used: Array<{ start: number; end: number }> = (
+        Array.isArray(existingSubnets) ? existingSubnets : ([] as any[])
+      )
         .filter(
           (s: ExistingSubnet) =>
             String(s.vpc_id || s.network_id || s.vpc?.id) === String(formData.vpc_id)
@@ -248,7 +251,7 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: A
         onClose();
       },
       onError: (error) => {
-        console.error("Failed to create subnet:", error);
+        logger.error("Failed to create subnet:", error);
         const message = error instanceof Error ? error.message : "Failed to create subnet.";
         try {
           // Fallback if backend attaches message differently

@@ -80,7 +80,7 @@ const KeyPairsSection: React.FC<KeyPairsSectionProps> = ({
     if (region) {
       baseStats.push({
         label: "Region",
-        value: region,
+        value: region as any,
         tone: "info",
         icon: <MapPin size={16} />,
       });
@@ -112,7 +112,7 @@ const KeyPairsSection: React.FC<KeyPairsSectionProps> = ({
           project_id: projectId,
           region,
         },
-      },
+      } as any,
       {
         onSuccess: () => {
           ToastUtils.success(`Deleted key pair "${deleteModal.name}".`);
@@ -174,7 +174,7 @@ const KeyPairsSection: React.FC<KeyPairsSectionProps> = ({
             }),
           disabled: isDeleting,
           title: "Remove Key Pair",
-        },
+        } as any,
       ]}
     />
   );
@@ -185,7 +185,7 @@ const KeyPairsSection: React.FC<KeyPairsSectionProps> = ({
         title="Key Pairs"
         description="Provision SSH key material to grant secure access to managed compute resources."
         actions={actions}
-        meta={stats}
+        meta={stats as any}
         isLoading={isFetching}
       >
         {paginatedKeyPairs.length > 0 ? (

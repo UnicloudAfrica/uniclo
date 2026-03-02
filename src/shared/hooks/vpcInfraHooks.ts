@@ -203,16 +203,16 @@ export const useCreateNatGateway = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      payload,
-    }: {
+  return useMutation<
+    any,
+    Error,
+    {
       projectId: string;
       region?: string;
       payload: { subnet_id: string; elastic_ip_id?: string; name?: string; vpc_id?: string };
-    }) => {
+    }
+  >({
+    mutationFn: async ({ projectId, region, payload }) => {
       if (context === "admin") {
         const { data } = await axios.post(
           buildUrl(apiBaseUrl, context, `/projects/${projectId}/nat-gateways`),
@@ -247,16 +247,8 @@ export const useDeleteNatGateway = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      natGatewayId,
-    }: {
-      projectId: string;
-      region?: string;
-      natGatewayId: string;
-    }) => {
+  return useMutation<void, Error, { projectId: string; region?: string; natGatewayId: string }>({
+    mutationFn: async ({ projectId, region, natGatewayId }) => {
       if (context === "admin") {
         await axios.delete(
           buildUrl(apiBaseUrl, context, `/projects/${projectId}/nat-gateways/${natGatewayId}`),
@@ -272,7 +264,7 @@ export const useDeleteNatGateway = () => {
         projectId,
         resolvedRegion,
       ]);
-      const localId = resolveLocalId(cached, natGatewayId);
+      const localId = resolveLocalId(cached as ResourceLike[] | undefined, natGatewayId);
 
       await axios.delete(buildUrl(apiBaseUrl, context, `/nat-gateways/${localId}`), {
         headers: authHeaders,
@@ -373,18 +365,17 @@ export const useAssociateElasticIp = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      elasticIpId,
-      payload,
-    }: {
+  return useMutation<
+    any,
+    Error,
+    {
       projectId: string;
       region?: string;
       elasticIpId: string;
       payload: { instance_id?: string; network_interface_id?: string };
-    }) => {
+    }
+  >({
+    mutationFn: async ({ projectId, region, elasticIpId, payload }) => {
       if (context === "admin") {
         const { data } = await axios.post(
           buildUrl(
@@ -429,16 +420,8 @@ export const useDisassociateElasticIp = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      elasticIpId,
-    }: {
-      projectId: string;
-      region?: string;
-      elasticIpId: string;
-    }) => {
+  return useMutation<void, Error, { projectId: string; region?: string; elasticIpId: string }>({
+    mutationFn: async ({ projectId, region, elasticIpId }) => {
       if (context === "admin") {
         await axios.delete(
           buildUrl(
@@ -475,16 +458,8 @@ export const useDeleteElasticIp = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      elasticIpId,
-    }: {
-      projectId: string;
-      region?: string;
-      elasticIpId: string;
-    }) => {
+  return useMutation<void, Error, { projectId: string; region?: string; elasticIpId: string }>({
+    mutationFn: async ({ projectId, region, elasticIpId }) => {
       if (context === "admin") {
         await axios.delete(
           buildUrl(apiBaseUrl, context, `/projects/${projectId}/elastic-ips/${elasticIpId}`),
@@ -500,7 +475,7 @@ export const useDeleteElasticIp = () => {
         projectId,
         resolvedRegion,
       ]);
-      const localId = resolveLocalId(cached, elasticIpId);
+      const localId = resolveLocalId(cached as ResourceLike[] | undefined, elasticIpId);
 
       await axios.delete(buildUrl(apiBaseUrl, context, `/elastic-ips/${localId}`), {
         headers: authHeaders,
@@ -557,16 +532,16 @@ export const useCreateSecurityGroup = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      payload,
-    }: {
+  return useMutation<
+    any,
+    Error,
+    {
       projectId: string;
       region?: string;
       payload: { vpc_id: string; name: string; description?: string };
-    }) => {
+    }
+  >({
+    mutationFn: async ({ projectId, region, payload }) => {
       if (context === "admin") {
         const { data } = await axios.post(
           buildUrl(apiBaseUrl, context, `/projects/${projectId}/security-groups`),
@@ -601,16 +576,8 @@ export const useDeleteSecurityGroup = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      securityGroupId,
-    }: {
-      projectId: string;
-      region?: string;
-      securityGroupId: string;
-    }) => {
+  return useMutation<void, Error, { projectId: string; region?: string; securityGroupId: string }>({
+    mutationFn: async ({ projectId, region, securityGroupId }) => {
       if (context === "admin") {
         await axios.delete(
           buildUrl(
@@ -630,7 +597,7 @@ export const useDeleteSecurityGroup = () => {
         projectId,
         resolvedRegion,
       ]);
-      const localId = resolveLocalId(cached, securityGroupId);
+      const localId = resolveLocalId(cached as ResourceLike[] | undefined, securityGroupId);
 
       await axios.delete(buildUrl(apiBaseUrl, context, `/security-groups/${localId}`), {
         headers: authHeaders,
@@ -746,13 +713,10 @@ export const useAddSecurityGroupRule = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      securityGroupId,
-      payload,
-    }: {
+  return useMutation<
+    any,
+    Error,
+    {
       projectId: string;
       region?: string;
       securityGroupId: string;
@@ -763,7 +727,9 @@ export const useAddSecurityGroupRule = () => {
         port_range_max?: number;
         cidr?: string;
       };
-    }) => {
+    }
+  >({
+    mutationFn: async ({ projectId, region, securityGroupId, payload }) => {
       if (context === "admin") {
         const { data } = await axios.post(
           buildUrl(
@@ -823,13 +789,10 @@ export const useRemoveSecurityGroupRule = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      securityGroupId,
-      payload,
-    }: {
+  return useMutation<
+    void,
+    Error,
+    {
       projectId: string;
       region?: string;
       securityGroupId: string;
@@ -840,7 +803,9 @@ export const useRemoveSecurityGroupRule = () => {
         port_range_max?: number;
         cidr?: string;
       };
-    }) => {
+    }
+  >({
+    mutationFn: async ({ projectId, region, securityGroupId, payload }) => {
       if (context === "admin") {
         await axios.delete(
           buildUrl(
@@ -926,16 +891,16 @@ export const useCreateSubnet = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      payload,
-    }: {
+  return useMutation<
+    any,
+    Error,
+    {
       projectId: string;
       region?: string;
       payload: { name: string; cidr_block: string; vpc_id: string };
-    }) => {
+    }
+  >({
+    mutationFn: async ({ projectId, region, payload }) => {
       if (context === "admin") {
         const { data } = await axios.post(
           buildUrl(apiBaseUrl, context, `/projects/${projectId}/subnets`),
@@ -970,16 +935,8 @@ export const useDeleteSubnet = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      subnetId,
-    }: {
-      projectId: string;
-      region?: string;
-      subnetId: string;
-    }) => {
+  return useMutation<void, Error, { projectId: string; region?: string; subnetId: string }>({
+    mutationFn: async ({ projectId, region, subnetId }) => {
       if (context === "admin") {
         await axios.delete(
           buildUrl(apiBaseUrl, context, `/projects/${projectId}/subnets/${subnetId}`),
@@ -998,7 +955,7 @@ export const useDeleteSubnet = () => {
         projectId,
         resolvedRegion,
       ]);
-      const localId = resolveLocalId(cached, subnetId);
+      const localId = resolveLocalId(cached as ResourceLike[] | undefined, subnetId);
 
       await axios.delete(buildUrl(apiBaseUrl, context, `/subnets/${localId}`), {
         headers: authHeaders,
@@ -1051,16 +1008,16 @@ export const useCreateVpc = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      payload,
-    }: {
+  return useMutation<
+    any,
+    Error,
+    {
       projectId: string;
       region?: string;
       payload: { name: string; cidr: string; is_default?: boolean };
-    }) => {
+    }
+  >({
+    mutationFn: async ({ projectId, region, payload }) => {
       if (context === "admin") {
         const { data } = await axios.post(
           buildUrl(apiBaseUrl, context, `/projects/${projectId}/vpcs`),
@@ -1095,16 +1052,8 @@ export const useDeleteVpc = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      vpcId,
-    }: {
-      projectId: string;
-      region?: string;
-      vpcId: string;
-    }) => {
+  return useMutation<void, Error, { projectId: string; region?: string; vpcId: string }>({
+    mutationFn: async ({ projectId, region, vpcId }) => {
       if (context === "admin") {
         await axios.delete(buildUrl(apiBaseUrl, context, `/projects/${projectId}/vpcs/${vpcId}`), {
           headers: authHeaders,
@@ -1177,16 +1126,12 @@ export const useCreateNetworkAcl = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      payload,
-    }: {
-      projectId: string;
-      region?: string;
-      payload: { vpc_id: string; name?: string };
-    }) => {
+  return useMutation<
+    any,
+    Error,
+    { projectId: string; region?: string; payload: { vpc_id: string; name?: string } }
+  >({
+    mutationFn: async ({ projectId, region, payload }) => {
       if (context === "admin") {
         const { data } = await axios.post(
           buildUrl(apiBaseUrl, context, `/projects/${projectId}/network-acls`),
@@ -1221,16 +1166,8 @@ export const useDeleteNetworkAcl = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      networkAclId,
-    }: {
-      projectId: string;
-      region?: string;
-      networkAclId: string;
-    }) => {
+  return useMutation<void, Error, { projectId: string; region?: string; networkAclId: string }>({
+    mutationFn: async ({ projectId, region, networkAclId }) => {
       if (context === "admin") {
         await axios.delete(
           buildUrl(apiBaseUrl, context, `/projects/${projectId}/network-acls/${networkAclId}`),
@@ -1246,7 +1183,7 @@ export const useDeleteNetworkAcl = () => {
         projectId,
         resolvedRegion,
       ]);
-      const localId = resolveLocalId(cached, networkAclId);
+      const localId = resolveLocalId(cached as ResourceLike[] | undefined, networkAclId);
 
       await axios.delete(buildUrl(apiBaseUrl, context, `/network-acls/${localId}`), {
         headers: authHeaders,
@@ -1309,13 +1246,10 @@ export const useAddNetworkAclRule = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      networkAclId,
-      payload,
-    }: {
+  return useMutation<
+    any,
+    Error,
+    {
       projectId: string;
       region?: string;
       networkAclId: string;
@@ -1328,7 +1262,9 @@ export const useAddNetworkAclRule = () => {
         port_range_min?: number;
         port_range_max?: number;
       };
-    }) => {
+    }
+  >({
+    mutationFn: async ({ projectId, region, networkAclId, payload }) => {
       if (context === "admin") {
         const { data } = await axios.post(
           buildUrl(
@@ -1401,18 +1337,17 @@ export const useRemoveNetworkAclRule = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      networkAclId,
-      payload,
-    }: {
+  return useMutation<
+    void,
+    Error,
+    {
       projectId: string;
       region?: string;
       networkAclId: string;
       payload: { rule_number: number; egress: boolean };
-    }) => {
+    }
+  >({
+    mutationFn: async ({ projectId, region, networkAclId, payload }) => {
       if (context === "admin") {
         await axios.delete(
           buildUrl(
@@ -1509,16 +1444,16 @@ export const useCreateVpcPeering = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      payload,
-    }: {
+  return useMutation<
+    any,
+    Error,
+    {
       projectId: string;
       region?: string;
       payload: { vpc_id: string; peer_vpc_id: string; name?: string };
-    }) => {
+    }
+  >({
+    mutationFn: async ({ projectId, region, payload }) => {
       if (context === "admin") {
         const { data } = await axios.post(
           buildUrl(apiBaseUrl, context, `/projects/${projectId}/vpc-peering`),
@@ -1559,16 +1494,8 @@ export const useAcceptVpcPeering = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      peeringId,
-    }: {
-      projectId: string;
-      region?: string;
-      peeringId: string;
-    }) => {
+  return useMutation<void, Error, { projectId: string; region?: string; peeringId: string }>({
+    mutationFn: async ({ projectId, region, peeringId }) => {
       if (context === "admin") {
         await axios.post(
           buildUrl(apiBaseUrl, context, `/projects/${projectId}/vpc-peering/${peeringId}/accept`),
@@ -1606,16 +1533,8 @@ export const useRejectVpcPeering = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      peeringId,
-    }: {
-      projectId: string;
-      region?: string;
-      peeringId: string;
-    }) => {
+  return useMutation<void, Error, { projectId: string; region?: string; peeringId: string }>({
+    mutationFn: async ({ projectId, region, peeringId }) => {
       if (context === "admin") {
         await axios.post(
           buildUrl(apiBaseUrl, context, `/projects/${projectId}/vpc-peering/${peeringId}/reject`),
@@ -1653,16 +1572,8 @@ export const useDeleteVpcPeering = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      peeringId,
-    }: {
-      projectId: string;
-      region?: string;
-      peeringId: string;
-    }) => {
+  return useMutation<void, Error, { projectId: string; region?: string; peeringId: string }>({
+    mutationFn: async ({ projectId, region, peeringId }) => {
       if (context === "admin") {
         await axios.delete(
           buildUrl(apiBaseUrl, context, `/projects/${projectId}/vpc-peering/${peeringId}`),
@@ -1678,7 +1589,7 @@ export const useDeleteVpcPeering = () => {
         projectId,
         resolved,
       ]);
-      const localId = resolveLocalId(cached, peeringId);
+      const localId = resolveLocalId(cached as ResourceLike[] | undefined, peeringId);
 
       await axios.delete(buildUrl(apiBaseUrl, context, `/vpc-peering-connections/${localId}`), {
         headers: authHeaders,
@@ -1779,16 +1690,8 @@ export const useDeleteInternetGateway = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      igwId,
-    }: {
-      projectId: string;
-      region?: string;
-      igwId: string;
-    }) => {
+  return useMutation<void, Error, { projectId: string; region?: string; igwId: string }>({
+    mutationFn: async ({ projectId, region, igwId }) => {
       if (context === "admin") {
         await axios.delete(
           buildUrl(apiBaseUrl, context, `/projects/${projectId}/internet-gateways/${igwId}`),
@@ -1829,18 +1732,12 @@ export const useAttachInternetGateway = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      igwId,
-      vpcId,
-    }: {
-      projectId: string;
-      region?: string;
-      igwId: string;
-      vpcId: string;
-    }) => {
+  return useMutation<
+    void,
+    Error,
+    { projectId: string; region?: string; igwId: string; vpcId: string }
+  >({
+    mutationFn: async ({ projectId, region, igwId, vpcId }) => {
       if (context === "admin") {
         await axios.post(
           buildUrl(apiBaseUrl, context, `/projects/${projectId}/internet-gateways/${igwId}/attach`),
@@ -1879,18 +1776,12 @@ export const useDetachInternetGateway = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      igwId,
-      vpcId,
-    }: {
-      projectId: string;
-      region?: string;
-      igwId: string;
-      vpcId: string;
-    }) => {
+  return useMutation<
+    void,
+    Error,
+    { projectId: string; region?: string; igwId: string; vpcId: string }
+  >({
+    mutationFn: async ({ projectId, region, igwId, vpcId }) => {
       if (context === "admin") {
         await axios.post(
           buildUrl(apiBaseUrl, context, `/projects/${projectId}/internet-gateways/${igwId}/detach`),
@@ -1961,12 +1852,10 @@ export const useCreateRoute = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      payload,
-    }: {
+  return useMutation<
+    any,
+    Error,
+    {
       projectId: string;
       region?: string;
       payload: {
@@ -1975,7 +1864,9 @@ export const useCreateRoute = () => {
         gateway_id?: string;
         nat_gateway_id?: string;
       };
-    }) => {
+    }
+  >({
+    mutationFn: async ({ projectId, region, payload }) => {
       if (context === "admin") {
         const { data } = await axios.post(
           buildUrl(apiBaseUrl, context, `/projects/${projectId}/routes`),
@@ -2010,16 +1901,16 @@ export const useDeleteRoute = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      payload,
-    }: {
+  return useMutation<
+    void,
+    Error,
+    {
       projectId: string;
       region?: string;
       payload: { route_table_id: string; destination_cidr_block: string };
-    }) => {
+    }
+  >({
+    mutationFn: async ({ projectId, region, payload }) => {
       if (context === "admin") {
         await axios.delete(buildUrl(apiBaseUrl, context, `/projects/${projectId}/routes`), {
           headers: authHeaders,
@@ -2053,18 +1944,12 @@ export const useAssociateRouteTable = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      routeTableId,
-      subnetId,
-    }: {
-      projectId: string;
-      region?: string;
-      routeTableId: string;
-      subnetId: string;
-    }) => {
+  return useMutation<
+    any,
+    Error,
+    { projectId: string; region?: string; routeTableId: string; subnetId: string }
+  >({
+    mutationFn: async ({ projectId, region, routeTableId, subnetId }) => {
       if (context === "admin") {
         const { data } = await axios.post(
           buildUrl(
@@ -2108,16 +1993,8 @@ export const useDisassociateRouteTable = () => {
   const queryClient = useQueryClient();
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      region,
-      associationId,
-    }: {
-      projectId: string;
-      region?: string;
-      associationId: string;
-    }) => {
+  return useMutation<void, Error, { projectId: string; region?: string; associationId: string }>({
+    mutationFn: async ({ projectId, region, associationId }) => {
       if (context === "admin") {
         await axios.delete(
           buildUrl(

@@ -3,6 +3,7 @@ import { Loader2, X } from "lucide-react";
 
 import { useCreateClientSecurityGroup } from "../../../hooks/clientHooks/securityGroupHooks";
 import { useFetchGeneralRegions } from "../../../hooks/resource";
+import logger from "../../../utils/logger";
 
 interface AddSGProps {
   isOpen: boolean;
@@ -57,7 +58,7 @@ const AddSG: React.FC<AddSGProps> = ({ isOpen, onClose, projectId = "", region =
         onClose();
       },
       onError: (err: any) => {
-        console.error("Failed to create security group:", err);
+        logger.error("Failed to create security group:", err);
       },
     });
   };
@@ -114,7 +115,7 @@ const AddSG: React.FC<AddSGProps> = ({ isOpen, onClose, projectId = "", region =
                   <option value="" disabled>
                     {isRegionsFetching ? "Loading regions..." : "Select a region"}
                   </option>
-                  {regions?.map((r: any) => (
+                  {(regions as any)?.map((r: any) => (
                     <option key={r.region} value={r.region}>
                       {r.label}
                     </option>

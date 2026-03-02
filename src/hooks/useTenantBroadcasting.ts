@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import createEchoClient from "../echo";
 import useAdminAuthStore from "../stores/adminAuthStore";
+import logger from "../utils/logger";
 
 /**
  * Hook to listen for real-time tenant provisioning updates.
@@ -36,7 +37,7 @@ export const useTenantBroadcasting = (tenantId?: string | number | null) => {
     const channel = echo.private(`tenants.${tenantId}`);
 
     channel.listen(".TenantProvisioningUpdated", (event: ProvisioningEvent) => {
-      console.log("🚀 Real-time Tenant Update:", event);
+      logger.log("🚀 Real-time Tenant Update:", event);
 
       queryClient.setQueryData<ProvisioningPayload>(
         ["admin-tenant-details", tenantId],

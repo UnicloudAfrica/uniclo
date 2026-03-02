@@ -44,7 +44,7 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
   }, [context]);
 
   const { isFetching, data: instancesResponse, refetch } = useInstances();
-  const instances = instancesResponse?.data || [];
+  const instances = (instancesResponse as any)?.data || [];
 
   const { consoles, openConsole, closeConsole } = useConsoleManager();
 

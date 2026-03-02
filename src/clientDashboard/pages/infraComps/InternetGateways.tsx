@@ -74,7 +74,7 @@ const IGWs: React.FC<IGWsProps> = ({ projectId = "", region = "" }) => {
   const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const currentIgws = (igws || []).slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  const attachedCount = (igws || []).filter((igw: IGW) => igw.attached_vpc_id).length;
+  const attachedCount = (igws || []).filter((igw: any) => igw.attached_vpc_id).length;
 
   const stats = [
     { label: "Total IGWs", value: totalItems, tone: "primary" as const },
@@ -262,7 +262,7 @@ const IGWs: React.FC<IGWsProps> = ({ projectId = "", region = "" }) => {
         {currentIgws && currentIgws.length > 0 ? (
           <>
             <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-              {currentIgws.map(renderGatewayCard)}
+              {currentIgws.map(renderGatewayCard as any)}
             </div>
 
             {totalPages > 1 && (

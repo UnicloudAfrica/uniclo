@@ -198,7 +198,7 @@ export const useAdminCreateInstanceLogic = () => {
     return configurations.map((cfg) => {
       const status = evaluateConfigurationCompleteness(cfg);
       const computeLabel =
-        cfg.compute_label || formatComputeLabel(cfg.compute_instance_id, instanceTypes);
+        cfg.compute_label || formatComputeLabel(cfg.compute_instance_id, instanceTypes as any);
       const resolvedComputeLabel =
         computeLabel && !["Not selected", "Instance selected"].includes(computeLabel)
           ? computeLabel
@@ -206,10 +206,10 @@ export const useAdminCreateInstanceLogic = () => {
       const defaultTitle =
         cfg.name?.trim() ||
         (resolvedComputeLabel ? resolvedComputeLabel : "Instance configuration");
-      const osLabel = cfg.os_image_label || formatOsLabel(cfg.os_image_id, osImages);
+      const osLabel = cfg.os_image_label || formatOsLabel(cfg.os_image_id, osImages as any);
       const storageLabel = cfg.volume_type_label
         ? `${cfg.volume_type_label}${cfg.storage_size_gb ? ` • ${cfg.storage_size_gb} GB` : ""}`
-        : formatVolumeLabel(cfg.volume_type_id, cfg.storage_size_gb, volumeTypes);
+        : formatVolumeLabel(cfg.volume_type_id, cfg.storage_size_gb, volumeTypes as any);
       return {
         id: cfg.id,
         title: defaultTitle,
@@ -225,7 +225,7 @@ export const useAdminCreateInstanceLogic = () => {
           : "Not selected",
         storageLabel,
         floatingIpLabel: `${Number(cfg.floating_ip_count || 0)} floating IP${Number(cfg.floating_ip_count || 0) === 1 ? "" : "s"}`,
-        keypairLabel: formatKeypairLabel(cfg.keypair_name, keyPairs, cfg.keypair_label),
+        keypairLabel: formatKeypairLabel(cfg.keypair_name, keyPairs as any, cfg.keypair_label),
         subnetLabel: formatSubnetLabel(cfg),
         statusLabel: status.isComplete ? "Complete" : "Incomplete",
         isComplete: status.isComplete,
@@ -359,7 +359,7 @@ export const useAdminCreateInstanceLogic = () => {
   const summaryPlanLabel = useMemo(() => {
     if (!configurationSummaries.length) return "Instance profile";
     if (configurationSummaries.length === 1)
-      return configurationSummaries[0].title || "Instance profile";
+      return configurationSummaries[0]!.title || "Instance profile";
     return `${configurationSummaries.length} compute profiles`;
   }, [configurationSummaries]);
 

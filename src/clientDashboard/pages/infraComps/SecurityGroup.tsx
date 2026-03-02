@@ -16,6 +16,7 @@ import {
   ResourceListCard,
   ModernButton,
 } from "../../../shared/components/ui";
+import logger from "../../../utils/logger";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -86,7 +87,7 @@ const SecurityGroup: React.FC<SecurityGroupProps> = ({ projectId = "", region = 
           setDeleteModal(null);
         },
         onError: (err: any) => {
-          console.error("Failed to delete Security Group:", err);
+          logger.error("Failed to delete Security Group:", err);
           setDeleteModal(null);
         },
       }
@@ -109,7 +110,7 @@ const SecurityGroup: React.FC<SecurityGroupProps> = ({ projectId = "", region = 
       });
       ToastUtils.success("Security groups synced successfully!");
     } catch (error: any) {
-      console.error("Failed to sync Security Groups:", error);
+      logger.error("Failed to sync Security Groups:", error);
       ToastUtils.error(error?.message || "Failed to sync security groups.");
     } finally {
       setIsSyncing(false);
@@ -143,7 +144,7 @@ const SecurityGroup: React.FC<SecurityGroupProps> = ({ projectId = "", region = 
       },
     ] as unknown;
     if (region) {
-      base.push({
+      (base as any).push({
         label: "Region",
         value: region,
         tone: "info",
@@ -154,14 +155,14 @@ const SecurityGroup: React.FC<SecurityGroupProps> = ({ projectId = "", region = 
 
   const renderSecurityGroupCard = (securityGroup: SecurityGroupType) => {
     const inboundRules =
-      securityGroup.ingress_rules?.length ??
-      securityGroup.inbound_rules?.length ??
-      securityGroup.rules?.inbound?.length ??
+      (securityGroup as any).ingress_rules?.length ??
+      (securityGroup as any).inbound_rules?.length ??
+      (securityGroup as any).rules?.inbound?.length ??
       0;
     const outboundRules =
-      securityGroup.egress_rules?.length ??
-      securityGroup.outbound_rules?.length ??
-      securityGroup.rules?.outbound?.length ??
+      (securityGroup as any).egress_rules?.length ??
+      (securityGroup as any).outbound_rules?.length ??
+      (securityGroup as any).rules?.outbound?.length ??
       0;
     const status = securityGroup.status || securityGroup.state || "Not specified";
 
@@ -229,7 +230,7 @@ const SecurityGroup: React.FC<SecurityGroupProps> = ({ projectId = "", region = 
         title="Security Groups"
         description="Manage firewall rules that control inbound and outbound access to project resources."
         actions={actions}
-        meta={stats}
+        meta={stats as any}
         isLoading={isFetching}
       >
         {currentSecurityGroups.length > 0 ? (

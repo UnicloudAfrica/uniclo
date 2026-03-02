@@ -13,7 +13,7 @@ export const EscalationBadge: React.FC<EscalationBadgeProps> = ({
   size = "md",
 }) => {
   const config = ESCALATION_CONFIG[level] || ESCALATION_CONFIG[0];
-  const Icon = config.icon;
+  const Icon = config?.icon;
 
   const sizeClasses = {
     sm: "text-xs gap-1",
@@ -28,9 +28,9 @@ export const EscalationBadge: React.FC<EscalationBadgeProps> = ({
   };
 
   return (
-    <div className={`inline-flex items-center ${sizeClasses[size]} ${config.color}`}>
+    <div className={`inline-flex items-center ${sizeClasses[size]} ${config?.color}`}>
       <Icon className={iconSizes[size]} />
-      {showLabel && <span>{config.label}</span>}
+      {showLabel && <span>{config?.label}</span>}
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import adminSilentApiforUser from "../../index/admin/silentadminforuser";
 import apiAdminforUser from "../../index/admin/apiAdminforUser";
+import logger from "../../utils/logger";
 
 const fetchElasticIps = async ({ project_id, region, refresh = false }: any) => {
   const params = new URLSearchParams();
@@ -70,7 +71,7 @@ export const useCreateElasticIp = () => {
       queryClient.invalidateQueries({ queryKey: ["elasticIps"] });
     },
     onError: (error: any) => {
-      console.error("Error creating elastic IP:", error);
+      logger.error("Error creating elastic IP:", error);
     },
   });
 };
@@ -84,7 +85,7 @@ export const useUpdateElasticIp = () => {
       queryClient.invalidateQueries({ queryKey: ["elasticIp", variables.id] });
     },
     onError: (error: any) => {
-      console.error("Error updating elastic IP:", error);
+      logger.error("Error updating elastic IP:", error);
     },
   });
 };
@@ -105,7 +106,7 @@ export const useDeleteElasticIp = () => {
       });
     },
     onError: (error: any) => {
-      console.error("Error deleting elastic IP:", error);
+      logger.error("Error deleting elastic IP:", error);
     },
   });
 };

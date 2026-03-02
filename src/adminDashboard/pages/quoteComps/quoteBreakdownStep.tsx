@@ -3,7 +3,7 @@ import ModernCard from "../../../shared/components/ui/ModernCard";
 import { ModernButton } from "../../../shared/components/ui";
 import ModernTable from "../../../shared/components/ui/ModernTable";
 
-const formatCurrency = (amount, currency = "USD") => {
+const formatCurrency = (amount: any, currency = "USD") => {
   if (amount === null || amount === undefined) return "—";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -89,7 +89,7 @@ const QuoteBreakdownStep = ({ apiResponse }: any) => {
             {
               key: "name",
               header: "ITEM",
-              render: (_, item) => (
+              render: (_: any, item: any) => (
                 <div>
                   <p className="font-medium text-slate-900">{item.name}</p>
                   {item.description && <p className="text-xs text-slate-500">{item.description}</p>}
@@ -100,13 +100,13 @@ const QuoteBreakdownStep = ({ apiResponse }: any) => {
               key: "quantity",
               header: "QTY",
               align: "right",
-              render: (val) => <span className="text-slate-600">{val}</span>,
+              render: (val: any) => <span className="text-slate-600">{val}</span>,
             },
             {
               key: "unit_amount",
               header: "UNIT PRICE",
               align: "right",
-              render: (val, item) => (
+              render: (val: any, item: any) => (
                 <span className="text-slate-600">{formatCurrency(val, item.currency)}</span>
               ),
             },
@@ -114,7 +114,7 @@ const QuoteBreakdownStep = ({ apiResponse }: any) => {
               key: "total",
               header: "TOTAL",
               align: "right",
-              render: (val, item) => (
+              render: (val: any, item: any) => (
                 <span className="font-medium text-slate-900">
                   {formatCurrency(val, item.currency)}
                 </span>
@@ -122,7 +122,7 @@ const QuoteBreakdownStep = ({ apiResponse }: any) => {
             },
           ];
 
-          const lineItemsData = (invoice.line_items || []).map((item, idx) => ({
+          const lineItemsData = (invoice.line_items || []).map((item: any, idx: any) => ({
             ...item,
             id: `line-${idx}`,
           }));
@@ -178,7 +178,7 @@ const QuoteBreakdownStep = ({ apiResponse }: any) => {
 
               <ModernTable
                 data={lineItemsData}
-                columns={lineItemColumns}
+                columns={lineItemColumns as any}
                 searchable={false}
                 filterable={false}
                 exportable={false}

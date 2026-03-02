@@ -15,6 +15,7 @@ import load from "./assets/load.gif";
 import checked from "./assets/checked.png";
 import warning from "./assets/warning.png";
 import { GeneralContext } from "../contexts/contextprovider";
+import logger from "../utils/logger";
 
 interface GeneralItem {
   address: string;
@@ -202,15 +203,15 @@ const Contact = () => {
 
       if (response.ok) {
         // Handle successful form submission, e.g., show a success message
-        console.log("Form submitted successfully");
+        logger.log("Form submitted successfully");
         setSuccessMessage(true);
       } else {
         // Handle form submission error
-        console.error("Form submission error");
+        logger.error("Form submission error");
         setErrorMessage(true);
       }
     } catch (error) {
-      console.error("Error submitting form:", error);
+      logger.error("Error submitting form:", error);
     }
   };
 
@@ -339,7 +340,7 @@ const Contact = () => {
                     >
                       <option value="">Select Country</option>
                       {countryList.map((country, index) => (
-                        <option key={index} value={country.phone}>
+                        <option key={index} value={country.phone as any}>
                           {country.code + "  " + "+" + country.phone}
                         </option>
                       ))}

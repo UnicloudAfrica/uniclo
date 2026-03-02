@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentAdminApi from "../index/admin/silent";
 import adminApi from "../index/admin/api";
+import logger from "../utils/logger";
 
 export interface NetworkPolicySettings {
   force_eip_for_public_preset?: boolean;
@@ -39,7 +40,7 @@ export const useUpdateAdminNetworkPolicySettings = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-network-policy"] });
     },
     onError: (error) => {
-      console.error("Error updating network policy:", error);
+      logger.error("Error updating network policy:", error);
     },
   });
 };

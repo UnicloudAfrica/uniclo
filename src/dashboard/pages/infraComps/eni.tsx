@@ -13,6 +13,7 @@ import { ResourceSection } from "../../../shared/components/ui";
 import { ResourceEmptyState } from "../../../shared/components/ui";
 import { ResourceListCard } from "../../../shared/components/ui";
 import { ModernButton } from "../../../shared/components/ui";
+import logger from "../../../utils/logger";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -24,7 +25,13 @@ const getToneForStatus = (status = "") => {
   return "neutral";
 };
 
-const ENIs = ({ projectId = "", region = "", actionRequest, onActionHandled, onStatsUpdate }) => {
+const ENIs = ({
+  projectId = "",
+  region = "",
+  actionRequest,
+  onActionHandled,
+  onStatsUpdate,
+}: any) => {
   const { data: enis, isFetching } = useFetchTenantNetworkInterfaces(projectId, region);
   const { mutate: syncEnis, isPending: isSyncing } = useSyncTenantNetworkInterfaces();
   const { mutate: deleteEni, isPending: isDeleting } = useDeleteTenantNetworkInterface();
@@ -116,7 +123,7 @@ const ENIs = ({ projectId = "", region = "", actionRequest, onActionHandled, onS
       {
         onSuccess: () => ToastUtils.success("Network interfaces synced with provider."),
         onError: (err) => {
-          console.error("Failed to sync network interfaces:", err);
+          logger.error("Failed to sync network interfaces:", err);
           ToastUtils.error(err?.message || "Failed to sync network interfaces.");
         },
       }
@@ -142,7 +149,7 @@ const ENIs = ({ projectId = "", region = "", actionRequest, onActionHandled, onS
           setDeleteModal(null);
         },
         onError: (err) => {
-          console.error("Failed to delete network interface:", err);
+          logger.error("Failed to delete network interface:", err);
           ToastUtils.error(err?.message || "Failed to delete network interface.");
           setDeleteModal(null);
         },
@@ -223,14 +230,14 @@ const ENIs = ({ projectId = "", region = "", actionRequest, onActionHandled, onS
     />
   );
 
-  const renderIps = (eniRecord) => {
+  const renderIps = (eniRecord: any) => {
     const ips = eniRecord?.private_ip_addresses ?? [];
     if (!ips.length) {
       return <p className="text-sm text-slate-500">No private addresses</p>;
     }
     return (
       <ul className="space-y-1 text-sm text-slate-600">
-        {ips.map((ip, index) => {
+        {ips.map((ip: any, index: any) => {
           const value = typeof ip === "string" ? ip : ip?.private_ip_address;
           return <li key={`${eniRecord.id}-ip-${index}`}>{value || "—"}</li>;
         })}
@@ -238,7 +245,7 @@ const ENIs = ({ projectId = "", region = "", actionRequest, onActionHandled, onS
     );
   };
 
-  const renderCard = (eni) => {
+  const renderCard = (eni: any) => {
     const record = eni.network_interface ?? eni;
     const id = record?.id ?? eni.id;
     const attachment = record?.attachment ?? eni.attachment;
@@ -331,7 +338,7 @@ const ENIs = ({ projectId = "", region = "", actionRequest, onActionHandled, onS
         title="Elastic Network Interfaces"
         description="Provision additional network adapters for granular connectivity and IP management."
         actions={actions}
-        meta={stats}
+        meta={stats as any}
         isLoading={isFetching}
       >
         {currentItems.length > 0 ? (

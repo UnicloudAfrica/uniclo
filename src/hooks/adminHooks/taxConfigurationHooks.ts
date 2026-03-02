@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
+import logger from "../../utils/logger";
 
 // GET: Fetch all tax configurations
 const fetchTaxConfigurations = async () => {
@@ -92,7 +93,7 @@ export const useCreateTaxConfiguration = () => {
       });
     },
     onError: (error: any) => {
-      console.error("Error creating tax configuration:", error);
+      logger.error("Error creating tax configuration:", error);
     },
   });
 };
@@ -124,7 +125,7 @@ export const useUpdateTaxConfiguration = () => {
       }
     },
     onError: (error: any) => {
-      console.error("Error updating tax configuration:", error);
+      logger.error("Error updating tax configuration:", error);
     },
   });
 };
@@ -145,7 +146,7 @@ export const useDeleteTaxConfiguration = () => {
       });
     },
     onError: (error: any) => {
-      console.error("Error deleting tax configuration:", error);
+      logger.error("Error deleting tax configuration:", error);
     },
   });
 };

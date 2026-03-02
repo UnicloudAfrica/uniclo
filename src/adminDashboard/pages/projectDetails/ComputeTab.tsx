@@ -36,7 +36,7 @@ const ComputeTab: React.FC<ComputeTabProps> = ({ project, initialSubView, onSubV
       projectId={project?.identifier}
       region={project?.region}
       hierarchy="admin"
-      useInstances={useFetchPurchasedInstances}
+      useInstances={useFetchPurchasedInstances as any}
       keyPairHooks={{
         useList: useFetchKeyPairs,
         useSync: useSyncKeyPairs,

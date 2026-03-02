@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../index/admin/silent";
 import api from "../index/admin/api";
+import logger from "../utils/logger";
 
 const fetchRegions = async () => {
   const res = await silentApi("GET", "/regions");
@@ -9,25 +10,25 @@ const fetchRegions = async () => {
   return res.data;
 };
 
-const fetchRegionById = async (id) => {
+const fetchRegionById = async (id: any) => {
   const res = await silentApi("GET", `/regions/${id}`);
   if (!res.data) throw new Error(`Failed to fetch region with ID ${id}`);
   return res.data;
 };
 
-const createRegion = async (regionData) => {
+const createRegion = async (regionData: any) => {
   const res = await api("POST", "/regions", regionData);
   if (!res.data) throw new Error("Failed to create region");
   return res.data;
 };
 
-const updateRegion = async ({ id, regionData }) => {
+const updateRegion = async ({ id, regionData }: any) => {
   const res = await api("PATCH", `/regions/${id}`, regionData);
   if (!res.data) throw new Error(`Failed to update region with ID ${id}`);
   return res.data;
 };
 
-const deleteRegion = async (id) => {
+const deleteRegion = async (id: any) => {
   const res = await api("DELETE", `/regions/${id}`);
   if (!res.data) throw new Error(`Failed to delete region with ID ${id}`);
   return res.data;
@@ -43,7 +44,7 @@ export const useFetchTenantRegions = (options: any = {}) => {
   });
 };
 
-export const useFetchTenantRegionById = (id, options = {}) => {
+export const useFetchTenantRegionById = (id: any, options = {}) => {
   return useQuery({
     queryKey: ["region", id],
     queryFn: () => fetchRegionById(id),
@@ -62,7 +63,7 @@ export const useCreateTenantRegion = () => {
       queryClient.invalidateQueries({ queryKey: ["regions"] });
     },
     onError: (error) => {
-      console.error("Error creating region:", error);
+      logger.error("Error creating region:", error);
     },
   });
 };
@@ -76,7 +77,7 @@ export const useUpdateTenantRegion = () => {
       queryClient.invalidateQueries({ queryKey: ["region", variables.id] });
     },
     onError: (error) => {
-      console.error("Error updating region:", error);
+      logger.error("Error updating region:", error);
     },
   });
 };
@@ -89,7 +90,7 @@ export const useDeleteTenantRegion = () => {
       queryClient.invalidateQueries({ queryKey: ["regions"] });
     },
     onError: (error) => {
-      console.error("Error deleting region:", error);
+      logger.error("Error deleting region:", error);
     },
   });
 };

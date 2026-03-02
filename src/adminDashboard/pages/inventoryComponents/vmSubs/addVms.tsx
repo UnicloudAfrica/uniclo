@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import ToastUtils from "../../../../utils/toastUtil";
 import { useCreateVmInstance } from "../../../../hooks/adminHooks/vmHooks";
+import logger from "../../../../utils/logger";
 
 const AddVMModal = ({ isOpen, onClose }: any) => {
   const [formData, setFormData] = useState({
@@ -42,8 +43,8 @@ const AddVMModal = ({ isOpen, onClose }: any) => {
     ];
 
     numberFields.forEach((field: any) => {
-      const value = parseFloat(formData[field]);
-      if (isNaN(value) || formData[field] === "") {
+      const value = parseFloat((formData as any)[field]);
+      if (isNaN(value) || (formData as any)[field] === "") {
         newErrors[field] = `${field
           .replace(/_/g, " ")
           .replace("gib", "GiB")
@@ -84,7 +85,7 @@ const AddVMModal = ({ isOpen, onClose }: any) => {
         onClose();
       },
       onError: (err) => {
-        console.error("Failed to create VM Instance:", err);
+        logger.error("Failed to create VM Instance:", err);
         ToastUtils.error("Failed to create VM Instance. Please try again.");
       },
     });

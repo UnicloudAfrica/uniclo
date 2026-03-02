@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import adminApi, { adminSilentApi } from "../../index/admin/api";
+import logger from "../../utils/logger";
 
 const fetchSubnets = async ({ project_id, region, refresh = false }: any) => {
   const params = new URLSearchParams();
@@ -63,7 +64,7 @@ export const useCreateSubnet = () => {
       });
     },
     onError: (error: any) => {
-      console.error("Error creating subnet:", error);
+      logger.error("Error creating subnet:", error);
     },
   });
 };
@@ -79,7 +80,7 @@ export const useDeleteSubnet = () => {
       });
     },
     onError: (error: any) => {
-      console.error("Error deleting subnet:", error);
+      logger.error("Error deleting subnet:", error);
     },
   });
 };

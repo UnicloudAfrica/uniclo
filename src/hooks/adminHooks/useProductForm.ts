@@ -9,6 +9,7 @@ import {
 } from "../../utils/productImportUtils";
 import silentApi from "../../index/admin/silent";
 import ToastUtils from "../../utils/toastUtil";
+import logger from "../../utils/logger";
 
 export const useProductForm = (regionLookup: Record<string, any>) => {
   const [entries, setEntries] = useState<ProductEntry[]>([createEmptyEntry()]);
@@ -91,7 +92,7 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
           };
         });
       } catch (error) {
-        console.error("Failed to load product options", error);
+        logger.error("Failed to load product options", error);
         updateEntry(index, { options: [], loadingOptions: false });
         ToastUtils.error("Failed to load product options.");
       }

@@ -70,7 +70,7 @@ const ViewSGModal = ({ isOpen, onClose, securityGroup }: any) => {
             <DetailRow label="Rules">
               {securityGroup.rules && securityGroup.rules.length > 0 ? (
                 <ul className="space-y-2">
-                  {securityGroup.rules.map((rule, index) => (
+                  {securityGroup.rules.map((rule: any, index: any) => (
                     <li key={index} className="text-xs bg-gray-100 p-2 rounded">
                       {/* Customize rule display as needed */}
                       <pre>{JSON.stringify(rule, null, 2)}</pre>

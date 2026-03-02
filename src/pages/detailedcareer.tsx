@@ -16,6 +16,7 @@ import checked from "./assets/checked.png";
 import warning from "./assets/warning.png";
 import DOMPurify from "dompurify";
 import { CareerContext } from "../contexts/contextprovider";
+import logger from "../utils/logger";
 
 interface CareerItem {
   title: string;
@@ -78,7 +79,7 @@ const DetailedCareer = () => {
 
   const db = useMemo(() => {
     if (typeof window === "undefined") return null;
-    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]!;
     return getFirestore(app);
   }, []);
 
@@ -97,11 +98,11 @@ const DetailedCareer = () => {
           const career = { id: doc.id, ...(doc.data() as Omit<CareerItem, "id">) };
           setSelectedCareerItem(career);
         } else {
-          console.log("Document does not exist");
+          logger.log("Document does not exist");
         }
       })
       .catch((error) => {
-        console.error("Error getting document:", error);
+        logger.error("Error getting document:", error);
       });
   }, [id, db, careerArray.length]);
 
@@ -119,7 +120,7 @@ const DetailedCareer = () => {
         }, 2000);
       })
       .catch((err) => {
-        console.error("Unable to copy link to clipboard", err);
+        logger.error("Unable to copy link to clipboard", err);
       });
   };
 
@@ -360,16 +361,16 @@ const DetailedCareer = () => {
 
       if (response.ok) {
         // Handle successful form submission, e.g., show a success message
-        console.log("Form submitted successfully");
+        logger.log("Form submitted successfully");
         setLoading("No");
         setSuccessMessage(true);
       } else {
         // Handle form submission error
-        console.error("Form submission error");
+        logger.error("Form submission error");
         setLoading("No");
       }
     } catch (error) {
-      console.error("Error submitting form:", error);
+      logger.error("Error submitting form:", error);
       setLoading("No");
       setErrorMessage(true);
     }

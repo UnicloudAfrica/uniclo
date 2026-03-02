@@ -1,6 +1,7 @@
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../index/admin/api";
+import logger from "../../utils/logger";
 
 // Convert backend response to frontend format
 const convertBackendResponse = (backendData: any) => {
@@ -194,7 +195,7 @@ export const useSetupInfrastructureComponent = () => {
       });
     },
     onError: (error: any, variables: any) => {
-      console.error(`Failed to setup ${variables.componentType}:`, error);
+      logger.error(`Failed to setup ${variables.componentType}:`, error);
     },
   });
 };
@@ -225,7 +226,7 @@ export const useProvisionVpc = () => {
       });
     },
     onError: (error: any) => {
-      console.error("Failed to provision VPC:", error);
+      logger.error("Failed to provision VPC:", error);
     },
   });
 };
@@ -258,7 +259,7 @@ export const useEnableProjectVpc = () => {
       });
     },
     onError: (error: any) => {
-      console.error("Failed to enable VPC:", error);
+      logger.error("Failed to enable VPC:", error);
     },
   });
 };
@@ -313,7 +314,7 @@ export const useProjectStatusPolling = (projectId: any, options: any = {}) => {
     },
     onSuccess: (data: any) => {
       // Log status changes
-      console.log(`Project ${projectId} status:`, data.status);
+      logger.log(`Project ${projectId} status:`, data.status);
 
       // If project completed, trigger success callback
       if (options.onStatusChange) {
@@ -360,7 +361,7 @@ export const useBulkSetupInfrastructure = () => {
       });
     },
     onError: (error: any, variables: any) => {
-      console.error("Failed to setup infrastructure components:", error);
+      logger.error("Failed to setup infrastructure components:", error);
     },
   });
 };
@@ -389,7 +390,7 @@ export const useResetInfrastructureComponent = () => {
       });
     },
     onError: (error: any, variables: any) => {
-      console.error(`Failed to reset ${variables.componentType}:`, error);
+      logger.error(`Failed to reset ${variables.componentType}:`, error);
     },
   });
 };
@@ -471,7 +472,7 @@ export const useSyncProjectInfrastructure = () => {
       resourceKeys.forEach((key: any) => queryClient.invalidateQueries({ queryKey: [key] }));
     },
     onError: (error: any) => {
-      console.error("Failed to sync infrastructure:", error);
+      logger.error("Failed to sync infrastructure:", error);
     },
   });
 };

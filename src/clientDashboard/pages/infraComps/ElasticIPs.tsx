@@ -15,6 +15,7 @@ import {
   ModernButton,
 } from "../../../shared/components/ui";
 import ToastUtils from "../../../utils/toastUtil";
+import logger from "../../../utils/logger";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -75,9 +76,8 @@ const EIPs: React.FC<ElasticIPsProps> = ({ projectId = "", region = "" }) => {
 
   const availableCount = useMemo(
     () =>
-      (eips || []).filter(
-        (eip: ElasticIP) => (eip.status || "").toString().toLowerCase() === "available"
-      ).length,
+      (eips || []).filter((eip: any) => (eip.status || "").toString().toLowerCase() === "available")
+        .length,
     [eips]
   );
   const allocatedCount = totalItems - availableCount;
@@ -129,7 +129,7 @@ const EIPs: React.FC<ElasticIPsProps> = ({ projectId = "", region = "" }) => {
           closeDeleteModal();
         },
         onError: (err: any) => {
-          console.error("Failed to delete EIP:", err);
+          logger.error("Failed to delete EIP:", err);
           ToastUtils.error(err?.message || "Failed to release Elastic IP.");
           closeDeleteModal();
         },
@@ -150,7 +150,7 @@ const EIPs: React.FC<ElasticIPsProps> = ({ projectId = "", region = "" }) => {
       });
       ToastUtils.success("Elastic IPs synced successfully!");
     } catch (error: any) {
-      console.error("Failed to sync Elastic IPs:", error);
+      logger.error("Failed to sync Elastic IPs:", error);
       ToastUtils.error(error?.message || "Failed to sync Elastic IPs.");
     } finally {
       setIsSyncing(false);
@@ -239,7 +239,7 @@ const EIPs: React.FC<ElasticIPsProps> = ({ projectId = "", region = "" }) => {
         {currentEips.length > 0 ? (
           <>
             <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-              {currentEips.map(renderCard)}
+              {currentEips.map(renderCard as any)}
             </div>
             {totalPages > 1 && (
               <div className="mt-6 flex items-center justify-between text-sm text-slate-500">

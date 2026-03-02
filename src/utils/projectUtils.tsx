@@ -1,6 +1,7 @@
 import React from "react";
 import { Activity, AlertCircle, Check, Clock, Loader2, XCircle } from "lucide-react";
 import { Project } from "../types/project";
+import logger from "./logger";
 
 export interface StatusDisplayConfig {
   backgroundColor: string;
@@ -278,7 +279,7 @@ export const decodeProjectId = (encodedId: string): string => {
   try {
     return atob(decodeURIComponent(encodedId));
   } catch (error) {
-    console.error("Failed to decode project ID:", error);
+    logger.error("Failed to decode project ID:", error);
     return encodedId;
   }
 };

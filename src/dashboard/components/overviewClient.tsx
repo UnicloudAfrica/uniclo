@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import DeleteClientModal from "../pages/clientComps/deleteClient";
 import EditClientModal from "../pages/clientComps/editClient";
 
-const OverviewClient = ({ client, onClientUpdated }) => {
+const OverviewClient = ({ client, onClientUpdated }: any) => {
   // Add onClientUpdated prop for refetching
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<any>(null);
@@ -16,7 +16,7 @@ const OverviewClient = ({ client, onClientUpdated }) => {
     return <div className="text-gray-600">No client data available.</div>;
   }
 
-  const openDeleteModal = (clientData) => {
+  const openDeleteModal = (clientData: any) => {
     setClientToDelete(clientData);
     setIsDeleteModalOpen(true);
   };
@@ -31,7 +31,7 @@ const OverviewClient = ({ client, onClientUpdated }) => {
     navigate("/dashboard/clients"); // Navigate back to clients list after deletion
   };
 
-  const openEditModal = (clientData) => {
+  const openEditModal = (clientData: any) => {
     setClientToEdit(clientData);
     setIsEditModalOpen(true);
   };

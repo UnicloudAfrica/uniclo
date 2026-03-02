@@ -63,7 +63,7 @@ export const useClientProvisioningLogic = () => {
   // Ensure value is string to match resolveCountryCodeFromEntity expectation
   const countryOptions: Option[] = useMemo(
     () =>
-      countriesData.map((c: any) => ({
+      (countriesData as any).map((c: any) => ({
         value: String(c.iso2 || c.code || c.id),
         label: c.name,
       })),
@@ -124,7 +124,7 @@ export const useClientProvisioningLogic = () => {
 
   const regionOptions: Option[] = useMemo(
     () =>
-      generalRegions.map((r: any) => ({
+      (generalRegions as any).map((r: any) => ({
         value: r.code || r.region || r.id || r.slug,
         label: r.label || r.name || r.region || r.code,
       })),

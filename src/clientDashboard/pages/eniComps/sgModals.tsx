@@ -13,7 +13,7 @@ export const AttachSgModal = ({
   projectId,
   region = "",
   networkInterfaceId = "",
-}) => {
+}: any) => {
   const [form, setForm] = useState({
     security_group_id: "",
     region,
@@ -152,7 +152,7 @@ export const DetachSgModal = ({
   projectId,
   region = "",
   networkInterfaceId = "",
-}) => {
+}: any) => {
   const [form, setForm] = useState({
     security_group_id: "",
     region,

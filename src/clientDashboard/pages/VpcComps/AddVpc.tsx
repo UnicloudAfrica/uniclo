@@ -3,6 +3,7 @@ import { Loader2, X } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useCreateClientVpc } from "../../../hooks/clientHooks/vpcHooks";
 import { useFetchGeneralRegions } from "../../../hooks/resource";
+import logger from "../../../utils/logger";
 
 interface AddTenantVpcProps {
   isOpen: boolean;
@@ -62,7 +63,7 @@ const AddTenantVpc: React.FC<AddTenantVpcProps> = ({
         onClose();
       },
       onError: (err) => {
-        console.error("Failed to create VPC:", err);
+        logger.error("Failed to create VPC:", err);
       },
     });
   };

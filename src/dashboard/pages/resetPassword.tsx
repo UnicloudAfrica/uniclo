@@ -13,6 +13,7 @@ import {
 import useImageFallback from "../../hooks/useImageFallback";
 import { getSubdomain } from "../../utils/getSubdomain";
 import AuthShell from "../../components/auth/AuthShell";
+import logger from "../../utils/logger";
 
 export default function ResetPassword() {
   const { userEmail, clearUserEmail } = useTenantAuthStore.getState();
@@ -23,11 +24,11 @@ export default function ResetPassword() {
   const { mutate: resetPassword, isPending: isResetPending } = useResetPassword();
   const { mutate: resendOtp, isPending: isResendPending } = useResendOTP();
   const navigate = useNavigate();
-  const hostname = typeof window !== "undefined" ? globalThis.window.location.hostname : "";
-  const subdomain = typeof window !== "undefined" ? getSubdomain() : null;
+  const hostname = globalThis.window !== undefined ? globalThis.window.location.hostname : "";
+  const subdomain = globalThis.window !== undefined ? getSubdomain() : null;
   const { data: branding } = usePublicBrandingTheme({
     domain: hostname,
-    subdomain,
+    subdomain: subdomain ?? undefined,
   });
   useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
   const fallbackBrand = {
@@ -56,11 +57,11 @@ export default function ResetPassword() {
     } else if (timeLeft === 0) {
       setIsActive(false);
     }
-    return () => clearInterval(interval);
+    return () => clearInterval(interval as any);
   }, [isActive, timeLeft]);
 
   // Format time display
-  const formatTime = (seconds) => {
+  const formatTime = (seconds: any) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
@@ -90,7 +91,7 @@ export default function ResetPassword() {
   };
 
   // Handle form submission for password reset
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: any) => {
     e.preventDefault();
 
     if (!validateForm()) return;
@@ -108,7 +109,7 @@ export default function ResetPassword() {
       },
       onError: (err) => {
         setErrors({ general: err.message || "Failed to reset password" });
-        console.log(err);
+        logger.log(err);
       },
     });
   };
@@ -125,7 +126,7 @@ export default function ResetPassword() {
           },
           onError: (err) => {
             setErrors({ general: err.message || "Failed to resend OTP" });
-            console.log(err);
+            logger.log(err);
           },
         }
       );

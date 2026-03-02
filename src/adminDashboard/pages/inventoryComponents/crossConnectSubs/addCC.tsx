@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import ToastUtils from "../../../../utils/toastUtil";
 import { useCreateCrossConnect } from "../../../../hooks/adminHooks/crossConnectHooks";
+import logger from "../../../../utils/logger";
 
 const AddCrossConnect = ({ isOpen, onClose }: any) => {
   const { mutate, isPending } = useCreateCrossConnect();
@@ -56,7 +57,7 @@ const AddCrossConnect = ({ isOpen, onClose }: any) => {
         });
       },
       onError: (err) => {
-        // console.error("Failed to create Cross Connect:", err);
+        // logger.error("Failed to create Cross Connect:", err);
         // ToastUtils.error("Failed to create Cross Connect. Please try again.");
       },
     });
@@ -127,7 +128,7 @@ const AddCrossConnect = ({ isOpen, onClose }: any) => {
                 value={formData.description}
                 onChange={(e) => updateFormData("description", e.target.value)}
                 placeholder="Enter Description"
-                rows="3"
+                rows={3}
                 className="w-full input-field border-gray-300"
               ></textarea>
             </div>

@@ -1381,7 +1381,7 @@ const AdminInstancesDetails = () => {
     try {
       setIsConsoleLoading(true);
       const fetchResult = await fetchConsoleUrl();
-      const result = (fetchResult.data as GenericRecord | undefined) || {};
+      const result = (fetchResult.data as unknown as GenericRecord | undefined) || {};
       if (fetchResult.isError) {
         throw fetchResult.error;
       }

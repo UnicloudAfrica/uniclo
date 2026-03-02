@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import adminApi from "../index/admin/api";
 import silentAdminApi from "../index/admin/silent";
+import logger from "../utils/logger";
 
 type Id = string | number;
 type ApiPayload = Record<string, unknown> | FormData | null | undefined;
@@ -586,7 +587,7 @@ export const useCreateTenant = () => {
       queryClient.invalidateQueries({ queryKey: ["tenants"] });
     },
     onError: (error: unknown) => {
-      console.error("Error creating tenant:", error);
+      logger.error("Error creating tenant:", error);
     },
   });
 };
@@ -612,7 +613,7 @@ export const useUpdateTenant = () => {
       queryClient.invalidateQueries({ queryKey: ["tenant", variables.id] });
     },
     onError: (error: unknown) => {
-      console.error("Error updating tenant:", error);
+      logger.error("Error updating tenant:", error);
     },
   });
 };
@@ -625,7 +626,7 @@ export const useDeleteTenant = () => {
       queryClient.invalidateQueries({ queryKey: ["tenants"] });
     },
     onError: (error: unknown) => {
-      console.error("Error deleting tenant:", error);
+      logger.error("Error deleting tenant:", error);
     },
   });
 };
@@ -652,7 +653,7 @@ export const useCreateSubTenant = () => {
       queryClient.invalidateQueries({ queryKey: ["sub-tenants"] });
     },
     onError: (error: unknown) => {
-      console.error("Error creating sub-tenant:", error);
+      logger.error("Error creating sub-tenant:", error);
     },
   });
 };
@@ -679,7 +680,7 @@ export const useCreateRegion = () => {
       queryClient.invalidateQueries({ queryKey: ["regions"] });
     },
     onError: (error: unknown) => {
-      console.error("Error creating region:", error);
+      logger.error("Error creating region:", error);
     },
   });
 };
@@ -694,7 +695,7 @@ export const useUpdateRegion = () => {
       queryClient.invalidateQueries({ queryKey: ["region", variables.id] });
     },
     onError: (error: unknown) => {
-      console.error("Error updating region:", error);
+      logger.error("Error updating region:", error);
     },
   });
 };
@@ -707,7 +708,7 @@ export const useDeleteRegion = () => {
       queryClient.invalidateQueries({ queryKey: ["regions"] });
     },
     onError: (error: unknown) => {
-      console.error("Error deleting region:", error);
+      logger.error("Error deleting region:", error);
     },
   });
 };
@@ -737,7 +738,7 @@ export const useCreateAdminProductPricing = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-product-pricing"] });
     },
     onError: (error: unknown) => {
-      console.error("Error creating admin product pricing:", error);
+      logger.error("Error creating admin product pricing:", error);
     },
   });
 };
@@ -746,7 +747,7 @@ export const useExportAdminProductPricingTemplate = () => {
   return useMutation({
     mutationFn: exportAdminProductPricingTemplate,
     onError: (error: unknown) => {
-      console.error("Error exporting admin product pricing template:", error);
+      logger.error("Error exporting admin product pricing template:", error);
     },
   });
 };
@@ -759,7 +760,7 @@ export const useImportAdminProductPricing = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-product-pricing"] });
     },
     onError: (error: unknown) => {
-      console.error("Error importing admin product pricing:", error);
+      logger.error("Error importing admin product pricing:", error);
     },
   });
 };
@@ -786,7 +787,7 @@ export const useCreateProviderRegionCredential = () => {
       queryClient.invalidateQueries({ queryKey: ["provider-region-credentials"] });
     },
     onError: (error: unknown) => {
-      console.error("Error creating provider region credential:", error);
+      logger.error("Error creating provider region credential:", error);
     },
   });
 };
@@ -799,7 +800,7 @@ export const useResetProviderRegionCredentialPassword = () => {
       queryClient.invalidateQueries({ queryKey: ["provider-region-credentials"] });
     },
     onError: (error: unknown) => {
-      console.error("Error resetting provider region credential password:", error);
+      logger.error("Error resetting provider region credential password:", error);
     },
   });
 };
@@ -826,7 +827,7 @@ export const useImportProviderDiscoveryProjects = () => {
       queryClient.invalidateQueries({ queryKey: ["provider-discovery-projects"] });
     },
     onError: (error: unknown) => {
-      console.error("Error importing provider discovery projects:", error);
+      logger.error("Error importing provider discovery projects:", error);
     },
   });
 };
@@ -839,7 +840,7 @@ export const useSyncProviderDiscoveryProjects = () => {
       queryClient.invalidateQueries({ queryKey: ["provider-discovery-projects"] });
     },
     onError: (error: unknown) => {
-      console.error("Error syncing provider discovery projects:", error);
+      logger.error("Error syncing provider discovery projects:", error);
     },
   });
 };
@@ -886,7 +887,7 @@ export const useCreateZadaraDomain = () => {
       queryClient.invalidateQueries({ queryKey: ["zadara-domains"] });
     },
     onError: (error: unknown) => {
-      console.error("Error creating Zadara domain:", error);
+      logger.error("Error creating Zadara domain:", error);
     },
   });
 };
@@ -901,7 +902,7 @@ export const useUpdateZadaraDomain = () => {
       queryClient.invalidateQueries({ queryKey: ["zadara-domain", variables.id] });
     },
     onError: (error: unknown) => {
-      console.error("Error updating Zadara domain:", error);
+      logger.error("Error updating Zadara domain:", error);
     },
   });
 };
@@ -914,7 +915,7 @@ export const useDeleteZadaraDomain = () => {
       queryClient.invalidateQueries({ queryKey: ["zadara-domains"] });
     },
     onError: (error: unknown) => {
-      console.error("Error deleting Zadara domain:", error);
+      logger.error("Error deleting Zadara domain:", error);
     },
   });
 };
@@ -927,7 +928,7 @@ export const useSyncZadaraDomainPolicies = () => {
       queryClient.invalidateQueries({ queryKey: ["zadara-domains"] });
     },
     onError: (error: unknown) => {
-      console.error("Error syncing Zadara domain policies:", error);
+      logger.error("Error syncing Zadara domain policies:", error);
     },
   });
 };
@@ -941,7 +942,7 @@ export const useAssignZadaraDomainUserPolicies = () => {
       queryClient.invalidateQueries({ queryKey: ["zadara-domain-user-policies"] });
     },
     onError: (error: unknown) => {
-      console.error("Error assigning Zadara domain user policies:", error);
+      logger.error("Error assigning Zadara domain user policies:", error);
     },
   });
 };
@@ -1078,7 +1079,7 @@ export const useCreateAdminCloudProvider = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-cloud-providers"] });
     },
     onError: (error: unknown) => {
-      console.error("Error creating admin cloud provider:", error);
+      logger.error("Error creating admin cloud provider:", error);
     },
   });
 };
@@ -1093,7 +1094,7 @@ export const useUpdateAdminCloudProvider = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-cloud-provider", variables.id] });
     },
     onError: (error: unknown) => {
-      console.error("Error updating admin cloud provider:", error);
+      logger.error("Error updating admin cloud provider:", error);
     },
   });
 };
@@ -1106,7 +1107,7 @@ export const useDeleteAdminCloudProvider = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-cloud-providers"] });
     },
     onError: (error: unknown) => {
-      console.error("Error deleting admin cloud provider:", error);
+      logger.error("Error deleting admin cloud provider:", error);
     },
   });
 };
@@ -1130,7 +1131,7 @@ export const useCreateAdminCloudRegion = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-cloud-regions"] });
     },
     onError: (error: unknown) => {
-      console.error("Error creating admin cloud region:", error);
+      logger.error("Error creating admin cloud region:", error);
     },
   });
 };
@@ -1145,7 +1146,7 @@ export const useUpdateAdminCloudRegion = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-cloud-region", variables.id] });
     },
     onError: (error: unknown) => {
-      console.error("Error updating admin cloud region:", error);
+      logger.error("Error updating admin cloud region:", error);
     },
   });
 };
@@ -1158,7 +1159,7 @@ export const useDeleteAdminCloudRegion = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-cloud-regions"] });
     },
     onError: (error: unknown) => {
-      console.error("Error deleting admin cloud region:", error);
+      logger.error("Error deleting admin cloud region:", error);
     },
   });
 };
@@ -1193,7 +1194,7 @@ export const useCreateAdminCloudProjectRegion = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-cloud-project-regions"] });
     },
     onError: (error: unknown) => {
-      console.error("Error creating admin cloud project region:", error);
+      logger.error("Error creating admin cloud project region:", error);
     },
   });
 };
@@ -1208,7 +1209,7 @@ export const useUpdateAdminCloudProjectRegion = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-cloud-project-region", variables.id] });
     },
     onError: (error: unknown) => {
-      console.error("Error updating admin cloud project region:", error);
+      logger.error("Error updating admin cloud project region:", error);
     },
   });
 };
@@ -1221,7 +1222,7 @@ export const useDeleteAdminCloudProjectRegion = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-cloud-project-regions"] });
     },
     onError: (error: unknown) => {
-      console.error("Error deleting admin cloud project region:", error);
+      logger.error("Error deleting admin cloud project region:", error);
     },
   });
 };

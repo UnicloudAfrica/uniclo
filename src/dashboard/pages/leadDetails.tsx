@@ -27,6 +27,7 @@ import AddLeadDocument from "./leadComps/addLeadDoc";
 import UpdateLeadDoc from "./leadComps/updateLeadDoc";
 import DocumentViewerModal from "./leadComps/documentViewer";
 import ToastUtils from "../../utils/toastUtil";
+import logger from "../../utils/logger";
 
 const formatStatusForDisplay = (status: string | null | undefined) =>
   status?.replace(/_/g, " ") || "N/A";
@@ -158,7 +159,7 @@ const DashboardLeadDetails = () => {
         const decodedId = atob(decodeURIComponent(encodedId));
         setDataState((prev) => ({ ...prev, leadId: decodedId }));
       } catch (error) {
-        console.error("Failed to decode lead ID:", error);
+        logger.error("Failed to decode lead ID:", error);
         setDataState((prev) => ({ ...prev, leadId: null }));
       }
     }
@@ -498,7 +499,7 @@ const DashboardLeadDetails = () => {
       <ModernCard title="Stages" className="mb-2">
         {stages && stages.length > 0 ? (
           <div className="space-y-4">
-            {stages.map((stage) => (
+            {stages.map((stage: any) => (
               <div key={stage.id} className="border-l-4 border-blue-500 pl-4 py-2 space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-gray-800 capitalize">
@@ -535,7 +536,7 @@ const DashboardLeadDetails = () => {
                   </h4>
                   {stage.documents && stage.documents.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {stage.documents.map((doc) => (
+                      {stage.documents.map((doc: any) => (
                         <DocumentItem
                           key={doc.id}
                           doc={doc}
@@ -559,7 +560,7 @@ const DashboardLeadDetails = () => {
       <ModernCard title="Notes">
         {notes && notes.length > 0 ? (
           <div className="space-y-3">
-            {notes.split("\n\n").map((note, index) => (
+            {notes.split("\n\n").map((note: any, index: any) => (
               <div key={index} className="flex items-start">
                 <span className="text-gray-500 mr-2 mt-1">&bull;</span>
                 <p className="text-gray-900 leading-relaxed">
@@ -588,7 +589,7 @@ const DashboardLeadDetails = () => {
       >
         {documents && documents.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {documents.map((doc) => (
+            {documents.map((doc: any) => (
               <DocumentItem
                 key={doc.id}
                 doc={doc}

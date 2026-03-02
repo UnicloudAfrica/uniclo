@@ -51,8 +51,8 @@ export const ObjectStorageTransactions: React.FC<ObjectStorageTransactionsProps>
     setLoading(true);
     try {
       const data = await objectStorageApi.getTransactions(accountId);
-      setTransactions(data.transactions || []);
-      setTotal(data.total || 0);
+      setTransactions((data as any).transactions || []);
+      setTotal((data as any).total || 0);
     } catch (err) {
       ToastUtils.error(getErrorMessage(err, "Failed to load transactions"));
     } finally {
@@ -92,9 +92,9 @@ export const ObjectStorageTransactions: React.FC<ObjectStorageTransactionsProps>
     const style = styles[status.toLowerCase()] || styles.pending;
     return (
       <span
-        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${style.bg} ${style.text}`}
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${style?.bg} ${style?.text}`}
       >
-        {style.icon}
+        {style?.icon}
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );

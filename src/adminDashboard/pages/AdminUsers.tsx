@@ -12,6 +12,7 @@ import adminFileApi from "../../index/admin/fileapi";
 import { DeleteAdminModal } from "./adminComps/deleteAdmin";
 import { TableActionButtons } from "../../shared/components/tables";
 import ToastUtils from "../../utils/toastUtil";
+import logger from "../../utils/logger";
 
 interface AdminUser {
   identifier: string;
@@ -43,7 +44,7 @@ export default function AdminUsers() {
     try {
       return encodeURIComponent(btoa(String(id)));
     } catch (error) {
-      console.error("Failed to encode admin id", error);
+      logger.error("Failed to encode admin id", error);
       return null;
     }
   };
@@ -84,7 +85,7 @@ export default function AdminUsers() {
       globalThis.window.location.reload();
     } catch (error) {
       ToastUtils.error("Failed to delete admins");
-      console.error("Bulk delete error:", error);
+      logger.error("Bulk delete error:", error);
     }
   };
 
@@ -111,7 +112,7 @@ export default function AdminUsers() {
       ToastUtils.success(`Successfully exported ${selectedIds.length} admin(s)`);
     } catch (error) {
       ToastUtils.error("Failed to export admins");
-      console.error("Bulk export error:", error);
+      logger.error("Bulk export error:", error);
     }
   };
 
@@ -128,7 +129,7 @@ export default function AdminUsers() {
       globalThis.window.location.reload();
     } catch (error) {
       ToastUtils.error("Failed to duplicate admins");
-      console.error("Bulk duplicate error:", error);
+      logger.error("Bulk duplicate error:", error);
     }
   };
 
@@ -145,7 +146,7 @@ export default function AdminUsers() {
       globalThis.window.location.reload();
     } catch (error) {
       ToastUtils.error("Failed to archive admins");
-      console.error("Bulk archive error:", error);
+      logger.error("Bulk archive error:", error);
     }
   };
 
@@ -161,7 +162,7 @@ export default function AdminUsers() {
       globalThis.window.location.reload();
     } catch (error) {
       ToastUtils.error("Failed to duplicate admin");
-      console.error("Duplicate error:", error);
+      logger.error("Duplicate error:", error);
     }
   };
 
@@ -176,7 +177,7 @@ export default function AdminUsers() {
       globalThis.window.location.reload();
     } catch (error) {
       ToastUtils.error("Failed to archive admin");
-      console.error("Archive error:", error);
+      logger.error("Archive error:", error);
     }
   };
 

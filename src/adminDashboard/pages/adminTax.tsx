@@ -8,6 +8,7 @@ import ResourceDataExplorer from "../components/ResourceDataExplorer";
 import AddTaxTypeModal from "./taxComponents/addTax";
 import EditTaxTypeModal from "./taxComponents/editTax";
 import { useFetchTaxConfigurations } from "../../hooks/adminHooks/taxConfigurationHooks";
+import logger from "../../utils/logger";
 
 interface TaxCountry {
   id?: string | number;
@@ -83,7 +84,7 @@ export default function AdminTax() {
     refetch,
   } = useFetchTaxConfigurations({
     onError: (error: unknown) => {
-      console.error("Failed to fetch tax configurations", error);
+      logger.error("Failed to fetch tax configurations", error);
     },
   });
   const taxConfigurations = useMemo<TaxConfiguration[]>(

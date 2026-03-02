@@ -82,7 +82,7 @@ const ResourceHero: React.FC<ResourceHeroProps> = ({
   const theme = palette[accent] || palette.neutral;
 
   return (
-    <section className={theme.container}>
+    <section className={theme?.container}>
       <div className="flex flex-col gap-6 px-6 py-8 sm:px-10 sm:py-10 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-2xl space-y-3">
           {breadcrumbs && (
@@ -97,9 +97,9 @@ const ResourceHero: React.FC<ResourceHeroProps> = ({
               />
             </div>
           )}
-          <span className={theme.badge}>{subtitle || "Administrative"}</span>
-          <h1 className={theme.title}>{title}</h1>
-          {description && <p className={theme.description}>{description}</p>}
+          <span className={theme?.badge}>{subtitle || "Administrative"}</span>
+          <h1 className={theme?.title}>{title}</h1>
+          {description && <p className={theme?.description}>{description}</p>}
         </div>
         {rightSlot && <div className="flex shrink-0 items-center justify-end">{rightSlot}</div>}
       </div>
@@ -112,7 +112,7 @@ const ResourceHero: React.FC<ResourceHeroProps> = ({
                 ? React.isValidElement(metric.icon)
                   ? React.cloneElement(metric.icon as React.ReactElement<{ className?: string }>, {
                       className: [
-                        theme.metricIconColor,
+                        theme?.metricIconColor,
                         (metric.icon as React.ReactElement<{ className?: string }>).props
                           ?.className,
                       ]
@@ -122,16 +122,16 @@ const ResourceHero: React.FC<ResourceHeroProps> = ({
                   : metric.icon
                 : null;
               return (
-                <div key={metric.label} className={theme.metricCard}>
+                <div key={metric.label} className={theme?.metricCard}>
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className={theme.metricLabel}>{metric.label}</p>
-                      <div className={`${theme.metricValue} mt-2`}>{metric.value}</div>
+                      <p className={theme?.metricLabel}>{metric.label}</p>
+                      <div className={`${theme?.metricValue} mt-2`}>{metric.value}</div>
                     </div>
-                    {iconNode && <span className={theme.metricIcon}>{iconNode}</span>}
+                    {iconNode && <span className={theme?.metricIcon}>{iconNode}</span>}
                   </div>
                   {metric.description && (
-                    <div className={theme.metricDescription}>{metric.description}</div>
+                    <div className={theme?.metricDescription}>{metric.description}</div>
                   )}
                 </div>
               );

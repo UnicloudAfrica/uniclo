@@ -18,8 +18,8 @@ const TenantHome: React.FC<TenantHomeProps> = ({ tenant = "Tenant" }) => {
     logo,
     color: "var(--theme-color)",
   };
-  const hostname = typeof window !== "undefined" ? globalThis.window.location.hostname : "";
-  const subdomain = typeof window !== "undefined" ? getSubdomain() : null;
+  const hostname = globalThis.window !== undefined ? globalThis.window.location.hostname : "";
+  const subdomain = globalThis.window !== undefined ? getSubdomain() : null;
   const { data: branding } = usePublicBrandingTheme({
     domain: hostname,
     subdomain: subdomain ?? undefined,

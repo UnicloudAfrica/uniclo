@@ -1,29 +1,30 @@
 import { X, Loader2 } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useDeleteClient } from "../../../hooks/clientHooks";
+import logger from "../../../utils/logger";
 
-const DeleteClientModal = ({ isOpen, onClose, client, onDeleteConfirm }) => {
+const DeleteClientModal = ({ isOpen, onClose, client, onDeleteConfirm }: any) => {
   // Use the useDeleteClient hook
   const { mutate, isPending } = useDeleteClient();
 
-  const handleDeleteConfirm = (e) => {
+  const handleDeleteConfirm = (e: any) => {
     if (e) e.preventDefault(); // Prevent default form submission behavior if this is part of a form
 
     if (client?.id) {
       mutate(client.identifier, {
         onSuccess: () => {
-          //   console.log("Client deleted successfully!");
+          //   logger.log("Client deleted successfully!");
           ToastUtils.success("Client deleted successfully");
           onClose(); // Close modal on success
           onDeleteConfirm(); // Notify parent component (AdminClients) for potential refetching
         },
         onError: (err) => {
-          //   console.error("Failed to delete client:", err);
+          //   logger.error("Failed to delete client:", err);
           //   ToastUtils.error("Failed to delete client. Please try again.");
         },
       });
     } else {
-      //   console.error("No client ID provided for deletion.");
+      //   logger.error("No client ID provided for deletion.");
       //   ToastUtils.error("Cannot delete: Client ID is missing.");
     }
   };

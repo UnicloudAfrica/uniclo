@@ -145,7 +145,7 @@ const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
                 className={`px-4 py-1.5 ${isComplete ? "bg-green-100 text-green-700" : "bg-[--theme-color-10] text-[--theme-color]"} rounded-full text-xs font-bold flex items-center gap-2 ${!isComplete && "animate-bounce"}`}
               >
                 <RefreshCw className={`w-3 h-3 ${!isComplete && "animate-spin"}`} />
-                {currentStep.label} {isComplete ? "Successful" : "In progress..."}
+                {(currentStep as any)?.label} {isComplete ? "Successful" : "In progress..."}
               </div>
             </div>
           )}
@@ -155,7 +155,7 @@ const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
         <div
           className={`overflow-hidden rounded-3xl border ${isComplete ? "border-green-100 shadow-green-100/30" : "border-gray-100 shadow-gray-200/50"} bg-white shadow-2xl`}
         >
-          <SetupProgressCard steps={setupSteps} isLoading={false} />
+          <SetupProgressCard steps={setupSteps as any} isLoading={false} />
         </div>
 
         {/* Action Buttons */}
@@ -173,7 +173,7 @@ const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
 
         <div className="text-center mt-12 space-y-3 pb-20">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-lg text-[10px] text-gray-500 font-mono uppercase tracking-widest">
-            Project ID: {project?.identifier || project?.id || "Loading..."}
+            Project ID: {(project as any)?.identifier || (project as any)?.id || "Loading..."}
           </div>
         </div>
       </div>

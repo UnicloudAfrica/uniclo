@@ -355,29 +355,29 @@ const RegionEdit = () => {
   const fetchRegionDetail = async () => {
     try {
       setLoading(true);
-      const response = await adminRegionApi.fetchRegionByCode(code);
+      const response = await adminRegionApi.fetchRegionByCode(code as string);
       const regionData = response.data;
       setRegion(regionData);
       setFormData({
         name: regionData.name || "",
         code: regionData.code || "",
-        country_code: regionData.country_code || "",
-        city: regionData.city || "",
+        country_code: (regionData.country_code || "") as string,
+        city: (regionData.city || "") as string,
         status: regionData.status || "healthy",
-        is_active: regionData.is_active !== undefined ? regionData.is_active : true,
-        visibility: regionData.visibility || "public",
+        is_active: (regionData.is_active !== undefined ? regionData.is_active : true) as boolean,
+        visibility: (regionData.visibility || "public") as string,
       });
 
       // Fetch services and credentials
       if (regionData.provider) {
         // 1. Get definitions
-        const servicesRes = await adminRegionApi.getProviderServices(regionData.provider);
-        const servicesDef = servicesRes.data?.services || {};
+        const servicesRes = await adminRegionApi.getProviderServices(regionData.provider as string);
+        const servicesDef = (servicesRes.data as any)?.services || {};
         setProviderServices(servicesRes.data);
 
         // 2. Get current status/config
         const credsRes = await adminRegionApi.getCredentialStatus(regionData.code);
-        const currentCreds = credsRes.data?.credentials || {}; // Fix: access credentials nested object
+        const currentCreds = (credsRes.data as any)?.credentials || {}; // Fix: access credentials nested object
 
         const initialConfigs: Record<string, any> = {};
         const verifiedSet = new Set<string>();
@@ -518,7 +518,7 @@ const RegionEdit = () => {
       setSubmitting(true);
 
       // Update basic details
-      await adminRegionApi.updateRegion(code, {
+      await adminRegionApi.updateRegion(code as string, {
         name: formData.name.trim(),
         country_code: formData.country_code.trim(),
         city: formData.city.trim(),
@@ -528,7 +528,10 @@ const RegionEdit = () => {
 
       // Update Visibility if changed
       if (formData.visibility !== region.visibility) {
-        await adminRegionApi.updateVisibility(region.code, formData.visibility);
+        await adminRegionApi.updateVisibility(
+          region.code,
+          formData.visibility as "public" | "private"
+        );
       }
 
       // Update Services
@@ -976,7 +979,7 @@ const RegionEdit = () => {
                       ) {
                         try {
                           setSubmitting(true);
-                          const res = await adminRegionApi.unverifyRegion(code);
+                          const res = await adminRegionApi.unverifyRegion(code as string);
                           if (res.success) {
                             ToastUtils.success("Region approval revoked");
                             // Update local state

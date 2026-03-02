@@ -98,7 +98,7 @@ const AdminClientDetails = () => {
     isFetching: isClientFetching,
     isError,
     error,
-  } = useFetchClientById(clientId);
+  } = useFetchClientById(clientId as any);
   const clientDetails =
     clientDetailsData && typeof clientDetailsData === "object"
       ? (clientDetailsData as ClientDetails)

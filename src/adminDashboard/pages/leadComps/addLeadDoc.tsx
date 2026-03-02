@@ -103,7 +103,7 @@ const AddLeadDocument = ({ isOpen, onClose, lead }: any) => {
   if (!isOpen) return null;
 
   const formatDocumentNameForDisplay = (name: any) => {
-    return name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    return name.replace(/_/g, " ").replace(/\b\w/g, (c: any) => c.toUpperCase());
   };
 
   return (

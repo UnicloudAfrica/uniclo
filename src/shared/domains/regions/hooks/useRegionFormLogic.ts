@@ -8,8 +8,8 @@ import type {
   RegionFormChangeHandler,
   ServiceConfigState,
   ProviderServicesSchema,
-  DEFAULT_REGION_FORM_DATA,
 } from "../types/serviceConfig.types";
+import { DEFAULT_REGION_FORM_DATA } from "../types/serviceConfig.types";
 
 export interface UseRegionFormLogicOptions {
   initialData?: Partial<RegionFormData>;
@@ -130,28 +130,28 @@ export function useRegionFormLogic({
   );
 
   const handleServiceToggle = useCallback((serviceType: string) => {
-    setServiceConfigs((prev) => ({
+    setServiceConfigs(((prev: Record<string, ServiceConfigState>) => ({
       ...prev,
       [serviceType]: {
         ...prev[serviceType],
         enabled: !prev[serviceType]?.enabled,
       },
-    }));
+    })) as any);
   }, []);
 
   const handleModeChange = useCallback((serviceType: string, mode: "manual" | "automated") => {
-    setServiceConfigs((prev) => ({
+    setServiceConfigs(((prev: Record<string, ServiceConfigState>) => ({
       ...prev,
       [serviceType]: {
         ...prev[serviceType],
         mode,
       },
-    }));
+    })) as any);
   }, []);
 
   const handleCredentialChange = useCallback(
     (serviceType: string, fieldName: string, value: string) => {
-      setServiceConfigs((prev) => ({
+      setServiceConfigs(((prev: Record<string, ServiceConfigState>) => ({
         ...prev,
         [serviceType]: {
           ...prev[serviceType],
@@ -160,7 +160,7 @@ export function useRegionFormLogic({
             [fieldName]: value,
           },
         },
-      }));
+      })) as any);
       // Invalidate connection status on change
       setConnectedServices((prev) => {
         const next = new Set(prev);

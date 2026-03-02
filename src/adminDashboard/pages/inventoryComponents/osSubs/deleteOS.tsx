@@ -1,6 +1,7 @@
 import { X, Loader2 } from "lucide-react";
 import { useDeleteOsImage } from "../../../../hooks/adminHooks/os-imageHooks"; //
 import ToastUtils from "../../../../utils/toastUtil";
+import logger from "../../../../utils/logger";
 
 const DeleteOS = ({ isOpen, onClose, osImage }: any) => {
   // Use the useDeleteOsImage hook without global onSuccess/onError
@@ -16,13 +17,13 @@ const DeleteOS = ({ isOpen, onClose, osImage }: any) => {
           onClose();
         },
         onError: (err) => {
-          console.error("Failed to delete OS Image:", err);
+          logger.error("Failed to delete OS Image:", err);
 
           // ToastUtils.error("Failed to delete OS Image. Please try again.");
         },
       });
     } else {
-      console.error("No OS Image ID provided for deletion.");
+      logger.error("No OS Image ID provided for deletion.");
     }
   };
 

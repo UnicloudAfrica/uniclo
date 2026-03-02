@@ -50,7 +50,7 @@ const getApiForContext = (context: ApiContext, silent: boolean = false) => {
 
 // Detect context from URL path
 export const detectApiContext = (): ApiContext => {
-  if (typeof window !== "undefined") {
+  if (globalThis.window !== undefined) {
     const path = globalThis.window.location.pathname;
     if (path.startsWith("/admin-dashboard")) return "admin";
     if (path.startsWith("/dashboard") || path.startsWith("/tenant-dashboard")) return "tenant";
@@ -209,7 +209,7 @@ export function useNotificationPreferences() {
       try {
         const response = await apiClient("GET", "/settings/profile?category=notifications");
         // Transform from { notifications: { key: value } } to preference array format
-        const settings = response?.data?.settings || {};
+        const settings = (response as any)?.data?.settings || {};
         const preferences = [
           {
             category: "billing",

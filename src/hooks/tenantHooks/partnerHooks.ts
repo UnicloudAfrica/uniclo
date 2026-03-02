@@ -10,7 +10,7 @@ const fetchPartners = async () => {
   return res.data;
 };
 
-const fetchPartnerById = async (id) => {
+const fetchPartnerById = async (id: any) => {
   const res = await silentTenantApi("GET", `/admin/partners/${id}`);
   if (!res?.data) {
     throw new Error(`Failed to fetch partner with id ${id}`);
@@ -18,7 +18,7 @@ const fetchPartnerById = async (id) => {
   return res.data;
 };
 
-const fetchPartnerClients = async (id) => {
+const fetchPartnerClients = async (id: any) => {
   const res = await silentTenantApi("GET", `/admin/partners/${id}/clients`);
   if (!res?.data) {
     throw new Error(`Failed to fetch partner clients for ${id}`);
@@ -26,7 +26,7 @@ const fetchPartnerClients = async (id) => {
   return res.data;
 };
 
-const createPartner = async (payload) => {
+const createPartner = async (payload: any) => {
   const res = await tenantApi("POST", "/admin/partners", payload);
   if (!res?.data) {
     throw new Error("Failed to create partner");
@@ -34,7 +34,7 @@ const createPartner = async (payload) => {
   return res.data;
 };
 
-const updatePartner = async ({ id, data }) => {
+const updatePartner = async ({ id, data }: any) => {
   const res = await tenantApi("PATCH", `/admin/partners/${id}`, data);
   if (!res?.data) {
     throw new Error("Failed to update partner");
@@ -42,7 +42,7 @@ const updatePartner = async ({ id, data }) => {
   return res.data;
 };
 
-const deletePartner = async (id) => {
+const deletePartner = async (id: any) => {
   const res = await tenantApi("DELETE", `/admin/partners/${id}`);
   if (!res?.success) {
     throw new Error("Failed to delete partner");
@@ -59,7 +59,7 @@ export const useFetchTenantPartners = (options: any = {}) =>
     ...options,
   });
 
-export const useFetchTenantPartnerById = (id, options = {}) =>
+export const useFetchTenantPartnerById = (id: any, options = {}) =>
   useQuery({
     queryKey: ["tenant-partners", id],
     queryFn: () => fetchPartnerById(id),
@@ -69,7 +69,7 @@ export const useFetchTenantPartnerById = (id, options = {}) =>
     ...options,
   });
 
-export const useFetchTenantPartnerClients = (id, options = {}) =>
+export const useFetchTenantPartnerClients = (id: any, options = {}) =>
   useQuery({
     queryKey: ["tenant-partner-clients", id],
     queryFn: () => fetchPartnerClients(id),
@@ -109,7 +109,7 @@ export const useDeleteTenantPartner = () => {
     mutationFn: deletePartner,
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["tenant-partners"] });
-      queryClient.removeQueries(["tenant-partners", id]);
+      queryClient.removeQueries({ queryKey: ["tenant-partners", id] });
       queryClient.invalidateQueries({ queryKey: ["tenant-partner-clients", id] });
     },
   });

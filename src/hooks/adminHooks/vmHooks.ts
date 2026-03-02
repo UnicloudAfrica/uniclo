@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
+import logger from "../../utils/logger";
 
 type CollectionResponse = {
   data: unknown[];
@@ -107,7 +108,7 @@ export const useCreateVmInstance = () => {
       queryClient.invalidateQueries({ queryKey: ["vmInstances"] });
     },
     onError: (error: any) => {
-      console.error("Error creating VM instance:", error);
+      logger.error("Error creating VM instance:", error);
     },
   });
 };
@@ -123,7 +124,7 @@ export const useUpdateVmInstance = () => {
       });
     },
     onError: (error: any) => {
-      console.error("Error updating VM instance:", error);
+      logger.error("Error updating VM instance:", error);
     },
   });
 };
@@ -136,7 +137,7 @@ export const useDeleteVmInstance = () => {
       queryClient.invalidateQueries({ queryKey: ["vmInstances"] });
     },
     onError: (error: any) => {
-      console.error("Error deleting VM instance:", error);
+      logger.error("Error deleting VM instance:", error);
     },
   });
 };

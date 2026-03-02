@@ -1,5 +1,6 @@
 import { handleAuthRedirect } from "./authRedirect";
 import ToastUtils from "./toastUtil";
+import logger from "./logger";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -89,12 +90,12 @@ const parseJsonSafely = async (response: Response): Promise<unknown> => {
     try {
       return JSON.parse(text);
     } catch (err) {
-      console.error("⚠️ Failed to parse JSON response", err, { text });
+      logger.error("⚠️ Failed to parse JSON response", err, { text });
       throw new Error("Unexpected response format from server.");
     }
   }
 
-  console.warn("⚠️ Received non-JSON response", { text });
+  logger.warn("⚠️ Received non-JSON response", { text });
   throw new Error("Received unsupported response format from server.");
 };
 
@@ -171,7 +172,10 @@ export const createApiClient = ({
           authState?.setTwoFactorRequired?.(true);
           const effectiveRole = authState?.getEffectiveRole?.() || authState?.role;
           const targetPath = effectiveRole === "admin" ? "/verify-admin-mail" : "/verify-mail";
-          if (typeof window !== "undefined" && globalThis.window.location.pathname !== targetPath) {
+          if (
+            globalThis.window !== undefined &&
+            globalThis.window.location.pathname !== targetPath
+          ) {
             globalThis.window.location.assign(targetPath);
           }
           throw new Error(
@@ -284,7 +288,10 @@ export const createMultipartApiClient = ({
           authState?.setTwoFactorRequired?.(true);
           const effectiveRole = authState?.getEffectiveRole?.() || authState?.role;
           const targetPath = effectiveRole === "admin" ? "/verify-admin-mail" : "/verify-mail";
-          if (typeof window !== "undefined" && globalThis.window.location.pathname !== targetPath) {
+          if (
+            globalThis.window !== undefined &&
+            globalThis.window.location.pathname !== targetPath
+          ) {
             globalThis.window.location.assign(targetPath);
           }
           throw new Error(
@@ -366,7 +373,7 @@ export const createFileApiClient = ({
           res = await response.text();
         } else {
           res = await response.text();
-          console.warn("Unexpected Content-Type, treating as text:", contentType);
+          logger.warn("Unexpected Content-Type, treating as text:", contentType);
         }
 
         return res as T;
@@ -391,7 +398,10 @@ export const createFileApiClient = ({
           authState?.setTwoFactorRequired?.(true);
           const effectiveRole = authState?.getEffectiveRole?.() || authState?.role;
           const targetPath = effectiveRole === "admin" ? "/verify-admin-mail" : "/verify-mail";
-          if (typeof window !== "undefined" && globalThis.window.location.pathname !== targetPath) {
+          if (
+            globalThis.window !== undefined &&
+            globalThis.window.location.pathname !== targetPath
+          ) {
             globalThis.window.location.assign(targetPath);
           }
           throw new Error(
@@ -418,7 +428,7 @@ export const createFileApiClient = ({
         throw new Error(errorMessage);
       }
     } catch (err) {
-      console.error("API error:", err);
+      logger.error("API error:", err);
       throw err;
     }
   };

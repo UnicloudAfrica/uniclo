@@ -56,7 +56,7 @@ export const useObjectStorageBroadcasting = (
     return () => {
       if (echoRef.current) {
         accountIds.forEach((id) => {
-          echoRef.current.leave(`object-storage.${id}`);
+          (echoRef as any).current.leave(`object-storage.${id}`);
         });
       }
     };

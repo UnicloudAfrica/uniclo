@@ -60,7 +60,7 @@ const ProjectsTableView: React.FC<ProjectsTableViewProps> = ({
             className="font-medium text-gray-900 cursor-pointer hover:text-blue-600"
             onClick={() => onViewProject(row)}
           >
-            {value || "—"}
+            {(value as any) || "—"}
           </span>
         ),
       },
@@ -68,7 +68,7 @@ const ProjectsTableView: React.FC<ProjectsTableViewProps> = ({
         key: "identifier",
         header: "Identifier",
         sortable: false, // Identifier usually not sorted, but can be enabled if needed
-        render: (value) => <span className="text-gray-500">{value || "—"}</span>,
+        render: (value) => <span className="text-gray-500">{(value as any) || "—"}</span>,
       },
       {
         key: "status",
@@ -98,7 +98,7 @@ const ProjectsTableView: React.FC<ProjectsTableViewProps> = ({
       {
         key: "provider",
         header: "Provider",
-        render: (value) => <span className="capitalize">{value || "—"}</span>,
+        render: (value) => <span className="capitalize">{(value as any) || "—"}</span>,
       },
       {
         key: "created_at",

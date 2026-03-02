@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useCreateOsImage } from "../../../../hooks/adminHooks/os-imageHooks";
 import ToastUtils from "../../../../utils/toastUtil";
+import logger from "../../../../utils/logger";
 
 const AddOSImageModal = ({ isOpen, onClose }: any) => {
   const { mutate, isPending } = useCreateOsImage();
@@ -49,7 +50,7 @@ const AddOSImageModal = ({ isOpen, onClose }: any) => {
         onClose(); // Close modal on success
       },
       onError: (err) => {
-        console.error("Failed to create OS Image:", err);
+        logger.error("Failed to create OS Image:", err);
         // ToastUtils.error("Failed to create OS Image. Please try again."); // Uncomment if ToastUtils is used
       },
     });

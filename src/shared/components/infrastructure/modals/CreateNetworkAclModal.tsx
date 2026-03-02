@@ -36,7 +36,7 @@ const CreateNetworkAclModal: React.FC<CreateNetworkAclModalProps> = ({
   };
 
   const getVpcOptions = () => {
-    return vpcs.map((vpc) => ({
+    return (vpcs as any).map((vpc: any) => ({
       value: vpc.id,
       label: `${vpc.name || vpc.id} (${vpc.cidr_block})`,
     }));

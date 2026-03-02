@@ -14,7 +14,7 @@ const documentTypeOptions = [
   "other",
 ];
 
-const AddLeadDocument = ({ isOpen, onClose, lead }) => {
+const AddLeadDocument = ({ isOpen, onClose, lead }: any) => {
   const [formData, setFormData] = useState({
     document_type: "",
     name: "",
@@ -52,12 +52,12 @@ const AddLeadDocument = ({ isOpen, onClose, lead }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field, value) => {
+  const updateFormData = (field: any, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleFileChange = (event) => {
+  const handleFileChange = (event: any) => {
     const fileBase64 = event.target.files[0];
     if (fileBase64) {
       updateFormData("file", fileBase64);
@@ -66,7 +66,7 @@ const AddLeadDocument = ({ isOpen, onClose, lead }) => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: any) => {
     if (e) e.preventDefault();
 
     if (!validateForm()) return;
@@ -96,8 +96,8 @@ const AddLeadDocument = ({ isOpen, onClose, lead }) => {
 
   if (!isOpen) return null;
 
-  const formatDocumentNameForDisplay = (name) =>
-    name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const formatDocumentNameForDisplay = (name: any) =>
+    name.replace(/_/g, " ").replace(/\b\w/g, (c: any) => c.toUpperCase());
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
@@ -176,7 +176,7 @@ const AddLeadDocument = ({ isOpen, onClose, lead }) => {
                 className="w-full rounded-[10px] border border-gray-300 px-3 py-2 text-sm input-field"
               >
                 <option value="">No linked stage</option>
-                {lead?.stages?.map((stage) => (
+                {lead?.stages?.map((stage: any) => (
                   <option key={stage.id} value={stage.id}>
                     {formatDocumentNameForDisplay(stage.stage_name)} •{" "}
                     {formatDocumentNameForDisplay(stage.status)}
@@ -194,9 +194,11 @@ const AddLeadDocument = ({ isOpen, onClose, lead }) => {
               </label>
               <FileInput
                 id="documentFile"
-                icon={Upload}
+                icon={Upload as any}
                 accept=".pdf,.png,.jpg,.jpeg,.svg,.webp"
-                label={formData.file ? `Selected: ${formData.file.name}` : "Click to upload"}
+                label={
+                  formData.file ? `Selected: ${(formData.file as any).name}` : "Click to upload"
+                }
                 onChange={handleFileChange}
               />
               {errors.file && <p className="text-red-500 text-xs mt-1">{errors.file}</p>}

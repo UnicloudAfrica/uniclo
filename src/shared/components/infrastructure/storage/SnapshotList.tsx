@@ -105,7 +105,7 @@ const SnapshotList: React.FC<SnapshotListProps> = ({ snapshots, isLoading, onDel
     );
   }
 
-  return <ModernTable columns={columns} data={snapshots} loading={isLoading} />;
+  return <ModernTable columns={columns as any} data={snapshots} loading={isLoading} />;
 };
 
 export default SnapshotList;

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
+import logger from "../../utils/logger";
 
 type CollectionResponse = {
   data: unknown[];
@@ -107,7 +108,7 @@ export const useCreateBandwidthProduct = () => {
       queryClient.invalidateQueries({ queryKey: ["bandwidthProducts"] });
     },
     onError: (error: any) => {
-      console.error("Error creating bandwidth product:", error);
+      logger.error("Error creating bandwidth product:", error);
     },
   });
 };
@@ -123,7 +124,7 @@ export const useUpdateBandwidthProduct = () => {
       });
     },
     onError: (error: any) => {
-      console.error("Error updating bandwidth product:", error);
+      logger.error("Error updating bandwidth product:", error);
     },
   });
 };
@@ -136,7 +137,7 @@ export const useDeleteBandwidthProduct = () => {
       queryClient.invalidateQueries({ queryKey: ["bandwidthProducts"] });
     },
     onError: (error: any) => {
-      console.error("Error deleting bandwidth product:", error);
+      logger.error("Error deleting bandwidth product:", error);
     },
   });
 };

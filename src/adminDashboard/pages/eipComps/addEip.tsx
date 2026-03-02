@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Loader2, X } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useCreateElasticIp } from "../../../hooks/adminHooks/eipHooks";
+import logger from "../../../utils/logger";
 
 const AddEip = ({ isOpen, onClose, projectId = "", region = "" }: any) => {
   const { mutate, isPending } = useCreateElasticIp();
@@ -41,7 +42,7 @@ const AddEip = ({ isOpen, onClose, projectId = "", region = "" }: any) => {
         onClose();
       },
       onError: (err) => {
-        console.error("Failed to create elastic IP:", err);
+        logger.error("Failed to create elastic IP:", err);
       },
     });
   };

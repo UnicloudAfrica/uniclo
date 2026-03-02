@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentTenantApi from "../index/tenant/silentTenant";
 import tenantApi from "../index/tenant/tenantApi";
+import logger from "../utils/logger";
 
 type TenantAdminId = string | number;
 type TenantAdminPayload = Record<string, unknown>;
@@ -85,7 +86,7 @@ export const useCreateTenantAdmin = () => {
       queryClient.invalidateQueries({ queryKey: ["tenant-admins"] });
     },
     onError: (error) => {
-      console.error("Error creating admin:", error);
+      logger.error("Error creating admin:", error);
     },
   });
 };
@@ -100,7 +101,7 @@ export const useUpdateTenantAdmin = () => {
       queryClient.invalidateQueries({ queryKey: ["tenant-admins", variables.id] });
     },
     onError: (error) => {
-      console.error("Error updating admin:", error);
+      logger.error("Error updating admin:", error);
     },
   });
 };
@@ -114,7 +115,7 @@ export const useDeleteTenantAdmin = () => {
       queryClient.invalidateQueries({ queryKey: ["tenant-admins"] });
     },
     onError: (error) => {
-      console.error("Error deleting admin:", error);
+      logger.error("Error deleting admin:", error);
     },
   });
 };

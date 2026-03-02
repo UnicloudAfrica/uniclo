@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const useImageFallback = (primarySrc, fallbackSrc) => {
+const useImageFallback = (primarySrc: any, fallbackSrc: any) => {
   const [src, setSrc] = useState(primarySrc || fallbackSrc || "");
 
   useEffect(() => {
@@ -9,7 +9,7 @@ const useImageFallback = (primarySrc, fallbackSrc) => {
 
   const handleError = () => {
     if (!fallbackSrc) return;
-    setSrc((current) => (current === fallbackSrc ? current : fallbackSrc));
+    setSrc((current: any) => (current === fallbackSrc ? current : fallbackSrc));
   };
 
   return { src, onError: handleError };

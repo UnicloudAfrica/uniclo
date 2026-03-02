@@ -8,6 +8,7 @@ import {
 } from "../../hooks/adminHooks/projectHooks";
 import ToastUtils from "../../utils/toastUtil";
 import { Project } from "../../types/project";
+import logger from "../../utils/logger";
 
 interface ProjectsResponse {
   data?: Project[];
@@ -95,7 +96,7 @@ const AdminProjects = () => {
       await deleteProjectMutation.mutateAsync(project.identifier);
       ToastUtils.success(`Project "${project.name}" deleted successfully`);
     } catch (err: unknown) {
-      console.error("Failed to delete project:", err);
+      logger.error("Failed to delete project:", err);
       ToastUtils.error(getErrorMessage(err, "Failed to delete project"));
     }
 
@@ -127,7 +128,7 @@ const AdminProjects = () => {
       );
       ToastUtils.success(`Exported ${selectedIds.length} projects successfully`);
     } catch (err: unknown) {
-      console.error("Failed to export projects:", err);
+      logger.error("Failed to export projects:", err);
       ToastUtils.error(getErrorMessage(err, "Failed to export projects"));
     }
   };
@@ -144,7 +145,7 @@ const AdminProjects = () => {
         ToastUtils.success("All project statuses are already correct");
       }
     } catch (err: unknown) {
-      console.error("Failed to sync statuses:", err);
+      logger.error("Failed to sync statuses:", err);
       ToastUtils.error(getErrorMessage(err, "Failed to sync project statuses"));
     }
   };

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Loader2, X } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useCreateClientElasticIp } from "../../../hooks/clientHooks/elasticIPHooks";
+import logger from "../../../utils/logger";
 
 interface AddEipProps {
   isOpen: boolean;
@@ -53,7 +54,7 @@ const AddEip: React.FC<AddEipProps> = ({ isOpen, onClose, projectId = "", region
         onClose();
       },
       onError: (err: any) => {
-        console.error("Failed to create elastic IP:", err);
+        logger.error("Failed to create elastic IP:", err);
       },
     });
   };

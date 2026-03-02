@@ -17,6 +17,7 @@ import {
   Download,
 } from "lucide-react";
 import { designTokens } from "../../styles/designTokens";
+import logger from "../../utils/logger";
 
 interface PurchasedModule {
   id?: string | number;
@@ -147,19 +148,19 @@ export default function AdminPurchasedModules() {
 
   // Action handlers
   const handleDownload = (module: PurchasedModule) => {
-    console.log("Download module:", module);
+    logger.log("Download module:", module);
     // Implement download logic
   };
   const handleEdit = (module: PurchasedModule) => {
-    console.log("Edit module:", module);
+    logger.log("Edit module:", module);
     // Implement edit logic
   };
   const handleDelete = (module: PurchasedModule) => {
-    console.log("Delete module:", module);
+    logger.log("Delete module:", module);
     // Implement delete logic
   };
   const handleAddModule = () => {
-    console.log("Add new module");
+    logger.log("Add new module");
     // Implement add module logic
   };
 

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useCreateFloatingIP } from "../../../../hooks/adminHooks/floatingIPHooks";
 import ToastUtils from "../../../../utils/toastUtil";
+import logger from "../../../../utils/logger";
 
 const AddFloatingIP = ({ isOpen, onClose }: any) => {
   const { mutate, isPending } = useCreateFloatingIP();
@@ -50,7 +51,7 @@ const AddFloatingIP = ({ isOpen, onClose }: any) => {
         onClose();
       },
       onError: (err) => {
-        console.error("Failed to create Floating IP:", err);
+        logger.error("Failed to create Floating IP:", err);
         ToastUtils.error("Failed to create Floating IP. Please try again.");
       },
     });
@@ -121,7 +122,7 @@ const AddFloatingIP = ({ isOpen, onClose }: any) => {
                 value={formData.description}
                 onChange={(e) => updateFormData("description", e.target.value)}
                 placeholder="Enter Description"
-                rows="3"
+                rows={3}
                 className="w-full input-field border-gray-300"
               ></textarea>
             </div>

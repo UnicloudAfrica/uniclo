@@ -35,7 +35,7 @@ const TenantNetworkAcls: React.FC = () => {
       hierarchy="tenant"
       projectId={projectId}
       region={region}
-      hooks={hooks}
+      hooks={hooks as any}
       onManageRules={handleManageRules}
       wrapper={({ headerActions, children }) => (
         <TenantPageShell

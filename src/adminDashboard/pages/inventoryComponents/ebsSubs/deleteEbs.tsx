@@ -2,6 +2,7 @@ import { X, Loader2 } from "lucide-react";
 
 import ToastUtils from "../../../../utils/toastUtil"; // Ensure ToastUtils is
 import { useDeleteEbsVolume } from "../../../../hooks/adminHooks/ebsHooks";
+import logger from "../../../../utils/logger";
 const DeleteEBSModal = ({ isOpen, onClose, ebsVolume }: any) => {
   // Use the useDeleteEbsVolume hook
   const { mutate, isPending } = useDeleteEbsVolume();
@@ -12,17 +13,17 @@ const DeleteEBSModal = ({ isOpen, onClose, ebsVolume }: any) => {
     if (ebsVolume?.identifier) {
       mutate(ebsVolume.identifier, {
         onSuccess: () => {
-          //   console.log("EBS Volume deleted successfully!");
+          //   logger.log("EBS Volume deleted successfully!");
           ToastUtils.success("EBS Volume deleted successfully");
           onClose();
         },
         onError: (err) => {
-          //   console.error("Failed to delete EBS Volume:", err);
+          //   logger.error("Failed to delete EBS Volume:", err);
           //   ToastUtils.error("Failed to delete EBS Volume. Please try again.");
         },
       });
     } else {
-      //   console.error("No EBS Volume ID provided for deletion.");
+      //   logger.error("No EBS Volume ID provided for deletion.");
       //   ToastUtils.error("Cannot delete: EBS Volume ID is missing.");
     }
   };

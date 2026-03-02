@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import createEchoClient from "../echo";
 import { useApiContext } from "./useApiContext";
+import logger from "../utils/logger";
 
 type ProjectBroadcastEvent = {
   step?: Record<string, unknown>;
@@ -32,7 +33,7 @@ export const useProjectBroadcasting = (projectId: string | number | null) => {
     const channel = echo.private(`projects.${projectId}`);
 
     channel.listen(".ProjectProvisioningUpdated", (event: ProjectBroadcastEvent) => {
-      console.log("🚀 Real-time Provisioning Update:", event);
+      logger.log("🚀 Real-time Provisioning Update:", event);
 
       // Determine query key based on context
       const queryKeyPrefix =

@@ -9,6 +9,7 @@ import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
 import { type Client } from "../../shared/types/client";
 import { type ApiResponse } from "../../shared/types/resource";
+import logger from "../../utils/logger";
 
 // GET: Fetch all clients
 const fetchClients = async (): Promise<Client[]> => {
@@ -33,7 +34,7 @@ const createClient = async (clientData: Partial<Client>): Promise<Client | undef
     const response: ApiResponse<Client> = await api("POST", "/clients", clientData);
     return response.data;
   } catch (error) {
-    console.error("Error in createClientApiCall:", error);
+    logger.error("Error in createClientApiCall:", error);
     throw error;
   }
 };

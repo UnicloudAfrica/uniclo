@@ -32,7 +32,7 @@ const AssociateSubnetModal: React.FC<AssociateSubnetModalProps> = ({
   };
 
   const getSubnetOptions = () => {
-    return subnets.map((s) => ({
+    return (subnets as any).map((s: any) => ({
       value: s.id,
       label: `${s.name || s.id} (${s.cidr_block || s.cidr})`,
     }));

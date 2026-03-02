@@ -36,7 +36,32 @@ export interface BrandingTheme {
   hasCustomBranding: boolean;
   isLegacyPlatformTheme: boolean;
   isFallback: boolean;
-  raw: unknown;
+  raw: BrandingPayload;
+  [key: string]: unknown;
+}
+
+export interface BrandingPayload {
+  logo?: string | null;
+  favicon?: string | null;
+  logo_href?: string | null;
+  brand?: {
+    palette?: BrandingPalette;
+    accent_color?: string;
+    primary_color?: string;
+    logo?: string | null;
+    favicon?: string | null;
+  };
+  company?: BrandingCompany & {
+    logo_url?: string | null;
+    favicon_url?: string | null;
+  };
+}
+
+export interface BrandingResponse {
+  data?: {
+    branding?: BrandingPayload;
+  };
+  resolved?: BrandingTheme;
 }
 
 export interface ClientTheme {

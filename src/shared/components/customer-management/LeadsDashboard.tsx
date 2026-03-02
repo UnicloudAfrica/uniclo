@@ -331,67 +331,73 @@ const LeadsDashboard: React.FC<LeadsDashboardProps> = ({ context = "admin" }) =>
     conversion: 5,
     engaged: -3,
   };
-  const statusSegments = useMemo<StatusSegment[]>(() => {
-    return STATUS_ORDER.map((statusId) => {
-      if (statusId === "all") {
+  const statusSegments = useMemo<StatusSegment[]>(
+    (() => {
+      return STATUS_ORDER.map((statusId) => {
+        if (statusId === "all") {
+          return {
+            id: "all",
+            count: totalLeadCount,
+            label: STATUS_CONFIG.all.label,
+            description: STATUS_CONFIG.all.description,
+          };
+        }
+        const config = STATUS_CONFIG[statusId];
         return {
-          id: "all",
-          count: totalLeadCount,
-          label: STATUS_CONFIG.all.label,
-          description: STATUS_CONFIG.all.description,
+          id: statusId,
+          count: leadsByStatus[statusId] ?? 0,
+          label: config?.label ?? statusId,
+          description: config?.description ?? "",
         };
-      }
-      const config = STATUS_CONFIG[statusId];
-      return {
-        id: statusId,
-        count: leadsByStatus[statusId] ?? 0,
-        label: config?.label ?? statusId,
-        description: config?.description ?? "",
-      };
-    }).filter((segment) => segment.id === "all" || segment.count > 0);
-  }, [leadsByStatus, totalLeadCount]);
+      }).filter((segment) => segment.id === "all" || segment.count > 0);
+    }) as any,
+    [leadsByStatus, totalLeadCount]
+  );
 
   // Prepare funnel data
-  const funnelStages = useMemo<FunnelStage[]>(() => {
-    return [
-      {
-        id: "new",
-        label: "New",
-        count: leadsByStatus["new"] ?? 0,
-        color: STATUS_CONFIG.new.color,
-      },
-      {
-        id: "contacted",
-        label: "Contacted",
-        count: leadsByStatus["contacted"] ?? 0,
-        color: STATUS_CONFIG.contacted.color,
-      },
-      {
-        id: "qualified",
-        label: "Qualified",
-        count: leadsByStatus["qualified"] ?? 0,
-        color: STATUS_CONFIG.qualified.color,
-      },
-      {
-        id: "proposal_sent",
-        label: "Proposal",
-        count: leadsByStatus["proposal_sent"] ?? 0,
-        color: STATUS_CONFIG.proposal_sent.color,
-      },
-      {
-        id: "negotiating",
-        label: "Negotiating",
-        count: leadsByStatus["negotiating"] ?? 0,
-        color: STATUS_CONFIG.negotiating.color,
-      },
-      {
-        id: "closed_won",
-        label: "Won",
-        count: leadsByStatus["closed_won"] ?? 0,
-        color: STATUS_CONFIG.closed_won.color,
-      },
-    ].filter((stage) => stage.count > 0);
-  }, [leadsByStatus]);
+  const funnelStages = useMemo<FunnelStage[]>(
+    (() => {
+      return [
+        {
+          id: "new",
+          label: "New",
+          count: leadsByStatus["new"] ?? 0,
+          color: STATUS_CONFIG.new.color,
+        },
+        {
+          id: "contacted",
+          label: "Contacted",
+          count: leadsByStatus["contacted"] ?? 0,
+          color: STATUS_CONFIG.contacted.color,
+        },
+        {
+          id: "qualified",
+          label: "Qualified",
+          count: leadsByStatus["qualified"] ?? 0,
+          color: STATUS_CONFIG.qualified.color,
+        },
+        {
+          id: "proposal_sent",
+          label: "Proposal",
+          count: leadsByStatus["proposal_sent"] ?? 0,
+          color: STATUS_CONFIG.proposal_sent.color,
+        },
+        {
+          id: "negotiating",
+          label: "Negotiating",
+          count: leadsByStatus["negotiating"] ?? 0,
+          color: STATUS_CONFIG.negotiating.color,
+        },
+        {
+          id: "closed_won",
+          label: "Won",
+          count: leadsByStatus["closed_won"] ?? 0,
+          color: STATUS_CONFIG.closed_won.color,
+        },
+      ].filter((stage) => stage.count > 0);
+    }) as any,
+    [leadsByStatus]
+  );
 
   const filteredLeads = useMemo(() => {
     if (!Array.isArray(leads)) return [];
@@ -552,7 +558,8 @@ const LeadsDashboard: React.FC<LeadsDashboardProps> = ({ context = "admin" }) =>
     }
   };
   const handleBulkExport = async () => {
-    const fileApiClient: FileApiClient = context === "admin" ? adminFileApi : tenantFileApi;
+    const fileApiClient: FileApiClient =
+      context === "admin" ? adminFileApi : (tenantFileApi as any);
     try {
       const response = await fileApiClient("POST", "/leads/bulk-export", {
         lead_ids: selectedLeads,
@@ -646,7 +653,7 @@ const LeadsDashboard: React.FC<LeadsDashboardProps> = ({ context = "admin" }) =>
     } catch (error) {
       // Restore cache on failure
       previousCaches.forEach(([key, data]) => {
-        queryClient.setQueryData(key, data);
+        queryClient.setQueryData(key as any, data);
       });
       ToastUtil.error("Failed to delete lead");
       console.error("Delete error:", error);
@@ -856,7 +863,7 @@ const LeadsDashboard: React.FC<LeadsDashboardProps> = ({ context = "admin" }) =>
                   <span>All leads across every stage</span>
                   <TrendIndicator value={trends.pipeline} />
                 </div>
-              ),
+              ) as any,
               icon: <Users className="h-4 w-4" />,
             },
             {
@@ -867,7 +874,7 @@ const LeadsDashboard: React.FC<LeadsDashboardProps> = ({ context = "admin" }) =>
                   <span>Closed won vs. total leads</span>
                   <TrendIndicator value={trends.conversion} />
                 </div>
-              ),
+              ) as any,
               icon: <CheckCircle2 className="h-4 w-4" />,
             },
             {
@@ -878,7 +885,7 @@ const LeadsDashboard: React.FC<LeadsDashboardProps> = ({ context = "admin" }) =>
                   <span>In conversation right now</span>
                   <TrendIndicator value={trends.engaged} />
                 </div>
-              ),
+              ) as any,
               icon: <BarChart3 className="h-4 w-4" />,
             },
           ]}

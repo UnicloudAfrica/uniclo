@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import tenantSilentApi from "../../index/tenant/silentTenant";
 import tenantApi from "../../index/tenant/tenantApi";
+import logger from "../../utils/logger";
 
 const fetchTenantSecurityGroups = async ({
   project_id,
@@ -103,7 +104,7 @@ export const useCreateTenantSecurityGroup = () => {
       });
     },
     onError: (error) => {
-      console.error("Error creating security group:", error);
+      logger.error("Error creating security group:", error);
     },
   });
 };
@@ -119,7 +120,7 @@ export const useUpdateTenantSecurityGroup = () => {
       });
     },
     onError: (error) => {
-      console.error("Error updating security group:", error);
+      logger.error("Error updating security group:", error);
     },
   });
 };
@@ -134,7 +135,7 @@ export const useDeleteTenantSecurityGroup = () => {
       });
     },
     onError: (error) => {
-      console.error("Error deleting security group:", error);
+      logger.error("Error deleting security group:", error);
     },
   });
 };

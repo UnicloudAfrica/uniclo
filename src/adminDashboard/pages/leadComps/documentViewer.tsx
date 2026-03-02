@@ -40,7 +40,14 @@ const DocumentViewerModal = ({ isOpen, onClose, document: documentData }: any) =
     remove: removeQuery,
   } = useDownloadDoc(documentId, {
     enabled: false,
-  });
+  }) as any as {
+    data: any;
+    isFetching: boolean;
+    isError: boolean;
+    error: any;
+    refetch: () => void;
+    remove: () => void;
+  };
 
   useEffect(() => {
     const el = globalThis.window.document.createElement("div");

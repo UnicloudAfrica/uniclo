@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { X, Search, User } from "lucide-react";
 import { ModernButton } from "../../shared/components/ui";
 import adminSilentApi from "../../index/admin/silent";
+import logger from "../../utils/logger";
 
 /**
  * UserSelectModal - Modal for selecting a user to assign leads to
@@ -23,9 +24,9 @@ const UserSelectModal = ({ isOpen, onClose, onSelect, title = "Select User to As
     try {
       // Fetch admins who can be assigned leads
       const response = await adminSilentApi("GET", "/admins");
-      setUsers(response.data || []);
+      setUsers(response.data || ([] as any));
     } catch (error) {
-      console.error("Failed to fetch users:", error);
+      logger.error("Failed to fetch users:", error);
       setUsers([]);
     } finally {
       setLoading(false);

@@ -1,7 +1,7 @@
 // for admin
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { AuthState, TenantContext } from "../types/auth";
+import { AuthState, Tenant, TenantContext } from "../types/auth";
 
 const inferTenantContext = (): TenantContext => {
   if (typeof window === "undefined") {

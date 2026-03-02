@@ -4,6 +4,7 @@ import { Key, ArrowLeft, Loader2, Upload, AlertCircle } from "lucide-react";
 import AdminPageShell from "../../components/AdminPageShell";
 import { useCreateKeyPair } from "../../../hooks/adminHooks/keyPairHooks";
 import { useFetchProjects } from "../../../hooks/adminHooks/projectHooks"; // Assuming this hook exists based on previous checks
+import logger from "../../../utils/logger";
 
 const AdminKeyPairCreate: React.FC = () => {
   const navigate = useNavigate();
@@ -73,7 +74,7 @@ const AdminKeyPairCreate: React.FC = () => {
 
       navigate("/admin-dashboard/key-pairs");
     } catch (err: any) {
-      console.error(err);
+      logger.error(err);
       setError(err.message || "Failed to create key pair.");
     }
   };

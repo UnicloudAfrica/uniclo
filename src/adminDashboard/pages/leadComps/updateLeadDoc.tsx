@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useDownloadDoc, useUpdateDoc } from "../../../hooks/adminHooks/leadsHook";
+import logger from "../../../utils/logger";
 
 const formatStatusForDisplay = (status: any) => {
-  return status ? status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "N/A";
+  return status ? status.replace(/_/g, " ").replace(/\b\w/g, (c: any) => c.toUpperCase()) : "N/A";
 };
 
 const documentStatusOptions = [
@@ -77,7 +78,7 @@ const UpdateLeadDoc = ({ isOpen, onClose, document, leadId }: any) => {
           onClose();
         },
         onError: (error) => {
-          console.error("Failed to update document:", error);
+          logger.error("Failed to update document:", error);
         },
       }
     );
@@ -148,7 +149,7 @@ const UpdateLeadDoc = ({ isOpen, onClose, document, leadId }: any) => {
                 id="reviewNotes"
                 value={reviewNotes}
                 onChange={(e) => setReviewNotes(e.target.value)}
-                rows="4"
+                rows={4}
                 className="w-full rounded-[10px] border px-3 py-2 text-sm input-field border-gray-300"
                 placeholder="Add your review notes here..."
               ></textarea>

@@ -2,6 +2,7 @@ import React from "react";
 import { X, Loader2, AlertTriangle } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useDeleteTenant } from "../../../hooks/adminHooks/tenantHooks";
+import logger from "../../../utils/logger";
 
 interface DeleteTenantModalProps {
   isOpen: boolean;
@@ -32,7 +33,7 @@ const DeleteTenantModal: React.FC<DeleteTenantModalProps> = ({
           onClose(); // Close the modal
         },
         onError: (err: any) => {
-          console.error("Failed to delete Partner:", err);
+          logger.error("Failed to delete Partner:", err);
           ToastUtils.error(err.message || "Failed to delete partner. Please try again.");
         },
       });

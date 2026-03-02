@@ -13,14 +13,14 @@ const Dashboard = () => {
   const { data: projectsResponse, isLoading: projectsLoading } = useFetchTenantProjects();
 
   // Calculate Stats
-  const clientCount = clients?.length || 0;
+  const clientCount = (clients as any)?.length || 0;
   const projects = Array.isArray(projectsResponse)
     ? projectsResponse
     : projectsResponse?.data || [];
-  const projectCount = projects.length;
+  const projectCount = (projects as any).length;
 
   // Calculate active instances across all projects
-  const activeInstancesCount = projects.reduce((acc: number, project: any) => {
+  const activeInstancesCount = (projects as any).reduce((acc: number, project: any) => {
     return acc + (project.instances_count || 0);
   }, 0);
 

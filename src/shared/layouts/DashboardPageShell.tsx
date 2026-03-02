@@ -82,7 +82,7 @@ const DashboardPageShell: React.FC<DashboardPageShellProps> = ({
   const headerTitle =
     title ||
     (computedBreadcrumbs.length
-      ? computedBreadcrumbs[computedBreadcrumbs.length - 1].label
+      ? computedBreadcrumbs?.[computedBreadcrumbs.length - 1].label
       : "Dashboard");
 
   const sectionClasses = [!disableContentPadding && "p-6 md:p-8", contentClassName]

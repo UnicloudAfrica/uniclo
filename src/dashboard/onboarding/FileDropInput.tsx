@@ -12,7 +12,7 @@ const FileDropInput = ({
   const inputRef = useRef<any>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const handleFiles = (files) => {
+  const handleFiles = (files: any) => {
     if (!files || files.length === 0) {
       return;
     }
@@ -20,7 +20,7 @@ const FileDropInput = ({
     onFileSelected?.(file);
   };
 
-  const handleDrop = (event) => {
+  const handleDrop = (event: any) => {
     event.preventDefault();
     event.stopPropagation();
     setIsDragging(false);
@@ -32,20 +32,20 @@ const FileDropInput = ({
     }
   };
 
-  const handleDragOver = (event) => {
+  const handleDragOver = (event: any) => {
     event.preventDefault();
     event.stopPropagation();
     if (disabled) return;
     setIsDragging(true);
   };
 
-  const handleDragLeave = (event) => {
+  const handleDragLeave = (event: any) => {
     event.preventDefault();
     event.stopPropagation();
     setIsDragging(false);
   };
 
-  const handleClear = (event) => {
+  const handleClear = (event: any) => {
     event.preventDefault();
     event.stopPropagation();
     if (disabled) return;
@@ -56,7 +56,7 @@ const FileDropInput = ({
   };
 
   const renderPreview = () => {
-    const renderFileLabel = (stringValue) => (
+    const renderFileLabel = (stringValue: any) => (
       <span className="text-xs text-gray-600 text-center break-all">
         {stringValue.split("/").pop()}
       </span>

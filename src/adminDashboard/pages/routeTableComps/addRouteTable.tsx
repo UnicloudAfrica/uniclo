@@ -44,7 +44,7 @@ const AddRouteTable = ({
   });
   const [errors, setErrors] = useState<Record<string, any>>({});
 
-  const { data: vpcs } = useFetchVpcs(projectId, form.region, {
+  const { data: vpcs } = useFetchVpcs(projectId as any, form.region, {
     enabled: !!projectId && !!form.region,
   });
   const vpcOptions = useMemo<VpcOption[]>(() => {

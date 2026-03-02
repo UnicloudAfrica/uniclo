@@ -340,9 +340,9 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
                         </div>
                       )}
 
-                      {cfg.volume_types && cfg.volume_types.length > 0 && (
+                      {(cfg as any).volume_types && (cfg as any).volume_types.length > 0 && (
                         <div className="pl-5 border-l-2 border-gray-100 space-y-1">
-                          {cfg.volume_types.map((vol, vIdx) => (
+                          {(cfg as any).volume_types.map((vol: any, vIdx: any) => (
                             <div key={vIdx} className="flex items-center gap-2 text-gray-500">
                               <HardDrive className="h-3 w-3 flex-shrink-0" />
                               <span>

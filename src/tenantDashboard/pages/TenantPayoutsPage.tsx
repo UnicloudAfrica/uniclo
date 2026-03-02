@@ -10,7 +10,6 @@ import {
   PayoutSummary,
   Payout,
   formatCurrency,
-  formatBankAccount,
 } from "../../shared/components/banking";
 import silentTenantApi from "../../index/tenant/silentTenant";
 
@@ -51,7 +50,7 @@ const usePayoutHistory = () => {
     queryKey: ["tenant", "payouts"],
     queryFn: async () => {
       const res = await silentTenantApi("GET", "/admin/payouts");
-      return (res.data?.data || res.data || []) as Payout[];
+      return ((res.data as any)?.data || res.data || []) as Payout[];
     },
   });
 };
@@ -220,7 +219,7 @@ const TenantPayoutsPage: React.FC = () => {
                 initialData={bankDetails}
                 banks={banks}
                 isLoadingBanks={isLoadingBanks}
-                onVerify={verifyAccount}
+                onVerify={verifyAccount as any}
                 onSave={async (data) => {
                   await updateBankDetailsMutation.mutateAsync(data);
                 }}

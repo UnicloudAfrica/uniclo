@@ -25,6 +25,7 @@ import OnboardingStatusBoard from "../components/onboarding/OnboardingStatusBoar
 import TenantBillingTab from "./tenantComps/TenantBillingTab";
 import TenantNetworkPolicyTab from "./tenantComps/TenantNetworkPolicyTab";
 import { useTenantBroadcasting } from "../../hooks/useTenantBroadcasting";
+import logger from "../../utils/logger";
 
 type PartnerBusiness = {
   name?: string;
@@ -48,7 +49,7 @@ const decodeId = (encodedId: string) => {
   try {
     return atob(decodeURIComponent(encodedId));
   } catch (e) {
-    console.error("Error decoding ID:", e);
+    logger.error("Error decoding ID:", e);
     return null;
   }
 };
@@ -97,7 +98,7 @@ export default function AdminPartnerDetails() {
     isFetching: isPartnerFetching,
     isError: isPartnerError,
     error: partnerError,
-  } = useFetchTenantById(tenantId);
+  } = useFetchTenantById(tenantId as any);
   const partnerDetails =
     partnerDetailsData && typeof partnerDetailsData === "object"
       ? (partnerDetailsData as PartnerDetails)
@@ -112,7 +113,7 @@ export default function AdminPartnerDetails() {
         year: "numeric",
       });
     } catch (error) {
-      console.error("Unable to format date", error);
+      logger.error("Unable to format date", error);
       return null;
     }
   };

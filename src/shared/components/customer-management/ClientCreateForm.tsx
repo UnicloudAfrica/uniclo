@@ -285,12 +285,12 @@ const ClientCreateForm: React.FC<ClientCreateFormProps> = ({
     if (field in formData) {
       const key = field as ClientFormKey;
       if (key === "verified" || key === "force_password_reset") {
-        updateFormData(key, Boolean(value) as ClientFormData[ClientFormKey]);
+        updateFormData(key, Boolean(value) as ClientFormData[ClientFormKey] as any);
         return;
       }
       const normalizedValue =
         typeof value === "string" ? value : value == null ? "" : String(value);
-      updateFormData(key, normalizedValue as ClientFormData[ClientFormKey]);
+      updateFormData(key, normalizedValue as ClientFormData[ClientFormKey] as any);
     }
   };
 

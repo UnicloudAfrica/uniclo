@@ -51,7 +51,10 @@ import ProjectDetailsShell from "./projectDetails/ProjectDetailsShell";
 
 import { ProjectUser, SummaryItem, SummaryAction } from "../../types/project";
 
+import { InfraStatusData } from "../../shared/components/projects/details/projectDetailsResourceCounts";
+
 import { ApiResponse } from "../../shared/types/resource";
+import logger from "../../utils/logger";
 
 // Types
 interface User extends Omit<ProjectUser, "actions"> {
@@ -159,8 +162,8 @@ export default function AdminProjectDetails() {
     data: projectStatusData,
     isFetching: isProjectStatusFetching,
     refetch: refetchProjectStatus,
-  } = useProjectStatus(projectId, {
-    refetchInterval: (query) => {
+  } = useProjectStatus(projectId as string, {
+    refetchInterval: (query: any) => {
       const data = query.state.data as ProjectStatusResponse | undefined;
       const status = data?.["project"]?.["status"];
       return status === "provisioning" || status === "pending" ? 3000 : false;
@@ -171,7 +174,7 @@ export default function AdminProjectDetails() {
     data: projectDetailsResponse,
 
     refetch: refetchProjectDetails,
-  } = useFetchProjectById(projectId, {
+  } = useFetchProjectById(projectId as string, {
     enabled: Boolean(projectId),
     refetchInterval: (query: any) => {
       const status = query?.state?.data?.data?.status;
@@ -181,7 +184,7 @@ export default function AdminProjectDetails() {
 
   const { data: infraStatusData } = useProjectInfrastructureStatus(projectId, {
     enabled: Boolean(projectId),
-  });
+  }) as { data: InfraStatusData | undefined };
 
   const allProjectUsers = useMemo(() => {
     const details = projectDetailsResponse as ApiResponse<{ users?: User[] }> | undefined;
@@ -220,7 +223,7 @@ export default function AdminProjectDetails() {
   const { mutateAsync: revokePolicy, isPending: isRevokingPolicy } = useRevokeProjectUserPolicy();
   const { mutateAsync: assignPolicy, isPending: isAssigningPolicy } = useAssignProjectUserPolicy();
 
-  const project = projectStatusData?.project;
+  const project = projectStatusData?.project as Record<string, any> | undefined;
 
   const { data: cloudPoliciesResponse } = useCloudPolicies(
     {
@@ -355,7 +358,10 @@ export default function AdminProjectDetails() {
     if (Array.isArray(securityGroupsData) && securityGroupsData.length > 0) {
       updateResourceCount("security_groups", securityGroupsData.length);
     } else if (infraStatusData?.data?.components?.security_groups?.count !== undefined) {
-      updateResourceCount("security_groups", infraStatusData.data.components.security_groups.count);
+      updateResourceCount(
+        "security_groups",
+        infraStatusData.data.components.security_groups.count as any
+      );
     }
   }, [securityGroupsData, infraStatusData, updateResourceCount]);
 
@@ -363,7 +369,7 @@ export default function AdminProjectDetails() {
     if (Array.isArray(subnetsData) && subnetsData.length > 0) {
       updateResourceCount("subnets", subnetsData.length);
     } else if (infraStatusData?.data?.components?.subnets?.count !== undefined) {
-      updateResourceCount("subnets", infraStatusData.data.components.subnets.count);
+      updateResourceCount("subnets", infraStatusData.data.components.subnets.count as any);
     }
   }, [subnetsData, infraStatusData, updateResourceCount]);
 
@@ -475,7 +481,7 @@ export default function AdminProjectDetails() {
       currentStatus &&
       (currentStatus === "ready" || currentStatus === "active" || currentStatus === "completed")
     ) {
-      console.log("[AdminProjectDetails] Provisioning completed, refreshing network data...");
+      logger.log("[AdminProjectDetails] Provisioning completed, refreshing network data...");
       // Trigger refetch of all network-related data
       refetchNetworkStatus?.();
       refetchProjectStatus?.();
@@ -503,7 +509,7 @@ export default function AdminProjectDetails() {
 
     // Detect transition to all-completed state
     if (allCompleted && wasIncomplete) {
-      console.log(
+      logger.log(
         "[AdminProjectDetails] All provisioning steps completed, refreshing network data..."
       );
       // Short delay to allow backend to finalize
@@ -822,7 +828,9 @@ export default function AdminProjectDetails() {
       const comp = components?.[key];
       if (!comp) return null;
       return (
-        comp.status === "active" || comp.status === "completed" || (comp.count && comp.count > 0)
+        (comp as any).status === "active" ||
+        (comp as any).status === "completed" ||
+        (comp.count && comp.count > 0)
       );
     };
 
@@ -994,7 +1002,7 @@ export default function AdminProjectDetails() {
       await Promise.all([refetchProjectStatus(), refetchProjectDetails()]);
       return res;
     } catch (error: any) {
-      console.error(`Action error [${label}]:`, error);
+      logger.error(`Action error [${label}]:`, error);
       ToastUtils.error(error?.message || `Failed to execute ${label}`, {
         id: `project-action-err-${label}`,
       });
@@ -1087,7 +1095,7 @@ export default function AdminProjectDetails() {
         contentClassName=""
       >
         <ProjectDetailsShell
-          project={project}
+          project={project as any}
           projectInstances={projectInstances}
           allProjectUsers={allProjectUsers}
           cloudPolicies={cloudPolicies}
@@ -1141,7 +1149,7 @@ export default function AdminProjectDetails() {
               0,
             users: allProjectUsers.length,
           }}
-          infraStatusData={infraStatusData}
+          infraStatusData={infraStatusData ?? null}
           networkData={networkData}
           canCreateInstances={canCreateInstances}
           setupSteps={

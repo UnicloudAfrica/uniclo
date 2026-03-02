@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentAdminApi from "../index/admin/silent";
 import adminApi from "../index/admin/api";
+import logger from "../utils/logger";
 
 /**
  * Admin Tenant Billing Hooks
@@ -133,7 +134,7 @@ export const useUpdateTenantBillingConfig = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-tenant-billing", variables.tenantId] });
     },
     onError: (error) => {
-      console.error("Error updating tenant billing config:", error);
+      logger.error("Error updating tenant billing config:", error);
     },
   });
 };
@@ -146,7 +147,7 @@ export const useAddTenantCredit = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-tenant-billing", variables.tenantId] });
     },
     onError: (error) => {
-      console.error("Error adding tenant credit:", error);
+      logger.error("Error adding tenant credit:", error);
     },
   });
 };

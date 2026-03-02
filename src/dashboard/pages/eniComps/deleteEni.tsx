@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 
-const DeleteEniModal = ({ isOpen, onClose, eniName = "", onConfirm, isDeleting = false }) => {
+const DeleteEniModal = ({ isOpen, onClose, eniName = "", onConfirm, isDeleting = false }: any) => {
   if (!isOpen) return null;
 
   return (

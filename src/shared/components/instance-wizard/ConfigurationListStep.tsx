@@ -121,7 +121,7 @@ const ConfigurationListStep: React.FC<ConfigurationListStepProps> = ({
           updateAdditionalVolume={onUpdateVolume}
           removeAdditionalVolume={onRemoveVolume}
           regionOptions={regionOptions}
-          baseProjectOptions={resources.projects}
+          baseProjectOptions={resources.projects as any}
           billingCountry={billingCountry}
           isLoadingResources={isLoadingResources}
           showActionRow={index === configurations.length - 1}

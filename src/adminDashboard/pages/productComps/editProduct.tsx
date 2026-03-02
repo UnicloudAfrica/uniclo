@@ -26,7 +26,7 @@ const EditProduct = ({ isOpen, onClose, product, onUpdated }: any) => {
         provider_resource_id: product.provider_resource_id || null,
         created_at: product.created_at || "",
         updated_at: product.updated_at || "",
-      });
+      } as any);
     }
   }, [product]);
 

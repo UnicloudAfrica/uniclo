@@ -34,7 +34,7 @@ const PartnerCard = ({ partner }: { partner: Partner }) => {
 };
 
 const Partnership = () => {
-  const isBrowser = typeof window !== "undefined";
+  const isBrowser = globalThis.window !== undefined;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: partners = [], isFetching } = useFetchMarketingPartners() as any;
 

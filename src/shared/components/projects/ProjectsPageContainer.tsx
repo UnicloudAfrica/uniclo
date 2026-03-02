@@ -15,6 +15,7 @@ import {
 } from "../../../utils/projectUtils";
 import ToastUtils from "../../../utils/toastUtil";
 import { Project } from "../../../types/project";
+import logger from "../../../utils/logger";
 
 export interface ProjectsPageContainerProps {
   projects?: Project[];
@@ -266,7 +267,7 @@ const ProjectsPageContainer: React.FC<ProjectsPageContainerProps> = ({
       ToastUtils.success("Projects refreshed");
     } catch (err: unknown) {
       const error = err as Error | { message: string };
-      console.error("Failed to refresh projects:", error);
+      logger.error("Failed to refresh projects:", error);
       ToastUtils.error(error?.message || "Failed to refresh projects");
     } finally {
       setIsManualRefreshing(false);

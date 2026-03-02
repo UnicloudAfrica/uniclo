@@ -52,8 +52,8 @@ const ClientSupport: React.FC = () => {
           queryKey={["client", "support"]}
           fetchThreads={fetchThreads}
           fetchThread={fetchThread}
-          createThread={createThread}
-          replyThread={replyThread}
+          createThread={createThread as any}
+          replyThread={replyThread as any}
           resolveThread={resolveThread}
           canCreate
           canResolve

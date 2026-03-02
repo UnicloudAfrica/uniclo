@@ -28,7 +28,7 @@ export const useInstanceBroadcasting = (
 
     normalizedIds.forEach((id) => {
       const channel = echo.private(`instances.${id}`);
-      channel.listen(".InstanceProvisioningUpdated", (event) => {
+      channel.listen(".InstanceProvisioningUpdated", (event: any) => {
         if (typeof onStepUpdate === "function") {
           onStepUpdate(event);
         }
@@ -38,7 +38,7 @@ export const useInstanceBroadcasting = (
     return () => {
       if (echoRef.current) {
         normalizedIds.forEach((id) => {
-          echoRef.current.leave(`instances.${id}`);
+          (echoRef as any).current.leave(`instances.${id}`);
         });
       }
     };

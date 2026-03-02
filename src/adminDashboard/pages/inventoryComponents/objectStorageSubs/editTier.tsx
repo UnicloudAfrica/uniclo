@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, X } from "lucide-react";
 import ToastUtils from "../../../../utils/toastUtil";
 import { useUpdateProductPricing } from "../../../../hooks/adminHooks/adminproductPricingHook";
+import logger from "../../../../utils/logger";
 
-const formatNumber = (value, digits = 4) => {
+const formatNumber = (value: any, digits = 4) => {
   if (value === null || value === undefined || Number.isNaN(Number(value))) {
     return "";
   }
@@ -46,7 +47,7 @@ const EditObjectStorageTierModal = ({ isOpen, onClose, tier, onUpdated }: any) =
     if (!quota) {
       nextErrors.quota = "Invalid quota for this tier.";
     }
-    if (pricePerGb === "" || Number.isNaN(Number(pricePerGb))) {
+    if (Number.isNaN(Number(pricePerGb as any))) {
       nextErrors.pricePerGb = "Enter a valid price per GiB.";
     } else if (Number(pricePerGb) <= 0) {
       nextErrors.pricePerGb = "Price per GiB must be greater than zero.";
@@ -83,7 +84,7 @@ const EditObjectStorageTierModal = ({ isOpen, onClose, tier, onUpdated }: any) =
         onClose?.();
       },
       onError: (error) => {
-        console.error("Failed to update Silo Storage tier", error);
+        logger.error("Failed to update Silo Storage tier", error);
         ToastUtils.error(
           error?.response?.data?.message || "Failed to update Silo Storage tier. Please try again."
         );
@@ -135,7 +136,7 @@ const EditObjectStorageTierModal = ({ isOpen, onClose, tier, onUpdated }: any) =
               min="0"
               value={pricePerGb}
               onChange={(event) => {
-                setPricePerGb(event.target.value);
+                setPricePerGb(event.target.value as any);
                 setErrors((prev) => ({ ...prev, pricePerGb: null }));
               }}
               className={`w-full rounded-xl border px-4 py-2 text-sm text-slate-700 outline-none transition focus:border-primary-300 focus:ring-2 focus:ring-primary-100 ${

@@ -3,6 +3,7 @@ import { Download, CheckCircle, FileText, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ModernCard, ModernButton, ModernTable, Column } from "../../ui";
 import { InvoiceResponse, LineItem } from "../types";
+import logger from "../../../../utils/logger";
 
 const formatCurrency = (amount: number | null | undefined, currency: string = "USD") => {
   if (amount === null || amount === undefined) return "—";
@@ -14,7 +15,7 @@ const formatCurrency = (amount: number | null | undefined, currency: string = "U
 
 const downloadPdf = (base64String: string | null | undefined, filename: string) => {
   if (!base64String) {
-    console.error("No PDF data available");
+    logger.error("No PDF data available");
     return;
   }
 
@@ -35,7 +36,7 @@ const downloadPdf = (base64String: string | null | undefined, filename: string) 
     document.body.removeChild(anchor);
     URL.revokeObjectURL(url);
   } catch (error) {
-    console.error("Error downloading PDF:", error);
+    logger.error("Error downloading PDF:", error);
     alert("Unable to download PDF. The file may not be ready yet.");
   }
 };
@@ -88,7 +89,7 @@ interface InvoiceConfirmationStepProps {
 const InvoiceConfirmationStep: React.FC<InvoiceConfirmationStepProps> = ({ apiResponse }) => {
   const navigate = useNavigate();
 
-  console.log("API Response:", apiResponse); // Debug log
+  logger.log("API Response:", apiResponse); // Debug log
 
   if (!apiResponse?.invoices?.length) {
     return (
@@ -118,8 +119,8 @@ const InvoiceConfirmationStep: React.FC<InvoiceConfirmationStepProps> = ({ apiRe
           const currency =
             invoice.amounts?.currency || invoice.currency_code || invoice.currency || "USD";
 
-          console.log("Invoice:", invoice); // Debug log
-          console.log("Currency:", currency); // Debug log
+          logger.log("Invoice:", invoice); // Debug log
+          logger.log("Currency:", currency); // Debug log
 
           const columns: Column<LineItem>[] = [
             {

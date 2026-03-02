@@ -94,9 +94,9 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
 
   const { data: countries = [], isFetching: isCountriesFetching } = useFetchCountries();
   const { data: rawRegions, isFetching: isRegionsFetching } = useSharedFetchRegions(mode);
-  const regions = useFormattedRegions(rawRegions);
+  const regions = useFormattedRegions(rawRegions as any);
 
-  const countryOptions = useMemo(() => formatCountryOptions(countries), [countries]);
+  const countryOptions = useMemo(() => formatCountryOptions(countries as any), [countries]);
 
   const { isCountryLocked, lockedCountry } = useMemo(() => {
     let resolved = "";
@@ -143,7 +143,7 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
   );
 
   const { data: objectStorageTiers, isFetching: isObjectStorageFetching } = useFetchProductPricing(
-    storageItem.region,
+    storageItem.region as any,
     "object_storage_configuration",
     {
       enabled: !!storageItem.region,
@@ -256,7 +256,7 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
   const addObjectStorageItem = () => {
     if (!validateStorageItem()) return;
 
-    const tier = objectStorageTiers?.find(
+    const tier = (objectStorageTiers as any)?.find(
       (item: any) => String(item.product?.productable_id ?? item.id) === String(storageItem.tier_id)
     );
 
@@ -418,8 +418,8 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
                 {isCountryLocked ? (
                   <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 font-medium h-[42px] flex items-center justify-between">
                     <span className="flex items-center gap-2">
-                      {countries.find(
-                        (c) => (c.iso2 || c.code || "").toUpperCase() === selectedCountryCode
+                      {(countries as any).find(
+                        (c: any) => (c.iso2 || c.code || "").toUpperCase() === selectedCountryCode
                       )?.name || selectedCountryCode}
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-md bg-slate-200 px-2 py-0.5 text-xs text-slate-600">
@@ -477,8 +477,8 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
                   countryCode={calculatorData.country_code}
                   currencyCode={selectedCurrency}
                   errors={(errors?.[`pricing_requests.${index}`] as any) || {}}
-                  isLastItem={calculatorData.pricing_requests.length === 1}
-                  regions={regions}
+                  isLastItem={calculatorData.pricing_requests.length === (1 as any)}
+                  regions={regions as any}
                   isRegionsFetching={isRegionsFetching}
                 />
               ))}
@@ -516,7 +516,9 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
                   Region<span className="text-red-500">*</span>
                 </label>
                 <SelectableInput
-                  options={regions?.map((region) => ({ id: region.code, name: region.name })) || []}
+                  options={
+                    regions?.map((region) => ({ id: region.code, name: region.name as any })) || []
+                  }
                   value={storageItem.region}
                   searchValue={searchTerms.region}
                   onSearchChange={(value) => setSearchTerms((prev) => ({ ...prev, region: value }))}
@@ -534,7 +536,7 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
                 </label>
                 <SelectableInput
                   options={
-                    objectStorageTiers?.map(({ product, pricing }: any) => ({
+                    (objectStorageTiers as any)?.map(({ product, pricing }: any) => ({
                       id: product.productable_id,
                       name: `${product.name} • ${formatCurrency(pricing?.effective?.price_local, pricing?.effective?.currency) || "N/A"}`,
                     })) || []

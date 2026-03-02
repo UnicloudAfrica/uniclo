@@ -6,6 +6,7 @@ import {
 } from "../../../hooks/adminHooks/projectInfrastructureHooks";
 import { useEnsureRootDomain } from "../../../hooks/adminHooks/zadaraDomainHooks";
 import ToastUtils from "../../../utils/toastUtil";
+import logger from "../../../utils/logger";
 
 const StepStatus = {
   PENDING: "pending",
@@ -239,7 +240,7 @@ const InfrastructureSetupFlow = ({ projectId, projectName }: any) => {
           refetchStatus();
         },
         onError: (error) => {
-          console.error("Domain setup failed:", error);
+          logger.error("Domain setup failed:", error);
           ToastUtils.error("Failed to setup domain. Please try again.");
         },
       });
@@ -257,7 +258,7 @@ const InfrastructureSetupFlow = ({ projectId, projectName }: any) => {
           setPollingEnabled(true);
         },
         onError: (error) => {
-          console.error(`Failed to setup ${componentType}:`, error);
+          logger.error(`Failed to setup ${componentType}:`, error);
           ToastUtils.error(`Failed to setup ${componentType}. Please try again.`);
         },
       }

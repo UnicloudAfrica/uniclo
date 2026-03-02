@@ -3,12 +3,52 @@
  * Shared utility functions for project-related operations
  */
 
-import type {
-  Project,
-  ProjectUser,
-  ProjectStats,
-  ProjectSummaryItem,
-} from "../types/project.types";
+import logger from "../../../../utils/logger";
+
+type Project = {
+  id?: string | number;
+  name?: string;
+  description?: string;
+  identifier?: string;
+  region?: string;
+  region_name?: string;
+  status?: any;
+  role?: any;
+  users?: ProjectUser[] | { local?: ProjectUser[] };
+  instances?: unknown[];
+  pending_instances?: unknown[];
+  created_at?: string;
+  [key: string]: unknown;
+};
+
+type ProjectUser = {
+  name?: string;
+  full_name?: string;
+  first_name?: string;
+  middle_name?: string;
+  last_name?: string;
+  email?: string;
+  role?: any;
+  status?: any;
+  [key: string]: unknown;
+};
+
+type ProjectStats = {
+  total: number;
+  active: number;
+  inactive: number;
+  pending: number;
+  failed: number;
+};
+
+type ProjectSummaryItem = {
+  label: string;
+  value: string | number;
+  tone?: string;
+  completed?: boolean;
+  complete?: boolean;
+  [key: string]: unknown;
+};
 
 /**
  * Encode project ID for URL parameters
@@ -24,7 +64,7 @@ export const decodeProjectId = (encodedId: string): string | null => {
   try {
     return atob(decodeURIComponent(encodedId));
   } catch (e) {
-    console.error("Error decoding project ID:", e);
+    logger.error("Error decoding project ID:", e);
     return null;
   }
 };
@@ -54,7 +94,7 @@ export const isTenantAdmin = (user: ProjectUser | null | undefined): boolean => 
   // Check roles array
   if (
     Array.isArray(user.roles) &&
-    user.roles.some((role) => role === "tenant_admin" || role === "tenant-admin")
+    user.roles.some((role: any) => role === "tenant_admin" || role === "tenant-admin")
   ) {
     return true;
   }
@@ -160,10 +200,10 @@ export const getProjectStatusVariant = (status: string = "") => {
  * Calculate project statistics from array of projects
  */
 export const calculateProjectStats = (projects: Project[]): ProjectStats => {
-  return projects.reduce(
+  return projects.reduce<ProjectStats>(
     (stats, project) => {
       stats.total++;
-      const status = project.status.toLowerCase();
+      const status = String(project.status || "").toLowerCase();
 
       if (status === "active") stats.active++;
       else if (status === "inactive") stats.inactive++;

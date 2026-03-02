@@ -19,7 +19,7 @@ const ClientObjectStorageDetail = () => {
         ]}
       >
         <ObjectStorageAccountDetail
-          accountId={accountId}
+          accountId={accountId as any}
           backUrl="/client-dashboard/object-storage"
           backLabel="Back to Silo Storage"
           canDelete={true}

@@ -20,6 +20,7 @@ import {
   type InvoiceItem,
   type EnforcementSummary,
 } from "../../hooks/useTenantBilling";
+import logger from "../../utils/logger";
 
 type InvoiceStatus = "paid" | "pending" | "overdue" | "void";
 type PaymentMethod = "wallet" | "bank_transfer" | "card";
@@ -74,7 +75,7 @@ const TenantInvoicesPage: React.FC = () => {
       const apiUrl = import.meta.env.VITE_API_BASE_URL || "";
       globalThis.window.open(`${apiUrl}/api/tenant/v1/invoices/${invoiceId}/pdf`, "_blank");
     } catch (error) {
-      console.error("Failed to download PDF:", error);
+      logger.error("Failed to download PDF:", error);
     }
   };
 
@@ -90,7 +91,7 @@ const TenantInvoicesPage: React.FC = () => {
       setPaymentAmount("");
       setPaymentReference("");
     } catch (error) {
-      console.error("Payment failed:", error);
+      logger.error("Payment failed:", error);
     }
   };
 
@@ -150,7 +151,7 @@ const TenantInvoicesPage: React.FC = () => {
             <select
               value={statusFilter}
               onChange={(e) => {
-                setStatusFilter(e.target.value);
+                setStatusFilter(e.target.value as any);
                 setCurrentPage(1);
               }}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"

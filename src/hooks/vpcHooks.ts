@@ -11,6 +11,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../index/silent";
 import api from "../index/api";
 import { type Vpc, type VpcFlowLog, type VpcApiResponse } from "../shared/types/vpc";
+import logger from "../utils/logger";
 
 // VPC Interfaces moved to shared/types/vpc.ts
 
@@ -112,7 +113,7 @@ export const useCreateTenantVpc = () => {
       queryClient.invalidateQueries({ queryKey: ["vpcs"] });
     },
     onError: (error) => {
-      console.error("Error creating VPC:", error);
+      logger.error("Error creating VPC:", error);
     },
   });
 };
@@ -126,7 +127,7 @@ export const useUpdateTenantVpc = () => {
       queryClient.invalidateQueries({ queryKey: ["vpc", variables.id] });
     },
     onError: (error: unknown) => {
-      console.error("Error updating VPC:", error);
+      logger.error("Error updating VPC:", error);
     },
   });
 };
@@ -139,7 +140,7 @@ export const useDeleteTenantVpc = () => {
       queryClient.invalidateQueries({ queryKey: ["vpcs"] });
     },
     onError: (error) => {
-      console.error("Error deleting VPC:", error);
+      logger.error("Error deleting VPC:", error);
     },
   });
 };
@@ -152,7 +153,7 @@ export const useSyncTenantVpcs = () => {
       queryClient.invalidateQueries({ queryKey: ["vpcs"] });
     },
     onError: (error) => {
-      console.error("Error syncing VPCs:", error);
+      logger.error("Error syncing VPCs:", error);
     },
   });
 };
@@ -296,7 +297,7 @@ export const useCreateVpcFlowLog = () => {
       queryClient.invalidateQueries({ queryKey: ["vpc-flow-logs"] });
     },
     onError: (error) => {
-      console.error("Error creating VPC flow log:", error);
+      logger.error("Error creating VPC flow log:", error);
     },
   });
 };
@@ -310,7 +311,7 @@ export const useUpdateVpcFlowLog = () => {
       queryClient.invalidateQueries({ queryKey: ["vpc-flow-log", variables.id] });
     },
     onError: (error) => {
-      console.error("Error updating VPC flow log:", error);
+      logger.error("Error updating VPC flow log:", error);
     },
   });
 };
@@ -323,7 +324,7 @@ export const useDeleteVpcFlowLog = () => {
       queryClient.invalidateQueries({ queryKey: ["vpc-flow-logs"] });
     },
     onError: (error) => {
-      console.error("Error deleting VPC flow log:", error);
+      logger.error("Error deleting VPC flow log:", error);
     },
   });
 };

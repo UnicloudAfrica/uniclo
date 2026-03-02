@@ -43,8 +43,8 @@ const Navbar = (): JSX.Element => {
   const [openDropdown, setOpenDropdown] = useState<DropdownSetter | null>(null);
 
   const dropdownRef = useRef<HTMLSpanElement | null>(null);
-  const hostname = typeof window !== "undefined" ? globalThis.window.location.hostname : "";
-  const subdomain = typeof window !== "undefined" ? (getSubdomain() ?? undefined) : undefined;
+  const hostname = globalThis.window !== undefined ? globalThis.window.location.hostname : "";
+  const subdomain = globalThis.window !== undefined ? (getSubdomain() ?? undefined) : undefined;
   const { data: branding } = usePublicBrandingTheme({
     domain: hostname,
     subdomain,

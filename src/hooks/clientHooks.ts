@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentTenantApi from "../index/tenant/silentTenant";
 import tenantApi from "../index/tenant/tenantApi";
+import logger from "../utils/logger";
 
 // GET: Fetch all clients
 const fetchClients = async ({ queryKey }: { queryKey: any[] }) => {
@@ -32,7 +33,7 @@ const createClient = async (clientData: any) => {
 
     return response;
   } catch (error) {
-    console.error("Error in createClientApiCall:", error);
+    logger.error("Error in createClientApiCall:", error);
     throw error;
   }
 };
@@ -86,11 +87,11 @@ export const useCreateClient = () => {
   return useMutation({
     mutationFn: createClient,
     onSuccess: () => {
-      console.log("Client created successfully");
+      logger.log("Client created successfully");
       queryClient.invalidateQueries({ queryKey: ["clients"] });
     },
     onError: (error) => {
-      console.error("Error creating client:", error);
+      logger.error("Error creating client:", error);
     },
   });
 };
@@ -101,12 +102,12 @@ export const useUpdateClient = () => {
   return useMutation({
     mutationFn: updateClient,
     onSuccess: (data, variables) => {
-      console.log("Client updated successfully");
+      logger.log("Client updated successfully");
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       queryClient.invalidateQueries({ queryKey: ["clients", variables.id] });
     },
     onError: (error) => {
-      console.error("Error updating client:", error);
+      logger.error("Error updating client:", error);
     },
   });
 };
@@ -117,11 +118,11 @@ export const useDeleteClient = () => {
   return useMutation({
     mutationFn: deleteClient,
     onSuccess: () => {
-      console.log("Client deleted successfully");
+      logger.log("Client deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["clients"] });
     },
     onError: (error) => {
-      console.error("Error deleting client:", error);
+      logger.error("Error deleting client:", error);
     },
   });
 };

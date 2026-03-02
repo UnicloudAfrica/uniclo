@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import tenantRegionApi from "../../services/tenantRegionApi";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
+import logger from "../../utils/logger";
 
 type FulfillmentMode = "automated" | "manual";
 type Provider = "zadara";
@@ -62,10 +63,10 @@ const NewRegionRequest = () => {
 
     try {
       setSubmitting(true);
-      await tenantRegionApi.createRegionRequest(formData);
+      await tenantRegionApi.createRegionRequest(formData as any);
       navigate("/tenant-dashboard/region-requests");
     } catch (error) {
-      console.error("Error creating region:", error);
+      logger.error("Error creating region:", error);
     } finally {
       setSubmitting(false);
     }

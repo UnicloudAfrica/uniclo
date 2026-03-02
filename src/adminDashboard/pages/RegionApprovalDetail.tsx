@@ -21,6 +21,7 @@ import { useFetchTenants } from "../../hooks/adminHooks/tenantHooks";
 import ToastUtils from "../../utils/toastUtil";
 import AdminPageShell from "../components/AdminPageShell";
 import { ModernCard, ModernButton, ModernTable, StatusPill } from "../../shared/components/ui";
+import logger from "../../utils/logger";
 
 type ApprovalStatus = "pending" | "approved" | "rejected" | "suspended";
 type FastTrackMode = "owner_only" | "grant_only" | "disabled";
@@ -165,7 +166,7 @@ const RegionApprovalDetail = () => {
       setFastTrackMode(regionData?.fast_track_mode || "owner_only");
       setFastTrackNotes(regionData?.fast_track_notes || "");
     } catch (error: unknown) {
-      console.error("Error fetching region:", error);
+      logger.error("Error fetching region:", error);
       ToastUtils.error("Failed to load region details");
     } finally {
       setLoading(false);
@@ -196,7 +197,7 @@ const RegionApprovalDetail = () => {
       fetchRegionDetail();
       ToastUtils.success("Credentials verified successfully");
     } catch (error: unknown) {
-      console.error("Error verifying credentials:", error);
+      logger.error("Error verifying credentials:", error);
       ToastUtils.error(getErrorMessage(error, "Verification failed"));
     } finally {
       setVerifying(false);
@@ -224,7 +225,7 @@ const RegionApprovalDetail = () => {
       fetchRegionDetail();
       ToastUtils.success("Region reactivated");
     } catch (error: unknown) {
-      console.error("Error reactivating region:", error);
+      logger.error("Error reactivating region:", error);
       ToastUtils.error(getErrorMessage(error, "Unable to reactivate region"));
     }
   };
@@ -245,7 +246,7 @@ const RegionApprovalDetail = () => {
       await fetchRegionDetail();
       ToastUtils.success("Fast-track settings updated");
     } catch (error: unknown) {
-      console.error("Error updating fast track:", error);
+      logger.error("Error updating fast track:", error);
       ToastUtils.error(getErrorMessage(error, "Failed to update fast-track settings"));
     } finally {
       setUpdatingFastTrack(false);
@@ -267,7 +268,7 @@ const RegionApprovalDetail = () => {
       await fetchRegionDetail();
       ToastUtils.success("Fast-track access granted");
     } catch (error: unknown) {
-      console.error("Error granting fast track:", error);
+      logger.error("Error granting fast track:", error);
       ToastUtils.error(getErrorMessage(error, "Failed to grant fast-track access"));
     } finally {
       setGrantingFastTrack(false);
@@ -286,7 +287,7 @@ const RegionApprovalDetail = () => {
       await adminRegionApi.revokeFastTrack(id, tenantId);
       await fetchRegionDetail();
     } catch (error: unknown) {
-      console.error("Error revoking fast track:", error);
+      logger.error("Error revoking fast track:", error);
     }
   };
   const credentialSummary = region?.msp_credential_summary || {};

@@ -12,6 +12,7 @@ import {
 } from "../../hooks/useBrandingTheme";
 import logo from "./assets/logo.png";
 import { useAdminShellContext } from "./AdminShellContext";
+import logger from "../../utils/logger";
 
 interface AdminHeadbarProps {
   forceRender?: boolean;
@@ -28,10 +29,10 @@ const AdminHeadbar: React.FC<AdminHeadbarProps> = ({ forceRender = false }) => {
   const { data: branding, isFetching: isBrandingFetching } = useAdminBrandingTheme({
     enabled: shouldRender,
   });
-  useApplyBrandingTheme(branding, { fallbackLogo: logo, enabled: shouldRender });
+  useApplyBrandingTheme(branding as any, { fallbackLogo: logo, enabled: shouldRender });
 
   const preset = buildAdminHeadbarPreset(
-    resolveBrandLogo(branding, logo),
+    resolveBrandLogo(branding as any, logo),
     branding?.accentColor || branding?.primaryColor
   );
 
@@ -44,7 +45,7 @@ const AdminHeadbar: React.FC<AdminHeadbarProps> = ({ forceRender = false }) => {
       // Admin logout API call would go here
       // await adminApi.post("/logout");
     } catch (error) {
-      console.error("Admin logout failed:", error);
+      logger.error("Admin logout failed:", error);
     } finally {
       clearAllAuthSessions();
       navigate("/admin-signin");

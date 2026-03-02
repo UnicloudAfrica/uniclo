@@ -53,7 +53,7 @@ const Solutions = () => {
                 // Ensure 'order' property exists and is numeric
                 .filter((item) => typeof item.order === "number")
                 // Sort the array based on the 'order' property
-                .sort((a, b) => a.order - b.order)
+                .sort((a, b) => (a?.order ?? 0) - (b?.order ?? 0))
                 .map((item, index) => (
                   <Link to={`/solutions/${item.id}`}>
                     <div key={item.id} id={item.id} className="w-full text-center">

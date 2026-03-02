@@ -5,6 +5,7 @@ import SetupProgressCard from "../projects/details/SetupProgressCard";
 import { useApiContext, ApiContext } from "../../../hooks/useApiContext";
 import { useInstanceBroadcasting } from "../../../hooks/useInstanceBroadcasting";
 import ToastUtils from "../../../utils/toastUtil";
+import logger from "../../../utils/logger";
 
 interface ConfigurationSummary {
   id: string;
@@ -457,7 +458,7 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
 
       for (const ref of refs) {
         try {
-          const response = await fetch(`${apiRoot}/instances/${ref.lookupId}`, {
+          const response = await fetch(`${apiRoot}/instances/${(ref as any).lookupId}`, {
             headers: authHeaders,
             credentials: "include",
           });
@@ -470,7 +471,7 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
           if (steps.length > 0) {
             setInstanceProgress((prev) => ({
               ...prev,
-              [String(ref.key)]: steps.map((step: any) => ({
+              [String((ref as any).key)]: steps.map((step: any) => ({
                 id: step.id || step.key || step.label || "",
                 label: step.label || "Step",
                 status: normalizeStatus(step.status),
@@ -481,7 +482,7 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
             }));
           }
         } catch (err) {
-          console.warn(`Failed to fetch progress for instance ${ref.lookupId}`, err);
+          logger.warn(`Failed to fetch progress for instance ${(ref as any).lookupId}`, err);
         }
       }
     },
@@ -556,7 +557,7 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
 
         const failures = results.filter((result) => result.status === "rejected");
         if (failures.length > 0) {
-          console.error("Health check refresh failures:", failures);
+          logger.error("Health check refresh failures:", failures);
           ToastUtils.error(`Failed to refresh ${failures.length} instance(s).`);
         } else {
           ToastUtils.success("Health check refresh triggered.");
@@ -626,13 +627,16 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
           status = "pending";
         }
 
-        const updatedAt = stepUpdates.reduce<string | undefined>((latest, current) => {
-          if (!current?.updated_at) return latest;
-          if (!latest) return current.updated_at;
-          return new Date(current.updated_at).getTime() > new Date(latest).getTime()
-            ? current.updated_at
-            : latest;
-        }, step.updated_at);
+        const updatedAt = stepUpdates.reduce<string | undefined>(
+          (latest, current) => {
+            if (!current?.updated_at) return latest;
+            if (!latest) return current.updated_at;
+            return new Date(current.updated_at).getTime() > new Date(latest).getTime()
+              ? current.updated_at
+              : latest;
+          },
+          (step as any).updated_at
+        );
 
         const description =
           failedCount > 0

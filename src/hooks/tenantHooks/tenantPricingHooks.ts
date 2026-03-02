@@ -3,6 +3,7 @@ import tenantSilentApi from "../../index/tenant/silentTenant";
 import tenantApi from "../../index/tenant/tenantApi";
 import tenantMultipartApi from "../../index/tenant/multipartTenantApi";
 import tenantFileApi from "../../index/tenant/fileapi";
+import logger from "../../utils/logger";
 
 type QueryMeta = Record<string, unknown>;
 
@@ -151,7 +152,7 @@ const fetchTenantPricingOverrides = async (
 const createTenantPricingOverride = async (
   payload: TenantPricingCreatePayload
 ): Promise<unknown> => {
-  const res = await tenantApi("POST", "/admin/product-pricing", payload);
+  const res = await tenantApi("POST", "/admin/product-pricing", payload as any);
   if (!res) {
     throw new Error("Failed to set tenant price setting");
   }
@@ -165,7 +166,7 @@ const updateTenantPricingOverride = async ({
   if (!id) {
     throw new Error("Pricing identifier is required");
   }
-  const res = await tenantApi("PATCH", `/admin/product-pricing/${id}`, payload);
+  const res = await tenantApi("PATCH", `/admin/product-pricing/${id}`, payload as any);
   if (!res) {
     throw new Error("Failed to update tenant price setting");
   }
@@ -251,7 +252,7 @@ export const useUpsertTenantPricingOverride = () => {
       queryClient.invalidateQueries({ queryKey: ["product-pricing"] });
     },
     onError: (error) => {
-      console.error("Error creating tenant pricing override:", error);
+      logger.error("Error creating tenant pricing override:", error);
     },
   });
 };
@@ -265,7 +266,7 @@ export const useUpdateTenantPricingOverride = () => {
       queryClient.invalidateQueries({ queryKey: ["product-pricing"] });
     },
     onError: (error) => {
-      console.error("Error updating tenant pricing override:", error);
+      logger.error("Error updating tenant pricing override:", error);
     },
   });
 };
@@ -279,7 +280,7 @@ export const useDeleteTenantPricingOverride = () => {
       queryClient.invalidateQueries({ queryKey: ["product-pricing"] });
     },
     onError: (error) => {
-      console.error("Error deleting tenant pricing override:", error);
+      logger.error("Error deleting tenant pricing override:", error);
     },
   });
 };
@@ -293,7 +294,7 @@ export const useImportTenantPricingOverrides = () => {
       queryClient.invalidateQueries({ queryKey: ["product-pricing"] });
     },
     onError: (error) => {
-      console.error("Error importing tenant price settings:", error);
+      logger.error("Error importing tenant price settings:", error);
     },
   });
 };
@@ -302,7 +303,7 @@ export const useExportTenantPricingTemplate = () => {
   return useMutation<unknown, Error, string>({
     mutationFn: exportTenantPricingTemplate,
     onError: (error) => {
-      console.error("Error exporting tenant pricing template:", error);
+      logger.error("Error exporting tenant pricing template:", error);
     },
   });
 };

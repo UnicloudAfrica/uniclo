@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { X, Loader2 } from "lucide-react";
 import ToastUtils from "../../../../utils/toastUtil";
 import { useCreateEbsVolume } from "../../../../hooks/adminHooks/ebsHooks";
+import logger from "../../../../utils/logger";
 
 type EbsFormData = {
   name: string;
@@ -102,7 +103,7 @@ const AddEBSModal = ({ isOpen = false, onClose }: AddEbsModalProps) => {
         onClose?.();
       },
       onError: (err: unknown) => {
-        console.error("Failed to create EBS Volume:", err);
+        logger.error("Failed to create EBS Volume:", err);
         ToastUtils.error(
           err instanceof Error ? err.message : "Failed to create EBS Volume. Please try again."
         );
@@ -238,7 +239,7 @@ const AddEBSModal = ({ isOpen = false, onClose }: AddEbsModalProps) => {
                 value={formData.description}
                 onChange={(e) => updateFormData("description", e.target.value)}
                 placeholder="Enter a brief description for the EBS volume"
-                rows="3"
+                rows={3}
                 className={`w-full input-field ${
                   errors["description"] ? "border-red-500" : "border-gray-300"
                 }`}

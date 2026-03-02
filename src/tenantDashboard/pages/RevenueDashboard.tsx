@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import tenantRegionApi from "../../services/tenantRegionApi";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
 import { Download } from "lucide-react";
+import logger from "../../utils/logger";
 
 interface RevenueSummary {
   total_revenue?: number;
@@ -81,7 +82,7 @@ const RevenueDashboard = () => {
           : []
       );
     } catch (error) {
-      console.error("Error fetching revenue data:", error);
+      logger.error("Error fetching revenue data:", error);
     } finally {
       setLoading(false);
     }
@@ -100,7 +101,7 @@ const RevenueDashboard = () => {
     try {
       await tenantRegionApi.exportRevenueShares(filters);
     } catch (error) {
-      console.error("Error exporting:", error);
+      logger.error("Error exporting:", error);
     }
   };
 
@@ -241,7 +242,7 @@ const RevenueDashboard = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {shares.length === 0 ? (
                     <tr>
-                      <td colSpan="8" className="px-6 py-12 text-center text-gray-500">
+                      <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
                         No revenue shares found
                       </td>
                     </tr>

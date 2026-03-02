@@ -23,6 +23,7 @@ import {
   productTypes,
   mapRowToEntry,
 } from "../../utils/productImportUtils";
+import logger from "../../utils/logger";
 
 interface RegionOption {
   code: string;
@@ -39,7 +40,7 @@ const AdminProductCreate = () => {
   const { isFetching: isRegionsFetching, data: regionsData } = useFetchRegions();
   const { mutate: createProducts, isPending: isCreating } = useCreateProducts();
   const regions = useMemo<RegionOption[]>(
-    () => (Array.isArray(regionsData) ? (regionsData as RegionOption[]) : []),
+    () => (Array.isArray(regionsData) ? (regionsData as any as RegionOption[]) : []),
     [regionsData]
   );
 
@@ -164,7 +165,7 @@ const AdminProductCreate = () => {
         ToastUtils.warning("No valid rows found in the file.");
       }
     } catch (error) {
-      console.error("Failed to import products:", error);
+      logger.error("Failed to import products:", error);
       ToastUtils.error("Failed to import products. Please try again.");
     } finally {
       setIsImporting(false);

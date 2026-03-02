@@ -19,6 +19,7 @@ import ExtendStorageModal from "../../shared/components/object-storage/ExtendSto
 import DeleteStorageAccountModal from "../../shared/components/object-storage/DeleteStorageAccountModal";
 import objectStorageApi from "../../services/objectStorageApi";
 import ToastUtils from "../../utils/toastUtil";
+import logger from "../../utils/logger";
 
 /**
  * Admin Silo Storage Detail Page
@@ -70,7 +71,7 @@ const AdminObjectStorageDetail: React.FC = () => {
       const data = await objectStorageApi.fetchBuckets(accountId);
       setBuckets(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Failed to load silos:", err);
+      logger.error("Failed to load silos:", err);
     } finally {
       setBucketsLoading(false);
     }
@@ -221,7 +222,7 @@ const AdminObjectStorageDetail: React.FC = () => {
         return (
           <ObjectStorageAnalytics
             accountId={accountId}
-            accountName={account.name}
+            accountName={account.name as any}
             onExtendStorage={() => setShowExtendModal(true)}
           />
         );
@@ -324,7 +325,7 @@ const AdminObjectStorageDetail: React.FC = () => {
                 setSelectedBucket(name);
                 setShowMobileSidebar(false);
               }}
-              onCreateBucket={handleCreateBucket}
+              onCreateBucket={handleCreateBucket as any}
               onDeleteBucket={handleDeleteBucket}
               onRefresh={handleRefresh}
               bucketsLoading={bucketsLoading}
@@ -343,7 +344,7 @@ const AdminObjectStorageDetail: React.FC = () => {
               buckets={buckets}
               selectedBucket={selectedBucket}
               onSelectBucket={setSelectedBucket}
-              onCreateBucket={handleCreateBucket}
+              onCreateBucket={handleCreateBucket as any}
               onDeleteBucket={handleDeleteBucket}
               onRefresh={handleRefresh}
               bucketsLoading={bucketsLoading}

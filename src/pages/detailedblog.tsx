@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 import copy from "./assets/copy.svg";
 import { BlogContext } from "../contexts/contextprovider";
 import DOMPurify from "dompurify";
+import logger from "../utils/logger";
 
 interface BlogItem {
   id: string;
@@ -57,7 +58,7 @@ const DetailedBlog = () => {
     drawin: "",
     tag: "",
   };
-  const [selectedBlogItem, setSelectedBlogItem] = useState<BlogItem>(emptyBlog as BlogItem);
+  const [selectedBlogItem, setSelectedBlogItem] = useState<BlogItem>(emptyBlog as any as BlogItem);
   const [otherBlogsState, setOtherBlogsState] = useState<BlogItem[]>([]);
 
   const { title } = useParams();
@@ -101,14 +102,14 @@ const DetailedBlog = () => {
       .then((querySnapshot) => {
         if (!querySnapshot.empty) {
           const doc = querySnapshot.docs[0];
-          const blogs = { id: doc.id, ...doc.data() } as BlogItem;
+          const blogs = { id: doc?.id, ...doc?.data() } as BlogItem;
           setSelectedBlogItem(blogs);
         } else {
-          console.log("Document does not exist for decoded title:", decodedTitle);
+          logger.log("Document does not exist for decoded title:", decodedTitle);
         }
       })
       .catch((error) => {
-        console.error("Error getting documents:", error);
+        logger.error("Error getting documents:", error);
       });
   }, [decodedTitle, db, blogArray.length]);
 
@@ -118,7 +119,7 @@ const DetailedBlog = () => {
     const q = query(blogsCollectionRef);
     getDocs(q)
       .then((querySnapshot) => {
-        const otherBlogsData = [];
+        const otherBlogsData: any = [];
         querySnapshot.forEach((doc) => {
           const blogData = { id: doc.id, ...doc.data() } as BlogItem;
           if (decodedTitle !== doc.data().title) {
@@ -128,7 +129,7 @@ const DetailedBlog = () => {
         setOtherBlogsState(otherBlogsData);
       })
       .catch((error) => {
-        console.error("Error getting documents:", error);
+        logger.error("Error getting documents:", error);
       });
   }, [decodedTitle, db, blogArray.length]);
 
@@ -146,7 +147,7 @@ const DetailedBlog = () => {
         }, 2000); // Change back to 'Copy link' after 3000 milliseconds (3 seconds)
       })
       .catch((err) => {
-        console.error("Unable to copy link to clipboard", err);
+        logger.error("Unable to copy link to clipboard", err);
       });
   };
 

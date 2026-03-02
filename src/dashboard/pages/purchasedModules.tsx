@@ -12,7 +12,7 @@ export default function PurchasedModules() {
 
   const instances = fetchedInstances.data;
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: any) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
     return date.toLocaleString("en-US", {
@@ -29,26 +29,26 @@ export default function PurchasedModules() {
     {
       key: "name",
       header: "Instance Name",
-      render: (val) => <span className="text-[var(--theme-text-color)]">{val || "N/A"}</span>,
+      render: (val: any) => <span className="text-[var(--theme-text-color)]">{val || "N/A"}</span>,
     },
     {
       key: "storage_size_gb",
       header: "Disk Size",
-      render: (val) => (
+      render: (val: any) => (
         <span className="text-[var(--theme-text-color)]">{val ? `${val} GiB` : "N/A"}</span>
       ),
     },
     {
       key: "os_image",
       header: "OS Image",
-      render: (_, item) => (
+      render: (_: any, item: any) => (
         <span className="text-[var(--theme-text-color)]">{item.os_image?.name || "N/A"}</span>
       ),
     },
     {
       key: "status",
       header: "Status",
-      render: (val) => {
+      render: (val: any) => {
         const baseClass =
           "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize";
         let styleClass = "";
@@ -74,11 +74,13 @@ export default function PurchasedModules() {
     {
       key: "created_at",
       header: "Creation Date",
-      render: (val) => <span className="text-[var(--theme-text-color)]">{formatDate(val)}</span>,
+      render: (val: any) => (
+        <span className="text-[var(--theme-text-color)]">{formatDate(val)}</span>
+      ),
     },
   ];
 
-  const tableData = instances.map((item) => ({ ...item, id: item.id }));
+  const tableData = instances?.map((item) => ({ ...item, id: item.id }));
 
   const FilterButton = (
     <button className="flex items-center gap-2 px-3 py-2 text-sm bg-[var(--theme-surface-alt)] rounded-[8px] text-gray-600 hover:text-gray-900 transition-colors">

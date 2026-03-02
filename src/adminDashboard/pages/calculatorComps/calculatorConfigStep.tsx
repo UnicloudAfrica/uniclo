@@ -160,7 +160,7 @@ const CalculatorConfigStep = ({
   );
   const { data: rawRegions, isFetching: isRegionsFetching } = useFetchRegions();
   const regions = useFormattedRegions(
-    Array.isArray(rawRegions) ? (rawRegions as RegionLike[]) : []
+    Array.isArray(rawRegions) ? (rawRegions as any as RegionLike[]) : []
   );
 
   const selectedCountryCode = useMemo(
@@ -421,7 +421,7 @@ const CalculatorConfigStep = ({
           {/* Workload Cards List */}
           <div className="space-y-6">
             {calculatorData.pricing_requests?.map((request: WorkloadRequest, index: number) => {
-              const workloadErrors = errors[`pricing_requests.${index}`] as
+              const workloadErrors = errors[`pricing_requests.${index}`] as unknown as
                 | Record<string, string | null>
                 | undefined;
               return (

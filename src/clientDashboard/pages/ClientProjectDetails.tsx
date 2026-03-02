@@ -34,9 +34,9 @@ import api from "../../index/client/api";
 import InfrastructureSetupWizard from "../../adminDashboard/components/provisioning/InfrastructureSetupWizard";
 import { useFetchClientPurchasedInstances } from "../../hooks/clientHooks/instanceHooks";
 import {
-  useFetchKeyPairs,
+  useFetchClientKeyPairs,
+  useDeleteClientKeyPair,
   useSyncKeyPairs,
-  useDeleteKeyPair,
 } from "../../hooks/clientHooks/keyPairsHook";
 import type { StatusResponse, NetworkStatusResponse } from "../../hooks/clientHooks/projectHooks";
 
@@ -179,7 +179,7 @@ const ClientProjectDetails: React.FC = () => {
     }
     try {
       ToastUtils.info(`Executing ${label}...`);
-      const res = await api(method.toUpperCase(), endpoint, payload);
+      const res = await api(method.toUpperCase() as any, endpoint, payload);
       ToastUtils.success(`${label} completed successfully!`);
       await Promise.all([refetchStatus(), refetchProject()]);
       return res;
@@ -261,16 +261,9 @@ const ClientProjectDetails: React.FC = () => {
   };
 
   const clientKeyPairHooks: KeyPairHooks = {
-    useList: (projectIdValue, regionValue, options) => {
-      const query = useFetchKeyPairs(projectIdValue, regionValue, options);
-      return {
-        data: Array.isArray(query.data) ? query.data : [],
-        isFetching: query.isFetching ?? false,
-        refetch: query.refetch,
-      };
-    },
+    useList: useFetchClientKeyPairs as KeyPairHooks["useList"],
     useSync: useSyncKeyPairs,
-    useDelete: useDeleteKeyPair,
+    useDelete: useDeleteClientKeyPair as KeyPairHooks["useDelete"],
   };
 
   const projectDetails = useProjectDetailsAdapter({
@@ -295,7 +288,7 @@ const ClientProjectDetails: React.FC = () => {
       handleGenericAction({
         method: action?.method || "POST",
         endpoint: action?.endpoint,
-        label: action?.label,
+        label: action?.label as string,
       }),
     computeTab: {
       hierarchy: "client",
@@ -318,7 +311,7 @@ const ClientProjectDetails: React.FC = () => {
     return (
       <ProvisioningFullScreen
         project={project}
-        setupSteps={projectDetails.setupSteps}
+        setupSteps={projectDetails.setupSteps as any}
         onRefresh={() => refetchStatus()}
         onViewProject={() => {
           // Force hide overlay immediately to prevent the loop
@@ -353,7 +346,10 @@ const ClientProjectDetails: React.FC = () => {
         }
       >
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 min-h-[600px]">
-          <InfrastructureSetupWizard project={project} setupMutation={setupMutation} />
+          <InfrastructureSetupWizard
+            project={project as any}
+            setupMutation={setupMutation as any}
+          />
         </div>
       </ClientPageShell>
     );

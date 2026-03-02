@@ -18,6 +18,7 @@ import type { MetaItem, Tone } from "../../../shared/components/ui/ResourceSecti
 import { ResourceEmptyState } from "../../../shared/components/ui";
 import { ResourceListCard } from "../../../shared/components/ui";
 import { ModernButton } from "../../../shared/components/ui";
+import logger from "../../../utils/logger";
 
 type RouteAssociation = {
   subnet_id?: string;
@@ -199,7 +200,7 @@ const RouteTables = ({ projectId = "", region = "" }: RouteTablesProps) => {
       await queryClient.invalidateQueries({ queryKey: ["routeTables", { projectId, region }] });
       ToastUtils.success("Route tables synced successfully!");
     } catch (error) {
-      console.error("Failed to sync route tables:", error);
+      logger.error("Failed to sync route tables:", error);
       const message = error instanceof Error ? error.message : "Failed to sync route tables.";
       ToastUtils.error(message);
     } finally {

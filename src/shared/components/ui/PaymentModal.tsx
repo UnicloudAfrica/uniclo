@@ -17,6 +17,7 @@ import useTenantAuthStore from "../../../stores/tenantAuthStore";
 import useClientAuthStore from "../../../stores/clientAuthStore";
 import { PaystackButton } from "react-paystack";
 import { formatCurrencyValue, toNumber } from "../../../utils/instanceCreationUtils";
+import logger from "../../../utils/logger";
 
 /**
  * PaymentModal - Shared across Admin, Tenant, and Client dashboards
@@ -554,7 +555,7 @@ const PaymentModal = ({
         const payload = (await response.json().catch(() => ({}))) as ApiResponse;
 
         if (!response.ok || payload.success === false) {
-          console.error("Failed to remove card", payload);
+          logger.error("Failed to remove card", payload);
           return;
         }
 
@@ -566,7 +567,7 @@ const PaymentModal = ({
 
         setSelectedSavedCard((prev) => (prev === cardIdentifier ? null : prev));
       } catch (error) {
-        console.error("Unable to remove card", error);
+        logger.error("Unable to remove card", error);
       }
     },
     [apiRoot, authHeaders, isAuthenticated]
@@ -586,7 +587,7 @@ const PaymentModal = ({
       const payload = (await response.json().catch(() => ({}))) as ApiResponse;
 
       if (!response.ok || payload.success === false) {
-        console.error("Failed to fetch saved cards", payload);
+        logger.error("Failed to fetch saved cards", payload);
         return;
       }
 
@@ -594,7 +595,7 @@ const PaymentModal = ({
         setSavedCards(payload.cards);
       }
     } catch (error) {
-      console.error("Unable to fetch saved cards", error);
+      logger.error("Unable to fetch saved cards", error);
     }
   }, [apiRoot, authHeaders, isAuthenticated]);
 
@@ -703,7 +704,7 @@ const PaymentModal = ({
 
       setIsConfirming(true);
       try {
-        console.info("[PaymentModal] Confirming transaction", {
+        logger.info("[PaymentModal] Confirming transaction", {
           transactionIdentifier,
           gateway,
           payload,
@@ -722,7 +723,7 @@ const PaymentModal = ({
         }>;
 
         if (!response.ok) {
-          console.error("[PaymentModal] Failed to confirm transaction", {
+          logger.error("[PaymentModal] Failed to confirm transaction", {
             status: response.status,
             statusText: response.statusText,
             body,
@@ -737,14 +738,14 @@ const PaymentModal = ({
         const isSuccess = successStatuses.includes(txStatus);
 
         if (!isSuccess) {
-          console.info("[PaymentModal] Transaction not yet successful", { txStatus, body });
+          logger.info("[PaymentModal] Transaction not yet successful", { txStatus, body });
           return false;
         }
 
-        console.info("[PaymentModal] Transaction confirmed", { txStatus });
+        logger.info("[PaymentModal] Transaction confirmed", { txStatus });
         return true;
       } catch (error) {
-        console.error("Failed to confirm transaction:", error);
+        logger.error("Failed to confirm transaction:", error);
         return false;
       } finally {
         setIsConfirming(false);
@@ -772,7 +773,7 @@ const PaymentModal = ({
 
   const handleBankTransferConfirmation = useCallback(async () => {
     if (!selectedPaymentOption) return;
-    console.info("[PaymentModal] Bank transfer confirm clicked", {
+    logger.info("[PaymentModal] Bank transfer confirm clicked", {
       transactionIdentifier,
       selectedPaymentOption,
     });
@@ -791,7 +792,7 @@ const PaymentModal = ({
 
   const handleSavedCardPayment = useCallback(async () => {
     if (!selectedSavedCard) return;
-    console.info("[PaymentModal] Saved card payment clicked", {
+    logger.info("[PaymentModal] Saved card payment clicked", {
       selectedSavedCard,
       transactionIdentifier,
     });
@@ -850,7 +851,7 @@ const PaymentModal = ({
         }
       }
     } catch (error) {
-      console.error("Failed to check transaction status:", error);
+      logger.error("Failed to check transaction status:", error);
     } finally {
       setIsPolling(false);
     }
@@ -1595,7 +1596,7 @@ const PaymentModal = ({
                 className="w-full inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-70 bg-[var(--theme-color)] border border-[var(--theme-color)] min-h-[48px]"
                 disabled={!isPaystackReady}
                 onSuccess={async (response: Record<string, unknown>) => {
-                  console.info("[Paystack][Admin] PaystackButton success", response);
+                  logger.info("[Paystack][Admin] PaystackButton success", response);
                   setPaymentStatus("processing");
                   const confirmed = await confirmTransaction({
                     gatewayOverride: "Paystack",
@@ -1610,7 +1611,7 @@ const PaymentModal = ({
                   }
                 }}
                 onClose={async () => {
-                  console.info("[Paystack][Admin] PaystackButton closed");
+                  logger.info("[Paystack][Admin] PaystackButton closed");
                   if ((paymentStatus as string) === "completed") return;
                   setPaymentStatus("processing");
                   const confirmed = await confirmTransaction({

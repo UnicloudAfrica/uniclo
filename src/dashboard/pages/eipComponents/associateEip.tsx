@@ -3,8 +3,9 @@ import { Loader2, X } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useAssociateTenantElasticIp } from "../../../hooks/elasticIPHooks";
 import { useFetchTenantNetworkInterfaces } from "../../../hooks/eni";
+import logger from "../../../utils/logger";
 
-const AssociateEipModal = ({ isOpen, onClose, projectId, region, elasticIp }) => {
+const AssociateEipModal = ({ isOpen, onClose, projectId, region, elasticIp }: any) => {
   const [targetType, setTargetType] = useState("eni");
   const [eniId, setEniId] = useState("");
   const [instanceId, setInstanceId] = useState("");
@@ -27,7 +28,7 @@ const AssociateEipModal = ({ isOpen, onClose, projectId, region, elasticIp }) =>
 
   const allocationId = elasticIp.provider_resource_id || elasticIp.public_ip || elasticIp.id;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: any) => {
     if (e) e.preventDefault();
     if (!allocationId) {
       ToastUtils.error("Missing Elastic IP identifier.");
@@ -51,9 +52,9 @@ const AssociateEipModal = ({ isOpen, onClose, projectId, region, elasticIp }) =>
     };
 
     if (targetType === "eni") {
-      payload.eni_id = eniId;
+      (payload as any).eni_id = eniId;
     } else {
-      payload.instance_id = instanceId.trim();
+      (payload as any).instance_id = instanceId.trim();
     }
 
     associateEip(payload, {
@@ -64,7 +65,7 @@ const AssociateEipModal = ({ isOpen, onClose, projectId, region, elasticIp }) =>
         onClose();
       },
       onError: (err) => {
-        console.error("Failed to associate Elastic IP:", err);
+        logger.error("Failed to associate Elastic IP:", err);
         ToastUtils.error(err?.message || "Failed to associate Elastic IP.");
       },
     });

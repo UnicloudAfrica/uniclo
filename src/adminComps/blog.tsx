@@ -5,6 +5,7 @@ import { Editor } from "@tinymce/tinymce-react";
 import { getFirestore, collection, addDoc, doc, deleteDoc } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { BlogContext } from "../contexts/contextprovider";
+import logger from "../utils/logger";
 
 interface BlogRecord {
   id?: string;
@@ -70,9 +71,9 @@ const BlogAdmin = () => {
   const date = formatDate(newDate);
   const time = formatTime(newDate);
 
-  // console.log(blogContent)
+  // logger.log(blogContent)
 
-  // console.log(date)
+  // logger.log(date)
   const sumbmitImg = () => {
     if (file && blogTitle && blogTag && blogDrawin) {
       setLoadValue("Yes");

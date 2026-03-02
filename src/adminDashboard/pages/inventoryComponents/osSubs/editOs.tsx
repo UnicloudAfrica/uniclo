@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useUpdateOsImage } from "../../../../hooks/adminHooks/os-imageHooks";
 import ToastUtils from "../../../../utils/toastUtil";
+import logger from "../../../../utils/logger";
 
 const EditOS = ({ isOpen, onClose, osImage }: any) => {
   const [formData, setFormData] = useState({ name: "" });
@@ -46,13 +47,13 @@ const EditOS = ({ isOpen, onClose, osImage }: any) => {
             onClose();
           },
           onError: (err) => {
-            console.error("Failed to update OS Image:", err);
+            logger.error("Failed to update OS Image:", err);
             ToastUtils.error("Failed to update OS Image. Please try again.");
           },
         }
       );
     } else {
-      console.error("No OS Image ID provided for update.");
+      logger.error("No OS Image ID provided for update.");
       ToastUtils.error("Cannot update: OS Image ID is missing.");
     }
   };

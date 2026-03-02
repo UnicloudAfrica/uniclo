@@ -18,6 +18,7 @@ import {
   ResourceListCard,
   ModernButton,
 } from "../../../shared/components/ui";
+import logger from "../../../utils/logger";
 
 interface RouteTablesProps {
   projectId?: string;
@@ -124,14 +125,14 @@ const RouteTables: React.FC<RouteTablesProps> = ({ projectId = "", region = "" }
       },
     ] as unknown;
     if (mainTablesCount) {
-      summary.push({
+      (summary as any).push({
         label: "Main Tables",
         value: mainTablesCount,
         tone: "success",
       });
     }
     if (region) {
-      summary.push({
+      (summary as any).push({
         label: "Region",
         value: region,
         tone: "info",
@@ -185,7 +186,7 @@ const RouteTables: React.FC<RouteTablesProps> = ({ projectId = "", region = "" }
       });
       ToastUtils.success("Route tables synced successfully!");
     } catch (error: any) {
-      console.error("Failed to sync route tables:", error);
+      logger.error("Failed to sync route tables:", error);
       ToastUtils.error(error?.message || "Failed to sync route tables.");
     } finally {
       setIsSyncing(false);
@@ -232,7 +233,7 @@ const RouteTables: React.FC<RouteTablesProps> = ({ projectId = "", region = "" }
       title="Route Tables"
       description="Control how traffic flows between subnets and the internet."
       actions={[syncButton, addButton]}
-      meta={stats}
+      meta={stats as any}
       isLoading={isFetching}
     >
       <div className="mb-6 rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-sm">
@@ -297,7 +298,9 @@ const RouteTables: React.FC<RouteTablesProps> = ({ projectId = "", region = "" }
             const associations = rt.associations || [];
             const gatewayPreference = igwChoice[rtId] || "";
             const isMainTable =
-              Boolean(rt.main) || Boolean(rt.is_main) || associations.some((assoc) => assoc?.main);
+              Boolean(rt.main) ||
+              Boolean(rt.is_main) ||
+              associations.some((assoc: any) => assoc?.main);
             const statusLabel = rt.status || (isMainTable ? "Main Table" : "");
             const statuses = [];
             if (statusLabel) {
@@ -362,7 +365,7 @@ const RouteTables: React.FC<RouteTablesProps> = ({ projectId = "", region = "" }
                         <p className="text-sm text-slate-500">No routes defined</p>
                       ) : (
                         <ul className="space-y-2">
-                          {routes.map((route, idx) => {
+                          {routes.map((route: any, idx: any) => {
                             const destination =
                               route.destination_cidr_block ||
                               route.destination_prefix_list_id ||
@@ -420,7 +423,7 @@ const RouteTables: React.FC<RouteTablesProps> = ({ projectId = "", region = "" }
                         <p className="text-sm text-slate-500">No associations</p>
                       ) : (
                         <div className="flex flex-wrap gap-2">
-                          {associations.map((assoc, idx) => (
+                          {associations.map((assoc: any, idx: any) => (
                             <span
                               key={`${rtId}-assoc-${idx}`}
                               className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600"

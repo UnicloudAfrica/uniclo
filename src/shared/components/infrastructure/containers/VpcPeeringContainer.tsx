@@ -105,7 +105,7 @@ const VpcPeeringContainer: React.FC<VpcPeeringContainerProps> = ({
     <>
       <Wrapper headerActions={headerActions}>
         <VpcPeeringOverview
-          peeringConnections={peeringConnections}
+          peeringConnections={peeringConnections as any}
           isLoading={isLoading}
           onAccept={acceptMutation ? handleAccept : undefined}
           onReject={rejectMutation ? handleReject : undefined}

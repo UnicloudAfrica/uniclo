@@ -1,6 +1,7 @@
 import { X, Loader2 } from "lucide-react";
 import ToastUtils from "../../../../utils/toastUtil";
 import { useDeleteBandwidthProduct } from "../../../../hooks/adminHooks/bandwidthHooks";
+import logger from "../../../../utils/logger";
 
 const DeleteBandwidthModal = ({ isOpen, onClose, bandwidth }: any) => {
   // Use the useDeleteBandwidthProduct hook
@@ -13,7 +14,7 @@ const DeleteBandwidthModal = ({ isOpen, onClose, bandwidth }: any) => {
       // Call mutate with the bandwidth product's ID
       mutate(bandwidth.identifier, {
         onSuccess: () => {
-          //   console.log("Bandwidth Product deleted successfully!");
+          //   logger.log("Bandwidth Product deleted successfully!");
           ToastUtils.success("Bandwidth product deleted successfully");
           onClose(); // Close modal on success
         },
@@ -22,7 +23,7 @@ const DeleteBandwidthModal = ({ isOpen, onClose, bandwidth }: any) => {
         },
       });
     } else {
-      //   console.error("No Bandwidth Product ID provided for deletion.");
+      //   logger.error("No Bandwidth Product ID provided for deletion.");
       //   ToastUtils.error("Cannot delete: Bandwidth Product ID is missing.");
     }
   };

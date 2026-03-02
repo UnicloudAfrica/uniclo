@@ -21,7 +21,7 @@ const defaultForm = {
   verified: false,
 };
 
-const Field = ({ label, children }) => (
+const Field = ({ label, children }: any) => (
   <div className="space-y-2">
     <label className="text-sm font-medium text-slate-700">{label}</label>
     {children}
@@ -40,25 +40,25 @@ export default function EditPartnerPage() {
   useEffect(() => {
     if (partner) {
       setForm({
-        name: partner.business?.name ?? partner.name ?? "",
-        registration_number: partner.business?.registration_number ?? "",
-        company_type: partner.business?.company_type ?? "",
-        industry: partner.business?.industry ?? "",
-        address: partner.business?.address ?? "",
-        city: partner.business?.city ?? "",
-        state: partner.business?.state ?? "",
-        verified: Boolean(partner.verified),
+        name: (partner as any).business?.name ?? (partner as any).name ?? "",
+        registration_number: (partner as any).business?.registration_number ?? "",
+        company_type: (partner as any).business?.company_type ?? "",
+        industry: (partner as any).business?.industry ?? "",
+        address: (partner as any).business?.address ?? "",
+        city: (partner as any).business?.city ?? "",
+        state: (partner as any).business?.state ?? "",
+        verified: Boolean((partner as any).verified),
       });
     }
   }, [partner]);
 
-  const updateField = (key) => (event) => {
+  const updateField = (key: any) => (event: any) => {
     const value = event.target.type === "checkbox" ? event.target.checked : event.target.value;
     setIsDirty(true);
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event: any) => {
     event.preventDefault();
     if (!partnerId) return;
 
@@ -80,7 +80,7 @@ export default function EditPartnerPage() {
       ToastUtils.success("Partner updated.");
       navigate(`/dashboard/partners/${partnerId}`);
     } catch (error) {
-      ToastUtils.error(error?.response?.data?.message || "Failed to update partner.");
+      ToastUtils.error((error as any)?.response?.data?.message || "Failed to update partner.");
     }
   };
 

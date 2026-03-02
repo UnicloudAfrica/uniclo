@@ -2,6 +2,7 @@ import { useMutation, UseMutationResult } from "@tanstack/react-query";
 import api, { HttpMethod } from "../index/api";
 import config from "../config";
 import { resolveActivePersona } from "../stores/sessionUtils";
+import logger from "../utils/logger";
 
 type AuthPayload = Record<string, unknown>;
 
@@ -95,10 +96,10 @@ export const useCreateAccount = (): UseMutationResult<unknown, Error, AuthPayloa
   return useMutation({
     mutationFn: createAccount,
     onError: (error) => {
-      console.error(error);
+      logger.error(error);
     },
     onSuccess: (data) => {
-      // console.log(data);
+      // logger.log(data);
     },
   });
 };
@@ -108,10 +109,10 @@ export const useLoginAccount = (): UseMutationResult<unknown, Error, AuthPayload
   return useMutation({
     mutationFn: loginAccount,
     onError: (error: Error) => {
-      //   console.error(error);
+      //   logger.error(error);
     },
     onSuccess: () => {
-      // console.log(data);
+      // logger.log(data);
     },
   });
 };
@@ -121,10 +122,10 @@ export const useVerifyMail = (): UseMutationResult<unknown, Error, AuthPayload> 
   return useMutation({
     mutationFn: verifyEmail,
     onError: (error) => {
-      console.error(error);
+      logger.error(error);
     },
     onSuccess: (data) => {
-      // console.log(data);
+      // logger.log(data);
     },
   });
 };
@@ -134,10 +135,10 @@ export const useForgotPassword = (): UseMutationResult<unknown, Error, AuthPaylo
   return useMutation({
     mutationFn: forgotPassword,
     onError: (error) => {
-      console.error(error);
+      logger.error(error);
     },
     onSuccess: (data) => {
-      // console.log(data);
+      // logger.log(data);
     },
   });
 };
@@ -146,10 +147,10 @@ export const useResetPassword = (): UseMutationResult<unknown, Error, AuthPayloa
   return useMutation({
     mutationFn: resetPassword,
     onError: (error) => {
-      console.error(error);
+      logger.error(error);
     },
     onSuccess: (data) => {
-      // console.log(data);
+      // logger.log(data);
     },
   });
 };
@@ -158,10 +159,10 @@ export const useResendOTP = (): UseMutationResult<unknown, Error, AuthPayload> =
   return useMutation({
     mutationFn: resendOTP,
     onError: (error) => {
-      console.error(error);
+      logger.error(error);
     },
     onSuccess: (data) => {
-      // console.log(data);
+      // logger.log(data);
     },
   });
 };

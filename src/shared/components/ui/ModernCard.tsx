@@ -12,12 +12,14 @@ import type { CardPadding, CardVariant } from "./types";
 export interface ModernCardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   title?: string;
+  actions?: React.ReactNode;
   variant?: CardVariant;
   padding?: CardPadding;
   shadow?: string;
   hover?: boolean;
   className?: string;
   onClick?: () => void;
+  [key: string]: any;
 }
 
 const ModernCard: React.FC<ModernCardProps> = ({
@@ -122,7 +124,7 @@ const ModernCard: React.FC<ModernCardProps> = ({
         if (hover) {
           e.currentTarget.style.transform = "translateY(0)";
 
-          e.currentTarget.style.boxShadow = getVariantStyles().boxShadow || "none";
+          e.currentTarget.style.boxShadow = (getVariantStyles() as any).boxShadow || "none";
         }
       }}
       {...props}

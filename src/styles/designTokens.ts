@@ -159,7 +159,7 @@ export type DesignTokens = {
   zIndex: ZIndexScale;
 };
 
-type ColorLike = Record<string | number, string | ColorLike>;
+type ColorLike = Record<string | number, string | any>;
 
 export const designTokens: DesignTokens = {
   // ==================== COLORS ====================

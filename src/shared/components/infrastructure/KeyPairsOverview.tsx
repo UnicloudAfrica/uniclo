@@ -182,7 +182,7 @@ const KeyPairsOverview: React.FC<KeyPairsOverviewProps> = ({
         {keyPairs.length > 0 ? (
           <ModernTable
             data={keyPairs}
-            columns={columns}
+            columns={columns as any}
             actions={tableActions}
             paginated={true}
             pageSize={itemsPerPage}

@@ -369,8 +369,9 @@ const ClientDashboard: React.FC = () => {
     ticketStats,
     isFetching: isDashboardFetching,
   } = useFetchClientDashboardStats();
-  const { data: offers = DEFAULT_OFFERS, isFetching: isOffersFetching } =
-    useFetchClientProductOffers() as { data: Offers; isFetching: boolean };
+  const { data: offers = DEFAULT_OFFERS, isFetching: isOffersFetching } = (
+    useFetchClientProductOffers as any
+  )() as { data: Offers; isFetching: boolean };
 
   const [showVerifyModal, setShowVerifyModal] = useState(false);
 

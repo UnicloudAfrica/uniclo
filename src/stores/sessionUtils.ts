@@ -3,6 +3,7 @@ import useAdminAuthStore from "./adminAuthStore";
 import useTenantAuthStore from "./tenantAuthStore";
 import useClientAuthStore from "./clientAuthStore";
 import { AuthState } from "../types/auth";
+import logger from "../utils/logger";
 
 const normalizeRole = (role: string | null | undefined): string | null =>
   typeof role === "string" ? role.toLowerCase() : null;
@@ -91,7 +92,7 @@ const requestLogout = async (role: string | null | undefined) => {
     return response;
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error("Logout failed:", error);
+    logger.error("Logout failed:", error);
     return null;
   }
 };

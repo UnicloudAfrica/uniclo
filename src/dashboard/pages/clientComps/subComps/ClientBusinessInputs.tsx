@@ -435,7 +435,7 @@ const ClientBusinessInputs: React.FC<ClientBusinessInputsProps> = ({
             </label>
             <span
               className={`w-full input-field block transition-all ${
-                errors.type ? "border-red-500 border" : ""
+                (errors as any).type ? "border-red-500 border" : ""
               }`}
             >
               <select
@@ -449,7 +449,9 @@ const ClientBusinessInputs: React.FC<ClientBusinessInputsProps> = ({
                 <option value="CAC_ENRICHED">CAC_ENRICHED</option>
               </select>
             </span>
-            {errors.type && <p className="text-red-500 text-xs mt-1">{errors.type}</p>}
+            {(errors as any).type && (
+              <p className="text-red-500 text-xs mt-1">{(errors as any).type}</p>
+            )}
           </div>
           <div>
             <label htmlFor="business_name" className="block text-sm font-medium text-gray-700 mb-2">

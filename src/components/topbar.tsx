@@ -9,8 +9,8 @@ import useImageFallback from "../hooks/useImageFallback";
 import { getSubdomain } from "../utils/getSubdomain";
 
 const Topbar = (): JSX.Element => {
-  const hostname = typeof window !== "undefined" ? globalThis.window.location.hostname : "";
-  const subdomain = typeof window !== "undefined" ? (getSubdomain() ?? undefined) : undefined;
+  const hostname = globalThis.window !== undefined ? globalThis.window.location.hostname : "";
+  const subdomain = globalThis.window !== undefined ? (getSubdomain() ?? undefined) : undefined;
   const { data: branding } = usePublicBrandingTheme({
     domain: hostname,
     subdomain,

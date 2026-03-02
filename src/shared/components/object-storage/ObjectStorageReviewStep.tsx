@@ -20,6 +20,7 @@ export interface ObjectStorageReviewStepProps {
   onSubmit: () => void;
   onBack: () => void;
   onGeneratePaymentOptions?: () => void;
+  [key: string]: any;
 }
 
 export const ObjectStorageReviewStep: React.FC<ObjectStorageReviewStepProps> = ({

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { X, Loader2, Trash2 } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useUpdateTaxConfiguration } from "../../../hooks/adminHooks/taxConfigurationHooks";
+import logger from "../../../utils/logger";
 
 const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }: any) => {
   const { mutate, isPending } = useUpdateTaxConfiguration(); // Use the new update tax type hook
@@ -46,7 +47,7 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }: any) => {
     }
     // Validate existing rates
     formData.countryRates.forEach((rate, index) => {
-      const rateValue = parseFloat(rate.rate);
+      const rateValue = parseFloat((rate as any).rate);
       if (isNaN(rateValue) || rateValue < 0 || rateValue > 100) {
         newErrors[`rate-${index}`] = "Rate must be a number between 0 and 100.";
       }
@@ -64,7 +65,7 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }: any) => {
   const handleRateChange = (index: any, value: any) => {
     setFormData((prev) => {
       const updatedRates = [...prev.countryRates];
-      updatedRates[index] = { ...updatedRates[index], rate: value };
+      updatedRates[index] = { ...(updatedRates[index] as any), rate: value };
       return { ...prev, countryRates: updatedRates };
     });
     setErrors((prev) => ({ ...prev, [`rate-${index}`]: null })); // Clear specific rate error
@@ -102,7 +103,7 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }: any) => {
             onSuccess?.();
           },
           onError: (err) => {
-            console.error("Failed to update Tax Type:", err);
+            logger.error("Failed to update Tax Type:", err);
             ToastUtils.error(err.message || "Failed to update tax type. Please try again.");
           },
         }
@@ -158,11 +159,11 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }: any) => {
                 <div className="space-y-3">
                   {formData.countryRates.map((rate, index) => (
                     <div
-                      key={rate.id || `new-${index}`} // Use existing ID or a new temporary key
+                      key={(rate as any).id || `new-${index}`} // Use existing ID or a new temporary key
                       className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg"
                     >
                       <span className="font-medium text-gray-700 w-1/3">
-                        {rate.country?.name || `Country ID: ${rate.country_id}`}
+                        {(rate as any).country?.name || `Country ID: ${(rate as any).country_id}`}
                       </span>
                       <div className="relative w-1/3">
                         <input
@@ -170,7 +171,7 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }: any) => {
                           step="0.001"
                           min="0"
                           max="100"
-                          value={rate.rate}
+                          value={(rate as any).rate}
                           onChange={(e) => handleRateChange(index, e.target.value)}
                           placeholder="7.5"
                           className={`w-full input-field pr-10 ${

@@ -6,6 +6,7 @@ import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
 import { ModernButton } from "../../shared/components/ui";
 import { useFetchAdminById } from "../../hooks/adminHooks/adminHooks";
 import { EditAdminModal } from "./adminComps/editAdmin";
+import logger from "../../utils/logger";
 
 interface AdminRecord {
   id?: string | number;
@@ -19,7 +20,7 @@ const decodeId = (encodedId?: string) => {
   try {
     return atob(decodeURIComponent(encodedId));
   } catch (error) {
-    console.error("Failed to decode admin id", error);
+    logger.error("Failed to decode admin id", error);
     return null;
   }
 };

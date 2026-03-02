@@ -3,6 +3,8 @@ import { CheckCircle2, XCircle } from "lucide-react";
 import { SummaryTotals, PaymentOptionLike } from "../../../hooks/useObjectStoragePricing";
 import { PaymentModal } from "../ui";
 
+export type PaymentOption = PaymentOptionLike;
+
 export interface ObjectStoragePaymentStepProps {
   paymentOptions: PaymentOptionLike[];
   totals: SummaryTotals;

@@ -5,6 +5,7 @@ import { ModernButton } from "../../../shared/components/ui";
 import StatusPill from "../../../shared/components/ui/StatusPill";
 import { getStepsForTarget } from "../../../dashboard/onboarding/stepConfig";
 import { fetchAdminOnboardingSubmission } from "../../../hooks/adminHooks/onboardingReviewHooks";
+import logger from "../../../utils/logger";
 
 const STATUS_LABELS: Record<string, string> = {
   not_started: "Not started",
@@ -133,7 +134,7 @@ const OnboardingStatusBoard: React.FC<OnboardingStatusBoardProps> = ({
                 },
               ];
             } catch (stepError) {
-              console.error(`Failed to load onboarding submission for ${step.id}`, stepError);
+              logger.error(`Failed to load onboarding submission for ${step.id}`, stepError);
               return [
                 step.id,
                 {
@@ -151,7 +152,7 @@ const OnboardingStatusBoard: React.FC<OnboardingStatusBoardProps> = ({
         }
       } catch (fetchError: any) {
         if (!isCancelled) {
-          console.error("Failed to load onboarding submissions", fetchError);
+          logger.error("Failed to load onboarding submissions", fetchError);
           setError(fetchError?.message ?? "Unable to load onboarding submissions right now.");
           setStatuses({});
         }

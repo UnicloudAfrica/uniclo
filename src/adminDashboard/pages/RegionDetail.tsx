@@ -28,6 +28,7 @@ import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
 import { ModernButton } from "../../shared/components/ui";
 import StatusPill from "../../shared/components/ui/StatusPill";
 import { designTokens } from "../../styles/designTokens";
+import logger from "../../utils/logger";
 
 const statusToneMap = {
   healthy: "success",
@@ -81,20 +82,20 @@ const RegionDetail = () => {
   const fetchRegionDetail = async () => {
     try {
       setLoading(true);
-      const response = await adminRegionApi.fetchRegionByCode(code);
+      const response = await adminRegionApi.fetchRegionByCode(code as any);
       setRegion(response.data);
 
       // Fetch credential status for services
       if (response.data?.code) {
         try {
           const credsRes = await adminRegionApi.getCredentialStatus(response.data.code);
-          setCredentialStatus(credsRes.data?.credentials || {});
+          setCredentialStatus((credsRes.data as any)?.credentials || {});
         } catch (err) {
-          console.warn("Could not fetch credential status", err);
+          logger.warn("Could not fetch credential status", err);
         }
       }
     } catch (error) {
-      console.error("Error fetching region:", error);
+      logger.error("Error fetching region:", error);
       ToastUtils.error("Failed to load region details");
     } finally {
       setLoading(false);
@@ -112,8 +113,8 @@ const RegionDetail = () => {
       region.status && (
         <StatusPill
           key="status"
-          label={statusLabelMap[region.status] || formatSegment(region.status)}
-          tone={statusToneMap[region.status] || "info"}
+          label={(statusLabelMap as any)[region.status] || formatSegment(region.status)}
+          tone={(statusToneMap as any)[region.status] || "info"}
         />
       ),
       <StatusPill
@@ -180,7 +181,7 @@ const RegionDetail = () => {
         key: "health",
         title: "Operational Health",
         value: formatSegment(region.status) || "Unknown",
-        color: statusToneMap[region.status] || "info",
+        color: (statusToneMap as any)[region.status] || "info",
         icon: <Activity size={24} />,
         description:
           region.status === "healthy"

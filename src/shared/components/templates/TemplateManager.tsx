@@ -441,23 +441,23 @@ const TemplateManager: React.FC = () => {
             const config = template.configuration || {};
             const compute = config.compute || {};
             const computeMeta: string[] = [];
-            if (compute?.vcpu) computeMeta.push(`${compute.vcpu} vCPU`);
-            if (compute?.ram_mb) {
-              computeMeta.push(`${Math.round(Number(compute.ram_mb) / 1024)} GB RAM`);
+            if ((compute as any)?.vcpu) computeMeta.push(`${(compute as any).vcpu} vCPU`);
+            if ((compute as any)?.ram_mb) {
+              computeMeta.push(`${Math.round(Number((compute as any).ram_mb) / 1024)} GB RAM`);
             }
-            const computeLabel = compute?.name
+            const computeLabel = (compute as any)?.name
               ? computeMeta.length
-                ? `${compute.name} • ${computeMeta.join(" • ")}`
-                : compute.name
+                ? `${(compute as any).name} • ${computeMeta.join(" • ")}`
+                : (compute as any).name
               : config.compute_instance_id || "—";
 
-            const osLabel = config.os_image?.name || config.os_image_id || "—";
+            const osLabel = (config.os_image as any)?.name || config.os_image_id || "—";
 
             const volume =
               (Array.isArray(config.volumes) && config.volumes[0]) ||
               (Array.isArray(config.volume_types) && config.volume_types[0]) ||
               {};
-            const volumeLabel = volume?.name || volume?.volume_type_id || "—";
+            const volumeLabel = (volume as any)?.name || volume?.volume_type_id || "—";
             const volumeSize = volume?.size_gb ?? volume?.storage_size_gb;
             const storageLabel = volumeSize ? `${volumeLabel} • ${volumeSize} GB` : volumeLabel;
 

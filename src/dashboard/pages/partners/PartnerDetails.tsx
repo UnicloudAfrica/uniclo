@@ -12,14 +12,22 @@ import {
   useFetchTenantPartnerClients,
 } from "../../../hooks/tenantHooks/partnerHooks";
 
-const InfoRow = ({ label, value }) => (
+const InfoRow = ({ label, value }: { label: string; value: any }) => (
   <div className="flex flex-col gap-1">
     <span className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</span>
     <span className="text-sm font-semibold text-slate-900">{value ?? "—"}</span>
   </div>
 );
 
-const SimpleTable = ({ isLoading, data, onRowClick }) => {
+const SimpleTable = ({
+  isLoading,
+  data,
+  onRowClick,
+}: {
+  isLoading: boolean;
+  data: any[];
+  onRowClick?: (client: any) => void;
+}) => {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-16">
@@ -40,7 +48,7 @@ const SimpleTable = ({ isLoading, data, onRowClick }) => {
 
   return (
     <div className="divide-y divide-slate-100">
-      {data.map((client) => (
+      {data.map((client: any) => (
         <button
           key={client.id || client.identifier}
           type="button"
@@ -61,9 +69,13 @@ export default function PartnerDetailsPage() {
   const navigate = useNavigate();
   const { partnerId } = useParams();
 
-  const { data: partner, isFetching: isPartnerFetching } = useFetchTenantPartnerById(partnerId);
-  const { data: partnerClients = [], isFetching: isClientsFetching } =
-    useFetchTenantPartnerClients(partnerId);
+  const { data: partner, isFetching: isPartnerFetching } = useFetchTenantPartnerById(partnerId) as {
+    data: any;
+    isFetching: boolean;
+  };
+  const { data: partnerClients = [], isFetching: isClientsFetching } = (
+    useFetchTenantPartnerClients as any
+  )(partnerId) as { data: any[]; isFetching: boolean };
   const { mutateAsync: deletePartner, isPending: isDeleting } = useDeleteTenantPartner();
 
   const statistics = useMemo(() => {
@@ -97,7 +109,7 @@ export default function PartnerDetailsPage() {
       ToastUtils.success("Partner removed.");
       navigate("/dashboard/clients");
     } catch (error) {
-      ToastUtils.error(error?.response?.data?.message || "Failed to remove partner.");
+      ToastUtils.error((error as any)?.response?.data?.message || "Failed to remove partner.");
     }
   };
 
@@ -169,7 +181,7 @@ export default function PartnerDetailsPage() {
             {statistics.map((stat) => (
               <ModernCard
                 key={stat.label}
-                padding="md"
+                padding="default"
                 className="flex items-center justify-between border border-slate-100 bg-slate-50"
               >
                 <div>
@@ -202,8 +214,7 @@ export default function PartnerDetailsPage() {
               Edit partner
             </ModernButton>
             <ModernButton
-              variant="outline"
-              tone="destructive"
+              variant="danger"
               onClick={handleDelete}
               isDisabled={isDeleting}
               isLoading={isDeleting}
@@ -220,7 +231,7 @@ export default function PartnerDetailsPage() {
           <SimpleTable
             isLoading={isClientsFetching}
             data={partnerClients}
-            onRowClick={(client) => navigate(`/dashboard/clients/${client.identifier}`)}
+            onRowClick={(client: any) => navigate(`/dashboard/clients/${client.identifier}`)}
           />
         </ModernCard>
       </div>

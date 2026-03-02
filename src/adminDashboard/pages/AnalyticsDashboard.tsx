@@ -21,7 +21,7 @@ const useAnalytics = () => {
     queryKey: ["analytics", "dashboard"],
     queryFn: async () => {
       const response = await adminApi.get("/analytics/dashboard");
-      return response.data.data;
+      return (response as any).data.data;
     },
   });
 };
@@ -31,7 +31,7 @@ const useTopTenants = () => {
     queryKey: ["analytics", "top-tenants"],
     queryFn: async () => {
       const response = await adminApi.get("/analytics/top-tenants");
-      return response.data.data;
+      return (response as any).data.data;
     },
   });
 };
@@ -41,7 +41,7 @@ const useMonthlyRevenue = () => {
     queryKey: ["analytics", "monthly-revenue"],
     queryFn: async () => {
       const response = await adminApi.get("/analytics/monthly-revenue");
-      return response.data.data;
+      return (response as any).data.data;
     },
   });
 };
@@ -51,7 +51,7 @@ const useRecentActivity = () => {
     queryKey: ["analytics", "recent-activity"],
     queryFn: async () => {
       const response = await adminApi.get("/analytics/recent-activity");
-      return response.data.data;
+      return (response as any).data.data;
     },
   });
 };

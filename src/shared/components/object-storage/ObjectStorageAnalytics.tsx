@@ -38,7 +38,9 @@ interface AnalyticsData {
 
 interface ObjectStorageAnalyticsProps {
   accountId: string;
+  accountName?: string;
   onExtendStorage: () => void;
+  [key: string]: any;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>

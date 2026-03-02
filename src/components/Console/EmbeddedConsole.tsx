@@ -179,6 +179,7 @@ const EmbeddedConsole = ({
         document.removeEventListener("mouseup", handleMouseUp);
       };
     }
+    return undefined;
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
   // Handle console type change

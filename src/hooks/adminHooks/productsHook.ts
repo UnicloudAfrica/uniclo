@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
+import logger from "../../utils/logger";
 
 // GET: Fetch all products
 const fetchProducts = async () => {
@@ -82,7 +83,7 @@ export const useCreateProduct = () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
     },
     onError: (error: any) => {
-      console.error("Error creating product:", error);
+      logger.error("Error creating product:", error);
     },
   });
 };
@@ -98,7 +99,7 @@ export const useUpdateProduct = () => {
       queryClient.invalidateQueries({ queryKey: ["product", variables.id] });
     },
     onError: (error: any) => {
-      console.error("Error updating product:", error);
+      logger.error("Error updating product:", error);
     },
   });
 };
@@ -113,7 +114,7 @@ export const useDeleteProduct = () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
     },
     onError: (error: any) => {
-      console.error("Error deleting product:", error);
+      logger.error("Error deleting product:", error);
     },
   });
 };

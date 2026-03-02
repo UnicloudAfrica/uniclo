@@ -17,9 +17,10 @@ import ToastUtils from "../../../utils/toastUtil";
 
 const ITEMS_PER_PAGE = 6;
 
-const normalizeStatus = (value) => (value ? value.toString().replace(/_/g, " ").toLowerCase() : "");
+const normalizeStatus = (value: any) =>
+  value ? value.toString().replace(/_/g, " ").toLowerCase() : "";
 
-const getToneForStatus = (status) => {
+const getToneForStatus = (status: any) => {
   const normalized = normalizeStatus(status);
   if (["active", "available", "ready", "associated", "attached"].includes(normalized)) {
     return "success";
@@ -35,7 +36,10 @@ const getToneForStatus = (status) => {
 
 const VPCs = ({ projectId = "", region = "" }) => {
   const queryClient = useQueryClient();
-  const { data: vpcs, isFetching } = useFetchTenantVpcs(projectId, region);
+  const { data: vpcs, isFetching } = useFetchTenantVpcs(projectId, region) as {
+    data: any[];
+    isFetching: boolean;
+  };
   const { mutate: deleteVpc, isPending: isDeleting } = useDeleteTenantVpc();
   const { mutateAsync: syncVpcs, isPending: isSyncing } = useSyncTenantVpcs();
 
@@ -52,15 +56,15 @@ const VPCs = ({ projectId = "", region = "" }) => {
   }, [vpcs, currentPage]);
 
   const stats = useMemo(() => {
-    const defaults = (vpcs ?? []).filter((item) => item.is_default).length;
-    const pending = (vpcs ?? []).filter((item) =>
+    const defaults = (vpcs ?? []).filter((item: any) => item.is_default).length;
+    const pending = (vpcs ?? []).filter((item: any) =>
       ["pending", "creating", "syncing"].includes(normalizeStatus(item.state || item.status))
     ).length;
-    const healthy = (vpcs ?? []).filter((item) =>
+    const healthy = (vpcs ?? []).filter((item: any) =>
       ["available", "active"].includes(normalizeStatus(item.state || item.status))
     ).length;
 
-    const baseStats = [
+    const baseStats: any[] = [
       {
         label: "Total VPCs",
         value: totalItems,
@@ -95,11 +99,11 @@ const VPCs = ({ projectId = "", region = "" }) => {
     return baseStats;
   }, [vpcs, totalItems, region]);
 
-  const openDeleteModal = (vpc) => setDeleteModal(vpc);
+  const openDeleteModal = (vpc: any) => setDeleteModal(vpc);
   const closeDeleteModal = () => setDeleteModal(null);
   const openCreateModal = () => setCreateModal(true);
   const closeCreateModal = () => setCreateModal(false);
-  const openViewModal = (vpc) => setViewModal(vpc);
+  const openViewModal = (vpc: any) => setViewModal(vpc);
   const closeViewModal = () => setViewModal(null);
 
   const handleSync = async () => {
@@ -115,7 +119,7 @@ const VPCs = ({ projectId = "", region = "" }) => {
       });
       ToastUtils.success("VPCs synced successfully.");
     } catch (error) {
-      ToastUtils.error(error?.message || "Unable to sync VPCs right now.");
+      ToastUtils.error((error as any)?.message || "Unable to sync VPCs right now.");
     }
   };
 
@@ -165,13 +169,13 @@ const VPCs = ({ projectId = "", region = "" }) => {
         title="Virtual Private Clouds"
         description="Segment your project networking into isolated address spaces that match your infrastructure topology."
         actions={actions}
-        meta={stats}
+        meta={stats as any}
         isLoading={isFetching}
       >
         {totalItems > 0 ? (
           <>
             <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-              {currentVpcs.map((vpc) => (
+              {currentVpcs.map((vpc: any) => (
                 <ResourceListCard
                   key={vpc.id}
                   title={vpc.name || "Unnamed VPC"}
@@ -184,35 +188,39 @@ const VPCs = ({ projectId = "", region = "" }) => {
                       value: vpc.is_default ? "Yes" : "No",
                     },
                   ]}
-                  statuses={[
-                    {
-                      label: normalizeStatus(vpc.state) || "unknown",
-                      tone: getToneForStatus(vpc.state),
-                    },
-                    vpc.status
-                      ? {
-                          label: normalizeStatus(vpc.status) || "unknown",
-                          tone: getToneForStatus(vpc.status),
-                        }
-                      : null,
-                  ].filter(Boolean)}
-                  actions={[
-                    {
-                      key: "inspect",
-                      icon: <Eye size={16} />,
-                      variant: "ghost",
-                      onClick: () => openViewModal(vpc),
-                      title: "Inspect VPC",
-                    },
-                    {
-                      key: "remove",
-                      icon: <Trash2 size={16} />,
-                      variant: "danger",
-                      onClick: () => openDeleteModal(vpc),
-                      disabled: isDeleting,
-                      title: "Remove VPC",
-                    },
-                  ]}
+                  statuses={
+                    [
+                      {
+                        label: normalizeStatus(vpc.state) || "unknown",
+                        tone: getToneForStatus(vpc.state),
+                      },
+                      vpc.status
+                        ? {
+                            label: normalizeStatus(vpc.status) || "unknown",
+                            tone: getToneForStatus(vpc.status),
+                          }
+                        : null,
+                    ].filter(Boolean) as any
+                  }
+                  actions={
+                    [
+                      {
+                        key: "inspect",
+                        icon: <Eye size={16} />,
+                        variant: "ghost",
+                        onClick: () => openViewModal(vpc),
+                        label: "Inspect VPC",
+                      },
+                      {
+                        key: "remove",
+                        icon: <Trash2 size={16} />,
+                        variant: "danger",
+                        onClick: () => openDeleteModal(vpc),
+                        disabled: isDeleting,
+                        label: "Remove VPC",
+                      },
+                    ] as any
+                  }
                 />
               ))}
             </div>

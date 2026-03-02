@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient, UseMutationResult } from "@tanstack/react-query";
 import api from "../index/api";
+import logger from "../utils/logger";
 
 // POST: verify a business
 const verifyBusiness = async (businessData: any): Promise<any> => {
@@ -17,7 +18,7 @@ export const useVerifyBusiness = (): UseMutationResult<any, Error, any> => {
       // queryClient.invalidateQueries({ queryKey: ["instanceRequests"] });
     },
     onError: (error) => {
-      console.error("Error verify business:", error);
+      logger.error("Error verify business:", error);
     },
   });
 };

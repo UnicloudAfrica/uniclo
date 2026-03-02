@@ -4,6 +4,7 @@ import { logoutActiveSession } from "../../stores/sessionUtils";
 import { DashboardSidebar } from "../../shared/components/sidebar";
 import { tenantMenuItems } from "../../shared/config/sidebarMenus";
 import useSidebarStore from "../../stores/sidebarStore";
+import logger from "../../utils/logger";
 
 interface TenantData {
   name?: string;
@@ -31,7 +32,7 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({ tenantData }) => {
       closeMobile();
       navigate("/tenant-signin");
     } catch (error) {
-      console.error("Failed to logout:", error);
+      logger.error("Failed to logout:", error);
     }
   };
 

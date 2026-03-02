@@ -219,15 +219,15 @@ const WorkflowSelectionStep: React.FC<WorkflowSelectionStepProps> = ({
 
           {showContextSelector && (
             <CustomerContextSelector
-              contextType={contextType}
+              contextType={contextType as any}
               setContextType={onContextTypeChange}
               selectedTenantId={selectedTenantId}
               setSelectedTenantId={onTenantChange}
               selectedUserId={selectedUserId}
               setSelectedUserId={onUserChange}
-              tenants={tenants}
+              tenants={tenants as any}
               isTenantsFetching={isTenantsFetching}
-              userPool={userPool}
+              userPool={userPool as any}
               isUsersFetching={isUsersFetching}
             />
           )}

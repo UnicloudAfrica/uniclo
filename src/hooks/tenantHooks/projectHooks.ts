@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import tenantSilentApi from "../../index/tenant/silentTenant";
 import tenantApi from "../../index/tenant/tenantApi";
+import logger from "../../utils/logger";
 
 // GET: Fetch all tenant projects
 const fetchTenantProjects = async (params: any = {}) => {
@@ -170,7 +171,7 @@ export const useCreateTenantProject = () => {
       queryClient.invalidateQueries({ queryKey: ["tenant-projects"] });
     },
     onError: (error) => {
-      console.error("Error creating project:", error);
+      logger.error("Error creating project:", error);
     },
   });
 };
@@ -185,7 +186,7 @@ export const useUpdateTenantProject = () => {
       queryClient.invalidateQueries({ queryKey: ["tenant-project", variables.id] });
     },
     onError: (error) => {
-      console.error("Error updating project:", error);
+      logger.error("Error updating project:", error);
     },
   });
 };
@@ -199,7 +200,7 @@ export const useDeleteTenantProject = () => {
       queryClient.invalidateQueries({ queryKey: ["tenant-projects"] });
     },
     onError: (error) => {
-      console.error("Error deleting project:", error);
+      logger.error("Error deleting project:", error);
     },
   });
 };
@@ -213,7 +214,7 @@ export const useArchiveTenantProject = () => {
       queryClient.invalidateQueries({ queryKey: ["tenant-projects"] });
     },
     onError: (error) => {
-      console.error("Error archiving project:", error);
+      logger.error("Error archiving project:", error);
     },
   });
 };
@@ -227,7 +228,7 @@ export const useActivateTenantProject = () => {
       queryClient.invalidateQueries({ queryKey: ["tenant-projects"] });
     },
     onError: (error) => {
-      console.error("Error activating project:", error);
+      logger.error("Error activating project:", error);
     },
   });
 };
@@ -242,7 +243,7 @@ export const useEnableTenantVpc = () => {
       queryClient.invalidateQueries({ queryKey: ["tenant-project", projectId] });
     },
     onError: (error) => {
-      console.error("Error enabling VPC:", error);
+      logger.error("Error enabling VPC:", error);
     },
   });
 };
@@ -273,7 +274,7 @@ export const useTenantEnableInternetAccess = () => {
       queryClient.invalidateQueries({ queryKey: ["tenant-project-status", projectId] });
     },
     onError: (error) => {
-      console.error("Error enabling internet access:", error);
+      logger.error("Error enabling internet access:", error);
     },
   });
 };
@@ -305,7 +306,7 @@ export const useSetupInfrastructure = () => {
       queryClient.invalidateQueries({ queryKey: ["tenant-projects"] });
     },
     onError: (error) => {
-      console.error("Error setting up infrastructure:", error);
+      logger.error("Error setting up infrastructure:", error);
     },
   });
 };

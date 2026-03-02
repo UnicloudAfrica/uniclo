@@ -40,7 +40,7 @@ const AdminSecurityGroups: React.FC = () => {
         hierarchy="admin"
         projectId={projectId}
         region={region}
-        hooks={hooks}
+        hooks={hooks as any}
         onNavigateToRules={handleNavigateToRules}
         wrapper={({ headerActions, children }) => (
           <AdminPageShell

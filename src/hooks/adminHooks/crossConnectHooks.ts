@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
+import logger from "../../utils/logger";
 
 type CollectionResponse = {
   data: unknown[];
@@ -107,7 +108,7 @@ export const useCreateCrossConnect = () => {
       queryClient.invalidateQueries({ queryKey: ["crossConnects"] });
     },
     onError: (error: any) => {
-      console.error("Error creating cross-connect product:", error);
+      logger.error("Error creating cross-connect product:", error);
     },
   });
 };
@@ -123,7 +124,7 @@ export const useUpdateCrossConnect = () => {
       });
     },
     onError: (error: any) => {
-      console.error("Error updating cross-connect product:", error);
+      logger.error("Error updating cross-connect product:", error);
     },
   });
 };
@@ -136,7 +137,7 @@ export const useDeleteCrossConnect = () => {
       queryClient.invalidateQueries({ queryKey: ["crossConnects"] });
     },
     onError: (error: any) => {
-      console.error("Error deleting cross-connect product:", error);
+      logger.error("Error deleting cross-connect product:", error);
     },
   });
 };

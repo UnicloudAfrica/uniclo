@@ -14,6 +14,7 @@ import { ResourceSection } from "../../../shared/components/ui";
 import { ResourceEmptyState } from "../../../shared/components/ui";
 import { ResourceListCard } from "../../../shared/components/ui";
 import { ModernButton } from "../../../shared/components/ui";
+import logger from "../../../utils/logger";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -26,7 +27,13 @@ const getToneForStatus = (status = "") => {
   return "neutral";
 };
 
-const EIPs = ({ projectId = "", region = "", actionRequest, onActionHandled, onStatsUpdate }) => {
+const EIPs = ({
+  projectId = "",
+  region = "",
+  actionRequest,
+  onActionHandled,
+  onStatsUpdate,
+}: any) => {
   const { data: eips, isFetching } = useFetchTenantElasticIps(projectId, region);
   const { mutate: deleteElasticIp, isPending: isDeleting } = useDeleteTenantElasticIp();
   const { mutate: syncElasticIps, isPending: isSyncing } = useSyncTenantElasticIps();
@@ -118,7 +125,7 @@ const EIPs = ({ projectId = "", region = "", actionRequest, onActionHandled, onS
       {
         onSuccess: () => ToastUtils.success("Elastic IPs synced with provider."),
         onError: (err) => {
-          console.error("Failed to sync Elastic IPs:", err);
+          logger.error("Failed to sync Elastic IPs:", err);
           ToastUtils.error(err?.message || "Failed to sync Elastic IPs.");
         },
       }
@@ -142,7 +149,7 @@ const EIPs = ({ projectId = "", region = "", actionRequest, onActionHandled, onS
           setDeleteModal(null);
         },
         onError: (err) => {
-          console.error("Failed to delete EIP:", err);
+          logger.error("Failed to delete EIP:", err);
           ToastUtils.error(err?.message || "Failed to release Elastic IP.");
           setDeleteModal(null);
         },
@@ -150,7 +157,7 @@ const EIPs = ({ projectId = "", region = "", actionRequest, onActionHandled, onS
     );
   };
 
-  const openDeleteModal = (eip) => {
+  const openDeleteModal = (eip: any) => {
     setDeleteModal({
       id: eip.id ?? eip.provider_resource_id,
       allocationId: eip.provider_resource_id || eip.public_ip,
@@ -231,7 +238,7 @@ const EIPs = ({ projectId = "", region = "", actionRequest, onActionHandled, onS
     />
   );
 
-  const renderCard = (eip) => {
+  const renderCard = (eip: any) => {
     const status = eip.status || "unknown";
     const allocationId = eip.provider_resource_id || eip.id;
     const association =
@@ -306,7 +313,7 @@ const EIPs = ({ projectId = "", region = "", actionRequest, onActionHandled, onS
         title="Elastic IPs"
         description="Allocate and manage public IP addresses for compute workloads."
         actions={actions}
-        meta={stats}
+        meta={stats as any}
         isLoading={isFetching}
       >
         {currentItems.length > 0 ? (

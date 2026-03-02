@@ -403,7 +403,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
 
   useEffect(() => {
     if (!isRegionsFetching && regionsList.length && !selectedRegion) {
-      setSelectedRegion(regionsList[0].code);
+      setSelectedRegion(regionsList[0]!.code as any);
     }
   }, [isRegionsFetching, regionsList, selectedRegion]);
 

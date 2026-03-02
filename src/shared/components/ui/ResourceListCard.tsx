@@ -26,10 +26,12 @@ interface ResourceStatus {
 interface ResourceAction {
   key?: string;
   label: string;
+  title?: string;
   onClick: () => void;
   icon?: ReactNode;
   variant?: ButtonVariant;
   disabled?: boolean;
+  [key: string]: any;
 }
 
 interface ResourceListCardProps {
@@ -84,7 +86,7 @@ export const ResourceListCard: React.FC<ResourceListCardProps> = ({
         {statuses.length > 0 && (
           <div className="flex flex-wrap items-center gap-2">
             {statuses.map(({ label, tone = "neutral" }, index) => (
-              <StatusPill key={`${label}-${index}`} label={label} tone={tone} />
+              <StatusPill key={`${label}-${index}`} label={label} tone={tone as any} />
             ))}
           </div>
         )}

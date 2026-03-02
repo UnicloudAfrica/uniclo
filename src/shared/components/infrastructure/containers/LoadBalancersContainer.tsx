@@ -66,7 +66,7 @@ const LoadBalancersContainer: React.FC<LoadBalancersContainerProps> = ({
   return (
     <Wrapper headerActions={headerActions}>
       <LoadBalancersOverview
-        loadBalancers={loadBalancers}
+        loadBalancers={loadBalancers as any}
         isLoading={isLoading}
         onDelete={deleteMutation ? handleDelete : undefined}
         onManage={onManage}

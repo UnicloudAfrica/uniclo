@@ -5,7 +5,7 @@ import { ModernButton } from "../../../shared/components/ui";
 import ToastUtils from "../../../utils/toastUtil";
 import { useFetchTenantAdminById, useDeleteTenantAdmin } from "../../../hooks/adminUserHooks";
 
-const InfoRow = ({ label, value }) => (
+const InfoRow = ({ label, value }: any) => (
   <div className="space-y-1">
     <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
     <p className="text-sm font-semibold text-slate-900">{value ?? "—"}</p>
@@ -16,7 +16,7 @@ export default function TenantUserDetailsPage() {
   const navigate = useNavigate();
   const { userId } = useParams();
 
-  const { data: user, isFetching: isLoading } = useFetchTenantAdminById(userId);
+  const { data: user, isFetching: isLoading } = useFetchTenantAdminById(userId as any);
   const { mutateAsync: removeUser, isPending: isDeleting } = useDeleteTenantAdmin();
 
   const handleDelete = async () => {
@@ -29,7 +29,7 @@ export default function TenantUserDetailsPage() {
       ToastUtils.success("Tenant user removed.");
       navigate("/dashboard/clients");
     } catch (error) {
-      ToastUtils.error(error?.response?.data?.message || "Failed to remove tenant user.");
+      ToastUtils.error((error as any)?.response?.data?.message || "Failed to remove tenant user.");
     }
   };
 
@@ -52,21 +52,21 @@ export default function TenantUserDetailsPage() {
           <>
             <div className="flex flex-col gap-2">
               <h2 className="text-2xl font-semibold text-slate-900">
-                {[user.first_name, user.last_name].filter(Boolean).join(" ") ||
-                  user.email ||
+                {[(user as any).first_name, (user as any).last_name].filter(Boolean).join(" ") ||
+                  (user as any).email ||
                   "Tenant user"}
               </h2>
               <p className="text-sm text-slate-500">
-                Role: {user.pivot?.role ?? user.role ?? "member"}
+                Role: {(user as any).pivot?.role ?? (user as any).role ?? "member"}
               </p>
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
-              <InfoRow label="Email" value={user.email} />
-              <InfoRow label="Phone" value={user.phone} />
+              <InfoRow label="Email" value={(user as any).email} />
+              <InfoRow label="Phone" value={(user as any).phone} />
               <InfoRow
                 label="Invitation status"
-                value={user.pivot?.accepted_at ? "Accepted" : "Pending acceptance"}
+                value={(user as any).pivot?.accepted_at ? "Accepted" : "Pending acceptance"}
               />
             </div>
 
@@ -79,7 +79,7 @@ export default function TenantUserDetailsPage() {
               </ModernButton>
               <ModernButton
                 variant="outline"
-                tone="destructive"
+                tone={"destructive" as any}
                 onClick={handleDelete}
                 isDisabled={isDeleting}
                 isLoading={isDeleting}

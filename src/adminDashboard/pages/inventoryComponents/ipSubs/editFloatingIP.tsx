@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useUpdateFloatingIP } from "../../../../hooks/adminHooks/floatingIPHooks";
 import ToastUtils from "../../../../utils/toastUtil";
+import logger from "../../../../utils/logger";
 
 const EditFloatingIP = ({ isOpen, onClose, floatingIP }: any) => {
   const [formData, setFormData] = useState({
@@ -65,18 +66,18 @@ const EditFloatingIP = ({ isOpen, onClose, floatingIP }: any) => {
         { id: floatingIP.id, ipData: updatedData },
         {
           onSuccess: () => {
-            // console.log("Floating IP updated successfully!");
+            // logger.log("Floating IP updated successfully!");
             ToastUtils.success("Floating IP updated successfully");
             onClose();
           },
           onError: (err) => {
-            // console.error("Failed to update Floating IP:", err);
+            // logger.error("Failed to update Floating IP:", err);
             // ToastUtils.error("Failed to update Floating IP. Please try again.");
           },
         }
       );
     } else {
-      //   console.error("No Floating IP ID provided for update.");
+      //   logger.error("No Floating IP ID provided for update.");
       //   ToastUtils.error("Cannot update: Floating IP ID is missing.");
     }
   };
@@ -129,7 +130,7 @@ const EditFloatingIP = ({ isOpen, onClose, floatingIP }: any) => {
               </label>
               <textarea
                 id="floatingIPDescription"
-                rows="3"
+                rows={3}
                 value={formData.description}
                 onChange={(e) => updateFormData("description", e.target.value)}
                 placeholder="e.g., Public IP for web server"

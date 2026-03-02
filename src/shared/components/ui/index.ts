@@ -37,5 +37,6 @@ export { default as PaymentModal } from "./PaymentModal";
 // Data Display Components
 export { default as ModernStatsCard } from "./ModernStatsCard";
 export { default as StatusPill } from "./StatusPill";
+export type { StatusTone } from "./StatusPill";
 export { default as Pagination } from "./Pagination";
 export { default as SearchBar } from "./SearchBar";

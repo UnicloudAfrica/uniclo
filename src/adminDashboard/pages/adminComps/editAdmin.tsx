@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useUpdateAdmin } from "../../../hooks/adminHooks/adminHooks";
 import FormLayout, { formAccent, getAccentRgba } from "../../components/FormLayout";
+import logger from "../../../utils/logger";
 
 export const EditAdminModal = ({
   isOpen,
@@ -97,8 +98,8 @@ export const EditAdminModal = ({
         onClose(); // Close the modal on successful update
       },
       onError: (err) => {
-        console.error("Failed to update admin:", err);
-        ToastUtils.error(err?.message || "Failed to update admin. Please try again.");
+        logger.error("Failed to update admin:", err);
+        ToastUtils.error((err as any)?.message || "Failed to update admin. Please try again.");
       },
     });
   };
@@ -284,7 +285,7 @@ export const EditAdminModal = ({
       <form id={formId} onSubmit={handleSubmit} className="space-y-8">
         {isError && (
           <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error?.message || "Failed to update admin. Please try again."}
+            {(error as any)?.message || "Failed to update admin. Please try again."}
           </div>
         )}
 

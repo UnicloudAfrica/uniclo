@@ -19,6 +19,8 @@ import {
   type LeadAssigneeOption,
 } from "../../../hooks/adminHooks/leadsHook";
 
+export type { LeadCreatePayload, LeadAssigneeOption };
+
 const leadStatusOptions = [
   "new",
   "contacted",

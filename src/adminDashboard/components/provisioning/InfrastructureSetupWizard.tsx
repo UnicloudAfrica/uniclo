@@ -37,8 +37,8 @@ const InfrastructureSetupWizard: React.FC<InfrastructureSetupWizardProps> = ({
     setupMutation.mutate(
       {
         id: project.identifier || project.id,
-        blueprint: selectedBlueprint,
-      },
+        blueprint: selectedBlueprint as any,
+      } as any,
       {
         onSuccess: () => {
           setShowConfirm(false);
@@ -61,7 +61,7 @@ const InfrastructureSetupWizard: React.FC<InfrastructureSetupWizardProps> = ({
 
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-10">
         <NetworkPresetSelector
-          value={selectedBlueprint}
+          value={selectedBlueprint as any}
           onChange={setSelectedBlueprint}
           presets={presetCatalog}
           showAdvancedOption={false}

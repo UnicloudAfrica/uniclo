@@ -103,7 +103,7 @@ export const ThreadTable: React.FC<ThreadTableProps> = ({
             {threads.map((thread) => {
               const escalationLevel = thread.escalation_level ?? 0;
               const escalationConfig = ESCALATION_CONFIG[escalationLevel] || ESCALATION_CONFIG[0];
-              const EscalationIcon = escalationConfig.icon;
+              const EscalationIcon = escalationConfig?.icon;
               const slaRisk = isSlaAtRisk(thread);
               const statusValue = thread.status || "open";
               const isOpen = statusValue !== "resolved" && statusValue !== "closed";
@@ -149,10 +149,10 @@ export const ThreadTable: React.FC<ThreadTableProps> = ({
                   {showEscalation && (
                     <td className="hidden px-4 py-3 text-center md:table-cell">
                       <div
-                        className={`flex items-center justify-center gap-1 ${escalationConfig.color}`}
+                        className={`flex items-center justify-center gap-1 ${escalationConfig?.color}`}
                       >
                         <EscalationIcon className="w-4 h-4" />
-                        <span className="text-sm">{escalationConfig.label}</span>
+                        <span className="text-sm">{escalationConfig?.label}</span>
                       </div>
                     </td>
                   )}

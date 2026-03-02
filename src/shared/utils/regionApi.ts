@@ -50,13 +50,15 @@ const resolveRegionValue = (region: RegionLike): string | number =>
   "";
 
 const resolveRegionLabel = (region: RegionLike, fallback: string): string =>
-  region?.label ??
-  region?.name ??
-  region?.region ??
-  region?.code ??
-  region?.id ??
-  region?.slug ??
-  fallback;
+  String(
+    region?.label ??
+      region?.name ??
+      region?.region ??
+      region?.code ??
+      region?.id ??
+      region?.slug ??
+      fallback
+  );
 
 export const normalizeRegionList = (payload: unknown): NormalizedRegion[] => {
   const extractArray = (value: unknown): RegionLike[] | null =>

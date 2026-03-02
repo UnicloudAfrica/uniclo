@@ -13,6 +13,7 @@ import { ResourceSection } from "../../../shared/components/ui";
 import { ResourceEmptyState } from "../../../shared/components/ui";
 import { ResourceListCard } from "../../../shared/components/ui";
 import { ModernButton } from "../../../shared/components/ui";
+import logger from "../../../utils/logger";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -32,7 +33,7 @@ const Subnets = ({
   actionRequest,
   onActionHandled,
   onStatsUpdate,
-}) => {
+}: any) => {
   const { data: subnets, isFetching } = useFetchTenantSubnets(projectId, region);
   const { mutate: deleteSubnet, isPending: isDeleting } = useDeleteTenantSubnet();
   const { mutate: syncSubnets, isPending: isSyncing } = useSyncTenantSubnets();
@@ -42,11 +43,11 @@ const Subnets = ({
   const [viewModal, setViewModal] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const totalItems = subnets?.length ?? 0;
+  const totalItems = (subnets as any)?.length ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
   const currentSubnets = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return (subnets ?? []).slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    return ((subnets as any) ?? []).slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [subnets, currentPage]);
 
   const lastActionToken = useRef<any>(null);
@@ -64,9 +65,9 @@ const Subnets = ({
 
   const openCreateModal = () => setCreateModal(true);
   const closeCreateModal = () => setCreateModal(false);
-  const openDeleteModal = (subnet, subnetName) => setDeleteModal({ subnet, subnetName });
+  const openDeleteModal = (subnet: any, subnetName: any) => setDeleteModal({ subnet, subnetName });
   const closeDeleteModal = () => setDeleteModal(null);
-  const openViewModal = (subnet) => setViewModal(subnet);
+  const openViewModal = (subnet: any) => setViewModal(subnet);
   const closeViewModal = () => setViewModal(null);
 
   const handleSync = () => {
@@ -82,7 +83,7 @@ const Subnets = ({
           ToastUtils.success("Subnets synced with provider.");
         },
         onError: (err) => {
-          console.error("Failed to sync subnets:", err);
+          logger.error("Failed to sync subnets:", err);
           ToastUtils.error(err?.message || "Failed to sync subnets.");
         },
       }
@@ -95,16 +96,13 @@ const Subnets = ({
     const { subnet } = deleteModal;
     const payload = { project_id: projectId, region: subnet.region };
 
-    deleteSubnet(
-      { id: subnet.id, payload },
-      {
-        onSuccess: () => closeDeleteModal(),
-        onError: (err) => {
-          console.error("Failed to delete subnet:", err);
-          closeDeleteModal();
-        },
-      }
-    );
+    deleteSubnet({ id: subnet.id, payload } as any, {
+      onSuccess: () => closeDeleteModal(),
+      onError: (err) => {
+        logger.error("Failed to delete subnet:", err);
+        closeDeleteModal();
+      },
+    });
   };
 
   useEffect(() => {
@@ -216,7 +214,7 @@ const Subnets = ({
   const subnetCards = (
     <>
       <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-        {currentSubnets.map((subnet) => {
+        {currentSubnets.map((subnet: any) => {
           const displayName = subnet.name || subnet.cidr_block || `Subnet ${subnet.id}`;
           const cidr = subnet.cidr_block || subnet.cidr || "—";
           const vpcDisplay = subnet.vpc_id || "—";
@@ -233,29 +231,31 @@ const Subnets = ({
               key={subnet.id}
               title={displayName}
               subtitle={subnet.id}
-              metadata={[
-                { label: "CIDR", value: cidr },
-                { label: "VPC", value: vpcDisplay },
-                { label: "Region", value: subnet.region || region || "—" },
-                zone
-                  ? {
-                      label: "Availability Zone",
-                      value: zone,
-                    }
-                  : null,
-                {
-                  label: "Available IPs",
-                  value: availableIps,
-                },
-                {
-                  label: "Total IPs",
-                  value: totalIps,
-                },
-                {
-                  label: "Default Subnet",
-                  value: isDefault ? "Yes" : "No",
-                },
-              ].filter(Boolean)}
+              metadata={
+                [
+                  { label: "CIDR", value: cidr },
+                  { label: "VPC", value: vpcDisplay },
+                  { label: "Region", value: subnet.region || region || "—" },
+                  zone
+                    ? {
+                        label: "Availability Zone",
+                        value: zone,
+                      }
+                    : null,
+                  {
+                    label: "Available IPs",
+                    value: availableIps,
+                  },
+                  {
+                    label: "Total IPs",
+                    value: totalIps,
+                  },
+                  {
+                    label: "Default Subnet",
+                    value: isDefault ? "Yes" : "No",
+                  },
+                ].filter(Boolean) as any
+              }
               statuses={[
                 {
                   label: status,

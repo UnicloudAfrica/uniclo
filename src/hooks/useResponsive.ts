@@ -14,8 +14,8 @@ export interface ResponsiveValues<T> {
 // Hook for detecting screen size and managing responsive behavior
 export const useResponsive = () => {
   const [screenSize, setScreenSize] = useState({
-    width: typeof window !== "undefined" ? globalThis.window.innerWidth : 1024,
-    height: typeof window !== "undefined" ? globalThis.window.innerHeight : 768,
+    width: globalThis.window !== undefined ? globalThis.window.innerWidth : 1024,
+    height: globalThis.window !== undefined ? globalThis.window.innerHeight : 768,
   });
 
   const [device, setDevice] = useState("desktop");
@@ -72,7 +72,7 @@ export const useResponsive = () => {
       if (isMobile && values[0] !== undefined) return values[0];
       if (isTablet && values[1] !== undefined) return values[1];
       if (isDesktop && values[2] !== undefined) return values[2];
-      return values[values.length - 1]; // fallback to last value
+      return values[values.length - 1]!; // fallback to last value
     }
 
     const responsiveValues = values as ResponsiveValues<T>;
@@ -173,9 +173,9 @@ export const useResponsiveContainer = () => {
   const { device, isMobile, isTablet } = useResponsive();
 
   const getContainerPadding = (): string => {
-    if (isMobile) return designTokens.spacing[4]; // 16px
-    if (isTablet) return designTokens.spacing[6]; // 24px
-    return designTokens.spacing[8]; // 32px
+    if (isMobile) return designTokens.spacing[4]!; // 16px
+    if (isTablet) return designTokens.spacing[6]!; // 24px
+    return designTokens.spacing[8]!; // 32px
   };
 
   const getContainerMaxWidth = (): string => {

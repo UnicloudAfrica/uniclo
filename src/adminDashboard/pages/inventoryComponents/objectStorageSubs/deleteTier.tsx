@@ -2,6 +2,7 @@ import { Loader2, Trash2, X } from "lucide-react";
 import ToastUtils from "../../../../utils/toastUtil";
 import { useDeleteProduct } from "../../../../hooks/adminHooks/adminProductHooks";
 import { useDeleteProductPricing } from "../../../../hooks/adminHooks/adminproductPricingHook";
+import logger from "../../../../utils/logger";
 
 const DeleteObjectStorageTierModal = ({ isOpen, onClose, tier, onDeleted }: any) => {
   const { mutate: deleteProduct, isPending: isDeletingProduct } = useDeleteProduct();
@@ -26,7 +27,7 @@ const DeleteObjectStorageTierModal = ({ isOpen, onClose, tier, onDeleted }: any)
         onClose?.();
       },
       onError: (error) => {
-        console.error("Failed to delete Silo Storage product", error);
+        logger.error("Failed to delete Silo Storage product", error);
         ToastUtils.error(
           error?.response?.data?.message || "Failed to delete Silo Storage tier. Please try again."
         );
@@ -39,7 +40,7 @@ const DeleteObjectStorageTierModal = ({ isOpen, onClose, tier, onDeleted }: any)
       deletePricing(tier.pricing.id, {
         onSuccess: proceedWithProductDelete,
         onError: (error) => {
-          console.warn("Failed to delete pricing entry, continuing", error);
+          logger.warn("Failed to delete pricing entry, continuing", error);
           proceedWithProductDelete();
         },
       });

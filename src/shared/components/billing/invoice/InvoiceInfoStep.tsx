@@ -50,15 +50,15 @@ const InvoiceInfoStep: React.FC<InvoiceInfoStepProps> = ({
     <div className="space-y-6">
       {/* Customer Context - Full width on top */}
       <CustomerContextSelector
-        contextType={contextType}
+        contextType={contextType as any}
         setContextType={setContextType}
         selectedTenantId={selectedTenantId}
         setSelectedTenantId={setSelectedTenantId}
         selectedUserId={selectedUserId}
         setSelectedUserId={setSelectedUserId}
-        tenants={tenants}
+        tenants={tenants as any}
         isTenantsFetching={isTenantsFetching}
-        userPool={userPool}
+        userPool={userPool as any}
         isUsersFetching={isUsersFetching}
       />
 

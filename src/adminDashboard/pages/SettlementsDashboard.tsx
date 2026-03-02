@@ -53,7 +53,7 @@ const useSettlements = (params: Record<string, any>) => {
   return useQuery({
     queryKey: ["settlements", params],
     queryFn: async () => {
-      const response = await adminApi.get("/settlements", { params });
+      const response = await (adminApi.get as any)("/settlements", { params });
       return response.data;
     },
   });
@@ -64,7 +64,7 @@ const useSettlementSummary = () => {
     queryKey: ["settlements", "summary"],
     queryFn: async () => {
       const response = await adminApi.get("/settlements/summary");
-      return response.data.data as SettlementSummary;
+      return (response as any).data.data as SettlementSummary;
     },
   });
 };
@@ -174,8 +174,8 @@ const SettlementsDashboard: React.FC = () => {
   const markSettled = useMarkSettled();
   const sendReminder = useSendReminder();
 
-  const settlements = settlementData?.data?.data || [];
-  const pagination = settlementData?.data || {};
+  const settlements = (settlementData as any)?.data?.data || [];
+  const pagination = (settlementData as any)?.data || {};
 
   const handleMarkSettled = async (id: number) => {
     if (globalThis.window.confirm("Mark this settlement as paid?")) {
@@ -200,7 +200,7 @@ const SettlementsDashboard: React.FC = () => {
     if (filters.payer_type) params.append("payer_type", filters.payer_type);
 
     // Open export URL in new tab (will download CSV)
-    const baseUrl = adminApi.defaults.baseURL || "";
+    const baseUrl = (adminApi as any).defaults.baseURL || "";
     globalThis.window.open(`${baseUrl}/settlements/export?${params.toString()}`, "_blank");
   };
 

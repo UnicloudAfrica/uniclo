@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient, type UseQueryOptions } from "@ta
 import silentApi from "../index/silent";
 import api from "../index/api";
 import tenantApi from "../index/tenant/tenantApi";
+import logger from "../utils/logger";
 
 type Identifier = string | number;
 type QueryParamValue = string | number | boolean | null | undefined;
@@ -308,7 +309,7 @@ export const useCreateInstanceRequest = () => {
       queryClient.invalidateQueries({ queryKey: ["instanceRequests"] });
     },
     onError: (error) => {
-      console.error("Error creating instance request:", error);
+      logger.error("Error creating instance request:", error);
     },
   });
 };
@@ -322,7 +323,7 @@ export const useInitiateMultiInstanceRequest = () => {
       queryClient.invalidateQueries({ queryKey: ["instanceRequests"] });
     },
     onError: (error) => {
-      console.error("Error creating instance request:", error);
+      logger.error("Error creating instance request:", error);
     },
   });
 };
@@ -338,7 +339,7 @@ export const useUpdateInstanceRequest = () => {
       queryClient.invalidateQueries({ queryKey: ["instanceRequest", variables.id] });
     },
     onError: (error) => {
-      console.error("Error updating instance request:", error);
+      logger.error("Error updating instance request:", error);
     },
   });
 };
@@ -355,7 +356,7 @@ export const useRefreshInstanceStatus = () => {
       queryClient.invalidateQueries({ queryKey: ["instanceDetails", identifier] });
     },
     onError: (error) => {
-      console.error("Error refreshing instance status:", error);
+      logger.error("Error refreshing instance status:", error);
     },
   });
 };
@@ -390,7 +391,7 @@ export const useExecuteInstanceAction = () => {
       queryClient.invalidateQueries({ queryKey: ["instanceDetails", variables.identifier] });
     },
     onError: (error) => {
-      console.error("Error executing instance action:", error);
+      logger.error("Error executing instance action:", error);
     },
   });
 };

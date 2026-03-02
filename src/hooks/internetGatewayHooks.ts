@@ -2,8 +2,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../index/silent";
 import api from "../index/api";
+import logger from "../utils/logger";
 
-const fetchInternetGateways = async ({ project_id, region }) => {
+const fetchInternetGateways = async ({ project_id, region }: any) => {
   const params = new URLSearchParams();
   if (project_id) params.append("project_id", project_id);
   if (region) params.append("region", region);
@@ -17,13 +18,13 @@ const fetchInternetGateways = async ({ project_id, region }) => {
   return res.data;
 };
 
-const createInternetGateway = async (internetGatewayData) => {
+const createInternetGateway = async (internetGatewayData: any) => {
   const res = await api("POST", "/business/internet-gateways", internetGatewayData);
   if (!res.data) throw new Error("Failed to create internet gateway");
   return res.data;
 };
 
-const deleteInternetGateway = async (arg) => {
+const deleteInternetGateway = async (arg: any) => {
   // Support multiple call shapes:
   // - deleteInternetGateway({ id, payload })
   // - deleteInternetGateway(id)
@@ -45,21 +46,21 @@ const deleteInternetGateway = async (arg) => {
   return res.data;
 };
 
-const attachInternetGateway = async (attachData) => {
+const attachInternetGateway = async (attachData: any) => {
   // Use shared attachment endpoint
   const res = await api("POST", "/business/internet-gateway-attachments", attachData);
   if (!res.data) throw new Error("Failed to attach internet gateway");
   return res.data;
 };
 
-const detachInternetGateway = async (detachData) => {
+const detachInternetGateway = async (detachData: any) => {
   // Shared API supports id-less DELETE with body
   const res = await api("DELETE", "/business/internet-gateway-attachments", detachData);
   if (!res.data) throw new Error("Failed to detach internet gateway");
   return res.data;
 };
 
-const syncInternetGateways = async ({ project_id, region }) => {
+const syncInternetGateways = async ({ project_id, region }: any) => {
   const params = new URLSearchParams();
   if (project_id) params.append("project_id", project_id);
   if (region) params.append("region", region);
@@ -74,7 +75,7 @@ const syncInternetGateways = async ({ project_id, region }) => {
   return res.data;
 };
 
-export const useFetchTenantInternetGateways = (projectId, region, options = {}) => {
+export const useFetchTenantInternetGateways = (projectId: any, region: any, options = {}) => {
   return useQuery({
     queryKey: ["internetGateways", { projectId, region }],
     queryFn: () => fetchInternetGateways({ project_id: projectId, region }),
@@ -92,7 +93,7 @@ export const useCreateTenantInternetGateway = () => {
       queryClient.invalidateQueries({ queryKey: ["internetGateways"] });
     },
     onError: (error) => {
-      console.error("Error creating internet gateway:", error);
+      logger.error("Error creating internet gateway:", error);
     },
   });
 };
@@ -105,7 +106,7 @@ export const useDeleteTenantInternetGateway = () => {
       queryClient.invalidateQueries({ queryKey: ["internetGateways"] });
     },
     onError: (error) => {
-      console.error("Error deleting internet gateway:", error);
+      logger.error("Error deleting internet gateway:", error);
     },
   });
 };
@@ -118,7 +119,7 @@ export const useAttachTenantInternetGateway = () => {
       queryClient.invalidateQueries({ queryKey: ["internetGateways"] });
     },
     onError: (error) => {
-      console.error("Error attaching internet gateway:", error);
+      logger.error("Error attaching internet gateway:", error);
     },
   });
 };
@@ -131,7 +132,7 @@ export const useDetachTenantInternetGateway = () => {
       queryClient.invalidateQueries({ queryKey: ["internetGateways"] });
     },
     onError: (error) => {
-      console.error("Error detaching internet gateway:", error);
+      logger.error("Error detaching internet gateway:", error);
     },
   });
 };
@@ -144,7 +145,7 @@ export const useSyncTenantInternetGateways = () => {
       queryClient.invalidateQueries({ queryKey: ["internetGateways"] });
     },
     onError: (error) => {
-      console.error("Error syncing internet gateways:", error);
+      logger.error("Error syncing internet gateways:", error);
     },
   });
 };

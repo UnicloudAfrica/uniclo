@@ -6,8 +6,9 @@ import {
 } from "../../../hooks/internetGatewayHooks";
 import { useFetchTenantVpcs } from "../../../hooks/vpcHooks";
 import ToastUtils from "../../../utils/toastUtil";
+import logger from "../../../utils/logger";
 
-const AttachIgwModal = ({ isOpen, onClose, projectId, region = "", igw, mode = "attach" }) => {
+const AttachIgwModal = ({ isOpen, onClose, projectId, region = "", igw, mode = "attach" }: any) => {
   const [selectedVpc, setSelectedVpc] = useState("");
   const isAttach = mode === "attach";
   const actionLabel = isAttach ? "Attach" : "Detach";
@@ -27,7 +28,7 @@ const AttachIgwModal = ({ isOpen, onClose, projectId, region = "", igw, mode = "
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: any) => {
     if (e) e.preventDefault();
     if (!igwId) {
       ToastUtils.error("Missing internet gateway identifier.");
@@ -55,7 +56,7 @@ const AttachIgwModal = ({ isOpen, onClose, projectId, region = "", igw, mode = "
         setSelectedVpc("");
       },
       onError: (err) => {
-        console.error(`Failed to ${mode} IGW:`, err);
+        logger.error(`Failed to ${mode} IGW:`, err);
         ToastUtils.error(err?.message || `Failed to ${mode} IGW.`);
       },
     });

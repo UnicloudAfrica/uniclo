@@ -150,7 +150,7 @@ const ClientModules: React.FC<ClientModulesProps> = () => {
       <div className="mt-6">
         <ModernTable
           data={data}
-          columns={columns}
+          columns={columns as any}
           onRowClick={handleRowClick}
           paginated={true}
           pageSize={10}

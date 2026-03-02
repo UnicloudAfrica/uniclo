@@ -436,7 +436,7 @@ export default function TenantBillingTab({ tenantId }: Props) {
             <div className="mt-4 pt-4 border-t">
               <p className="text-gray-500 text-sm mb-2">Allowed Models</p>
               <div className="flex flex-wrap gap-2">
-                {config.allowed_billing_models.map((model: any) => (
+                {config?.allowed_billing_models.map((model: any) => (
                   <span
                     key={model}
                     className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm capitalize"
@@ -452,7 +452,7 @@ export default function TenantBillingTab({ tenantId }: Props) {
             <div className="mt-4 pt-4 border-t">
               <p className="text-gray-500 text-sm mb-2">Configured Gateways</p>
               <div className="flex flex-wrap gap-2">
-                {config.payment_gateways.map((gw: any) => (
+                {config?.payment_gateways.map((gw: any) => (
                   <span
                     key={gw.id}
                     className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm ${

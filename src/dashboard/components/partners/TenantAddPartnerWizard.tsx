@@ -19,7 +19,7 @@ import ToastUtils from "../../../utils/toastUtil";
 import { useCreateTenantPartner } from "../../../hooks/tenantHooks/partnerHooks";
 import { getBaseDomain } from "../../../utils/getSubdomain";
 
-const TenantAddPartnerWizard = ({ onClose }) => {
+const TenantAddPartnerWizard = ({ onClose }: any) => {
   const [currentStep, setCurrentStep] = useState(0);
   const baseDomain = getBaseDomain();
   const domainSuffix = baseDomain ? `.${baseDomain}` : "";
@@ -87,7 +87,7 @@ const TenantAddPartnerWizard = ({ onClose }) => {
       validate: CreateAccount.validate,
     },
     {
-      component: (props) => (
+      component: (props: any) => (
         <BusinessInfo
           {...props}
           industries={industries}
@@ -100,7 +100,7 @@ const TenantAddPartnerWizard = ({ onClose }) => {
       validate: BusinessInfo.validate,
     },
     {
-      component: (props) => (
+      component: (props: any) => (
         <BusinessAddress
           {...props}
           countries={countries}
@@ -117,7 +117,7 @@ const TenantAddPartnerWizard = ({ onClose }) => {
       validate: BusinessAddress.validate,
     },
     {
-      component: (props) => <UploadFiles {...props} setErrors={setErrors} />,
+      component: (props: any) => <UploadFiles {...props} setErrors={setErrors} />,
       label: "Upload Document",
       description: "Attach supporting documentation to complete onboarding.",
       validate: UploadFiles.validate,
@@ -125,7 +125,7 @@ const TenantAddPartnerWizard = ({ onClose }) => {
   ];
 
   const validateStep = () => {
-    const stepErrors = steps[currentStep].validate(formData);
+    const stepErrors = steps![currentStep].validate(formData);
     setErrors(stepErrors);
     return Object.keys(stepErrors).length === 0;
   };
@@ -182,7 +182,7 @@ const TenantAddPartnerWizard = ({ onClose }) => {
     };
 
     if (formData.domain) {
-      payload.domain = `${formData.domain}${domainSuffix}`;
+      (payload as any).domain = `${formData.domain}${domainSuffix}`;
     }
 
     createPartner(payload, {
@@ -205,26 +205,26 @@ const TenantAddPartnerWizard = ({ onClose }) => {
     "businessLogo",
   ];
 
-  const uploadedDocs = docKeys.filter((key) => formData.business[key]).length;
+  const uploadedDocs = docKeys.filter((key) => (formData.business as any)[key]).length;
   const progress = Math.round(((currentStep + 1) / steps.length) * 100);
   const domainPreview = formData.domain ? `${formData.domain}${displaySuffix}` : "Not assigned";
   const contactName = [formData.first_name, formData.last_name].filter(Boolean).join(" ").trim();
 
-  const toTitle = (value) =>
+  const toTitle = (value: any) =>
     value
       ? value
           .toString()
           .replace(/[_-]+/g, " ")
-          .replace(/\b\w/g, (char) => char.toUpperCase())
+          .replace(/\b\w/g, (char: any) => char.toUpperCase())
       : "Not provided";
 
-  const ActiveStep = steps[currentStep].component;
+  const ActiveStep = steps![currentStep].component;
   const activeStepContent = ActiveStep({
     formData,
     setFormData,
     errors,
     setErrors,
-  });
+  } as any);
 
   const summarySections = useMemo(
     () => [
@@ -362,7 +362,7 @@ const TenantAddPartnerWizard = ({ onClose }) => {
     {
       label: "Current stage",
       value: `${currentStep + 1} / ${steps.length}`,
-      hint: steps[currentStep].label,
+      hint: steps![currentStep].label,
     },
     {
       label: "Subdomain",

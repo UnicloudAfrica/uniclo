@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Loader2, X } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useCreateTenantElasticIp } from "../../../hooks/elasticIPHooks";
+import logger from "../../../utils/logger";
 
-const AddEip = ({ isOpen, onClose, projectId = "", region = "" }) => {
+const AddEip = ({ isOpen, onClose, projectId = "", region = "" }: any) => {
   const { mutate, isPending } = useCreateTenantElasticIp();
   const [formData, setFormData] = useState({
     address: "",
@@ -19,12 +20,12 @@ const AddEip = ({ isOpen, onClose, projectId = "", region = "" }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field, value) => {
+  const updateFormData = (field: any, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: any) => {
     if (e) e.preventDefault();
     if (!validateForm()) return;
 
@@ -41,7 +42,7 @@ const AddEip = ({ isOpen, onClose, projectId = "", region = "" }) => {
         onClose();
       },
       onError: (err) => {
-        console.error("Failed to create elastic IP:", err);
+        logger.error("Failed to create elastic IP:", err);
       },
     });
   };

@@ -7,10 +7,12 @@ const fetchMarketingPartners = async () => {
   return res?.data || [];
 };
 
-type MarketingPartnersOptions = UseQueryOptions<unknown[], Error, unknown[], readonly unknown[]>;
+type MarketingPartnersOptions = Partial<
+  UseQueryOptions<unknown[], Error, unknown[], readonly unknown[]>
+>;
 
 export const useFetchMarketingPartners = (options: MarketingPartnersOptions = {}) => {
-  const { enabled = typeof window !== "undefined", ...rest } = options;
+  const { enabled = globalThis.window !== undefined, ...rest } = options as any;
 
   return useQuery({
     queryKey: ["marketing-partners"],
@@ -18,6 +20,6 @@ export const useFetchMarketingPartners = (options: MarketingPartnersOptions = {}
     staleTime: 1000 * 60 * 10,
     refetchOnWindowFocus: false,
     enabled,
-    ...rest,
+    ...(rest as any),
   });
 };

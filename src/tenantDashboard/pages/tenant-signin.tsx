@@ -13,6 +13,7 @@ import {
 import useImageFallback from "../../hooks/useImageFallback";
 import { getSubdomain } from "../../utils/getSubdomain";
 import AuthShell from "../../components/auth/AuthShell";
+import logger from "../../utils/logger";
 
 interface TenantLoginProps {
   tenant?: string;
@@ -46,8 +47,8 @@ const TenantLogin: React.FC<TenantLoginProps> = ({ tenant = "Tenant" }) => {
     logo,
     color: "var(--theme-color)",
   };
-  const hostname = typeof window !== "undefined" ? globalThis.window.location.hostname : "";
-  const subdomain = typeof window !== "undefined" ? getSubdomain() : null;
+  const hostname = globalThis.window !== undefined ? globalThis.window.location.hostname : "";
+  const subdomain = globalThis.window !== undefined ? getSubdomain() : null;
   const { data: branding } = usePublicBrandingTheme({
     domain: hostname,
     subdomain,
@@ -124,7 +125,7 @@ const TenantLogin: React.FC<TenantLoginProps> = ({ tenant = "Tenant" }) => {
       },
       onError: (err) => {
         setErrors({ general: getErrorMessage(err, "Failed to login") });
-        console.log(err);
+        logger.log(err);
       },
     });
   };

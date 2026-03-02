@@ -2,10 +2,9 @@ import { useCallback, useMemo } from "react";
 import { useCreateNewLead, useFetchLeadTypes } from "../../../hooks/adminHooks/leadsHook";
 import ToastUtils from "../../../utils/toastUtil";
 import { useFetchCountries } from "../../../hooks/resource";
-import CreateLeadForm, {
-  type CountryOption,
-  type LeadCreatePayload,
-} from "../../../shared/components/leads/CreateLeadForm";
+import CreateLeadForm from "../../../shared/components/leads/CreateLeadForm";
+import type { CountryOption } from "../../../shared/components/leads/CreateLeadForm";
+import type { LeadCreatePayload } from "../../../hooks/adminHooks/leadsHook";
 
 interface CreateLeadProps {
   isOpen?: boolean;

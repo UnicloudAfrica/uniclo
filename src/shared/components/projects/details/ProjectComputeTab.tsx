@@ -232,7 +232,7 @@ const ProjectComputeTab: React.FC<ProjectComputeTabProps> = ({
         >
           <ModernTable
             data={instances}
-            columns={columns}
+            columns={columns as any}
             loading={isFetching}
             emptyMessage="No instances found for this project."
           />

@@ -414,7 +414,7 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
   const { isFetching: isRegionsFetching, data: regionsData } = useFetchRegions();
   const { isFetching: isCountriesFetching, data: countriesData } = useFetchCountries();
   const regions = useMemo<RegionOption[]>(
-    () => (Array.isArray(regionsData) ? (regionsData as RegionOption[]) : []),
+    () => (Array.isArray(regionsData) ? (regionsData as any as RegionOption[]) : []),
     [regionsData]
   );
   const countries = useMemo<CountryOption[]>(

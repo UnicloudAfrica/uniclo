@@ -23,6 +23,29 @@ type ChangeSubscriptionPlanPayload = {
   prorate?: boolean;
 };
 
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  currency: string;
+  interval: "month" | "year";
+  [key: string]: unknown;
+}
+
+export interface Subscription {
+  id: string;
+  plan_id: string;
+  status: string;
+  current_period_end?: string;
+  [key: string]: unknown;
+}
+
+interface ListResponse<T> {
+  data: T[];
+  total?: number;
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // SUBSCRIPTION PLANS (Admin)
 // ═══════════════════════════════════════════════════════════════════
@@ -32,11 +55,16 @@ export const useFetchSubscriptionPlans = (
   params: QueryParams = {},
   options: Record<string, unknown> = {}
 ) => {
-  return useQuery<Record<string, unknown>>({
+  return useQuery<ListResponse<SubscriptionPlan>>({
     queryKey: ["subscriptionPlans", params],
     queryFn: async () => {
-      const res = await silentApi("GET", "/admin/v1/subscription-plans", params);
-      return res.data;
+      const res = await silentApi<ListResponse<SubscriptionPlan>>(
+        "GET",
+        "/admin/v1/subscription-plans",
+        params
+      );
+      // Handle both { data: [...] } and direct [...] if wrapped by silentApi
+      return res;
     },
     staleTime: 1000 * 60 * 5,
     ...options,
@@ -48,11 +76,11 @@ export const useFetchSubscriptionPlan = (
   id: string | null | undefined,
   options: Record<string, unknown> = {}
 ) => {
-  return useQuery<Record<string, unknown>>({
+  return useQuery<SubscriptionPlan>({
     queryKey: ["subscriptionPlan", id],
     queryFn: async () => {
-      const res = await silentApi("GET", `/admin/v1/subscription-plans/${id}`);
-      return res.data?.data || res.data;
+      const res = await silentApi<any>("GET", `/admin/v1/subscription-plans/${id}`);
+      return res.data || res;
     },
     enabled: !!id,
     ...options,
@@ -64,7 +92,7 @@ export const useCreateSubscriptionPlan = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: MutationPayload) => {
-      const res = await api("POST", "/admin/v1/subscription-plans", data);
+      const res = await api<SubscriptionPlan>("POST", "/admin/v1/subscription-plans", data);
       return res.data;
     },
     onSuccess: () => {
@@ -78,7 +106,7 @@ export const useUpdateSubscriptionPlan = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...data }: IdPayload) => {
-      const res = await api("PUT", `/admin/v1/subscription-plans/${id}`, data);
+      const res = await api<SubscriptionPlan>("PUT", `/admin/v1/subscription-plans/${id}`, data);
       return res.data;
     },
     onSuccess: (_, variables) => {
@@ -93,7 +121,7 @@ export const useDeleteSubscriptionPlan = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await api("DELETE", `/admin/v1/subscription-plans/${id}`);
+      const res = await api<unknown>("DELETE", `/admin/v1/subscription-plans/${id}`);
       return res.data;
     },
     onSuccess: () => {
@@ -111,11 +139,15 @@ export const useFetchSubscriptions = (
   params: QueryParams = {},
   options: Record<string, unknown> = {}
 ) => {
-  return useQuery<Record<string, unknown>>({
+  return useQuery<ListResponse<Subscription>>({
     queryKey: ["subscriptions", params],
     queryFn: async () => {
-      const res = await silentApi("GET", "/admin/v1/subscriptions", params);
-      return res.data;
+      const res = await silentApi<ListResponse<Subscription>>(
+        "GET",
+        "/admin/v1/subscriptions",
+        params
+      );
+      return res;
     },
     staleTime: 1000 * 60 * 2,
     ...options,
@@ -127,11 +159,11 @@ export const useFetchSubscription = (
   id: string | null | undefined,
   options: Record<string, unknown> = {}
 ) => {
-  return useQuery<Record<string, unknown>>({
+  return useQuery<Subscription>({
     queryKey: ["subscription", id],
     queryFn: async () => {
-      const res = await silentApi("GET", `/admin/v1/subscriptions/${id}`);
-      return res.data?.data || res.data;
+      const res = await silentApi<any>("GET", `/admin/v1/subscriptions/${id}`);
+      return res.data || res;
     },
     enabled: !!id,
     ...options,
@@ -139,12 +171,12 @@ export const useFetchSubscription = (
 };
 
 // Fetch subscription statistics
-export const useFetchSubscriptionStats = (options: any = {}) => {
+export const useFetchSubscriptionStats = (options: Record<string, unknown> = {}) => {
   return useQuery<Record<string, unknown>>({
     queryKey: ["subscriptionStats"],
     queryFn: async () => {
-      const res = await silentApi("GET", "/admin/v1/subscriptions-statistics");
-      return res.data?.data || res.data;
+      const res = await silentApi<any>("GET", "/admin/v1/subscriptions-statistics");
+      return res.data || res;
     },
     staleTime: 1000 * 60 * 1,
     ...options,
@@ -156,7 +188,7 @@ export const useCreateSubscription = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: MutationPayload) => {
-      const res = await api("POST", "/admin/v1/subscriptions", data);
+      const res = await api<Subscription>("POST", "/admin/v1/subscriptions", data);
       return res.data;
     },
     onSuccess: () => {
@@ -171,7 +203,7 @@ export const useUpdateSubscription = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...data }: IdPayload) => {
-      const res = await api("PUT", `/admin/v1/subscriptions/${id}`, data);
+      const res = await api<Subscription>("PUT", `/admin/v1/subscriptions/${id}`, data);
       return res.data;
     },
     onSuccess: (_, variables) => {
@@ -186,7 +218,7 @@ export const useCancelSubscription = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, reason, note, immediately }: CancelSubscriptionPayload) => {
-      const res = await api("POST", `/admin/v1/subscriptions/${id}/cancel`, {
+      const res = await api<unknown>("POST", `/admin/v1/subscriptions/${id}/cancel`, {
         reason,
         note,
         immediately,
@@ -206,7 +238,7 @@ export const useChangeSubscriptionPlan = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, plan_id, prorate }: ChangeSubscriptionPlanPayload) => {
-      const res = await api("POST", `/admin/v1/subscriptions/${id}/change-plan`, {
+      const res = await api<Subscription>("POST", `/admin/v1/subscriptions/${id}/change-plan`, {
         plan_id,
         prorate,
       });
@@ -224,7 +256,7 @@ export const useRenewSubscription = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await api("POST", `/admin/v1/subscriptions/${id}/renew`);
+      const res = await api<unknown>("POST", `/admin/v1/subscriptions/${id}/renew`);
       return res.data;
     },
     onSuccess: (_, id) => {
@@ -240,12 +272,12 @@ export const useRenewSubscription = () => {
 // ═══════════════════════════════════════════════════════════════════
 
 const fetchSubs = async () => {
-  const res = await silentApi("GET", "/business/subscription");
-  return res.data;
+  const res = await silentApi<any>("GET", "/business/subscription");
+  return res.data || res;
 };
 
-export const useFetchSubs = (options: any = {}) => {
-  return useQuery<Record<string, unknown>>({
+export const useFetchSubs = (options: Record<string, unknown> = {}) => {
+  return useQuery<Subscription>({
     queryKey: ["subs"],
     queryFn: fetchSubs,
     staleTime: 1000 * 60 * 5,

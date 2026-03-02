@@ -87,19 +87,16 @@ const AdminCreateInstance = () => {
 
   const resolveProviderForRegion = (regionCode: string) => {
     const candidate = (Array.isArray(resources.regions) ? resources.regions : []).find(
-      (region: {
-        code?: string;
-        region?: string;
-        slug?: string;
-        id?: string;
-        provider?: string;
-        provider_code?: string;
-        provider_id?: string;
-      }) =>
+      (region: any) =>
         String(region?.code || region?.region || region?.slug || region?.id || "") ===
         String(regionCode)
     );
-    return candidate?.provider || candidate?.provider_code || candidate?.provider_id || "";
+    return (
+      (candidate as any)?.provider ||
+      (candidate as any)?.provider_code ||
+      (candidate as any)?.provider_id ||
+      ""
+    );
   };
 
   const handleSaveTemplate = (config: Configuration) => {
@@ -164,7 +161,7 @@ const AdminCreateInstance = () => {
     if (!selectedProjectId || !Array.isArray(resources.projects)) return null;
     return (
       resources.projects.find(
-        (project: { id?: string | number; identifier?: string }) =>
+        (project: any) =>
           String(project.id) === String(selectedProjectId) ||
           String(project.identifier) === String(selectedProjectId)
       ) || null

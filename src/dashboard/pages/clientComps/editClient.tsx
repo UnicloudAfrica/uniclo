@@ -8,8 +8,9 @@ import {
 } from "../../../hooks/resource";
 import { useUpdateClient } from "../../../hooks/adminHooks/clientHooks";
 import ToastUtils from "../../../utils/toastUtil";
+import logger from "../../../utils/logger";
 
-const EditClientModal = ({ isOpen, onClose, clientData }) => {
+const EditClientModal = ({ isOpen, onClose, clientData }: any) => {
   const { data: profile, isFetching: isProfileFetching } = useFetchProfile();
   const { data: countries, isFetching: isCountriesFetching } = useFetchCountries();
 
@@ -93,7 +94,9 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
   // Update country name in formData when country_id changes and countries data is available
   useEffect(() => {
     if (formData.country_id && countries) {
-      const selectedCountry = countries.find((c) => c.id === parseInt(formData.country_id));
+      const selectedCountry = (countries as any).find(
+        (c: any) => c.id === parseInt(formData.country_id)
+      );
       if (selectedCountry) {
         setFormData((prev) => ({ ...prev, country: selectedCountry.name }));
       }
@@ -105,7 +108,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
   // Update state name in formData when state_id changes and states data is available
   useEffect(() => {
     if (formData.state_id && states) {
-      const selectedState = states.find((s) => s.id === parseInt(formData.state_id));
+      const selectedState = (states as any).find((s: any) => s.id === parseInt(formData.state_id));
       if (selectedState) {
         setFormData((prev) => ({ ...prev, state: selectedState.name }));
       }
@@ -152,7 +155,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: any) => {
     const { id, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -161,7 +164,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
     setErrors((prev) => ({ ...prev, [id]: null }));
   };
 
-  const handleCountryChange = (e) => {
+  const handleCountryChange = (e: any) => {
     const countryId = e.target.value;
     setFormData((prev) => ({
       ...prev,
@@ -179,7 +182,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
     }));
   };
 
-  const handleStateChange = (e) => {
+  const handleStateChange = (e: any) => {
     const stateId = e.target.value;
     setFormData((prev) => ({
       ...prev,
@@ -191,7 +194,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
   };
 
   // Simplified handleCityChange for direct text input
-  const handleCityChange = (e) => {
+  const handleCityChange = (e: any) => {
     const { value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -200,7 +203,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
     setErrors((prev) => ({ ...prev, city: null }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: any) => {
     e.preventDefault();
 
     if (!validateForm()) {
@@ -214,7 +217,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
       email: formData.email,
       phone: formData.phone,
       role: "client",
-      tenant_id: profile?.tenant_id,
+      tenant_id: (profile as any)?.tenant_id,
       verified: formData.verified,
       force_password_reset: formData.force_password_reset,
       country_id: parseInt(formData.country_id),
@@ -233,7 +236,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
           onClose();
         },
         onError: (err) => {
-          console.error("Failed to update client:", err);
+          logger.error("Failed to update client:", err);
           ToastUtils.error(err.message || "Failed to update client. Please try again.");
         },
       }

@@ -244,7 +244,7 @@ const setNestedValue = (
     cursor = cursor[key] as Record<string, unknown>;
   });
 
-  cursor[finalKey] = value;
+  cursor[finalKey as any] = value;
 };
 
 interface PartnerRegionQualificationFormProps {

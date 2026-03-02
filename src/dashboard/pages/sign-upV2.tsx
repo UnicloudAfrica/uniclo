@@ -98,11 +98,11 @@ export default function DashboardSignUpV2() {
   const { mutate: verifyBusiness, isPending: isVerifying } = useVerifyBusiness();
   const { data: countries = [], isFetching: isCountriesFetching } = useSharedFetchCountries();
   const countriesList = useMemo<Country[]>(
-    () => (Array.isArray(countries) ? (countries as Country[]) : []),
+    () => (Array.isArray(countries) ? (countries as any as Country[]) : []),
     [countries]
   );
-  const hostname = typeof window !== "undefined" ? globalThis.window.location.hostname : "";
-  const subdomain = typeof window !== "undefined" ? getSubdomain() : null;
+  const hostname = globalThis.window !== undefined ? globalThis.window.location.hostname : "";
+  const subdomain = globalThis.window !== undefined ? getSubdomain() : null;
   const { data: branding } = usePublicBrandingTheme({
     domain: hostname,
     subdomain: subdomain ?? undefined,
@@ -156,7 +156,7 @@ export default function DashboardSignUpV2() {
       ...prev,
       [field]: null,
       general: null,
-      verificationToken: requiresReverification ? null : prev.verificationToken,
+      verificationToken: requiresReverification ? null : (prev.verificationToken ?? null),
     }));
   };
 
@@ -264,11 +264,15 @@ export default function DashboardSignUpV2() {
     ) {
       setErrors((prev) => ({
         ...prev,
-        companyName: !formData.companyName.trim() ? "Business name is required" : prev.companyName,
-        companyType: !formData.companyType ? "Business type is required" : prev.companyType,
+        companyName: !formData.companyName.trim()
+          ? "Business name is required"
+          : (prev.companyName ?? null),
+        companyType: !formData.companyType
+          ? "Business type is required"
+          : (prev.companyType ?? null),
         registrationNumber: !formData.registrationNumber.trim()
           ? "Incorporation number is required"
-          : prev.registrationNumber,
+          : (prev.registrationNumber ?? null),
       }));
       return;
     }

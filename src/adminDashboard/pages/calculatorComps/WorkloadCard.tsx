@@ -100,7 +100,7 @@ const WorkloadCard = ({
   const regions = useFormattedRegions((Array.isArray(rawRegions) ? rawRegions : []) as any);
 
   const { data: computerInstancesData, isFetching: isComputerInstancesFetching } =
-    useFetchProductPricing(data.region, "compute_instance", {
+    useFetchProductPricing(data.region as any, "compute_instance", {
       enabled: !!data.region,
       countryCode,
     });
@@ -109,35 +109,35 @@ const WorkloadCard = ({
     : [];
 
   const { data: osImagesData, isFetching: isOsImagesFetching } = useFetchProductPricing(
-    data.region,
+    data.region as any,
     "os_image",
     { enabled: !!data.region, countryCode }
   );
   const osImages: PricingProduct[] = Array.isArray(osImagesData) ? osImagesData : [];
 
   const { data: ebsVolumesData, isFetching: isEbsVolumesFetching } = useFetchProductPricing(
-    data.region,
+    data.region as any,
     "volume_type",
     { enabled: !!data.region, countryCode }
   );
   const ebsVolumes: PricingProduct[] = Array.isArray(ebsVolumesData) ? ebsVolumesData : [];
 
   const { data: bandwidthsData, isFetching: isBandwidthsFetching } = useFetchProductPricing(
-    data.region,
+    data.region as any,
     "bandwidth",
     { enabled: !!data.region, countryCode }
   );
   const bandwidths: PricingProduct[] = Array.isArray(bandwidthsData) ? bandwidthsData : [];
 
   const { data: floatingIpsData, isFetching: isFloatingIpsFetching } = useFetchProductPricing(
-    data.region,
+    data.region as any,
     "ip",
     { enabled: !!data.region, countryCode }
   );
   const floatingIps: PricingProduct[] = Array.isArray(floatingIpsData) ? floatingIpsData : [];
 
   const { data: crossConnectsData, isFetching: isCrossConnectsFetching } = useFetchProductPricing(
-    data.region,
+    data.region as any,
     "cross_connect",
     {
       enabled: !!data.region,

@@ -8,7 +8,21 @@ import {
 } from "../../../hooks/tenantHooks/edgeHooks";
 import { useFetchTenantRegions } from "../../../hooks/tenantHooks/regionHooks";
 
-const TenantAssignEdgeConfigModal = ({ isOpen, onClose, onSuccess, projectId, region }) => {
+interface TenantAssignEdgeConfigModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
+  projectId: string;
+  region?: string;
+}
+
+const TenantAssignEdgeConfigModal = ({
+  isOpen,
+  onClose,
+  onSuccess,
+  projectId,
+  region,
+}: TenantAssignEdgeConfigModalProps) => {
   const [selectedRegion, setSelectedRegion] = useState(region || "");
   const [formData, setFormData] = useState({
     edge_network_id: "",
@@ -20,10 +34,11 @@ const TenantAssignEdgeConfigModal = ({ isOpen, onClose, onSuccess, projectId, re
     enabled: isOpen,
   });
 
-  const { data: currentConfig } = useFetchTenantProjectEdgeConfig(projectId, selectedRegion, {
+  const { data: rawCurrentConfig } = useFetchTenantProjectEdgeConfig(projectId, selectedRegion, {
     enabled: isOpen && !!selectedRegion,
   });
-  const metadata = currentConfig?.metadata || {};
+  const currentConfig = rawCurrentConfig as Record<string, any> | null | undefined;
+  const metadata = (currentConfig?.metadata || {}) as Record<string, any>;
   const {
     data: edgeNetworks,
     isFetching: isFetchingNetworks,
@@ -74,7 +89,7 @@ const TenantAssignEdgeConfigModal = ({ isOpen, onClose, onSuccess, projectId, re
     }
   };
 
-  const updateForm = (field, value) => setFormData((p) => ({ ...p, [field]: value }));
+  const updateForm = (field: string, value: any) => setFormData((p) => ({ ...p, [field]: value }));
 
   const handleAssign = () => {
     if (!projectId || !selectedRegion || !formData.edge_network_id || !formData.ip_pool_id) {
@@ -179,7 +194,7 @@ const TenantAssignEdgeConfigModal = ({ isOpen, onClose, onSuccess, projectId, re
                 <option value="">
                   {isFetchingRegions ? "Loading regions..." : "Select a region"}
                 </option>
-                {(regions || []).map((r) => (
+                {((regions as any[] | undefined) || []).map((r: any) => (
                   <option key={r.region} value={r.code || r.region}>
                     {r.name || r.label}
                   </option>
@@ -227,7 +242,7 @@ const TenantAssignEdgeConfigModal = ({ isOpen, onClose, onSuccess, projectId, re
                     <option value="">
                       {isFetchingNetworks ? "Loading networks..." : "Select an edge network"}
                     </option>
-                    {(edgeNetworks || []).map((n) => (
+                    {(edgeNetworks || []).map((n: any) => (
                       <option
                         key={n.id || n.uuid || n.identifier}
                         value={n.id || n.uuid || n.identifier}
@@ -277,7 +292,7 @@ const TenantAssignEdgeConfigModal = ({ isOpen, onClose, onSuccess, projectId, re
                     <option value="">
                       {isFetchingPools ? "Loading IP pools..." : "Select an IP pool"}
                     </option>
-                    {(ipPools || []).map((p) => (
+                    {(ipPools || []).map((p: any) => (
                       <option
                         key={p.edge_network_ip_pool_id || p.id || p.uuid}
                         value={p.edge_network_ip_pool_id || p.id || p.uuid}

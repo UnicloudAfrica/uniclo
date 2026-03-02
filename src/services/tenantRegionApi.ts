@@ -9,6 +9,7 @@ import config from "../config";
 import useAdminAuthStore from "../stores/adminAuthStore";
 import useTenantAuthStore from "../stores/tenantAuthStore";
 import ToastUtils from "../utils/toastUtil";
+import logger from "../utils/logger";
 
 type Id = string | number;
 type QueryParams = Record<string, string | number | boolean | null | undefined>;
@@ -82,7 +83,7 @@ class TenantRegionApiService {
         throw new Error(data.message || "Failed to fetch region requests");
       }
     } catch (error) {
-      console.error("Error fetching region requests:", error);
+      logger.error("Error fetching region requests:", error);
       throw error;
     }
   }
@@ -111,7 +112,7 @@ class TenantRegionApiService {
         throw new Error(data.message || "Failed to submit region request");
       }
     } catch (error) {
-      console.error("Error creating region request:", error);
+      logger.error("Error creating region request:", error);
       ToastUtils.error(getErrorMessage(error, "Failed to submit region request"));
       throw error;
     }
@@ -139,7 +140,7 @@ class TenantRegionApiService {
         throw new Error(data.message || "Failed to fetch region request");
       }
     } catch (error) {
-      console.error(`Error fetching region request ${id}:`, error);
+      logger.error(`Error fetching region request ${id}:`, error);
       throw error;
     }
   }
@@ -168,7 +169,7 @@ class TenantRegionApiService {
         throw new Error(data.message || "Failed to update fulfillment mode");
       }
     } catch (error) {
-      console.error(`Error updating fulfillment mode for region ${id}:`, error);
+      logger.error(`Error updating fulfillment mode for region ${id}:`, error);
       ToastUtils.error(getErrorMessage(error, "Failed to update fulfillment mode"));
       throw error;
     }
@@ -197,7 +198,7 @@ class TenantRegionApiService {
         throw new Error(data.message || "Failed to cancel region request");
       }
     } catch (error) {
-      console.error(`Error cancelling region request ${id}:`, error);
+      logger.error(`Error cancelling region request ${id}:`, error);
       ToastUtils.error(getErrorMessage(error, "Failed to cancel region request"));
       throw error;
     }
@@ -230,7 +231,7 @@ class TenantRegionApiService {
         throw new Error(data.message || "Failed to verify credentials");
       }
     } catch (error) {
-      console.error(`Error verifying credentials for region ${regionId}:`, error);
+      logger.error(`Error verifying credentials for region ${regionId}:`, error);
       ToastUtils.error(getErrorMessage(error, "Failed to verify credentials"));
       throw error;
     }
@@ -263,7 +264,7 @@ class TenantRegionApiService {
         throw new Error(data.message || "Failed to fetch revenue shares");
       }
     } catch (error) {
-      console.error("Error fetching revenue shares:", error);
+      logger.error("Error fetching revenue shares:", error);
       throw error;
     }
   }
@@ -293,7 +294,7 @@ class TenantRegionApiService {
         throw new Error(data.message || "Failed to fetch revenue statistics");
       }
     } catch (error) {
-      console.error("Error fetching revenue stats:", error);
+      logger.error("Error fetching revenue stats:", error);
       throw error;
     }
   }
@@ -332,7 +333,7 @@ class TenantRegionApiService {
         throw new Error("Failed to export revenue shares");
       }
     } catch (error) {
-      console.error("Error exporting revenue shares:", error);
+      logger.error("Error exporting revenue shares:", error);
       ToastUtils.error(getErrorMessage(error, "Failed to export revenue shares"));
       throw error;
     }

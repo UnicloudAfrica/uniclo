@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import tenantApi from "../../index/tenant/tenantApi";
 
-const convertBackendResponse = (backendData) => {
+const convertBackendResponse = (backendData: any) => {
   if (!backendData) return null;
 
   const infrastructure = backendData.infrastructure || {};
@@ -19,14 +19,14 @@ const convertBackendResponse = (backendData) => {
     elastic_ips: infrastructure.elastic_ips?.count ?? infrastructure.eips_count ?? null,
   };
 
-  const normalizeDetails = (component) => {
+  const normalizeDetails = (component: any) => {
     if (!component || !component.details) return null;
     if (Array.isArray(component.details)) return component.details;
     if (typeof component.details === "object") return [component.details];
     return null;
   };
 
-  const normalizeStatus = (component) => {
+  const normalizeStatus = (component: any) => {
     if (!component) return "pending";
     const status = component.status;
     if (status === "configured" || status === "completed") return "completed";
@@ -127,7 +127,7 @@ const convertBackendResponse = (backendData) => {
   };
 };
 
-export const useTenantProjectInfrastructureStatus = (projectId, options = {}) => {
+export const useTenantProjectInfrastructureStatus = (projectId: any, options = {}) => {
   return useQuery({
     queryKey: ["tenant-project-infrastructure-status", projectId],
     queryFn: async () => {
@@ -149,6 +149,6 @@ export const useTenantProjectInfrastructureStatus = (projectId, options = {}) =>
       }
       return failureCount < 3;
     },
-    ...options,
-  });
+    ...(options as any),
+  } as any);
 };

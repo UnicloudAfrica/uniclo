@@ -3,6 +3,7 @@ import { Loader2, X } from "lucide-react";
 import { useAttachClientIgw, useDetachClientIgw } from "../../../hooks/clientHooks/igwHooks";
 import { useFetchClientVpcs } from "../../../hooks/clientHooks/vpcHooks";
 import ToastUtils from "../../../utils/toastUtil";
+import logger from "../../../utils/logger";
 
 interface AttachIgwModalProps {
   isOpen: boolean;
@@ -68,7 +69,7 @@ const AttachIgwModal: React.FC<AttachIgwModalProps> = ({
         setSelectedVpc("");
       },
       onError: (err: any) => {
-        console.error(`Failed to ${mode} IGW:`, err);
+        logger.error(`Failed to ${mode} IGW:`, err);
         ToastUtils.error(err?.message || `Failed to ${mode} IGW.`);
       },
     });

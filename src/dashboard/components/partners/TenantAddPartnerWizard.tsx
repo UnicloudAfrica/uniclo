@@ -5,7 +5,7 @@ import {
   useFetchIndustries,
   useFetchStatesById,
   useFetchCitiesById,
-} from "../../../hooks/resource";
+} from "@/hooks/resource";
 import CreateAccount from "../../../adminDashboard/pages/tenantComps/CreateAccount";
 import BusinessInfo from "../../../adminDashboard/pages/tenantComps/BusinessInfo";
 import BusinessAddress from "../../../adminDashboard/pages/tenantComps/BusinessAddress";
@@ -15,9 +15,9 @@ import FormLayout, {
   formAccent,
   getAccentRgba,
 } from "../../../adminDashboard/components/FormLayout";
-import ToastUtils from "../../../utils/toastUtil";
-import { useCreateTenantPartner } from "../../../hooks/tenantHooks/partnerHooks";
-import { getBaseDomain } from "../../../utils/getSubdomain";
+import ToastUtils from "@/utils/toastUtil";
+import { useCreateTenantPartner } from "@/hooks/tenantHooks/partnerHooks";
+import { getBaseDomain } from "@/utils/getSubdomain";
 
 const TenantAddPartnerWizard = ({ onClose }: any) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -182,7 +182,7 @@ const TenantAddPartnerWizard = ({ onClose }: any) => {
     };
 
     if (formData.domain) {
-      (payload as any).domain = `${formData.domain}${domainSuffix}`;
+      (payload as Record<string, unknown>).domain = `${formData.domain}${domainSuffix}`;
     }
 
     createPartner(payload, {
@@ -205,7 +205,9 @@ const TenantAddPartnerWizard = ({ onClose }: any) => {
     "businessLogo",
   ];
 
-  const uploadedDocs = docKeys.filter((key) => (formData.business as any)[key]).length;
+  const uploadedDocs = docKeys.filter(
+    (key) => (formData.business as Record<string, unknown>)[key]
+  ).length;
   const progress = Math.round(((currentStep + 1) / steps.length) * 100);
   const domainPreview = formData.domain ? `${formData.domain}${displaySuffix}` : "Not assigned";
   const contactName = [formData.first_name, formData.last_name].filter(Boolean).join(" ").trim();
@@ -224,7 +226,7 @@ const TenantAddPartnerWizard = ({ onClose }: any) => {
     setFormData,
     errors,
     setErrors,
-  } as any) as React.JSX.Element;
+  } as never) as React.JSX.Element;
 
   const summarySections = useMemo(
     () => [

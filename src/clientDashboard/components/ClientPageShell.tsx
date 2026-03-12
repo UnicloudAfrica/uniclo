@@ -1,5 +1,5 @@
 import React, { ComponentProps } from "react";
-import DashboardPageShell from "../../shared/layouts/DashboardPageShell";
+import DashboardPageShell from "@/shared/layouts/DashboardPageShell";
 
 type DashboardPageShellProps = ComponentProps<typeof DashboardPageShell>;
 

@@ -50,6 +50,9 @@ export interface Region {
   baseUrl?: string;
   endpoint?: string;
   code?: string;
+  provider?: string;
+  country_code?: string;
+  city?: string;
 }
 
 export interface ComputeInstance {

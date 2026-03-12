@@ -16,8 +16,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import TenantPageShell from "../../components/TenantPageShell";
-import ModernCard from "../../../shared/components/ui/ModernCard";
-import ModernButton from "../../../shared/components/ui/ModernButton";
+import ModernCard from "@/shared/components/ui/ModernCard";
+import ModernButton from "@/shared/components/ui/ModernButton";
 import {
   useLoadBalancer,
   useListeners,
@@ -27,8 +27,8 @@ import {
   useCreateTargetGroup,
   useDeleteTargetGroup,
   useRegisterTargets,
-} from "../../../hooks/adminHooks/loadBalancerHooks";
-import { useFetchPurchasedInstances } from "../../../hooks/adminHooks/instancesHook";
+} from "@/hooks/adminHooks/loadBalancerHooks";
+import { useFetchPurchasedInstances } from "@/shared/hooks/resources/instanceHooks";
 
 const TenantLoadBalancerDetail: React.FC = () => {
   const { lbId } = useParams<{ lbId: string }>();

@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, Shield } from "lucide-react";
 import {
   useCreateClientProject,
   useClientProjectMembershipSuggestions,
-} from "../../../hooks/clientHooks/projectHooks";
-import { useFetchGeneralRegions } from "../../../hooks/resource";
+} from "@/hooks/clientHooks/projectHooks";
+import { useFetchGeneralRegions } from "@/hooks/resource";
 import { useNavigate } from "react-router-dom";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "@/utils/toastUtil";
 import NetworkPresetSelector, {
   DEFAULT_PRESETS,
-} from "../../../shared/components/network/NetworkPresetSelector";
-import { useNetworkPresets } from "../../../hooks/networkPresetHooks";
-import { useAsyncAction } from "../../../shared/hooks/useAsyncAction";
+} from "@/shared/components/network/NetworkPresetSelector";
+import { useNetworkPresets } from "@/hooks/networkPresetHooks";
+import { useAsyncAction } from "@/shared/hooks/useAsyncAction";
+import { useCloudPolicies, type CloudPolicy } from "@/shared/hooks/resources/cloudPolicyHooks";
 
 interface ProjectMember {
   id: string | number;
@@ -80,10 +81,59 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     [networkPresets]
   );
 
+  // Cloud policies — resolve provider from selected region
+  const [userPolicies, setUserPolicies] = useState<Record<string, Array<string | number>>>({});
+  const regionList = useMemo(
+    () => (Array.isArray(regions) ? (regions as { code?: string; provider?: string }[]) : []),
+    [regions]
+  );
+  const selectedRegionProvider = useMemo(() => {
+    const match = regionList.find((r) => r.code === formData.region);
+    return match?.provider || "";
+  }, [formData.region, regionList]);
+
+  const { data: cloudPoliciesData = [] } = useCloudPolicies(
+    { region: formData.region, provider: selectedRegionProvider },
+    { enabled: !!formData.region && !!selectedRegionProvider }
+  );
+  const cloudPolicies = useMemo<CloudPolicy[]>(
+    () => (Array.isArray(cloudPoliciesData) ? cloudPoliciesData : []),
+    [cloudPoliciesData]
+  );
+
+  // Auto-assign default policies when members are selected
+  const defaultPolicyIds = useMemo(
+    () => cloudPolicies.filter((p) => p.is_default).map((p) => p.id),
+    [cloudPolicies]
+  );
+
+  useEffect(() => {
+    if (selectedMembers.length > 0 && cloudPolicies.length > 0) {
+      setUserPolicies((prev) => {
+        const next = { ...prev };
+        selectedMembers.forEach((member) => {
+          if (!next[member.id]) next[member.id] = [...defaultPolicyIds];
+        });
+        return next;
+      });
+    }
+  }, [selectedMembers, defaultPolicyIds, cloudPolicies.length]);
+
+  const handleTogglePolicy = (memberId: string | number, policyId: string | number) => {
+    setUserPolicies((prev) => {
+      const current = prev[memberId] || [];
+      const next = current.includes(policyId)
+        ? current.filter((id) => id !== policyId)
+        : [...current, policyId];
+      return { ...prev, [memberId]: next };
+    });
+  };
+
   const resetState = useCallback(() => {
     setFormData({ ...INITIAL_FORM_STATE });
     setErrors({});
     setSelectedMembers([]);
+    setUserPolicies({});
     membersFetchKeyRef.current = null;
     resetAsyncAction();
   }, [resetAsyncAction]);
@@ -261,6 +311,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
       region: formData.region,
       assignment_scope: formData.assignment_scope,
       member_user_ids: selectedMembers.map((member: any) => Number(member.id)),
+      user_policies: Object.keys(userPolicies).length > 0 ? userPolicies : undefined,
       metadata: formData.network_preset ? { network_preset: formData.network_preset } : undefined,
     };
 
@@ -546,6 +597,59 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
           <p className="text-sm text-gray-500">Select a scope to load members.</p>
         )}
       </div>
+
+      {/* Cloud Policies Section */}
+      {cloudPolicies.length > 0 && selectedMembers.length > 0 && (
+        <div className={sectionClasses}>
+          <div className="flex items-center gap-2 mb-1">
+            <Shield className="w-4 h-4 text-slate-500" />
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Cloud access policies
+            </p>
+          </div>
+          <p className="text-xs text-gray-500 mb-4">
+            Assign cloud permissions to project members. Default policies are pre-selected.
+          </p>
+
+          <div className="space-y-4">
+            {selectedMembers.map((member) => {
+              const memberPolicies = userPolicies[member.id] || [];
+              return (
+                <div key={member.id} className="rounded-xl border border-gray-200 bg-white p-4">
+                  <p className="text-sm font-medium text-gray-700 mb-3">
+                    {member.name || member.email || `User #${member.id}`}
+                    {member.role && (
+                      <span className="ml-2 text-[10px] text-gray-400 uppercase tracking-wide">
+                        {member.role}
+                      </span>
+                    )}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {cloudPolicies.map((policy) => {
+                      const isSelected = memberPolicies.includes(policy.id);
+                      return (
+                        <button
+                          key={policy.id}
+                          type="button"
+                          onClick={() => handleTogglePolicy(member.id, policy.id)}
+                          title={policy.description || policy.name}
+                          className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                            isSelected
+                              ? "bg-[var(--theme-color)] text-white shadow-md shadow-[var(--theme-color-faint)]"
+                              : "bg-gray-50 text-gray-600 border border-gray-100 hover:border-gray-300"
+                          }`}
+                        >
+                          {policy.name || "Unnamed Policy"}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -573,6 +677,16 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
       {
         label: "Members selected",
         value: selectedMembers.length ? `${selectedMembers.length} member(s)` : "Using defaults",
+      },
+      {
+        label: "Cloud policies",
+        value: (() => {
+          const totalPolicies = Object.values(userPolicies).reduce(
+            (sum, arr) => sum + arr.length,
+            0
+          );
+          return totalPolicies > 0 ? `${totalPolicies} policy assignment(s)` : "Defaults";
+        })(),
       },
     ];
 

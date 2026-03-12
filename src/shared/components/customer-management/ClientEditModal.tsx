@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { useUpdateClient as useAdminUpdateClient } from "../../../hooks/adminHooks/clientHooks";
-import { useUpdateClient as useTenantUpdateClient } from "../../../hooks/clientHooks";
-import { useFetchCountries } from "../../../hooks/resource";
-import ToastUtils from "../../../utils/toastUtil";
+import { useUpdateClient as useAdminUpdateClient } from "@/hooks/adminHooks/clientHooks";
+import { useUpdateClient as useTenantUpdateClient } from "@/hooks/clientHooks";
+import { useFetchCountries } from "@/hooks/resource";
+import ToastUtils from "@/utils/toastUtil";
 import FormLayout, {
   formAccent,
   getAccentRgba,
 } from "../../../adminDashboard/components/FormLayout";
-import { Client } from "../../../types/client";
+import { Client } from "@/types/client";
 
 interface ClientEditModalProps {
   context?: "admin" | "tenant";
@@ -54,10 +54,10 @@ const ClientEditModal: React.FC<ClientEditModalProps> = ({
 
   const adminMutation = useAdminUpdateClient();
   const tenantMutation = useTenantUpdateClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const { mutate: updateClient, isPending } = (
     context === "tenant" ? tenantMutation : adminMutation
-  ) as any;
+  ) as { mutate: (data: Record<string, unknown>) => void; isPending: boolean };
 
   const { data: countries } = useFetchCountries();
 
@@ -100,8 +100,7 @@ const ClientEditModal: React.FC<ClientEditModalProps> = ({
   const handleSubmit = () => {
     if (!validateForm()) return;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const selectedCountry = (countries as any[])?.find(
+    const selectedCountry = (countries as Record<string, unknown>[])?.find(
       (countryOption) => countryOption.name === formData.country
     );
     const countryId = selectedCountry ? selectedCountry.id : null;
@@ -125,7 +124,6 @@ const ClientEditModal: React.FC<ClientEditModalProps> = ({
     updateClient(
       { id: clientId, clientData: payload },
       {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onSuccess: (updatedData: any) => {
           ToastUtils.success("Client updated successfully!");
           if (client) {
@@ -288,7 +286,7 @@ const ClientEditModal: React.FC<ClientEditModalProps> = ({
           { label: "Client", value: contactName || client?.first_name || "Unnamed" },
           { label: "Country", value: formData.country || client?.country || "Not set" },
           { label: "Verified", value: client?.verified ? "Yes" : "No" },
-        ] as any
+        ] as never
       }
       aside={asideContent}
       accentGradient={accent.gradient}

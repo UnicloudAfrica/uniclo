@@ -1,11 +1,14 @@
-import config from "../../config";
-import useTenantAuthStore from "../../stores/tenantAuthStore";
-import { createApiClient } from "../../utils/createApiClient";
+/**
+ * @deprecated Use `import { api } from "@/lib/api"` instead.
+ */
+import { api } from "../../lib/api";
 
-export default createApiClient({
-  baseURL: config.tenantURL,
-  authStore: useTenantAuthStore,
-  showToasts: true,
-  redirectPath: "/sign-in",
-  useSafeJsonParsing: true,
-});
+type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+
+const tenantApi = <T = unknown>(
+  method: HttpMethod,
+  path: string,
+  body: Record<string, unknown> | FormData | null = null
+): Promise<T> => api.request<T>(method, path, body as any);
+
+export default tenantApi;

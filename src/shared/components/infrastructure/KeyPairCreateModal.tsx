@@ -2,15 +2,15 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Clipboard, Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { useApiContext } from "../../../hooks/useApiContext";
+import { useApiContext } from "@/hooks/useApiContext";
 import { useCreateKeyPair } from "../../hooks/keyPairsHooks";
 import ModernModal from "../ui/ModernModal";
 import ModernInput from "../ui/ModernInput";
 import ModernSelect from "../ui/ModernSelect";
 import ModernTextarea from "../ui/ModernTextarea";
 import { ModernButton } from "../ui";
-import { designTokens } from "../../../styles/designTokens";
-import ToastUtils from "../../../utils/toastUtil";
+import { designTokens } from "@/styles/designTokens";
+import ToastUtils from "@/utils/toastUtil";
 
 interface KeyPairCreateModalProps {
   isOpen: boolean;
@@ -30,19 +30,34 @@ const getRegionEndpoint = (context: string) => {
   return "/regions";
 };
 
-const extractRegions = (payload: any) => {
-  if (Array.isArray(payload?.data)) return payload.data;
+const extractRegions = (payload: unknown): any[] => {
+  if (
+    payload &&
+    typeof payload === "object" &&
+    "data" in payload &&
+    Array.isArray((payload as any).data)
+  ) {
+    return (payload as any).data;
+  }
   if (Array.isArray(payload)) return payload;
   return [];
 };
 
-const buildRegionOptions = (items: any[]): RegionOption[] => {
+const buildRegionOptions = (items: Record<string, unknown>[]): RegionOption[] => {
   return items
     .map((region) => {
-      const value =
-        region?.code ?? region?.region ?? region?.id ?? region?.name ?? region?.label ?? "";
+      const value = (region?.code ??
+        region?.region ??
+        region?.id ??
+        region?.name ??
+        region?.label ??
+        "") as string;
       if (!value) return null;
-      const label = region?.label ?? region?.name ?? region?.region ?? region?.code ?? value;
+      const label = (region?.label ??
+        region?.name ??
+        region?.region ??
+        region?.code ??
+        value) as string;
       return { value: String(value), label: String(label) };
     })
     .filter(Boolean) as RegionOption[];
@@ -125,15 +140,17 @@ const KeyPairCreateModal: React.FC<KeyPairCreateModalProps> = ({
         public_key: formData.public_key.trim() || null,
       },
       {
-        onSuccess: (response: any) => {
+        onSuccess: (response: { material?: string }) => {
           setSuccessState({
             isSuccess: true,
             material: response?.material || "",
           });
           ToastUtils.success("Key pair generated successfully.");
         },
-        onError: (error: any) => {
-          ToastUtils.error(error?.message || "Failed to create key pair. Try again.");
+        onError: (error: unknown) => {
+          const message =
+            error instanceof Error ? error.message : "Failed to create key pair. Try again.";
+          ToastUtils.error(message);
         },
       }
     );

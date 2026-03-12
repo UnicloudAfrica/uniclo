@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import AdminPageShell from "../../components/AdminPageShell";
-import { StorageManagementContainer } from "../../../shared/components/infrastructure/storage";
+import { StorageManagementContainer } from "@/shared/components/infrastructure/storage";
 
 const AdminSnapshots: React.FC = () => {
   const location = useLocation();

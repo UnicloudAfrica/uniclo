@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Copy, Check, Key, Eye, EyeOff, AlertTriangle } from "lucide-react";
-import logger from "../../../utils/logger";
+import logger from "@/utils/logger";
 
 interface ObjectStorageCredentialsProps {
   endpoint?: string | undefined;

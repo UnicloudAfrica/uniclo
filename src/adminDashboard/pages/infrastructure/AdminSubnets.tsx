@@ -2,13 +2,13 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Network } from "lucide-react";
 import AdminPageShell from "../../components/AdminPageShell";
-import SubnetsContainer from "../../../shared/components/infrastructure/containers/SubnetsContainer";
+import SubnetsContainer from "@/shared/components/infrastructure/containers/SubnetsContainer";
 import {
   useSubnets,
   useCreateSubnet,
   useDeleteSubnet,
   useVpcs,
-} from "../../../shared/hooks/vpcInfraHooks";
+} from "@/shared/hooks/vpcInfraHooks";
 
 /**
  * Admin Subnets page - truly thin wrapper.

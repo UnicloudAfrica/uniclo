@@ -9,8 +9,8 @@ import {
   Area,
   AreaChart,
 } from "recharts";
-import objectStorageApi from "../../../services/objectStorageApi";
-import ToastUtils from "../../../utils/toastUtil";
+import objectStorageApi from "@/services/objectStorageApi";
+import ToastUtils from "@/utils/toastUtil";
 import { ModernCard } from "@/shared/components/ui";
 
 interface AnalyticsData {

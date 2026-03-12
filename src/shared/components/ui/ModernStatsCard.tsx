@@ -3,13 +3,14 @@ import {
   useEffect,
   isValidElement,
   cloneElement,
+  memo,
   type ReactElement,
   type CSSProperties,
 } from "react";
 import { ArrowUp, ArrowDown } from "lucide-react";
-import { designTokens } from "../../../styles/designTokens";
-import { useAnimations, useReducedMotion } from "../../../hooks/useAnimations";
-import { useResponsive } from "../../../hooks/useResponsive";
+import { designTokens } from "@/styles/designTokens";
+import { useAnimations, useReducedMotion } from "@/hooks/useAnimations";
+import { useResponsive } from "@/hooks/useResponsive";
 
 type StatsIconProps = {
   size?: number;
@@ -528,4 +529,4 @@ const ModernStatsCard = ({
   );
 };
 
-export default ModernStatsCard;
+export default memo(ModernStatsCard);

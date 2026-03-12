@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import TenantPageShell from "../../components/TenantPageShell";
-import ClientCreateForm from "../../../shared/components/customer-management/ClientCreateForm";
-import { ModernButton } from "../../../shared/components/ui";
-import { useTenantBrandingTheme } from "../../../hooks/useBrandingTheme";
+import ClientCreateForm from "@/shared/components/customer-management/ClientCreateForm";
+import { ModernButton } from "@/shared/components/ui";
+import { useTenantBrandingTheme } from "@/hooks/useBrandingTheme";
 
 const useTenantIdParam = () => {
   const location = useLocation();

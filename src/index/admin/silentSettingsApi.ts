@@ -1,17 +1,14 @@
-import config from "../../config";
-import useAdminAuthStore from "../../stores/adminAuthStore";
-import { createApiClient } from "../../utils/createApiClient";
-
 /**
- * Admin Silent Settings API Client
- *
- * This is the silent version (no toasts) for admin users accessing shared settings endpoints
- * at /api/v1/settings/* (not /admin/v1/settings/*)
+ * @deprecated Use `import { api } from "@/lib/api"` with `{ silent: true }` option.
  */
-export default createApiClient({
-  baseURL: config.baseURL, // Uses /api/v1, not /admin/v1
-  authStore: useAdminAuthStore, // Uses admin auth headers
-  showToasts: false,
-  redirectPath: "/admin-signin",
-  useSafeJsonParsing: true,
-});
+import { api } from "../../lib/api";
+
+type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+
+const adminSilentSettingsApi = <T = unknown>(
+  method: HttpMethod,
+  path: string,
+  body: Record<string, unknown> | null = null
+): Promise<T> => api.request<T>(method, path, body as any, { silent: true });
+
+export default adminSilentSettingsApi;

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { KeyRound, MapPin, RefreshCw, Trash2 } from "lucide-react";
-import { useApiContext } from "../../../hooks/useApiContext";
+import { useApiContext } from "@/hooks/useApiContext";
 import {
   keyPairsKeys,
   useDeleteKeyPair,
@@ -9,7 +9,7 @@ import {
   useSyncKeyPairs,
 } from "../../hooks/keyPairsHooks";
 import { ModernButton, ResourceEmptyState, ResourceListCard, ResourceSection } from "../ui";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "@/utils/toastUtil";
 import KeyPairCreateModal from "./KeyPairCreateModal";
 import KeyPairDeleteModal from "./KeyPairDeleteModal";
 
@@ -32,7 +32,7 @@ interface KeyPair {
   fingerprint?: string;
   region?: string;
   created_at?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 const KeyPairsSection: React.FC<KeyPairsSectionProps> = ({
@@ -80,7 +80,7 @@ const KeyPairsSection: React.FC<KeyPairsSectionProps> = ({
     if (region) {
       baseStats.push({
         label: "Region",
-        value: region as any,
+        value: region,
         tone: "info",
         icon: <MapPin size={16} />,
       });
@@ -96,8 +96,8 @@ const KeyPairsSection: React.FC<KeyPairsSectionProps> = ({
     try {
       await syncKeyPairs({ project_id: projectId, region });
       ToastUtils.success("Key pairs synced successfully.");
-    } catch (error: any) {
-      ToastUtils.error(error?.message || "Unable to sync key pairs.");
+    } catch (error: Error | unknown) {
+      ToastUtils.error((error as Error)?.message || "Unable to sync key pairs.");
     }
   };
 
@@ -112,7 +112,7 @@ const KeyPairsSection: React.FC<KeyPairsSectionProps> = ({
           project_id: projectId,
           region,
         },
-      } as any,
+      } as never,
       {
         onSuccess: () => {
           ToastUtils.success(`Deleted key pair "${deleteModal.name}".`);
@@ -121,8 +121,8 @@ const KeyPairsSection: React.FC<KeyPairsSectionProps> = ({
           });
           setDeleteModal(null);
         },
-        onError: (error: any) => {
-          ToastUtils.error(error?.message || "Failed to delete key pair.");
+        onError: (error: Error | unknown) => {
+          ToastUtils.error((error as Error)?.message || "Failed to delete key pair.");
           setDeleteModal(null);
         },
       }
@@ -135,7 +135,7 @@ const KeyPairsSection: React.FC<KeyPairsSectionProps> = ({
       variant="outline"
       size="sm"
       leftIcon={<RefreshCw size={16} />}
-      onClick={handleSync}
+      onClick={() => handleSync()}
       isDisabled={!projectId || isSyncing}
       isLoading={isSyncing}
     >
@@ -160,22 +160,24 @@ const KeyPairsSection: React.FC<KeyPairsSectionProps> = ({
                 value: new Date(keyPair.created_at).toLocaleString(),
               }
             : null,
-        ].filter(Boolean) as any
+        ].filter(Boolean) as { label: string; value: string | React.ReactNode }[]
       }
-      actions={[
-        {
-          key: "remove",
-          icon: <Trash2 size={16} />,
-          variant: "danger",
-          onClick: () =>
-            setDeleteModal({
-              id: keyPair.id,
-              name: keyPair.name,
-            }),
-          disabled: isDeleting,
-          title: "Remove Key Pair",
-        } as any,
-      ]}
+      actions={
+        [
+          {
+            key: "remove",
+            icon: <Trash2 size={16} />,
+            variant: "danger",
+            onClick: () =>
+              setDeleteModal({
+                id: keyPair.id,
+                name: keyPair.name,
+              }),
+            disabled: isDeleting,
+            title: "Remove Key Pair",
+          },
+        ] as never[]
+      }
     />
   );
 
@@ -185,7 +187,7 @@ const KeyPairsSection: React.FC<KeyPairsSectionProps> = ({
         title="Key Pairs"
         description="Provision SSH key material to grant secure access to managed compute resources."
         actions={actions}
-        meta={stats as any}
+        meta={stats}
         isLoading={isFetching}
       >
         {paginatedKeyPairs.length > 0 ? (

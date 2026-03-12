@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { X, HardDrive, Plus, Check, Loader2, Zap } from "lucide-react";
-import objectStorageApi from "../../../services/objectStorageApi";
-import ToastUtils from "../../../utils/toastUtil";
+import objectStorageApi from "@/services/objectStorageApi";
+import ToastUtils from "@/utils/toastUtil";
 import PaymentModal from "../ui/PaymentModal";
 
 interface ExtensionOption {
@@ -73,20 +73,19 @@ const ExtendStorageModal: React.FC<ExtendStorageModalProps> = ({
   const [fastTrackEligible, setFastTrackEligible] = useState(false);
   const [fastTrackEnabled, setFastTrackEnabled] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && accountId) {
-      loadPricing();
-    }
-  }, [isOpen, accountId]);
-
   const loadPricing = useCallback(async () => {
     if (!accountId) return;
     setLoading(true);
     try {
-      const data = (await objectStorageApi.getExtensionPricing(accountId)) as any;
-      setOptions(data["options"] || []);
-      setPricePerGb(data["pricing"]?.["price_per_gb"] || 0.16);
-      setCurrency(data["pricing"]?.["currency"] || "USD");
+      const data = (await objectStorageApi.getExtensionPricing(accountId)) as Record<
+        string,
+        unknown
+      >;
+      setOptions((data["options"] as ExtensionOption[]) || []);
+      setPricePerGb(
+        ((data["pricing"] as Record<string, unknown>)?.["price_per_gb"] as number) || 0.16
+      );
+      setCurrency(((data["pricing"] as Record<string, unknown>)?.["currency"] as string) || "USD");
 
       // Set fast track eligibility (but don't auto-enable)
       const eligible = data["fast_track"]?.["eligible"] || false;
@@ -97,6 +96,12 @@ const ExtendStorageModal: React.FC<ExtendStorageModalProps> = ({
       setLoading(false);
     }
   }, [accountId]);
+
+  useEffect(() => {
+    if (isOpen && accountId) {
+      loadPricing();
+    }
+  }, [isOpen, accountId, loadPricing]);
 
   const getSelectedGb = (): number => {
     if (selectedOption !== null) {
@@ -152,8 +157,8 @@ const ExtendStorageModal: React.FC<ExtendStorageModalProps> = ({
         additionalGb,
         months,
         fastTrackEligible && fastTrackEnabled
-      )) as any;
-      setPaymentResult(result as ExtensionResult);
+      )) as ExtensionResult;
+      setPaymentResult(result);
 
       if (
         result["payment"]?.["required"] === false ||
@@ -193,8 +198,8 @@ const ExtendStorageModal: React.FC<ExtendStorageModalProps> = ({
           mode="modal"
           transactionData={{
             data: {
-              transaction: paymentResult.transaction as any,
-              payment: paymentResult.payment as any,
+              transaction: paymentResult.transaction as Record<string, unknown>,
+              payment: paymentResult.payment as Record<string, unknown>,
               order: {
                 storage_profiles: [
                   {

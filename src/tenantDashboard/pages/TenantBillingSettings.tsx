@@ -23,7 +23,7 @@ import {
   useSavePaymentGateway,
   useDeletePaymentGateway,
   type Settlement,
-} from "../../hooks/useTenantBilling";
+} from "@/hooks/useTenantBilling";
 
 const BILLING_MODEL_INFO = {
   direct: {

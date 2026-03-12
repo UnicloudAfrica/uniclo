@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
-import { useFetchCountries } from "../../../hooks/resource";
-import { useCreateTaxConfiguration } from "../../../hooks/adminHooks/taxConfigurationHooks";
-import ToastUtils from "../../../utils/toastUtil";
-import logger from "../../../utils/logger";
+import { useFetchCountries } from "@/hooks/resource";
+import { useCreateTaxConfiguration } from "@/hooks/adminHooks/taxConfigurationHooks";
+import ToastUtils from "@/utils/toastUtil";
+import logger from "@/utils/logger";
 
 const AddTaxTypeModal = ({ isOpen, onClose, defaultCountryId, onSuccess }: any) => {
   const { data: countries, isFetching: isCountriesFetching } = useFetchCountries();
@@ -73,7 +73,7 @@ const AddTaxTypeModal = ({ isOpen, onClose, defaultCountryId, onSuccess }: any) 
     if (formData.initialRate.trim() !== "" && formData.selectedCountryId) {
       const numericInitialRate = parseFloat(formData.initialRate);
       if (!Number.isNaN(numericInitialRate)) {
-        (dataToSubmit as any).rates = [
+        (dataToSubmit as Record<string, unknown>).rates = [
           {
             country_id: parseInt(formData.selectedCountryId),
             rate: numericInitialRate / 100,
@@ -188,7 +188,7 @@ const AddTaxTypeModal = ({ isOpen, onClose, defaultCountryId, onSuccess }: any) 
                       <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
                       <span className="text-gray-500 text-sm">Loading countries...</span>
                     </div>
-                  ) : countries && (countries as any).length > 0 ? (
+                  ) : countries && (countries as unknown[]).length > 0 ? (
                     <select
                       id="selectedCountryId"
                       value={formData.selectedCountryId}
@@ -197,7 +197,7 @@ const AddTaxTypeModal = ({ isOpen, onClose, defaultCountryId, onSuccess }: any) 
                       disabled={isPending}
                     >
                       <option value="">Select a country</option>
-                      {(countries as any).map((country: any) => (
+                      {(countries as Record<string, unknown>[]).map((country) => (
                         <option key={country.id} value={country.id}>
                           {country.name}
                         </option>

@@ -1,5 +1,5 @@
-import React from "react";
-import { designTokens } from "../../../styles/designTokens";
+import React, { memo } from "react";
+import { designTokens } from "@/styles/designTokens";
 
 export type StatusTone = "success" | "warning" | "danger" | "info" | "neutral";
 
@@ -117,4 +117,4 @@ const StatusPill: React.FC<StatusPillProps> = ({
   );
 };
 
-export default StatusPill;
+export default memo(StatusPill);

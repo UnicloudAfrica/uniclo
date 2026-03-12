@@ -2,12 +2,10 @@ import React from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Zap, Plus, Trash2, RefreshCw, Layers, Shield, Globe } from "lucide-react";
 import TenantPageShell from "../../components/TenantPageShell";
-import ModernCard from "../../../shared/components/ui/ModernCard";
-import ModernButton from "../../../shared/components/ui/ModernButton";
-import {
-  useLoadBalancers,
-  useDeleteLoadBalancer,
-} from "../../../hooks/adminHooks/loadBalancerHooks";
+import ModernCard from "@/shared/components/ui/ModernCard";
+import ModernButton from "@/shared/components/ui/ModernButton";
+import { useLoadBalancers, useDeleteLoadBalancer } from "@/hooks/adminHooks/loadBalancerHooks";
+import type { LoadBalancer } from "@/shared/components/infrastructure/types";
 
 const TenantLoadBalancers: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -112,7 +110,7 @@ const TenantLoadBalancers: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {loadBalancers.map((lb: any) => (
+                {loadBalancers.map((lb: LoadBalancer) => (
                   <tr key={lb.id} className="hover:bg-gray-50">
                     <td className="py-3 px-4">
                       <div className="font-medium text-gray-900">{lb.name}</div>

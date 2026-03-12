@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import TenantPageShell from "../components/TenantPageShell";
-import { ModernButton } from "../../shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
 import CreateProjectModal from "../components/addProject";
 
 const DashboardProjectCreate: React.FC = () => {

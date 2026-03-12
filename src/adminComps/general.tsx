@@ -2,24 +2,13 @@ import { useState, useContext, useRef } from "react";
 import load from "./assets/load.gif";
 import cloud from "./assets/cloud.png";
 import { GeneralContext } from "../contexts/contextprovider";
-import { initializeApp } from "firebase/app";
-import { getFirestore, doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { getFirestoreDb, getFirebaseApp } from "../shared/config/firebase";
 
 const General = () => {
-  const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    appId: import.meta.env.VITE_FIREBASE_APP_ID,
-    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const storage = getStorage(app);
+  const db = getFirestoreDb();
+  const storage = getStorage(getFirebaseApp());
 
   const [selectedFileName, setSelectedFileName] = useState("");
   const [loading, setLoading] = useState("No");

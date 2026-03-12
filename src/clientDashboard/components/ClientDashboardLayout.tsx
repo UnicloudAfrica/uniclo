@@ -2,11 +2,11 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Headbar from "./clientHeadbar";
 import Sidebar from "./clientSidebar";
-import useClientTheme from "../../hooks/clientHooks/useClientTheme";
-import { useApplyBrandingTheme } from "../../hooks/useBrandingTheme";
-import useClientAuthStore from "../../stores/clientAuthStore";
-import { ClientTheme } from "../../types/branding";
-import { AuthState } from "../../types/auth";
+import useClientTheme from "@/hooks/clientHooks/useClientTheme";
+import { useApplyBrandingTheme } from "@/hooks/useBrandingTheme";
+import useClientAuthStore from "@/stores/clientAuthStore";
+import { ClientTheme } from "@/types/branding";
+import { AuthState } from "@/types/auth";
 
 const ClientDashboardLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

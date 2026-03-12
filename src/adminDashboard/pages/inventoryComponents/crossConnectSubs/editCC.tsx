@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
-import { useUpdateCrossConnect } from "../../../../hooks/adminHooks/crossConnectHooks";
-import ToastUtils from "../../../../utils/toastUtil";
+import { useUpdateCrossConnect } from "@/hooks/adminHooks/crossConnectHooks";
+import ToastUtils from "@/utils/toastUtil";
 
 const EditCrossConnect = ({ isOpen, onClose, crossConnect }: any) => {
   const [formData, setFormData] = useState({

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import DetailedModules from "./DetailedModules"; // Note: File import was DetailedModules, check casing. Step 4303 shows "./DetailedModules".
-import ModernTable, { Column } from "../../../shared/components/ui/ModernTable";
+import ModernTable, { Column } from "@/shared/components/ui/ModernTable";
 
 interface PartnerModulesProps {
   tenantId?: string;

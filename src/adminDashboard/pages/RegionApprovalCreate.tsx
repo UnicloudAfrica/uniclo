@@ -11,12 +11,13 @@ import {
   AlertCircle,
   KeyRound,
 } from "lucide-react";
-import adminRegionApi from "../../services/adminRegionApi";
-import ToastUtils from "../../utils/toastUtil";
+import adminRegionApi from "@/services/adminRegionApi";
+import ToastUtils from "@/utils/toastUtil";
 import AdminPageShell from "../components/AdminPageShell";
-import { ModernCard, ModernButton } from "../../shared/components/ui";
-import StatusPill from "../../shared/components/ui/StatusPill";
-import { useFetchTenants } from "../../hooks/adminHooks/tenantHooks";
+import { ModernCard, ModernButton } from "@/shared/components/ui";
+import StatusPill from "@/shared/components/ui/StatusPill";
+import { useFetchTenants } from "@/hooks/adminHooks/tenantHooks";
+import { getFrontendVisibleProvidersWithCapability } from "@/config/providers";
 
 type RegionOwnershipType = "platform" | "tenant_owned";
 type RegionFulfillmentMode = "automated" | "manual";
@@ -80,7 +81,10 @@ type OverviewTile = {
 };
 
 const PROVIDER_OPTIONS = [
-  { value: "zadara", label: "Zadara" },
+  ...getFrontendVisibleProvidersWithCapability("compute").map(({ key, config }) => ({
+    value: key,
+    label: config.label.replace(/\s*\(.+\)\s*$/, ""),
+  })),
   { value: "aws", label: "AWS (coming soon)" },
   { value: "azure", label: "Azure (coming soon)" },
   { value: "gcp", label: "Google Cloud (coming soon)" },
@@ -89,8 +93,13 @@ const PROVIDER_OPTIONS = [
   { value: "openstack", label: "OpenStack (coming soon)" },
 ];
 
+/** Providers that support automated provisioning and object storage */
+const AUTOMATED_PROVIDERS = getFrontendVisibleProvidersWithCapability("compute").map(
+  ({ key }) => key
+);
+
 const initialFormState: RegionFormState = {
-  provider: "zadara",
+  provider: "",
   ownership_type: "platform",
   owner_tenant_id: "",
   code: "",
@@ -136,7 +145,7 @@ const RegionApprovalCreate = () => {
       if (name === "provider" && typeof value === "string") {
         const normalized = value.toLowerCase();
         next.provider = normalized;
-        if (normalized !== "zadara") {
+        if (!AUTOMATED_PROVIDERS.includes(normalized)) {
           next.fulfillment_mode = "manual";
           next.base_url = "";
           next.object_storage_enabled = false;
@@ -176,9 +185,9 @@ const RegionApprovalCreate = () => {
       setErrors((prev) => ({ ...prev, provider: "", base_url: "" }));
     }
   };
-  const validateZadaraFields = (nextErrors: RegionFormErrors) => {
+  const validateProviderFields = (nextErrors: RegionFormErrors) => {
     if (!formData.base_url) {
-      nextErrors.base_url = "Base URL is required for Zadara";
+      nextErrors.base_url = "Base URL is required";
     } else if (!/^https?:\/\/.+/.test(formData.base_url)) {
       nextErrors.base_url = "Use a valid http(s) URL";
     }
@@ -230,18 +239,18 @@ const RegionApprovalCreate = () => {
     if (!formData.name) nextErrors.name = "Region name is required";
     if (!formData.country_code) nextErrors.country_code = "Country code is required";
 
-    if (formData.provider === "zadara") {
-      validateZadaraFields(nextErrors);
+    if (AUTOMATED_PROVIDERS.includes(formData.provider)) {
+      validateProviderFields(nextErrors);
     } else {
       if (formData.base_url && !/^https?:\/\/.+/.test(formData.base_url)) {
         nextErrors.base_url = "Use a valid http(s) URL";
       }
       if (formData.fulfillment_mode === "automated") {
-        nextErrors.fulfillment_mode = "Automated fulfilment is available for Zadara only";
+        nextErrors.fulfillment_mode = "Automated fulfilment is not yet available for this provider";
       }
       if (formData.object_storage_enabled) {
         nextErrors.object_storage_enabled =
-          "Object storage automation is available for Zadara only";
+          "Object storage automation is not yet available for this provider";
       }
     }
 
@@ -263,7 +272,7 @@ const RegionApprovalCreate = () => {
 
   const buildPayload = () => {
     const rawProvider = sanitizeValue(formData.provider);
-    const provider = (typeof rawProvider === "string" ? rawProvider : "zadara").toLowerCase();
+    const provider = (typeof rawProvider === "string" ? rawProvider : "").toLowerCase();
 
     const payload: Record<string, unknown> = {
       provider,
@@ -283,7 +292,7 @@ const RegionApprovalCreate = () => {
       payload["platform_fee_percentage"] = Number.parseFloat(formData.platform_fee_percentage);
     }
 
-    if (provider !== "zadara") {
+    if (!AUTOMATED_PROVIDERS.includes(provider)) {
       payload["base_url"] = null;
       payload["fulfillment_mode"] = "manual";
     } else if (formData.object_storage_enabled) {
@@ -418,14 +427,14 @@ const RegionApprovalCreate = () => {
     },
   ];
 
-  const providerIsZadara = formData.provider === "zadara";
+  const providerSupportsAutomation = AUTOMATED_PROVIDERS.includes(formData.provider);
 
   const infoBanner = useMemo<InfoBanner>(() => {
-    if (!providerIsZadara) {
+    if (!providerSupportsAutomation) {
       return {
         tone: "warning",
         title: "Coming soon",
-        body: "Automated provisioning is currently available for Zadara only. Regions on other providers will operate in manual mode until integrations are released.",
+        body: "Automated provisioning is not yet available for this provider. Regions will operate in manual mode until the integration is released.",
       };
     }
     const base: InfoBanner =
@@ -446,7 +455,7 @@ const RegionApprovalCreate = () => {
     }
 
     return base;
-  }, [formData.fulfillment_mode, isTenantOwned, providerIsZadara]);
+  }, [formData.fulfillment_mode, isTenantOwned, providerSupportsAutomation]);
 
   const renderInput = (
     id: RegionFormField,
@@ -525,33 +534,35 @@ const RegionApprovalCreate = () => {
       <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-semibold text-gray-800">
-            Enable Zadara Silo Storage for this region?
+            Enable Silo Storage for this region?
           </p>
           <p className="mt-1 text-xs text-gray-600">
             Turning this on lets tenants in this region receive S3 credentials managed by the CRM.
             You&apos;ll need a valid access key.
           </p>
         </div>
-        <label className={`inline-flex items-center gap-2 ${providerIsZadara ? "" : "opacity-60"}`}>
+        <label
+          className={`inline-flex items-center gap-2 ${providerSupportsAutomation ? "" : "opacity-60"}`}
+        >
           <input
             type="checkbox"
             name="object_storage_enabled"
             checked={formData.object_storage_enabled}
             onChange={handleChange}
             className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            disabled={!providerIsZadara}
+            disabled={!providerSupportsAutomation}
           />
           <span className="text-sm font-medium text-gray-700">Enable Silo Storage</span>
         </label>
       </div>
 
-      {!providerIsZadara && (
+      {!providerSupportsAutomation && (
         <p className="text-xs text-gray-500">
-          Object storage automation is available when the region is backed by Zadara.
+          Object storage automation is available for supported providers.
         </p>
       )}
 
-      {providerIsZadara && formData.object_storage_enabled && (
+      {providerSupportsAutomation && formData.object_storage_enabled && (
         <div className="space-y-4">
           {renderInput(
             "object_storage_base_url",
@@ -613,7 +624,8 @@ const RegionApprovalCreate = () => {
           </div>
 
           <div className="rounded-xl border border-amber-100 bg-amber-50 p-4 text-xs text-amber-700">
-            Provide a monitored mailbox—Zadara sends password resets and operational alerts here.
+            Provide a monitored mailbox — the provider sends password resets and operational alerts
+            here.
           </div>
         </div>
       )}
@@ -704,7 +716,7 @@ const RegionApprovalCreate = () => {
                   ))}
                 </select>
               </div>
-              {!providerIsZadara && formData.provider && (
+              {!providerSupportsAutomation && formData.provider && (
                 <p className="text-xs text-amber-600">
                   Automated provisioning for {formData.provider.toUpperCase()} is coming soon.
                   Regions will operate in manual mode until the integration is ready.
@@ -766,11 +778,11 @@ const RegionApprovalCreate = () => {
 
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-6">
-              {renderInput("code", "Region Code", "lagos-1", MapPin, {
+              {renderInput("code", "Region Code", "uca-lagos-002", MapPin, {
                 required: true,
                 maxLength: 32,
               })}
-              {renderInput("name", "Region Name", "Lagos Region 1", Building2, {
+              {renderInput("name", "Region Name", "uca-lagos-002", Building2, {
                 required: true,
               })}
             </div>
@@ -782,14 +794,14 @@ const RegionApprovalCreate = () => {
               {renderInput("city", "City", "Lagos", MapPin)}
               <div className="space-y-2">
                 <label htmlFor="base_url" className="text-sm font-medium text-gray-700">
-                  Base URL {providerIsZadara && <span className="text-red-500">*</span>}
+                  Base URL {providerSupportsAutomation && <span className="text-red-500">*</span>}
                 </label>
                 <div
                   className={`flex items-center gap-3 rounded-lg border px-3 py-2 focus-within:ring-2 ${
                     errors.base_url
                       ? "border-red-400 focus-within:ring-red-100"
                       : "border-gray-300 focus-within:ring-primary-100"
-                  } ${providerIsZadara ? "" : "opacity-60"}`}
+                  } ${providerSupportsAutomation ? "" : "opacity-60"}`}
                 >
                   <Globe className="h-4 w-4 text-gray-400" />
                   <input
@@ -800,11 +812,11 @@ const RegionApprovalCreate = () => {
                     placeholder="https://api.lagos1.example.com"
                     className="flex-1 border-none bg-transparent text-sm outline-none"
                     type="url"
-                    disabled={!providerIsZadara}
+                    disabled={!providerSupportsAutomation}
                   />
                 </div>
                 {errors.base_url && <p className="text-xs text-red-500">{errors.base_url}</p>}
-                {!providerIsZadara && (
+                {!providerSupportsAutomation && (
                   <p className="text-xs text-gray-500">
                     Base URL will be captured once automated provisioning is supported for this
                     provider.
@@ -854,7 +866,7 @@ const RegionApprovalCreate = () => {
                         ? "border-primary-500 bg-primary-50"
                         : "border-gray-200 hover:border-primary-200 hover:bg-gray-50"
                     } ${
-                      mode.value === "automated" && !providerIsZadara
+                      mode.value === "automated" && !providerSupportsAutomation
                         ? "opacity-60 cursor-not-allowed"
                         : ""
                     }`}
@@ -865,13 +877,13 @@ const RegionApprovalCreate = () => {
                       value={mode.value}
                       checked={formData.fulfillment_mode === mode.value}
                       onChange={handleChange}
-                      disabled={mode.value === "automated" && !providerIsZadara}
+                      disabled={mode.value === "automated" && !providerSupportsAutomation}
                       className="mt-1 h-4 w-4"
                     />
                     <div>
                       <p className="text-sm font-semibold text-gray-900">{mode.title}</p>
                       <p className="text-xs text-gray-600">{mode.description}</p>
-                      {mode.value === "automated" && !providerIsZadara && (
+                      {mode.value === "automated" && !providerSupportsAutomation && (
                         <p className="text-[11px] text-amber-600 mt-1">
                           Enable automated fulfilment once {formData.provider.toUpperCase()}{" "}
                           integration is live.

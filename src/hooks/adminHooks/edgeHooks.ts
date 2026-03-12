@@ -7,8 +7,8 @@ import {
 } from "@tanstack/react-query";
 import adminSilentApiforUser from "../../index/admin/silentadminforuser";
 import apiAdminforUser from "../../index/admin/apiAdminforUser";
-import { EdgeConfig, EdgeNetwork, EdgeIpPool, AssignEdgePayload } from "../../shared/types/edge";
-import { ApiResponse } from "../../shared/types/resource";
+import { EdgeConfig, EdgeNetwork, EdgeIpPool, AssignEdgePayload } from "@/shared/types/edge";
+import { ApiResponse } from "@/shared/types/resource";
 
 // Admin: fetch project edge configuration
 const fetchProjectEdgeConfigAdmin = async (
@@ -25,7 +25,7 @@ const fetchProjectEdgeConfigAdmin = async (
     if (refresh) params.append("refresh", "1");
     const res = await adminSilentApiforUser<ApiResponse<EdgeConfig>>(
       "GET",
-      `/business/edge-config?${params.toString()}`
+      `/edge-config?${params.toString()}`
     );
     return res?.data ?? (res as unknown as EdgeConfig) ?? null;
   } catch {
@@ -34,18 +34,19 @@ const fetchProjectEdgeConfigAdmin = async (
 };
 
 // Admin: list available edge networks (optionally scoped by project)
-const normalizeCollection = <T>(payload: any): T[] => {
+const normalizeCollection = <T>(payload: unknown): T[] => {
   if (!payload) return [];
+  const record = payload as Record<string, any>;
   if (Array.isArray(payload)) return payload as T[];
-  if (Array.isArray(payload.items)) return payload.items as T[];
-  if (Array.isArray(payload.edge_networks)) return payload.edge_networks as T[];
-  if (Array.isArray(payload.edge_network_ip_pools)) {
-    return payload.edge_network_ip_pools as T[];
+  if (Array.isArray(record.items)) return record.items as T[];
+  if (Array.isArray(record.edge_networks)) return record.edge_networks as T[];
+  if (Array.isArray(record.edge_network_ip_pools)) {
+    return record.edge_network_ip_pools as T[];
   }
-  if (Array.isArray(payload.pools)) return payload.pools as T[];
-  if (Array.isArray(payload.data)) return payload.data as T[];
-  if (payload.data) {
-    return normalizeCollection<T>(payload.data);
+  if (Array.isArray(record.pools)) return record.pools as T[];
+  if (Array.isArray(record.data)) return record.data as T[];
+  if (record.data) {
+    return normalizeCollection<T>(record.data);
   }
   return [];
 };
@@ -62,7 +63,7 @@ const fetchEdgeNetworks = async ({
   if (region) params.append("region", region);
   const res = await adminSilentApiforUser(
     "GET",
-    `/business/edge-networks${params.toString() ? `?${params.toString()}` : ""}`
+    `/edge-networks${params.toString() ? `?${params.toString()}` : ""}`
   );
   return normalizeCollection<EdgeNetwork>(res);
 };
@@ -83,7 +84,7 @@ const fetchIpPools = async ({
   if (edge_network_id) params.append("edge_network_id", edge_network_id);
   const res = await adminSilentApiforUser(
     "GET",
-    `/business/edge-ip-pools${params.toString() ? `?${params.toString()}` : ""}`
+    `/edge-ip-pools${params.toString() ? `?${params.toString()}` : ""}`
   );
   return normalizeCollection<EdgeIpPool>(res);
 };
@@ -96,7 +97,7 @@ const assignProjectEdge = async ({
 }): Promise<EdgeConfig> => {
   const res = await apiAdminforUser<ApiResponse<EdgeConfig>>(
     "POST",
-    `/business/edge-config/assign`,
+    `/edge-config/assign`,
     payload as Record<string, unknown>
   );
   return (res?.data ?? res) as EdgeConfig;

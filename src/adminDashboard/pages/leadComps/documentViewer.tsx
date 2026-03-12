@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AlertTriangle, ExternalLink, Loader2, X } from "lucide-react";
-import { useDownloadDoc } from "../../../hooks/adminHooks/leadsHook";
+import { useDownloadDoc } from "@/hooks/adminHooks/leadsHooks";
 
 const inferMimeTypeFromName = (fileName: any) => {
   const lower = fileName?.toLowerCase() || "";

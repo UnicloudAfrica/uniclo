@@ -4,8 +4,8 @@ import ModernCard from "../ui/ModernCard";
 import ModernButton from "../ui/ModernButton";
 import Skeleton from "../Skeleton";
 import { ResourceEmptyState } from "../ui/ResourceEmptyState";
-import { getStatusDisplayConfig, formatDate } from "../../../utils/projectUtils";
-import { Project } from "../../../types/project";
+import { getStatusDisplayConfig, formatDate } from "@/utils/projectUtils";
+import { Project } from "@/types/project";
 
 export interface ProjectsCardViewProps {
   projects: Project[];

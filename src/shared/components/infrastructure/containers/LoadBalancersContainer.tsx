@@ -1,20 +1,23 @@
-import React from "react";
+import React, { useState } from "react";
 import { RefreshCw } from "lucide-react";
 import ModernButton from "../../ui/ModernButton";
+import ConfirmDialog from "@/shared/components/ui/ConfirmDialog";
 import LoadBalancersOverview from "../LoadBalancersOverview";
+
+import { LoadBalancer } from "../types";
 
 interface LoadBalancerHooks {
   useList: (
     projectId: string,
     region?: string
   ) => {
-    data: unknown;
+    data: LoadBalancer[];
     isLoading: boolean;
     refetch: () => void;
   };
   useDelete?: () => {
-    mutate: (input: any, options?: any) => void;
-    mutateAsync?: (input: any) => Promise<any>;
+    mutate: (input: { projectId: string; lbId: string }, options?: unknown) => void;
+    mutateAsync?: (input: { projectId: string; lbId: string }) => Promise<unknown>;
   };
 }
 
@@ -27,7 +30,7 @@ interface LoadBalancersContainerProps {
     headerActions: React.ReactNode;
     children: React.ReactNode;
   }) => React.ReactElement<any>;
-  onManage?: (lb: any) => void;
+  onManage?: (lb: LoadBalancer) => void;
 }
 
 const LoadBalancersContainer: React.FC<LoadBalancersContainerProps> = ({
@@ -37,42 +40,69 @@ const LoadBalancersContainer: React.FC<LoadBalancersContainerProps> = ({
   wrapper: Wrapper,
   onManage,
 }) => {
-  const { data: loadBalancers = [], isLoading, refetch } = hooks.useList(projectId, region);
+  const {
+    data: loadBalancers = [],
+    isLoading,
+    isFetching,
+    refetch,
+  } = hooks.useList(projectId, region);
   const deleteMutation = hooks.useDelete ? hooks.useDelete() : null;
 
-  const handleDelete = async (lb: any) => {
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; data?: LoadBalancer }>({
+    open: false,
+  });
+
+  const handleDelete = (lb: LoadBalancer) => {
     if (!deleteMutation) return;
-    if (
-      !confirm("Are you sure you want to delete this Load Balancer? This action cannot be undone.")
-    ) {
-      return;
+    setDeleteConfirm({ open: true, data: lb });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteMutation || !deleteConfirm.data) return;
+    const lb = deleteConfirm.data;
+    try {
+      if (deleteMutation.mutateAsync) {
+        await deleteMutation.mutateAsync({ projectId, lbId: lb.id });
+        refetch();
+        return;
+      }
+      deleteMutation.mutate({ projectId, lbId: lb.id }, { onSuccess: () => refetch() });
+    } finally {
+      setDeleteConfirm({ open: false });
     }
-    if (deleteMutation.mutateAsync) {
-      await deleteMutation.mutateAsync({ projectId, lbId: lb.id });
-      return;
-    }
-    deleteMutation.mutate({ projectId, lbId: lb.id });
   };
 
   const headerActions = (
     <div className="flex items-center gap-3">
-      <ModernButton variant="secondary" size="sm" onClick={() => refetch()} disabled={isLoading}>
-        <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-        Refresh
+      <ModernButton variant="secondary" size="sm" onClick={() => refetch()} disabled={isFetching}>
+        <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
+        {isFetching ? "Refreshing..." : "Refresh"}
       </ModernButton>
     </div>
   );
 
   return (
-    <Wrapper headerActions={headerActions}>
-      <LoadBalancersOverview
-        loadBalancers={loadBalancers as any}
-        isLoading={isLoading}
-        onDelete={deleteMutation ? handleDelete : undefined}
-        onManage={onManage}
-        showActions={Boolean(deleteMutation || onManage)}
+    <>
+      <Wrapper headerActions={headerActions}>
+        <LoadBalancersOverview
+          loadBalancers={loadBalancers}
+          isLoading={isLoading}
+          onDelete={deleteMutation ? handleDelete : undefined}
+          onManage={onManage}
+          showActions={Boolean(deleteMutation || onManage)}
+        />
+      </Wrapper>
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.open}
+        title="Delete Load Balancer"
+        message="Are you sure you want to delete this Load Balancer? This action cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteConfirm({ open: false })}
       />
-    </Wrapper>
+    </>
   );
 };
 

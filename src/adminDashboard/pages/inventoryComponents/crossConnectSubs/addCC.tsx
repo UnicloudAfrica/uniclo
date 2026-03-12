@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
-import ToastUtils from "../../../../utils/toastUtil";
-import { useCreateCrossConnect } from "../../../../hooks/adminHooks/crossConnectHooks";
+import ToastUtils from "@/utils/toastUtil";
+import { useCreateCrossConnect } from "@/hooks/adminHooks/crossConnectHooks";
 
 const AddCrossConnect = ({ isOpen, onClose }: any) => {
   const { mutate, isPending } = useCreateCrossConnect();

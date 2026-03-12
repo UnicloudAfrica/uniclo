@@ -167,7 +167,7 @@ const fetchTenantBusinessSettings = async () => {
 
 const updateTenantBusinessSettings = async (settingsData: SettingsPayload) => {
   const res = await requestSettings(
-    api as any,
+    api as unknown as SettingsApiClient,
     "PUT",
     "/business/settings/tenant/business",
     settingsData
@@ -182,7 +182,7 @@ const fetchTenantBillingSettings = async () => {
 
 const updateTenantBillingSettings = async (settingsData: SettingsPayload) => {
   const res = await requestSettings(
-    api as any,
+    api as unknown as SettingsApiClient,
     "PUT",
     "/business/settings/tenant/billing",
     settingsData
@@ -197,7 +197,7 @@ const fetchTenantBrandingSettings = async () => {
 
 const updateTenantBrandingSettings = async (settingsData: SettingsPayload) => {
   const res = await requestSettings(
-    api as any,
+    api as unknown as SettingsApiClient,
     "PUT",
     "/business/settings/tenant/branding",
     settingsData
@@ -217,7 +217,7 @@ const fetchAllTenantSettings = async () => {
 
 const resetTenantCategorySettings = async (resetData: SettingsPayload) => {
   const res = await requestSettings(
-    api as any,
+    api as unknown as SettingsApiClient,
     "POST",
     "/business/settings/tenant/reset",
     resetData

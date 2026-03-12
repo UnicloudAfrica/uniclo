@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { ArrowUpRight, Loader2 } from "lucide-react";
-import { ModernInput, ModernModal } from "../../../shared/components/ui";
+import { ModernInput, ModernModal } from "@/shared/components/ui";
 import { adminSilentApi } from "../../../index/admin/api";
-import ToastUtils from "../../../utils/toastUtil";
-import logger from "../../../utils/logger";
+import ToastUtils from "@/utils/toastUtil";
+import logger from "@/utils/logger";
 
 interface PromoteClientModalProps {
   isOpen: boolean;

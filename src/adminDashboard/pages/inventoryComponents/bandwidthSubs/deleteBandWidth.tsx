@@ -1,6 +1,6 @@
 import { X, Loader2 } from "lucide-react";
-import ToastUtils from "../../../../utils/toastUtil";
-import { useDeleteBandwidthProduct } from "../../../../hooks/adminHooks/bandwidthHooks";
+import ToastUtils from "@/utils/toastUtil";
+import { useDeleteBandwidthProduct } from "@/hooks/adminHooks/bandwidthHooks";
 
 const DeleteBandwidthModal = ({ isOpen, onClose, bandwidth }: any) => {
   // Use the useDeleteBandwidthProduct hook

@@ -4,7 +4,7 @@ import ClientPageShell from "../components/ClientPageShell";
 import TemplateGallery from "../../components/templates/TemplateGallery";
 import { Wrench } from "lucide-react";
 
-import { InstanceTemplate } from "../../hooks/useInstanceTemplates";
+import { InstanceTemplate } from "@/hooks/useInstanceTemplates";
 
 const ClientInstanceCreate: React.FC = () => {
   const navigate = useNavigate();

@@ -2,11 +2,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import { CalendarClock, SquarePen, Trash2 } from "lucide-react";
 import EditPartnerModal from "../../pages/tenantComps/EditTenant";
 import DeletePartnerModal from "../../pages/tenantComps/DeleteTenant";
-import { ModernButton } from "../../../shared/components/ui";
-import StatusPill from "../../../shared/components/ui/StatusPill";
+import { ModernButton } from "@/shared/components/ui";
+import StatusPill from "@/shared/components/ui/StatusPill";
 import IconBadge from "../IconBadge";
-import SetupProgressCard from "../../../shared/components/projects/details/SetupProgressCard";
-import logger from "../../../utils/logger";
+import SetupProgressCard from "@/shared/components/projects/details/SetupProgressCard";
+import logger from "@/utils/logger";
 
 interface OverviewPartnerProps {
   partnerDetails: any;
@@ -40,7 +40,7 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails, openE
     }
   };
 
-  const business = partnerDetails?.business ?? {};
+  const business = useMemo(() => partnerDetails?.business ?? {}, [partnerDetails]);
   const verificationTone = partnerDetails?.verified === 1 ? "success" : "warning";
   const verificationLabel =
     partnerDetails?.verified === 1 ? "Verified partner" : "Verification pending";
@@ -240,8 +240,8 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails, openE
                 {contactItems.map(({ iconKey, tone, label, value, type }: any) => (
                   <li key={label} className="flex items-start gap-3 text-sm">
                     <IconBadge
-                      iconKey={iconKey as any}
-                      tone={tone as any}
+                      iconKey={iconKey as never}
+                      tone={tone as never}
                       size="sm"
                       className="mt-0.5"
                     />
@@ -318,7 +318,7 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails, openE
                     key={label}
                     className="flex items-start gap-3 rounded-2xl border border-[var(--theme-surface-alt)] bg-[var(--theme-surface-alt)] p-3"
                   >
-                    <IconBadge iconKey={iconKey as any} tone={tone as any} />
+                    <IconBadge iconKey={iconKey as never} tone={tone as never} />
                     <div>
                       <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                         {label}
@@ -343,7 +343,7 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails, openE
 
             <div className="rounded-3xl border border-[var(--theme-surface-alt)] bg-white p-5 shadow-sm">
               <div className="flex items-center gap-2">
-                <IconBadge icon={CalendarClock as any} tone="indigo" size="sm" />
+                <IconBadge icon={CalendarClock as never} tone="indigo" size="sm" />
                 <h3 className="text-sm font-semibold text-slate-900">Compliance & Lifecycle</h3>
               </div>
               <dl className="mt-4 grid gap-3 sm:grid-cols-2">

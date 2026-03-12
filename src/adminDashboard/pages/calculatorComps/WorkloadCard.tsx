@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { HardDrive, Network, Plus, Trash2, Loader2 } from "lucide-react";
-import ModernCard from "../../../shared/components/ui/ModernCard";
-import { ModernButton } from "../../../shared/components/ui";
-import ModernInput from "../../../shared/components/ui/ModernInput";
-import SelectableInput, { SelectableOption } from "../../../shared/components/ui/SelectableInput";
-import { useFetchProductPricing } from "../../../hooks/resource";
-import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
-import { useFormattedRegions } from "../../../utils/regionUtils";
+import ModernCard from "@/shared/components/ui/ModernCard";
+import { ModernButton } from "@/shared/components/ui";
+import ModernInput from "@/shared/components/ui/ModernInput";
+import SelectableInput, { SelectableOption } from "@/shared/components/ui/SelectableInput";
+import { useFetchProductPricing } from "@/hooks/resource";
+import { useFetchRegions } from "@/hooks/adminHooks/regionHooks";
+import { useFormattedRegions } from "@/utils/regionUtils";
 
 type WorkloadVolume = {
   volume_type_id?: string | number | null;
@@ -97,10 +97,12 @@ const WorkloadCard = ({
   }, [errors]);
 
   const { data: rawRegions, isFetching: isRegionsFetching } = useFetchRegions();
-  const regions = useFormattedRegions((Array.isArray(rawRegions) ? rawRegions : []) as any);
+  const regions = useFormattedRegions(
+    (Array.isArray(rawRegions) ? rawRegions : []) as Record<string, unknown>[]
+  );
 
   const { data: computerInstancesData, isFetching: isComputerInstancesFetching } =
-    useFetchProductPricing(data.region as any, "compute_instance", {
+    useFetchProductPricing(data.region as string, "compute_instance", {
       enabled: !!data.region,
       countryCode,
     });
@@ -109,35 +111,35 @@ const WorkloadCard = ({
     : [];
 
   const { data: osImagesData, isFetching: isOsImagesFetching } = useFetchProductPricing(
-    data.region as any,
+    data.region as string,
     "os_image",
     { enabled: !!data.region, countryCode }
   );
   const osImages: PricingProduct[] = Array.isArray(osImagesData) ? osImagesData : [];
 
   const { data: ebsVolumesData, isFetching: isEbsVolumesFetching } = useFetchProductPricing(
-    data.region as any,
+    data.region as string,
     "volume_type",
     { enabled: !!data.region, countryCode }
   );
   const ebsVolumes: PricingProduct[] = Array.isArray(ebsVolumesData) ? ebsVolumesData : [];
 
   const { data: bandwidthsData, isFetching: isBandwidthsFetching } = useFetchProductPricing(
-    data.region as any,
+    data.region as string,
     "bandwidth",
     { enabled: !!data.region, countryCode }
   );
   const bandwidths: PricingProduct[] = Array.isArray(bandwidthsData) ? bandwidthsData : [];
 
   const { data: floatingIpsData, isFetching: isFloatingIpsFetching } = useFetchProductPricing(
-    data.region as any,
+    data.region as string,
     "ip",
     { enabled: !!data.region, countryCode }
   );
   const floatingIps: PricingProduct[] = Array.isArray(floatingIpsData) ? floatingIpsData : [];
 
   const { data: crossConnectsData, isFetching: isCrossConnectsFetching } = useFetchProductPricing(
-    data.region as any,
+    data.region as string,
     "cross_connect",
     {
       enabled: !!data.region,

@@ -3,19 +3,19 @@ import { Loader2 } from "lucide-react";
 import logo from "./assets/logo.png";
 
 import { useNavigate } from "react-router-dom";
-import VerificationCodeInput from "../../utils/VerificationCodeInput";
-import useAdminAuthStore from "../../stores/adminAuthStore";
-import useTenantAuthStore from "../../stores/tenantAuthStore";
-import useClientAuthStore from "../../stores/clientAuthStore";
+import VerificationCodeInput from "@/utils/VerificationCodeInput";
+import useAdminAuthStore from "@/stores/adminAuthStore";
+import useTenantAuthStore from "@/stores/tenantAuthStore";
+import useClientAuthStore from "@/stores/clientAuthStore";
 
-import { clearAuthSessionsExcept } from "../../stores/sessionUtils";
-import { useVerifyAdminMail } from "../../hooks/adminHooks/authHooks";
+import { clearAuthSessionsExcept } from "@/stores/sessionUtils";
+import { useVerifyAdminMail } from "@/hooks/adminHooks/authHooks";
 import {
   resolveBrandLogo,
   usePlatformBrandingTheme,
   useApplyBrandingTheme,
-} from "../../hooks/useBrandingTheme";
-import useImageFallback from "../../hooks/useImageFallback";
+} from "@/hooks/useBrandingTheme";
+import useImageFallback from "@/hooks/useImageFallback";
 import AuthShell from "../../components/auth/AuthShell";
 
 interface VerifyErrors {

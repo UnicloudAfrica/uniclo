@@ -1,14 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Calculator, Flag, Globe, Loader2, Percent, Pencil, Plus } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
-import { ModernButton } from "../../shared/components/ui";
-import { ModernCard } from "../../shared/components/ui";
-import ResourceHero from "../../shared/components/ui/ResourceHero";
+import { ModernButton } from "@/shared/components/ui";
+import { ModernCard } from "@/shared/components/ui";
+import ResourceHero from "@/shared/components/ui/ResourceHero";
 import ResourceDataExplorer from "../components/ResourceDataExplorer";
 import AddTaxTypeModal from "./taxComponents/addTax";
 import EditTaxTypeModal from "./taxComponents/editTax";
-import { useFetchTaxConfigurations } from "../../hooks/adminHooks/taxConfigurationHooks";
-import logger from "../../utils/logger";
+import { useFetchTaxConfigurations } from "@/hooks/adminHooks/taxConfigurationHooks";
+import logger from "@/utils/logger";
 
 interface TaxCountry {
   id?: string | number;

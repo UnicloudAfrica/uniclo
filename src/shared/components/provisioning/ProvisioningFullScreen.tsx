@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { Loader2, ArrowRight, CheckCircle, RefreshCw } from "lucide-react";
 import SetupProgressCard from "../projects/details/SetupProgressCard";
 
@@ -20,6 +20,13 @@ const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
   onRefresh,
   onViewProject,
 }) => {
+  const onRefreshRef = useRef(onRefresh);
+  const hasRefreshHandler = Boolean(onRefresh);
+
+  useEffect(() => {
+    onRefreshRef.current = onRefresh;
+  }, [onRefresh]);
+
   // Calculate progress percentage
   const totalSteps = setupSteps.length;
   const completedSteps = setupSteps.filter((s) => s.status === "completed").length;
@@ -28,26 +35,20 @@ const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
   // Find current active step
   const currentStep = setupSteps.find((s) => s.status === "pending" || s.status === "in_progress");
 
-  // Auto-refresh logic (Polling fallback)
+  // Keep polling while provisioning is active, then do one final refresh after 100%.
   useEffect(() => {
-    if (!onRefresh) return;
+    if (!hasRefreshHandler) return;
 
     let timer: ReturnType<typeof setTimeout> | null = null;
     let pollInterval: ReturnType<typeof setInterval> | null = null;
 
     if (progress >= 100) {
-      // Finalization polling (faster to catch 'active' status switch)
       timer = setTimeout(() => {
-        onRefresh();
+        onRefreshRef.current?.();
       }, 2000);
-
-      pollInterval = setInterval(() => {
-        onRefresh();
-      }, 3000);
     } else {
-      // Universal fallback polling (if broadcasting fails or is missing)
       pollInterval = setInterval(() => {
-        onRefresh();
+        onRefreshRef.current?.();
       }, 5000);
     }
 
@@ -55,7 +56,7 @@ const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
       if (timer) clearTimeout(timer);
       if (pollInterval) clearInterval(pollInterval);
     };
-  }, [progress, onRefresh]);
+  }, [progress, hasRefreshHandler]);
 
   // Show completion state when at 100%
   const isComplete = progress >= 100;
@@ -145,7 +146,8 @@ const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
                 className={`px-4 py-1.5 ${isComplete ? "bg-green-100 text-green-700" : "bg-[--theme-color-10] text-[--theme-color]"} rounded-full text-xs font-bold flex items-center gap-2 ${!isComplete && "animate-bounce"}`}
               >
                 <RefreshCw className={`w-3 h-3 ${!isComplete && "animate-spin"}`} />
-                {(currentStep as any)?.label} {isComplete ? "Successful" : "In progress..."}
+                {(currentStep as { label?: string })?.label}{" "}
+                {isComplete ? "Successful" : "In progress..."}
               </div>
             </div>
           )}
@@ -155,7 +157,7 @@ const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
         <div
           className={`overflow-hidden rounded-3xl border ${isComplete ? "border-green-100 shadow-green-100/30" : "border-gray-100 shadow-gray-200/50"} bg-white shadow-2xl`}
         >
-          <SetupProgressCard steps={setupSteps as any} isLoading={false} />
+          <SetupProgressCard steps={setupSteps as never} isLoading={false} />
         </div>
 
         {/* Action Buttons */}
@@ -173,7 +175,10 @@ const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
 
         <div className="text-center mt-12 space-y-3 pb-20">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-lg text-[10px] text-gray-500 font-mono uppercase tracking-widest">
-            Project ID: {(project as any)?.identifier || (project as any)?.id || "Loading..."}
+            Project ID:{" "}
+            {(project as { identifier?: string; id?: string })?.identifier ||
+              (project as { identifier?: string; id?: string })?.id ||
+              "Loading..."}
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import logo from "../assets/logo.png";
-import useImageFallback from "../../../hooks/useImageFallback";
+import useImageFallback from "@/hooks/useImageFallback";
 
 export default function Header({ logoSrc, logoAlt = "Logo", companyName = "Your Company" }: any) {
   const { src: resolvedLogoSrc, onError: handleLogoError } = useImageFallback(logoSrc, logo);

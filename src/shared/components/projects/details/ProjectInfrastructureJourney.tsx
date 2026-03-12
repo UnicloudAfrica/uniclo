@@ -1,5 +1,5 @@
 import React from "react";
-import { designTokens } from "../../../../styles/designTokens";
+import { designTokens } from "@/styles/designTokens";
 
 interface InfrastructureSection {
   key: string;

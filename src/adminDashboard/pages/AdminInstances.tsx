@@ -1,5 +1,5 @@
 import AdminPageShell from "../components/AdminPageShell";
-import SharedInstanceList from "../../shared/components/instances/SharedInstanceList";
+import SharedInstanceList from "@/shared/components/instances/SharedInstanceList";
 
 export default function AdminInstances() {
   return (

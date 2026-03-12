@@ -4,12 +4,12 @@ import { Cable } from "lucide-react";
 import ClientPageShell from "../components/ClientPageShell";
 import NetworkInterfacesContainer, {
   NetworkInterfaceHooks,
-} from "../../shared/components/infrastructure/containers/NetworkInterfacesContainer";
+} from "@/shared/components/infrastructure/containers/NetworkInterfacesContainer";
 import {
   useFetchClientNetworkInterfaces,
   syncClientNetworkInterfacesFromProvider,
-} from "../../hooks/clientHooks/networkHooks";
-import ToastUtils from "../../utils/toastUtil";
+} from "@/hooks/clientHooks/networkHooks";
+import ToastUtils from "@/utils/toastUtil";
 
 /**
  * Client Network Interfaces - thin wrapper.

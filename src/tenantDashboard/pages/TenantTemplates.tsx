@@ -1,6 +1,6 @@
 import React from "react";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
-import TemplateManager from "../../shared/components/templates/TemplateManager";
+import TemplateManager from "@/shared/components/templates/TemplateManager";
 
 const TenantTemplates: React.FC = () => {
   return (

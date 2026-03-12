@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { Globe, MapPin, DollarSign, Pencil, Trash2, Plus } from "lucide-react";
-import { useFetchFloatingIPs } from "../../../hooks/adminHooks/floatingIPHooks";
+import { useFetchFloatingIPs } from "@/hooks/adminHooks/floatingIPHooks";
 import ResourceDataExplorer from "../../components/ResourceDataExplorer";
 import AddFloatingIP from "./ipSubs/addFloatingIP";
 import EditFloatingIP from "./ipSubs/editFloatingIP";
 import DeleteFloatingIP from "./ipSubs/deleteFloatingIP";
-import { ModernButton } from "../../../shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
 
 const formatCurrency = (amount: any, currency = "USD") => {
   if (amount === null || amount === undefined || Number.isNaN(amount)) {
@@ -19,7 +19,7 @@ const formatCurrency = (amount: any, currency = "USD") => {
   }).format(Number(amount));
 };
 
-const FloatingIP = ({ selectedRegion, onMetricsChange }: any) => {
+const FloatingIP = ({ selectedRegion, selectedProvider, onMetricsChange }: any) => {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [search, setSearch] = useState("");
@@ -36,19 +36,19 @@ const FloatingIP = ({ selectedRegion, onMetricsChange }: any) => {
 
   const { data, isFetching } = useFetchFloatingIPs(
     selectedRegion,
-    { page, perPage, search },
+    { page, perPage, search, provider: selectedProvider },
     { enabled: Boolean(selectedRegion), keepPreviousData: true }
   );
 
-  const rows = data?.data ?? [];
+  const rows = useMemo(() => data?.data ?? [], [data]);
   const meta = data?.meta ?? null;
   const total = meta?.total ?? rows.length;
 
   const averagePrice = useMemo(() => {
     if (!rows.length) return 0;
     return (
-      (rows as any).reduce(
-        (acc: any, ip: any) => (acc as any) + Number((ip as any).price || 0),
+      (rows as Record<string, unknown>[]).reduce(
+        (acc: number, ip: Record<string, unknown>) => acc + Number((ip.price as number) || 0),
         0
       ) / rows.length
     );
@@ -189,13 +189,13 @@ const FloatingIP = ({ selectedRegion, onMetricsChange }: any) => {
       <ResourceDataExplorer
         title="Floating IP catalogue"
         description="Manage routable IP pools and cost structures that back tenant networking."
-        columns={columns as any}
-        rows={rows as any}
+        columns={columns as Record<string, unknown>[]}
+        rows={rows as Record<string, unknown>[]}
         loading={isFetching}
-        page={meta?.current_page ?? (page as any)}
-        perPage={meta?.per_page ?? (perPage as any)}
-        total={total as any}
-        meta={meta as any}
+        page={(meta?.current_page as number) ?? page}
+        perPage={(meta?.per_page as number) ?? perPage}
+        total={total as number}
+        meta={meta as Record<string, unknown>}
         onPageChange={setPage}
         onPerPageChange={(next) => {
           setPerPage(next);

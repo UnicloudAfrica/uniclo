@@ -1,5 +1,5 @@
-import React, { ReactNode } from "react";
-import { designTokens } from "../../../styles/designTokens";
+import React, { memo, ReactNode } from "react";
+import { designTokens } from "@/styles/designTokens";
 import { CloudSnow } from "lucide-react";
 
 interface ResourceEmptyStateProps {
@@ -9,7 +9,7 @@ interface ResourceEmptyStateProps {
   icon?: ReactNode;
 }
 
-export const ResourceEmptyState: React.FC<ResourceEmptyStateProps> = ({
+const ResourceEmptyStateBase: React.FC<ResourceEmptyStateProps> = ({
   title,
   message,
   action,
@@ -50,3 +50,5 @@ export const ResourceEmptyState: React.FC<ResourceEmptyStateProps> = ({
     </div>
   );
 };
+
+export const ResourceEmptyState = memo(ResourceEmptyStateBase);

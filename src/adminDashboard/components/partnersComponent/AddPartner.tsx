@@ -5,20 +5,20 @@ import {
   useFetchIndustries,
   useFetchStatesById,
   useFetchCitiesById,
-} from "../../../hooks/resource";
-import { useCreateTenant } from "../../../hooks/adminHooks/tenantHooks";
-import { useAssignDiscount } from "../../../hooks/useDiscounts";
+} from "@/hooks/resource";
+import { useCreateTenant } from "@/hooks/adminHooks/tenantHooks";
+import { useAssignDiscount } from "@/hooks/useDiscounts";
 import CreateAccount from "../../pages/tenantComps/CreateAccount";
 import BusinessInfo from "../../pages/tenantComps/BusinessInfo";
 import BusinessAddress from "../../pages/tenantComps/BusinessAddress";
 import UploadFiles from "../../pages/tenantComps/UploadFiles";
 import BillingConfigStep from "../../pages/tenantComps/BillingConfigStep";
 import StepNavigation from "../../pages/tenantComps/StepNavigation";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "@/utils/toastUtil";
 import DiscountFormSection, {
   getDefaultDiscountFormData,
   DiscountFormData,
-} from "../../../shared/components/DiscountFormSection";
+} from "@/shared/components/DiscountFormSection";
 import FormLayout, { formAccent, getAccentRgba } from "../../components/FormLayout";
 
 interface AddPartnerProps {
@@ -364,7 +364,9 @@ const AddPartner: React.FC<AddPartnerProps> = ({ isOpen, onClose, mode = "modal"
     "businessLogo",
   ];
 
-  const uploadedDocs = docKeys.filter((key: any) => (formData.business as any)[key]).length;
+  const uploadedDocs = docKeys.filter(
+    (key: string) => (formData.business as Record<string, unknown>)[key]
+  ).length;
   const progress = Math.round(((currentStep + 1) / steps.length) * 100);
   const domainPreview = formData.domain ? `${formData.domain}.unicloudafrica.com` : "Not assigned";
   const contactName = [formData.first_name, formData.last_name].filter(Boolean).join(" ").trim();
@@ -383,7 +385,7 @@ const AddPartner: React.FC<AddPartnerProps> = ({ isOpen, onClose, mode = "modal"
       formData={formData}
       setFormData={setFormData}
       errors={errors}
-      setErrors={setErrors as any}
+      setErrors={setErrors as never}
     />
   ) : null;
 
@@ -591,7 +593,7 @@ const AddPartner: React.FC<AddPartnerProps> = ({ isOpen, onClose, mode = "modal"
       description="Capture partner profile, regional presence, and supporting documentation to complete onboarding."
       accentGradient={accent.gradient}
       accentColor={accent.color}
-      meta={meta as any}
+      meta={meta as never}
       aside={asideContent}
       footer={footer}
       maxWidthClass="max-w-8xl"

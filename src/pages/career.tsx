@@ -11,13 +11,13 @@ interface CareerItem {
   duration: string;
   pay: string;
   location: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   [key: string]: any;
 }
 
 const Career = () => {
   const [isSelectOpen, setIsSelectOpen] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const [careerArray] = useContext(CareerContext) as [CareerItem[]];
   const [selectedLocation, setSelectedLocation] = useState("all"); // Initialize with 'all'
 

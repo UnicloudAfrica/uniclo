@@ -1,11 +1,19 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import tenantRegionApi from "../../services/tenantRegionApi";
+import tenantRegionApi from "@/services/tenantRegionApi";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
-import logger from "../../utils/logger";
+import { getFrontendVisibleProvidersWithCapability } from "@/config/providers";
+import logger from "@/utils/logger";
 
 type FulfillmentMode = "automated" | "manual";
-type Provider = "zadara";
+type Provider = string;
+
+const PROVIDER_OPTIONS = getFrontendVisibleProvidersWithCapability("compute").map(
+  ({ key, config }) => ({
+    value: key,
+    label: config.label.replace(/\s*\(.+\)\s*$/, ""),
+  })
+);
 
 interface RegionRequestFormData {
   provider: Provider;
@@ -94,9 +102,13 @@ const NewRegionRequest = () => {
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="zadara">Zadara</option>
+              {PROVIDER_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
-            <p className="text-sm text-gray-500 mt-1">Currently only Zadara is supported</p>
+            <p className="text-sm text-gray-500 mt-1">Select the cloud provider for your region</p>
           </div>
 
           {/* Region Code */}
@@ -109,7 +121,7 @@ const NewRegionRequest = () => {
               name="code"
               value={formData.code}
               onChange={handleChange}
-              placeholder="e.g., lagos-1"
+              placeholder="e.g., uca-lagos-002"
               className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                 errors.code ? "border-red-500" : "border-gray-300"
               }`}

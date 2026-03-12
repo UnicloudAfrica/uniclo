@@ -4,20 +4,36 @@ import { ShieldCheck } from "lucide-react";
 import ClientPageShell from "../components/ClientPageShell";
 import NetworkAclsContainer, {
   NetworkAclHooks,
-} from "../../shared/components/infrastructure/containers/NetworkAclsContainer";
+} from "@/shared/components/infrastructure/containers/NetworkAclsContainer";
 import {
   useNetworkAcls,
   useCreateNetworkAcl,
   useDeleteNetworkAcl,
   useVpcs,
-} from "../../shared/hooks/vpcInfraHooks";
-import { NetworkAcl } from "../../shared/components/infrastructure/types";
+} from "@/shared/hooks/vpcInfraHooks";
+import { NetworkAcl } from "@/shared/components/infrastructure/types";
+import { useFetchProjectById } from "@/shared/hooks/resources/projectHooks";
+import { isFeatureSupported } from "@/utils/featureGating";
+import { UnsupportedFeature } from "@/shared/components/UnsupportedFeature";
 
 const ClientNetworkAcls: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const projectId = searchParams.get("project") || "";
   const region = searchParams.get("region") || "";
+
+  const { data: projectData } = useFetchProjectById(projectId);
+  const project =
+    projectData && typeof projectData === "object" ? (projectData as Record<string, any>) : null;
+  const provider = project?.provider || searchParams.get("provider");
+
+  if (provider && !isFeatureSupported(provider, "network_acls")) {
+    return (
+      <ClientPageShell title="Network ACLs" description="">
+        <UnsupportedFeature feature="Network ACLs" provider={provider} />
+      </ClientPageShell>
+    );
+  }
 
   const hooks: NetworkAclHooks = {
     useList: useNetworkAcls as NetworkAclHooks["useList"],

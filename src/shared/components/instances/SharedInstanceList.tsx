@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   RefreshCw,
@@ -14,13 +14,15 @@ import {
 import { ModernButton, ModernTable } from "../ui";
 import { StatusBadge } from "./StatusBadge";
 import InstanceStats from "./InstanceStats";
-import EmbeddedConsole, { useConsoleManager } from "../../../components/Console/EmbeddedConsole";
-import ToastUtils from "../../../utils/toastUtil";
+import EmbeddedConsole, { useConsoleManager } from "@/components/Console/EmbeddedConsole";
+import ToastUtils from "@/utils/toastUtil";
 
 // Hooks
-import { useFetchPurchasedInstances } from "../../../hooks/adminHooks/instancesHook";
-import { useFetchClientPurchasedInstances } from "../../../hooks/clientHooks/instanceHooks";
-import { useFetchTenantInstances } from "../../../hooks/tenantHooks/instancesHook";
+import {
+  useFetchPurchasedInstances,
+  useFetchInstanceRequests as useFetchTenantInstances,
+} from "../../hooks/resources/instanceHooks";
+import { useFetchClientPurchasedInstances } from "@/hooks/clientHooks/instanceHooks";
 
 interface SharedInstanceListProps {
   context: "admin" | "tenant" | "client";
@@ -44,7 +46,7 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
   }, [context]);
 
   const { isFetching, data: instancesResponse, refetch } = useInstances();
-  const instances = (instancesResponse as any)?.data || [];
+  const instances = (instancesResponse as Record<string, unknown>)?.data || [];
 
   const { consoles, openConsole, closeConsole } = useConsoleManager();
 
@@ -78,9 +80,12 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
     }
   };
 
-  const handleConsoleAccess = (instanceIdentifier: string) => {
-    openConsole(instanceIdentifier);
-  };
+  const handleConsoleAccess = useCallback(
+    (instanceIdentifier: string) => {
+      openConsole(instanceIdentifier);
+    },
+    [openConsole]
+  );
 
   // Instance Actions - Mocked or passed down?
   // Previous AdminInstances had mocked actions.
@@ -230,7 +235,7 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
       },
     ];
     return cols;
-  }, [context, navigateToDetails]);
+  }, [context, navigateToDetails, handleConsoleAccess]);
 
   const provisioningCount = instances.filter((i: any) =>
     ["provisioning", "building", "reboot", "hard_reboot"].includes((i.status || "").toLowerCase())
@@ -275,7 +280,7 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
 
       <ModernTable
         data={instances}
-        columns={columns as any}
+        columns={columns as never}
         title="Instances"
         searchable
         searchKeys={["name", "identifier", "floating_ip.ip_address", "private_ip", "owner"]}

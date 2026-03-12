@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
-import SharedCreateInvoice from "../../shared/components/billing/SharedCreateInvoice";
+import SharedCreateInvoice from "@/shared/components/billing/SharedCreateInvoice";
 
 const TenantCreateInvoice = () => {
   const navigate = useNavigate();

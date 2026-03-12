@@ -12,15 +12,15 @@ import {
   Server,
   Activity,
 } from "lucide-react";
-import ModernTable, { Column } from "../../shared/components/ui/ModernTable";
-import { ModernCard } from "../../shared/components/ui";
-import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
-import { ModernButton } from "../../shared/components/ui";
+import ModernTable, { Column } from "@/shared/components/ui/ModernTable";
+import { ModernCard } from "@/shared/components/ui";
+import ModernStatsCard from "@/shared/components/ui/ModernStatsCard";
+import { ModernButton } from "@/shared/components/ui";
 import AdminPageShell from "../components/AdminPageShell";
-import { designTokens } from "../../styles/designTokens";
+import { designTokens } from "@/styles/designTokens";
 import DeleteRegionModal from "./regionComps/deleteRegion";
-import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
-import useAuthRedirect from "../../utils/adminAuthRedirect";
+import { useFetchRegions } from "@/hooks/adminHooks/regionHooks";
+import useAuthRedirect from "@/utils/adminAuthRedirect";
 
 interface RegionRecord {
   id?: string | number | null;
@@ -268,7 +268,7 @@ const AdminRegion = () => {
       <DeleteRegionModal
         isOpen={isDeleteModalOpen}
         onClose={closeDeleteModal}
-        regionId={selectedRegion?.id}
+        regionId={selectedRegion?.code}
         regionName={selectedRegion?.name}
       />
     </>

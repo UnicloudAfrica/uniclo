@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, Loader2, X } from "lucide-react";
-import { useDownloadDoc } from "../../../hooks/tenantHooks/leadsHook";
+import { useDownloadDoc } from "@/hooks/tenantHooks/leadsHooks";
 
 const getFallbackMimeType = (fileName: any) => {
   const lower = fileName?.toLowerCase() || "";

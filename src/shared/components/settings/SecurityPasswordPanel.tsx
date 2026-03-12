@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Lock, Save, Eye, EyeOff } from "lucide-react";
 import { ModernButton, ModernCard } from "../ui";
-import { useContextAwareSettings } from "../../../hooks/useContextAwareSettings";
+import { useContextAwareSettings } from "@/hooks/useContextAwareSettings";
 
 export const SecurityPasswordPanel = () => {
   const [formData, setFormData] = useState({

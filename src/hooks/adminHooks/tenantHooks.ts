@@ -7,9 +7,9 @@ import {
 } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
-import { type Tenant } from "../../shared/types/tenant";
-import { type ApiResponse } from "../../shared/types/resource";
-import logger from "../../utils/logger";
+import { type Tenant } from "@/shared/types/tenant";
+import { type ApiResponse } from "@/shared/types/resource";
+import logger from "@/utils/logger";
 
 // GET: Fetch all tenants
 const fetchTenants = async (): Promise<Tenant[]> => {
@@ -135,7 +135,11 @@ export const useCreateTenant = (
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["tenants"] });
       if (options.onSuccess) {
-        (options.onSuccess as any)(data, variables, context);
+        (options.onSuccess as (data: unknown, variables: unknown, context: unknown) => void)(
+          data,
+          variables,
+          context
+        );
       }
     },
   });
@@ -156,7 +160,11 @@ export const useUpdateTenant = (
       queryClient.invalidateQueries({ queryKey: ["tenants"] });
       queryClient.invalidateQueries({ queryKey: ["tenants", String(variables.id)] });
       if (options.onSuccess) {
-        (options.onSuccess as any)(data, variables, context);
+        (options.onSuccess as (data: unknown, variables: unknown, context: unknown) => void)(
+          data,
+          variables,
+          context
+        );
       }
     },
   });
@@ -173,7 +181,11 @@ export const useDeleteTenant = (
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["tenants"] });
       if (options.onSuccess) {
-        (options.onSuccess as any)(data, variables, context);
+        (options.onSuccess as (data: unknown, variables: unknown, context: unknown) => void)(
+          data,
+          variables,
+          context
+        );
       }
     },
   });

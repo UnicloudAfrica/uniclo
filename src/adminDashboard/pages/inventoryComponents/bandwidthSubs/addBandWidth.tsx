@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
-import ToastUtils from "../../../../utils/toastUtil";
-import { useCreateBandwidthProduct } from "../../../../hooks/adminHooks/bandwidthHooks";
+import ToastUtils from "@/utils/toastUtil";
+import { useCreateBandwidthProduct } from "@/hooks/adminHooks/bandwidthHooks";
 
 const AddBandwidthModal = ({ isOpen, onClose }: any) => {
   const [formData, setFormData] = useState({

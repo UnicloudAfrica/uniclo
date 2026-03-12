@@ -1,5 +1,5 @@
 import { Server, Play, Square, Network } from "lucide-react";
-import { ModernStatsCard } from "../../shared/components/ui";
+import { ModernStatsCard } from "@/shared/components/ui";
 
 const InstanceStats = ({ instances }: any) => {
   const totalInstancesCount = instances.length;

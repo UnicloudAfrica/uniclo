@@ -30,7 +30,7 @@ import logger from "../utils/logger";
 
 // **GET**: fetchCountries
 const fetchCountries = async (): Promise<Country[]> => {
-  const res: ApiResponse<Country[]> = await silentApi("GET", "/business/countries");
+  const res: ApiResponse<Country[]> = await silentApi("GET", "/countries");
   return res.data ?? [];
 };
 

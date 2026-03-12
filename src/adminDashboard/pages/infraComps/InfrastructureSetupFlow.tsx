@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { CheckCircle, AlertCircle, Loader2, ArrowRight, RefreshCw } from "lucide-react";
 import {
   useProjectInfrastructureStatus,
   useSetupInfrastructureComponent,
-} from "../../../hooks/adminHooks/projectInfrastructureHooks";
-import { useEnsureRootDomain } from "../../../hooks/adminHooks/zadaraDomainHooks";
-import ToastUtils from "../../../utils/toastUtil";
-import logger from "../../../utils/logger";
+} from "@/shared/hooks/resources/projectInfrastructureHooks";
+import { useEnsureRootDomain } from "@/hooks/adminHooks/zadaraDomainHooks";
+import ToastUtils from "@/utils/toastUtil";
+import logger from "@/utils/logger";
 
 const StepStatus = {
   PENDING: "pending",
@@ -179,48 +179,51 @@ const InfrastructureSetupFlow = ({ projectId, projectName }: any) => {
   const { mutate: ensureDomain, isPending: isEnsuringDomain } = useEnsureRootDomain();
 
   // Define infrastructure setup steps (matching backend components)
-  const infrastructureSteps = [
-    {
-      id: "domain",
-      title: "Domain Setup",
-      description: "Ensure root domain exists for the project infrastructure",
-      component: "domain",
-      prerequisites: [],
-      troubleshooting: "Check domain configuration and DNS settings",
-    },
-    {
-      id: "vpc",
-      title: "VPC Configuration",
-      description: "Create and configure Virtual Private Cloud for network isolation",
-      component: "vpc",
-      prerequisites: ["Domain must be configured"],
-      troubleshooting: "Verify cloud provider credentials and region availability",
-    },
-    {
-      id: "edge_networks",
-      title: "Edge Networks",
-      description: "Setup edge network configurations for optimized connectivity",
-      component: "edge_networks",
-      prerequisites: ["VPC must be created and available"],
-      troubleshooting: "Ensure VPC is active before configuring edge networks",
-    },
-    {
-      id: "security_groups",
-      title: "Security Groups",
-      description: "Configure firewall rules and security policies",
-      component: "security_groups",
-      prerequisites: ["VPC must be available"],
-      troubleshooting: "Verify network security rules and access policies",
-    },
-    {
-      id: "subnets",
-      title: "Subnets",
-      description: "Create and configure network subnets for resource organization",
-      component: "subnets",
-      prerequisites: ["VPC must be configured"],
-      troubleshooting: "Check CIDR blocks and subnet configurations",
-    },
-  ];
+  const infrastructureSteps = useMemo(
+    () => [
+      {
+        id: "domain",
+        title: "Domain Setup",
+        description: "Ensure root domain exists for the project infrastructure",
+        component: "domain",
+        prerequisites: [],
+        troubleshooting: "Check domain configuration and DNS settings",
+      },
+      {
+        id: "vpc",
+        title: "VPC Configuration",
+        description: "Create and configure Virtual Private Cloud for network isolation",
+        component: "vpc",
+        prerequisites: ["Domain must be configured"],
+        troubleshooting: "Verify cloud provider credentials and region availability",
+      },
+      {
+        id: "edge_networks",
+        title: "Edge Networks",
+        description: "Setup edge network configurations for optimized connectivity",
+        component: "edge_networks",
+        prerequisites: ["VPC must be created and available"],
+        troubleshooting: "Ensure VPC is active before configuring edge networks",
+      },
+      {
+        id: "security_groups",
+        title: "Security Groups",
+        description: "Configure firewall rules and security policies",
+        component: "security_groups",
+        prerequisites: ["VPC must be available"],
+        troubleshooting: "Verify network security rules and access policies",
+      },
+      {
+        id: "subnets",
+        title: "Subnets",
+        description: "Create and configure network subnets for resource organization",
+        component: "subnets",
+        prerequisites: ["VPC must be configured"],
+        troubleshooting: "Check CIDR blocks and subnet configurations",
+      },
+    ],
+    []
+  );
 
   // Calculate progress percentage
   const completedSteps = infrastructureStatus?.components
@@ -283,25 +286,28 @@ const InfrastructureSetupFlow = ({ projectId, projectName }: any) => {
   };
 
   // Get step status from API response
-  const getStepStatus = (step: any) => {
-    if (!infrastructureStatus?.components) return StepStatus.PENDING;
+  const getStepStatus = useCallback(
+    (step: any) => {
+      if (!infrastructureStatus?.components) return StepStatus.PENDING;
 
-    const component = infrastructureStatus.components[step.component];
-    if (!component) return StepStatus.PENDING;
+      const component = infrastructureStatus.components[step.component];
+      if (!component) return StepStatus.PENDING;
 
-    switch (component.status) {
-      case "completed":
-        return StepStatus.COMPLETED;
-      case "in_progress":
-        return StepStatus.IN_PROGRESS;
-      case "error":
-        return StepStatus.ERROR;
-      case "pending":
-        return StepStatus.PENDING;
-      default:
-        return StepStatus.PENDING;
-    }
-  };
+      switch (component.status) {
+        case "completed":
+          return StepStatus.COMPLETED;
+        case "in_progress":
+          return StepStatus.IN_PROGRESS;
+        case "error":
+          return StepStatus.ERROR;
+        case "pending":
+          return StepStatus.PENDING;
+        default:
+          return StepStatus.PENDING;
+      }
+    },
+    [infrastructureStatus]
+  );
 
   // Auto-advance to next incomplete step
   useEffect(() => {
@@ -320,7 +326,7 @@ const InfrastructureSetupFlow = ({ projectId, projectName }: any) => {
         setPollingEnabled(false);
       }
     }
-  }, [infrastructureStatus, completedSteps, totalSteps]);
+  }, [infrastructureStatus, completedSteps, totalSteps, getStepStatus, infrastructureSteps]);
 
   if (isLoadingStatus) {
     return (

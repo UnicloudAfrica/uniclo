@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
-import ToastUtils from "../../../../utils/toastUtil";
-import { useCreateVmInstance } from "../../../../hooks/adminHooks/vmHooks";
-import logger from "../../../../utils/logger";
+import ToastUtils from "@/utils/toastUtil";
+import { useCreateVmInstance } from "@/hooks/adminHooks/vmHooks";
+import logger from "@/utils/logger";
 
-const AddVMModal = ({ isOpen, onClose }: any) => {
+const AddVMModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const [formData, setFormData] = useState({
     name: "",
     family: "",
@@ -12,7 +12,7 @@ const AddVMModal = ({ isOpen, onClose }: any) => {
     memory_gib: "",
     // price: "",
   });
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, string | null>>({});
 
   // Reset form data and errors when modal opens or closes
   useEffect(() => {
@@ -32,7 +32,7 @@ const AddVMModal = ({ isOpen, onClose }: any) => {
   const { mutate, isPending } = useCreateVmInstance();
 
   const validateForm = () => {
-    const newErrors: Record<string, any> = {};
+    const newErrors: Record<string, string> = {};
     if (!formData.name.trim()) newErrors.name = "Name is required";
     if (!formData.family.trim()) newErrors.family = "Family is required";
 
@@ -42,9 +42,9 @@ const AddVMModal = ({ isOpen, onClose }: any) => {
       // "price",
     ];
 
-    numberFields.forEach((field: any) => {
-      const value = parseFloat((formData as any)[field]);
-      if (isNaN(value) || (formData as any)[field] === "") {
+    numberFields.forEach((field) => {
+      const value = parseFloat((formData as Record<string, any>)[field]);
+      if (isNaN(value) || (formData as Record<string, any>)[field] === "") {
         newErrors[field] = `${field
           .replace(/_/g, " ")
           .replace("gib", "GiB")
@@ -61,12 +61,12 @@ const AddVMModal = ({ isOpen, onClose }: any) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field: any, value: any) => {
+  const updateFormData = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null })); // Clear error when input changes
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
     if (!validateForm()) return;

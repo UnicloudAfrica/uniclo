@@ -2,17 +2,13 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Key } from "lucide-react";
 import AdminPageShell from "../../components/AdminPageShell";
-import KeyPairsContainer from "../../../shared/components/infrastructure/containers/KeyPairsContainer";
-import {
-  useFetchKeyPairs,
-  useDeleteKeyPair,
-  useSyncKeyPairs,
-} from "../../../shared/hooks/keyPairsHooks";
+import KeyPairsContainer from "@/shared/components/infrastructure/containers/KeyPairsContainer";
+import { useFetchKeyPairs, useDeleteKeyPair, useSyncKeyPairs } from "@/shared/hooks/keyPairsHooks";
 
 const AdminKeyPairs: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const projectId = searchParams.get("project") || "";
-  const region = searchParams.get("region") || "";
+  const projectId = searchParams.get("project") || undefined;
+  const region = searchParams.get("region") || undefined;
 
   const hooks = {
     useList: useFetchKeyPairs,

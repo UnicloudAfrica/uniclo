@@ -13,10 +13,10 @@ import {
   HardDrive,
 } from "lucide-react";
 import { ModernCard, ModernButton, ModernInput, StatusPill } from "../../ui";
-import ToastUtils from "../../../../utils/toastUtil";
-import { useSharedMultiQuotes } from "../../../../hooks/sharedCalculatorHooks";
-import { formatRegionName } from "../../../../utils/regionUtils";
-import { useFetchCountries } from "../../../../hooks/resource";
+import ToastUtils from "@/utils/toastUtil";
+import { useSharedMultiQuotes } from "@/hooks/sharedCalculatorHooks";
+import { formatRegionName } from "@/utils/regionUtils";
+import { useFetchCountries } from "@/hooks/resource";
 import { CalculatorData } from "../types";
 
 const selectClass =
@@ -188,8 +188,8 @@ const CalculatorSummaryStep: React.FC<CalculatorSummaryStepProps> = ({
     const payload: any = {
       ...additional,
       pricing_requests: calculatorData.pricing_requests.map((req) => {
-        const { volumes, ...rest } = req as any;
-        delete (rest as any)._display;
+        const { volumes, ...rest } = req as unknown as Record<string, unknown>;
+        delete (rest as Record<string, unknown>)._display;
         return {
           ...rest,
           volume_types:
@@ -201,7 +201,7 @@ const CalculatorSummaryStep: React.FC<CalculatorSummaryStepProps> = ({
       }),
       object_storage_items: calculatorData.object_storage_items?.map((item: any) => {
         const { ...rest } = item;
-        delete (rest as any)._display;
+        delete (rest as Record<string, unknown>)._display;
         return {
           ...rest,
           productable_id: item.tier_id,
@@ -268,8 +268,12 @@ const CalculatorSummaryStep: React.FC<CalculatorSummaryStepProps> = ({
     createMultiQuote(payload, {
       onSuccess: (data: any) => {
         ToastUtils.success("Invoice generated successfully!");
-        if (data["invoices"]?.[0]?.["pdf"]) {
-          const { pdf, filename = "invoice.pdf" } = data["invoices"][0] as any;
+        const firstInvoice = (data["invoices"] as Record<string, unknown>[])?.[0];
+        if (firstInvoice?.["pdf"]) {
+          const { pdf, filename = "invoice.pdf" } = firstInvoice as {
+            pdf: string;
+            filename?: string;
+          };
           const byteCharacters = atob(pdf);
           const byteNumbers = new Array(byteCharacters.length);
           for (let i = 0; i < byteCharacters.length; i++) {

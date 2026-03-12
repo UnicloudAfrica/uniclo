@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Building2, Loader2, Pencil } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "@/utils/toastUtil";
 import {
   useFetchColocationSettings,
   useCreateColocationSettings,
-} from "../../../hooks/adminHooks/colocationHooks";
-import { ModernButton } from "../../../shared/components/ui";
+} from "@/hooks/adminHooks/colocationHooks";
+import { ModernButton } from "@/shared/components/ui";
 
 type ColocationSettingResponse = {
   percentage?: number | null;

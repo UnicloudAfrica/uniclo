@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
-import { ModernTable, Column } from "../../shared/components/ui";
+import { ModernTable, Column } from "@/shared/components/ui";
 
 const buildClassName = (...classes: (string | undefined | null | false)[]) =>
   classes.filter(Boolean).join(" ");

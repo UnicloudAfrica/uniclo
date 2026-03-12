@@ -1,19 +1,23 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { X, Loader2 } from "lucide-react";
-import { useCreateProject, useTenantProjectMembershipSuggestions } from "../../hooks/projectHooks";
-import { useFetchGeneralRegions } from "../../hooks/resource";
-import { useFetchClients } from "../../hooks/clientHooks";
+import { X, Loader2, Shield } from "lucide-react";
+import {
+  useCreateProject,
+  useProjectMembershipSuggestions as useTenantProjectMembershipSuggestions,
+} from "@/shared/hooks/resources/projectHooks";
+import { useFetchGeneralRegions } from "@/hooks/resource";
+import { useFetchClients } from "@/hooks/clientHooks";
 import { useNavigate } from "react-router-dom";
-import ToastUtils from "../../utils/toastUtil";
+import ToastUtils from "@/utils/toastUtil";
 import NetworkPresetSelector, {
   DEFAULT_PRESETS,
-} from "../../shared/components/network/NetworkPresetSelector";
-import { useNetworkPresets } from "../../hooks/networkPresetHooks";
-import { useAsyncAction } from "../../shared/hooks/useAsyncAction";
+} from "@/shared/components/network/NetworkPresetSelector";
+import { useNetworkPresets } from "@/hooks/networkPresetHooks";
+import { useAsyncAction } from "@/shared/hooks/useAsyncAction";
+import { useCloudPolicies, type CloudPolicy } from "@/shared/hooks/resources/cloudPolicyHooks";
 
-import { NormalizedRegion } from "../../shared/utils/regionApi";
-import { Client } from "../../types/client";
-import { ProjectUser } from "../../types/project";
+import { NormalizedRegion } from "@/shared/utils/regionApi";
+import { Client } from "@/types/client";
+import { ProjectUser } from "@/types/project";
 
 interface FormState {
   name: string;
@@ -80,10 +84,56 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     [networkPresets]
   );
 
+  // Cloud policies
+  const [userPolicies, setUserPolicies] = useState<Record<string, Array<string | number>>>({});
+  const regionList = useMemo(
+    () => (Array.isArray(regions) ? (regions as { code?: string; provider?: string }[]) : []),
+    [regions]
+  );
+  const selectedRegionProvider = useMemo(() => {
+    const match = regionList.find((r) => r.code === formData.region);
+    return match?.provider || "";
+  }, [formData.region, regionList]);
+
+  const { data: cloudPoliciesData = [] } = useCloudPolicies(
+    { region: formData.region, provider: selectedRegionProvider },
+    { enabled: !!formData.region && !!selectedRegionProvider }
+  );
+  const cloudPolicies = useMemo<CloudPolicy[]>(
+    () => (Array.isArray(cloudPoliciesData) ? cloudPoliciesData : []),
+    [cloudPoliciesData]
+  );
+  const defaultPolicyIds = useMemo(
+    () => cloudPolicies.filter((p) => p.is_default).map((p) => p.id),
+    [cloudPolicies]
+  );
+  useEffect(() => {
+    if (selectedMembers.length > 0 && cloudPolicies.length > 0) {
+      setUserPolicies((prev) => {
+        const next = { ...prev };
+        selectedMembers.forEach((member) => {
+          if (!next[member.id]) next[member.id] = [...defaultPolicyIds];
+        });
+        return next;
+      });
+    }
+  }, [selectedMembers, defaultPolicyIds, cloudPolicies.length]);
+
+  const handleTogglePolicy = (memberId: string | number, policyId: string | number) => {
+    setUserPolicies((prev) => {
+      const current = prev[memberId] || [];
+      const next = current.includes(policyId)
+        ? current.filter((id) => id !== policyId)
+        : [...current, policyId];
+      return { ...prev, [memberId]: next };
+    });
+  };
+
   const resetState = useCallback(() => {
     setFormData({ ...INITIAL_FORM_STATE });
     setErrors({});
     setSelectedMembers([]);
+    setUserPolicies({});
     membersFetchKeyRef.current = null;
     resetAsyncAction();
   }, [resetAsyncAction]);
@@ -312,6 +362,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
       client_id: formData.assignment_scope === "client" ? formData.client_id || null : null,
       user_id: formData.assignment_scope === "client" ? formData.client_id || null : null,
       member_user_ids: selectedMembers.map((member) => Number(member.id)),
+      user_policies: Object.keys(userPolicies).length > 0 ? userPolicies : undefined,
       metadata: formData.network_preset ? { network_preset: formData.network_preset } : undefined,
     };
     await runAsyncAction(() => createProjectAsync(payload), {
@@ -747,6 +798,59 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
           </p>
         )}
       </div>
+
+      {/* Cloud Policies Section */}
+      {cloudPolicies.length > 0 && selectedMembers.length > 0 && (
+        <div className={sectionClasses}>
+          <div className="flex items-center gap-2 mb-1">
+            <Shield className="w-4 h-4 text-slate-500" />
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Cloud access policies
+            </p>
+          </div>
+          <p className="text-xs text-gray-500 mb-4">
+            Assign cloud permissions to project members. Default policies are pre-selected.
+          </p>
+          <div className="space-y-4">
+            {selectedMembers.map((member) => {
+              const memberPolicies = userPolicies[member.id] || [];
+              return (
+                <div key={member.id} className="rounded-xl border border-gray-200 bg-white p-4">
+                  <p className="text-sm font-medium text-gray-700 mb-3">
+                    {member.name || member.email || `User #${member.id}`}
+                    {member.role && (
+                      <span className="ml-2 text-[10px] text-gray-400 uppercase tracking-wide">
+                        {member.role}
+                      </span>
+                    )}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {cloudPolicies.map((policy) => {
+                      const isSelected = memberPolicies.includes(policy.id);
+                      return (
+                        <button
+                          key={policy.id}
+                          type="button"
+                          onClick={() => handleTogglePolicy(member.id, policy.id)}
+                          title={policy.description || policy.name}
+                          className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                            isSelected
+                              ? "bg-[var(--theme-color)] text-white shadow-md shadow-[var(--theme-color-faint)]"
+                              : "bg-gray-50 text-gray-600 border border-gray-100 hover:border-gray-300"
+                          }`}
+                        >
+                          {policy.name || "Unnamed Policy"}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {errors.general && <p className="text-red-500 text-xs mt-1">{errors.general}</p>}
     </div>
   );

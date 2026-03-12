@@ -4,9 +4,9 @@ import {
   resolveBrandLogo,
   useApplyBrandingTheme,
   usePublicBrandingTheme,
-} from "../../hooks/useBrandingTheme";
-import useImageFallback from "../../hooks/useImageFallback";
-import { getSubdomain } from "../../utils/getSubdomain";
+} from "@/hooks/useBrandingTheme";
+import useImageFallback from "@/hooks/useImageFallback";
+import { getSubdomain } from "@/utils/getSubdomain";
 
 interface TenantHomeProps {
   tenant?: string;

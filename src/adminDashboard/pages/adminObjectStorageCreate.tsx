@@ -1,7 +1,7 @@
 import React from "react";
 import AdminPageShell from "../components/AdminPageShell";
-import { ObjectStorageCreateContent } from "../../shared/components/object-storage";
-import objectStorageApi from "../../services/objectStorageApi";
+import { ObjectStorageCreateContent } from "@/shared/components/object-storage";
+import objectStorageApi from "@/services/objectStorageApi";
 
 const AdminObjectStorageCreate: React.FC = () => {
   return (

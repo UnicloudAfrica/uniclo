@@ -30,7 +30,7 @@ export interface NetworkAcl {
   name?: string;
   vpc_id?: string;
   is_default?: boolean;
-  entries?: Array<any>;
+  entries?: Record<string, unknown>[];
   provider_resource_id?: string;
   local_id?: string | number;
 }

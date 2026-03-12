@@ -1,6 +1,7 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { Cable, Server, Globe2 } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
+import { ResourceEmptyState } from "../ui/ResourceEmptyState";
 
 export interface NetworkInterface {
   id: string;
@@ -26,6 +27,7 @@ interface NetworkInterfacesTableProps {
   networkInterfaces: NetworkInterface[];
   isLoading?: boolean | undefined;
   emptyMessage?: string | undefined;
+  emptyAction?: ReactNode;
 }
 
 /**
@@ -36,6 +38,7 @@ const NetworkInterfacesTable: React.FC<NetworkInterfacesTableProps> = ({
   networkInterfaces = [],
   isLoading = false,
   emptyMessage = "No Network Interfaces found",
+  emptyAction,
 }) => {
   const getStatusColor = (status?: string) => {
     switch (status?.toLowerCase()) {
@@ -64,13 +67,12 @@ const NetworkInterfacesTable: React.FC<NetworkInterfacesTableProps> = ({
 
   if (networkInterfaces.length === 0) {
     return (
-      <ModernCard className="p-12 text-center">
-        <Cable className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-        <div className="text-gray-500 mb-1">{emptyMessage}</div>
-        <div className="text-sm text-gray-400">
-          Network interfaces are created automatically with instances
-        </div>
-      </ModernCard>
+      <ResourceEmptyState
+        title="No Network Interfaces"
+        message={emptyMessage}
+        icon={<Cable className="w-5 h-5" />}
+        action={emptyAction}
+      />
     );
   }
 

@@ -1,106 +1,40 @@
-import config from "../config";
-import useAdminAuthStore from "./adminAuthStore";
-import useTenantAuthStore from "./tenantAuthStore";
-import useClientAuthStore from "./clientAuthStore";
-import { AuthState } from "../types/auth";
-import logger from "../utils/logger";
-
-const normalizeRole = (role: string | null | undefined): string | null =>
-  typeof role === "string" ? role.toLowerCase() : null;
-
 /**
- * Clears all persisted auth sessions except the provided role.
+ * @deprecated Session utilities replaced by unified auth store.
+ * This file provides backward-compatible exports that delegate to useAuthStore.
  */
-export const clearAuthSessionsExcept = (activeRole: string | null | undefined) => {
-  const normalized = normalizeRole(activeRole);
+import useAuthStore from "./authStore";
 
-  if (normalized !== "admin") {
-    useAdminAuthStore.getState().clearSession?.();
-  }
-  if (normalized !== "tenant") {
-    useTenantAuthStore.getState().clearSession?.();
-  }
-  if (normalized !== "client") {
-    useClientAuthStore.getState().clearSession?.();
-  }
-};
-
-export const clearAllAuthSessions = () => clearAuthSessionsExcept(null);
-
-export const resolveActivePersona = (): {
-  key: "admin" | "tenant" | "client" | null;
-  snapshot: AuthState | null;
-} => {
-  const admin = useAdminAuthStore.getState?.();
-  const tenant = useTenantAuthStore.getState?.();
-  const client = useClientAuthStore.getState?.();
-
-  if (admin?.isAuthenticated) return { key: "admin", snapshot: admin };
-  if (tenant?.isAuthenticated) return { key: "tenant", snapshot: tenant };
-  if (client?.isAuthenticated) return { key: "client", snapshot: client };
-  return { key: null, snapshot: null };
-};
-
-const resolveAuthStore = (role: string | null | undefined) => {
-  switch (normalizeRole(role)) {
-    case "admin":
-      return useAdminAuthStore;
-    case "tenant":
-      return useTenantAuthStore;
-    case "client":
-      return useClientAuthStore;
-    default:
-      return null;
-  }
-};
-
-const resolveAuthHeaders = (role: string | null | undefined): Record<string, string> => {
-  const store = resolveAuthStore(role);
-  const state = store?.getState?.();
-  if (state?.getAuthHeaders) {
-    return state.getAuthHeaders();
-  }
+/** @deprecated Use useAuthStore.getState() instead */
+export const resolveActivePersona = () => {
+  const state = useAuthStore.getState();
+  const role = state.session?.role || null;
   return {
-    "Content-Type": "application/json",
-    Accept: "application/json",
+    role,
+    key: role ? `unicloud_${role}_auth` : "unicloud_auth",
+    snapshot: state,
+    store: useAuthStore,
   };
 };
 
-const resolveLogoutBaseUrl = (role: string | null | undefined): string => {
-  switch (normalizeRole(role)) {
-    case "admin":
-      return config.adminURL;
-    case "tenant":
-      return config.tenantURL;
-    case "client":
-      return config.baseURL;
-    default:
-      return config.baseURL;
-  }
+/** @deprecated Use useAuthStore.getState().clearSession() instead */
+export const clearAuthSessionsExcept = (_keep?: string) => {
+  // No-op: unified store has single session, no need to clear "other" sessions
 };
 
-const requestLogout = async (role: string | null | undefined) => {
-  const headers = resolveAuthHeaders(role);
-  const baseUrl = resolveLogoutBaseUrl(role);
-  const url = `${baseUrl}/business/auth/logout`;
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers,
-      credentials: "include",
-    });
-    return response;
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    logger.error("Logout failed:", error);
-    return null;
-  }
+/** @deprecated Use useAuthStore.getState().clearSession() instead */
+export const clearAllAuthSessions = () => {
+  useAuthStore.getState().clearSession();
 };
 
+/** @deprecated Use useAuthStore.getState().logout() instead */
 export const logoutActiveSession = async () => {
-  const { key } = resolveActivePersona();
-  if (key) {
-    await requestLogout(key);
-  }
-  clearAllAuthSessions();
+  await useAuthStore.getState().logout();
+};
+
+/** @deprecated Use useAuthStore directly */
+export const resolveAuthStore = () => useAuthStore;
+
+/** @deprecated Use useAuthStore.getState().getAuthHeaders() */
+export const resolveAuthHeaders = () => {
+  return useAuthStore.getState().getAuthHeaders();
 };

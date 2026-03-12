@@ -11,16 +11,16 @@ import {
   ChevronRight,
   Loader2,
 } from "lucide-react";
-import { useFetchProducts } from "../../../hooks/adminHooks/adminProductHooks";
-import { useFetchProductPricing } from "../../../hooks/adminHooks/adminproductPricingHook";
+import { useFetchProducts } from "@/hooks/adminHooks/adminProductHooks";
+import { useFetchProductPricing } from "@/hooks/adminHooks/adminProductPricingHooks";
 import EditObjectStorageTierModal from "./objectStorageSubs/editTier";
 import DeleteObjectStorageTierModal from "./objectStorageSubs/deleteTier";
-import ModernCard from "../../../shared/components/ui/ModernCard";
-import { ModernButton } from "../../../shared/components/ui";
-import ModernTable from "../../../shared/components/ui/ModernTable";
+import ModernCard from "@/shared/components/ui/ModernCard";
+import { ModernButton } from "@/shared/components/ui";
+import ModernTable from "@/shared/components/ui/ModernTable";
 import IconBadge from "../../components/IconBadge";
 
-const parseQuota = (product: any) => {
+const parseQuota = (product: Record<string, unknown>) => {
   if (!product) return null;
 
   const quotaFromMeta = product.object_storage?.quota_gb ?? product.productable?.quota_gb;
@@ -46,14 +46,14 @@ const parseQuota = (product: any) => {
   return null;
 };
 
-const formatNumber = (value: any, suffix = "") =>
+const formatNumber = (value: unknown, suffix = "") =>
   typeof value === "number" && !Number.isNaN(value)
     ? `${value.toLocaleString()}${suffix}`
     : value
       ? `${Number(value).toLocaleString()}${suffix}`
       : "—";
 
-const makeKey = (region: any, product: any) => {
+const makeKey = (region: unknown, product: Record<string, unknown>) => {
   const quota = parseQuota(product);
   const fallback = product?.productable_id ?? 0;
   const fallbackNumeric = Number(fallback) || 0;
@@ -61,16 +61,25 @@ const makeKey = (region: any, product: any) => {
   return `${(region || "").toLowerCase()}::${resolved}`;
 };
 
-const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
+const ObjectStorageInventory = ({
+  selectedRegion,
+  selectedProvider,
+  onMetricsChange,
+}: {
+  selectedRegion?: string;
+  selectedProvider?: string;
+  onMetricsChange?: (metrics: unknown) => void;
+}) => {
+  const provider = selectedProvider || "";
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [search, setSearch] = useState("");
-  const [selectedTier, setSelectedTier] = useState<any>(null);
+  const [selectedTier, setSelectedTier] = useState<Record<string, unknown> | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [removedKeys, setRemovedKeys] = useState<any[]>([]);
-  const [priceOverrides, setPriceOverrides] = useState<Record<string, any>>({});
+  const [removedKeys, setRemovedKeys] = useState<string[]>([]);
+  const [priceOverrides, setPriceOverrides] = useState<Record<string, Record<string, unknown>>>({});
 
   useEffect(() => {
     setPage(1);
@@ -84,21 +93,25 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
 
   const { data: pricingPayload, isFetching: isPricingFetching } = useFetchProductPricing(
     {
-      provider: "zadara",
+      provider,
       productType: "object_storage_configuration",
       perPage: 1000,
       page: 1,
     },
     { keepPreviousData: true }
   );
-  const productList = Array.isArray(products) ? products : [];
-  const pricingRows = Array.isArray((pricingPayload as any)?.data)
-    ? (pricingPayload as any).data
-    : [];
-  const pricingMeta = (pricingPayload as any)?.meta;
+  const productList = useMemo(() => (Array.isArray(products) ? products : []), [products]);
+  const pricingRows = useMemo(
+    () =>
+      Array.isArray((pricingPayload as { data?: Record<string, unknown>[] })?.data)
+        ? (pricingPayload as { data: Record<string, unknown>[] }).data
+        : [],
+    [pricingPayload]
+  );
+  const pricingMeta = (pricingPayload as { meta?: unknown })?.meta;
 
   const pricingMap = useMemo(() => {
-    return pricingRows.reduce((acc: Record<string, any>, item: any) => {
+    return pricingRows.reduce((acc: Record<string, unknown>, item: Record<string, unknown>) => {
       const productMeta = item.product || {};
       const region = productMeta.region || item.region;
       const key = makeKey(region, {
@@ -115,7 +128,7 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
 
   const filteredProducts = useMemo(() => {
     if (!productList.length) return [];
-    return productList.filter((product: any) => {
+    return productList.filter((product: Record<string, unknown>) => {
       const key = makeKey(product.region, product);
       return !removalSet.has(key);
     });
@@ -130,7 +143,7 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
       if (!prev.some((key) => !productKeys.has(key))) {
         return prev;
       }
-      return prev.filter((key: any) => productKeys.has(key));
+      return prev.filter((key: string) => productKeys.has(key));
     });
   }, [productList]);
 
@@ -175,7 +188,8 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
   const filteredByRegion = useMemo(() => {
     if (!selectedRegion) return enrichedProducts;
     return enrichedProducts.filter(
-      (item: any) => (item.region || "").toLowerCase() === selectedRegion.toLowerCase()
+      (item: Record<string, unknown>) =>
+        ((item.region as string) || "").toLowerCase() === selectedRegion.toLowerCase()
     );
   }, [enrichedProducts, selectedRegion]);
 
@@ -238,7 +252,7 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
     return searchedRows.slice(start, start + perPage);
   }, [searchedRows, page, perPage]);
 
-  const openEdit = (row: any) => {
+  const openEdit = (row: Record<string, unknown>) => {
     setIsDeleteOpen(false);
     setSelectedTier({
       product: row,
@@ -248,7 +262,7 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
     setIsEditOpen(true);
   };
 
-  const openDelete = (row: any) => {
+  const openDelete = (row: Record<string, unknown>) => {
     setIsEditOpen(false);
     setSelectedTier({
       product: row,
@@ -264,9 +278,10 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
     setSelectedTier(null);
   };
 
-  const handleTierDeleted = (tier: any) => {
+  const handleTierDeleted = (tier: Record<string, unknown>) => {
     if (!tier?.product) return;
-    const key = makeKey(tier.product.region, tier.product);
+    const product = tier.product as Record<string, unknown>;
+    const key = makeKey(product.region, product);
     setRemovedKeys((prev) => (prev.includes(key) ? prev : [...prev, key]));
     setPriceOverrides((prev) => {
       if (!prev[key]) return prev;
@@ -289,7 +304,7 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
     const pricingKey = [
       "product-pricing-admin",
       "",
-      "zadara",
+      provider,
       1,
       1000,
       "",
@@ -315,18 +330,20 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
     });
   };
 
-  const handleTierUpdated = (tier: any, totalPrice: any) => {
+  const handleTierUpdated = (tier: Record<string, unknown>, totalPrice: unknown) => {
     if (!tier?.product || totalPrice === undefined || totalPrice === null) return;
-    const key = makeKey(tier.product.region, tier.product);
+    const product = tier.product as Record<string, unknown>;
+    const pricing = tier.pricing as Record<string, unknown> | undefined;
+    const key = makeKey(product.region, product);
     setPriceOverrides((prev) => ({
       ...prev,
       [key]: {
-        ...(tier.pricing || {
-          provider: tier.product.provider,
-          region: tier.product.region,
-          product_id: tier.product.id,
-          productable_id: tier.product.productable_id,
-          productable_type: tier.product.productable_type,
+        ...(pricing || {
+          provider: product.provider,
+          region: product.region,
+          product_id: product.id,
+          productable_id: product.productable_id,
+          productable_type: product.productable_type,
         }),
         price_usd: Number(totalPrice),
       },
@@ -335,7 +352,7 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
     const pricingKey = [
       "product-pricing-admin",
       "",
-      "zadara",
+      provider,
       1,
       1000,
       "",
@@ -466,7 +483,11 @@ const ObjectStorageInventory = ({ selectedRegion, onMetricsChange }: any) => {
                   header: "SKU",
                   render: (_: any, row: any) => (
                     <div className="flex items-start gap-3">
-                      <IconBadge iconKey="business.companyType" tone={"indigo" as any} size="sm" />
+                      <IconBadge
+                        iconKey="business.companyType"
+                        tone={"indigo" as never}
+                        size="sm"
+                      />
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-slate-900">
                           {row.name || row.pricing?.product_name || "Unnamed tier"}

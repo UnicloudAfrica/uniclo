@@ -1,6 +1,7 @@
 import React from "react";
-import { CheckCircle, Globe, Zap } from "lucide-react";
+import { CheckCircle, Globe, Plus, Zap } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
+import ModernButton from "../ui/ModernButton";
 import LoadBalancersTable from "./LoadBalancersTable";
 import type { LoadBalancer } from "./types";
 
@@ -10,6 +11,7 @@ interface LoadBalancersOverviewProps {
   emptyMessage?: string;
   onDelete?: (lb: LoadBalancer) => void;
   onManage?: (lb: LoadBalancer) => void;
+  onCreate?: () => void;
   showActions?: boolean;
 }
 
@@ -19,6 +21,7 @@ const LoadBalancersOverview: React.FC<LoadBalancersOverviewProps> = ({
   emptyMessage,
   onDelete,
   onManage,
+  onCreate,
   showActions,
 }) => {
   const activeCount = loadBalancers.filter(
@@ -68,6 +71,14 @@ const LoadBalancersOverview: React.FC<LoadBalancersOverviewProps> = ({
         loadBalancers={loadBalancers}
         isLoading={isLoading}
         emptyMessage={emptyMessage}
+        emptyAction={
+          onCreate ? (
+            <ModernButton variant="primary" size="sm" onClick={onCreate}>
+              <Plus className="w-4 h-4 mr-1" />
+              Create Load Balancer
+            </ModernButton>
+          ) : undefined
+        }
         onDelete={onDelete}
         onManage={onManage}
         showActions={showActions}

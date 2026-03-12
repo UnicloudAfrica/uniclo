@@ -5,8 +5,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import ModernStatsCard from "../ui/ModernStatsCard";
 import ModernTable from "../ui/ModernTable";
 import { TableActionButtons } from "../tables";
-import { useFetchClients as useAdminFetchClients } from "../../../hooks/adminHooks/clientHooks";
-import { useFetchClients as useTenantFetchClients } from "../../../hooks/clientHooks";
+import { useFetchClients as useAdminFetchClients } from "@/hooks/adminHooks/clientHooks";
+import { useFetchClients as useTenantFetchClients } from "@/hooks/clientHooks";
 import ClientDeleteModal from "./ClientDeleteModal";
 import ClientEditModal from "./ClientEditModal";
 import PromoteClientModal from "../../../adminDashboard/pages/clientComps/PromoteClientModal";
@@ -14,9 +14,9 @@ import adminSilentApi from "../../../index/admin/silent";
 import tenantSilentApi from "../../../index/tenant/silentTenant";
 import adminFileApi from "../../../index/admin/fileapi";
 import tenantFileApi from "../../../index/tenant/fileapi";
-import ToastUtil from "../../../utils/toastUtil";
-import { Client } from "../../../types/client";
-import logger from "../../../utils/logger";
+import ToastUtil from "@/utils/toastUtil";
+import { Client } from "@/types/client";
+import logger from "@/utils/logger";
 
 const encodeId = (id: string | number) => encodeURIComponent(btoa(String(id)));
 const decodeId = (encodedId: string) => {
@@ -46,11 +46,14 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
 
   const adminClientsQuery = useAdminFetchClients({ enabled: context === "admin" });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const tenantClientsQuery = useTenantFetchClients(null, { enabled: context === "tenant" });
 
-  const clients: Client[] =
-    ((context === "tenant" ? tenantClientsQuery.data : adminClientsQuery.data) as any) || [];
+  const clients = useMemo<Client[]>(
+    () =>
+      ((context === "tenant" ? tenantClientsQuery.data : adminClientsQuery.data) as Client[]) || [],
+    [context, tenantClientsQuery.data, adminClientsQuery.data]
+  );
   const isFetching =
     context === "tenant" ? tenantClientsQuery.isFetching : adminClientsQuery.isFetching;
 
@@ -86,7 +89,12 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
       ...Array.from(new Set(clientData.map((item) => item.tenant_id)))
         .map((tenantId) => {
           const tenant = clientData.find((item) => item.tenant_id === tenantId)?.tenant;
-          return tenant ? { id: (tenant as any).id, name: (tenant as any).name } : null;
+          return tenant
+            ? {
+                id: (tenant as Record<string, unknown>).id,
+                name: (tenant as Record<string, unknown>).name as string,
+              }
+            : null;
         })
         .filter(Boolean),
     ];
@@ -94,7 +102,7 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
 
   const totalClients = clientData.length;
   const activeClients = clientData.filter(
-    (client) => client.status === "active" || (client as any).is_active
+    (client) => client.status === "active" || (client as Record<string, unknown>).is_active
   ).length;
   const tenantCount = context === "admin" ? Math.max(uniqueTenants.length - 1, 0) : 1;
   const pendingClients = clientData.filter((client) => client.status === "pending").length;
@@ -144,7 +152,6 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
     setSelectedClient(null);
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const apiClient: any = context === "admin" ? adminSilentApi : tenantSilentApi;
 
   const refreshClients = () => {
@@ -168,10 +175,8 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
   };
 
   const handleBulkExport = async (format = "csv") => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const fileApiClient: any = context === "admin" ? adminFileApi : tenantFileApi;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response: any = await fileApiClient("POST", "/clients/bulk-export", {
         client_ids: selectedClients,
         format,
@@ -186,7 +191,6 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
       link.remove();
 
       ToastUtil.success(`Successfully exported ${selectedClients.length} client(s)`);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       ToastUtil.error("Failed to export clients");
       logger.error("Bulk export error:", error);
@@ -276,7 +280,10 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
             key: "tenant_name",
             header: "Tenant Name",
             render: (_value: any, item: Client) => (
-              <div className="text-gray-600">{(item as any).tenant?.name || "N/A"}</div>
+              <div className="text-gray-600">
+                {(((item as Record<string, unknown>).tenant as Record<string, unknown>)
+                  ?.name as string) || "N/A"}
+              </div>
             ),
             sortable: true,
           },
@@ -329,7 +336,7 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
   const filteredData = useMemo(() => {
     if (context !== "admin") return clientData;
     if (!selectedTenantId) return clientData;
-    // eslint-disable-next-line eqeqeq
+    // eqeqeq
     return clientData.filter((item) => String(item.tenant_id) == String(selectedTenantId));
   }, [clientData, selectedTenantId, context]);
 
@@ -446,7 +453,6 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
       {context === "admin" && (
         <PromoteClientModal
           isOpen={isPromoteClientModalOpen}
-          // eslint-disable-next-line @typescript-eslint/no-empty-function
           onClose={closePromoteClientModal}
           client={selectedClient}
           onPromoted={() => {

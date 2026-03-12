@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { useVerifyBusiness } from "../../../../hooks/businessHooks";
-import ToastUtils from "../../../../utils/toastUtil";
+import { useVerifyBusiness } from "@/hooks/businessHooks";
+import ToastUtils from "@/utils/toastUtil";
 
 type SelectOption = {
   id?: string | number;
@@ -435,7 +435,7 @@ const ClientBusinessInputs: React.FC<ClientBusinessInputsProps> = ({
             </label>
             <span
               className={`w-full input-field block transition-all ${
-                (errors as any).type ? "border-red-500 border" : ""
+                (errors as Record<string, { message?: string }>).type ? "border-red-500 border" : ""
               }`}
             >
               <select
@@ -449,8 +449,10 @@ const ClientBusinessInputs: React.FC<ClientBusinessInputsProps> = ({
                 <option value="CAC_ENRICHED">CAC_ENRICHED</option>
               </select>
             </span>
-            {(errors as any).type && (
-              <p className="text-red-500 text-xs mt-1">{(errors as any).type}</p>
+            {(errors as Record<string, { message?: string }>).type && (
+              <p className="text-red-500 text-xs mt-1">
+                {(errors as Record<string, { message?: string }>).type?.message || "Invalid type"}
+              </p>
             )}
           </div>
           <div>

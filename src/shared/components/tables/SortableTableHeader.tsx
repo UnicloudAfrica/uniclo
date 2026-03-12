@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 
 export interface SortConfig {
@@ -11,7 +11,7 @@ export interface ColumnConfig {
   label: string | React.ReactNode;
   sortable?: boolean;
   className?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   style?: React.CSSProperties | any;
 }
 
@@ -92,4 +92,4 @@ const SortableTableHeader: React.FC<SortableTableHeaderProps> = ({
   );
 };
 
-export default SortableTableHeader;
+export default memo(SortableTableHeader);

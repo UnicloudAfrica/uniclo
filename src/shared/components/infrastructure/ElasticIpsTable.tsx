@@ -1,12 +1,14 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { Globe2 } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
+import { ResourceEmptyState } from "../ui/ResourceEmptyState";
 import type { ElasticIp } from "./types";
 
 interface ElasticIpsTableProps {
   elasticIps: ElasticIp[];
   isLoading?: boolean;
   emptyMessage?: string;
+  emptyAction?: ReactNode;
   onAssociate?: (eip: ElasticIp) => void;
   onDisassociate?: (eip: ElasticIp) => void;
   onRelease?: (eip: ElasticIp) => void;
@@ -17,6 +19,7 @@ const ElasticIpsTable: React.FC<ElasticIpsTableProps> = ({
   elasticIps,
   isLoading = false,
   emptyMessage = "No elastic IPs found",
+  emptyAction,
   onAssociate,
   onDisassociate,
   onRelease,
@@ -32,10 +35,12 @@ const ElasticIpsTable: React.FC<ElasticIpsTableProps> = ({
 
   if (elasticIps.length === 0) {
     return (
-      <ModernCard className="p-12 text-center">
-        <Globe2 className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-        <div className="text-gray-500">{emptyMessage}</div>
-      </ModernCard>
+      <ResourceEmptyState
+        title="No Elastic IPs"
+        message={emptyMessage}
+        icon={<Globe2 className="w-5 h-5" />}
+        action={emptyAction}
+      />
     );
   }
 

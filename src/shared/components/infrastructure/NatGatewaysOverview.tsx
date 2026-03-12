@@ -1,6 +1,7 @@
 import React from "react";
-import { Globe, Network } from "lucide-react";
+import { Globe, Network, Plus } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
+import ModernButton from "../ui/ModernButton";
 import NatGatewaysTable from "./NatGatewaysTable";
 import type { NatGateway } from "./types";
 
@@ -10,6 +11,7 @@ interface NatGatewaysOverviewProps {
   emptyMessage?: string | undefined;
   availableSubnetsCount?: number | undefined;
   onDelete?: ((nat: NatGateway) => void) | undefined;
+  onCreate?: (() => void) | undefined;
   showActions?: boolean | undefined;
 }
 
@@ -19,6 +21,7 @@ const NatGatewaysOverview: React.FC<NatGatewaysOverviewProps> = ({
   emptyMessage,
   availableSubnetsCount,
   onDelete,
+  onCreate,
   showActions,
 }) => {
   const availableCount = natGateways.filter((gateway) => gateway.state === "available").length;
@@ -72,6 +75,14 @@ const NatGatewaysOverview: React.FC<NatGatewaysOverviewProps> = ({
         natGateways={natGateways}
         isLoading={isLoading}
         emptyMessage={emptyMessage}
+        emptyAction={
+          onCreate ? (
+            <ModernButton variant="primary" size="sm" onClick={onCreate}>
+              <Plus className="w-4 h-4 mr-1" />
+              Create NAT Gateway
+            </ModernButton>
+          ) : undefined
+        }
         onDelete={onDelete}
         showActions={shouldShowActions}
       />

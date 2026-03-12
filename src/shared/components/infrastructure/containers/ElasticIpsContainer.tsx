@@ -4,11 +4,12 @@ import { Plus, RefreshCw } from "lucide-react";
 import { ElasticIpsOverview } from "../index";
 import AssociateElasticIpModal from "../modals/AssociateElasticIpModal";
 import ModernButton from "../../ui/ModernButton";
+import ConfirmDialog from "../../ui/ConfirmDialog";
 import {
   getElasticIpPermissions,
   type Hierarchy,
   type ElasticIpPermissions,
-} from "../../../config/permissionPresets";
+} from "@/shared/config/permissionPresets";
 import type { ElasticIp } from "../types";
 
 interface ElasticIpHooks {
@@ -17,10 +18,25 @@ interface ElasticIpHooks {
     region?: string,
     options?: { enabled?: boolean }
   ) => UseQueryResult<ElasticIp[], Error>;
-  useCreate: () => UseMutationResult<any, any, any, unknown>;
-  useDelete: () => UseMutationResult<any, any, any, unknown>;
-  useAssociate: () => UseMutationResult<any, any, any, unknown>;
-  useDisassociate: () => UseMutationResult<any, any, any, unknown>;
+  useCreate: () => UseMutationResult<any, Error, { projectId: string; region?: string }, unknown>;
+  useDelete: () => UseMutationResult<
+    any,
+    Error,
+    { projectId: string; region?: string; elasticIpId: string },
+    unknown
+  >;
+  useAssociate: () => UseMutationResult<
+    any,
+    Error,
+    { projectId: string; region?: string; elasticIpId: string; payload: { instance_id: string } },
+    unknown
+  >;
+  useDisassociate: () => UseMutationResult<
+    any,
+    Error,
+    { projectId: string; region?: string; elasticIpId: string },
+    unknown
+  >;
 }
 
 interface HeaderActionsState {
@@ -66,9 +82,21 @@ const ElasticIpsContainer: React.FC<ElasticIpsContainerProps> = ({
   // Modal state
   const [showAssociateModal, setShowAssociateModal] = useState(false);
   const [selectedEip, setSelectedEip] = useState<ElasticIp | null>(null);
+  const [confirmRelease, setConfirmRelease] = useState<{ open: boolean; data?: ElasticIp }>({
+    open: false,
+  });
+  const [confirmDisassociate, setConfirmDisassociate] = useState<{
+    open: boolean;
+    data?: ElasticIp;
+  }>({ open: false });
 
   // Use injected hooks - SINGLE SOURCE OF TRUTH (no hooks in dashboard pages)
-  const { data: elasticIps = [], isLoading, refetch } = hooks.useList(projectId, region);
+  const {
+    data: elasticIps = [],
+    isLoading,
+    isFetching,
+    refetch,
+  } = hooks.useList(projectId, region);
   const { mutate: createElasticIp, isPending: isCreating } = hooks.useCreate();
   const { mutate: deleteElasticIp } = hooks.useDelete();
   const { mutate: associateElasticIp, isPending: isAssociating } = hooks.useAssociate();
@@ -77,14 +105,21 @@ const ElasticIpsContainer: React.FC<ElasticIpsContainerProps> = ({
   // Handlers
   const handleAllocate = () => {
     if (!permissions.canCreate) return;
-    createElasticIp({ projectId, region });
+    createElasticIp({ projectId, region }, { onSuccess: () => refetch() });
   };
 
   const handleRelease = (elasticIp: ElasticIp) => {
     if (!permissions.canDelete) return;
-    if (confirm("Are you sure you want to release this Elastic IP?")) {
-      deleteElasticIp({ projectId, region, elasticIpId: elasticIp.id });
-    }
+    setConfirmRelease({ open: true, data: elasticIp });
+  };
+
+  const executeRelease = () => {
+    if (!confirmRelease.data) return;
+    deleteElasticIp(
+      { projectId, region, elasticIpId: confirmRelease.data.id },
+      { onSuccess: () => refetch() }
+    );
+    setConfirmRelease({ open: false });
   };
 
   const handleAssociate = (elasticIpId: string, instanceId: string) => {
@@ -100,6 +135,7 @@ const ElasticIpsContainer: React.FC<ElasticIpsContainerProps> = ({
         onSuccess: () => {
           setShowAssociateModal(false);
           setSelectedEip(null);
+          refetch();
         },
       }
     );
@@ -107,9 +143,16 @@ const ElasticIpsContainer: React.FC<ElasticIpsContainerProps> = ({
 
   const handleDisassociate = (eip: ElasticIp) => {
     if (!permissions.canDisassociate) return;
-    if (confirm("Are you sure you want to disassociate this Elastic IP?")) {
-      disassociateElasticIp({ projectId, region, elasticIpId: eip.id });
-    }
+    setConfirmDisassociate({ open: true, data: eip });
+  };
+
+  const executeDisassociate = () => {
+    if (!confirmDisassociate.data) return;
+    disassociateElasticIp(
+      { projectId, region, elasticIpId: confirmDisassociate.data.id },
+      { onSuccess: () => refetch() }
+    );
+    setConfirmDisassociate({ open: false });
   };
 
   const openAssociateModal = (eip: ElasticIp) => {
@@ -120,9 +163,9 @@ const ElasticIpsContainer: React.FC<ElasticIpsContainerProps> = ({
   // Build header actions
   const headerActions = (
     <div className="flex items-center gap-3">
-      <ModernButton variant="secondary" size="sm" onClick={refetch as any} disabled={isLoading}>
-        <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-        Refresh
+      <ModernButton variant="secondary" size="sm" onClick={() => refetch()} disabled={isFetching}>
+        <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
+        {isFetching ? "Refreshing..." : "Refresh"}
       </ModernButton>
       {permissions.canCreate && (
         <ModernButton variant="primary" size="sm" onClick={handleAllocate} disabled={isCreating}>
@@ -167,6 +210,26 @@ const ElasticIpsContainer: React.FC<ElasticIpsContainerProps> = ({
           isAssociating={isAssociating}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={confirmRelease.open}
+        title="Release Elastic IP?"
+        message="Are you sure you want to release this Elastic IP?"
+        confirmLabel="Release"
+        variant="danger"
+        onConfirm={executeRelease}
+        onCancel={() => setConfirmRelease({ open: false })}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDisassociate.open}
+        title="Disassociate Elastic IP?"
+        message="Are you sure you want to disassociate this Elastic IP?"
+        confirmLabel="Disassociate"
+        variant="warning"
+        onConfirm={executeDisassociate}
+        onCancel={() => setConfirmDisassociate({ open: false })}
+      />
     </>
   );
 

@@ -1,20 +1,14 @@
-import config from "../../config";
-import useAdminAuthStore from "../../stores/adminAuthStore";
-import { createApiClient } from "../../utils/createApiClient";
-
 /**
- * Admin Settings API Client
- *
- * This client is specifically for admin users accessing the shared settings endpoints
- * at /api/v1/settings/* (not /admin/v1/settings/*)
- *
- * The settings endpoints are shared across all user types (client, tenant, admin)
- * and rely on cookie-based auth.
+ * @deprecated Use `import { api } from "@/lib/api"` instead.
  */
-export default createApiClient({
-  baseURL: config.baseURL, // Uses /api/v1, not /admin/v1
-  authStore: useAdminAuthStore, // Uses admin auth headers
-  showToasts: true,
-  redirectPath: "/admin-signin",
-  useSafeJsonParsing: true,
-});
+import { api } from "../../lib/api";
+
+type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+
+const adminSettingsApi = <T = unknown>(
+  method: HttpMethod,
+  path: string,
+  body: Record<string, unknown> | FormData | null = null
+): Promise<T> => api.request<T>(method, path, body as any);
+
+export default adminSettingsApi;

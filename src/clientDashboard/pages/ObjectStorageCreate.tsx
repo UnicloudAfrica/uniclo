@@ -1,8 +1,8 @@
 import React from "react";
 import ClientActiveTab from "../components/clientActiveTab";
 import ClientPageShell from "../components/ClientPageShell";
-import { ObjectStorageCreateContent } from "../../shared/components/object-storage";
-import objectStorageApi from "../../services/objectStorageApi";
+import { ObjectStorageCreateContent } from "@/shared/components/object-storage";
+import objectStorageApi from "@/services/objectStorageApi";
 
 const ClientObjectStorageCreate: React.FC = () => {
   return (

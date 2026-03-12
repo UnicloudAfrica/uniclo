@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import ClientPageShell from "../components/ClientPageShell";
-import { StorageManagementContainer } from "../../shared/components/infrastructure/storage";
+import { StorageManagementContainer } from "@/shared/components/infrastructure/storage";
 
 const ClientImages: React.FC = () => {
   const location = useLocation();

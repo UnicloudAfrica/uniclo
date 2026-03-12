@@ -4,11 +4,12 @@ import { Plus, RefreshCw } from "lucide-react";
 import { SecurityGroupsOverview } from "../index";
 import CreateSecurityGroupModal from "../modals/CreateSecurityGroupModal";
 import ModernButton from "../../ui/ModernButton";
+import ConfirmDialog from "../../ui/ConfirmDialog";
 import {
   getSecurityGroupPermissions,
   type Hierarchy,
   type SecurityGroupPermissions,
-} from "../../../config/permissionPresets";
+} from "@/shared/config/permissionPresets";
 import type { SecurityGroup, Vpc } from "../types";
 
 interface SecurityGroupHooks {
@@ -23,7 +24,7 @@ interface SecurityGroupHooks {
     {
       projectId: string;
       region?: string;
-      payload: { name: string; description: string; vpc_id: string };
+      payload: { name: string; description?: string; vpc_id: string };
     },
     unknown
   >;
@@ -74,9 +75,17 @@ const SecurityGroupsContainer: React.FC<SecurityGroupsContainerProps> = ({
 
   // Modal state
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; data?: SecurityGroup }>({
+    open: false,
+  });
 
   // Use injected hooks - SINGLE SOURCE OF TRUTH
-  const { data: securityGroups = [], isLoading, refetch } = hooks.useList(projectId, region);
+  const {
+    data: securityGroups = [],
+    isLoading,
+    isFetching,
+    refetch,
+  } = hooks.useList(projectId, region);
   // VPCs: use stub if hook not provided (Tenant/Client don't need VPCs)
   const useVpcsHook = hooks.useVpcs ?? (() => ({ data: [] as Vpc[] }));
   const { data: vpcs = [] } = useVpcsHook(projectId, region);
@@ -95,6 +104,7 @@ const SecurityGroupsContainer: React.FC<SecurityGroupsContainerProps> = ({
       {
         onSuccess: () => {
           setShowCreateModal(false);
+          refetch();
         },
       }
     );
@@ -102,9 +112,16 @@ const SecurityGroupsContainer: React.FC<SecurityGroupsContainerProps> = ({
 
   const handleDelete = (sg: SecurityGroup) => {
     if (!permissions.canDelete) return;
-    if (globalThis.window.confirm("Are you sure you want to delete this security group?")) {
-      deleteSg({ projectId, region, securityGroupId: sg.id });
-    }
+    setConfirmDelete({ open: true, data: sg });
+  };
+
+  const executeDelete = () => {
+    if (!confirmDelete.data) return;
+    deleteSg(
+      { projectId, region, securityGroupId: confirmDelete.data.id },
+      { onSuccess: () => refetch() }
+    );
+    setConfirmDelete({ open: false });
   };
 
   const handleViewRules = (sg: SecurityGroup) => {
@@ -115,9 +132,9 @@ const SecurityGroupsContainer: React.FC<SecurityGroupsContainerProps> = ({
   // Build header actions
   const headerActions = (
     <div className="flex items-center gap-3">
-      <ModernButton variant="secondary" size="sm" onClick={refetch as any} disabled={isLoading}>
-        <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-        Refresh
+      <ModernButton variant="secondary" size="sm" onClick={() => refetch()} disabled={isFetching}>
+        <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
+        {isFetching ? "Refreshing..." : "Refresh"}
       </ModernButton>
       {permissions.canCreate && (
         <ModernButton variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
@@ -149,6 +166,16 @@ const SecurityGroupsContainer: React.FC<SecurityGroupsContainerProps> = ({
           vpcs={vpcs}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDelete.open}
+        title="Delete Security Group?"
+        message="Are you sure you want to delete this security group?"
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={executeDelete}
+        onCancel={() => setConfirmDelete({ open: false })}
+      />
     </>
   );
 

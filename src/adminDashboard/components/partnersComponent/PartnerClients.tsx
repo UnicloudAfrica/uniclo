@@ -1,9 +1,9 @@
 import React from "react";
 import { Eye, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useFetchSubTenantByTenantID } from "../../../hooks/adminHooks/tenantHooks";
-import { ModernButton } from "../../../shared/components/ui";
-import ModernTable, { Column } from "../../../shared/components/ui/ModernTable";
+import { useFetchSubTenantByTenantID } from "@/hooks/adminHooks/tenantHooks";
+import { ModernButton } from "@/shared/components/ui";
+import ModernTable, { Column } from "@/shared/components/ui/ModernTable";
 
 const encodeId = (id: string | number) => {
   return encodeURIComponent(btoa(String(id)));

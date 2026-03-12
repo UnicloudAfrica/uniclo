@@ -1,6 +1,6 @@
 import React from "react";
 import { X, Package } from "lucide-react";
-import { formatRegionName } from "../../../../utils/regionUtils";
+import { formatRegionName } from "@/utils/regionUtils";
 import { PricingRequest, ObjectStorageRequest } from "../types";
 
 const getDisplayName = (display: unknown): string | null => {
@@ -21,7 +21,7 @@ interface InvoiceItemQueueProps {
 const InvoiceItemQueue: React.FC<InvoiceItemQueueProps> = ({
   items = [],
   onRemove,
-  onEdit,
+  onEdit: _onEdit,
   readOnly = false,
   type = "compute",
 }) => {

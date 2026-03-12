@@ -4,7 +4,7 @@
  */
 import React from "react";
 import { MapPin, Globe, Building, ChevronRight } from "lucide-react";
-import ModernInput from "../../../components/ui/ModernInput";
+import ModernInput from "@/shared/components/ui/ModernInput";
 import type {
   RegionFormChangeHandler,
   RegionFormData,
@@ -51,7 +51,7 @@ const RegionInfoForm: React.FC<RegionInfoFormProps> = ({
           name="code"
           value={regionData.code}
           onChange={(e) => onChange("code", e.target.value)}
-          placeholder="e.g., lagos-1"
+          placeholder="e.g., uca-lagos-002"
           required
           helper="Unique identifier for this region"
         />

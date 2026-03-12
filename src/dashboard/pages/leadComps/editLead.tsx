@@ -1,12 +1,12 @@
 import { useMemo } from "react";
-import { useFetchTenantAdmins } from "../../../hooks/adminUserHooks";
-import { useUpdateLead } from "../../../hooks/tenantHooks/leadsHook";
-import ToastUtils from "../../../utils/toastUtil";
+import { useFetchTenantAdmins } from "@/hooks/adminUserHooks";
+import { useUpdateLead } from "@/hooks/tenantHooks/leadsHooks";
+import ToastUtils from "@/utils/toastUtil";
 import EditLeadModal, {
   type LeadAssigneeOption,
   type LeadEditLead,
   type LeadUpdatePayload,
-} from "../../../shared/components/leads/EditLeadModal";
+} from "@/shared/components/leads/EditLeadModal";
 
 type TenantAdmin = {
   id?: string | number;

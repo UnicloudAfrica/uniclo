@@ -72,7 +72,7 @@ const ProjectComputeTab: React.FC<ProjectComputeTabProps> = ({
   } = useInstances({ project_id: projectId }, { enabled: Boolean(projectId) });
 
   const instances = useMemo(() => {
-    const items = extractInstances(instancesResponse as any);
+    const items = extractInstances(instancesResponse as never);
     return items.filter((instance) => (instance?.status || "").toLowerCase() !== "pending_payment");
   }, [instancesResponse]);
 
@@ -170,7 +170,7 @@ const ProjectComputeTab: React.FC<ProjectComputeTabProps> = ({
   const useKeyPairsAdapter = (projectIdValue: string, regionValue?: string, options = {}) => {
     const query = keyPairHooks.useList(projectIdValue, regionValue, options);
     return {
-      data: (query.data as any) || [],
+      data: (query.data as Record<string, unknown>[]) || [],
       isFetching: query.isFetching,
       refetch: query.refetch,
     };
@@ -232,7 +232,7 @@ const ProjectComputeTab: React.FC<ProjectComputeTabProps> = ({
         >
           <ModernTable
             data={instances}
-            columns={columns as any}
+            columns={columns as never}
             loading={isFetching}
             emptyMessage="No instances found for this project."
           />

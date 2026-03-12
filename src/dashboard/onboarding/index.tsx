@@ -1,57 +1,38 @@
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
-import { Loader2, AlertCircle, CheckCircle2, MessageCircle, Plus, Trash2 } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import {
   useOnboardingState,
   useOnboardingStep,
   usePostOnboardingThread,
   useUpdateOnboardingStep,
-} from "../../hooks/onboardingHooks";
+} from "@/hooks/onboardingHooks";
 import { getStepsForTarget } from "./stepConfig";
-import ToastUtils from "../../utils/toastUtil";
+import ToastUtils from "@/utils/toastUtil";
 import PartnerRegionQualificationForm from "./PartnerRegionQualificationForm";
 import BusinessProfileForm, { ensureBusinessProfileDefaults } from "./BusinessProfileForm";
 import BrandingThemeForm, { ensureBrandingThemeDefaults } from "./BrandingThemeForm";
-import FileDropInput from "./FileDropInput";
-import { useTenantBrandingTheme } from "../../hooks/useBrandingTheme";
+import FieldInput from "./FieldInput";
+import ConversationThread from "./ConversationThread";
+import {
+  type FormValues,
+  type SubmitAction,
+  statusCopy,
+  defaultStatusMeta,
+  isRecord,
+  getErrorMessage,
+  isBlank,
+  validatePartnerRegionPayload,
+  normalisePartnerRegionFormValues,
+  validateBusinessProfilePayload,
+  validateBrandingPayload,
+} from "./validationHelpers";
+import { useTenantBrandingTheme } from "@/hooks/useBrandingTheme";
 import type {
   OnboardingDocument,
-  OnboardingFieldDefinition,
-  OnboardingFileValue,
   OnboardingStateData,
-  OnboardingStatus,
   OnboardingSubmissionData,
   OnboardingThread,
-  StatusMeta,
-} from "../../types/onboarding";
-
-type FormValues = Record<string, unknown>;
-type SubmitAction = "save" | "submit" | "resubmit";
-
-const statusCopy: Record<string, StatusMeta> = {
-  draft: { label: "Draft", tone: "bg-slate-100 text-slate-700" },
-  submitted: { label: "Submitted", tone: "bg-blue-100 text-blue-700" },
-  in_review: { label: "In review", tone: "bg-blue-100 text-blue-700" },
-  changes_requested: { label: "Changes requested", tone: "bg-amber-100 text-amber-700" },
-  approved: { label: "Approved", tone: "bg-emerald-100 text-emerald-700" },
-  rejected: { label: "Rejected", tone: "bg-rose-100 text-rose-700" },
-};
-
-const defaultStatusMeta = { label: "Draft", tone: "bg-slate-100 text-slate-700" };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  value !== null && typeof value === "object";
-
-const getErrorMessage = (error: unknown, fallback: string): string => {
-  if (error instanceof Error && error.message.trim() !== "") {
-    return error.message;
-  }
-
-  if (isRecord(error) && typeof error.message === "string" && error.message.trim() !== "") {
-    return error.message;
-  }
-
-  return fallback;
-};
+} from "@/types/onboarding";
 
 const OnboardingDashboard = () => {
   const { data: state, isLoading: isStateLoading } = useOnboardingState();
@@ -355,7 +336,7 @@ const OnboardingDashboard = () => {
         <header className="mb-8">
           <h1 className="text-3xl font-semibold text-gray-900">Complete your onboarding</h1>
           <p className="text-gray-600 mt-1 max-w-2xl">
-            We’ll unlock the full dashboard once these steps are approved. You can save drafts,
+            We'll unlock the full dashboard once these steps are approved. You can save drafts,
             upload documents, and have a running conversation with the {brandName} review team here.
           </p>
           <ProgressBar
@@ -502,79 +483,13 @@ const OnboardingDashboard = () => {
                       </div>
                     </form>
 
-                    <div className="border-t border-gray-100 pt-6">
-                      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                        <MessageCircle className="w-5 h-5 text-[--theme-color]" /> Conversation
-                        history
-                      </h3>
-                      <p className="text-sm text-gray-500 mb-4">
-                        Keep everything in one place. We will notify you when reviewers respond.
-                      </p>
-
-                      <div className="space-y-4 max-h-72 overflow-y-auto pr-2">
-                        {submissionThreads.length ? (
-                          submissionThreads.map((thread) => (
-                            <div
-                              key={thread.id}
-                              className="bg-gray-50 border border-gray-100 rounded-lg p-4 text-sm text-gray-700"
-                            >
-                              <div className="flex items-center justify-between mb-1">
-                                <p className="font-medium">
-                                  {thread.author?.name ?? thread.author?.type ?? "Reviewer"}
-                                </p>
-                                <span className="text-xs text-gray-400">
-                                  {thread.created_at
-                                    ? new Date(thread.created_at).toLocaleString()
-                                    : ""}
-                                </span>
-                              </div>
-                              <p className="whitespace-pre-line text-gray-700">{thread.message}</p>
-                              {thread.action === "request_changes" && (
-                                <span className="inline-flex items-center mt-2 text-xs font-medium text-amber-600">
-                                  <AlertCircle className="w-4 h-4 mr-1" /> Changes requested
-                                </span>
-                              )}
-                            </div>
-                          ))
-                        ) : (
-                          <div className="text-sm text-gray-500">
-                            No messages yet. Submit a note to start.
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="mt-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Leave a note for the review team
-                        </label>
-                        <textarea
-                          value={comment}
-                          onChange={(event) => setComment(event.target.value)}
-                          rows={3}
-                          className="w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-[--theme-color] focus:outline-none text-sm p-3"
-                          placeholder="Share clarifications or let us know when you’ve made an update."
-                        />
-                        <div className="flex flex-col md:flex-row md:items-center gap-3 mt-3">
-                          <button
-                            type="button"
-                            onClick={handleSendMessage}
-                            disabled={!comment.trim() || threadMutation.isPending}
-                            className="px-4 py-2 rounded-full bg-[--secondary-color] text-white text-sm font-semibold hover:opacity-90 disabled:opacity-60"
-                          >
-                            {threadMutation.isPending ? (
-                              <span className="flex items-center gap-2">
-                                <Loader2 className="w-4 h-4 animate-spin" /> Sending...
-                              </span>
-                            ) : (
-                              "Send message"
-                            )}
-                          </button>
-                          <p className="text-xs text-gray-500">
-                            You can also submit the step to send a final note with your update.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                    <ConversationThread
+                      threads={submissionThreads}
+                      comment={comment}
+                      onCommentChange={setComment}
+                      onSendMessage={handleSendMessage}
+                      isSending={threadMutation.isPending}
+                    />
                   </div>
                 )}
               </div>
@@ -617,358 +532,6 @@ const StatusBlurb = ({ submission }: StatusBlurbProps) => {
       )}
     </div>
   );
-};
-
-interface FieldInputProps {
-  field: OnboardingFieldDefinition;
-  value: unknown;
-  onChange: (value: unknown) => void;
-  onFileChange?: (file: File | null) => void;
-}
-
-const FieldInput = ({ field, value, onChange, onFileChange }: FieldInputProps) => {
-  const baseClass =
-    "w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-[--theme-color] focus:outline-none text-sm";
-
-  if (field.type === "textarea") {
-    return (
-      <div className="md:col-span-2">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          {field.label}
-          {field.required && <span className="text-red-500"> *</span>}
-        </label>
-        <textarea
-          value={typeof value === "string" || typeof value === "number" ? value : ""}
-          onChange={(event) => onChange(event.target.value)}
-          rows={field.rows ?? 4}
-          className={`${baseClass} p-3`}
-        />
-        {field.helperText && <p className="text-xs text-gray-500 mt-1">{field.helperText}</p>}
-      </div>
-    );
-  }
-
-  if (field.type === "file") {
-    const handleSelect = (file: File | null) => {
-      if (onFileChange) {
-        onFileChange(file);
-        return;
-      }
-
-      if (!file) {
-        onChange("");
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        onChange(event.target?.result ?? "");
-      };
-      reader.onerror = () => {
-        ToastUtils.error("We couldn't read that file. Please try again.");
-      };
-      reader.readAsDataURL(file);
-    };
-
-    const spanClass = field.fullWidth === false ? "" : "md:col-span-2";
-    return (
-      <div className={spanClass}>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          {field.label}
-          {field.required && <span className="text-red-500"> *</span>}
-        </label>
-        <FileDropInput
-          accept={field.accept ?? ".pdf,.png,.jpg,.jpeg"}
-          value={value}
-          helperText={field.helperText}
-          onFileSelected={handleSelect}
-        />
-        {isRecord(value) && typeof value.url === "string" && value.url.trim() !== "" && (
-          <a
-            href={value.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-[--theme-color] font-medium mt-2"
-          >
-            View current file
-          </a>
-        )}
-      </div>
-    );
-  }
-
-  if (field.type === "select") {
-    const options = field.options ?? [];
-    const normalizedValue =
-      typeof value === "string" || typeof value === "number" ? String(value) : "";
-    const hasValueOption =
-      normalizedValue !== "" && options.some((option) => option.value === normalizedValue);
-    const computedOptions = hasValueOption
-      ? options
-      : normalizedValue
-        ? [...options, { value: normalizedValue, label: normalizedValue }]
-        : options;
-
-    return (
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          {field.label}
-          {field.required && <span className="text-red-500"> *</span>}
-        </label>
-        <select
-          value={normalizedValue}
-          onChange={(event) => onChange(event.target.value)}
-          className={`${baseClass} h-11 px-3 bg-white`}
-        >
-          <option value="" disabled>
-            Select an option
-          </option>
-          {computedOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        {field.helperText && <p className="text-xs text-gray-500 mt-1">{field.helperText}</p>}
-      </div>
-    );
-  }
-
-  if (field.type === "collection") {
-    return (
-      <CollectionField
-        field={field}
-        value={Array.isArray(value) ? value : []}
-        onChange={(nextValue) => onChange(nextValue)}
-      />
-    );
-  }
-
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {field.label}
-        {field.required && <span className="text-red-500"> *</span>}
-      </label>
-      <input
-        type={field.type ?? "text"}
-        value={typeof value === "string" || typeof value === "number" ? value : ""}
-        onChange={(event) => onChange(event.target.value)}
-        className={`${baseClass} h-11 px-3`}
-        placeholder={field.placeholder}
-      />
-      {field.helperText && <p className="text-xs text-gray-500 mt-1">{field.helperText}</p>}
-    </div>
-  );
-};
-
-const isBlank = (value: unknown) => {
-  if (Array.isArray(value)) {
-    return value.length === 0;
-  }
-
-  return value === undefined || value === null || `${value}`.trim() === "";
-};
-
-const validatePartnerRegionPayload = (payload: unknown): string[] => {
-  const missing: string[] = [];
-
-  if (!isRecord(payload)) {
-    missing.push("Tell us if you operate a region");
-    return missing;
-  }
-
-  if (payload.has_datacenter_node === null || payload.has_datacenter_node === undefined) {
-    missing.push("Tell us if you operate a region");
-    return missing;
-  }
-
-  if (payload.has_datacenter_node === false) {
-    return missing;
-  }
-
-  const region = isRecord(payload.region) ? payload.region : {};
-
-  const requiredRegionFields: Array<[string, string]> = [
-    ["provider", "Cloud provider"],
-    ["code", "Region code"],
-    ["country_code", "Country ISO"],
-    ["fulfillment_mode", "Fulfilment mode"],
-  ];
-
-  requiredRegionFields.forEach(([key, label]) => {
-    if (isBlank(region[key] ?? "")) {
-      missing.push(label);
-    }
-  });
-
-  const provider = typeof region.provider === "string" ? region.provider.toLowerCase() : "";
-  const fulfillmentMode =
-    typeof region.fulfillment_mode === "string" ? region.fulfillment_mode : "";
-
-  if (provider && provider !== "zadara" && fulfillmentMode === "automated") {
-    missing.push("Automated fulfilment is only available for Zadara right now");
-  }
-
-  if (provider !== "zadara") {
-    return [...new Set(missing)];
-  }
-
-  if (fulfillmentMode && !["manual", "automated"].includes(fulfillmentMode)) {
-    missing.push("Choose a fulfilment mode");
-  }
-
-  if (fulfillmentMode === "automated") {
-    const credentials = isRecord(region.msp_credentials) ? region.msp_credentials : {};
-
-    const requiredCredentialFields: Array<[string, string]> = [
-      ["base_url", "MSP base URL"],
-      ["username", "MSP username"],
-      ["password", "MSP password"],
-      ["domain", "MSP domain"],
-    ];
-
-    requiredCredentialFields.forEach(([key, label]) => {
-      if (isBlank(credentials[key] ?? "")) {
-        missing.push(label);
-      }
-    });
-
-    if (!isValidUrl(credentials.base_url ?? "")) {
-      missing.push("MSP base URL (valid URL)");
-    }
-
-    const objectStorage = isRecord(credentials.object_storage) ? credentials.object_storage : {};
-    if (objectStorage.enabled === true) {
-      if (isBlank(objectStorage.base_url ?? "")) {
-        missing.push("Object storage base URL");
-      } else if (!isValidUrl(objectStorage.base_url)) {
-        missing.push("Object storage base URL (valid URL)");
-      }
-    }
-  }
-
-  return [...new Set(missing)];
-};
-
-const normalisePartnerRegionFormValues = (payload: unknown): Record<string, unknown> => {
-  if (!isRecord(payload)) {
-    return { has_datacenter_node: null };
-  }
-
-  if (payload.has_datacenter_node === false) {
-    return { has_datacenter_node: false };
-  }
-
-  const region = isRecord(payload.region) ? payload.region : {};
-  const meta = isRecord(region.meta) ? region.meta : {};
-  const credentials = isRecord(region.msp_credentials) ? region.msp_credentials : {};
-  const objectStorage = isRecord(credentials.object_storage) ? credentials.object_storage : {};
-
-  return {
-    has_datacenter_node:
-      typeof payload.has_datacenter_node === "boolean" ? payload.has_datacenter_node : null,
-    region: {
-      ...region,
-      provider: typeof region.provider === "string" ? region.provider.toLowerCase() : "",
-      meta,
-      msp_credentials: {
-        ...credentials,
-        object_storage: objectStorage,
-      },
-    },
-  };
-};
-
-const validateBusinessProfilePayload = (payload: unknown): string[] => {
-  const data = ensureBusinessProfileDefaults(payload);
-  const missing: string[] = [];
-
-  if (isBlank(data.company_name)) missing.push("Company name");
-  if (isBlank(data.registration_number)) missing.push("Incorporation number");
-  if (isBlank(data.company_type)) missing.push("Business type");
-  if (isBlank(data.business_model)) missing.push("Business model");
-  if (isBlank(data.date_of_incorporation)) missing.push("Date of incorporation");
-  if (isBlank(data.industry)) missing.push("Industry");
-  if (isBlank(data.website) || !isValidUrl(data.website))
-    missing.push("Company website (valid URL)");
-  if (isBlank(data.address)) missing.push("Business address");
-  if (isBlank(data.country) || isBlank(data.country_id)) missing.push("Country");
-  if (isBlank(data.state) || isBlank(data.state_id)) missing.push("State / Region");
-  if (isBlank(data.city)) missing.push("City");
-  if (isBlank(data.support_contact_name)) missing.push("Support contact name");
-
-  if (!isValidEmail(data.support_contact_email ?? "")) {
-    missing.push("Support contact email (valid)");
-  }
-
-  if (isBlank(data.support_contact_phone)) {
-    missing.push("Support contact phone");
-  }
-
-  if (!isValidEmail(data.support_email ?? "")) {
-    missing.push("Generic support email (valid)");
-  }
-
-  const optionalUrlFields: Array<[string, string]> = [
-    ["privacy_policy_url", "Privacy policy URL"],
-    ["help_center_url", "Help centre URL"],
-    ["unsubscription_url", "Email unsubscription URL"],
-    ["logo_href", "Logo target URL"],
-  ];
-
-  optionalUrlFields.forEach(([key, label]) => {
-    const value = data[key];
-    if (!isBlank(value) && !isValidUrl(value)) {
-      missing.push(`${label} (valid URL)`);
-    }
-  });
-
-  return [...new Set(missing)];
-};
-
-const isValidEmail = (value: unknown) =>
-  typeof value === "string" && /\S+@\S+\.\S+/.test(value.trim());
-
-const validateBrandingPayload = (payload: unknown): string[] => {
-  const data = ensureBrandingThemeDefaults(payload);
-  const missing: string[] = [];
-
-  if (isBlank(data.logo)) {
-    missing.push("Company logo");
-  }
-
-  if (isBlank(data.privacy_policy_url) || !isValidUrl(data.privacy_policy_url)) {
-    missing.push("Privacy policy URL (valid)");
-  }
-
-  const brandingOptionalUrlFields: Array<[string, string]> = [
-    ["help_center_url", "Help centre URL"],
-    ["unsubscription_url", "Email unsubscription URL"],
-    ["logo_href", "Logo target URL"],
-  ];
-
-  brandingOptionalUrlFields.forEach(([key, label]) => {
-    const value = data[key];
-    if (!isBlank(value) && !isValidUrl(value)) {
-      missing.push(`${label} (valid URL)`);
-    }
-  });
-
-  return [...new Set(missing)];
-};
-
-const isValidUrl = (value: unknown) => {
-  if (typeof value !== "string" || value.trim() === "") {
-    return false;
-  }
-
-  try {
-    const parsed = new URL(value);
-    return Boolean(parsed.protocol && parsed.host);
-  } catch (_error) {
-    return false;
-  }
 };
 
 interface ProgressBarProps {
@@ -1038,191 +601,5 @@ const DocumentGallery = ({ documents }: DocumentGalleryProps) => (
     </div>
   </div>
 );
-
-interface CollectionFieldProps {
-  field: OnboardingFieldDefinition;
-  value: unknown[];
-  onChange: (value: unknown[]) => void;
-}
-
-const CollectionField = ({ field, value, onChange }: CollectionFieldProps) => {
-  const items = Array.isArray(value) ? value : [];
-
-  const handleAdd = () => {
-    const template = (field.fields ?? []).reduce<Record<string, unknown>>((acc, sub) => {
-      acc[sub.id] = "";
-      return acc;
-    }, {});
-
-    onChange([...(items ?? []), template]);
-  };
-
-  const handleRemove = (index: number) => {
-    const next = items.filter((_, idx) => idx !== index);
-    onChange(next);
-  };
-
-  const handleItemChange = (index: number, key: string, newValue: unknown) => {
-    const next = items.map((item, idx) => {
-      const itemRecord = isRecord(item) ? item : {};
-      return idx === index ? { ...itemRecord, [key]: newValue } : itemRecord;
-    });
-
-    onChange(next);
-  };
-
-  const handleItemFileChange = (index: number, key: string, file: File | null) => {
-    if (!file) {
-      handleItemChange(index, key, "");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      handleItemChange(index, key, event.target?.result ?? "");
-    };
-    reader.onerror = () => {
-      ToastUtils.error("We couldn't read that file. Please try again.");
-    };
-    reader.readAsDataURL(file);
-  };
-
-  return (
-    <div className="md:col-span-2">
-      <div className="flex items-center justify-between mb-2">
-        <label className="block text-sm font-medium text-gray-700">
-          {field.label}
-          {field.required && <span className="text-red-500"> *</span>}
-        </label>
-        <button
-          type="button"
-          onClick={handleAdd}
-          className="inline-flex items-center gap-1 text-xs font-medium text-[--theme-color] hover:opacity-80"
-        >
-          <Plus className="w-4 h-4" /> Add {field.itemLabel ?? "entry"}
-        </button>
-      </div>
-      {field.helperText && <p className="text-xs text-gray-500 mb-3">{field.helperText}</p>}
-
-      <div className="space-y-4">
-        {items.length === 0 ? (
-          <p className="text-sm text-gray-500">No entries yet. Use the button above to add one.</p>
-        ) : (
-          items.map((item, index) => {
-            const itemRecord = isRecord(item) ? item : {};
-            return (
-              <div key={index} className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-semibold text-gray-800">
-                    {field.itemLabel ?? "Entry"} {index + 1}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => handleRemove(index)}
-                    className="inline-flex items-center gap-1 text-xs text-rose-500 hover:text-rose-600"
-                  >
-                    <Trash2 className="w-4 h-4" /> Remove
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {(field.fields ?? []).map((subField) => {
-                    const fieldValue = itemRecord[subField.id];
-                    const scalarValue =
-                      typeof fieldValue === "string" || typeof fieldValue === "number"
-                        ? fieldValue
-                        : "";
-
-                    return (
-                      <div
-                        key={subField.id}
-                        className={subField.type === "textarea" ? "md:col-span-2" : ""}
-                      >
-                        <label className="block text-xs font-medium text-gray-600 mb-1">
-                          {subField.label}
-                          {subField.required && <span className="text-red-500"> *</span>}
-                        </label>
-                        {subField.type === "textarea" ? (
-                          <textarea
-                            value={scalarValue}
-                            onChange={(event) =>
-                              handleItemChange(index, subField.id, event.target.value)
-                            }
-                            rows={subField.rows ?? 3}
-                            className="w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-[--theme-color] focus:outline-none text-sm p-2"
-                          />
-                        ) : subField.type === "select" ? (
-                          <select
-                            value={scalarValue}
-                            onChange={(event) =>
-                              handleItemChange(index, subField.id, event.target.value)
-                            }
-                            className="w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-[--theme-color] focus:outline-none text-sm h-10 px-3 bg-white"
-                          >
-                            <option value="" disabled>
-                              Select an option
-                            </option>
-                            {(subField.options ?? []).map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
-                        ) : subField.type === "file" ? (
-                          <>
-                            <FileDropInput
-                              accept={subField.accept ?? ".pdf,.png,.jpg,.jpeg"}
-                              value={itemRecord[subField.id] as OnboardingFileValue}
-                              helperText={subField.helperText}
-                              onFileSelected={(file: File | null) =>
-                                handleItemFileChange(index, subField.id, file)
-                              }
-                            />
-                            {(() => {
-                              const currentValue = itemRecord[subField.id];
-                              const fileRecord = isRecord(currentValue) ? currentValue : null;
-
-                              if (!fileRecord || typeof fileRecord.url !== "string") {
-                                return null;
-                              }
-
-                              return (
-                                <a
-                                  href={fileRecord.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 text-[10px] text-[--theme-color] mt-1"
-                                >
-                                  View current file
-                                </a>
-                              );
-                            })()}
-                          </>
-                        ) : (
-                          <input
-                            type={subField.type ?? "text"}
-                            value={scalarValue}
-                            onChange={(event) =>
-                              handleItemChange(index, subField.id, event.target.value)
-                            }
-                            className="w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-[--theme-color] focus:outline-none text-sm h-10 px-3"
-                            placeholder={subField.placeholder}
-                          />
-                        )}
-                        {subField.helperText && subField.type !== "file" && (
-                          <p className="text-[10px] text-gray-500 mt-1">{subField.helperText}</p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-    </div>
-  );
-};
 
 export default OnboardingDashboard;

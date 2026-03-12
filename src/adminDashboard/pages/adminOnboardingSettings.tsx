@@ -4,15 +4,15 @@ import {
   useCreateOnboardingSetting,
   useUpdateOnboardingSetting,
   useDeleteOnboardingSetting,
-} from "../../hooks/adminHooks/onboardingSettingsHooks";
+} from "@/hooks/adminHooks/onboardingSettingsHooks";
 import { Loader2, Plus, Save, Trash2, X } from "lucide-react";
-import ToastUtils from "../../utils/toastUtil";
+import ToastUtils from "@/utils/toastUtil";
 import AdminPageShell from "../components/AdminPageShell";
-import useAuthRedirect from "../../utils/adminAuthRedirect";
-import { useFetchCountries as useAdminFetchCountries } from "../../hooks/adminHooks/countriesHooks";
+import useAuthRedirect from "@/utils/adminAuthRedirect";
+import { useFetchCountries as useAdminFetchCountries } from "@/hooks/adminHooks/countriesHooks";
 import { STEP_CONFIG } from "../../dashboard/onboarding/stepConfig";
-import ModernTable from "../../shared/components/ui/ModernTable";
-import logger from "../../utils/logger";
+import ModernTable from "@/shared/components/ui/ModernTable";
+import logger from "@/utils/logger";
 
 type EnforcementMode = "required" | "grace" | "optional";
 
@@ -160,7 +160,7 @@ const AdminOnboardingSettings = () => {
       const nextStepId = stepOptions[0]?.value ?? "";
       setForm((prev) => ({ ...prev, step_id: nextStepId }));
     }
-  }, [form.persona, stepOptions]);
+  }, [form.persona, form.step_id, stepOptions]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -375,8 +375,8 @@ const AdminOnboardingSettings = () => {
                     key: "persona",
                     header: "Persona",
                     sortable: true,
-                    render: (val) => (
-                      <span className="font-medium text-gray-900">{val as any}</span>
+                    render: (val: unknown) => (
+                      <span className="font-medium text-gray-900">{val as string}</span>
                     ),
                   },
                   {
@@ -388,20 +388,22 @@ const AdminOnboardingSettings = () => {
                     key: "country_code",
                     header: "Country",
                     sortable: true,
-                    render: (val) => (val as any) || <span className="text-gray-400">—</span>,
+                    render: (val: unknown) =>
+                      (val as string) || <span className="text-gray-400">—</span>,
                   },
                   {
                     key: "enforcement",
                     header: "Enforcement",
                     sortable: true,
-                    render: (val) =>
-                      (enforcementOptions.find((opt) => opt.value === val)?.label ?? val) as any,
+                    render: (val: unknown) =>
+                      (enforcementOptions.find((opt) => opt.value === val)?.label ?? val) as string,
                   },
                   {
                     key: "grace_period_days",
                     header: "Grace Days",
                     sortable: true,
-                    render: (val, row) => (row.enforcement === "grace" ? ((val ?? 0) as any) : "—"),
+                    render: (val: unknown, row: OnboardingSetting) =>
+                      row.enforcement === "grace" ? ((val ?? 0) as number) : "—",
                   },
                   {
                     key: "actions",

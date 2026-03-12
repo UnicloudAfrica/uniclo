@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 
-import ToastUtils from "../../utils/toastUtil";
+import ToastUtils from "@/utils/toastUtil";
 import { getAsyncErrorMessage } from "../utils/asyncError";
 
 export type AsyncStatus = "idle" | "pending" | "success" | "error";

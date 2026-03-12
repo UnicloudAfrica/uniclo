@@ -2,13 +2,13 @@ import React from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Shield } from "lucide-react";
 import AdminPageShell from "../../components/AdminPageShell";
-import SecurityGroupsContainer from "../../../shared/components/infrastructure/containers/SecurityGroupsContainer";
+import SecurityGroupsContainer from "@/shared/components/infrastructure/containers/SecurityGroupsContainer";
 import {
   useSecurityGroups,
   useCreateSecurityGroup,
   useDeleteSecurityGroup,
   useVpcs,
-} from "../../../shared/hooks/vpcInfraHooks";
+} from "@/shared/hooks/vpcInfraHooks";
 
 /**
  * Admin Security Groups page - truly thin wrapper.

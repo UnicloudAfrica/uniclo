@@ -1,18 +1,19 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { DashboardHeadbar } from "../../shared/components/headbar";
-import { useDashboardProfile } from "../../shared/hooks/useDashboardProfile";
-import { clearAllAuthSessions } from "../../stores/sessionUtils";
-import useSidebarStore from "../../stores/sidebarStore";
-import { buildAdminHeadbarPreset } from "../../shared/config/headbarPresets";
+import { DashboardHeadbar } from "@/shared/components/headbar";
+import { useDashboardProfile } from "@/shared/hooks/useDashboardProfile";
+import { clearAllAuthSessions } from "@/stores/sessionUtils";
+import useSidebarStore from "@/stores/sidebarStore";
+import { buildAdminHeadbarPreset } from "@/shared/config/headbarPresets";
 import {
   resolveBrandLogo,
   useAdminBrandingTheme,
   useApplyBrandingTheme,
-} from "../../hooks/useBrandingTheme";
+} from "@/hooks/useBrandingTheme";
+import type { BrandingTheme } from "@/types/branding";
 import logo from "./assets/logo.png";
 import { useAdminShellContext } from "./AdminShellContext";
-import logger from "../../utils/logger";
+import logger from "@/utils/logger";
 
 interface AdminHeadbarProps {
   forceRender?: boolean;
@@ -29,11 +30,14 @@ const AdminHeadbar: React.FC<AdminHeadbarProps> = ({ forceRender = false }) => {
   const { data: branding, isFetching: isBrandingFetching } = useAdminBrandingTheme({
     enabled: shouldRender,
   });
-  useApplyBrandingTheme(branding as any, { fallbackLogo: logo, enabled: shouldRender });
+  useApplyBrandingTheme(branding?.data as BrandingTheme, {
+    fallbackLogo: logo,
+    enabled: shouldRender,
+  });
 
   const preset = buildAdminHeadbarPreset(
-    resolveBrandLogo(branding as any, logo),
-    branding?.accentColor || branding?.primaryColor
+    resolveBrandLogo(branding?.data as BrandingTheme, logo),
+    branding?.data?.accentColor || branding?.data?.primaryColor
   );
 
   if (!shouldRender) {

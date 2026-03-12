@@ -1,0 +1,611 @@
+/**
+ * Project Infrastructure Hooks — Context-aware hooks for project infrastructure.
+ *
+ * Replaces duplicated project-infrastructure hooks across admin/tenant/client.
+ * Uses `useApiContext()` to route requests to the correct API client.
+ *
+ * Exports:
+ *   - Shared hooks used by all roles (status query)
+ *   - Admin-only hooks (setup, bulk setup, reset, polling, progress, sync, provision, enable-vpc)
+ *
+ * The infrastructure endpoint follows a non-standard URL pattern:
+ *   admin:  /business/project-infrastructure/...
+ *   tenant: /admin/business/project-infrastructure/...
+ *   client: /business/project-infrastructure/...
+ */
+import React from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useApiContext } from "@/hooks/useApiContext";
+import type { ApiContext } from "@/hooks/useApiContext";
+import { apiRegistry } from "../../api/apiRegistry";
+import logger from "@/utils/logger";
+
+type AnyRecord = Record<string, any>;
+
+// ─── URL Helpers ────────────────────────────────────────────────
+
+/**
+ * Returns the base path for the project-infrastructure endpoint
+ * according to the role / API context.
+ */
+const infraBasePath = (context: ApiContext): string => {
+  switch (context) {
+    case "tenant":
+      return "/admin/business/project-infrastructure";
+    case "admin":
+    case "client":
+    default:
+      return "/business/project-infrastructure";
+  }
+};
+
+// ─── Normalisation Helpers ──────────────────────────────────────
+
+export const normalizeDetails = (component: any): any[] | null => {
+  if (!component || !component.details) return null;
+  if (Array.isArray(component.details)) return component.details;
+  if (typeof component.details === "object") return [component.details];
+  return null;
+};
+
+export const normalizeStatus = (component: any): string => {
+  if (!component) return "pending";
+  const status = component.status;
+  if (status === "configured" || status === "completed") return "completed";
+  if (status === "ready") {
+    const details = normalizeDetails(component);
+    if (
+      (details && details.length > 0) ||
+      (typeof component.count === "number" && component.count > 0)
+    ) {
+      return "completed";
+    }
+    return "pending";
+  }
+  const details = normalizeDetails(component);
+  if (
+    (details && details.length > 0) ||
+    (typeof component.count === "number" && component.count > 0)
+  ) {
+    return "completed";
+  }
+  return component.ready_for_setup ? "pending" : "pending";
+};
+
+// ─── Component Definitions ──────────────────────────────────────
+
+/**
+ * The full set of infrastructure component keys.
+ * Admin sees all; tenant/client see a subset.
+ */
+const ADMIN_COMPONENTS = [
+  "keypairs",
+  "vpc",
+  "edge_networks",
+  "security_groups",
+  "subnets",
+  "route_tables",
+  "internet_gateways",
+  "network_interfaces",
+  "elastic_ips",
+] as const;
+
+/**
+ * Tenant sees all the same components as admin (minus the hardcoded "domain").
+ */
+const TENANT_COMPONENTS = ADMIN_COMPONENTS;
+
+/**
+ * Client sees a reduced subset of components.
+ */
+const CLIENT_COMPONENTS = [
+  "keypairs",
+  "vpc",
+  "edge_networks",
+  "security_groups",
+  "subnets",
+] as const;
+
+type ComponentKey = (typeof ADMIN_COMPONENTS)[number];
+
+const componentsForContext = (context: ApiContext): readonly ComponentKey[] => {
+  switch (context) {
+    case "admin":
+      return ADMIN_COMPONENTS;
+    case "tenant":
+      return TENANT_COMPONENTS;
+    case "client":
+    default:
+      return CLIENT_COMPONENTS;
+  }
+};
+
+// ─── Backend → Frontend Conversion ──────────────────────────────
+
+const buildComponent = (infraEntry: any) => ({
+  status: normalizeStatus(infraEntry),
+  details: normalizeDetails(infraEntry),
+  count: infraEntry?.count ?? null,
+  error: null,
+});
+
+const buildKeypairsComponent = (kp: any) => ({
+  status: (() => {
+    if (!kp) return "pending";
+    if (kp.status === "configured" || kp.status === "completed") return "completed";
+    if (typeof kp.count === "number" && kp.count > 0) return "completed";
+    const details = normalizeDetails(kp);
+    if (details && details.length > 0) return "completed";
+    return kp?.ready_for_setup ? "pending" : "pending";
+  })(),
+  details: normalizeDetails(kp),
+  count: kp?.count ?? null,
+  error: null,
+});
+
+export const convertBackendResponse = (backendData: any, context: ApiContext = "admin") => {
+  if (!backendData) return null;
+
+  const infrastructure = backendData.infrastructure || {};
+  const componentKeys = componentsForContext(context);
+
+  // Build the components object, only including keys relevant to the context
+  const components: AnyRecord = {};
+
+  // Admin version includes a hardcoded "domain" entry
+  if (context === "admin") {
+    components.domain = {
+      status: "completed",
+      details: null,
+      error: null,
+    };
+  }
+
+  for (const key of componentKeys) {
+    if (key === "keypairs") {
+      components[key] = buildKeypairsComponent(infrastructure.keypairs);
+    } else {
+      components[key] = buildComponent(infrastructure[key]);
+    }
+  }
+
+  // Build counts map (tenant & client include this; admin does not)
+  // Cast once to access legacy flat count fields (e.g. vpcs_count, igws_count)
+  const infraLegacy = infrastructure as AnyRecord;
+  const counts: AnyRecord | undefined =
+    context !== "admin"
+      ? {
+          vpcs: infrastructure.vpc?.count ?? infraLegacy.vpcs_count ?? null,
+          subnets: infrastructure.subnets?.count ?? infraLegacy.subnets_count ?? null,
+          security_groups:
+            infrastructure.security_groups?.count ?? infraLegacy.security_groups_count ?? null,
+          keypairs: infrastructure.keypairs?.count ?? infraLegacy.keypairs_count ?? null,
+          internet_gateways:
+            infrastructure.internet_gateways?.count ?? infraLegacy.igws_count ?? null,
+          route_tables:
+            infrastructure.route_tables?.count ?? infraLegacy.route_tables_count ?? null,
+          network_interfaces:
+            infrastructure.network_interfaces?.count ?? infraLegacy.enis_count ?? null,
+          elastic_ips: infrastructure.elastic_ips?.count ?? infraLegacy.eips_count ?? null,
+        }
+      : undefined;
+
+  const result: AnyRecord = {
+    project_id: backendData.project?.identifier,
+    overall_status: backendData.project?.status || "pending",
+    components,
+    completion_percentage: backendData.completion_percentage || 0,
+    estimated_completion: backendData.estimated_completion_time
+      ? new Date(Date.now() + backendData.estimated_completion_time * 1000).toISOString()
+      : null,
+    last_updated: new Date().toISOString(),
+    next_steps: backendData.next_steps || [],
+  };
+
+  if (counts !== undefined) {
+    result.counts = counts;
+  }
+
+  return result;
+};
+
+// ─── Query Key Factories ────────────────────────────────────────
+
+export const projectInfraKeys = {
+  status: (context: ApiContext, projectId: any) =>
+    ["project-infrastructure-status", context, projectId] as const,
+  polling: (context: ApiContext, projectId: any) =>
+    ["project-status-polling", context, projectId] as const,
+};
+
+// ─── Shared Hooks (all roles) ───────────────────────────────────
+
+/** Fetch project infrastructure status — all roles */
+export const useProjectInfrastructureStatus = (projectId: any, options: AnyRecord = {}) => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const basePath = infraBasePath(context);
+
+  return useQuery({
+    queryKey: projectInfraKeys.status(context, projectId),
+    queryFn: async () => {
+      if (!projectId) {
+        throw new Error("Project ID is required");
+      }
+      if (typeof projectId === "string" && projectId.includes("\0")) {
+        throw new Error("Invalid Project ID: Contains null byte");
+      }
+
+      const response = await entry.silentApi.get<AnyRecord>(`${basePath}/${projectId}`);
+
+      const raw = (response as AnyRecord)?.data ?? response;
+      const convertedData = convertBackendResponse(raw, context);
+
+      return { data: convertedData };
+    },
+    enabled: !!projectId,
+    staleTime: 30000,
+    cacheTime: 300000,
+    retry: (failureCount: any, error: any) => {
+      if (error?.message?.includes?.("404") || error?.message?.includes?.("403")) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+    ...options,
+  } as never);
+};
+
+// ─── Admin-Only Hooks ───────────────────────────────────────────
+
+/** Setup a single infrastructure component — admin only */
+export const useSetupInfrastructureComponent = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+  const basePath = infraBasePath(context);
+
+  return useMutation({
+    mutationFn: async ({ projectId, componentType }: any) => {
+      if (!projectId || !componentType) {
+        throw new Error("Project ID and component type are required");
+      }
+
+      return entry.toastApi.post<AnyRecord>(basePath, {
+        project_identifier: projectId,
+        component: componentType,
+        auto_configure: true,
+        timestamp: new Date().toISOString(),
+      });
+    },
+    onSuccess: (_data: any, variables: any) => {
+      queryClient.invalidateQueries({
+        queryKey: projectInfraKeys.status(context, variables.projectId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["project-details", variables.projectId],
+      });
+    },
+    onError: (error: any, variables: any) => {
+      logger.error(`Failed to setup ${variables.componentType}:`, error);
+    },
+  });
+};
+
+/** Provision VPC for a project — admin only */
+export const useProvisionVpc = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ projectId, payload = {} }: any) => {
+      if (!projectId) {
+        throw new Error("Project ID is required");
+      }
+
+      return entry.toastApi.post<AnyRecord>(
+        `${entry.urlPrefix}/projects/${projectId}/vpc/provision`,
+        payload
+      );
+    },
+    onSuccess: (_data: any, variables: any) => {
+      queryClient.invalidateQueries({
+        queryKey: projectInfraKeys.status(context, variables.projectId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["project-details", variables.projectId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-project", variables.projectId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-projects"],
+      });
+    },
+    onError: (error: any) => {
+      logger.error("Failed to provision VPC:", error);
+    },
+  });
+};
+
+/** Enable VPC for a project in Zadara — admin only */
+export const useEnableProjectVpc = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ projectId }: any) => {
+      if (!projectId) {
+        throw new Error("Project ID is required");
+      }
+
+      return entry.toastApi.post<AnyRecord>(`${entry.urlPrefix}/projects/${projectId}/enable-vpc`);
+    },
+    onSuccess: (_data: any, variables: any) => {
+      queryClient.invalidateQueries({
+        queryKey: projectInfraKeys.status(context, variables.projectId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["project-details", variables.projectId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-project", variables.projectId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-projects"],
+      });
+    },
+    onError: (error: any) => {
+      logger.error("Failed to enable VPC:", error);
+    },
+  });
+};
+
+/** Real-time project status polling — admin only */
+export const useProjectStatusPolling = (projectId: any, options: AnyRecord = {}) => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const {
+    enabled = true,
+    interval = 30000,
+    maxPollingTime = 1800000,
+    stopOnStatus = ["active", "failed", "deleted"],
+    triggerSync = false,
+  } = options;
+
+  const [pollingStartTime] = React.useState(() => Date.now());
+  const [shouldStop, setShouldStop] = React.useState(false);
+
+  return useQuery({
+    queryKey: projectInfraKeys.polling(context, projectId),
+    queryFn: async () => {
+      if (!projectId) {
+        throw new Error("Project ID is required");
+      }
+
+      const syncParam = triggerSync ? "?sync=true" : "";
+      const response = await entry.silentApi.get<AnyRecord>(
+        `${entry.urlPrefix}/projects/${projectId}/status${syncParam}`
+      );
+
+      return (response as AnyRecord)?.data ?? response;
+    },
+    enabled: enabled && !!projectId && !shouldStop,
+    refetchInterval: (data: any, _query: any) => {
+      if (Date.now() - pollingStartTime > maxPollingTime) {
+        setShouldStop(true);
+        return false;
+      }
+
+      if (data && stopOnStatus.includes(data.status)) {
+        setShouldStop(true);
+        return false;
+      }
+
+      return interval;
+    },
+    refetchIntervalInBackground: false,
+    staleTime: 0,
+    retry: (failureCount: any, _error: any) => {
+      return failureCount < 3;
+    },
+    onSuccess: (data: any) => {
+      logger.log(`Project ${projectId} status:`, data.status);
+
+      if (options.onStatusChange) {
+        options.onStatusChange(data);
+      }
+    },
+    ...options.queryOptions,
+  } as never);
+};
+
+/** Bulk infrastructure setup — admin only */
+export const useBulkSetupInfrastructure = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+  const basePath = infraBasePath(context);
+
+  return useMutation({
+    mutationFn: async ({ projectId, components }: any) => {
+      if (!projectId || !Array.isArray(components) || components.length === 0) {
+        throw new Error("Project ID and components array are required");
+      }
+
+      const results = [];
+      for (const component of components) {
+        const result = await entry.toastApi.post<AnyRecord>(basePath, {
+          project_identifier: projectId,
+          component,
+          auto_configure: true,
+          timestamp: new Date().toISOString(),
+        });
+        results.push(result);
+      }
+      return { success: true, results };
+    },
+    onSuccess: (_data: any, variables: any) => {
+      queryClient.invalidateQueries({
+        queryKey: projectInfraKeys.status(context, variables.projectId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["project-details", variables.projectId],
+      });
+    },
+    onError: (error: any, _variables: any) => {
+      logger.error("Failed to setup infrastructure components:", error);
+    },
+  });
+};
+
+/** Reset/rollback infrastructure component — admin only */
+export const useResetInfrastructureComponent = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+  const basePath = infraBasePath(context);
+
+  return useMutation({
+    mutationFn: async ({ projectId, componentType }: any) => {
+      if (!projectId || !componentType) {
+        throw new Error("Project ID and component type are required");
+      }
+
+      return entry.toastApi.delete<AnyRecord>(`${basePath}/${projectId}`, {
+        component: componentType,
+        timestamp: new Date().toISOString(),
+      });
+    },
+    onSuccess: (_data: any, variables: any) => {
+      queryClient.invalidateQueries({
+        queryKey: projectInfraKeys.status(context, variables.projectId),
+      });
+    },
+    onError: (error: any, variables: any) => {
+      logger.error(`Failed to reset ${variables.componentType}:`, error);
+    },
+  });
+};
+
+/** Infrastructure setup progress helper — admin only */
+export const useInfrastructureProgress = (projectId: any) => {
+  const { data: infraStatus } = useProjectInfrastructureStatus(projectId);
+  const normalizedInfraStatus = (infraStatus as AnyRecord)?.data ?? infraStatus;
+
+  const progress = React.useMemo(() => {
+    const components = normalizedInfraStatus?.components;
+    if (!components) {
+      return {
+        completedSteps: 0,
+        totalSteps: 0,
+        percentage: 0,
+        currentStep: null,
+        nextStep: null,
+      };
+    }
+
+    const stepOrder = ["domain", "vpc", "edge_networks", "security_groups", "subnets"];
+
+    const completedSteps = stepOrder.filter(
+      (step: any) => components[step]?.status === "completed"
+    ).length;
+
+    const currentStep = stepOrder.find((step: any) => components[step]?.status === "in_progress");
+
+    const nextStep = stepOrder.find(
+      (step: any) => components[step]?.status === "pending" || !components[step]
+    );
+
+    return {
+      completedSteps,
+      totalSteps: stepOrder.length,
+      percentage: (completedSteps / stepOrder.length) * 100,
+      currentStep,
+      nextStep,
+      isComplete: completedSteps === stepOrder.length,
+    };
+  }, [normalizedInfraStatus]);
+
+  return progress;
+};
+
+/** Sync / force-refresh project infrastructure — all roles */
+export const useSyncProjectInfrastructure = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+  const basePath = infraBasePath(context);
+
+  return useMutation({
+    mutationFn: async ({ projectId }: any) => {
+      if (!projectId) {
+        throw new Error("Project ID is required");
+      }
+
+      // Step 1: Trigger provider → DB sync via ResourceSyncService.
+      // This pulls fresh data from Zadara/Nobus APIs into local DB models
+      // and recalculates project status (marks as active if VPC+subnet exist).
+      try {
+        await entry.silentApi.post<AnyRecord>(
+          `${entry.urlPrefix}/projects/${projectId}/sync-resources`
+        );
+      } catch (syncErr: any) {
+        // Log but don't abort — the refresh below has its own driver-based sync fallback
+        logger.warn("sync-resources pre-sync failed, falling back to refresh:", syncErr);
+      }
+
+      // Step 2: Fetch fresh infrastructure status.
+      // Uses refresh=true so the backend's own syncInfrastructureFromProvider
+      // runs as a second safety net, then returns the formatted response.
+      return entry.silentApi.get<AnyRecord>(`${basePath}/${projectId}?refresh=true`);
+    },
+    onSuccess: (_data: any, variables: any) => {
+      queryClient.invalidateQueries({
+        queryKey: projectInfraKeys.status(context, variables.projectId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["project-details", variables.projectId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-project", variables.projectId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-projects"],
+      });
+      const resourceKeys = [
+        "networks",
+        "vpcs",
+        "subnets",
+        "securityGroups",
+        "keyPairs",
+        "igws",
+        "routeTables",
+        "elasticIps",
+        "networkInterfaces",
+      ];
+      resourceKeys.forEach((key: any) => queryClient.invalidateQueries({ queryKey: [key] }));
+    },
+    onError: (error: any) => {
+      logger.error("Failed to sync infrastructure:", error);
+    },
+  });
+};
+
+// ─── Default Export ─────────────────────────────────────────────
+
+const projectInfrastructureHooks = {
+  useProjectInfrastructureStatus,
+  useSetupInfrastructureComponent,
+  useBulkSetupInfrastructure,
+  useResetInfrastructureComponent,
+  useInfrastructureProgress,
+  useProvisionVpc,
+  useEnableProjectVpc,
+  useProjectStatusPolling,
+  useSyncProjectInfrastructure,
+};
+
+export default projectInfrastructureHooks;

@@ -1,22 +1,43 @@
 import React, { useState } from "react";
 import { GitMerge, Plus, RefreshCw } from "lucide-react";
 import ModernButton from "../../ui/ModernButton";
+import ConfirmDialog from "@/shared/components/ui/ConfirmDialog";
 import { VpcPeeringOverview } from "..";
+import type { Vpc, VpcPeeringConnection } from "../types";
 
 interface VpcPeeringHooks {
   useList: (
     projectId: string,
     region?: string
   ) => {
-    data: unknown;
+    data: VpcPeeringConnection[];
     isLoading: boolean;
     refetch: () => void;
   };
-  useVpcs?: (projectId: string, region?: string) => { data: any[] };
-  useCreate?: () => { mutate: (input: any, options?: any) => void; isPending: boolean };
-  useAccept?: () => { mutate: (input: any) => void; isPending: boolean };
-  useReject?: () => { mutate: (input: any) => void; isPending: boolean };
-  useDelete?: () => { mutate: (input: any) => void; isPending: boolean };
+  useVpcs?: (projectId: string, region?: string) => { data: Vpc[] };
+  useCreate?: () => {
+    mutate: (
+      input: {
+        projectId: string;
+        region?: string;
+        payload: { vpc_id: string; peer_vpc_id: string; name?: string };
+      },
+      options?: { onSuccess?: () => void }
+    ) => void;
+    isPending: boolean;
+  };
+  useAccept?: () => {
+    mutate: (input: { projectId: string; region?: string; peeringId: string }) => void;
+    isPending: boolean;
+  };
+  useReject?: () => {
+    mutate: (input: { projectId: string; region?: string; peeringId: string }) => void;
+    isPending: boolean;
+  };
+  useDelete?: () => {
+    mutate: (input: { projectId: string; region?: string; peeringId: string }) => void;
+    isPending: boolean;
+  };
 }
 
 interface VpcPeeringContainerProps {
@@ -36,7 +57,12 @@ const VpcPeeringContainer: React.FC<VpcPeeringContainerProps> = ({
   hooks,
   wrapper: Wrapper,
 }) => {
-  const { data: peeringConnections = [], isLoading, refetch } = hooks.useList(projectId, region);
+  const {
+    data: peeringConnections = [],
+    isLoading,
+    isFetching,
+    refetch,
+  } = hooks.useList(projectId, region);
   const { data: vpcs = [] } = hooks.useVpcs ? hooks.useVpcs(projectId, region) : { data: [] };
 
   const createMutation = hooks.useCreate ? hooks.useCreate() : null;
@@ -48,6 +74,13 @@ const VpcPeeringContainer: React.FC<VpcPeeringContainerProps> = ({
   const [vpcId, setVpcId] = useState("");
   const [peerVpcId, setPeerVpcId] = useState("");
   const [peeringName, setPeeringName] = useState("");
+
+  const [rejectConfirm, setRejectConfirm] = useState<{ open: boolean; data?: any }>({
+    open: false,
+  });
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; data?: any }>({
+    open: false,
+  });
 
   const handleCreate = () => {
     if (!createMutation || !vpcId || !peerVpcId) return;
@@ -63,34 +96,59 @@ const VpcPeeringContainer: React.FC<VpcPeeringContainerProps> = ({
           setVpcId("");
           setPeerVpcId("");
           setPeeringName("");
+          refetch();
         },
       }
     );
   };
 
   const handleAccept = (pc: any) => {
-    acceptMutation?.mutate({ projectId, region, peeringId: pc.id });
+    acceptMutation?.mutate({ projectId, region, peeringId: pc.id }, { onSuccess: () => refetch() });
   };
 
   const handleReject = (pc: any) => {
     if (!rejectMutation) return;
-    if (confirm("Are you sure you want to reject this peering connection?")) {
-      rejectMutation.mutate({ projectId, region, peeringId: pc.id });
-    }
+    setRejectConfirm({ open: true, data: pc });
+  };
+
+  const confirmReject = () => {
+    if (!rejectMutation || !rejectConfirm.data) return;
+    rejectMutation.mutate(
+      { projectId, region, peeringId: rejectConfirm.data.id },
+      {
+        onSuccess: () => {
+          setRejectConfirm({ open: false });
+          refetch();
+        },
+      }
+    );
+    setRejectConfirm({ open: false });
   };
 
   const handleDelete = (pc: any) => {
     if (!deleteMutation) return;
-    if (confirm("Are you sure you want to delete this peering connection?")) {
-      deleteMutation.mutate({ projectId, region, peeringId: pc.id });
-    }
+    setDeleteConfirm({ open: true, data: pc });
+  };
+
+  const confirmDelete = () => {
+    if (!deleteMutation || !deleteConfirm.data) return;
+    deleteMutation.mutate(
+      { projectId, region, peeringId: deleteConfirm.data.id },
+      {
+        onSuccess: () => {
+          setDeleteConfirm({ open: false });
+          refetch();
+        },
+      }
+    );
+    setDeleteConfirm({ open: false });
   };
 
   const headerActions = (
     <div className="flex items-center gap-3">
-      <ModernButton variant="secondary" size="sm" onClick={() => refetch()} disabled={isLoading}>
-        <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-        Refresh
+      <ModernButton variant="secondary" size="sm" onClick={() => refetch()} disabled={isFetching}>
+        <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
+        {isFetching ? "Refreshing..." : "Refresh"}
       </ModernButton>
       {createMutation && (
         <ModernButton variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
@@ -105,7 +163,7 @@ const VpcPeeringContainer: React.FC<VpcPeeringContainerProps> = ({
     <>
       <Wrapper headerActions={headerActions}>
         <VpcPeeringOverview
-          peeringConnections={peeringConnections as any}
+          peeringConnections={peeringConnections}
           isLoading={isLoading}
           onAccept={acceptMutation ? handleAccept : undefined}
           onReject={rejectMutation ? handleReject : undefined}
@@ -147,7 +205,7 @@ const VpcPeeringContainer: React.FC<VpcPeeringContainerProps> = ({
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
                 >
                   <option value="">Select Requester VPC</option>
-                  {vpcs.map((vpc: any) => (
+                  {vpcs.map((vpc: Vpc) => (
                     <option key={vpc.id} value={vpc.id}>
                       {vpc.name || vpc.id} ({vpc.cidr_block || vpc.cidr})
                     </option>
@@ -165,7 +223,7 @@ const VpcPeeringContainer: React.FC<VpcPeeringContainerProps> = ({
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
                 >
                   <option value="">Select Peer VPC</option>
-                  {vpcs.map((vpc: any) => (
+                  {vpcs.map((vpc: Vpc) => (
                     <option key={vpc.id} value={vpc.id}>
                       {vpc.name || vpc.id} ({vpc.cidr_block || vpc.cidr})
                     </option>
@@ -195,6 +253,28 @@ const VpcPeeringContainer: React.FC<VpcPeeringContainerProps> = ({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={rejectConfirm.open}
+        title="Reject Peering Connection"
+        message="Are you sure you want to reject this peering connection?"
+        confirmLabel="Reject"
+        variant="warning"
+        onConfirm={confirmReject}
+        onCancel={() => setRejectConfirm({ open: false })}
+        isLoading={rejectMutation?.isPending}
+      />
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.open}
+        title="Delete Peering Connection"
+        message="Are you sure you want to delete this peering connection?"
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteConfirm({ open: false })}
+        isLoading={deleteMutation?.isPending}
+      />
     </>
   );
 };

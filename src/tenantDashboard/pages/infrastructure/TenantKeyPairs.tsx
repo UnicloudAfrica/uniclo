@@ -2,17 +2,13 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Key } from "lucide-react";
 import TenantPageShell from "../../../dashboard/components/TenantPageShell";
-import KeyPairsContainer from "../../../shared/components/infrastructure/containers/KeyPairsContainer";
-import {
-  useFetchKeyPairs,
-  useDeleteKeyPair,
-  useSyncKeyPairs,
-} from "../../../shared/hooks/keyPairsHooks";
+import KeyPairsContainer from "@/shared/components/infrastructure/containers/KeyPairsContainer";
+import { useFetchKeyPairs, useDeleteKeyPair, useSyncKeyPairs } from "@/shared/hooks/keyPairsHooks";
 
 const TenantKeyPairs: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const projectId = searchParams.get("project") || "";
-  const region = searchParams.get("region") || "";
+  const projectId = searchParams.get("project") || undefined;
+  const region = searchParams.get("region") || undefined;
 
   // Tenants share generic hooks but permission presets will gate actions
   const hooks = {

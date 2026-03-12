@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle, ArrowUpRight, ClipboardList, Loader2, RefreshCw } from "lucide-react";
-import { ModernButton } from "../../../shared/components/ui";
-import StatusPill from "../../../shared/components/ui/StatusPill";
+import { ModernButton } from "@/shared/components/ui";
+import StatusPill from "@/shared/components/ui/StatusPill";
 import { getStepsForTarget } from "../../../dashboard/onboarding/stepConfig";
-import { fetchAdminOnboardingSubmission } from "../../../hooks/adminHooks/onboardingReviewHooks";
-import logger from "../../../utils/logger";
+import { fetchAdminOnboardingSubmission } from "@/hooks/adminHooks/onboardingReviewHooks";
+import logger from "@/utils/logger";
 
 const STATUS_LABELS: Record<string, string> = {
   not_started: "Not started",

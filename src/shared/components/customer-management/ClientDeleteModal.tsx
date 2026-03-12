@@ -1,9 +1,9 @@
 import React from "react";
 import { X, Loader2 } from "lucide-react";
-import { useDeleteClient as useAdminDeleteClient } from "../../../hooks/adminHooks/clientHooks";
-import { useDeleteClient as useTenantDeleteClient } from "../../../hooks/clientHooks";
-import ToastUtils from "../../../utils/toastUtil";
-import { Client } from "../../../types/client";
+import { useDeleteClient as useAdminDeleteClient } from "@/hooks/adminHooks/clientHooks";
+import { useDeleteClient as useTenantDeleteClient } from "@/hooks/clientHooks";
+import ToastUtils from "@/utils/toastUtil";
+import { Client } from "@/types/client";
 
 interface ClientDeleteModalProps {
   context?: "admin" | "tenant";
@@ -25,7 +25,7 @@ const ClientDeleteModal: React.FC<ClientDeleteModalProps> = ({
 }) => {
   const adminMutation = useAdminDeleteClient();
   const tenantMutation = useTenantDeleteClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const { mutate, isPending } = (context === "tenant" ? tenantMutation : adminMutation) as any;
 
   const handleDeleteConfirm = (e: React.MouseEvent) => {

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import useClientAuthStore from "../../stores/clientAuthStore";
-import { AuthState } from "../../types/auth";
+import useClientAuthStore from "@/stores/clientAuthStore";
+import { AuthState } from "@/types/auth";
 import {
   getTenantId,
   resolveBrandLogo,
@@ -8,7 +8,7 @@ import {
   useClientBrandingTheme,
   usePlatformBrandingTheme,
 } from "../useBrandingTheme";
-import { BrandingTheme, ClientTheme } from "../../types/branding";
+import { BrandingTheme, ClientTheme } from "@/types/branding";
 
 const FALLBACK_LOGO = "https://dummyimage.com/150x50/e5e7eb/6b7280.png&text=Client+Logo";
 

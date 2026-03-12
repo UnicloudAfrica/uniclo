@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
-import { useFetchTenantAdmins } from "../../../hooks/adminUserHooks";
-import ToastUtils from "../../../utils/toastUtil";
-import { useCreateCustomStage } from "../../../hooks/tenantHooks/leadsHook";
-import logger from "../../../utils/logger";
+import { useFetchTenantAdmins } from "@/hooks/adminUserHooks";
+import ToastUtils from "@/utils/toastUtil";
+import { useCreateCustomStage } from "@/hooks/tenantHooks/leadsHooks";
+import logger from "@/utils/logger";
 
 const stageOptions = [
   "initial_contact",
@@ -15,8 +15,8 @@ const stageOptions = [
   "approval",
 ];
 
-const AddLeadStage = ({ isOpen, onClose }: any) => {
-  const [leadId, setLeadId] = useState<any>(null);
+const AddLeadStage = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+  const [leadId, setLeadId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     stage_name: "",
     description: "",
@@ -57,12 +57,12 @@ const AddLeadStage = ({ isOpen, onClose }: any) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field: any, value: any) => {
+  const updateFormData = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
     if (!validateForm()) return;
@@ -71,14 +71,14 @@ const AddLeadStage = ({ isOpen, onClose }: any) => {
       return;
     }
 
-    const stageData = {
+    const stageData: Record<string, any> = {
       lead_id: leadId,
       stage_name: formData.stage_name,
       description: formData.description,
     };
 
     if (formData.assigned_to) {
-      (stageData as any).assigned_to = formData.assigned_to;
+      stageData.assigned_to = formData.assigned_to;
     }
 
     mutate(stageData, {
@@ -94,8 +94,8 @@ const AddLeadStage = ({ isOpen, onClose }: any) => {
 
   if (!isOpen) return null;
 
-  const formatStageNameForDisplay = (name: any) =>
-    name.replace(/_/g, " ").replace(/\b\w/g, (c: any) => c.toUpperCase());
+  const formatStageNameForDisplay = (name: string) =>
+    name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
@@ -170,7 +170,7 @@ const AddLeadStage = ({ isOpen, onClose }: any) => {
                 {isAdminsLoading ? (
                   <option disabled>Loading admins...</option>
                 ) : (
-                  (admins as any)?.map((admin: any) => (
+                  (admins as Record<string, any>[])?.map((admin: Record<string, any>) => (
                     <option key={admin.id} value={admin.identifier || admin.id}>
                       {admin.first_name} {admin.last_name} ({admin.email})
                     </option>

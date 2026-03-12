@@ -1,12 +1,14 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { GitMerge } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
+import { ResourceEmptyState } from "../ui/ResourceEmptyState";
 import type { VpcPeeringConnection } from "./types";
 
 interface VpcPeeringTableProps {
   peeringConnections: VpcPeeringConnection[];
   isLoading?: boolean;
   emptyMessage?: string;
+  emptyAction?: ReactNode;
   onAccept?: (pc: VpcPeeringConnection) => void;
   onReject?: (pc: VpcPeeringConnection) => void;
   onDelete?: (pc: VpcPeeringConnection) => void;
@@ -17,6 +19,7 @@ const VpcPeeringTable: React.FC<VpcPeeringTableProps> = ({
   peeringConnections,
   isLoading = false,
   emptyMessage = "No VPC peering connections found",
+  emptyAction,
   onAccept,
   onReject,
   onDelete,
@@ -50,10 +53,12 @@ const VpcPeeringTable: React.FC<VpcPeeringTableProps> = ({
 
   if (peeringConnections.length === 0) {
     return (
-      <ModernCard className="p-12 text-center">
-        <GitMerge className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-        <div className="text-gray-500">{emptyMessage}</div>
-      </ModernCard>
+      <ResourceEmptyState
+        title="No VPC Peering Connections"
+        message={emptyMessage}
+        icon={<GitMerge className="w-5 h-5" />}
+        action={emptyAction}
+      />
     );
   }
 

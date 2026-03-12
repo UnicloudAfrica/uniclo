@@ -1,6 +1,7 @@
 import React from "react";
-import { Network } from "lucide-react";
+import { Network, Plus } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
+import ModernButton from "../ui/ModernButton";
 import VpcsTable from "./VpcsTable";
 import { Vpc } from "./types";
 import type { VpcPermissions } from "../../config/permissionPresets";
@@ -10,6 +11,7 @@ interface VpcsOverviewProps {
   isLoading?: boolean | undefined;
   emptyMessage?: string | undefined;
   onDelete?: ((vpc: Vpc) => void) | undefined;
+  onCreate?: (() => void) | undefined;
   showActions?: boolean | undefined;
   /** Optional permissions object for permission-based action and display gating */
   permissions?: VpcPermissions | undefined;
@@ -23,6 +25,7 @@ const VpcsOverview: React.FC<VpcsOverviewProps> = ({
   isLoading = false,
   emptyMessage,
   onDelete,
+  onCreate,
   showActions,
   permissions,
 }) => {
@@ -84,6 +87,14 @@ const VpcsOverview: React.FC<VpcsOverviewProps> = ({
         vpcs={vpcs}
         isLoading={isLoading}
         emptyMessage={emptyMessage}
+        emptyAction={
+          onCreate ? (
+            <ModernButton variant="primary" size="sm" onClick={onCreate}>
+              <Plus className="w-4 h-4 mr-1" />
+              Create VPC
+            </ModernButton>
+          ) : undefined
+        }
         onDelete={effectiveOnDelete}
         showDefaultBadge={effectiveShowDefaultBadge}
         showActions={shouldShowActions}

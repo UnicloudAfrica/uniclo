@@ -1,7 +1,7 @@
 import { X, Loader2 } from "lucide-react";
-import { useDeleteFloatingIP } from "../../../../hooks/adminHooks/floatingIPHooks";
-import ToastUtils from "../../../../utils/toastUtil";
-import logger from "../../../../utils/logger";
+import { useDeleteFloatingIP } from "@/hooks/adminHooks/floatingIPHooks";
+import ToastUtils from "@/utils/toastUtil";
+import logger from "@/utils/logger";
 
 const DeleteFloatingIP = ({ isOpen, onClose, floatingIP }: any) => {
   const { mutate, isPending } = useDeleteFloatingIP();

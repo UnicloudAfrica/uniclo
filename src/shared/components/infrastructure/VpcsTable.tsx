@@ -1,6 +1,7 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { Trash2, Network } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
+import { ResourceEmptyState } from "../ui/ResourceEmptyState";
 
 import { Vpc } from "./types";
 
@@ -8,6 +9,7 @@ interface VpcsTableProps {
   vpcs: Vpc[];
   isLoading?: boolean | undefined;
   emptyMessage?: string | undefined;
+  emptyAction?: ReactNode;
   onDelete?: ((vpc: Vpc) => void) | undefined;
   showDefaultBadge?: boolean | undefined;
   showActions?: boolean | undefined;
@@ -20,6 +22,7 @@ const VpcsTable: React.FC<VpcsTableProps> = ({
   vpcs,
   isLoading = false,
   emptyMessage = "No VPCs found for this project",
+  emptyAction,
   onDelete,
   showDefaultBadge = true,
   showActions = true,
@@ -37,10 +40,12 @@ const VpcsTable: React.FC<VpcsTableProps> = ({
 
   if (vpcs.length === 0) {
     return (
-      <ModernCard className="p-12 text-center">
-        <Network className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-        <div className="text-gray-500">{emptyMessage}</div>
-      </ModernCard>
+      <ResourceEmptyState
+        title="No VPCs"
+        message={emptyMessage}
+        icon={<Network className="w-5 h-5" />}
+        action={emptyAction}
+      />
     );
   }
 

@@ -1,7 +1,7 @@
 import React from "react";
 import ClientActiveTab from "../components/clientActiveTab";
 import ClientPageShell from "../components/ClientPageShell";
-import SharedInstanceList from "../../shared/components/instances/SharedInstanceList";
+import SharedInstanceList from "@/shared/components/instances/SharedInstanceList";
 
 const ClientInstances: React.FC = () => {
   return (

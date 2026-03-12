@@ -1,11 +1,11 @@
 import { useCallback, useMemo } from "react";
-import { useCreateNewLead, useFetchLeadTypes } from "../../../hooks/tenantHooks/leadsHook";
-import { useFetchTenantAdmins } from "../../../hooks/adminUserHooks";
-import ToastUtils from "../../../utils/toastUtil";
-import { useFetchCountries } from "../../../hooks/resource";
-import CreateLeadForm from "../../../shared/components/leads/CreateLeadForm";
-import type { CountryOption } from "../../../shared/components/leads/CreateLeadForm";
-import type { LeadCreatePayload, LeadAssigneeOption } from "../../../hooks/adminHooks/leadsHook";
+import { useCreateNewLead, useFetchLeadTypes } from "@/hooks/tenantHooks/leadsHooks";
+import { useFetchTenantAdmins } from "@/hooks/adminUserHooks";
+import ToastUtils from "@/utils/toastUtil";
+import { useFetchCountries } from "@/hooks/resource";
+import CreateLeadForm from "@/shared/components/leads/CreateLeadForm";
+import type { CountryOption } from "@/shared/components/leads/CreateLeadForm";
+import type { LeadCreatePayload, LeadAssigneeOption } from "@/hooks/adminHooks/leadsHooks";
 
 type TenantAdmin = {
   id?: string | number;

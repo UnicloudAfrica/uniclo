@@ -206,7 +206,7 @@ const CreateTicketModal = ({
 
     if (files.length > 0) {
       const formData = new FormData();
-      Object.keys(payload).forEach((key) => formData.append(key, payload[key] as any));
+      Object.keys(payload).forEach((key) => formData.append(key, String(payload[key])));
       files.forEach((file) => formData.append("attachments[]", file));
       onSubmit(formData);
     } else {
@@ -367,10 +367,10 @@ export const SupportThreadsPanel: React.FC<SupportThreadsPanelProps> = ({
     queryKey: [...queryKey, filters],
     queryFn: ({ pageParam = 1 }) => fetchThreads({ ...filters, page: pageParam }),
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => {
+    getNextPageParam: (lastPage: any) => {
       const meta = lastPage?.meta || lastPage;
-      const current = (meta as any).current_page || 1;
-      const last = (meta as any).last_page || 1;
+      const current = meta?.current_page || 1;
+      const last = meta?.last_page || 1;
       return current < last ? current + 1 : undefined;
     },
   });
@@ -379,7 +379,7 @@ export const SupportThreadsPanel: React.FC<SupportThreadsPanelProps> = ({
     if (inView && listQuery.hasNextPage && !listQuery.isFetchingNextPage) {
       listQuery.fetchNextPage();
     }
-  }, [inView, listQuery.hasNextPage, listQuery.isFetchingNextPage, listQuery.fetchNextPage]);
+  }, [inView, listQuery]);
 
   const detailQuery = useQuery({
     queryKey: [...queryKey, "detail", selectedId],
@@ -404,7 +404,7 @@ export const SupportThreadsPanel: React.FC<SupportThreadsPanelProps> = ({
       body: string | FormData | Record<string, unknown>;
     }) => {
       if (!replyThread) return Promise.reject(new Error("replyThread is not defined"));
-      return replyThread(payload.id, payload.body as any);
+      return replyThread(payload.id, payload.body as never);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [...queryKey, "detail", selectedId] });
@@ -447,11 +447,12 @@ export const SupportThreadsPanel: React.FC<SupportThreadsPanelProps> = ({
 
   const threads = useMemo(() => {
     if (!listQuery.data) return [];
-    return listQuery.data.pages.flatMap((page) => extractThreads(page));
+    return listQuery.data.pages.flatMap((page: any) => extractThreads(page));
   }, [listQuery.data]);
 
   const totalFromMeta =
-    (listQuery as any).data?.pages?.[0]?.meta?.total ?? listQuery.data?.pages?.[0]?.total;
+    (listQuery.data?.pages?.[0] as { meta?: { total?: number } })?.meta?.total ??
+    (listQuery.data?.pages?.[0] as { total?: number })?.total;
   const statusCounts = useMemo(() => {
     const counts: Record<ThreadStatusKey, number> = {
       open: 0,
@@ -496,7 +497,7 @@ export const SupportThreadsPanel: React.FC<SupportThreadsPanelProps> = ({
       { value: "resolved", label: "Resolved", count: statusCounts["resolved"] },
       { value: "closed", label: "Closed", count: statusCounts["closed"] },
     ],
-    [statusCounts, totalFromMeta, threads.length]
+    [statusCounts, threads.length]
   );
 
   const detailPayload = extractThreadDetail(detailQuery.data || {});

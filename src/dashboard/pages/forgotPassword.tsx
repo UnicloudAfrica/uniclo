@@ -2,23 +2,23 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import logo from "./assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
-import { useForgotPassword } from "../../hooks/authHooks";
-import useTenantAuthStore from "../../stores/tenantAuthStore";
+import { useForgotPassword } from "@/hooks/authHooks";
+import useTenantAuthStore from "@/stores/tenantAuthStore";
 import {
   resolveBrandLogo,
   useApplyBrandingTheme,
   usePublicBrandingTheme,
-} from "../../hooks/useBrandingTheme";
-import useImageFallback from "../../hooks/useImageFallback";
-import { getSubdomain } from "../../utils/getSubdomain";
+} from "@/hooks/useBrandingTheme";
+import useImageFallback from "@/hooks/useImageFallback";
+import { getSubdomain } from "@/utils/getSubdomain";
 import AuthShell from "../../components/auth/AuthShell";
-import logger from "../../utils/logger";
+import logger from "@/utils/logger";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState<Record<string, any>>({});
   const { mutate: forgotPassword, isPending } = useForgotPassword();
-  const { userEmail, setUserEmail } = useTenantAuthStore.getState();
+  const { setUserEmail } = useTenantAuthStore.getState();
   const hostname = globalThis.window !== undefined ? globalThis.window.location.hostname : "";
   const subdomain = globalThis.window !== undefined ? getSubdomain() : null;
   const { data: branding } = usePublicBrandingTheme({

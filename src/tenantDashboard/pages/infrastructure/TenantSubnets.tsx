@@ -2,13 +2,13 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Network } from "lucide-react";
 import TenantPageShell from "../../components/TenantPageShell";
-import SubnetsContainer from "../../../shared/components/infrastructure/containers/SubnetsContainer";
+import SubnetsContainer from "@/shared/components/infrastructure/containers/SubnetsContainer";
 import {
   useSubnets,
   useCreateSubnet,
   useDeleteSubnet,
   useVpcs,
-} from "../../../shared/hooks/vpcInfraHooks";
+} from "@/shared/hooks/vpcInfraHooks";
 
 /**
  * Tenant Subnets page - truly thin wrapper.

@@ -1,6 +1,7 @@
 import React, { type JSX } from "react";
 import { Route, Outlet } from "react-router-dom";
 import ObjectStorageProvider from "../contexts/ObjectStorageContext";
+import AdminRoute from "./AdminRoute";
 import AdminDashboard from "../adminDashboard/pages/AdminDashboard";
 import AdminPartners from "../adminDashboard/pages/AdminPartners";
 import AdminPartnerCreate from "../adminDashboard/pages/AdminPartnerCreate";
@@ -57,6 +58,9 @@ import PayoutsDashboard from "../adminDashboard/pages/PayoutsDashboard";
 import AnalyticsDashboard from "../adminDashboard/pages/AnalyticsDashboard";
 import TicketsDashboard from "../adminDashboard/pages/TicketsDashboard";
 import AdminTicketDetail from "../adminDashboard/pages/AdminTicketDetail";
+import AdminManagedDatabases from "../adminDashboard/pages/AdminManagedDatabases";
+import AdminDatabaseCreate from "../adminDashboard/pages/AdminDatabaseCreate";
+import AdminDatabaseDetail from "../adminDashboard/pages/AdminDatabaseDetail";
 
 // Infrastructure Pages
 import {
@@ -92,123 +96,135 @@ const ObjectStorageRouteProvider = (): JSX.Element => (
 const AdminRoutes = (): React.JSX.Element => {
   return (
     <>
+      {/* Public admin routes (no auth guard) */}
       <Route path="/admin-signin" element={<AdminLogin />} />
       <Route path="/verify-admin-mail" element={<VerifyAdminMail />} />
-      <Route path="/admin-dashboard" element={<AdminDashboard />} />
-      <Route path="/admin-dashboard/admin-users" element={<AdminUsers />} />
-      <Route path="/admin-dashboard/admin-users/create" element={<AdminUserCreate />} />
-      <Route path="/admin-dashboard/admin-users/:adminId" element={<AdminUserDetails />} />
-      <Route path="/admin-dashboard/admin-users/:adminId/edit" element={<AdminUserEdit />} />
-      <Route path="/admin-dashboard/admins" element={<AdminUsers />} />
-      <Route path="/admin-dashboard/partners" element={<AdminPartners />} />
-      <Route path="/admin-dashboard/partners/create" element={<AdminPartnerCreate />} />
-      <Route path="/admin-dashboard/partners/details" element={<AdminPartnerDetails />} />
-      <Route path="/admin-dashboard/clients" element={<AdminClients />} />
-      <Route path="/admin-dashboard/clients/create" element={<AdminClientCreate />} />
-      <Route path="/admin-dashboard/clients/details" element={<AdminClientDetails />} />
-      <Route path="/admin-dashboard/purchased-modules" element={<AdminPurchasedModules />} />
-      <Route path="/admin-dashboard/payment" element={<AdminPayment />} />
-      <Route path="/admin-dashboard/payment/:transactionId" element={<AdminPaymentDetails />} />
-      <Route path="/admin-dashboard/products" element={<AdminProducts />} />
-      <Route path="/admin-dashboard/products/add" element={<AdminProductCreate />} />
-      <Route path="/admin-dashboard/templates" element={<AdminTemplates />} />
-      <Route
-        path="/admin-dashboard/colocation"
-        element={<AdminPricing initialTab="colocation" />}
-      />
-      <Route path="/admin-dashboard/inventory" element={<AdminInventory />} />
-      <Route path="/admin-dashboard/projects" element={<AdminProjects />} />
-      <Route path="/admin-dashboard/projects/create" element={<AdminProjectCreate />} />
-      <Route path="/admin-dashboard/leads" element={<AdminLeads />} />
-      <Route path="/admin-dashboard/leads/create" element={<AdminLeadCreate />} />
-      <Route path="/admin-dashboard/regions" element={<AdminRegion />} />
-      <Route path="/admin-dashboard/regions/create" element={<RegionCreate />} />
-      <Route path="/admin-dashboard/regions/:id" element={<RegionDetail />} />
-      <Route path="/admin-dashboard/regions/:id/edit" element={<RegionEdit />} />
-      <Route path="/admin-dashboard/region-approvals" element={<RegionApprovals />} />
-      <Route path="/admin-dashboard/onboarding-review" element={<AdminOnboardingReview />} />
-      <Route path="/admin-dashboard/onboarding-settings" element={<AdminOnboardingSettings />} />
-      <Route path="/admin-dashboard/region-approvals/create" element={<RegionApprovalCreate />} />
-      <Route path="/admin-dashboard/region-approvals/:id" element={<RegionApprovalDetail />} />
-      <Route path="/admin-dashboard/region-approvals/:id/edit" element={<RegionApprovalEdit />} />
-      <Route path="/admin-dashboard/leads/details" element={<AdminLeadDetails />} />
-      <Route path="/admin-dashboard/projects/details" element={<AdminProjectDetails />} />
-      <Route path="/admin-dashboard/infrastructure-setup" element={<AdminInfrastructureSetup />} />
 
-      <Route path="/admin-dashboard/create-instance" element={<AdminCreateInstance />} />
-      <Route path="/admin-dashboard/key-pairs" element={<AdminKeyPairs />} />
-      <Route path="/admin-dashboard/pricing" element={<AdminPricing />} />
-
-      <Route path="/admin-dashboard/pricing-calculator" element={<AdminPricingCalculator />} />
-      <Route path="/admin-dashboard/create-invoice" element={<CreateInvoice />} />
-
-      <Route path="/admin-dashboard/account" element={<EnhancedProfileSettings />} />
-      <Route path="/admin-dashboard/instances" element={<AdminInstances />} />
-      <Route path="/admin-dashboard/instances/details" element={<AdminInstancesDetails />} />
-
-      <Route element={<ObjectStorageRouteProvider />}>
-        <Route path="/admin-dashboard/object-storage" element={<AdminObjectStorage />} />
+      {/* Protected admin routes */}
+      <Route element={<AdminRoute />}>
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        <Route path="/admin-dashboard/admin-users" element={<AdminUsers />} />
+        <Route path="/admin-dashboard/admin-users/create" element={<AdminUserCreate />} />
+        <Route path="/admin-dashboard/admin-users/:adminId" element={<AdminUserDetails />} />
+        <Route path="/admin-dashboard/admin-users/:adminId/edit" element={<AdminUserEdit />} />
+        <Route path="/admin-dashboard/admins" element={<AdminUsers />} />
+        <Route path="/admin-dashboard/partners" element={<AdminPartners />} />
+        <Route path="/admin-dashboard/partners/create" element={<AdminPartnerCreate />} />
+        <Route path="/admin-dashboard/partners/details" element={<AdminPartnerDetails />} />
+        <Route path="/admin-dashboard/clients" element={<AdminClients />} />
+        <Route path="/admin-dashboard/clients/create" element={<AdminClientCreate />} />
+        <Route path="/admin-dashboard/clients/details" element={<AdminClientDetails />} />
+        <Route path="/admin-dashboard/purchased-modules" element={<AdminPurchasedModules />} />
+        <Route path="/admin-dashboard/payment" element={<AdminPayment />} />
+        <Route path="/admin-dashboard/payment/:transactionId" element={<AdminPaymentDetails />} />
+        <Route path="/admin-dashboard/products" element={<AdminProducts />} />
+        <Route path="/admin-dashboard/products/add" element={<AdminProductCreate />} />
+        <Route path="/admin-dashboard/templates" element={<AdminTemplates />} />
         <Route
-          path="/admin-dashboard/object-storage/create"
-          element={<AdminObjectStorageCreate />}
+          path="/admin-dashboard/colocation"
+          element={<AdminPricing initialTab="colocation" />}
+        />
+        <Route path="/admin-dashboard/inventory" element={<AdminInventory />} />
+        <Route path="/admin-dashboard/projects" element={<AdminProjects />} />
+        <Route path="/admin-dashboard/projects/create" element={<AdminProjectCreate />} />
+        <Route path="/admin-dashboard/leads" element={<AdminLeads />} />
+        <Route path="/admin-dashboard/leads/create" element={<AdminLeadCreate />} />
+        <Route path="/admin-dashboard/regions" element={<AdminRegion />} />
+        <Route path="/admin-dashboard/regions/create" element={<RegionCreate />} />
+        <Route path="/admin-dashboard/regions/:id" element={<RegionDetail />} />
+        <Route path="/admin-dashboard/regions/:id/edit" element={<RegionEdit />} />
+        <Route path="/admin-dashboard/region-approvals" element={<RegionApprovals />} />
+        <Route path="/admin-dashboard/onboarding-review" element={<AdminOnboardingReview />} />
+        <Route path="/admin-dashboard/onboarding-settings" element={<AdminOnboardingSettings />} />
+        <Route path="/admin-dashboard/region-approvals/create" element={<RegionApprovalCreate />} />
+        <Route path="/admin-dashboard/region-approvals/:id" element={<RegionApprovalDetail />} />
+        <Route path="/admin-dashboard/region-approvals/:id/edit" element={<RegionApprovalEdit />} />
+        <Route path="/admin-dashboard/leads/details" element={<AdminLeadDetails />} />
+        <Route path="/admin-dashboard/projects/details" element={<AdminProjectDetails />} />
+        <Route
+          path="/admin-dashboard/infrastructure-setup"
+          element={<AdminInfrastructureSetup />}
+        />
+
+        <Route path="/admin-dashboard/create-instance" element={<AdminCreateInstance />} />
+        <Route path="/admin-dashboard/key-pairs" element={<AdminKeyPairs />} />
+        <Route path="/admin-dashboard/pricing" element={<AdminPricing />} />
+
+        <Route path="/admin-dashboard/pricing-calculator" element={<AdminPricingCalculator />} />
+        <Route path="/admin-dashboard/create-invoice" element={<CreateInvoice />} />
+
+        <Route path="/admin-dashboard/account" element={<EnhancedProfileSettings />} />
+        <Route path="/admin-dashboard/instances" element={<AdminInstances />} />
+        <Route path="/admin-dashboard/instances/details" element={<AdminInstancesDetails />} />
+
+        <Route path="/admin-dashboard/databases" element={<AdminManagedDatabases />} />
+        <Route path="/admin-dashboard/databases/create" element={<AdminDatabaseCreate />} />
+        <Route path="/admin-dashboard/databases/:identifier" element={<AdminDatabaseDetail />} />
+
+        <Route element={<ObjectStorageRouteProvider />}>
+          <Route path="/admin-dashboard/object-storage" element={<AdminObjectStorage />} />
+          <Route
+            path="/admin-dashboard/object-storage/create"
+            element={<AdminObjectStorageCreate />}
+          />
+          <Route
+            path="/admin-dashboard/object-storage/:accountId"
+            element={<AdminObjectStorageDetail />}
+          />
+          <Route
+            path="/admin-dashboard/object-storage/:accountId/buckets/:bucketName/*"
+            element={<AdminObjectStorageDetail />}
+          />
+        </Route>
+        <Route path="/admin-dashboard/tax-configuration" element={<AdminTax />} />
+        <Route path="/admin-dashboard/subscription-plans" element={<AdminSubscriptionPlans />} />
+        <Route path="/admin-dashboard/wallet" element={<WalletDashboard />} />
+        <Route path="/admin-dashboard/settlements" element={<SettlementsDashboard />} />
+        <Route path="/admin-dashboard/payouts" element={<PayoutsDashboard />} />
+        <Route path="/admin-dashboard/analytics" element={<AnalyticsDashboard />} />
+        <Route path="/admin-dashboard/tickets" element={<TicketsDashboard />} />
+        <Route path="/admin-dashboard/tickets/:id" element={<AdminTicketDetail />} />
+
+        {/* Infrastructure Management */}
+        <Route path="/admin-dashboard/infrastructure/nat-gateways" element={<AdminNatGateways />} />
+        <Route path="/admin-dashboard/infrastructure/elastic-ips" element={<AdminElasticIps />} />
+        <Route
+          path="/admin-dashboard/infrastructure/security-groups"
+          element={<AdminSecurityGroups />}
         />
         <Route
-          path="/admin-dashboard/object-storage/:accountId"
-          element={<AdminObjectStorageDetail />}
+          path="/admin-dashboard/infrastructure/security-group-rules"
+          element={<AdminSecurityGroupRules />}
         />
+        <Route path="/admin-dashboard/infrastructure/subnets" element={<AdminSubnets />} />
+        <Route path="/admin-dashboard/infrastructure/route-tables" element={<AdminRouteTables />} />
+        <Route path="/admin-dashboard/infrastructure/network-acls" element={<AdminNetworkAcls />} />
         <Route
-          path="/admin-dashboard/object-storage/:accountId/buckets/:bucketName/*"
-          element={<AdminObjectStorageDetail />}
+          path="/admin-dashboard/infrastructure/network-acl-rules"
+          element={<AdminNetworkAclRules />}
         />
+        <Route path="/admin-dashboard/infrastructure/vpc-peering" element={<AdminVpcPeering />} />
+        <Route
+          path="/admin-dashboard/infrastructure/load-balancers"
+          element={<AdminLoadBalancers />}
+        />
+        <Route path="/admin-dashboard/key-pairs" element={<AdminKeyPairs />} />
+        <Route path="/admin-dashboard/key-pairs/create" element={<AdminKeyPairCreate />} />
+        <Route path="/admin-dashboard/infrastructure/key-pairs" element={<AdminKeyPairs />} />
+        <Route
+          path="/admin-dashboard/infrastructure/network-interfaces"
+          element={<AdminNetworkInterfaces />}
+        />
+        <Route path="/admin-dashboard/infrastructure/vpcs" element={<AdminVpcs />} />
+        <Route
+          path="/admin-dashboard/infrastructure/internet-gateways"
+          element={<AdminInternetGateways />}
+        />
+        <Route path="/admin-dashboard/infrastructure/dns" element={<AdminDnsManagement />} />
+        <Route path="/admin-dashboard/infrastructure/snapshots" element={<AdminSnapshots />} />
+        <Route path="/admin-dashboard/infrastructure/images" element={<AdminImages />} />
+        <Route path="/admin-dashboard/infrastructure/autoscaling" element={<AdminAutoScaling />} />
       </Route>
-      <Route path="/admin-dashboard/tax-configuration" element={<AdminTax />} />
-      <Route path="/admin-dashboard/subscription-plans" element={<AdminSubscriptionPlans />} />
-      <Route path="/admin-dashboard/wallet" element={<WalletDashboard />} />
-      <Route path="/admin-dashboard/settlements" element={<SettlementsDashboard />} />
-      <Route path="/admin-dashboard/payouts" element={<PayoutsDashboard />} />
-      <Route path="/admin-dashboard/analytics" element={<AnalyticsDashboard />} />
-      <Route path="/admin-dashboard/tickets" element={<TicketsDashboard />} />
-      <Route path="/admin-dashboard/tickets/:id" element={<AdminTicketDetail />} />
-
-      {/* Infrastructure Management */}
-      <Route path="/admin-dashboard/infrastructure/nat-gateways" element={<AdminNatGateways />} />
-      <Route path="/admin-dashboard/infrastructure/elastic-ips" element={<AdminElasticIps />} />
-      <Route
-        path="/admin-dashboard/infrastructure/security-groups"
-        element={<AdminSecurityGroups />}
-      />
-      <Route
-        path="/admin-dashboard/infrastructure/security-group-rules"
-        element={<AdminSecurityGroupRules />}
-      />
-      <Route path="/admin-dashboard/infrastructure/subnets" element={<AdminSubnets />} />
-      <Route path="/admin-dashboard/infrastructure/route-tables" element={<AdminRouteTables />} />
-      <Route path="/admin-dashboard/infrastructure/network-acls" element={<AdminNetworkAcls />} />
-      <Route
-        path="/admin-dashboard/infrastructure/network-acl-rules"
-        element={<AdminNetworkAclRules />}
-      />
-      <Route path="/admin-dashboard/infrastructure/vpc-peering" element={<AdminVpcPeering />} />
-      <Route
-        path="/admin-dashboard/infrastructure/load-balancers"
-        element={<AdminLoadBalancers />}
-      />
-      <Route path="/admin-dashboard/key-pairs" element={<AdminKeyPairs />} />
-      <Route path="/admin-dashboard/key-pairs/create" element={<AdminKeyPairCreate />} />
-      <Route path="/admin-dashboard/infrastructure/key-pairs" element={<AdminKeyPairs />} />
-      <Route
-        path="/admin-dashboard/infrastructure/network-interfaces"
-        element={<AdminNetworkInterfaces />}
-      />
-      <Route path="/admin-dashboard/infrastructure/vpcs" element={<AdminVpcs />} />
-      <Route
-        path="/admin-dashboard/infrastructure/internet-gateways"
-        element={<AdminInternetGateways />}
-      />
-      <Route path="/admin-dashboard/infrastructure/dns" element={<AdminDnsManagement />} />
-      <Route path="/admin-dashboard/infrastructure/snapshots" element={<AdminSnapshots />} />
-      <Route path="/admin-dashboard/infrastructure/images" element={<AdminImages />} />
-      <Route path="/admin-dashboard/infrastructure/autoscaling" element={<AdminAutoScaling />} />
     </>
   );
 };

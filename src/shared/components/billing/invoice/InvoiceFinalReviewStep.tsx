@@ -1,6 +1,6 @@
 import React from "react";
 import { FileText, Building, ShieldCheck, Tag, Package } from "lucide-react";
-import { useFetchCountries } from "../../../../hooks/adminHooks/countriesHooks";
+import { useFetchCountries } from "@/hooks/adminHooks/countriesHooks";
 import { ModernCard, ModernInput } from "../../ui";
 import {
   AssignmentDetails,
@@ -51,7 +51,9 @@ const InvoiceFinalReviewStep: React.FC<InvoiceFinalReviewStepProps> = ({
 
   const selectedTenant =
     assignedTenant ||
-    (tenants as any)?.find((t: any) => String(t.id) === String(formData.tenant_id));
+    (tenants as Record<string, unknown>[])?.find(
+      (t: Record<string, unknown>) => String(t.id) === String(formData.tenant_id)
+    );
   const selectedUser = assignedUser || null;
 
   const tenantLabel = selectedTenant
@@ -59,12 +61,15 @@ const InvoiceFinalReviewStep: React.FC<InvoiceFinalReviewStepProps> = ({
     : null;
 
   const userLabel = selectedUser
-    ? (selectedUser as any).business_name ||
-      [(selectedUser as any).first_name, (selectedUser as any).last_name]
+    ? (selectedUser as Record<string, unknown>).business_name ||
+      [
+        (selectedUser as Record<string, unknown>).first_name,
+        (selectedUser as Record<string, unknown>).last_name,
+      ]
         .filter(Boolean)
         .join(" ") ||
-      (selectedUser as any).email ||
-      `User ${(selectedUser as any).id}`
+      (selectedUser as Record<string, unknown>).email ||
+      `User ${(selectedUser as Record<string, unknown>).id}`
     : null;
 
   const assignmentType = assignmentMode || (selectedUser ? "user" : selectedTenant ? "tenant" : "");

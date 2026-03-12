@@ -202,8 +202,9 @@ interface VerifyAccountResult {
 
 const fetchBanks = async () => {
   const res = await silentTenantApi("GET", "/admin/payment-gateway/banks");
-  if (!(res.data as any)?.banks) throw new Error("Failed to fetch banks");
-  return (res.data as any).banks as Bank[];
+  const data = res.data as Record<string, unknown>;
+  if (!data?.banks) throw new Error("Failed to fetch banks");
+  return data.banks as Bank[];
 };
 
 const verifyBankAccount = async (data: { account_number: string; bank_code: string }) => {
@@ -309,8 +310,9 @@ const fetchInvoices = async (params: InvoiceQueryParams = {}) => {
   const query = toQueryString(params);
   const url = `/admin/billing/invoices${query ? `?${query}` : ""}`;
   const res = await silentTenantApi("GET", url);
-  if (!(res.data as any)?.invoices) throw new Error("Failed to fetch invoices");
-  return (res.data as any).invoices as InvoiceItem[];
+  const data = res.data as Record<string, unknown>;
+  if (!data?.invoices) throw new Error("Failed to fetch invoices");
+  return data.invoices as InvoiceItem[];
 };
 
 const fetchEnforcementSummary = async () => {

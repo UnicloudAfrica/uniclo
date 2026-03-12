@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
-import { useDownloadDoc, useUpdateDoc } from "../../../hooks/adminHooks/leadsHook";
-import logger from "../../../utils/logger";
+import { useDownloadDoc, useUpdateDoc } from "@/hooks/adminHooks/leadsHooks";
+import logger from "@/utils/logger";
 
 const formatStatusForDisplay = (status: any) => {
   return status ? status.replace(/_/g, " ").replace(/\b\w/g, (c: any) => c.toUpperCase()) : "N/A";

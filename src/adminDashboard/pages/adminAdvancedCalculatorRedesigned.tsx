@@ -2,15 +2,15 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Calculator, Check, Settings, FileText, UserPlus } from "lucide-react";
 import CalculatorConfigStep from "./calculatorComps/calculatorConfigStep";
-import CalculatorSummaryStep from "../../shared/components/billing/calculator/CalculatorSummaryStep";
-import ToastUtils from "../../utils/toastUtil";
-import { useSharedCalculatorPricing } from "../../hooks/sharedCalculatorHooks";
+import CalculatorSummaryStep from "@/shared/components/billing/calculator/CalculatorSummaryStep";
+import ToastUtils from "@/utils/toastUtil";
+import { useSharedCalculatorPricing } from "@/hooks/sharedCalculatorHooks";
 import AdminPageShell from "../components/AdminPageShell";
-import { ModernCard } from "../../shared/components/ui";
-import { ModernButton } from "../../shared/components/ui";
-import { useCustomerContext } from "../../hooks/adminHooks/useCustomerContext";
-import CustomerContextSelector from "../../shared/components/common/CustomerContextSelector";
-import type { CalculatorData, ObjectStorageRequest } from "../../shared/components/billing/types";
+import { ModernCard } from "@/shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
+import { useCustomerContext } from "@/hooks/adminHooks/useCustomerContext";
+import CustomerContextSelector from "@/shared/components/common/CustomerContextSelector";
+import type { CalculatorData, ObjectStorageRequest } from "@/shared/components/billing/types";
 
 const AdminAdvancedCalculatorRedesigned = () => {
   const navigate = useNavigate();

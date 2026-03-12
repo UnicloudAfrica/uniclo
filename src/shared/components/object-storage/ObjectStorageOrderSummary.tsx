@@ -3,7 +3,7 @@ import {
   ResolvedProfile,
   SummaryTotals,
   BackendPricingLine,
-} from "../../../hooks/useObjectStoragePricing";
+} from "@/hooks/useObjectStoragePricing";
 import { ModernCard } from "../ui";
 
 export interface ObjectStorageOrderSummaryProps {

@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { Database, Gauge, Activity, Pencil, Trash2, Plus } from "lucide-react";
-import { useFetchEbsVolumes } from "../../../hooks/adminHooks/ebsHooks";
+import { useFetchEbsVolumes } from "@/hooks/adminHooks/ebsHooks";
 import ResourceDataExplorer from "../../components/ResourceDataExplorer";
 import AddEBSModal from "./ebsSubs/addEbs";
 import EditEBSModal from "./ebsSubs/editEbs";
 import DeleteEBSModal from "./ebsSubs/deleteEbs";
-import { ModernButton } from "../../../shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
 
 const formatMetric = (value: any, unit: any) => {
   if (value === null || value === undefined || Number.isNaN(value)) {
@@ -14,7 +14,7 @@ const formatMetric = (value: any, unit: any) => {
   return `${Number(value).toLocaleString()} ${unit}`;
 };
 
-const EBSVolumes = ({ selectedRegion, onMetricsChange }: any) => {
+const EBSVolumes = ({ selectedRegion, selectedProvider, onMetricsChange }: any) => {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [search, setSearch] = useState("");
@@ -31,19 +31,19 @@ const EBSVolumes = ({ selectedRegion, onMetricsChange }: any) => {
 
   const { data, isFetching } = useFetchEbsVolumes(
     selectedRegion,
-    { page, perPage, search },
+    { page, perPage, search, provider: selectedProvider },
     { enabled: Boolean(selectedRegion), keepPreviousData: true }
   );
 
-  const rows = data?.data ?? [];
+  const rows = useMemo(() => data?.data ?? [], [data]);
   const meta = data?.meta ?? null;
   const total = meta?.total ?? rows.length;
 
   const avgReadIOPS = useMemo(() => {
     if (!rows.length) return 0;
     return (
-      (rows as any).reduce(
-        (acc: any, volume: any) => (acc as any) + Number((volume as any).read_iops_limit || 0),
+      (rows as Record<string, unknown>[]).reduce(
+        (acc: number, volume: Record<string, unknown>) => acc + Number(volume.read_iops_limit || 0),
         0
       ) / rows.length
     );
@@ -52,8 +52,9 @@ const EBSVolumes = ({ selectedRegion, onMetricsChange }: any) => {
   const avgWriteIOPS = useMemo(() => {
     if (!rows.length) return 0;
     return (
-      (rows as any).reduce(
-        (acc: any, volume: any) => (acc as any) + Number((volume as any).write_iops_limit || 0),
+      (rows as Record<string, unknown>[]).reduce(
+        (acc: number, volume: Record<string, unknown>) =>
+          acc + Number(volume.write_iops_limit || 0),
         0
       ) / rows.length
     );
@@ -117,7 +118,7 @@ const EBSVolumes = ({ selectedRegion, onMetricsChange }: any) => {
     {
       header: "IOPS (R/W)",
       key: "read_iops_limit",
-      align: "center",
+      align: "center" as const,
       render: (volume: any) => (
         <div className="flex flex-col items-center text-xs text-slate-500">
           <span className="font-medium text-slate-700">
@@ -130,7 +131,7 @@ const EBSVolumes = ({ selectedRegion, onMetricsChange }: any) => {
     {
       header: "Bandwidth (R/W)",
       key: "read_bandwidth_limit",
-      align: "center",
+      align: "center" as const,
       render: (volume: any) => (
         <div className="flex flex-col items-center text-xs text-slate-500">
           <span className="font-medium text-slate-700">
@@ -143,7 +144,7 @@ const EBSVolumes = ({ selectedRegion, onMetricsChange }: any) => {
     {
       header: "",
       key: "actions",
-      align: "right",
+      align: "right" as const,
       render: (volume: any) => (
         <div className="flex items-center justify-end gap-2">
           <button
@@ -206,13 +207,13 @@ const EBSVolumes = ({ selectedRegion, onMetricsChange }: any) => {
       <ResourceDataExplorer
         title="Volume catalog"
         description="Control volume performance tiers and ensure workloads hit the right throughput."
-        columns={columns as any}
-        rows={rows as any}
+        columns={columns}
+        rows={rows as Record<string, unknown>[]}
         loading={isFetching}
-        page={meta?.current_page ?? (page as any)}
-        perPage={meta?.per_page ?? (perPage as any)}
-        total={total as any}
-        meta={meta as any}
+        page={Number(meta?.current_page ?? page)}
+        perPage={Number(meta?.per_page ?? perPage)}
+        total={Number(total)}
+        meta={meta}
         onPageChange={setPage}
         onPerPageChange={(next) => {
           setPerPage(next);

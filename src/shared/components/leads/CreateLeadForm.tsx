@@ -5,19 +5,19 @@ import FormLayout, {
   formAccent,
   getAccentRgba,
 } from "../../../adminDashboard/components/FormLayout";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "@/utils/toastUtil";
 import {
   buildLeadTypeOptions,
   ensureLeadTypeValue,
   formatLeadTypeLabel,
   type LeadTypeOption,
-} from "../../../utils/leadTypes";
+} from "@/utils/leadTypes";
 import {
   type LeadCreatePayload,
   type LeadStageData,
   type Lead,
   type LeadAssigneeOption,
-} from "../../../hooks/adminHooks/leadsHook";
+} from "@/hooks/adminHooks/leadsHooks";
 
 export type { LeadCreatePayload, LeadAssigneeOption };
 

@@ -1,6 +1,6 @@
 import { X, Loader2 } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
-import { useDeleteClient } from "../../../hooks/clientHooks";
+import ToastUtils from "@/utils/toastUtil";
+import { useDeleteClient } from "@/hooks/clientHooks";
 
 const DeleteClientModal = ({ isOpen, onClose, client, onDeleteConfirm }: any) => {
   // Use the useDeleteClient hook

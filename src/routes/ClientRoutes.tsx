@@ -37,6 +37,9 @@ import ClientSnapshots from "../clientDashboard/pages/ClientSnapshots";
 import ClientImages from "../clientDashboard/pages/ClientImages";
 import ClientAutoScaling from "../clientDashboard/pages/ClientAutoScaling";
 import ClientTicketDetail from "../clientDashboard/pages/ClientTicketDetail";
+import ClientManagedDatabases from "../clientDashboard/pages/ClientManagedDatabases";
+import ClientDatabaseCreate from "../clientDashboard/pages/ClientDatabaseCreate";
+import ClientDatabaseDetail from "../clientDashboard/pages/ClientDatabaseDetail";
 
 import type { JSX } from "react";
 
@@ -65,6 +68,10 @@ const ClientRoutes = (): JSX.Element => (
     <Route path="/client-dashboard/instances/create" element={<ClientInstanceCreate />} />
     <Route path="/client-dashboard/instances/provision" element={<ClientProvisioningWizard />} />
     <Route path="/client-dashboard/templates" element={<ClientTemplates />} />
+
+    <Route path="/client-dashboard/databases" element={<ClientManagedDatabases />} />
+    <Route path="/client-dashboard/databases/create" element={<ClientDatabaseCreate />} />
+    <Route path="/client-dashboard/databases/:identifier" element={<ClientDatabaseDetail />} />
 
     <Route path="/client-dashboard/launch" element={<ClientLaunch />} />
     <Route element={<ObjectStorageRouteProvider />}>

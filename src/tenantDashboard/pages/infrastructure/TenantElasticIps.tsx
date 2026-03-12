@@ -2,14 +2,14 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Globe2 } from "lucide-react";
 import TenantPageShell from "../../components/TenantPageShell";
-import ElasticIpsContainer from "../../../shared/components/infrastructure/containers/ElasticIpsContainer";
+import ElasticIpsContainer from "@/shared/components/infrastructure/containers/ElasticIpsContainer";
 import {
   useElasticIps,
   useCreateElasticIp,
   useDeleteElasticIp,
   useAssociateElasticIp,
   useDisassociateElasticIp,
-} from "../../../shared/hooks/vpcInfraHooks";
+} from "@/shared/hooks/vpcInfraHooks";
 
 /**
  * Tenant Elastic IPs page - truly thin wrapper.

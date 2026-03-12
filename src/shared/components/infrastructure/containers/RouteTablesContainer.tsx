@@ -1,29 +1,64 @@
-import React from "react";
+import React, { useState } from "react";
 import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
-import { getRouteTablePermissions, type Hierarchy } from "../../../config/permissionPresets";
+import { getRouteTablePermissions, type Hierarchy } from "@/shared/config/permissionPresets";
 import { RouteTablesOverview } from "..";
-import ToastUtils from "../../../../utils/toastUtil";
+import ToastUtils from "@/utils/toastUtil";
 import ModernButton from "../../ui/ModernButton";
+import ConfirmDialog from "@/shared/components/ui/ConfirmDialog";
+
+import { RouteTable, Subnet, InternetGateway, NatGateway } from "../types";
 
 interface RouteTableHooks {
-  useList: (projectId: string, region?: string, options?: any) => UseQueryResult<any[], Error>;
-  useSubnets: (projectId: string, region?: string, options?: any) => UseQueryResult<any[], Error>;
+  useList: (
+    projectId: string,
+    region?: string,
+    options?: { enabled?: boolean }
+  ) => UseQueryResult<RouteTable[], Error>;
+  useSubnets: (
+    projectId: string,
+    region?: string,
+    options?: { enabled?: boolean }
+  ) => UseQueryResult<Subnet[], Error>;
   useInternetGateways: (
     projectId: string,
     region?: string,
-    options?: any
-  ) => UseQueryResult<any[], Error>;
+    options?: { enabled?: boolean }
+  ) => UseQueryResult<InternetGateway[], Error>;
   useNatGateways: (
     projectId: string,
     region?: string,
-    options?: any
-  ) => UseQueryResult<any[], Error>;
+    options?: { enabled?: boolean }
+  ) => UseQueryResult<NatGateway[], Error>;
 
-  useCreate: () => UseMutationResult<any, any, any, unknown>;
-  useDelete: () => UseMutationResult<any, any, any, unknown>;
-  useAssociate: () => UseMutationResult<any, any, any, unknown>;
-  useDisassociate: () => UseMutationResult<any, any, any, unknown>;
+  useCreate: () => UseMutationResult<
+    unknown,
+    Error,
+    { projectId: string; region?: string; payload: { route_table_id: string; [key: string]: any } },
+    unknown
+  >;
+  useDelete: () => UseMutationResult<
+    unknown,
+    Error,
+    {
+      projectId: string;
+      region?: string;
+      payload: { route_table_id: string; destination_cidr_block: string };
+    },
+    unknown
+  >;
+  useAssociate: () => UseMutationResult<
+    unknown,
+    Error,
+    { projectId: string; region?: string; routeTableId: string; subnetId: string },
+    unknown
+  >;
+  useDisassociate: () => UseMutationResult<
+    unknown,
+    Error,
+    { projectId: string; region?: string; associationId: string },
+    unknown
+  >;
 }
 
 interface RouteTablesContainerProps {
@@ -49,6 +84,7 @@ const RouteTablesContainer: React.FC<RouteTablesContainerProps> = ({
   const {
     data: routeTables = [],
     isLoading,
+    isFetching,
     refetch,
   } = hooks.useList(projectId, region, {
     enabled: Boolean(projectId),
@@ -62,7 +98,17 @@ const RouteTablesContainer: React.FC<RouteTablesContainerProps> = ({
   const associateMutation = hooks.useAssociate();
   const disassociateMutation = hooks.useDisassociate();
 
-  const handleAddRoute = async (routeTableId: string, data: any) => {
+  const [deleteRouteConfirm, setDeleteRouteConfirm] = useState<{
+    open: boolean;
+    data?: { routeTableId: string; destination: string };
+  }>({ open: false });
+
+  const [disassociateConfirm, setDisassociateConfirm] = useState<{
+    open: boolean;
+    data?: { associationId: string };
+  }>({ open: false });
+
+  const handleAddRoute = async (routeTableId: string, data: Record<string, unknown>) => {
     if (!permissions.canManageRoutes) return;
     try {
       await createRouteMutation.mutateAsync({
@@ -71,14 +117,21 @@ const RouteTablesContainer: React.FC<RouteTablesContainerProps> = ({
         payload: { ...data, route_table_id: routeTableId },
       });
       ToastUtils.success("Route added successfully.");
-    } catch (error: any) {
-      ToastUtils.error(error?.message || "Failed to add route.");
+      refetch();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to add route.";
+      ToastUtils.error(message);
     }
   };
 
-  const handleDeleteRoute = async (routeTableId: string, destination: string) => {
+  const handleDeleteRoute = (routeTableId: string, destination: string) => {
     if (!permissions.canManageRoutes) return;
-    if (!confirm(`Delete route to ${destination}?`)) return;
+    setDeleteRouteConfirm({ open: true, data: { routeTableId, destination } });
+  };
+
+  const confirmDeleteRoute = async () => {
+    if (!deleteRouteConfirm.data) return;
+    const { routeTableId, destination } = deleteRouteConfirm.data;
     try {
       await deleteRouteMutation.mutateAsync({
         projectId,
@@ -86,8 +139,12 @@ const RouteTablesContainer: React.FC<RouteTablesContainerProps> = ({
         payload: { route_table_id: routeTableId, destination_cidr_block: destination },
       });
       ToastUtils.success("Route deleted.");
-    } catch (error: any) {
-      ToastUtils.error(error?.message || "Failed to delete route.");
+      refetch();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to delete route.";
+      ToastUtils.error(message);
+    } finally {
+      setDeleteRouteConfirm({ open: false });
     }
   };
 
@@ -101,14 +158,21 @@ const RouteTablesContainer: React.FC<RouteTablesContainerProps> = ({
         subnetId,
       });
       ToastUtils.success("Subnet associated successfully.");
-    } catch (error: any) {
-      ToastUtils.error(error?.message || "Failed to associate subnet.");
+      refetch();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to associate subnet.";
+      ToastUtils.error(message);
     }
   };
 
-  const handleDisassociate = async (associationId: string) => {
+  const handleDisassociate = (associationId: string) => {
     if (!permissions.canManageAssociations) return;
-    if (!confirm("Disassociate this subnet?")) return;
+    setDisassociateConfirm({ open: true, data: { associationId } });
+  };
+
+  const confirmDisassociate = async () => {
+    if (!disassociateConfirm.data) return;
+    const { associationId } = disassociateConfirm.data;
     try {
       await disassociateMutation.mutateAsync({
         projectId,
@@ -116,36 +180,64 @@ const RouteTablesContainer: React.FC<RouteTablesContainerProps> = ({
         associationId,
       });
       ToastUtils.success("Subnet disassociated.");
-    } catch (error: any) {
-      ToastUtils.error(error?.message || "Failed to disassociate subnet.");
+      refetch();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to disassociate subnet.";
+      ToastUtils.error(message);
+    } finally {
+      setDisassociateConfirm({ open: false });
     }
   };
 
   const headerActions = (
     <div className="flex items-center gap-3">
-      <ModernButton variant="secondary" size="sm" onClick={() => refetch()} disabled={isLoading}>
-        <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-        Refresh
+      <ModernButton variant="secondary" size="sm" onClick={() => refetch()} disabled={isFetching}>
+        <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
+        {isFetching ? "Refreshing..." : "Refresh"}
       </ModernButton>
     </div>
   );
 
   return (
-    <Wrapper headerActions={headerActions}>
-      <RouteTablesOverview
-        routeTables={routeTables}
-        subnets={subnets}
-        internetGateways={internetGateways}
-        natGateways={natGateways}
-        isLoading={isLoading}
-        permissions={permissions}
-        onAddRoute={handleAddRoute}
-        onDeleteRoute={handleDeleteRoute}
-        onAssociate={handleAssociate}
-        onDisassociate={handleDisassociate}
-        onRefresh={refetch}
+    <>
+      <Wrapper headerActions={headerActions}>
+        <RouteTablesOverview
+          routeTables={routeTables}
+          subnets={subnets}
+          internetGateways={internetGateways}
+          natGateways={natGateways}
+          isLoading={isLoading}
+          permissions={permissions}
+          onAddRoute={handleAddRoute}
+          onDeleteRoute={handleDeleteRoute}
+          onAssociate={handleAssociate}
+          onDisassociate={handleDisassociate}
+          onRefresh={refetch}
+        />
+      </Wrapper>
+
+      <ConfirmDialog
+        isOpen={deleteRouteConfirm.open}
+        title="Delete Route"
+        message={`Are you sure you want to delete the route to ${deleteRouteConfirm.data?.destination ?? ""}?`}
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={confirmDeleteRoute}
+        onCancel={() => setDeleteRouteConfirm({ open: false })}
+        isLoading={deleteRouteMutation.isPending}
       />
-    </Wrapper>
+
+      <ConfirmDialog
+        isOpen={disassociateConfirm.open}
+        title="Disassociate Subnet"
+        message="Are you sure you want to disassociate this subnet?"
+        confirmLabel="Disassociate"
+        variant="warning"
+        onConfirm={confirmDisassociate}
+        onCancel={() => setDisassociateConfirm({ open: false })}
+        isLoading={disassociateMutation.isPending}
+      />
+    </>
   );
 };
 

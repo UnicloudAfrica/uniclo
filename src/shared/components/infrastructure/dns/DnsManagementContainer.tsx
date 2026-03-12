@@ -6,9 +6,9 @@ import {
   useDeleteDnsZone,
   useDnsRecords,
   useChangeDnsRecords,
-} from "../../../../hooks/dnsHooks";
-import DnsZoneList, { DnsZone } from "./DnsZoneList";
-import DnsRecordManagement, { DnsRecord } from "./DnsRecordManagement";
+} from "@/hooks/dnsHooks";
+import DnsZoneList, { type DnsZone } from "./DnsZoneList";
+import DnsRecordManagement, { type DnsRecord } from "./DnsRecordManagement";
 import ModernCard from "../../ui/ModernCard";
 
 interface DnsManagementContainerProps {

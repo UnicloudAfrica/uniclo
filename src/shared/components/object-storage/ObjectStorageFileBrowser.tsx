@@ -25,9 +25,9 @@ import {
   Shield,
   ArrowRight,
 } from "lucide-react";
-import objectStorageApi from "../../../services/objectStorageApi";
+import objectStorageApi from "@/services/objectStorageApi";
 import DropzoneUploader from "./DropzoneUploader";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "@/utils/toastUtil";
 
 interface FileItem {
   type: "file" | "folder";
@@ -110,10 +110,14 @@ const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
 
     try {
       setLoading(true);
-      const data = await objectStorageApi.listObjects(accountId, bucketName, currentPrefix);
-      setFolders((data as any).folders || []);
+      const data = (await objectStorageApi.listObjects(
+        accountId,
+        bucketName,
+        currentPrefix
+      )) as Record<string, unknown>;
+      setFolders((data.folders as FileItem[]) || []);
       // Filter out .keep files - they're just folder placeholders
-      const visibleFiles = ((data as any).files || []).filter(
+      const visibleFiles = ((data.files as FileItem[]) || []).filter(
         (f: FileItem) => !f.name.endsWith(".keep") && f.name !== ".keep"
       );
       setFiles(visibleFiles);
@@ -129,13 +133,13 @@ const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
       setCurrentPrefix("");
       fetchObjects();
     }
-  }, [bucketName]);
+  }, [bucketName, fetchObjects]);
 
   useEffect(() => {
     if (bucketName) {
       fetchObjects();
     }
-  }, [currentPrefix, fetchObjects]); // Added fetchObjects to dependency array
+  }, [currentPrefix, fetchObjects, bucketName]);
 
   const navigateToFolder = (prefix: string) => {
     setCurrentPrefix(prefix);
@@ -150,7 +154,7 @@ const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
   const handleDownload = async (item: FileItem) => {
     try {
       const url = await objectStorageApi.getObjectUrl(accountId, bucketName!, item.key);
-      globalThis.window.open(url as any, "_blank");
+      globalThis.window.open(String(url), "_blank");
     } catch (err) {
       ToastUtils.error(getErrorMessage(err, "Failed to get download URL"));
     }
@@ -159,7 +163,7 @@ const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
   const handlePreview = async (item: FileItem) => {
     try {
       const url = await objectStorageApi.getObjectUrl(accountId, bucketName!, item.key);
-      setPreviewUrl(url as any);
+      setPreviewUrl(String(url));
       setPreviewName(item.name);
     } catch (err) {
       ToastUtils.error(getErrorMessage(err, "Failed to load preview"));

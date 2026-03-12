@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
-import { useCreateMultiQuotes } from "../../../hooks/adminHooks/calculatorOptionHooks";
-import { useSharedFetchRegions } from "../../../hooks/sharedCalculatorHooks";
-import { useFetchProductPricing } from "../../../hooks/resource";
-import { useCustomerContext } from "../../../hooks/adminHooks/useCustomerContext";
+import { useCreateMultiQuotes } from "@/hooks/adminHooks/calculatorOptionHooks";
+import { useSharedFetchRegions } from "@/hooks/sharedCalculatorHooks";
+import { useFetchProductPricing } from "@/hooks/resource";
+import { useCustomerContext } from "@/hooks/adminHooks/useCustomerContext";
 import { ModernButton } from "../ui";
 import InvoiceWizardStepper from "./invoice/InvoiceWizardStepper";
 import InvoiceInfoStep from "./invoice/InvoiceInfoStep";
@@ -12,7 +12,7 @@ import InvoiceItemsStep from "./invoice/InvoiceItemsStep";
 import InvoiceSummaryStep from "./invoice/InvoiceSummaryStep";
 import InvoiceFinalReviewStep from "./invoice/InvoiceFinalReviewStep";
 import InvoiceConfirmationStep from "./invoice/InvoiceConfirmationStep";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "@/utils/toastUtil";
 import {
   InvoiceFormData,
   PricingRequest,
@@ -359,12 +359,10 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
       country_code: countryCode,
       currency_code: currencyCode,
       pricing_requests: pricingRequests.map((req) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { _display, ...rest } = req;
         return rest;
       }),
       object_storage_items: objectStorageRequests.map((req) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { _display, ...rest } = req;
         return rest;
       }),

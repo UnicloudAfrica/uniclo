@@ -1,6 +1,6 @@
 import React from "react";
 import TenantPageShell from "../components/TenantPageShell";
-import SharedInstanceList from "../../shared/components/instances/SharedInstanceList";
+import SharedInstanceList from "@/shared/components/instances/SharedInstanceList";
 
 const Instances: React.FC = () => {
   return (

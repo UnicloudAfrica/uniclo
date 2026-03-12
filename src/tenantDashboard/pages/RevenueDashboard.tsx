@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
-import tenantRegionApi from "../../services/tenantRegionApi";
+import React, { useState, useEffect, useCallback } from "react";
+import tenantRegionApi from "@/services/tenantRegionApi";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
 import { Download } from "lucide-react";
-import logger from "../../utils/logger";
+import logger from "@/utils/logger";
 
 interface RevenueSummary {
   total_revenue?: number;
@@ -59,11 +59,7 @@ const RevenueDashboard = () => {
     status: "",
   });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const [statsRes, sharesRes] = await Promise.all([
@@ -86,7 +82,11 @@ const RevenueDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

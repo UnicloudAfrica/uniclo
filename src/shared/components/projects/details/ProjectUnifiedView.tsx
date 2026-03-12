@@ -1,10 +1,12 @@
 import React from "react";
+import { Boxes } from "lucide-react";
 import ComputeResourcesCard from "./ComputeResourcesCard";
 import NetworkConfigurationCard from "./NetworkConfigurationCard";
 import AdvancedQuickActionsCard from "./AdvancedQuickActionsCard";
 import SetupProgressCard from "./SetupProgressCard";
 import ResourceSummaryCard from "./ResourceSummaryCard";
-import { Project } from "../../../../types/project";
+import { InfrastructureVisualization } from "./infrastructure-viz";
+import { Project } from "@/types/project";
 
 // TypeScript interfaces for reusability across Admin/Tenant/Client
 export interface ProjectData extends Project {
@@ -64,7 +66,7 @@ export interface SetupStep {
   updated_at?: string;
 }
 
-import ProjectTopologyGraph from "./ProjectTopologyGraph";
+import type { ResourceTypeId } from "./infrastructure-viz";
 
 export interface ProjectUnifiedViewProps {
   // Core data
@@ -91,6 +93,9 @@ export interface ProjectUnifiedViewProps {
   }>;
   instances?: Array<{ id?: string | number; name?: string; status?: string }>;
 
+  // Network blueprint
+  networkBlueprintName?: string;
+
   // Edge network
   edgeNetworkConnected?: boolean;
   edgeNetworkName?: string;
@@ -103,7 +108,6 @@ export interface ProjectUnifiedViewProps {
   onViewNetworkDetails?: () => void;
   onCompleteSetup?: () => void;
   onViewAllResources?: () => void;
-  onViewKeyPairs?: () => void;
   onViewRouteTables?: () => void;
   onViewElasticIps?: () => void;
   onViewNetworkInterfaces?: () => void;
@@ -116,6 +120,8 @@ export interface ProjectUnifiedViewProps {
   onViewInternetGateways?: () => void;
   onViewLoadBalancers?: () => void;
   onViewUsers?: () => void;
+  /** Navigate to compute tab — used for Nobus network card */
+  onViewCompute?: () => void;
 
   // Loading states ...
   isEnablingInternet?: boolean;
@@ -141,6 +147,7 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
   subnets = [],
   igws = [],
   instances = [],
+  networkBlueprintName,
   edgeNetworkConnected = false,
   edgeNetworkName,
   onAddInstance,
@@ -150,7 +157,6 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
   onViewNetworkDetails,
   onCompleteSetup,
   onViewAllResources,
-  onViewKeyPairs,
   onViewRouteTables,
   onViewElasticIps,
   onViewNetworkInterfaces,
@@ -163,13 +169,14 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
   onViewInternetGateways,
   onViewLoadBalancers,
   onViewUsers,
+  onViewCompute,
   isEnablingInternet = false,
   isProvisioning = false,
   isSyncing = false,
   isLoading = false,
   showMemberManagement = true,
   showSyncButton = true,
-  showHero = true,
+  showHero: _showHero = true,
 }) => {
   const fallbackIgw = Array.isArray(igws) && igws.length > 0 ? igws[0] : null;
   const fallbackIgwDetails = fallbackIgw
@@ -192,7 +199,16 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
   const activeStep = setupSteps?.find((s) => s.status === "pending");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
+      {/* Network Blueprint Badge */}
+      {networkBlueprintName && (
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+          <Boxes className="w-4 h-4 text-blue-500 flex-shrink-0" />
+          <span className="font-medium">Network Blueprint:</span>
+          <span>{networkBlueprintName}</span>
+        </div>
+      )}
+
       {/* Row 1 - Three Equal Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <ComputeResourcesCard
@@ -205,6 +221,7 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
         />
 
         <NetworkConfigurationCard
+          provider={project.provider}
           vpcCount={resourceCounts.vpcs}
           subnetCount={resourceCounts.subnets}
           securityGroupCount={resourceCounts.security_groups}
@@ -213,6 +230,9 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
           onEnableInternet={onEnableInternet}
           onViewDetails={onViewNetworkDetails}
           isEnabling={isEnablingInternet}
+          instanceCount={instanceStats.total}
+          floatingIpCount={resourceCounts.floating_ips ?? 0}
+          onViewCompute={onViewCompute}
         />
 
         <AdvancedQuickActionsCard
@@ -237,10 +257,10 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
 
         <div className="lg:col-span-2">
           <ResourceSummaryCard
+            provider={project.provider}
             vpcs={resourceCounts.vpcs || 0}
             subnets={resourceCounts.subnets || 0}
             securityGroups={resourceCounts.security_groups || 0}
-            keyPairs={resourceCounts.key_pairs || 0}
             routeTables={resourceCounts.route_tables || 0}
             elasticIps={resourceCounts.elastic_ips || 0}
             networkInterfaces={resourceCounts.network_interfaces || 0}
@@ -254,7 +274,6 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
             onViewVpcs={onViewVpcs}
             onViewSubnets={onViewSubnets}
             onViewSecurityGroups={onViewSecurityGroups}
-            onViewKeyPairs={onViewKeyPairs}
             onViewRouteTables={onViewRouteTables}
             onViewElasticIps={onViewElasticIps}
             onViewNetworkInterfaces={onViewNetworkInterfaces}
@@ -268,14 +287,35 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
         </div>
       </div>
 
-      {/* Row 3 - Interactive Topology (Wide) */}
+      {/* Row 3 - Interactive Infrastructure Visualization (Wide) */}
       <div className="grid grid-cols-1 gap-6">
-        <ProjectTopologyGraph
-          vpc={vpcs[0]}
+        <InfrastructureVisualization
+          provider={project.provider}
+          vpcs={vpcs}
           subnets={subnets}
-          igw={igws[0]}
+          igws={igws}
           instances={instances}
+          resourceCounts={resourceCounts}
+          instanceStats={instanceStats}
+          networkStatus={networkStatus}
           activeStepId={activeStep?.id}
+          isProvisioning={isProvisioning}
+          onResourceClick={(typeId: ResourceTypeId) => {
+            const handlers: Record<string, (() => void) | undefined> = {
+              vpcs: onViewVpcs,
+              subnets: onViewSubnets,
+              security_groups: onViewSecurityGroups,
+              route_tables: onViewRouteTables,
+              elastic_ips: onViewElasticIps,
+              network_interfaces: onViewNetworkInterfaces,
+              nat_gateways: onViewNatGateways,
+              internet_gateways: onViewInternetGateways,
+              network_acls: onViewNetworkAcls,
+              vpc_peering: onViewVpcPeering,
+              load_balancers: onViewLoadBalancers,
+            };
+            handlers[typeId]?.();
+          }}
         />
       </div>
     </div>

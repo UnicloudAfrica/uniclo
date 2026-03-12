@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
-import logger from "../../utils/logger";
+import logger from "@/utils/logger";
 
 type CollectionResponse = {
   data: unknown[];
@@ -10,9 +10,10 @@ type CollectionResponse = {
   success?: boolean;
 };
 
-const buildQueryString = ({ region, page, perPage, search }: any) => {
+const buildQueryString = ({ region, provider, page, perPage, search }: any) => {
   const params = new URLSearchParams();
   if (region) params.append("region", region);
+  if (provider) params.append("provider", provider);
   if (page) params.append("page", page);
   if (perPage) params.append("per_page", perPage);
   if (search) params.append("search", search);
@@ -32,8 +33,8 @@ const normaliseCollectionResponse = (res: any) => {
   };
 };
 
-const fetchEbsVolumes = async ({ region, page, perPage, search }: any) => {
-  const queryString = buildQueryString({ region, page, perPage, search });
+const fetchEbsVolumes = async ({ region, provider, page, perPage, search }: any) => {
+  const queryString = buildQueryString({ region, provider, page, perPage, search });
   const res = await silentApi("GET", `/product-volume-type${queryString}`);
   const payload = normaliseCollectionResponse(res);
   if (!Array.isArray(payload.data)) {
@@ -76,12 +77,12 @@ const deleteEbsVolume = async (id: any) => {
 
 export const useFetchEbsVolumes = (
   region: any,
-  { page = 1, perPage = 10, search = "" }: any = {},
+  { page = 1, perPage = 10, search = "", provider = "" }: any = {},
   options: any = {}
 ) => {
   return useQuery<CollectionResponse>({
-    queryKey: ["ebsVolumes", region, page, perPage, search],
-    queryFn: () => fetchEbsVolumes({ region, page, perPage, search }),
+    queryKey: ["ebsVolumes", region, provider, page, perPage, search],
+    queryFn: () => fetchEbsVolumes({ region, provider, page, perPage, search }),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     enabled: !!region,

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 const DEFAULT_BREADCRUMB_COLOR = "var(--theme-color, var(--theme-color))";
@@ -61,4 +61,4 @@ const BreadcrumbTrail: React.FC<BreadcrumbTrailProps> = ({
   );
 };
 
-export default BreadcrumbTrail;
+export default memo(BreadcrumbTrail);

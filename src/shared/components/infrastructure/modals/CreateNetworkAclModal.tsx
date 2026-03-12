@@ -7,7 +7,7 @@ interface CreateNetworkAclModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (data: { vpc_id: string; name?: string }) => void;
-  vpcs: unknown;
+  vpcs: { id: string; name?: string; cidr_block?: string }[];
   isLoading?: boolean;
 }
 
@@ -36,9 +36,9 @@ const CreateNetworkAclModal: React.FC<CreateNetworkAclModalProps> = ({
   };
 
   const getVpcOptions = () => {
-    return (vpcs as any).map((vpc: any) => ({
+    return vpcs.map((vpc) => ({
       value: vpc.id,
-      label: `${vpc.name || vpc.id} (${vpc.cidr_block})`,
+      label: `${vpc.name || vpc.id} (${vpc.cidr_block || "N/A"})`,
     }));
   };
 

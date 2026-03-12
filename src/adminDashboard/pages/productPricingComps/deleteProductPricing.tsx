@@ -1,6 +1,6 @@
 import { Loader2, Trash2, X } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
-import { useDeleteProductPricing } from "../../../hooks/adminHooks/adminproductPricingHook";
+import ToastUtils from "@/utils/toastUtil";
+import { useDeleteProductPricing } from "@/hooks/adminHooks/adminProductPricingHooks";
 
 const DeleteProductPricingModal = ({ isOpen, onClose, pricing }: any) => {
   const { mutate: deletePricing, isPending } = useDeleteProductPricing();

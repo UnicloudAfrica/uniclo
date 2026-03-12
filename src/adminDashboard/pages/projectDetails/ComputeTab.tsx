@@ -1,12 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useFetchPurchasedInstances } from "../../../hooks/adminHooks/instancesHook";
-import {
-  useFetchKeyPairs,
-  useSyncKeyPairs,
-  useDeleteKeyPair,
-} from "../../../hooks/adminHooks/keyPairHooks";
-import ProjectComputeTab from "../../../shared/components/projects/details/ProjectComputeTab";
+import { useFetchPurchasedInstances } from "@/shared/hooks/resources/instanceHooks";
+import { useFetchKeyPairs, useSyncKeyPairs, useDeleteKeyPair } from "@/shared/hooks/keyPairsHooks";
+import ProjectComputeTab from "@/shared/components/projects/details/ProjectComputeTab";
 
 interface ComputeTabProps {
   project: any;

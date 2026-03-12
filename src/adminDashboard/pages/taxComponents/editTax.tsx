@@ -1,17 +1,27 @@
 import { useState, useEffect } from "react";
 import { X, Loader2, Trash2 } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
-import { useUpdateTaxConfiguration } from "../../../hooks/adminHooks/taxConfigurationHooks";
-import logger from "../../../utils/logger";
+import ToastUtils from "@/utils/toastUtil";
+import { useUpdateTaxConfiguration } from "@/hooks/adminHooks/taxConfigurationHooks";
+import logger from "@/utils/logger";
+
+interface CountryRate {
+  id?: number | string;
+  country_id: number;
+  country?: { name: string; currency_code?: string; currency_symbol?: string };
+  rate: number | string;
+}
 
 const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }: any) => {
   const { mutate, isPending } = useUpdateTaxConfiguration(); // Use the new update tax type hook
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    countryRates: CountryRate[];
+  }>({
     name: "",
     countryRates: [], // Array to manage rates
   });
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, string | null>>({});
 
   // Populate form data when the modal opens or when the taxType prop changes
   useEffect(() => {
@@ -47,7 +57,7 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }: any) => {
     }
     // Validate existing rates
     formData.countryRates.forEach((rate, index) => {
-      const rateValue = parseFloat((rate as any).rate);
+      const rateValue = parseFloat(rate.rate as string);
       if (isNaN(rateValue) || rateValue < 0 || rateValue > 100) {
         newErrors[`rate-${index}`] = "Rate must be a number between 0 and 100.";
       }
@@ -57,21 +67,21 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }: any) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormDataField = (field: any, value: any) => {
+  const updateFormDataField = (field: keyof typeof formData, value: string | CountryRate[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null })); // Clear error for the specific field
   };
 
-  const handleRateChange = (index: any, value: any) => {
+  const handleRateChange = (index: number, value: string) => {
     setFormData((prev) => {
       const updatedRates = [...prev.countryRates];
-      updatedRates[index] = { ...(updatedRates[index] as any), rate: value };
+      updatedRates[index] = { ...updatedRates[index], rate: value };
       return { ...prev, countryRates: updatedRates };
     });
     setErrors((prev) => ({ ...prev, [`rate-${index}`]: null })); // Clear specific rate error
   };
 
-  const handleRemoveRate = (index: any) => {
+  const handleRemoveRate = (index: number) => {
     setFormData((prev) => {
       const updatedRates = prev.countryRates.filter((_, i) => i !== index);
       return { ...prev, countryRates: updatedRates };
@@ -159,11 +169,11 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }: any) => {
                 <div className="space-y-3">
                   {formData.countryRates.map((rate, index) => (
                     <div
-                      key={(rate as any).id || `new-${index}`} // Use existing ID or a new temporary key
+                      key={rate.id || `new-${index}`} // Use existing ID or a new temporary key
                       className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg"
                     >
                       <span className="font-medium text-gray-700 w-1/3">
-                        {(rate as any).country?.name || `Country ID: ${(rate as any).country_id}`}
+                        {rate.country?.name || `Country ID: ${rate.country_id}`}
                       </span>
                       <div className="relative w-1/3">
                         <input
@@ -171,7 +181,7 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }: any) => {
                           step="0.001"
                           min="0"
                           max="100"
-                          value={(rate as any).rate}
+                          value={rate.rate}
                           onChange={(e) => handleRateChange(index, e.target.value)}
                           placeholder="7.5"
                           className={`w-full input-field pr-10 ${

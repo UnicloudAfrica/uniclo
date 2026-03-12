@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import ClientActiveTab from "../components/clientActiveTab";
 import ClientPageShell from "../components/ClientPageShell";
 import { useObjectStorage } from "../../contexts/ObjectStorageContext";
-import ObjectStorageDashboardContent from "../../shared/components/object-storage/ObjectStorageDashboardContent";
-import { objectStoragePresets } from "../../shared/config/objectStoragePresets";
-import useClientAuthStore from "../../stores/clientAuthStore";
+import ObjectStorageDashboardContent from "@/shared/components/object-storage/ObjectStorageDashboardContent";
+import { objectStoragePresets } from "@/shared/config/objectStoragePresets";
+import useClientAuthStore from "@/stores/clientAuthStore";
 
 interface StorageAccount {
   id: string | number;

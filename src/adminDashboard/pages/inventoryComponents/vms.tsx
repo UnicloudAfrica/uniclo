@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { Server, Cpu, Gauge, Pencil, Trash2, Plus } from "lucide-react";
-import { useFetchVmInstances } from "../../../hooks/adminHooks/vmHooks";
+import { useFetchVmInstances } from "@/hooks/adminHooks/vmHooks";
 import ResourceDataExplorer from "../../components/ResourceDataExplorer";
 import AddVMModal from "./vmSubs/addVms";
 import EditVMModal from "./vmSubs/editVms";
 import DeleteVMModal from "./vmSubs/deleteVms";
-import { ModernButton } from "../../../shared/components/ui";
+import { ModernButton, ProviderBadge } from "@/shared/components/ui";
 
 const formatMemory = (memoryMb: any) => {
   if (memoryMb === null || memoryMb === undefined) return "—";
   return `${Math.round(Number(memoryMb) / 1024)} GiB`;
 };
 
-const Vms = ({ selectedRegion, onMetricsChange }: any) => {
+const Vms = ({ selectedRegion, selectedProvider, onMetricsChange }: any) => {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [search, setSearch] = useState("");
@@ -29,23 +29,29 @@ const Vms = ({ selectedRegion, onMetricsChange }: any) => {
 
   const { data, isFetching } = useFetchVmInstances(
     selectedRegion,
-    { page, perPage, search },
+    { page, perPage, search, provider: selectedProvider },
     { enabled: Boolean(selectedRegion), keepPreviousData: true }
   );
 
-  const rows = data?.data ?? [];
+  const rows = useMemo(() => data?.data ?? [], [data]);
   const meta = data?.meta ?? null;
   const total = meta?.total ?? rows.length;
 
   const totalVCpus = useMemo(() => {
     if (!rows.length) return 0;
-    return rows.reduce((acc, vm) => (acc as any) + Number((vm as any).vcpus || 0), 0);
+    return (rows as Record<string, unknown>[]).reduce(
+      (acc: number, vm: Record<string, unknown>) => acc + Number(vm.vcpus || 0),
+      0
+    );
   }, [rows]);
 
   const avgMemory = useMemo(() => {
     if (!rows.length) return 0;
-    const sum = rows.reduce((acc, vm) => (acc as any) + Number((vm as any).memory_mb || 0), 0);
-    return (sum as any) / rows.length;
+    const sum = (rows as Record<string, unknown>[]).reduce(
+      (acc: number, vm: Record<string, unknown>) => acc + Number(vm.memory_mb || 0),
+      0
+    );
+    return sum / rows.length;
   }, [rows]);
 
   useEffect(() => {
@@ -95,18 +101,16 @@ const Vms = ({ selectedRegion, onMetricsChange }: any) => {
       header: "Compute profile",
       key: "name",
       render: (vm: any) => (
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-1">
           <span className="font-semibold text-slate-900">{vm.name || "Unnamed profile"}</span>
-          <span className="text-xs text-slate-500">
-            {vm.provider_label || vm.provider || "Provider unspecified"}
-          </span>
+          <ProviderBadge provider={vm.provider} />
         </div>
       ),
     },
     {
       header: "Memory",
       key: "memory_mb",
-      align: "center",
+      align: "center" as const,
       render: (vm: any) => (
         <span className="font-semibold text-slate-800">{formatMemory(vm.memory_mb)}</span>
       ),
@@ -114,7 +118,7 @@ const Vms = ({ selectedRegion, onMetricsChange }: any) => {
     {
       header: "vCPU / cores",
       key: "vcpus",
-      align: "center",
+      align: "center" as const,
       render: (vm: any) => (
         <div className="flex flex-col items-center text-xs text-slate-500">
           <span className="font-medium text-slate-700">{vm.vcpus ?? "—"} vCPU</span>
@@ -127,7 +131,7 @@ const Vms = ({ selectedRegion, onMetricsChange }: any) => {
     {
       header: "",
       key: "actions",
-      align: "right",
+      align: "right" as const,
       render: (vm: any) => (
         <div className="flex items-center justify-end gap-2">
           <button
@@ -186,13 +190,13 @@ const Vms = ({ selectedRegion, onMetricsChange }: any) => {
       <ResourceDataExplorer
         title="Compute catalogue"
         description="Balance CPU, memory, and sockets to deliver consistent performance tiers for customers."
-        columns={columns as any}
-        rows={rows as any}
+        columns={columns}
+        rows={rows as Record<string, unknown>[]}
         loading={isFetching}
-        page={meta?.current_page ?? (page as any)}
-        perPage={meta?.per_page ?? (perPage as any)}
-        total={total as any}
-        meta={meta as any}
+        page={Number(meta?.current_page ?? page)}
+        perPage={Number(meta?.per_page ?? perPage)}
+        total={Number(total)}
+        meta={meta}
         onPageChange={setPage}
         onPerPageChange={(next) => {
           setPerPage(next);

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { useCreateAdmin } from "../../../hooks/adminHooks/adminHooks";
-import ToastUtils from "../../../utils/toastUtil";
+import { useCreateAdmin } from "@/hooks/adminHooks/adminHooks";
+import ToastUtils from "@/utils/toastUtil";
 import FormLayout, { formAccent, getAccentRgba } from "../../components/FormLayout";
 
 type AdminFormData = {
@@ -45,7 +45,7 @@ export const AddAdminModal = ({ isOpen, onClose, mode = "modal" }: any) => {
 
   useEffect(() => {
     if (isError && error) {
-      ToastUtils.error((error as any).message || "Failed to add admin");
+      ToastUtils.error((error as { message?: string }).message || "Failed to add admin");
     }
     if (isSuccess && !isPending) {
       ToastUtils.success("Admin added successfully");
@@ -118,7 +118,7 @@ export const AddAdminModal = ({ isOpen, onClose, mode = "modal" }: any) => {
         onClose();
       },
       onError: (err) => {
-        ToastUtils.error((err as any).message || "Failed to add admin");
+        ToastUtils.error((err as { message?: string }).message || "Failed to add admin");
       },
     });
   };
@@ -312,7 +312,8 @@ export const AddAdminModal = ({ isOpen, onClose, mode = "modal" }: any) => {
       <form id={formId} onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {isError && (
           <div className="md:col-span-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {(error as any)?.message || "Failed to create admin. Please try again."}
+            {(error as { message?: string })?.message ||
+              "Failed to create admin. Please try again."}
           </div>
         )}
 

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import DetailedModules from "./detailsModules";
-import ModernTable from "../../../shared/components/ui/ModernTable";
+import ModernTable from "@/shared/components/ui/ModernTable";
 
 interface ClientModulesProps {
   client?: any; // Added prop for future use if needed, though currently using static data

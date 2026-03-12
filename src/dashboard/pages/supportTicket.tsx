@@ -1,5 +1,5 @@
 import TenantPageShell from "../components/TenantPageShell";
-import { SupportThreadsPanel } from "../../shared/components/support";
+import { SupportThreadsPanel } from "@/shared/components/support";
 import tenantApi from "../../index/tenant/tenantApi";
 import silentTenantApi from "../../index/tenant/silentTenant";
 

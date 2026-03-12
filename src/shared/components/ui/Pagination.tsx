@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 
 export interface PaginationProps {
@@ -180,4 +180,4 @@ const Pagination: React.FC<PaginationProps> = ({
   );
 };
 
-export default Pagination;
+export default memo(Pagination);

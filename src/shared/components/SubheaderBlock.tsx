@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { Menu } from "lucide-react";
 import BreadcrumbTrail from "./BreadcrumbTrail";
 
@@ -89,4 +89,4 @@ const SubheaderBlock: React.FC<SubheaderBlockProps> = ({
   );
 };
 
-export default SubheaderBlock;
+export default memo(SubheaderBlock);

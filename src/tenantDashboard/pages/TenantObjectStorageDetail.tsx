@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
-import ObjectStorageAccountDetail from "../../shared/components/object-storage/ObjectStorageAccountDetail";
+import ObjectStorageAccountDetail from "@/shared/components/object-storage/ObjectStorageAccountDetail";
 
 const TenantObjectStorageDetail = () => {
   const { accountId } = useParams();

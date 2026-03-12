@@ -1,6 +1,6 @@
 import { X, Loader2 } from "lucide-react";
-import { useDeleteProduct } from "../../../hooks/adminHooks/adminProductHooks";
-import logger from "../../../utils/logger";
+import { useDeleteProduct } from "@/hooks/adminHooks/adminProductHooks";
+import logger from "@/utils/logger";
 
 const DeleteProduct = ({ isOpen, onClose, productId, productName, refetch }: any) => {
   const { mutate: deleteProduct, isPending } = useDeleteProduct();

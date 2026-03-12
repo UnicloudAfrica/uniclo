@@ -1,14 +1,20 @@
 import React, { useMemo, useEffect, useRef, useCallback } from "react";
-import InstanceConfigurationForm from "../../shared/components/instance-wizard/InstanceConfigurationForm";
-import { Configuration, Option, AdditionalVolume } from "../../types/InstanceConfiguration";
-import { useFetchProjects } from "../../hooks/adminHooks/projectHooks";
-import { useFetchProductPricing } from "../../hooks/resource";
-import { useFetchSecurityGroups } from "../../hooks/adminHooks/securityGroupHooks";
-import { useFetchKeyPairs } from "../../hooks/adminHooks/keyPairHooks";
-import { useFetchSubnets } from "../../hooks/adminHooks/subnetHooks";
-import { useFetchNetworks } from "../../hooks/adminHooks/networkHooks";
-import ToastUtils from "../../utils/toastUtil";
-import { buildConfigurationFromTemplate } from "../../utils/instanceCreationUtils";
+import InstanceConfigurationForm from "@/shared/components/instance-wizard/InstanceConfigurationForm";
+import { Configuration, Option, AdditionalVolume } from "@/types/InstanceConfiguration";
+import { useFetchProjects } from "@/hooks/adminHooks/projectHooks";
+import { useFetchProductPricing } from "@/hooks/resource";
+import { useFetchSecurityGroups as _useFetchSG } from "@/shared/hooks/resources/securityGroupHooks";
+import { useFetchKeyPairs } from "@/shared/hooks/keyPairsHooks";
+import { useFetchSubnets as _useFetchSN } from "@/shared/hooks/resources/subnetHooks";
+
+// Local positional-arg wrappers for dynamic hook fallbacks
+const useFetchSecurityGroups = (projectId: any, region: any, opts: any = {}) =>
+  _useFetchSG({ projectId, region }, opts);
+const useFetchSubnets = (projectId: any, region: any, opts: any = {}) =>
+  _useFetchSN({ projectId, region }, opts);
+import { useFetchNetworks } from "@/hooks/adminHooks/networkHooks";
+import ToastUtils from "@/utils/toastUtil";
+import { buildConfigurationFromTemplate } from "@/utils/instanceCreationUtils";
 
 // Type for custom fetch hook that returns { data, isFetching, ... }
 type FetchHookResult = { data: any; isFetching?: boolean; isLoading?: boolean };
@@ -152,7 +158,7 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
     // In original: baseProjectOptions was "any[]". But here I typed it as Option[].
     // Let's assume passed in projectOptions are raw? No, in AdminCreateInstance baseProjectOptions was not passed?
     // Ah, checked lines 311: baseProjectOptions: any[].
-    // So I should treat them as any[] if I want to re-use logic, or pre-process them.
+    // So I should treat them as unknown[] if I want to re-use logic, or pre-process them.
 
     // Re-implementing logic
     const seen = new Set();
@@ -343,9 +349,9 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
   // 5. Transform Network Options
   const networkOptions = useMemo(() => {
     const list = Array.isArray(networksResponse)
-      ? networksResponse
-      : Array.isArray((networksResponse as any)?.data)
-        ? (networksResponse as any).data
+      ? (networksResponse as Record<string, unknown>[])
+      : Array.isArray((networksResponse as Record<string, unknown>)?.data)
+        ? (networksResponse as Record<string, { data?: unknown }>).data
         : [];
     return list
       .map((network: any): Option | null => {

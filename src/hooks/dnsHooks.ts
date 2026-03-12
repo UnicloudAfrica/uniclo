@@ -12,6 +12,25 @@ const getApiPrefix = (context: string) => {
   return context === "admin" ? "" : "/business";
 };
 
+/**
+ * Extract an array from a Zadara/Route53 API response.
+ * The API may return zones as { HostedZones: [...] }, { zones: [...] }, { data: [...] },
+ * or directly as an array.
+ */
+const extractArray = (raw: unknown, keys: string[]): unknown[] => {
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw === "object") {
+    const obj = raw as Record<string, unknown>;
+    // Check common wrapper keys
+    for (const key of keys) {
+      if (Array.isArray(obj[key])) return obj[key] as unknown[];
+    }
+    // Check 'data' as fallback
+    if (Array.isArray(obj.data)) return obj.data as unknown[];
+  }
+  return [];
+};
+
 // ==================== DNS Zones ====================
 
 /**
@@ -28,15 +47,42 @@ export const useDnsZones = (projectId?: string, region?: string) => {
       if (projectId) params.project_id = projectId;
       if (region) params.region = region;
 
-      const { data } = await axios.get(`${apiBaseUrl}${prefix}/dns-zones`, {
-        params,
-        headers: authHeaders,
-        withCredentials: true,
-      });
-      // Zadara API usually returns the list directly or wrapped in 'data'
-      return data.data || data;
+      try {
+        const { data } = await axios.get(`${apiBaseUrl}${prefix}/dns-zones`, {
+          params,
+          headers: authHeaders,
+          withCredentials: true,
+        });
+        // Zadara Route53 API wraps zones in "zones" key per swagger spec
+        return extractArray(data, ["zones", "HostedZones", "hosted_zones"]);
+      } catch (error: unknown) {
+        const axiosError = error as {
+          response?: { status?: number; data?: { error?: string; message?: string } };
+        };
+        const status = axiosError.response?.status;
+        const message =
+          axiosError.response?.data?.error || axiosError.response?.data?.message || "";
+
+        // Translate known DNS-not-configured errors into a recognizable error type
+        if (
+          status === 404 ||
+          status === 502 ||
+          message.toLowerCase().includes("external service") ||
+          message.toLowerCase().includes("not found")
+        ) {
+          const dnsError = new Error("DNS_NOT_CONFIGURED");
+          (dnsError as any).isDnsNotConfigured = true;
+          throw dnsError;
+        }
+        throw error;
+      }
     },
     enabled: isAuthenticated,
+    retry: (failureCount, error: any) => {
+      // Don't retry DNS-not-configured errors
+      if (error?.isDnsNotConfigured) return false;
+      return failureCount < 2;
+    },
   });
 };
 
@@ -46,7 +92,12 @@ export const useCreateDnsZone = () => {
   const prefix = getApiPrefix(context);
 
   return useMutation({
-    mutationFn: async (payload: any) => {
+    mutationFn: async (payload: {
+      project_id?: string;
+      region?: string;
+      name: string;
+      comment?: string;
+    }) => {
       const { data } = await axios.post(`${apiBaseUrl}${prefix}/dns-zones`, payload, {
         headers: authHeaders,
         withCredentials: true,
@@ -57,8 +108,9 @@ export const useCreateDnsZone = () => {
       ToastUtils.success("DNS Zone created successfully");
       queryClient.invalidateQueries({ queryKey: ["dns-zones"] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to create DNS Zone");
+    onError: (error: unknown) => {
+      const axiosError = error as { response?: { data?: { error?: string } } };
+      ToastUtils.error(axiosError.response?.data?.error || "Failed to ... ");
     },
   });
 };
@@ -116,7 +168,13 @@ export const useDnsRecords = (zoneId: string, projectId?: string, region?: strin
         headers: authHeaders,
         withCredentials: true,
       });
-      return data.data || data;
+      // Zadara Route53 API wraps records in "rrset_list" key per swagger spec
+      return extractArray(data, [
+        "rrset_list",
+        "ResourceRecordSets",
+        "records",
+        "resource_record_sets",
+      ]);
     },
     enabled: !!zoneId && isAuthenticated,
   });
@@ -137,9 +195,11 @@ export const useChangeDnsRecords = () => {
       zoneId: string;
       projectId?: string;
       region?: string;
-      changeBatch: any;
+      changeBatch: unknown;
     }) => {
-      const payload: any = { change_batch: changeBatch };
+      const payload: { change_batch: unknown; project_id?: string; region?: string } = {
+        change_batch: changeBatch,
+      };
       if (projectId) payload.project_id = projectId;
       if (region) payload.region = region;
 

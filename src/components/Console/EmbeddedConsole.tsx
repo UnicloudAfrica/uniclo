@@ -12,7 +12,7 @@ import {
   RotateCw,
   Monitor,
 } from "lucide-react";
-import { useApiContext } from "../../hooks/useApiContext";
+import { useApiContext } from "@/hooks/useApiContext";
 
 type Position = {
   x: number;

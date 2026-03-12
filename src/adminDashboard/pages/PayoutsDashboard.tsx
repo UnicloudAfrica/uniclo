@@ -6,14 +6,12 @@ import {
   CheckCircle,
   XCircle,
   Play,
-  Download,
   RefreshCw,
   Building2,
   Calendar,
-  CreditCard,
 } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
-import { ModernButton } from "../../shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
 import adminApi from "../../index/admin/api";
 
 // Types
@@ -50,11 +48,11 @@ interface PayoutSummary {
 }
 
 // API hooks
-const usePayouts = (params: Record<string, any>) => {
+const usePayouts = (params: Record<string, unknown>) => {
   return useQuery({
     queryKey: ["payouts", params],
     queryFn: async () => {
-      const response = await (adminApi.get as any)("/payouts", { params });
+      const response = await adminApi.get<{ data: { data: Payout[] } }>("/payouts", { params });
       return response.data;
     },
   });
@@ -64,8 +62,8 @@ const usePayoutSummary = () => {
   return useQuery({
     queryKey: ["payouts", "summary"],
     queryFn: async () => {
-      const response = await adminApi.get("/payouts/summary");
-      return (response as any).data.data as PayoutSummary;
+      const response = await adminApi.get<{ data: PayoutSummary }>("/payouts/summary");
+      return response.data.data;
     },
   });
 };
@@ -162,8 +160,8 @@ const PayoutsDashboard: React.FC = () => {
   const cancelPayout = useCancelPayout();
   const generatePayouts = useGeneratePayouts();
 
-  const payouts: Payout[] = (payoutsData as any)?.data?.data || [];
-  const pagination = (payoutsData as any)?.data || {};
+  const payouts: Payout[] = payoutsData?.data?.data || [];
+  const pagination = payoutsData?.data || {};
 
   const handleProcessPayout = async (id: number) => {
     if (
@@ -174,8 +172,9 @@ const PayoutsDashboard: React.FC = () => {
       try {
         await processPayout.mutateAsync(id);
         alert("Payout processed successfully!");
-      } catch (error: any) {
-        alert(error.response?.data?.error || "Failed to process payout");
+      } catch (error: unknown) {
+        const err = error as { response?: { data?: { error?: string } } };
+        alert(err.response?.data?.error || "Failed to process payout");
       }
     }
   };
@@ -185,8 +184,9 @@ const PayoutsDashboard: React.FC = () => {
       try {
         await cancelPayout.mutateAsync(id);
         alert("Payout cancelled");
-      } catch (error: any) {
-        alert(error.response?.data?.error || "Failed to cancel payout");
+      } catch (error: unknown) {
+        const err = error as { response?: { data?: { error?: string } } };
+        alert(err.response?.data?.error || "Failed to cancel payout");
       }
     }
   };
@@ -202,11 +202,12 @@ const PayoutsDashboard: React.FC = () => {
         period_end: generateForm.period_end,
         tenant_id: generateForm.tenant_id ? parseInt(generateForm.tenant_id) : undefined,
       });
-      alert((result as any).message || "Payouts generated successfully!");
+      alert((result as { message?: string }).message || "Payouts generated successfully!");
       setShowGenerateModal(false);
       setGenerateForm({ period_start: "", period_end: "", tenant_id: "" });
-    } catch (error: any) {
-      alert(error.response?.data?.error || "Failed to generate payouts");
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
+      alert(err.response?.data?.error || "Failed to generate payouts");
     }
   };
 
@@ -381,7 +382,7 @@ const PayoutsDashboard: React.FC = () => {
                       </td>
                     </tr>
                   ) : (
-                    payouts.map((payout: any) => (
+                    payouts.map((payout: Payout) => (
                       <tr key={payout.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">

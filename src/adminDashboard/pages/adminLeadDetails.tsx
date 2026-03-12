@@ -18,13 +18,13 @@ import {
   MapPin,
 } from "lucide-react";
 import AdminActiveTab from "../components/adminActiveTab";
-import { ModernCard, ModernButton } from "../../shared/components/ui";
+import { ModernCard, ModernButton } from "@/shared/components/ui";
 import {
   useFetchLeadById,
   useConvertLeadToUser,
   type Lead,
   type LeadUser,
-} from "../../hooks/adminHooks/leadsHook";
+} from "@/hooks/adminHooks/leadsHooks";
 import EditLead from "./leadComps/editLead";
 import AddLeadStage from "./leadComps/addLeadStage";
 import { EditLeadStage } from "./leadComps/editLeadStage";

@@ -41,11 +41,11 @@ export const useEntityDiscount = (entityType: "user" | "tenant", entityId: strin
   return useQuery<DiscountResponse>({
     queryKey: ["discount", entityType, entityId],
     queryFn: async () => {
-      const response = await (adminApi.get as any)(`/discounts/${entityType}s/${entityId}`);
-      return response.data;
+      const response = await adminApi.get(`/discounts/${entityType}s/${entityId}`);
+      return response.data as DiscountResponse;
     },
     enabled: !!entityId,
-  } as any) as any;
+  });
 };
 
 // Assign discount to a user or tenant
@@ -62,7 +62,10 @@ export const useAssignDiscount = () => {
       entityId: string | number;
       data: DiscountFormData;
     }) => {
-      const response = await adminApi.post(`/discounts/${entityType}s/${entityId}`, data as any);
+      const response = await adminApi.post(
+        `/discounts/${entityType}s/${entityId}`,
+        data as unknown as Record<string, unknown>
+      );
       return response.data;
     },
     onSuccess: (_, variables) => {
@@ -70,7 +73,7 @@ export const useAssignDiscount = () => {
         queryKey: ["discount", variables.entityType, variables.entityId],
       });
     },
-  } as any) as any;
+  });
 };
 
 // Update discount for a user or tenant
@@ -87,7 +90,10 @@ export const useUpdateDiscount = () => {
       entityId: string | number;
       data: Partial<DiscountFormData> & { is_active?: boolean };
     }) => {
-      const response = await adminApi.put(`/discounts/${entityType}s/${entityId}`, data);
+      const response = await adminApi.put(
+        `/discounts/${entityType}s/${entityId}`,
+        data as unknown as Record<string, unknown>
+      );
       return response.data;
     },
     onSuccess: (_, variables) => {
@@ -95,7 +101,7 @@ export const useUpdateDiscount = () => {
         queryKey: ["discount", variables.entityType, variables.entityId],
       });
     },
-  } as any) as any;
+  });
 };
 
 // Remove discount from a user or tenant
@@ -118,7 +124,7 @@ export const useRemoveDiscount = () => {
         queryKey: ["discount", variables.entityType, variables.entityId],
       });
     },
-  } as any) as any;
+  });
 };
 
 // Utility function to format discount for display

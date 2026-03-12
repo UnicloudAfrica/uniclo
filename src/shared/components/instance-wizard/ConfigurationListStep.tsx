@@ -1,7 +1,7 @@
 import React from "react";
 import AdminInstanceConfigurationCard from "../../../adminDashboard/components/AdminInstanceConfigurationCard";
-import { Configuration, AdditionalVolume, Option } from "../../../types/InstanceConfiguration";
-import { InstanceResources } from "../../../hooks/useInstanceResources";
+import { Configuration, AdditionalVolume, Option } from "@/types/InstanceConfiguration";
+import { InstanceResources } from "@/hooks/useInstanceResources";
 
 // Type for custom fetch hook that returns { data, isFetching, ... }
 type FetchHookResult<T = unknown> = { data: T; isFetching?: boolean; isLoading?: boolean };

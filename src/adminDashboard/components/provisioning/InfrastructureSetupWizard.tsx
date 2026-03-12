@@ -1,17 +1,14 @@
 import React, { useState } from "react";
 import { ArrowRight, AlertTriangle, Loader2 } from "lucide-react";
-import {
-  useSetupInfrastructure,
-  SetupInfrastructureInput,
-} from "../../../hooks/adminHooks/projectHooks";
-import { ModernButton } from "../../../shared/components/ui";
+import { useSetupInfrastructure, SetupInfrastructureInput } from "@/hooks/adminHooks/projectHooks";
+import { ModernButton } from "@/shared/components/ui";
 import NetworkPresetSelector, {
   DEFAULT_PRESETS,
-} from "../../../shared/components/network/NetworkPresetSelector";
-import { useNetworkPresets } from "../../../hooks/networkPresetHooks";
+} from "@/shared/components/network/NetworkPresetSelector";
+import { useNetworkPresets } from "@/hooks/networkPresetHooks";
 
 import { UseMutationResult } from "@tanstack/react-query";
-import { Project } from "../../../types/project";
+import { Project } from "@/types/project";
 
 interface InfrastructureSetupWizardProps {
   project: Project;
@@ -37,8 +34,8 @@ const InfrastructureSetupWizard: React.FC<InfrastructureSetupWizardProps> = ({
     setupMutation.mutate(
       {
         id: project.identifier || project.id,
-        blueprint: selectedBlueprint as any,
-      } as any,
+        blueprint: selectedBlueprint as never,
+      } as never,
       {
         onSuccess: () => {
           setShowConfirm(false);
@@ -61,7 +58,7 @@ const InfrastructureSetupWizard: React.FC<InfrastructureSetupWizardProps> = ({
 
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-10">
         <NetworkPresetSelector
-          value={selectedBlueprint as any}
+          value={selectedBlueprint as never}
           onChange={setSelectedBlueprint}
           presets={presetCatalog}
           showAdvancedOption={false}

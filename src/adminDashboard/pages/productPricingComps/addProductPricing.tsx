@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { X, Loader2, Plus, Trash2 } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
-import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
-import { useFetchCountries } from "../../../hooks/resource";
-import { useFetchProducts } from "../../../hooks/adminHooks/adminProductHooks";
-import { useCreateProductPricing } from "../../../hooks/adminHooks/adminproductPricingHook";
+import ToastUtils from "@/utils/toastUtil";
+import { useFetchRegions } from "@/hooks/adminHooks/regionHooks";
+import { useFetchCountries } from "@/hooks/resource";
+import { useFetchProducts } from "@/hooks/adminHooks/adminProductHooks";
+import { useCreateProductPricing } from "@/hooks/adminHooks/adminProductPricingHooks";
 
 interface AddProductPricingProps {
   isOpen: boolean;
@@ -74,9 +74,15 @@ const AddProductPricing = ({ isOpen, onClose }: AddProductPricingProps) => {
     error: productErrors,
   } = useFetchProducts();
   const { mutate: addProductPricing, isPending } = useCreateProductPricing();
-  const regions = Array.isArray(regionsData) ? (regionsData as RegionOption[]) : [];
+  const regions = useMemo(
+    () => (Array.isArray(regionsData) ? (regionsData as RegionOption[]) : []),
+    [regionsData]
+  );
   const countries = Array.isArray(countriesData) ? (countriesData as CountryOption[]) : [];
-  const products = Array.isArray(productsData) ? (productsData as ProductOption[]) : [];
+  const products = useMemo(
+    () => (Array.isArray(productsData) ? (productsData as ProductOption[]) : []),
+    [productsData]
+  );
 
   // Reset form state when modal opens
   useEffect(() => {

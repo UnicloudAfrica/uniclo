@@ -14,41 +14,35 @@ import {
   GitMerge,
 } from "lucide-react";
 
-import VpcsContainer from "../../../shared/components/infrastructure/containers/VpcsContainer";
-import SubnetsContainer from "../../../shared/components/infrastructure/containers/SubnetsContainer";
-import SecurityGroupsContainer from "../../../shared/components/infrastructure/containers/SecurityGroupsContainer";
-import RouteTablesContainer from "../../../shared/components/infrastructure/containers/RouteTablesContainer";
-import ElasticIpsContainer from "../../../shared/components/infrastructure/containers/ElasticIpsContainer";
-import NetworkInterfacesContainer from "../../../shared/components/infrastructure/containers/NetworkInterfacesContainer";
-import NatGatewaysContainer from "../../../shared/components/infrastructure/containers/NatGatewaysContainer";
-import InternetGatewaysContainer from "../../../shared/components/infrastructure/containers/InternetGatewaysContainer";
-import NetworkAclsContainer from "../../../shared/components/infrastructure/containers/NetworkAclsContainer";
-import VpcPeeringContainer from "../../../shared/components/infrastructure/containers/VpcPeeringContainer";
-import LoadBalancersContainer from "../../../shared/components/infrastructure/containers/LoadBalancersContainer";
+import VpcsContainer from "@/shared/components/infrastructure/containers/VpcsContainer";
+import SubnetsContainer from "@/shared/components/infrastructure/containers/SubnetsContainer";
+import SecurityGroupsContainer from "@/shared/components/infrastructure/containers/SecurityGroupsContainer";
+import RouteTablesContainer from "@/shared/components/infrastructure/containers/RouteTablesContainer";
+import ElasticIpsContainer from "@/shared/components/infrastructure/containers/ElasticIpsContainer";
+import NetworkInterfacesContainer from "@/shared/components/infrastructure/containers/NetworkInterfacesContainer";
+import NatGatewaysContainer from "@/shared/components/infrastructure/containers/NatGatewaysContainer";
+import InternetGatewaysContainer from "@/shared/components/infrastructure/containers/InternetGatewaysContainer";
+import NetworkAclsContainer from "@/shared/components/infrastructure/containers/NetworkAclsContainer";
+import VpcPeeringContainer from "@/shared/components/infrastructure/containers/VpcPeeringContainer";
+import LoadBalancersContainer from "@/shared/components/infrastructure/containers/LoadBalancersContainer";
 import {
   ResourceCanvas,
   ResourceSplitLayout,
-} from "../../../shared/components/projects/details/ResourceLayout";
+} from "@/shared/components/projects/details/ResourceLayout";
 
 import {
-  useVpcs,
   useCreateVpc,
   useDeleteVpc,
-  useSubnets,
   useCreateSubnet,
   useDeleteSubnet,
-  useSecurityGroups,
   useCreateSecurityGroup,
   useDeleteSecurityGroup,
-  useRouteTables,
   useCreateRoute,
   useDeleteRoute,
-  useElasticIps,
   useCreateElasticIp,
   useDeleteElasticIp,
   useAssociateElasticIp,
   useDisassociateElasticIp,
-  useInternetGateways,
   useCreateInternetGateway,
   useDeleteInternetGateway,
   useAttachInternetGateway,
@@ -66,15 +60,35 @@ import {
   useRejectVpcPeering,
   useAssociateRouteTable,
   useDisassociateRouteTable,
-} from "../../../hooks/adminHooks/vpcInfraHooks";
+} from "@/shared/hooks/vpcInfraHooks";
+import {
+  useFetchElasticIps,
+  useFetchIgws,
+  useFetchRouteTables,
+  useFetchSecurityGroups,
+  useFetchSubnets,
+  useFetchVpcs,
+} from "@/shared/hooks/resources";
 import {
   useFetchNetworkInterfaces,
   syncNetworkInterfacesFromProvider,
-} from "../../../hooks/adminHooks/networkHooks";
-import {
-  useLoadBalancers,
-  useDeleteLoadBalancer,
-} from "../../../hooks/adminHooks/loadBalancerHooks";
+} from "@/hooks/adminHooks/networkHooks";
+import { useLoadBalancers, useDeleteLoadBalancer } from "@/hooks/adminHooks/loadBalancerHooks";
+import type { UseQueryResult } from "@tanstack/react-query";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AdaptedListHook = (
+  projectId: string,
+  region?: string,
+  options?: any
+) => UseQueryResult<any[], Error>;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AdaptedListHook2Args = (
+  projectId: string,
+  region: string,
+  options?: any
+) => UseQueryResult<any[], Error>;
 
 interface NetworkingTabProps {
   project: any;
@@ -107,61 +121,137 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
   const projectId = project?.identifier;
   const region = project?.region;
 
-  // Adapters to match shared container interfaces
-  const useVpcsAdapter = (projectId: string) => {
-    const query = useVpcs(projectId);
-    return { data: (query.data as any) || [], isLoading: query.isLoading, refetch: query.refetch };
+  // Normalize a query result into a simple { data[], isLoading, isFetching, refetch } shape
+  const adaptQuery = (query: {
+    data: unknown;
+    isLoading: boolean;
+    isFetching?: boolean;
+    refetch: () => void;
+  }) => ({
+    data: Array.isArray(query.data) ? query.data : [],
+    isLoading: query.isLoading,
+    isFetching: query.isFetching ?? query.isLoading,
+    refetch: query.refetch,
+  });
+
+  const normalizeProviderListItem = <T extends Record<string, unknown>>(item: T) => {
+    const localId = item.id == null ? "" : String(item.id);
+    const providerId =
+      item.provider_resource_id == null ? localId : String(item.provider_resource_id);
+
+    return {
+      ...item,
+      id: providerId || localId,
+      local_id: localId || undefined,
+      provider_resource_id: providerId || localId,
+    };
   };
 
-  const useSubnetsAdapter = (projectId: string) => {
-    const query = useSubnets(projectId);
-    return { data: (query.data as any) || [], isLoading: query.isLoading, refetch: query.refetch };
-  };
+  const adaptMappedQuery = <T extends Record<string, unknown>>(
+    query: { data: unknown; isLoading: boolean; isFetching?: boolean; refetch: () => void },
+    mapper: (item: T) => Record<string, unknown> = normalizeProviderListItem
+  ) => ({
+    data: Array.isArray(query.data)
+      ? query.data.map((item) => (item && typeof item === "object" ? mapper(item as T) : item))
+      : [],
+    isLoading: query.isLoading,
+    isFetching: query.isFetching ?? query.isLoading,
+    refetch: query.refetch,
+  });
 
-  const useSecurityGroupsAdapter = (projectId: string) => {
-    const query = useSecurityGroups(projectId);
-    return { data: (query.data as any) || [], isLoading: query.isLoading, refetch: query.refetch };
-  };
+  const buildSharedListParams = (pid: string, resourceRegion?: string) => ({
+    projectId: pid,
+    region: resourceRegion ?? region,
+    extra: { refresh: true },
+  });
 
-  const useRouteTablesAdapter = (projectId: string) => {
-    const query = useRouteTables(projectId);
-    return { data: (query.data as any) || [], isLoading: query.isLoading, refetch: query.refetch };
-  };
+  function useVpcsAdapter(pid: string, resourceRegion?: string, options?: { enabled?: boolean }) {
+    return adaptMappedQuery(
+      useFetchVpcs(buildSharedListParams(pid, resourceRegion), {
+        enabled: options?.enabled ?? Boolean(pid && (resourceRegion ?? region)),
+      })
+    );
+  }
 
-  const useElasticIpsAdapter = (projectId: string) => {
-    const query = useElasticIps(projectId);
-    return { data: (query.data as any) || [], isLoading: query.isLoading, refetch: query.refetch };
-  };
+  function useSubnetsAdapter(
+    pid: string,
+    resourceRegion?: string,
+    options?: { enabled?: boolean }
+  ) {
+    return adaptMappedQuery(
+      useFetchSubnets(buildSharedListParams(pid, resourceRegion), {
+        enabled: options?.enabled ?? Boolean(pid && (resourceRegion ?? region)),
+      })
+    );
+  }
 
-  const useFetchNetworkInterfacesAdapter = (projectId: string, region: string) => {
-    const query = useFetchNetworkInterfaces(projectId, region);
-    return { data: (query.data as any) || [], isLoading: query.isLoading, refetch: query.refetch };
-  };
+  function useSecurityGroupsAdapter(
+    pid: string,
+    resourceRegion?: string,
+    options?: { enabled?: boolean }
+  ) {
+    return adaptMappedQuery(
+      useFetchSecurityGroups(buildSharedListParams(pid, resourceRegion), {
+        enabled: options?.enabled ?? Boolean(pid && (resourceRegion ?? region)),
+      })
+    );
+  }
 
-  const useNatGatewaysAdapter = (projectId: string) => {
-    const query = useNatGateways(projectId);
-    return { data: (query.data as any) || [], isLoading: query.isLoading, refetch: query.refetch };
-  };
+  function useRouteTablesAdapter(
+    pid: string,
+    resourceRegion?: string,
+    options?: { enabled?: boolean }
+  ) {
+    return adaptMappedQuery(
+      useFetchRouteTables(buildSharedListParams(pid, resourceRegion), {
+        enabled: options?.enabled ?? Boolean(pid && (resourceRegion ?? region)),
+      })
+    );
+  }
 
-  const useInternetGatewaysAdapter = (projectId: string) => {
-    const query = useInternetGateways(projectId);
-    return { data: (query.data as any) || [], isLoading: query.isLoading, refetch: query.refetch };
-  };
+  function useElasticIpsAdapter(
+    pid: string,
+    resourceRegion?: string,
+    options?: { enabled?: boolean }
+  ) {
+    return adaptMappedQuery(
+      useFetchElasticIps(buildSharedListParams(pid, resourceRegion), {
+        enabled: options?.enabled ?? Boolean(pid && (resourceRegion ?? region)),
+      })
+    );
+  }
 
-  const useNetworkAclsAdapter = (projectId: string) => {
-    const query = useNetworkAcls(projectId);
-    return { data: (query.data as any) || [], isLoading: query.isLoading, refetch: query.refetch };
-  };
+  function useFetchNetworkInterfacesAdapter(pid: string, r: string) {
+    return adaptQuery(useFetchNetworkInterfaces(pid, r));
+  }
 
-  const useVpcPeeringAdapter = (projectId: string) => {
-    const query = useVpcPeering(projectId);
-    return { data: (query.data as any) || [], isLoading: query.isLoading, refetch: query.refetch };
-  };
+  function useNatGatewaysAdapter(pid: string) {
+    return adaptQuery(useNatGateways(pid));
+  }
 
-  const useLoadBalancersAdapter = (projectId: string) => {
-    const query = useLoadBalancers(projectId);
-    return { data: (query.data as any) || [], isLoading: query.isLoading, refetch: query.refetch };
-  };
+  function useInternetGatewaysAdapter(
+    pid: string,
+    resourceRegion?: string,
+    options?: { enabled?: boolean }
+  ) {
+    return adaptMappedQuery(
+      useFetchIgws(buildSharedListParams(pid, resourceRegion), {
+        enabled: options?.enabled ?? Boolean(pid && (resourceRegion ?? region)),
+      })
+    );
+  }
+
+  function useNetworkAclsAdapter(pid: string) {
+    return adaptQuery(useNetworkAcls(pid));
+  }
+
+  function useVpcPeeringAdapter(pid: string) {
+    return adaptQuery(useVpcPeering(pid));
+  }
+
+  function useLoadBalancersAdapter(pid: string) {
+    return adaptQuery(useLoadBalancers(pid));
+  }
 
   useEffect(() => {
     if (initialResource && initialResource !== activeResource) {
@@ -176,7 +266,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
         label: "VPCs",
         icon: Network,
         category: "Core",
-        description: "Virtual networks for isolated project traffic",
+        description: "Your isolated virtual network",
         count: resourceCounts?.vpcs ?? 0,
       },
       {
@@ -184,7 +274,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
         label: "Subnets",
         icon: Hash,
         category: "Core",
-        description: "Segments within VPCs for workload placement",
+        description: "Network segments within your VPC",
         count: resourceCounts?.subnets ?? 0,
       },
       {
@@ -192,7 +282,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
         label: "Route Tables",
         icon: Route,
         category: "Core",
-        description: "Routing rules between subnets and gateways",
+        description: "Traffic routing rules between networks",
         count: resourceCounts?.route_tables ?? 0,
       },
       {
@@ -200,7 +290,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
         label: "Security Groups",
         icon: Shield,
         category: "Core",
-        description: "Instance-level firewall rules",
+        description: "Firewall rules for your servers",
         count: resourceCounts?.security_groups ?? 0,
       },
       {
@@ -208,7 +298,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
         label: "Internet Gateways",
         icon: Globe,
         category: "Connectivity",
-        description: "Public ingress and egress for VPCs",
+        description: "Connect your VPC to the internet",
         count: resourceCounts?.internet_gateways ?? 0,
       },
       {
@@ -216,7 +306,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
         label: "NAT Gateways",
         icon: Zap,
         category: "Connectivity",
-        description: "Outbound access for private subnets",
+        description: "Let private servers access the internet",
         count: resourceCounts?.nat_gateways ?? 0,
       },
       {
@@ -224,7 +314,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
         label: "Elastic IPs",
         icon: Link,
         category: "Connectivity",
-        description: "Static public IP addresses",
+        description: "Static public IP addresses for your resources",
         count: resourceCounts?.elastic_ips ?? 0,
       },
       {
@@ -232,7 +322,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
         label: "Network Interfaces",
         icon: ArrowLeftRight,
         category: "Connectivity",
-        description: "Virtual NICs attached to instances",
+        description: "Virtual network cards attached to instances",
         count: resourceCounts?.network_interfaces ?? 0,
       },
       {
@@ -240,7 +330,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
         label: "VPC Peering",
         icon: GitMerge,
         category: "Connectivity",
-        description: "Private connectivity across VPCs",
+        description: "Connect two VPCs together privately",
         count: resourceCounts?.vpc_peering ?? 0,
       },
       {
@@ -248,7 +338,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
         label: "Load Balancers",
         icon: Layers,
         category: "Connectivity",
-        description: "Distribute traffic across instances",
+        description: "Distribute traffic across multiple servers",
         count: resourceCounts?.load_balancers ?? 0,
       },
       {
@@ -256,7 +346,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
         label: "Network ACLs",
         icon: Lock,
         category: "Security",
-        description: "Subnet-level stateless filters",
+        description: "Subnet-level firewall rules",
         count: resourceCounts?.network_acls ?? 0,
       },
     ],
@@ -275,7 +365,13 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
       hierarchy: "admin" as const,
       projectId,
       region,
-      wrapper: ({ children, headerActions }: any) => (
+      wrapper: ({
+        children,
+        headerActions,
+      }: {
+        children: React.ReactNode;
+        headerActions?: React.ReactNode;
+      }) => (
         <ResourceCanvas
           icon={activeResourceConfig?.icon || Network}
           title={activeResourceConfig?.label || "Resources"}
@@ -294,7 +390,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <VpcsContainer
             {...commonProps}
             hooks={{
-              useList: useVpcsAdapter as any,
+              useList: useVpcsAdapter as AdaptedListHook,
               useCreate: useCreateVpc,
               useDelete: useDeleteVpc,
             }}
@@ -305,10 +401,10 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <SubnetsContainer
             {...commonProps}
             hooks={{
-              useList: useSubnetsAdapter as any,
+              useList: useSubnetsAdapter as AdaptedListHook,
               useCreate: useCreateSubnet,
               useDelete: useDeleteSubnet,
-              useVpcs: useVpcsAdapter as any,
+              useVpcs: useVpcsAdapter as AdaptedListHook,
             }}
           />
         );
@@ -317,12 +413,12 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <SecurityGroupsContainer
             {...commonProps}
             hooks={{
-              useList: useSecurityGroupsAdapter as any,
-              useCreate: useCreateSecurityGroup as any,
-              useDelete: useDeleteSecurityGroup as any,
-              useVpcs: useVpcsAdapter as any,
+              useList: useSecurityGroupsAdapter as AdaptedListHook,
+              useCreate: useCreateSecurityGroup as any, // mutation payload shape mismatch (description optional vs required)
+              useDelete: useDeleteSecurityGroup,
+              useVpcs: useVpcsAdapter as AdaptedListHook,
             }}
-            onNavigateToRules={(sg: any) =>
+            onNavigateToRules={(sg) =>
               navigate(
                 `/admin-dashboard/infrastructure/security-group-rules?project=${projectId}&region=${region}&sg=${sg.id}&name=${encodeURIComponent(sg.name || "Security Group")}`
               )
@@ -334,10 +430,10 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <RouteTablesContainer
             {...commonProps}
             hooks={{
-              useList: useRouteTablesAdapter as any,
-              useSubnets: useSubnetsAdapter as any,
-              useInternetGateways: useInternetGatewaysAdapter as any,
-              useNatGateways: useNatGatewaysAdapter as any,
+              useList: useRouteTablesAdapter as AdaptedListHook,
+              useSubnets: useSubnetsAdapter as AdaptedListHook,
+              useInternetGateways: useInternetGatewaysAdapter as AdaptedListHook,
+              useNatGateways: useNatGatewaysAdapter as AdaptedListHook,
               useCreate: useCreateRoute,
               useDelete: useDeleteRoute,
               useAssociate: useAssociateRouteTable,
@@ -350,10 +446,10 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <ElasticIpsContainer
             {...commonProps}
             hooks={{
-              useList: useElasticIpsAdapter as any,
-              useCreate: useCreateElasticIp,
+              useList: useElasticIpsAdapter as AdaptedListHook,
+              useCreate: useCreateElasticIp as any,
               useDelete: useDeleteElasticIp,
-              useAssociate: useAssociateElasticIp,
+              useAssociate: useAssociateElasticIp as any,
               useDisassociate: useDisassociateElasticIp,
             }}
           />
@@ -363,14 +459,14 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <NetworkInterfacesContainer
             {...commonProps}
             hooks={{
-              useList: useFetchNetworkInterfacesAdapter,
-              onSync: (projectId
+              useList: useFetchNetworkInterfacesAdapter as AdaptedListHook2Args,
+              onSync: projectId
                 ? () =>
                     syncNetworkInterfacesFromProvider({
                       project_id: projectId,
                       region,
                     })
-                : undefined) as any,
+                : undefined,
             }}
           />
         );
@@ -379,8 +475,8 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <NatGatewaysContainer
             {...commonProps}
             hooks={{
-              useList: useNatGatewaysAdapter,
-              useCreate: useCreateNatGateway,
+              useList: useNatGatewaysAdapter as AdaptedListHook,
+              useCreate: useCreateNatGateway as any,
               useDelete: useDeleteNatGateway,
             }}
           />
@@ -390,12 +486,12 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <InternetGatewaysContainer
             {...commonProps}
             hooks={{
-              useList: useInternetGatewaysAdapter as any,
-              useVpcs: useVpcsAdapter as any,
-              useCreate: useCreateInternetGateway,
-              useDelete: useDeleteInternetGateway,
-              useAttach: useAttachInternetGateway,
-              useDetach: useDetachInternetGateway,
+              useList: useInternetGatewaysAdapter as AdaptedListHook,
+              useVpcs: useVpcsAdapter as AdaptedListHook,
+              useCreate: useCreateInternetGateway as any,
+              useDelete: useDeleteInternetGateway as any,
+              useAttach: useAttachInternetGateway as any,
+              useDetach: useDetachInternetGateway as any,
             }}
           />
         );
@@ -404,12 +500,12 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <NetworkAclsContainer
             {...commonProps}
             hooks={{
-              useList: useNetworkAclsAdapter as any,
-              useVpcs: useVpcsAdapter as any,
-              useCreate: useCreateNetworkAcl as any,
-              useDelete: useDeleteNetworkAcl as any,
+              useList: useNetworkAclsAdapter as AdaptedListHook,
+              useVpcs: useVpcsAdapter as AdaptedListHook,
+              useCreate: useCreateNetworkAcl,
+              useDelete: useDeleteNetworkAcl,
             }}
-            onManageRules={(acl: any) =>
+            onManageRules={(acl) =>
               navigate(
                 `/admin-dashboard/infrastructure/network-acl-rules?project=${projectId}&region=${region}&acl=${acl.id}&name=${encodeURIComponent(acl.name || "ACL")}`
               )
@@ -421,8 +517,8 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <VpcPeeringContainer
             {...commonProps}
             hooks={{
-              useList: useVpcPeeringAdapter,
-              useVpcs: useVpcsAdapter,
+              useList: useVpcPeeringAdapter as AdaptedListHook,
+              useVpcs: useVpcsAdapter as AdaptedListHook,
               useCreate: useCreateVpcPeering,
               useAccept: useAcceptVpcPeering,
               useReject: useRejectVpcPeering,
@@ -435,7 +531,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <LoadBalancersContainer
             {...commonProps}
             hooks={{
-              useList: useLoadBalancersAdapter,
+              useList: useLoadBalancersAdapter as AdaptedListHook,
               useDelete: useDeleteLoadBalancer,
             }}
           />

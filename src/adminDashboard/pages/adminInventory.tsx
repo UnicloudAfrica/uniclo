@@ -10,16 +10,18 @@ import FloatingIP from "./inventoryComponents/floatingIP";
 import CrossConnect from "./inventoryComponents/crossConnect";
 
 import ObjectStorageInventory from "./inventoryComponents/objectStorage";
+import ManagedDatabaseInventory from "./inventoryComponents/managedDatabaseInventory";
 
-import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
+import { useFetchRegions } from "@/hooks/adminHooks/regionHooks";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Wifi, HardDrive, Database, Server, Globe, Cable } from "lucide-react";
-import ResourceHero from "../../shared/components/ui/ResourceHero";
-import { ModernCard } from "../../shared/components/ui";
+import { Wifi, HardDrive, Database, Server, Globe, Cable, Cylinder } from "lucide-react";
+import ResourceHero from "@/shared/components/ui/ResourceHero";
+import { ModernCard, getRegionOptionLabel } from "@/shared/components/ui";
 
 interface RegionRecord {
   code: string;
   name: string;
+  provider?: string;
 }
 
 interface InventoryMetric {
@@ -44,18 +46,24 @@ interface ProductDefinition {
   name: string;
   Component: ComponentType<{
     selectedRegion: string;
+    selectedProvider?: string;
     onMetricsChange?: (payload: { description?: string; metrics?: InventoryMetric[] }) => void;
   }>;
   icon: ComponentType<SVGProps<SVGSVGElement>>;
   caption: string;
   summary: ProductSummary;
+  /** Which providers support this category. Omit = all providers. */
+  providers?: string[];
 }
 
 export default function AdminInventory() {
   const [activeProductTab, setActiveProductTab] = useState("os-images");
   const [selectedRegion, setSelectedRegion] = useState("");
   const { isFetching: isRegionsFetching, data: regionsData } = useFetchRegions();
-  const regions: RegionRecord[] = Array.isArray(regionsData) ? (regionsData as RegionRecord[]) : [];
+  const regions: RegionRecord[] = useMemo(
+    () => (Array.isArray(regionsData) ? (regionsData as RegionRecord[]) : []),
+    [regionsData]
+  );
   const location = useLocation();
   const navigate = useNavigate();
   const [heroState, setHeroState] = useState<InventoryHeroState>({
@@ -153,6 +161,7 @@ export default function AdminInventory() {
         Component: CrossConnect,
         icon: Cable,
         caption: "Partner links",
+        providers: ["zadara"],
         summary: {
           description:
             "Expose carrier cross-connect offers and keep private networking pricing aligned.",
@@ -178,9 +187,40 @@ export default function AdminInventory() {
           ],
         },
       },
+      {
+        id: "managed-databases",
+        name: "Managed Databases",
+        Component: ManagedDatabaseInventory,
+        icon: Cylinder,
+        caption: "Dedicated VMs",
+        summary: {
+          description:
+            "Manage database plan inventory across engines. Ensure plans are available for tenant provisioning.",
+          metrics: [
+            { label: "Database plans", value: "—", description: "Total plans" },
+            { label: "Active", value: "—", description: "Available for provisioning" },
+            { label: "Engines", value: "—", description: "Supported DB engines" },
+          ],
+        },
+      },
     ],
     []
   );
+
+  // Derive the selected provider from the selected region
+  const selectedProvider = useMemo(() => {
+    if (!selectedRegion || !regions.length) return "";
+    const region = regions.find((r) => r.code === selectedRegion);
+    return region?.provider?.toLowerCase() || "";
+  }, [selectedRegion, regions]);
+
+  // Filter products to only show categories supported by the selected provider
+  const visibleProducts = useMemo(() => {
+    if (!selectedProvider) return productComponents;
+    return productComponents.filter(
+      (product) => !product.providers || product.providers.includes(selectedProvider)
+    );
+  }, [productComponents, selectedProvider]);
 
   useEffect(() => {
     if (!isRegionsFetching && regions.length > 0 && !selectedRegion) {
@@ -191,17 +231,32 @@ export default function AdminInventory() {
     }
   }, [isRegionsFetching, regions, selectedRegion]);
 
+  // When the region changes, if the active tab is not supported by this provider, switch to the first supported tab
+  useEffect(() => {
+    if (!visibleProducts.length) return;
+    const isCurrentTabVisible = visibleProducts.some((p) => p.id === activeProductTab);
+    if (!isCurrentTabVisible) {
+      const firstVisible = visibleProducts[0]?.id;
+      if (firstVisible) {
+        setActiveProductTab(firstVisible);
+        const params = new URLSearchParams(location.search);
+        params.set("tab", firstVisible);
+        navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+      }
+    }
+  }, [visibleProducts, activeProductTab, location.pathname, location.search, navigate]);
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tabParam = params.get("tab");
     if (
       tabParam &&
       tabParam !== activeProductTab &&
-      productComponents.some((product) => product.id === tabParam)
+      visibleProducts.some((product) => product.id === tabParam)
     ) {
       setActiveProductTab(tabParam);
     }
-  }, [location.search, activeProductTab, productComponents]);
+  }, [location.search, activeProductTab, visibleProducts]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -224,17 +279,17 @@ export default function AdminInventory() {
   );
 
   useEffect(() => {
-    if (!activeProductTab && productComponents.length > 0) {
-      const defaultTab = productComponents[0]?.id;
+    if (!activeProductTab && visibleProducts.length > 0) {
+      const defaultTab = visibleProducts[0]?.id;
       if (defaultTab) {
         setActiveProductTab(defaultTab);
       }
     }
-  }, [activeProductTab, productComponents]);
+  }, [activeProductTab, visibleProducts]);
 
   const activeProduct = useMemo(
-    () => productComponents.find((product) => product.id === activeProductTab),
-    [productComponents, activeProductTab]
+    () => visibleProducts.find((product) => product.id === activeProductTab),
+    [visibleProducts, activeProductTab]
   );
   const ActiveComponent = activeProduct?.Component;
 
@@ -256,7 +311,7 @@ export default function AdminInventory() {
 
   const handleProductTabChange = (tabId: string) => {
     setActiveProductTab(tabId);
-    const nextActive = productComponents.find((product) => product.id === tabId);
+    const nextActive = visibleProducts.find((product) => product.id === tabId);
     setHeroState(buildHeroState(nextActive));
     const params = new URLSearchParams(location.search);
     params.set("tab", tabId);
@@ -280,9 +335,9 @@ export default function AdminInventory() {
             Loading regions...
           </option>
         ) : (
-          regions.map((region: RegionRecord) => (
+          regions.map((region) => (
             <option key={region.code} value={region.code}>
-              {region.name}
+              {getRegionOptionLabel(region)}
             </option>
           ))
         )}
@@ -307,7 +362,7 @@ export default function AdminInventory() {
 
         <div className="flex flex-col gap-6 lg:flex-row">
           <ProductSideMenu
-            items={productComponents.map((product: ProductDefinition) => ({
+            items={visibleProducts.map((product: ProductDefinition) => ({
               id: product.id,
               name: product.name,
               icon: product.icon,
@@ -321,6 +376,7 @@ export default function AdminInventory() {
             {ActiveComponent && !isRegionsFetching ? (
               <ActiveComponent
                 selectedRegion={selectedRegion}
+                selectedProvider={selectedProvider}
                 onMetricsChange={handleSummaryChange}
               />
             ) : (

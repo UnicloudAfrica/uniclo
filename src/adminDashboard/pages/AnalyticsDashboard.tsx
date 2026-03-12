@@ -20,8 +20,10 @@ const useAnalytics = () => {
   return useQuery({
     queryKey: ["analytics", "dashboard"],
     queryFn: async () => {
-      const response = await adminApi.get("/analytics/dashboard");
-      return (response as any).data.data;
+      const response = await adminApi.get<{ data: Record<string, unknown> }>(
+        "/analytics/dashboard"
+      );
+      return response.data.data;
     },
   });
 };
@@ -30,8 +32,10 @@ const useTopTenants = () => {
   return useQuery({
     queryKey: ["analytics", "top-tenants"],
     queryFn: async () => {
-      const response = await adminApi.get("/analytics/top-tenants");
-      return (response as any).data.data;
+      const response = await adminApi.get<{ data: Record<string, unknown>[] }>(
+        "/analytics/top-tenants"
+      );
+      return response.data.data;
     },
   });
 };
@@ -40,8 +44,10 @@ const useMonthlyRevenue = () => {
   return useQuery({
     queryKey: ["analytics", "monthly-revenue"],
     queryFn: async () => {
-      const response = await adminApi.get("/analytics/monthly-revenue");
-      return (response as any).data.data;
+      const response = await adminApi.get<{ data: Record<string, unknown>[] }>(
+        "/analytics/monthly-revenue"
+      );
+      return response.data.data;
     },
   });
 };
@@ -50,8 +56,10 @@ const useRecentActivity = () => {
   return useQuery({
     queryKey: ["analytics", "recent-activity"],
     queryFn: async () => {
-      const response = await adminApi.get("/analytics/recent-activity");
-      return (response as any).data.data;
+      const response = await adminApi.get<{ data: Record<string, unknown>[] }>(
+        "/analytics/recent-activity"
+      );
+      return response.data.data;
     },
   });
 };
@@ -71,24 +79,24 @@ const AnalyticsDashboard: React.FC = () => {
   const { data: monthlyRevenue } = useMonthlyRevenue();
   const { data: recentActivity } = useRecentActivity();
 
-  // Format multi-currency revenue
-  const formatMultiCurrency = (
-    byCurrency: Record<string, { total: number; symbol: string }> | undefined
-  ): string => {
-    if (!byCurrency || Object.keys(byCurrency).length === 0) {
-      return formatCurrency(analytics?.revenue?.total || 0);
-    }
-    return (
-      Object.entries(byCurrency)
-        .filter(([_, data]) => data.total > 0)
-        .map(([_, data]) => `${data.symbol}${(data.total / 100).toLocaleString()}`)
-        .join(" + ") || formatCurrency(0)
-    );
-  };
-
   // Summary cards
-  const summaryCards = useMemo(
-    () => [
+  const summaryCards = useMemo(() => {
+    // Format multi-currency revenue
+    const formatMultiCurrency = (
+      byCurrency: Record<string, { total: number; symbol: string }> | undefined
+    ): string => {
+      if (!byCurrency || Object.keys(byCurrency).length === 0) {
+        return formatCurrency(analytics?.revenue?.total || 0);
+      }
+      return (
+        Object.entries(byCurrency)
+          .filter(([_, data]) => data.total > 0)
+          .map(([_, data]) => `${data.symbol}${(data.total / 100).toLocaleString()}`)
+          .join(" + ") || formatCurrency(0)
+      );
+    };
+
+    return [
       {
         title: "Total Revenue",
         value: formatMultiCurrency(analytics?.revenue?.by_currency),
@@ -124,13 +132,15 @@ const AnalyticsDashboard: React.FC = () => {
         color: "text-orange-600",
         bgColor: "bg-orange-50",
       },
-    ],
-    [analytics]
-  );
+    ];
+  }, [analytics]);
 
   const isInitialLoading = isAnalyticsLoading && !analytics;
 
-  const maxRevenue = Math.max(...(monthlyRevenue || []).map((m: any) => m.revenue), 1);
+  const maxRevenue = Math.max(
+    ...(monthlyRevenue || []).map((m: Record<string, unknown>) => (m.revenue as number) || 1),
+    1
+  );
 
   const getActivityIcon = (icon: string) => {
     if (icon === "dollar") return DollarSign;
@@ -202,13 +212,13 @@ const AnalyticsDashboard: React.FC = () => {
                     <BarChart3 className="w-5 h-5 text-gray-400" />
                   </div>
                   <div className="flex items-end gap-4 h-48">
-                    {(monthlyRevenue || []).map((month: any, index: number) => (
+                    {(monthlyRevenue || []).map((month: Record<string, unknown>, index: number) => (
                       <div key={index} className="flex-1 flex flex-col items-center">
                         <div
                           className="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-t-md transition-all hover:from-blue-600 hover:to-blue-500"
-                          style={{ height: (month.revenue / maxRevenue) * 160 + "px" }}
+                          style={{ height: ((month.revenue as number) / maxRevenue) * 160 + "px" }}
                         />
-                        <span className="text-xs text-gray-500 mt-2">{month.month}</span>
+                        <span className="text-xs text-gray-500 mt-2">{month.month as string}</span>
                       </div>
                     ))}
                   </div>
@@ -221,8 +231,8 @@ const AnalyticsDashboard: React.FC = () => {
                     <PieChart className="w-5 h-5 text-gray-400" />
                   </div>
                   <div className="space-y-4">
-                    {(topTenants || []).map((tenant: any, index: number) => (
-                      <div key={tenant.id} className="flex items-center justify-between">
+                    {(topTenants || []).map((tenant: Record<string, unknown>, index: number) => (
+                      <div key={tenant.id as string} className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <span
                             className={
@@ -238,10 +248,10 @@ const AnalyticsDashboard: React.FC = () => {
                           >
                             {index + 1}
                           </span>
-                          <span className="text-sm font-medium">{tenant.name}</span>
+                          <span className="text-sm font-medium">{tenant.name as string}</span>
                         </div>
                         <span className="text-sm text-gray-600">
-                          {formatCurrency(tenant.revenue)}
+                          {formatCurrency(tenant.revenue as number)}
                         </span>
                       </div>
                     ))}
@@ -259,27 +269,33 @@ const AnalyticsDashboard: React.FC = () => {
                   {(recentActivity || []).length === 0 ? (
                     <div className="text-center text-gray-500 py-4">No recent activity</div>
                   ) : (
-                    (recentActivity || []).map((activity: any, index: number) => {
-                      const IconComponent = getActivityIcon(activity.icon);
-                      const colors = getActivityColor(activity.color);
-                      return (
-                        <div
-                          key={index}
-                          className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg"
-                        >
+                    (recentActivity || []).map(
+                      (activity: Record<string, unknown>, index: number) => {
+                        const IconComponent = getActivityIcon(activity.icon as string);
+                        const colors = getActivityColor(activity.color as string);
+                        return (
                           <div
-                            className={`w-10 h-10 ${colors.bg} rounded-full flex items-center justify-center`}
+                            key={index}
+                            className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg"
                           >
-                            <IconComponent className={`w-5 h-5 ${colors.text}`} />
+                            <div
+                              className={`w-10 h-10 ${colors.bg} rounded-full flex items-center justify-center`}
+                            >
+                              <IconComponent className={`w-5 h-5 ${colors.text}`} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">{activity.title as string}</p>
+                              <p className="text-xs text-gray-500">
+                                {activity.description as string}
+                              </p>
+                            </div>
+                            <span className="ml-auto text-xs text-gray-400">
+                              {activity.time_ago as string}
+                            </span>
                           </div>
-                          <div>
-                            <p className="text-sm font-medium">{activity.title}</p>
-                            <p className="text-xs text-gray-500">{activity.description}</p>
-                          </div>
-                          <span className="ml-auto text-xs text-gray-400">{activity.time_ago}</span>
-                        </div>
-                      );
-                    })
+                        );
+                      }
+                    )
                   )}
                 </div>
               </div>

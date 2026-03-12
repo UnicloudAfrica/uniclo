@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
-import SharedPricingCalculator from "../../shared/components/billing/SharedPricingCalculator";
+import SharedPricingCalculator from "@/shared/components/billing/SharedPricingCalculator";
 
 const TenantPricingCalculator = () => {
   const navigate = useNavigate();

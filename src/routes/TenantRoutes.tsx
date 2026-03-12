@@ -48,6 +48,9 @@ import NewRegionRequest from "../tenantDashboard/pages/NewRegionRequest";
 import RevenueDashboard from "../tenantDashboard/pages/RevenueDashboard";
 import TenantProvisioningWizard from "../tenantDashboard/pages/TenantProvisioningWizard";
 import TenantTemplates from "../tenantDashboard/pages/TenantTemplates";
+import TenantManagedDatabases from "../dashboard/pages/TenantManagedDatabases";
+import TenantDatabaseCreate from "../dashboard/pages/TenantDatabaseCreate";
+import TenantDatabaseDetail from "../dashboard/pages/TenantDatabaseDetail";
 import TenantDiscountManager from "../tenantDashboard/pages/TenantDiscountManager";
 import TenantPayoutsPage from "../tenantDashboard/pages/TenantPayoutsPage";
 import TenantBillingSettings from "../tenantDashboard/pages/TenantBillingSettings";
@@ -122,6 +125,10 @@ const TenantRoutes = (): JSX.Element => (
         <Route path="/dashboard/instances/details" element={<InstanceDetails />} />
         <Route path="/dashboard/create-instance" element={<TenantProvisioningWizard />} />
         <Route path="/dashboard/templates" element={<TenantTemplates />} />
+
+        <Route path="/dashboard/databases" element={<TenantManagedDatabases />} />
+        <Route path="/dashboard/databases/create" element={<TenantDatabaseCreate />} />
+        <Route path="/dashboard/databases/:identifier" element={<TenantDatabaseDetail />} />
 
         <Route element={<ObjectStorageRouteProvider />}>
           <Route path="/dashboard/object-storage" element={<DashboardObjectStorage />} />

@@ -1,7 +1,7 @@
 import QuickAccessNav from "../components/quickAccessNav";
-import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
-import { ModernButton, ModernCard, StatusPill } from "../../shared/components/ui";
-import ModernTable, { Column } from "../../shared/components/ui/ModernTable";
+import ModernStatsCard from "@/shared/components/ui/ModernStatsCard";
+import { ModernButton, ModernCard, StatusPill } from "@/shared/components/ui";
+import ModernTable, { Column } from "@/shared/components/ui/ModernTable";
 import {
   Loader2,
   Upload,
@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import useAuthRedirect from "../../utils/adminAuthRedirect";
+import useAuthRedirect from "@/utils/adminAuthRedirect";
 import AdminPageShell from "../components/AdminPageShell";
 
 interface Partner {

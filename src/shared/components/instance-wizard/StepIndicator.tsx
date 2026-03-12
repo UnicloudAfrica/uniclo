@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { CheckCircle, Server, CreditCard, ClipboardCheck, Gauge, LucideIcon } from "lucide-react";
 
 export interface WizardStep {
@@ -157,4 +157,4 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
   );
 };
 
-export default StepIndicator;
+export default memo(StepIndicator);

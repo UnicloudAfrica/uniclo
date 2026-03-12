@@ -2,14 +2,14 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Globe2 } from "lucide-react";
 import AdminPageShell from "../../components/AdminPageShell";
-import ElasticIpsContainer from "../../../shared/components/infrastructure/containers/ElasticIpsContainer";
+import ElasticIpsContainer from "@/shared/components/infrastructure/containers/ElasticIpsContainer";
 import {
   useElasticIps,
   useCreateElasticIp,
   useDeleteElasticIp,
   useAssociateElasticIp,
   useDisassociateElasticIp,
-} from "../../../shared/hooks/vpcInfraHooks";
+} from "@/shared/hooks/vpcInfraHooks";
 
 /**
  * Admin Elastic IPs page - truly thin wrapper.

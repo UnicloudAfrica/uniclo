@@ -4,9 +4,9 @@ import { Loader2 } from "lucide-react";
 import TenantPageShell from "../components/TenantPageShell";
 import OverviewClient from "../components/overviewClient";
 import ClientModules from "../components/clientModules";
-import useAuthRedirect from "../../utils/authRedirect";
-import { useFetchClientById } from "../../hooks/adminHooks/clientHooks";
-import logger from "../../utils/logger";
+import useAuthRedirect from "@/utils/authRedirect";
+import { useFetchClientById } from "@/hooks/adminHooks/clientHooks";
+import logger from "@/utils/logger";
 
 export default function ClientsOverview() {
   const [activeButton, setActiveButton] = useState("overview");
@@ -14,7 +14,7 @@ export default function ClientsOverview() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const decodeId = (encodedId: any) => {
+  const decodeId = (encodedId: string) => {
     try {
       return atob(decodeURIComponent(encodedId));
     } catch (error) {
@@ -31,7 +31,7 @@ export default function ClientsOverview() {
     data: client,
     isFetching: isClientFetching,
     error: clientError,
-  } = useFetchClientById(clientId as any, {
+  } = useFetchClientById(clientId as string, {
     enabled: !!clientId,
   });
 
@@ -44,11 +44,11 @@ export default function ClientsOverview() {
     {
       label: "Purchased Modules History",
       value: "purchased",
-      component: <ClientModules {...({ client: client as any } as any)} />,
+      component: <ClientModules />,
     },
   ];
 
-  const handleButtonClick = (value: any) => {
+  const handleButtonClick = (value: string) => {
     setActiveButton(value);
   };
 

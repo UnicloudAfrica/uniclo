@@ -15,12 +15,9 @@ import {
   Search,
 } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
-import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
-import { ModernButton } from "../../shared/components/ui";
-import {
-  useFetchSubscriptionPlans,
-  useDeleteSubscriptionPlan,
-} from "../../hooks/subscriptionHooks";
+import ModernStatsCard from "@/shared/components/ui/ModernStatsCard";
+import { ModernButton } from "@/shared/components/ui";
+import { useFetchSubscriptionPlans, useDeleteSubscriptionPlan } from "@/hooks/subscriptionHooks";
 
 // ═══════════════════════════════════════════════════════════════════
 // TYPES
@@ -207,11 +204,11 @@ export default function AdminSubscriptionPlans() {
   const { data: plansData, isLoading } = useFetchSubscriptionPlans();
   const { mutate: deletePlan } = useDeleteSubscriptionPlan();
 
-  const plans: SubscriptionPlan[] = (plansData as any)?.data || [];
+  const plans: SubscriptionPlan[] = (plansData as Record<string, any>)?.data || [];
 
   // Filter plans
   const filteredPlans = plans.filter(
-    (plan: any) =>
+    (plan: SubscriptionPlan) =>
       plan.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       plan.slug.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -219,9 +216,9 @@ export default function AdminSubscriptionPlans() {
   // Stats
   const stats = {
     total: plans.length,
-    active: plans.filter((p: any) => p.is_active).length,
-    public: plans.filter((p: any) => p.is_public).length,
-    withTrial: plans.filter((p: any) => p.trial_days > 0).length,
+    active: plans.filter((p: SubscriptionPlan) => p.is_active).length,
+    public: plans.filter((p: SubscriptionPlan) => p.is_public).length,
+    withTrial: plans.filter((p: SubscriptionPlan) => p.trial_days > 0).length,
   };
 
   const handleEdit = (plan: SubscriptionPlan) => {
@@ -235,7 +232,7 @@ export default function AdminSubscriptionPlans() {
       return;
     }
     if (globalThis.window.confirm(`Delete plan "${plan.name}"?`)) {
-      (deletePlan as any)(plan.id);
+      deletePlan(String(plan.id));
     }
   };
 
@@ -309,7 +306,7 @@ export default function AdminSubscriptionPlans() {
         {/* Plans Grid */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i: any) => (
+            {[1, 2, 3].map((i: number) => (
               <div key={i} className="bg-gray-100 rounded-xl h-64 animate-pulse" />
             ))}
           </div>
@@ -328,7 +325,7 @@ export default function AdminSubscriptionPlans() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPlans.map((plan: any) => (
+            {filteredPlans.map((plan: SubscriptionPlan) => (
               <PlanCard
                 key={plan.id}
                 plan={plan}

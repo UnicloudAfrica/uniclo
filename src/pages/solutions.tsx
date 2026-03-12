@@ -30,9 +30,8 @@ interface CaseItem {
 }
 
 const Solutions = () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [solutionsArray] = useContext(SolutionsContext) as [SolutionItem[]];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const [casesArray] = useContext(CasesContext) as [CaseItem[]];
 
   return (

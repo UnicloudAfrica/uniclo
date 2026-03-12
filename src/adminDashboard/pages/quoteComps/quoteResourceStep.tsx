@@ -1,7 +1,7 @@
 import { Loader2, Plus, Trash2, Server, HardDrive, Network, Layers } from "lucide-react";
-import ModernCard from "../../../shared/components/ui/ModernCard";
-import { ModernButton } from "../../../shared/components/ui";
-import ModernInput from "../../../shared/components/ui/ModernInput";
+import ModernCard from "@/shared/components/ui/ModernCard";
+import { ModernButton } from "@/shared/components/ui";
+import ModernInput from "@/shared/components/ui/ModernInput";
 import type { MultiQuoteFormData, MultiQuoteFormErrors, UpdateFormData } from "./quoteTypes";
 
 const selectBaseClass =
@@ -47,11 +47,11 @@ const QuoteResourceStep = ({
   isEbsVolumesFetching,
   osImages,
   isOsImagesFetching,
-  bandwidths = [] as any[],
+  bandwidths = [] as unknown[],
   isBandwidthsFetching,
-  floatingIps = [] as any[],
+  floatingIps = [] as unknown[],
   isFloatingIpsFetching,
-  crossConnects = [] as any[],
+  crossConnects = [] as unknown[],
   isCrossConnectsFetching,
   onAddRequest,
   pricingRequests,
@@ -112,11 +112,13 @@ const QuoteResourceStep = ({
                 disabled={isRegionsFetching}
               >
                 <option value="">Select a region</option>
-                {regions?.map((region: any) => (
-                  <option key={region.code} value={region.code}>
-                    {region.name}
-                  </option>
-                ))}
+                {regions
+                  ?.filter((r: any) => r.name && r.is_active !== false)
+                  .map((region: any) => (
+                    <option key={region.code} value={region.code}>
+                      {region.name || region.code}
+                    </option>
+                  ))}
               </select>
               {isRegionsFetching && (
                 <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
@@ -432,11 +434,13 @@ const QuoteResourceStep = ({
                 disabled={isRegionsFetching}
               >
                 <option value="">Select a region</option>
-                {regions?.map((region: any) => (
-                  <option key={region.code} value={region.code}>
-                    {region.name}
-                  </option>
-                ))}
+                {regions
+                  ?.filter((r: any) => r.name && r.is_active !== false)
+                  .map((region: any) => (
+                    <option key={region.code} value={region.code}>
+                      {region.name || region.code}
+                    </option>
+                  ))}
               </select>
               {errors.object_storage_region && (
                 <p className="mt-2 text-xs font-medium text-red-600">

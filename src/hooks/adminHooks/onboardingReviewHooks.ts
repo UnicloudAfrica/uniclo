@@ -7,8 +7,8 @@ import {
 } from "@tanstack/react-query";
 import api from "../../index/admin/api";
 import silentApi from "../../index/admin/silent";
-import { type QueueEntry, type SubmissionData } from "../../shared/types/onboarding";
-import { type ApiResponse } from "../../shared/types/resource";
+import { type QueueEntry, type SubmissionData } from "@/shared/types/onboarding";
+import { type ApiResponse } from "@/shared/types/resource";
 
 const ADMIN_ONBOARDING_QUEUE_KEY = ["admin-onboarding", "queue"];
 

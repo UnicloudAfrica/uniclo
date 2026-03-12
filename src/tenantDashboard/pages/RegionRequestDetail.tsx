@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import tenantRegionApi from "../../services/tenantRegionApi";
-import ToastUtils from "../../utils/toastUtil";
+import tenantRegionApi from "@/services/tenantRegionApi";
+import ToastUtils from "@/utils/toastUtil";
 import TenantPageShell from "../components/TenantPageShell";
-import logger from "../../utils/logger";
+import logger from "@/utils/logger";
 
 type ApprovalStatus = "pending" | "approved" | "rejected" | "suspended";
 type FulfillmentMode = "manual" | "automated";
@@ -52,11 +52,7 @@ const RegionRequestDetail = () => {
   const [showCredentialModal, setShowCredentialModal] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [credentials, setCredentials] = useState<MspCredentials>(emptyCredentials);
-  useEffect(() => {
-    fetchRegionDetail();
-  }, [id]);
-
-  const fetchRegionDetail = async () => {
+  const fetchRegionDetail = useCallback(async () => {
     try {
       if (!id) {
         setRegion(null);
@@ -72,7 +68,11 @@ const RegionRequestDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchRegionDetail();
+  }, [fetchRegionDetail]);
 
   const handleVerifyCredentials = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

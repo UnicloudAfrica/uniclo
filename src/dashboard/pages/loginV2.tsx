@@ -2,17 +2,30 @@ import { useEffect, useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import logo from "./assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
-import { useLoginAccount } from "../../hooks/authHooks";
-import useTenantAuthStore from "../../stores/tenantAuthStore";
+import { useLoginAccount } from "@/hooks/authHooks";
+import useTenantAuthStore from "@/stores/tenantAuthStore";
 import {
   resolveBrandLogo,
   useApplyBrandingTheme,
   usePublicBrandingTheme,
-} from "../../hooks/useBrandingTheme";
-import useImageFallback from "../../hooks/useImageFallback";
-import { getSubdomain } from "../../utils/getSubdomain";
+} from "@/hooks/useBrandingTheme";
+import useImageFallback from "@/hooks/useImageFallback";
+import { getSubdomain } from "@/utils/getSubdomain";
 import AuthShell from "../../components/auth/AuthShell";
-// import useAuthRedirect from "../../utils/authRedirect";
+// import useAuthRedirect from "@/utils/authRedirect";
+
+interface LoginResponse {
+  data?: {
+    two_factor_enabled?: boolean;
+    two_factor_required?: boolean;
+    requires_two_factor?: boolean;
+    settings?: { security?: { two_factor_enabled?: boolean } };
+    profile?: { two_factor_enabled?: boolean };
+    user?: { two_factor_enabled?: boolean };
+  };
+  requires_two_factor?: boolean;
+  two_factor_required?: boolean;
+}
 
 export default function DashboardLoginV2() {
   const [showPassword, setShowPassword] = useState(false);
@@ -80,15 +93,16 @@ export default function DashboardLoginV2() {
 
     mutate(userData, {
       onSuccess: (res) => {
+        const typedRes = res as LoginResponse;
         const requiresTwoFactor =
-          (res as any)?.data?.two_factor_enabled ??
-          (res as any)?.data?.two_factor_required ??
-          (res as any)?.data?.requires_two_factor ??
-          (res as any)?.data?.settings?.security?.two_factor_enabled ??
-          (res as any)?.data?.profile?.two_factor_enabled ??
-          (res as any)?.requires_two_factor ??
-          (res as any)?.two_factor_required ??
-          (res as any)?.data?.user?.two_factor_enabled ??
+          typedRes?.data?.two_factor_enabled ??
+          typedRes?.data?.two_factor_required ??
+          typedRes?.data?.requires_two_factor ??
+          typedRes?.data?.settings?.security?.two_factor_enabled ??
+          typedRes?.data?.profile?.two_factor_enabled ??
+          typedRes?.requires_two_factor ??
+          typedRes?.two_factor_required ??
+          typedRes?.data?.user?.two_factor_enabled ??
           false;
 
         setTwoFactorRequired?.(Boolean(requiresTwoFactor));

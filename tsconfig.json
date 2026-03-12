@@ -33,6 +33,15 @@
             ],
             "@/styles/*": [
                 "src/styles/*"
+            ],
+            "@/types/*": [
+                "src/types/*"
+            ],
+            "@/services/*": [
+                "src/services/*"
+            ],
+            "@/config/*": [
+                "src/config/*"
             ]
         },
         "esModuleInterop": true,

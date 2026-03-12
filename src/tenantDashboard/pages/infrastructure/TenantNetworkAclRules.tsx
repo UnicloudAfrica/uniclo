@@ -2,13 +2,13 @@ import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ShieldCheck, Plus, Trash2, ArrowLeft } from "lucide-react";
 import TenantPageShell from "../../components/TenantPageShell";
-import ModernCard from "../../../shared/components/ui/ModernCard";
-import ModernButton from "../../../shared/components/ui/ModernButton";
+import ModernCard from "@/shared/components/ui/ModernCard";
+import ModernButton from "@/shared/components/ui/ModernButton";
 import {
   useNetworkAclRules,
   useAddNetworkAclRule,
   useRemoveNetworkAclRule,
-} from "../../../shared/hooks/vpcInfraHooks";
+} from "@/shared/hooks/vpcInfraHooks";
 
 interface NaclRule {
   rule_number: number;

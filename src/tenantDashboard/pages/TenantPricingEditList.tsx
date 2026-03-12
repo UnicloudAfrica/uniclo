@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Cpu, Database, Globe, HardDrive, Cable, Wifi, Tag } from "lucide-react";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
@@ -8,9 +8,9 @@ import {
   ModernSelect,
   ModernTable,
   type Column,
-} from "../../shared/components/ui";
-import { useFetchTenantRegions } from "../../hooks/tenantHooks/regionHooks";
-import { useFetchProductPricing } from "../../hooks/resource";
+} from "@/shared/components/ui";
+import { useFetchTenantRegions } from "@/hooks/tenantHooks/regionHooks";
+import { useFetchProductPricing } from "@/hooks/resource";
 import {
   useDeleteTenantPricingOverride,
   type TenantPricingCreatePayload,
@@ -18,11 +18,11 @@ import {
   useFetchTenantPricingOverrides,
   useUpsertTenantPricingOverride,
   useUpdateTenantPricingOverride,
-} from "../../hooks/tenantHooks/tenantPricingHooks";
-import { matchesProductType, normalizeProductType } from "../../utils/productTypeUtils";
-import ToastUtils from "../../utils/toastUtil";
-import useTenantAuthStore from "../../stores/tenantAuthStore";
-import { resolveCountryCodeFromEntity } from "../../shared/utils/countryUtils";
+} from "@/hooks/tenantHooks/tenantPricingHooks";
+import { matchesProductType, normalizeProductType } from "@/utils/productTypeUtils";
+import ToastUtils from "@/utils/toastUtil";
+import useTenantAuthStore from "@/stores/tenantAuthStore";
+import { resolveCountryCodeFromEntity } from "@/shared/utils/countryUtils";
 
 interface TenantRegion {
   code: string;
@@ -213,45 +213,48 @@ const TenantPricingEditList = () => {
     return extractRowsFromPayload<PricingCatalogRow>(catalogPayload);
   }, [catalogPayload]);
 
-  const findOverrideForProduct = (product?: PricingCatalogProduct | null) => {
-    if (
-      !product?.productable_type ||
-      product.productable_id === null ||
-      product.productable_id === undefined
-    ) {
-      return null;
-    }
-    const productId = product.productable_id;
-    const productType = product.productable_type;
-    const countryCode = activeRegion?.country_code?.toUpperCase();
-
-    const matchingOverrides = overrides.filter((override) => {
-      if (!override) return false;
-      if (!override.productable_type) return false;
-      if (override.productable_id === null || override.productable_id === undefined) return false;
-      if (Number(override.productable_id) !== Number(productId)) return false;
-      if (!matchesProductType(override.productable_type, productType)) return false;
-      return true;
-    });
-
-    if (!matchingOverrides.length) return null;
-
-    const regionMatch = matchingOverrides.find((override) => override.region === selectedRegion);
-    if (regionMatch) {
-      return { row: regionMatch, scope: "region" };
-    }
-
-    if (countryCode) {
-      const countryMatch = matchingOverrides.find(
-        (override) => !override.region && override.country_code?.toUpperCase() === countryCode
-      );
-      if (countryMatch) {
-        return { row: countryMatch, scope: "country" };
+  const findOverrideForProduct = useCallback(
+    (product?: PricingCatalogProduct | null) => {
+      if (
+        !product?.productable_type ||
+        product.productable_id === null ||
+        product.productable_id === undefined
+      ) {
+        return null;
       }
-    }
+      const productId = product.productable_id;
+      const productType = product.productable_type;
+      const countryCode = activeRegion?.country_code?.toUpperCase();
 
-    return null;
-  };
+      const matchingOverrides = overrides.filter((override) => {
+        if (!override) return false;
+        if (!override.productable_type) return false;
+        if (override.productable_id === null || override.productable_id === undefined) return false;
+        if (Number(override.productable_id) !== Number(productId)) return false;
+        if (!matchesProductType(override.productable_type, productType)) return false;
+        return true;
+      });
+
+      if (!matchingOverrides.length) return null;
+
+      const regionMatch = matchingOverrides.find((override) => override.region === selectedRegion);
+      if (regionMatch) {
+        return { row: regionMatch, scope: "region" };
+      }
+
+      if (countryCode) {
+        const countryMatch = matchingOverrides.find(
+          (override) => !override.region && override.country_code?.toUpperCase() === countryCode
+        );
+        if (countryMatch) {
+          return { row: countryMatch, scope: "country" };
+        }
+      }
+
+      return null;
+    },
+    [overrides, activeRegion, selectedRegion]
+  );
 
   useEffect(() => {
     if (!catalogRows.length) return;
@@ -276,7 +279,7 @@ const TenantPricingEditList = () => {
 
       return changed ? next : prev;
     });
-  }, [catalogRows, overrides, activeRegion, selectedRegion]);
+  }, [catalogRows, findOverrideForProduct]);
 
   const filteredRows = useMemo(() => {
     return catalogRows.filter((row) => {
@@ -291,106 +294,121 @@ const TenantPricingEditList = () => {
     });
   }, [catalogRows, searchValue]);
 
-  const handlePriceChange = (key: string, value: string) => {
+  const handlePriceChange = useCallback((key: string, value: string) => {
     setDraftPrices((prev) => ({ ...prev, [key]: value }));
-  };
+  }, []);
 
-  const handleSaveRow = async (row: PricingCatalogRow) => {
-    const product = row?.product;
-    if (
-      !product ||
-      !product.productable_type ||
-      product.productable_id === null ||
-      product.productable_id === undefined ||
-      !activeRegion?.provider
-    ) {
-      ToastUtils.error("Missing product or region details.");
-      return;
-    }
-
-    const adminDefault = row?.pricing?.admin?.price_usd;
-    if (adminDefault === null || adminDefault === undefined) {
-      ToastUtils.error("Admin default price must be set before tenant price settings.");
-      return;
-    }
-
-    const key = buildKey(product);
-    const rawValue = draftPrices[key];
-    const parsed = Number(rawValue);
-    if (!Number.isFinite(parsed) || parsed < 0) {
-      ToastUtils.error("Enter a valid tenant price.");
-      return;
-    }
-    if (parsed < adminDefault) {
-      ToastUtils.error("Tenant price cannot be below admin default.");
-      return;
-    }
-
-    const overrideInfo = findOverrideForProduct(product);
-    const overrideId = overrideInfo?.row?.id;
-    const hasOverride = overrideId !== undefined && overrideId !== null;
-    const adminScope = row?.pricing?.admin?.scope;
-
-    try {
-      if (hasOverride) {
-        await updateOverride({
-          id: overrideId,
-          payload: { price_usd: parsed },
-        });
-      } else {
-        const payload: TenantPricingCreatePayload = {
-          productable_type: product.productable_type,
-          productable_id: product.productable_id,
-          provider: String(activeRegion.provider),
-          price_usd: parsed,
-        };
-
-        if (adminScope === "country") {
-          if (!activeRegion?.country_code) {
-            ToastUtils.error("Region is missing a country code.");
-            return;
-          }
-          payload.country_code = activeRegion.country_code;
-        } else {
-          payload.region = selectedRegion;
-        }
-
-        await upsertOverride(payload);
+  const handleSaveRow = useCallback(
+    async (row: PricingCatalogRow) => {
+      const product = row?.product;
+      if (
+        !product ||
+        !product.productable_type ||
+        product.productable_id === null ||
+        product.productable_id === undefined ||
+        !activeRegion?.provider
+      ) {
+        ToastUtils.error("Missing product or region details.");
+        return;
       }
 
-      refetchOverrides();
-      refetchCatalog();
-      ToastUtils.success("Tenant price saved.");
-    } catch (_error) {
-      // tenantApi already displays toast errors
-    }
-  };
+      const adminDefault = row?.pricing?.admin?.price_usd;
+      if (adminDefault === null || adminDefault === undefined) {
+        ToastUtils.error("Admin default price must be set before tenant price settings.");
+        return;
+      }
 
-  const handleResetRow = async (row: PricingCatalogRow) => {
-    const product = row?.product;
-    if (!product) return;
-    const overrideInfo = findOverrideForProduct(product);
-    const overrideId = overrideInfo?.row?.id;
-    if (overrideId === undefined || overrideId === null) {
-      ToastUtils.error("No override found for this product.");
-      return;
-    }
-
-    try {
-      await deleteOverride(overrideId);
-      refetchOverrides();
-      refetchCatalog();
       const key = buildKey(product);
-      const adminPrice = row?.pricing?.admin?.price_usd;
-      setDraftPrices((prev) => ({
-        ...prev,
-        [key]: adminPrice === null || adminPrice === undefined ? "" : String(adminPrice),
-      }));
-      ToastUtils.success("Override reset.");
-    } catch (_error) {
-      // tenantApi already displays toast errors
-    }
-  };
+      const rawValue = draftPrices[key];
+      const parsed = Number(rawValue);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        ToastUtils.error("Enter a valid tenant price.");
+        return;
+      }
+      if (parsed < adminDefault) {
+        ToastUtils.error("Tenant price cannot be below admin default.");
+        return;
+      }
+
+      const overrideInfo = findOverrideForProduct(product);
+      const overrideId = overrideInfo?.row?.id;
+      const hasOverride = overrideId !== undefined && overrideId !== null;
+      const adminScope = row?.pricing?.admin?.scope;
+
+      try {
+        if (hasOverride) {
+          await updateOverride({
+            id: overrideId,
+            payload: { price_usd: parsed },
+          });
+        } else {
+          const payload: TenantPricingCreatePayload = {
+            productable_type: product.productable_type,
+            productable_id: product.productable_id,
+            provider: String(activeRegion.provider),
+            price_usd: parsed,
+          };
+
+          if (adminScope === "country") {
+            if (!activeRegion?.country_code) {
+              ToastUtils.error("Region is missing a country code.");
+              return;
+            }
+            payload.country_code = activeRegion.country_code;
+          } else {
+            payload.region = selectedRegion;
+          }
+
+          await upsertOverride(payload);
+        }
+
+        refetchOverrides();
+        refetchCatalog();
+        ToastUtils.success("Tenant price saved.");
+      } catch (_error) {
+        // tenantApi already displays toast errors
+      }
+    },
+    [
+      activeRegion,
+      draftPrices,
+      findOverrideForProduct,
+      refetchCatalog,
+      refetchOverrides,
+      selectedRegion,
+      updateOverride,
+      upsertOverride,
+    ]
+  );
+
+  const handleResetRow = useCallback(
+    async (row: PricingCatalogRow) => {
+      const product = row?.product;
+      if (!product) return;
+      const overrideInfo = findOverrideForProduct(product);
+      const overrideId = overrideInfo?.row?.id;
+      if (overrideId === undefined || overrideId === null) {
+        ToastUtils.error("No override found for this product.");
+        return;
+      }
+
+      try {
+        await deleteOverride(overrideId);
+        refetchOverrides();
+        refetchCatalog();
+        const key = buildKey(product);
+        const adminPrice = row?.pricing?.admin?.price_usd;
+        setDraftPrices((prev) => ({
+          ...prev,
+          [key]: adminPrice === null || adminPrice === undefined ? "" : String(adminPrice),
+        }));
+        ToastUtils.success("Override reset.");
+      } catch (_error) {
+        // tenantApi already displays toast errors
+      }
+    },
+    [deleteOverride, findOverrideForProduct, refetchCatalog, refetchOverrides]
+  );
 
   const columns = useMemo<Column<PricingCatalogRow>[]>(
     () => [
@@ -502,7 +520,15 @@ const TenantPricingEditList = () => {
         },
       },
     ],
-    [activeRegion, draftPrices, isSaving, overrides, selectedRegion, activeTab, searchValue]
+    [
+      activeRegion,
+      draftPrices,
+      isSaving,
+      findOverrideForProduct,
+      handlePriceChange,
+      handleSaveRow,
+      handleResetRow,
+    ]
   );
 
   const isLoading = isCatalogFetching || isOverridesFetching || isRegionsFetching;

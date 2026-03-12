@@ -1,48 +1,35 @@
-import { useEffect, useMemo, useRef } from "react";
-import createEchoClient from "../echo";
+import { useMemo } from "react";
+import { useRealtimeQuery, type ChannelConfig } from "./useRealtimeQuery";
 import { useApiContext } from "./useApiContext";
 
 type InstanceId = string | number;
 
 /**
  * Hook to listen for real-time instance provisioning updates.
+ *
+ * Uses `useRealtimeQuery` to manage Echo channel lifecycle.
+ * Fires the `onStepUpdate` callback when an event arrives.
  */
 export const useInstanceBroadcasting = (
   instanceIds: InstanceId[] | null | undefined,
   onStepUpdate?: (event: unknown) => void
 ) => {
-  const echoRef = useRef<ReturnType<typeof createEchoClient> | null>(null);
   const { isAuthenticated } = useApiContext();
 
-  const normalizedIds = useMemo(() => {
+  const channels = useMemo<ChannelConfig[]>(() => {
     if (!Array.isArray(instanceIds)) return [];
     const unique = new Set(instanceIds.map((id) => String(id)).filter(Boolean));
-    return Array.from(unique);
+    return Array.from(unique).map((id) => ({
+      channel: `instances.${id}`,
+      event: ".InstanceProvisioningUpdated",
+    }));
   }, [instanceIds]);
 
-  useEffect(() => {
-    if (!isAuthenticated || normalizedIds.length === 0) return;
-
-    const echo = createEchoClient();
-    echoRef.current = echo;
-
-    normalizedIds.forEach((id) => {
-      const channel = echo.private(`instances.${id}`);
-      channel.listen(".InstanceProvisioningUpdated", (event: any) => {
-        if (typeof onStepUpdate === "function") {
-          onStepUpdate(event);
-        }
-      });
-    });
-
-    return () => {
-      if (echoRef.current) {
-        normalizedIds.forEach((id) => {
-          (echoRef as any).current.leave(`instances.${id}`);
-        });
-      }
-    };
-  }, [isAuthenticated, normalizedIds, onStepUpdate]);
+  useRealtimeQuery({
+    channels,
+    onEvent: onStepUpdate,
+    enabled: isAuthenticated && channels.length > 0,
+  });
 
   return null;
 };

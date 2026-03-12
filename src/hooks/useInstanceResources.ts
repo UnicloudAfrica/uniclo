@@ -61,7 +61,7 @@ export const useInstanceResources = (options: UseInstanceResourcesOptions = {}) 
     setIsLoadingResources(true);
     try {
       const res = await apiFn("GET", endpoint);
-      const data = (res as any)?.data || {};
+      const data = (res as { data?: any })?.data || {};
       setResources({
         projects: data.projects || [],
         regions: data.regions || [],

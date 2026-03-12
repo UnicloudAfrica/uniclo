@@ -1,6 +1,6 @@
 import React from "react";
 import TenantPageShell from "../components/TenantPageShell";
-import AccountSettingsContent from "../../shared/components/settings/AccountSettingsContent";
+import AccountSettingsContent from "@/shared/components/settings/AccountSettingsContent";
 
 const TenantAccountSettings: React.FC = () => {
   return (

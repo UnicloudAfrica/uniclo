@@ -1,9 +1,6 @@
 import React, { useCallback, useEffect, useMemo } from "react";
-import ToastUtils from "../../../utils/toastUtil";
-import {
-  useObjectStorageLogic,
-  ObjectStorageLogicConfig,
-} from "../../../hooks/useObjectStorageLogic";
+import ToastUtils from "@/utils/toastUtil";
+import { useObjectStorageLogic, ObjectStorageLogicConfig } from "@/hooks/useObjectStorageLogic";
 import { ProvisioningWizardLayout } from "../instance-wizard";
 import { ModernButton } from "../ui";
 import { ObjectStorageWorkflowStep } from "./ObjectStorageWorkflowStep";
@@ -363,14 +360,14 @@ export const ObjectStorageCreateContent: React.FC<ObjectStorageCreateContentProp
         <div className="space-y-6">
           <ObjectStoragePaymentStep
             paymentOptions={paymentOptions}
-            onPaymentComplete={handlePaymentCompleted as any}
+            onPaymentComplete={handlePaymentCompleted as never}
             onPaymentOptionChange={setSelectedPaymentOption}
             totals={displayedTotals}
             isPaymentComplete={isPaymentComplete}
             isPaymentFailed={isPaymentFailed}
             isProcessing={isSubmitting}
             transactionId={transactionId || undefined}
-            transactionData={paymentTransactionData as any}
+            transactionData={paymentTransactionData as never}
           />
           <div className="flex flex-wrap items-center justify-between gap-3">
             <ModernButton
@@ -416,7 +413,7 @@ export const ObjectStorageCreateContent: React.FC<ObjectStorageCreateContentProp
           isSubmitting={isSubmitting}
           gatewayFees={gatewayFees}
           grandTotalWithFees={grandTotalWithFees}
-          dashboardContext={dashboardContext as any}
+          dashboardContext={dashboardContext as never}
           onSubmit={handleReviewSubmit}
           onBack={() => goToStep(resolvedReviewBackIndex)}
         />

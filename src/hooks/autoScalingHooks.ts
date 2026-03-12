@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useApiContext } from "./useApiContext";
+import { useSharedCalculatorOptions } from "./sharedCalculatorHooks";
 import ToastUtils from "../utils/toastUtil";
 
 /**
@@ -9,6 +10,46 @@ import ToastUtils from "../utils/toastUtil";
 
 const getApiPrefix = (context: string) => {
   return context === "admin" ? "" : "/business";
+};
+
+// ==================== Priced Provisioning Options ====================
+
+export interface PricedFlavor {
+  id: number;
+  name: string;
+  vcpus: number;
+  memory_gib: number;
+  unit_local: number;
+  unit_label: string;
+  currency: string;
+}
+
+export interface PricedImage {
+  id: number;
+  name: string;
+  unit_local: number;
+  currency: string;
+}
+
+/**
+ * Hook to fetch priced provisioning options (flavors, images) from the calculator-options endpoint.
+ * Only returns items that have been registered in the Product/ProductPricing system.
+ */
+export const usePricedProvisioningOptions = (region?: string) => {
+  const query = useSharedCalculatorOptions({ region }, { enabled: !!region });
+
+  const data = query.data as
+    | {
+        compute_flavors?: PricedFlavor[];
+        os_images?: PricedImage[];
+      }
+    | undefined;
+
+  return {
+    ...query,
+    flavors: (data?.compute_flavors ?? []) as PricedFlavor[],
+    images: (data?.os_images ?? []) as PricedImage[],
+  };
 };
 
 // ==================== Launch Configurations ====================
@@ -177,8 +218,9 @@ export const useCreateAutoScalingGroup = () => {
       ToastUtils.success("Auto-scaling group created successfully");
       queryClient.invalidateQueries({ queryKey: ["autoscaling-groups", variables.project_id] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.message || "Failed to create auto-scaling group");
+    onError: (error: unknown) => {
+      const axiosError = error as { response?: { data?: { message?: string } } };
+      ToastUtils.error(axiosError.response?.data?.message || "Failed to ... ");
     },
   });
 };

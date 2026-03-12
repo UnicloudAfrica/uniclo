@@ -49,8 +49,8 @@ export const useFetchBranding = (options: Record<string, unknown> = {}) => {
     queryKey: ["tenantBranding"],
     queryFn: async () => {
       const res = await silentApi<BrandingResponse>("GET", "/tenant/v1/admin/branding");
-      // res is the response object. It might have branding directly or inside data.
-      return (res as any)?.data?.branding || (res as any)?.branding || res;
+      const data = res as Record<string, any>;
+      return data?.data?.branding || data?.branding || res;
     },
     staleTime: 1000 * 60 * 5,
     ...options,
@@ -80,13 +80,11 @@ export const useUpdateBranding = () => {
 // Preview branding changes
 export const usePreviewBranding = () => {
   return useMutation({
-    mutationFn: async (data: Record<string, unknown>) => {
-      const res = await api<BrandingResponse>("POST", "/tenant/v1/admin/branding/preview", data);
+    mutationFn: async (payload: Record<string, unknown>) => {
+      const res = await api<BrandingResponse>("POST", "/tenant/v1/admin/branding/preview", payload);
+      const data = res as Record<string, any>;
       return (
-        (res as any)?.data?.branding ||
-        (res as any)?.data?.data?.branding ||
-        (res as any)?.data?.resolved ||
-        (res as any)?.data
+        data?.data?.branding || data?.data?.data?.branding || data?.data?.resolved || data?.data
       );
     },
   });
@@ -97,7 +95,7 @@ export const useVerifyDomain = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (domain: string) => {
-      const res = await api<unknown>("POST", "/tenant/v1/admin/branding/verify-domain", {
+      const res = await api<{ data: unknown }>("POST", "/tenant/v1/admin/branding/verify-domain", {
         domain,
       });
       return res.data;

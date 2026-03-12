@@ -1,104 +1,36 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import adminApi, { adminSilentApi } from "../../index/admin/api";
-import logger from "../../utils/logger";
+/**
+ * Admin Network Hooks
+ *
+ * - useFetchNetworkInterfaces / syncNetworkInterfacesFromProvider:
+ *   Legacy positional-arg wrappers around shared/hooks/resources/networkHooks.
+ * - useFetchNetworks: admin-specific hook for the /networks endpoint
+ *   (distinct from shared network-interfaces CRUD).
+ */
+import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
+import { adminSilentApi } from "../../index/admin/api";
+import networkHooksShared from "@/shared/hooks/resources/networkHooks";
+import { createLegacyWrappers, createSyncFunction } from "@/shared/hooks/createLegacyWrappers";
 
-const fetchNetworkInterfgace = async ({ project_id, region, refresh = false }: any) => {
-  const params = new URLSearchParams();
-  if (project_id) params.append("project_id", project_id);
-  if (region) params.append("region", region);
-  if (refresh) params.append("refresh", "1");
+const legacy = createLegacyWrappers(networkHooksShared);
+const syncFn = createSyncFunction("network-interfaces");
 
-  const queryString = params.toString();
-  const res = await adminSilentApi(
-    "GET",
-    `/network-interfaces${queryString ? `?${queryString}` : ""}`
-  );
-  if (!res.data) throw new Error("Failed to fetch network interfaces");
-  return res.data;
-};
+/** @deprecated Use useFetchNetworks from shared/hooks/resources/networkHooks with ListParams */
+export const useFetchNetworkInterfaces = legacy.useFetchList;
 
-const createNetworkInterface = async (payload: any) => {
-  const res = await adminApi("POST", "/network-interfaces", payload);
-  if (!res) throw new Error("Failed to create network interface");
-  return res;
-};
+/** @deprecated Use useSyncNetworks from shared/hooks/resources/networkHooks */
+export const syncNetworkInterfacesFromProvider = syncFn;
 
-const attachNetworkInterfaceSecurityGroup = async (payload: any) => {
-  const res = await adminApi("POST", "/network-interface-security-groups", payload);
-  if (!res) throw new Error("Failed to attach security group");
-  return res;
-};
+// --- Fetch networks (admin-specific /networks endpoint, NOT /network-interfaces) ---
 
-const detachNetworkInterfaceSecurityGroup = async (payload: any) => {
-  const res = await adminApi("DELETE", "/network-interface-security-groups", payload);
-  if (!res) throw new Error("Failed to detach security group");
-  return res;
-};
-
-export const useFetchNetworkInterfaces = (projectId: any, region: any, options: any = {}) => {
-  return useQuery<Record<string, unknown>>({
-    queryKey: ["networkInterfaces", { projectId, region }],
-    queryFn: () => fetchNetworkInterfgace({ project_id: projectId, region }),
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
-    ...options,
-  });
-};
-
-export const useCreateNetworkInterface = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: createNetworkInterface,
-    onSuccess: (data: any, variables: any) => {
-      queryClient.invalidateQueries({
-        queryKey: [
-          "networkInterfaces",
-          { projectId: variables.project_id, region: variables.region },
-        ],
-      });
-    },
-    onError: (error: any) => {
-      logger.error("Error creating network interface:", error);
-    },
-  });
-};
-
-export const useAttachNetworkInterfaceSecurityGroup = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: attachNetworkInterfaceSecurityGroup,
-    onSuccess: (data: any, variables: any) => {
-      queryClient.invalidateQueries({
-        queryKey: [
-          "networkInterfaces",
-          { projectId: variables.project_id, region: variables.region },
-        ],
-      });
-    },
-  });
-};
-
-export const useDetachNetworkInterfaceSecurityGroup = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: detachNetworkInterfaceSecurityGroup,
-    onSuccess: (data: any, variables: any) => {
-      queryClient.invalidateQueries({
-        queryKey: [
-          "networkInterfaces",
-          { projectId: variables.project_id, region: variables.region },
-        ],
-      });
-    },
-  });
-};
-
-export const syncNetworkInterfacesFromProvider = async ({ project_id, region }: any) => {
-  return fetchNetworkInterfgace({ project_id, region, refresh: true });
-};
-
-// Fetch networks for a project and region
-const fetchNetworks = async ({ project_id, region, refresh = false }: any) => {
+const fetchNetworks = async ({
+  project_id,
+  region,
+  refresh = false,
+}: {
+  project_id?: string;
+  region?: string;
+  refresh?: boolean;
+}) => {
   const params = new URLSearchParams();
   if (project_id) params.append("project_id", project_id);
   if (region) params.append("region", region);
@@ -110,17 +42,18 @@ const fetchNetworks = async ({ project_id, region, refresh = false }: any) => {
   return res.data;
 };
 
-export const useFetchNetworks = (projectId: any, region: any, options: any = {}) => {
+export const useFetchNetworks = (
+  projectId: string | undefined,
+  region: string | undefined,
+  options: Omit<UseQueryOptions<Record<string, unknown>>, "queryKey" | "queryFn"> = {}
+) => {
   return useQuery<Record<string, unknown>>({
     queryKey: ["networks", { projectId, region }],
-    queryFn: () => fetchNetworks({ project_id: projectId, region }),
+    queryFn: () =>
+      fetchNetworks({ project_id: projectId, region }) as Promise<Record<string, unknown>>,
     enabled: Boolean(projectId && region),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
   });
-};
-
-export const syncNetworksFromProvider = async ({ project_id, region }: any) => {
-  return fetchNetworks({ project_id, region, refresh: true });
 };

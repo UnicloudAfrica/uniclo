@@ -2,13 +2,13 @@ import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Plus, Trash2, RefreshCw, Shield, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import AdminPageShell from "../../components/AdminPageShell";
-import ModernButton from "../../../shared/components/ui/ModernButton";
-import ModernCard from "../../../shared/components/ui/ModernCard";
+import ModernButton from "@/shared/components/ui/ModernButton";
+import ModernCard from "@/shared/components/ui/ModernCard";
 import {
   useSecurityGroupRules,
   useAddSecurityGroupRule,
   useRemoveSecurityGroupRule,
-} from "../../../shared/hooks/vpcInfraHooks";
+} from "@/shared/hooks/vpcInfraHooks";
 
 interface SecurityGroupRule {
   ip_protocol: string;

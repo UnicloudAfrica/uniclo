@@ -2,6 +2,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   Database,
+  Globe,
+  Image as ImageIcon,
+  Layers,
   LayoutDashboard,
   Network,
   Settings,
@@ -17,7 +20,7 @@ import ProjectDetailsTeamAccess, { ProjectTeamMember } from "./ProjectDetailsTea
 import { deriveIpPoolStats, getProjectRamLabel, type IpPool } from "./resourceStats";
 import { buildNetworkingItems } from "./projectDetailsNetworking";
 import { buildProjectResourceCounts, type InfraStatusData } from "./projectDetailsResourceCounts";
-import { useProjectBroadcasting } from "../../../../hooks/useProjectBroadcasting";
+import { useProjectBroadcasting } from "@/hooks/useProjectBroadcasting";
 import type { ProjectDetailsResourceStats, ProjectDetailsTab } from "./types";
 import type {
   NetworkStatus as UnifiedNetworkStatus,
@@ -25,8 +28,10 @@ import type {
   ResourceCounts as UnifiedResourceCounts,
   SetupStep as UnifiedSetupStep,
 } from "./ProjectUnifiedView";
-import type { Project as ProjectRecord } from "../../../../types/project";
+import type { Project as ProjectRecord } from "@/types/project";
 import type { KeyPairHooks } from "../../infrastructure/containers/KeyPairsContainer";
+import { DEFAULT_PRESETS } from "../../network/NetworkPresetSelector";
+import { isFeatureSupported } from "@/utils/featureGating";
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -159,6 +164,12 @@ export interface ProjectDetailsAdapterConfig {
   }) => React.ReactNode;
   teamTab?: TeamTabConfig;
   renderTeamTab?: () => React.ReactNode;
+  renderStorageTab?: () => React.ReactNode;
+  renderImagesTab?: () => React.ReactNode;
+  renderDnsTab?: () => React.ReactNode;
+  renderAutoScalingTab?: () => React.ReactNode;
+  renderLimitsTab?: () => React.ReactNode;
+  renderSettingsTab?: () => React.ReactNode;
 
   showMemberManagement?: boolean;
   showSyncButton?: boolean;
@@ -275,6 +286,8 @@ export const useProjectDetailsAdapter = (
     ...(project?.resources_count !== undefined ? { resources_count: project.resources_count } : {}),
   };
 
+  const projectProvider = project?.provider as string | undefined;
+
   const unifiedProject: UnifiedProjectData = {
     ...projectForLayout,
     ...(project?.region_name !== undefined ? { region_name: project.region_name } : {}),
@@ -378,9 +391,10 @@ export const useProjectDetailsAdapter = (
 
   const ramLabel = useMemo(() => getProjectRamLabel(projectInstances), [projectInstances]);
 
+  const projectStatusProvisioningProgress = projectStatus?.["provisioning_progress"];
   const setupSteps = useMemo<UnifiedSetupStep[]>(() => {
     if (Array.isArray(config.setupSteps)) return config.setupSteps;
-    const statusSteps = normalizeProvisioningSteps(projectStatus?.["provisioning_progress"]);
+    const statusSteps = normalizeProvisioningSteps(projectStatusProvisioningProgress);
     const projectSteps = normalizeProvisioningSteps(project?.provisioning_progress);
     const steps = statusSteps.length > 0 ? statusSteps : projectSteps;
     return steps.map((step, index) => {
@@ -396,7 +410,7 @@ export const useProjectDetailsAdapter = (
         ? { ...baseStep, updated_at: step.updated_at }
         : baseStep;
     });
-  }, [config.setupSteps, projectStatus?.["provisioning_progress"], project?.provisioning_progress]);
+  }, [config.setupSteps, projectStatusProvisioningProgress, project?.provisioning_progress]);
 
   const allStepsComplete =
     setupSteps.length > 0 && setupSteps.every((step) => step.status === "completed");
@@ -424,6 +438,8 @@ export const useProjectDetailsAdapter = (
     snapshots: resourceCounts.snapshots || 0,
     ipPoolUsed: ipPoolStats.used,
     ipPoolTotal: ipPoolStats.total,
+    edgeNetworkConnected,
+    edgeNetworkName,
   };
 
   const setupProgressPercent =
@@ -432,8 +448,8 @@ export const useProjectDetailsAdapter = (
       : (config.infraStatusData?.data?.completion_percentage ?? 0);
 
   const networkingItems = useMemo(
-    () => config.networkingTab?.items ?? buildNetworkingItems(resourceCounts),
-    [config.networkingTab?.items, resourceCounts]
+    () => config.networkingTab?.items ?? buildNetworkingItems(resourceCounts, projectProvider),
+    [config.networkingTab?.items, resourceCounts, projectProvider]
   );
 
   const canCreateInstances = config.canCreateInstances ?? project?.status === "active";
@@ -454,6 +470,25 @@ export const useProjectDetailsAdapter = (
     setActiveTab("networking");
   };
 
+  // Derive the network blueprint display name from project metadata
+  const networkBlueprintName = useMemo(() => {
+    const presetId = (
+      isRecord(project?.metadata)
+        ? (project.metadata as UnknownRecord)["network_preset"]
+        : undefined
+    ) as string | undefined;
+    if (!presetId) return undefined;
+    const matched = DEFAULT_PRESETS.find((p) => p.id === presetId);
+    if (matched) {
+      // Build a readable label, e.g. "Standard (Public subnet, Internet Gateway, SSH/HTTP/HTTPS ports)"
+      const featureSummary =
+        matched.features.length > 0 ? ` (${matched.features.join(" + ")})` : "";
+      return `${matched.name}${featureSummary}`;
+    }
+    // Fallback: capitalize the raw preset id
+    return presetId.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+  }, [project?.metadata]);
+
   const unifiedViewProps = {
     project: unifiedProject,
     instanceStats: {
@@ -467,6 +502,7 @@ export const useProjectDetailsAdapter = (
     setupSteps,
     setupProgressPercent,
     edgeNetworkConnected,
+    ...(networkBlueprintName !== undefined ? { networkBlueprintName } : {}),
     ...(networkData !== undefined ? { networkStatus: networkData } : {}),
     ...(edgeNetworkName !== undefined ? { edgeNetworkName } : {}),
     instances: projectInstances,
@@ -476,10 +512,6 @@ export const useProjectDetailsAdapter = (
     onSyncResources,
     onViewNetworkDetails: () => onViewResource("vpcs"),
     onViewAllResources: () => onViewResource("vpcs"),
-    onViewKeyPairs: () => {
-      setActiveComputeSubView("keypairs");
-      setActiveTab("compute");
-    },
     onViewRouteTables: () => onViewResource("routes"),
     onViewElasticIps: () => onViewResource("eips"),
     onViewNetworkInterfaces: () => onViewResource("enis"),
@@ -492,6 +524,7 @@ export const useProjectDetailsAdapter = (
     onViewVpcPeering: () => onViewResource("peering"),
     onViewLoadBalancers: () => onViewResource("lbs"),
     onViewUsers,
+    onViewCompute: () => setActiveTab("compute"),
     isEnablingInternet: config.isEnablingInternet ?? false,
     isSyncing: config.isSyncing ?? false,
     isProvisioning: config.isStatusFetching ?? false,
@@ -551,27 +584,96 @@ export const useProjectDetailsAdapter = (
       id: "overview",
       label: "Overview",
       icon: LayoutDashboard,
+      tooltip: "Project health, resource summary, and quick actions",
       content: (
         <ProjectDetailsOverview
           requiredActions={requiredActions}
           onRequiredAction={config.onRequiredAction}
           unifiedViewProps={unifiedViewProps}
+          onNavigateToTab={setActiveTab}
         />
       ),
     },
   ];
 
   if (computeContent) {
-    tabs.push({ id: "compute", label: "Compute", icon: Activity, content: computeContent });
+    tabs.push({
+      id: "compute",
+      label: "Compute",
+      icon: Activity,
+      tooltip: "Launch and manage virtual servers (instances) and SSH key pairs",
+      content: computeContent,
+    });
   }
   if (networkingContent) {
-    tabs.push({ id: "networking", label: "Networking", icon: Network, content: networkingContent });
+    tabs.push({
+      id: "networking",
+      label: "Networking",
+      icon: Network,
+      tooltip: "Manage VPCs, subnets, security groups, and other network resources",
+      content: networkingContent,
+      hidden: !isFeatureSupported(projectProvider, "vpcs"),
+    });
   }
+  const storageContent = config.renderStorageTab?.() ?? undefined;
+  const imagesContent = config.renderImagesTab?.() ?? undefined;
+  const dnsContent = config.renderDnsTab?.() ?? undefined;
+  const autoScalingContent = config.renderAutoScalingTab?.() ?? undefined;
+  const limitsContent = config.renderLimitsTab?.() ?? undefined;
+  const settingsContent = config.renderSettingsTab?.() ?? undefined;
+
   tabs.push(
-    { id: "storage", label: "Storage", icon: Database },
-    { id: "team", label: "Identity & Access", icon: Users, content: teamContent },
-    { id: "limits", label: "Limits", icon: Shield },
-    { id: "settings", label: "Settings", icon: Settings }
+    {
+      id: "storage",
+      label: "Storage",
+      icon: Database,
+      tooltip: "Create and manage virtual hard drives (volumes) and snapshots",
+      content: storageContent,
+    },
+    {
+      id: "images",
+      label: "Images",
+      icon: ImageIcon,
+      tooltip: "Browse available operating system templates for new servers",
+      content: imagesContent,
+    },
+    {
+      id: "dns",
+      label: "DNS",
+      icon: Globe,
+      tooltip: "Map domain names (like myapp.com) to your server IP addresses",
+      content: dnsContent,
+      hidden: !isFeatureSupported(projectProvider, "dns"),
+    },
+    {
+      id: "autoscaling",
+      label: "Auto-Scaling",
+      icon: Layers,
+      tooltip: "Automatically add or remove servers based on demand",
+      content: autoScalingContent,
+      hidden: !isFeatureSupported(projectProvider, "autoscaling"),
+    },
+    {
+      id: "team",
+      label: "Identity & Access",
+      icon: Users,
+      tooltip: "Manage project members, roles, and access policies",
+      content: teamContent,
+    },
+    {
+      id: "limits",
+      label: "Limits",
+      icon: Shield,
+      tooltip: "View resource usage vs. your quota limits",
+      content: limitsContent,
+    },
+    {
+      id: "settings",
+      label: "Settings",
+      icon: Settings,
+      tooltip: "Project name, description, provider details, and danger zone",
+      content: settingsContent,
+    }
   );
 
   return {

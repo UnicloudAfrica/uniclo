@@ -1,7 +1,7 @@
 import { X, Loader2 } from "lucide-react";
 
-import ToastUtils from "../../../../utils/toastUtil"; // Ensure ToastUtils is
-import { useDeleteEbsVolume } from "../../../../hooks/adminHooks/ebsHooks";
+import ToastUtils from "@/utils/toastUtil"; // Ensure ToastUtils is
+import { useDeleteEbsVolume } from "@/hooks/adminHooks/ebsHooks";
 const DeleteEBSModal = ({ isOpen, onClose, ebsVolume }: any) => {
   // Use the useDeleteEbsVolume hook
   const { mutate, isPending } = useDeleteEbsVolume();

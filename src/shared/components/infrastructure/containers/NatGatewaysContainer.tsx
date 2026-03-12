@@ -1,19 +1,41 @@
 import React, { useState } from "react";
 import { Plus, RefreshCw } from "lucide-react";
-import { getNatGatewayPermissions, type Hierarchy } from "../../../config/permissionPresets";
+import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
+import { getNatGatewayPermissions, type Hierarchy } from "@/shared/config/permissionPresets";
 import { NatGatewaysOverview } from "..";
-import ToastUtils from "../../../../utils/toastUtil";
+import ToastUtils from "@/utils/toastUtil";
 import ModernButton from "../../ui/ModernButton";
+import ConfirmDialog from "@/shared/components/ui/ConfirmDialog";
 import CreateNatGatewayModal from "../modals/CreateNatGatewayModal";
+import type { NatGateway } from "../types";
 
 interface NatGatewayHooks {
   useList: (
     projectId: string,
     region?: string,
-    options?: any
-  ) => { data: unknown; isLoading: boolean; refetch: () => void };
-  useCreate: () => { mutate: (input: any, options?: any) => void; isPending: boolean };
-  useDelete: () => { mutate: (input: any, options?: any) => void; isPending: boolean }; // Some Delete hooks use mutateAsync, check usage. vpcInfraHooks uses mutate.
+    options?: { enabled?: boolean }
+  ) => UseQueryResult<NatGateway[], Error>;
+  useCreate: () => UseMutationResult<
+    NatGateway,
+    Error,
+    {
+      project_id: string;
+      region: string;
+      payload: {
+        subnet_id: string;
+        vpc_id?: string;
+        elastic_ip_id?: string;
+        name?: string;
+      };
+    },
+    unknown
+  >;
+  useDelete: () => UseMutationResult<
+    unknown,
+    Error,
+    { projectId: string; region?: string; natGatewayId: string },
+    unknown
+  >;
 }
 
 interface NatGatewaysContainerProps {
@@ -45,6 +67,7 @@ const NatGatewaysContainer: React.FC<NatGatewaysContainerProps> = ({
   const {
     data: natGateways = [],
     isLoading,
+    isFetching,
     refetch,
   } = hooks.useList(projectId, region, {
     enabled: Boolean(projectId),
@@ -54,43 +77,63 @@ const NatGatewaysContainer: React.FC<NatGatewaysContainerProps> = ({
   const { mutate: deleteNatGateway } = hooks.useDelete();
 
   const [isCreateModalOpen, setCreateModal] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; data?: string }>({
+    open: false,
+  });
 
-  const handleCreate = (data: any) => {
+  const handleCreate = (data: {
+    project_id: string;
+    region: string;
+    payload: {
+      subnet_id: string;
+      vpc_id?: string;
+      elastic_ip_id?: string;
+      name?: string;
+    };
+  }) => {
     if (!permissions.canCreate) return;
     createNatGateway(data, {
       onSuccess: () => {
         setCreateModal(false);
         ToastUtils.success("NAT Gateway created successfully.");
-        // Refetch is usually handled by Query Invalidation in the hook
+        refetch();
       },
-      onError: (error: any) => {
-        ToastUtils.error(error?.message || "Failed to create NAT Gateway.");
+      onError: (error: unknown) => {
+        const message = error instanceof Error ? error.message : "Failed to create NAT Gateway.";
+        ToastUtils.error(message);
       },
     });
   };
 
   const handleDelete = (id: string) => {
     if (!permissions.canDelete) return;
-    if (confirm("Are you sure you want to delete this NAT Gateway?")) {
-      deleteNatGateway(
-        { projectId, region, natGatewayId: id },
-        {
-          onSuccess: () => {
-            ToastUtils.success("NAT Gateway deleted.");
-          },
-          onError: (error: any) => {
-            ToastUtils.error(error?.message || "Failed to delete NAT Gateway.");
-          },
-        }
-      );
-    }
+    setDeleteConfirm({ open: true, data: id });
+  };
+
+  const confirmDelete = () => {
+    if (!deleteConfirm.data) return;
+    deleteNatGateway(
+      { projectId, region, natGatewayId: deleteConfirm.data },
+      {
+        onSuccess: () => {
+          ToastUtils.success("NAT Gateway deleted.");
+          setDeleteConfirm({ open: false });
+          refetch();
+        },
+        onError: (error: unknown) => {
+          const message = error instanceof Error ? error.message : "Failed to delete NAT Gateway.";
+          ToastUtils.error(message);
+          setDeleteConfirm({ open: false });
+        },
+      }
+    );
   };
 
   const headerActions = (
     <div className="flex items-center gap-3">
-      <ModernButton variant="secondary" size="sm" onClick={() => refetch()} disabled={isLoading}>
-        <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-        Refresh
+      <ModernButton variant="secondary" size="sm" onClick={() => refetch()} disabled={isFetching}>
+        <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
+        {isFetching ? "Refreshing..." : "Refresh"}
       </ModernButton>
       {permissions.canCreate && (
         <ModernButton variant="primary" size="sm" onClick={() => setCreateModal(true)}>
@@ -105,7 +148,7 @@ const NatGatewaysContainer: React.FC<NatGatewaysContainerProps> = ({
     <>
       <Wrapper headerActions={headerActions}>
         <NatGatewaysOverview
-          natGateways={natGateways as any[]}
+          natGateways={natGateways}
           isLoading={isLoading}
           availableSubnetsCount={0} // We'd need to fetch subnets to get this real count. Overview uses it for stats?
           onDelete={permissions.canDelete ? (gw) => handleDelete(gw.id) : undefined}
@@ -120,6 +163,16 @@ const NatGatewaysContainer: React.FC<NatGatewaysContainerProps> = ({
         region={region}
         onCreate={handleCreate}
         isLoading={isCreating}
+      />
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.open}
+        title="Delete NAT Gateway"
+        message="Are you sure you want to delete this NAT Gateway?"
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteConfirm({ open: false })}
       />
     </>
   );

@@ -1,12 +1,14 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { Shield } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
+import { ResourceEmptyState } from "../ui/ResourceEmptyState";
 import type { SecurityGroup } from "./types";
 
 interface SecurityGroupsTableProps {
   securityGroups: SecurityGroup[];
   isLoading?: boolean | undefined;
   emptyMessage?: string | undefined;
+  emptyAction?: ReactNode;
   onViewRules?: ((sg: SecurityGroup) => void) | undefined;
   onDelete?: ((sg: SecurityGroup) => void) | undefined;
   deleteLabel?: string | undefined;
@@ -17,6 +19,7 @@ const SecurityGroupsTable: React.FC<SecurityGroupsTableProps> = ({
   securityGroups,
   isLoading = false,
   emptyMessage = "No security groups found",
+  emptyAction,
   onViewRules,
   onDelete,
   deleteLabel = "Delete",
@@ -32,10 +35,12 @@ const SecurityGroupsTable: React.FC<SecurityGroupsTableProps> = ({
 
   if (securityGroups.length === 0) {
     return (
-      <ModernCard className="p-12 text-center">
-        <Shield className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-        <div className="text-gray-500">{emptyMessage}</div>
-      </ModernCard>
+      <ResourceEmptyState
+        title="No Security Groups"
+        message={emptyMessage}
+        icon={<Shield className="w-5 h-5" />}
+        action={emptyAction}
+      />
     );
   }
 

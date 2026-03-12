@@ -2,12 +2,7 @@ import React, { useState } from "react";
 import { Camera, Disc } from "lucide-react";
 import SnapshotList from "./SnapshotList";
 import ImageList from "./ImageList";
-import {
-  useSnapshots,
-  useDeleteSnapshot,
-  useImages,
-  useDeleteImage,
-} from "../../../../hooks/storageHooks";
+import { useSnapshots, useDeleteSnapshot, useImages, useDeleteImage } from "@/hooks/storageHooks";
 import ModernCard from "../../ui/ModernCard";
 import { ResourceEmptyState } from "../../ui/ResourceEmptyState";
 
@@ -76,7 +71,7 @@ const StorageManagementContainer: React.FC<StorageManagementContainerProps> = ({
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as "snapshots" | "images")}
               className={`
                                 flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
                                 ${

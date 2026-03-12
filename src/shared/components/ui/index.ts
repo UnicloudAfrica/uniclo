@@ -40,3 +40,10 @@ export { default as StatusPill } from "./StatusPill";
 export type { StatusTone } from "./StatusPill";
 export { default as Pagination } from "./Pagination";
 export { default as SearchBar } from "./SearchBar";
+
+// Feedback Components
+export { default as ConfirmDialog } from "./ConfirmDialog";
+
+// Provider Components
+export { default as ProviderBadge } from "./ProviderBadge";
+export { getProviderLabel, getProviderShortLabel, getRegionOptionLabel } from "./ProviderBadge";

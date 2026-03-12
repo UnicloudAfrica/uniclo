@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
-import { useFetchAdmins } from "../../../hooks/adminHooks/adminHooks";
-import ToastUtils from "../../../utils/toastUtil";
-import { useCreateCustomStage } from "../../../hooks/adminHooks/leadsHook";
-import logger from "../../../utils/logger";
+import { useFetchAdmins } from "@/hooks/adminHooks/adminHooks";
+import ToastUtils from "@/utils/toastUtil";
+import { useCreateCustomStage } from "@/hooks/adminHooks/leadsHooks";
+import logger from "@/utils/logger";
 
 const stageOptions = [
   "initial_contact",

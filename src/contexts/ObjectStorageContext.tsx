@@ -1,3 +1,17 @@
+/**
+ * @deprecated Prefer the React Query hooks from "@/hooks/useObjectStorage" for new code.
+ *
+ * This context is retained for backward compatibility with existing consumers.
+ * For account/bucket server-state, use:
+ *   - useStorageAccounts()  — paginated accounts via React Query
+ *   - useStorageBuckets()   — bucket list via React Query
+ *   - useCreateBucket()     — mutation with automatic cache invalidation
+ *   - useDeleteBucket()     — mutation with automatic cache invalidation
+ *
+ * The order management (createOrder, updateOrder, fastTrackOrder) is
+ * client-side localStorage state and remains in this context until
+ * the order flow is migrated to the backend billing pipeline.
+ */
 import {
   createContext,
   useCallback,
@@ -7,13 +21,11 @@ import {
   useRef,
   useState,
   type JSX,
+  type ReactNode,
 } from "react";
-import type { ReactNode } from "react";
 import objectStorageApi from "../services/objectStorageApi";
 import ToastUtils from "../utils/toastUtil";
-import useAdminAuthStore from "../stores/adminAuthStore";
-import useClientAuthStore from "../stores/clientAuthStore";
-import useTenantAuthStore from "../stores/tenantAuthStore";
+import useAuthStore from "../stores/authStore";
 import logger from "../utils/logger";
 
 const STORAGE_KEY = "uc_object_storage_orders_v1";
@@ -119,7 +131,7 @@ const ObjectStorageContext = createContext<ObjectStorageContextValue | undefined
 const randomId = (): string =>
   (globalThis.window.crypto?.randomUUID?.() ?? `order_${Date.now()}_${Math.random()}`)
     .toString()
-    .replace(/-/g, "");
+    .replaceAll("-", "");
 
 const createTimelineEntry = (status: string, note: string): OrderTimelineEntry => ({
   id: randomId(),
@@ -150,10 +162,7 @@ export const ObjectStorageProvider = ({ children }: ObjectStorageProviderProps):
   });
 
   const pendingProvisionTimeouts = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-  const isAdminAuthenticated = useAdminAuthStore((state) => state.isAuthenticated);
-  const isClientAuthenticated = useClientAuthStore((state) => state.isAuthenticated);
-  const isTenantAuthenticated = useTenantAuthStore((state) => state.isAuthenticated);
-  const isAuthenticated = isAdminAuthenticated || isClientAuthenticated || isTenantAuthenticated;
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [accounts, setAccounts] = useState<ObjectStorageAccount[]>([]);
   const [accountsLoading, setAccountsLoading] = useState(false);
   const [accountsError, setAccountsError] = useState<string | null>(null);
@@ -231,8 +240,8 @@ export const ObjectStorageProvider = ({ children }: ObjectStorageProviderProps):
         }
         const { items, meta } = await objectStorageApi.fetchAccounts(nextQuery);
         setAccounts(Array.isArray(items) ? items : []);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setAccountsMeta(meta ?? (null as any));
+
+        setAccountsMeta((meta as Record<string, unknown>) ?? null);
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Unable to load Silo Storage accounts.";
@@ -283,15 +292,10 @@ export const ObjectStorageProvider = ({ children }: ObjectStorageProviderProps):
 
       try {
         const data = await objectStorageApi.fetchBuckets(accountId);
-        /* eslint-disable @typescript-eslint/no-explicit-any */
-        setAccountBuckets(
-          (prev) =>
-            ({
-              ...prev,
-              [accountKey]: data,
-            }) as any
-        );
-        /* eslint-enable @typescript-eslint/no-explicit-any */
+        setAccountBuckets((prev) => ({
+          ...prev,
+          [accountKey]: data as ObjectStorageBucket[],
+        }));
         return data;
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unable to load silos.";
@@ -529,8 +533,9 @@ export const ObjectStorageProvider = ({ children }: ObjectStorageProviderProps):
   );
 
   return (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    <ObjectStorageContext.Provider value={value as any}> {children}</ObjectStorageContext.Provider>
+    <ObjectStorageContext.Provider value={value as ObjectStorageContextValue}>
+      {children}
+    </ObjectStorageContext.Provider>
   );
 };
 

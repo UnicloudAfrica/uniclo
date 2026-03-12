@@ -2,6 +2,7 @@ import React from "react";
 import { Activity } from "lucide-react";
 import { ModernButton, ModernCard } from "../../ui";
 import ProjectUnifiedView, { ProjectUnifiedViewProps } from "./ProjectUnifiedView";
+import GettingStartedChecklist from "./GettingStartedChecklist";
 
 interface RequiredActionPayload {
   method?: string;
@@ -22,6 +23,8 @@ interface ProjectDetailsOverviewProps {
   requiredActions?: RequiredActionItem[];
   onRequiredAction?: (action: RequiredActionPayload, item: RequiredActionItem) => void;
   unifiedViewProps: ProjectUnifiedViewProps;
+  /** Navigate to another tab (for Getting Started links) */
+  onNavigateToTab?: (tabId: string) => void;
   children?: React.ReactNode;
 }
 
@@ -29,14 +32,39 @@ const ProjectDetailsOverview: React.FC<ProjectDetailsOverviewProps> = ({
   requiredActions = [],
   onRequiredAction,
   unifiedViewProps,
+  onNavigateToTab,
   children,
 }) => {
   const actionItems = requiredActions.filter(
     (item) => item?.action && !item.completed && !item.complete
   );
 
+  // Derive checklist data from props already flowing through the overview
+  const rc = unifiedViewProps.resourceCounts ?? {};
+  const instanceCount = unifiedViewProps.instanceStats?.total ?? 0;
+  const internetEnabled = Boolean(
+    unifiedViewProps.networkStatus?.internet_gateway?.enabled ??
+    unifiedViewProps.edgeNetworkConnected ??
+    (rc.internet_gateways ?? 0) > 0
+  );
+
   return (
     <div className="space-y-6">
+      {/* Getting Started Checklist — shows until all core steps are done */}
+      {onNavigateToTab && (
+        <GettingStartedChecklist
+          provider={unifiedViewProps.project?.provider}
+          instanceCount={instanceCount}
+          vpcCount={rc.vpcs ?? 0}
+          subnetCount={rc.subnets ?? 0}
+          securityGroupCount={rc.security_groups ?? 0}
+          internetEnabled={internetEnabled}
+          teamMemberCount={rc.users ?? 0}
+          floatingIpCount={rc.floating_ips ?? 0}
+          onNavigateToTab={onNavigateToTab}
+        />
+      )}
+
       {actionItems.length > 0 && (
         <ModernCard className="border-l-4 border-l-yellow-400 bg-yellow-50/30">
           <div className="flex items-center justify-between mb-4">

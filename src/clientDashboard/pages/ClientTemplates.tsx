@@ -1,7 +1,7 @@
 import React from "react";
 import ClientActiveTab from "../components/clientActiveTab";
 import ClientPageShell from "../components/ClientPageShell";
-import TemplateManager from "../../shared/components/templates/TemplateManager";
+import TemplateManager from "@/shared/components/templates/TemplateManager";
 
 const ClientTemplates: React.FC = () => {
   return (

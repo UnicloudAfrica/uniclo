@@ -22,6 +22,13 @@ export interface TenantContext {
   currentTenant: Tenant | null;
 }
 
+/**
+ * AuthState — Backward-compatible type alias.
+ *
+ * The canonical type is `UnifiedAuthState` from `@/stores/authStore`.
+ * This interface is kept for backward compatibility with components
+ * that reference `AuthState` in typed selectors.
+ */
 export interface AuthState {
   token: string | null;
   userEmail: string | null;
@@ -33,6 +40,8 @@ export interface AuthState {
   twoFactorRequired: boolean;
   cloudRoles: string[];
   cloudAbilities: string[];
+  abilities: string[];
+  workspaceRole: string | null;
   currentTenant: Tenant | null;
   isCentralDomain: boolean;
   currentDomain: string | null;
@@ -50,6 +59,8 @@ export interface AuthState {
   setDomain?: (domain: string | null) => void;
   setCloudRoles: (roles: string[]) => void;
   setCloudAbilities: (abilities: string[]) => void;
+  setAbilities: (abilities: string[]) => void;
+  setWorkspaceRole: (role: string | null) => void;
   setAvailableTenants?: (tenants: Tenant[]) => void;
   setCurrentTenant: (tenant: Tenant | null) => void;
   setIsCentralDomain?: (value: boolean) => void;
@@ -62,4 +73,12 @@ export interface AuthState {
   getEffectiveRole?: () => string;
   updateContext?: (context: TenantContext) => void;
   setHasHydrated: (value: boolean) => void;
+  // Fields from UnifiedAuthState for compatibility
+  session?: unknown;
+  login?: (response: unknown) => void;
+  logout?: () => Promise<void>;
+  getRole?: () => string | null;
+  isAdmin?: () => boolean;
+  isTenant?: () => boolean;
+  isClient?: () => boolean;
 }

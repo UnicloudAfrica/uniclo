@@ -24,9 +24,8 @@ interface CaseItem {
 }
 
 const Resources = () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [resourcesArray] = useContext(ResourcesContext) as [ResourceItem[]];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const [casesArray] = useContext(CasesContext) as [CaseItem[]];
 
   return (

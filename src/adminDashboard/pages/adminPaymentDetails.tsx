@@ -10,18 +10,16 @@ import {
   Wallet,
 } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
-import ResourceHero from "../../shared/components/ui/ResourceHero";
-import { ModernButton } from "../../shared/components/ui";
-import { ModernCard } from "../../shared/components/ui";
-import ModernTable from "../../shared/components/ui/ModernTable";
-import { ResourceEmptyState } from "../../shared/components/ui";
+import ResourceHero from "@/shared/components/ui/ResourceHero";
+import { ModernButton, ModernCard, ResourceEmptyState } from "@/shared/components/ui";
+import ModernTable from "@/shared/components/ui/ModernTable";
 import {
   useDownloadAdminTransactionReceipt,
   useFetchAdminTransaction,
-} from "../../hooks/adminHooks/paymentHooks";
-import { designTokens } from "../../styles/designTokens";
+} from "@/hooks/adminHooks/paymentHooks";
+import { designTokens } from "@/styles/designTokens";
 
-const formatCurrency = (amount: any, currency = "NGN") => {
+const formatCurrency = (amount: number | string | null | undefined, currency = "NGN") => {
   if (amount === null || amount === undefined || Number.isNaN(amount)) {
     return "—";
   }
@@ -33,7 +31,7 @@ const formatCurrency = (amount: any, currency = "NGN") => {
   })}`;
 };
 
-const formatDateTime = (value: any) => {
+const formatDateTime = (value: string | number | Date | null | undefined) => {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
@@ -83,7 +81,7 @@ const statusPalette = {
     border: "border-slate-200",
   },
 };
-const StatusPill = ({ status }: any) => {
+const StatusPill = ({ status }: { status: string }) => {
   if (!status) return null;
   const normalizedStatus = String(status).toLowerCase() as keyof typeof statusPalette;
   const tone = statusPalette[normalizedStatus] || statusPalette.default;
@@ -92,7 +90,7 @@ const StatusPill = ({ status }: any) => {
       className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${tone.bg} ${tone.text} ${tone.border}`}
     >
       <BadgeCheck className="h-3.5 w-3.5" />
-      {status.replace(/_/g, " ")}
+      {status.replaceAll("_", " ")}
     </span>
   );
 };
@@ -110,7 +108,7 @@ export default function AdminPaymentDetails() {
   const { mutate: downloadReceipt, isPending: isDownloadingReceipt } =
     useDownloadAdminTransactionReceipt();
 
-  const paymentData: any = data;
+  const paymentData = data as Record<string, any>;
   const transaction = paymentData?.transaction ?? {};
   const payment = paymentData?.payment ?? {};
   const lineItems = paymentData?.line_items ?? paymentData?.order?.items ?? [];
@@ -128,7 +126,7 @@ export default function AdminPaymentDetails() {
       },
       {
         label: "Status",
-        value: (transaction.status || "Pending").replace(/_/g, " "),
+        value: (transaction.status || "Pending").replaceAll("_", " "),
         description: `Updated ${formatDateTime(transaction.updated_at)}`,
         icon: <BadgeCheck className="h-4 w-4" />,
       },
@@ -165,7 +163,7 @@ export default function AdminPaymentDetails() {
     if (!transaction.identifier && !transaction.id) return;
     const identifier = transaction.identifier || transaction.id;
     downloadReceipt(identifier, {
-      onSuccess: (buffer: any) => {
+      onSuccess: (buffer) => {
         const blob = new Blob([buffer as BlobPart], { type: "application/pdf" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
@@ -198,7 +196,7 @@ export default function AdminPaymentDetails() {
     {
       label: "Transaction ID",
       value: transaction.identifier || transaction.id || "—",
-      helper: `Type: ${(transaction.type || "—").replace(/_/g, " ")}`,
+      helper: `Type: ${(transaction.type || "—").replaceAll("_", " ")}`,
     },
   ];
 
@@ -216,7 +214,7 @@ export default function AdminPaymentDetails() {
       {
         key: "description",
         header: "SERVICE",
-        render: (_: any, item: any) => (
+        render: (_: unknown, item: Record<string, any>) => (
           <div>
             <p className="font-semibold text-slate-900">{item.description || "Service charge"}</p>
             {item.itemable?.identifier && (
@@ -228,21 +226,23 @@ export default function AdminPaymentDetails() {
       {
         key: "frequency",
         header: "FREQUENCY",
-        render: (val: any) => (
-          <span className="text-slate-600">{(val || "Recurring").replace(/_/g, " ")}</span>
+        render: (val: string) => (
+          <span className="text-slate-600">{(val || "Recurring").replaceAll("_", " ")}</span>
         ),
       },
       {
         key: "quantity",
         header: "QTY",
         align: "right",
-        render: (val: any) => <span className="text-slate-600">{val ?? 1}</span>,
+        render: (val: number | string | null | undefined) => (
+          <span className="text-slate-600">{val ?? 1}</span>
+        ),
       },
       {
         key: "unit_price",
         header: "UNIT PRICE",
         align: "right",
-        render: (val: any) => (
+        render: (val: number | string | null | undefined) => (
           <span className="text-slate-600">{formatCurrency(val ?? 0, currency)}</span>
         ),
       },
@@ -250,20 +250,20 @@ export default function AdminPaymentDetails() {
         key: "subtotal",
         header: "LINE TOTAL",
         align: "right",
-        render: (val: any) => (
+        render: (val: number | string | null | undefined) => (
           <span className="font-semibold text-slate-900">{formatCurrency(val ?? 0, currency)}</span>
         ),
       },
     ];
 
-    const data = lineItems.map((item: any, idx: number) => ({
+    const normalizedLineItems = lineItems.map((item: Record<string, any>, idx: number) => ({
       ...item,
       id: item.identifier || idx,
     }));
 
     return (
       <ModernTable
-        data={data}
+        data={normalizedLineItems}
         columns={columns as any}
         searchable={false}
         filterable={false}
@@ -282,7 +282,7 @@ export default function AdminPaymentDetails() {
       {
         key: "name",
         header: "INSTANCE",
-        render: (_: any, instance: any) => (
+        render: (_: unknown, instance: Record<string, any>) => (
           <div>
             <p className="font-semibold text-slate-900">{instance.name || instance.identifier}</p>
             <span className="text-xs text-slate-500">{instance.identifier}</span>
@@ -292,21 +292,21 @@ export default function AdminPaymentDetails() {
       {
         key: "region",
         header: "REGION",
-        render: (val: any) => <span className="text-slate-600 uppercase">{val || "—"}</span>,
+        render: (val: string) => <span className="text-slate-600 uppercase">{val || "—"}</span>,
       },
       {
         key: "provider",
         header: "PROVIDER",
-        render: (val: any) => <span className="text-slate-600">{val || "—"}</span>,
+        render: (val: string) => <span className="text-slate-600">{val || "—"}</span>,
       },
       {
         key: "status",
         header: "STATUS",
-        render: (val: any) => <span className="text-slate-600 capitalize">{val || "—"}</span>,
+        render: (val: string) => <span className="text-slate-600 capitalize">{val || "—"}</span>,
       },
     ];
 
-    const instanceData = paymentData.instances.map((i: any) => ({
+    const instanceData = paymentData.instances.map((i: Record<string, any>) => ({
       ...i,
       id: i.identifier || i.id,
     }));
@@ -337,152 +337,148 @@ export default function AdminPaymentDetails() {
     );
   };
   return (
-    <>
-      <AdminPageShell
-        title="Payment Detail"
-        description="Drill into a payment to review customer, gateway, and provisioning data in one place."
-        breadcrumbs={breadcrumbs}
-        contentClassName="space-y-8"
-        subHeaderContent={
-          <ModernButton
-            variant="ghost"
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:border-slate-300 hover:text-slate-800"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </ModernButton>
-        }
-      >
-        {isError ? (
-          <ModernCard className="flex flex-col items-center justify-center gap-4 border border-rose-200 bg-rose-50/80 py-12 text-center text-rose-700">
-            <p className="text-lg font-semibold">Unable to load payment</p>
-            <p className="text-sm max-w-lg text-rose-600">
-              We couldn't retrieve this payment record. It may have been removed or there may be a
-              temporary service disruption.
-            </p>
-            <ModernButton onClick={() => refetchTransaction()}>Retry</ModernButton>
-          </ModernCard>
-        ) : (
-          <>
-            <ResourceHero
-              title={
-                transaction.identifier ? `Receipt ${transaction.identifier}` : "Payment receipt"
-              }
-              subtitle="Billing"
-              description="Review the payment timeline, gateway responses, services fulfilled, and download an official receipt with the UniCloud brand."
-              metrics={metrics}
-              accent="midnight"
-              rightSlot={
-                <ModernButton
-                  onClick={handleDownloadReceipt}
-                  disabled={isDownloadingReceipt || isFetching}
-                  className="inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
-                >
-                  {isDownloadingReceipt ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4" />
-                  )}
-                  Download receipt
-                </ModernButton>
-              }
-            />
+    <AdminPageShell
+      title="Payment Detail"
+      description="Drill into a payment to review customer, gateway, and provisioning data in one place."
+      breadcrumbs={breadcrumbs}
+      contentClassName="space-y-8"
+      subHeaderContent={
+        <ModernButton
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:border-slate-300 hover:text-slate-800"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </ModernButton>
+      }
+    >
+      {isError ? (
+        <ModernCard className="flex flex-col items-center justify-center gap-4 border border-rose-200 bg-rose-50/80 py-12 text-center text-rose-700">
+          <p className="text-lg font-semibold">Unable to load payment</p>
+          <p className="text-sm max-w-lg text-rose-600">
+            We couldn't retrieve this payment record. It may have been removed or there may be a
+            temporary service disruption.
+          </p>
+          <ModernButton onClick={() => refetchTransaction()}>Retry</ModernButton>
+        </ModernCard>
+      ) : (
+        <>
+          <ResourceHero
+            title={transaction.identifier ? `Receipt ${transaction.identifier}` : "Payment receipt"}
+            subtitle="Billing"
+            description="Review the payment timeline, gateway responses, services fulfilled, and download an official receipt with the UniCloud brand."
+            metrics={metrics}
+            accent="midnight"
+            rightSlot={
+              <ModernButton
+                onClick={handleDownloadReceipt}
+                disabled={isDownloadingReceipt || isFetching}
+                className="inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+              >
+                {isDownloadingReceipt ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                Download receipt
+              </ModernButton>
+            }
+          />
 
-            <ModernCard className="space-y-6 border border-slate-200/80 bg-white/95 shadow-sm backdrop-blur">
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Payment summary
-                  </p>
-                  <h2 className="text-lg font-semibold text-slate-900">Core payment properties</h2>
-                  <p className="text-sm text-slate-500">
-                    Quickly review who paid, how it was processed, and any gateway references tied
-                    to the charge.
-                  </p>
-                </div>
-                <StatusPill status={transaction.status} />
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                {summaryItems.map((item: any) => (
-                  <div
-                    key={item.label}
-                    className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm"
-                  >
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      {item.label}
-                    </p>
-                    <p className="mt-2 text-sm font-semibold text-slate-900">{item.value}</p>
-                    {item.helper && <p className="mt-1 text-xs text-slate-500">{item.helper}</p>}
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <ModernButton
-                  variant="outline"
-                  className="inline-flex items-center gap-2"
-                  onClick={() => refetchTransaction()}
-                  disabled={isFetching}
-                >
-                  {isFetching ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <CreditCard className="h-4 w-4" />
-                  )}
-                  Refresh payment state
-                </ModernButton>
-              </div>
-            </ModernCard>
-
-            <ModernCard className="space-y-6 border border-slate-200/80 bg-white/95 shadow-sm">
-              <div className="space-y-1">
+          <ModernCard className="space-y-6 border border-slate-200/80 bg-white/95 shadow-sm backdrop-blur">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div className="space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Charges
+                  Payment summary
                 </p>
-                <h2 className="text-lg font-semibold text-slate-900">Billable services included</h2>
+                <h2 className="text-lg font-semibold text-slate-900">Core payment properties</h2>
                 <p className="text-sm text-slate-500">
-                  Each line item represents an infrastructure component or add-on that was billed as
-                  part of this transaction.
+                  Quickly review who paid, how it was processed, and any gateway references tied to
+                  the charge.
                 </p>
               </div>
-              {renderLineItems()}
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Subtotal
-                  </p>
-                  <p className="mt-2 text-lg font-semibold text-slate-900">
-                    {formatCurrency(totals.subtotal ?? transaction.amount, currency)}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Taxes & fees
-                  </p>
-                  <p className="mt-2 text-lg font-semibold text-slate-900">
-                    {formatCurrency((totals.tax ?? 0) + (totals.fees ?? 0), currency)}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Total billed
-                  </p>
-                  <p
-                    className="mt-2 text-lg font-semibold"
-                    style={{ color: designTokens.colors["primary"]?.[600] ?? "var(--theme-color)" }}
-                  >
-                    {formatCurrency(totals.total ?? transaction.amount, currency)}
-                  </p>
-                </div>
-              </div>
-            </ModernCard>
+              <StatusPill status={transaction.status} />
+            </div>
 
-            {renderInstances()}
-          </>
-        )}
-      </AdminPageShell>
-    </>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {summaryItems.map((item: { label: string; value: string; helper: string | null }) => (
+                <div
+                  key={item.label}
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm"
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    {item.label}
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-slate-900">{item.value}</p>
+                  {item.helper && <p className="mt-1 text-xs text-slate-500">{item.helper}</p>}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <ModernButton
+                variant="outline"
+                className="inline-flex items-center gap-2"
+                onClick={() => refetchTransaction()}
+                disabled={isFetching}
+              >
+                {isFetching ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <CreditCard className="h-4 w-4" />
+                )}
+                Refresh payment state
+              </ModernButton>
+            </div>
+          </ModernCard>
+
+          <ModernCard className="space-y-6 border border-slate-200/80 bg-white/95 shadow-sm">
+            <div className="space-y-1">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Charges
+              </p>
+              <h2 className="text-lg font-semibold text-slate-900">Billable services included</h2>
+              <p className="text-sm text-slate-500">
+                Each line item represents an infrastructure component or add-on that was billed as
+                part of this transaction.
+              </p>
+            </div>
+            {renderLineItems()}
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Subtotal
+                </p>
+                <p className="mt-2 text-lg font-semibold text-slate-900">
+                  {formatCurrency(totals.subtotal ?? transaction.amount, currency)}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Taxes & fees
+                </p>
+                <p className="mt-2 text-lg font-semibold text-slate-900">
+                  {formatCurrency((totals.tax ?? 0) + (totals.fees ?? 0), currency)}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Total billed
+                </p>
+                <p
+                  className="mt-2 text-lg font-semibold"
+                  style={{ color: designTokens.colors["primary"]?.[600] ?? "var(--theme-color)" }}
+                >
+                  {formatCurrency(totals.total ?? transaction.amount, currency)}
+                </p>
+              </div>
+            </div>
+          </ModernCard>
+
+          {renderInstances()}
+        </>
+      )}
+    </AdminPageShell>
   );
 }

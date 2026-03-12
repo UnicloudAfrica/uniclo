@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   Activity,
@@ -20,15 +20,15 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
-import adminRegionApi from "../../services/adminRegionApi";
-import ToastUtils from "../../utils/toastUtil";
+import adminRegionApi from "@/services/adminRegionApi";
+import ToastUtils from "@/utils/toastUtil";
 import AdminPageShell from "../components/AdminPageShell";
-import { ModernCard } from "../../shared/components/ui";
-import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
-import { ModernButton } from "../../shared/components/ui";
-import StatusPill from "../../shared/components/ui/StatusPill";
-import { designTokens } from "../../styles/designTokens";
-import logger from "../../utils/logger";
+import { ModernCard } from "@/shared/components/ui";
+import ModernStatsCard from "@/shared/components/ui/ModernStatsCard";
+import { ModernButton } from "@/shared/components/ui";
+import StatusPill from "@/shared/components/ui/StatusPill";
+import { designTokens } from "@/styles/designTokens";
+import logger from "@/utils/logger";
 
 const statusToneMap = {
   healthy: "success",
@@ -40,16 +40,17 @@ const statusLabelMap = {
   degraded: "Degraded",
   down: "Down",
 };
-const formatSegment = (value: any) => {
+const formatSegment = (value: string | undefined | null) => {
   if (!value) return "";
   return value
     .toString()
     .split(/[_-]/)
     .filter(Boolean)
-    .map((segment: any) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .map((segment: string) => segment.charAt(0).toUpperCase() + segment.slice(1))
     .join(" ");
 };
-const formatDateTime = (value: any) => (value ? new Date(value).toLocaleString() : "—");
+const formatDateTime = (value: string | Date | undefined | null) =>
+  value ? new Date(value).toLocaleString() : "—";
 
 const AttributeTile = ({ label, value, hint, icon: Icon }: any) => {
   const resolvedValue = value !== null && value !== undefined && value !== "" ? value : "—";
@@ -68,30 +69,70 @@ const AttributeTile = ({ label, value, hint, icon: Icon }: any) => {
     </div>
   );
 };
+/** Icon lookup for service types */
+const SERVICE_ICON_MAP: Record<string, React.ElementType> = {
+  compute: Server,
+  object_storage: Database,
+  database: Database,
+  cdn: _LinkIcon,
+  network: Activity,
+};
+
+interface ProviderServiceDef {
+  type: string;
+  name: string;
+  description?: string;
+  auth_type?: string;
+  label?: string;
+}
+
 const RegionDetail = () => {
   const { id: code } = useParams();
   const navigate = useNavigate();
   const [region, setRegion] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [credentialStatus, setCredentialStatus] = useState<Record<string, any>>({});
+  const [providerServices, setProviderServices] = useState<ProviderServiceDef[]>([]);
 
-  useEffect(() => {
-    fetchRegionDetail();
-  }, [code]);
-
-  const fetchRegionDetail = async () => {
+  const fetchRegionDetail = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await adminRegionApi.fetchRegionByCode(code as any);
+      const response = await adminRegionApi.fetchRegionByCode(code as string);
       setRegion(response.data);
 
-      // Fetch credential status for services
+      // Fetch credential status and provider services
       if (response.data?.code) {
         try {
           const credsRes = await adminRegionApi.getCredentialStatus(response.data.code);
-          setCredentialStatus((credsRes.data as any)?.credentials || {});
+          setCredentialStatus(
+            (credsRes.data as { credentials?: Record<string, unknown> })?.credentials || {}
+          );
         } catch (err) {
           logger.warn("Could not fetch credential status", err);
+        }
+
+        // Fetch provider-specific services so Service Connections renders dynamically
+        if (response.data?.provider) {
+          try {
+            const svcRes = await adminRegionApi.getProviderServices(
+              response.data.provider as string
+            );
+            // Backend returns { provider, provider_config, services: { compute: {...}, ... } }
+            const raw = svcRes.data as any;
+            const servicesMap = raw?.services || raw || {};
+            const parsed: ProviderServiceDef[] = Object.entries(servicesMap).map(
+              ([key, val]: [string, any]) => ({
+                type: key,
+                name: val?.label || key,
+                label: val?.label,
+                description: val?.description,
+                auth_type: val?.auth_type,
+              })
+            );
+            setProviderServices(parsed);
+          } catch (err) {
+            logger.warn("Could not fetch provider services", err);
+          }
         }
       }
     } catch (error) {
@@ -100,7 +141,12 @@ const RegionDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [code]);
+
+  useEffect(() => {
+    fetchRegionDetail();
+  }, [fetchRegionDetail]);
+
   const locationLabel = useMemo(() => {
     if (!region) return "";
     const segments = [region.city, region.country_code].filter(Boolean);
@@ -113,8 +159,18 @@ const RegionDetail = () => {
       region.status && (
         <StatusPill
           key="status"
-          label={(statusLabelMap as any)[region.status] || formatSegment(region.status)}
-          tone={(statusToneMap as any)[region.status] || "info"}
+          label={
+            statusLabelMap[region.status as keyof typeof statusLabelMap] ||
+            formatSegment(region.status)
+          }
+          tone={
+            (statusToneMap[region.status as keyof typeof statusToneMap] || "info") as
+              | "success"
+              | "warning"
+              | "danger"
+              | "info"
+              | "neutral"
+          }
         />
       ),
       <StatusPill
@@ -171,7 +227,7 @@ const RegionDetail = () => {
         </Link>
       </div>
     );
-  }, [region, loading]);
+  }, [region, loading, fetchRegionDetail]);
 
   const statsCards = useMemo(() => {
     if (!region) return [];
@@ -181,7 +237,12 @@ const RegionDetail = () => {
         key: "health",
         title: "Operational Health",
         value: formatSegment(region.status) || "Unknown",
-        color: (statusToneMap as any)[region.status] || "info",
+        color: (statusToneMap[region.status as keyof typeof statusToneMap] || "info") as
+          | "success"
+          | "warning"
+          | "danger"
+          | "info"
+          | "neutral",
         icon: <Activity size={24} />,
         description:
           region.status === "healthy"
@@ -426,88 +487,69 @@ const RegionDetail = () => {
                 </div>
               </ModernCard>
 
-              {/* Service Connections */}
+              {/* Service Connections — rendered dynamically from provider config */}
               <ModernCard title="Service Connections" className="space-y-4">
                 <div className="grid gap-3">
-                  {/* Compute (VMs) */}
-                  <div
-                    className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${
-                      credentialStatus.compute?.status === "verified"
-                        ? "border-green-200 bg-green-50"
-                        : credentialStatus.compute?.configured
-                          ? "border-yellow-200 bg-yellow-50"
-                          : "border-gray-200 bg-gray-50"
-                    }`}
-                  >
-                    <div
-                      className={`rounded-lg p-1.5 ${
-                        credentialStatus.compute?.status === "verified"
-                          ? "bg-green-100 text-green-600"
-                          : "bg-gray-100 text-gray-500"
-                      }`}
-                    >
-                      <Server size={18} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">Compute (VMs)</p>
-                      <p className="text-xs text-gray-500 truncate">Keystone authentication</p>
-                    </div>
-                    {credentialStatus.compute?.status === "verified" ? (
-                      <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-                        <CheckCircle size={12} />
-                        Verified
-                      </span>
-                    ) : credentialStatus.compute?.configured ? (
-                      <span className="flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
-                        <AlertCircle size={12} />
-                        Pending
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
-                        —
-                      </span>
-                    )}
-                  </div>
+                  {providerServices.length > 0 ? (
+                    providerServices.map((svc) => {
+                      const svcKey = svc.type || svc.name;
+                      const cred = credentialStatus[svcKey];
+                      const SvcIcon = SERVICE_ICON_MAP[svcKey] || Server;
 
-                  {/* Object Storage */}
-                  <div
-                    className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${
-                      credentialStatus.object_storage?.status === "verified"
-                        ? "border-green-200 bg-green-50"
-                        : credentialStatus.object_storage?.configured
-                          ? "border-yellow-200 bg-yellow-50"
-                          : "border-gray-200 bg-gray-50"
-                    }`}
-                  >
-                    <div
-                      className={`rounded-lg p-1.5 ${
-                        credentialStatus.object_storage?.status === "verified"
-                          ? "bg-green-100 text-green-600"
-                          : "bg-gray-100 text-gray-500"
-                      }`}
-                    >
-                      <Database size={18} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">Object Storage</p>
-                      <p className="text-xs text-gray-500 truncate">S3-compatible (ZIOS)</p>
-                    </div>
-                    {credentialStatus.object_storage?.status === "verified" ? (
-                      <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-                        <CheckCircle size={12} />
-                        Verified
-                      </span>
-                    ) : credentialStatus.object_storage?.configured ? (
-                      <span className="flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
-                        <AlertCircle size={12} />
-                        Pending
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
-                        —
-                      </span>
-                    )}
-                  </div>
+                      return (
+                        <div
+                          key={svcKey}
+                          className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${
+                            cred?.status === "verified"
+                              ? "border-green-200 bg-green-50"
+                              : cred?.configured
+                                ? "border-yellow-200 bg-yellow-50"
+                                : "border-gray-200 bg-gray-50"
+                          }`}
+                        >
+                          <div
+                            className={`rounded-lg p-1.5 ${
+                              cred?.status === "verified"
+                                ? "bg-green-100 text-green-600"
+                                : "bg-gray-100 text-gray-500"
+                            }`}
+                          >
+                            <SvcIcon size={18} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900">
+                              {svc.label || svc.name || formatSegment(svcKey)}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {svc.description ||
+                                (svc.auth_type
+                                  ? `${formatSegment(svc.auth_type)} authentication`
+                                  : "")}
+                            </p>
+                          </div>
+                          {cred?.status === "verified" ? (
+                            <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                              <CheckCircle size={12} />
+                              Verified
+                            </span>
+                          ) : cred?.configured ? (
+                            <span className="flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
+                              <AlertCircle size={12} />
+                              Pending
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+                              —
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p className="text-sm text-gray-500 py-2">
+                      No services configured for this provider.
+                    </p>
+                  )}
                 </div>
               </ModernCard>
 

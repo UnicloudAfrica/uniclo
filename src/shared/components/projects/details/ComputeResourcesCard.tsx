@@ -21,9 +21,9 @@ const ComputeResourcesCard: React.FC<ComputeResourcesCardProps> = ({
   const isDisabled = isLoading || !canCreateInstances;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm h-full">
+    <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6 shadow-sm h-full">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 mb-4 md:mb-6">
         <div className="p-2 bg-blue-100 rounded-lg">
           <Server className="w-5 h-5 text-blue-600" />
         </div>
@@ -31,9 +31,9 @@ const ComputeResourcesCard: React.FC<ComputeResourcesCardProps> = ({
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-3 gap-2 md:gap-4 mb-4 md:mb-6">
         <div className="text-center">
-          <div className="text-3xl font-bold text-gray-900">{totalInstances}</div>
+          <div className="text-2xl md:text-3xl font-bold text-gray-900">{totalInstances}</div>
           <div className="text-sm text-gray-500">Instances</div>
         </div>
         <div className="text-center">
@@ -57,7 +57,7 @@ const ComputeResourcesCard: React.FC<ComputeResourcesCardProps> = ({
         type="button"
         onClick={onAddInstance}
         disabled={isDisabled}
-        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 cursor-pointer"
+        className="w-full flex items-center justify-center gap-2 px-3 py-2.5 md:px-4 md:py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 cursor-pointer"
       >
         <Plus className="w-5 h-5" />
         Add Instance

@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { Package, X } from "lucide-react";
-import { Option } from "../../../hooks/objectStorageUtils";
-import { ResolvedProfile } from "../../../hooks/useObjectStoragePricing";
+import { Option } from "@/hooks/objectStorageUtils";
+import { ResolvedProfile } from "@/hooks/useObjectStoragePricing";
 import { ModernInput, ModernSelect } from "../ui";
 
 export interface ObjectStorageProfileCardProps {

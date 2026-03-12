@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, Plus, Users, Building2, Phone } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ModernButton } from "../../shared/components/ui";
-import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
-import { TableActionButtons } from "../../shared/components/tables";
-import ModernTable, { type Column } from "../../shared/components/ui/ModernTable";
-import useAuthRedirect from "../../utils/adminAuthRedirect";
-import { useFetchTenants } from "../../hooks/adminHooks/tenantHooks";
+import { ModernButton } from "@/shared/components/ui";
+import ModernStatsCard from "@/shared/components/ui/ModernStatsCard";
+import { TableActionButtons } from "@/shared/components/tables";
+import ModernTable, { type Column } from "@/shared/components/ui/ModernTable";
+import useAuthRedirect from "@/utils/adminAuthRedirect";
+import { useFetchTenants } from "@/hooks/adminHooks/tenantHooks";
 import adminFileApi from "../../index/admin/fileapi";
 import DeleteTenantModal from "./tenantComps/DeleteTenant";
 import EditTenantModal from "./tenantComps/EditTenant";
 import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
 import AdminPageShell from "../components/AdminPageShell";
-import logger from "../../utils/logger";
+import logger from "@/utils/logger";
 
 const encodeId = (id: string) => encodeURIComponent(btoa(id));
 const decodeId = (encodedId: string) => {
@@ -263,7 +263,7 @@ const AdminPartners = () => {
       header: "Name",
       render: ((value: string | null | undefined) => (
         <div className="font-medium text-gray-900">{value || "—"}</div>
-      )) as any,
+      )) as unknown as string,
       sortable: true,
     },
     {
@@ -271,7 +271,7 @@ const AdminPartners = () => {
       header: "Type",
       render: ((value: string | null | undefined) => (
         <div className="text-gray-500">{formatCompanyType(value)}</div>
-      )) as any,
+      )) as unknown as string,
       sortable: true,
     },
     {
@@ -279,7 +279,7 @@ const AdminPartners = () => {
       header: "Industry",
       render: ((value: string | null | undefined) => (
         <div className="text-gray-500">{value || "—"}</div>
-      )) as any,
+      )) as unknown as string,
       sortable: true,
     },
     {
@@ -287,7 +287,7 @@ const AdminPartners = () => {
       header: "Email",
       render: ((value: string | null | undefined) => (
         <div className="text-gray-500">{value || "—"}</div>
-      )) as any,
+      )) as unknown as string,
       sortable: true,
     },
     {
@@ -295,7 +295,7 @@ const AdminPartners = () => {
       header: "Phone",
       render: ((value: string | null | undefined) => (
         <div className="text-gray-500">{value || "—"}</div>
-      )) as any,
+      )) as unknown as string,
       sortable: true,
     },
     {
@@ -309,7 +309,7 @@ const AdminPartners = () => {
         >
           {value || "active"}
         </span>
-      )) as any,
+      )) as unknown as string,
       sortable: true,
     },
     {
@@ -317,7 +317,7 @@ const AdminPartners = () => {
       header: "Created",
       render: ((value: string | null | undefined) => (
         <div className="text-gray-500">{value ? new Date(value).toLocaleDateString() : "—"}</div>
-      )) as any,
+      )) as unknown as string,
       sortable: true,
     },
     {

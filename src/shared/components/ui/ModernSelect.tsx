@@ -1,6 +1,6 @@
 import React, { forwardRef, useMemo, useState } from "react";
 import { ChevronDown, AlertCircle, Check } from "lucide-react";
-import { designTokens } from "../../../styles/designTokens";
+import { designTokens } from "@/styles/designTokens";
 
 interface Option {
   label: string;

@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { LogOut, X, ChevronLeft, ChevronRight } from "lucide-react";
 import CollapsibleMenu from "./CollapsibleMenu";
 import type { MenuEntry } from "./CollapsibleMenu";
-import useSidebarStore from "../../../stores/sidebarStore";
-import { logoutActiveSession } from "../../../stores/sessionUtils";
+import useSidebarStore from "@/stores/sidebarStore";
+import { logoutActiveSession } from "@/stores/sessionUtils";
 
 export interface DashboardSidebarProps {
   /** Menu items to display */

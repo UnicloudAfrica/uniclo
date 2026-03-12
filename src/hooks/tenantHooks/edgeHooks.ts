@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import silentTenantApi from "../../index/tenant/silentTenant";
 import tenantApi from "../../index/tenant/tenantApi";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const normalizeCollection = (payload: any): unknown[] => {
   if (!payload) return [];
   if (Array.isArray(payload)) return payload;

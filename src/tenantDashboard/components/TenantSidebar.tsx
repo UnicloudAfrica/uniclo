@@ -1,10 +1,10 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { logoutActiveSession } from "../../stores/sessionUtils";
-import { DashboardSidebar } from "../../shared/components/sidebar";
-import { tenantMenuItems } from "../../shared/config/sidebarMenus";
-import useSidebarStore from "../../stores/sidebarStore";
-import logger from "../../utils/logger";
+import { logoutActiveSession } from "@/stores/sessionUtils";
+import { DashboardSidebar } from "@/shared/components/sidebar";
+import { tenantMenuItems } from "@/shared/config/sidebarMenus";
+import useSidebarStore from "@/stores/sidebarStore";
+import logger from "@/utils/logger";
 
 interface TenantData {
   name?: string;

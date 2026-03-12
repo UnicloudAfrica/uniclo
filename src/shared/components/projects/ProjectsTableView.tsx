@@ -1,8 +1,8 @@
 import React, { useMemo } from "react";
 import { Eye, Archive, PlayCircle, Trash2 } from "lucide-react";
 import ModernTable, { Column } from "../ui/ModernTable";
-import { getStatusDisplayConfig, formatDate, SortConfig } from "../../../utils/projectUtils";
-import { Project } from "../../../types/project";
+import { getStatusDisplayConfig, formatDate, SortConfig } from "@/utils/projectUtils";
+import { Project } from "@/types/project";
 
 export interface ProjectsTableViewProps {
   projects: Project[];
@@ -60,7 +60,7 @@ const ProjectsTableView: React.FC<ProjectsTableViewProps> = ({
             className="font-medium text-gray-900 cursor-pointer hover:text-blue-600"
             onClick={() => onViewProject(row)}
           >
-            {(value as any) || "—"}
+            {(value as React.ReactNode) || "—"}
           </span>
         ),
       },
@@ -68,7 +68,9 @@ const ProjectsTableView: React.FC<ProjectsTableViewProps> = ({
         key: "identifier",
         header: "Identifier",
         sortable: false, // Identifier usually not sorted, but can be enabled if needed
-        render: (value) => <span className="text-gray-500">{(value as any) || "—"}</span>,
+        render: (value) => (
+          <span className="text-gray-500">{(value as React.ReactNode) || "—"}</span>
+        ),
       },
       {
         key: "status",
@@ -98,7 +100,7 @@ const ProjectsTableView: React.FC<ProjectsTableViewProps> = ({
       {
         key: "provider",
         header: "Provider",
-        render: (value) => <span className="capitalize">{(value as any) || "—"}</span>,
+        render: (value) => <span className="capitalize">{(value as React.ReactNode) || "—"}</span>,
       },
       {
         key: "created_at",

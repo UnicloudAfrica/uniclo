@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import AdminPageShell from "../components/AdminPageShell";
-import { ModernButton } from "../../shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
 import PricingSideMenu from "../components/pricingSideMenu";
 import ColocationSetting from "./inventoryComponents/colocation";
-import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
+import { useFetchRegions } from "@/hooks/adminHooks/regionHooks";
 import {
   useFetchProductPricing,
   useExportProductPricingTemplate,
-} from "../../hooks/adminHooks/adminproductPricingHook";
+} from "@/hooks/adminHooks/adminProductPricingHooks";
 import {
   Loader2,
   DollarSign,
@@ -30,12 +30,12 @@ import {
 import AddProductPricing from "./productPricingComps/addProductPricing";
 import EditProductPricingModal from "./productPricingComps/editProductPricing";
 import DeleteProductPricingModal from "./productPricingComps/deleteProductPricing";
-import ToastUtils from "../../utils/toastUtil";
+import ToastUtils from "@/utils/toastUtil";
 import UploadPricingFileModal from "./productPricingComps/uploadPricingFile";
-import ResourceHero from "../../shared/components/ui/ResourceHero";
+import ResourceHero from "@/shared/components/ui/ResourceHero";
 import ResourceDataExplorer from "../components/ResourceDataExplorer";
-import { ModernCard } from "../../shared/components/ui";
-import { matchesProductType } from "../../utils/productTypeUtils";
+import { ModernCard, ProviderBadge, getRegionOptionLabel } from "@/shared/components/ui";
+import { matchesProductType } from "@/utils/productTypeUtils";
 
 const formatCurrency = (value: any) =>
   typeof value === "number" || value ? `$${Number(value || 0).toFixed(2)}` : "—";
@@ -297,6 +297,39 @@ const PRICING_TAB_CONFIG = [
     emptyDescription: "Create cross connect pricing so private links can be ordered.",
   },
   {
+    id: "managed-databases",
+    name: "Managed Databases",
+    caption: "Dedicated VMs",
+    productType: "managed_database_plan",
+    heroTitle: "Managed database pricing",
+    heroDescription: "Set pricing for managed database plans across engines and regions.",
+    tableTitle: "Managed database pricing",
+    tableDescription: "Review database plan pricing for MongoDB, PostgreSQL, MySQL, and Redis.",
+    icon: Database,
+    metrics: (stats: any) => [
+      {
+        label: "Database plans",
+        value: stats.total,
+        description: "Priced DB plans",
+        icon: <Database className="h-5 w-5" />,
+      },
+      {
+        label: "Average price",
+        value: formatCurrency(stats.average),
+        description: "Across selected region",
+        icon: <DollarSign className="h-5 w-5" />,
+      },
+      {
+        label: "Highest price",
+        value: formatCurrency(stats.highest),
+        description: "Premium database plan",
+        icon: <TrendingUp className="h-5 w-5" />,
+      },
+    ],
+    emptyTitle: "No managed database pricing",
+    emptyDescription: "Add database plan pricing to enable managed database provisioning.",
+  },
+  {
     id: "colocation",
     name: "Rack & power",
     caption: "Colocation markup",
@@ -366,7 +399,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
     }
   );
   const { mutate: exportTemplate, isPending: isExporting } = useExportProductPricingTemplate();
-  const regionsList = Array.isArray(regions) ? regions : [];
+  const regionsList = useMemo(() => (Array.isArray(regions) ? regions : []), [regions]);
   const pricingPayload: any = pricingData;
 
   const menuItems = useMemo(
@@ -524,6 +557,12 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
         ),
       },
       {
+        header: "Provider",
+        key: "provider",
+        align: "center",
+        render: (row: any) => <ProviderBadge provider={row.provider} />,
+      },
+      {
         header: "Region",
         key: "region",
         align: "center",
@@ -534,7 +573,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
         ),
       },
       {
-        header: "Price (USD)",
+        header: "Price",
         key: "price_usd",
         align: "right",
         render: (row: any) => (
@@ -620,7 +659,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
         ) : (
           regionsList.map((region: any) => (
             <option key={region.code} value={region.code}>
-              {region.name}
+              {getRegionOptionLabel(region)}
             </option>
           ))
         )}

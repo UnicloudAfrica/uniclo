@@ -11,12 +11,11 @@ interface AdvisoryMember {
   position: string;
   order?: number;
   processedName?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   [key: string]: any;
 }
 
 const Advisory = () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [boardArray] = useContext(BoardContext) as [AdvisoryMember[]];
   const processedArray = useMemo(
     () =>

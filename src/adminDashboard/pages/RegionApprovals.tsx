@@ -1,16 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { ChangeEvent } from "react";
 import { Link } from "react-router-dom";
 import { Loader2, Eye, Edit, Plus, CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
-import adminRegionApi from "../../services/adminRegionApi";
-import { ModernCard } from "../../shared/components/ui";
-import ModernTable from "../../shared/components/ui/ModernTable";
-import type { Column } from "../../shared/components/ui/ModernTable";
-import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
-import { ModernButton } from "../../shared/components/ui";
-import { designTokens } from "../../styles/designTokens";
+import adminRegionApi from "@/services/adminRegionApi";
+import ModernTable from "@/shared/components/ui/ModernTable";
+import type { Column } from "@/shared/components/ui/ModernTable";
+import ModernStatsCard from "@/shared/components/ui/ModernStatsCard";
+import { ModernCard, ModernButton } from "@/shared/components/ui";
+import { designTokens } from "@/styles/designTokens";
 import AdminPageShell from "../components/AdminPageShell";
-import logger from "../../utils/logger";
+import logger from "@/utils/logger";
 
 type RegionApprovalStatus = "pending" | "approved" | "rejected" | "suspended";
 
@@ -47,11 +46,7 @@ const RegionApprovals = () => {
 
   const [searchTerm, _setSearchTerm] = useState("");
 
-  useEffect(() => {
-    fetchRegions();
-  }, [filters]);
-
-  const fetchRegions = async () => {
+  const fetchRegions = useCallback(async () => {
     try {
       setLoading(true);
       const response = await adminRegionApi.fetchRegionApprovals(filters);
@@ -61,7 +56,12 @@ const RegionApprovals = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
+
+  useEffect(() => {
+    fetchRegions();
+  }, [fetchRegions]);
+
   const _handleFilterChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
@@ -102,7 +102,7 @@ const RegionApprovals = () => {
       render: (value, row) => (
         <div>
           <div className="font-medium" style={{ color: designTokens.colors.neutral[900] }}>
-            {value as any}
+            {value as React.ReactNode}
           </div>
           <div className="text-sm" style={{ color: designTokens.colors.neutral[500] }}>
             {row.code}
@@ -125,7 +125,7 @@ const RegionApprovals = () => {
       header: "Location",
       render: (value, row) => (
         <span style={{ color: designTokens.colors.neutral[700] }}>
-          {value as any}, {row.country_code}
+          {value as React.ReactNode}, {row.country_code}
         </span>
       ),
     },
@@ -134,7 +134,7 @@ const RegionApprovals = () => {
       header: "Fulfillment",
       render: (value) => (
         <span className="capitalize" style={{ color: designTokens.colors.neutral[700] }}>
-          {value as any}
+          {value as React.ReactNode}
         </span>
       ),
     },
@@ -208,7 +208,7 @@ const RegionApprovals = () => {
             style={{ backgroundColor: config.bg, color: config.color }}
           >
             {config.icon}
-            {value as any}
+            {value as React.ReactNode}
           </span>
         );
       },

@@ -184,7 +184,11 @@ const updateStatus = async ({
     payload.meta = meta;
   }
 
-  const response = await api("PATCH", `/business/onboarding/${step}/status`, payload);
+  const response = await api<{ data?: Record<string, unknown> | null }>(
+    "PATCH",
+    `/business/onboarding/${step}/status`,
+    payload as unknown as Record<string, unknown>
+  );
 
   return (response?.data as Record<string, unknown> | null) ?? null;
 };

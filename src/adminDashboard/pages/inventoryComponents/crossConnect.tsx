@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { Cable, MapPinned, DollarSign, Pencil, Trash2, Plus } from "lucide-react";
-import { useFetchCrossConnects } from "../../../hooks/adminHooks/crossConnectHooks";
+import { useFetchCrossConnects } from "@/hooks/adminHooks/crossConnectHooks";
 import ResourceDataExplorer from "../../components/ResourceDataExplorer";
 import AddCrossConnect from "./crossConnectSubs/addCC";
 import EditCrossConnect from "./crossConnectSubs/editCC";
 import DeleteCrossConnect from "./crossConnectSubs/deleteCC";
-import { ModernButton } from "../../../shared/components/ui";
+import { ModernButton, ProviderBadge } from "@/shared/components/ui";
 
 const formatCurrency = (amount: any, currency = "USD") => {
   if (amount === null || amount === undefined || Number.isNaN(amount)) {
@@ -53,15 +53,15 @@ const CrossConnect = ({ selectedRegion, onMetricsChange }: any) => {
     { enabled: Boolean(selectedRegion), keepPreviousData: true }
   );
 
-  const rows = data?.data ?? [];
+  const rows = useMemo(() => data?.data ?? [], [data]);
   const meta = data?.meta ?? null;
   const total = meta?.total ?? rows.length;
 
   const averagePrice = useMemo(() => {
     if (!rows.length) return 0;
     return (
-      (rows as any).reduce(
-        (acc: any, item: any) => (acc as any) + Number((item as any).price || 0),
+      (rows as Record<string, unknown>[]).reduce(
+        (acc: number, item: Record<string, unknown>) => acc + Number((item.price as number) || 0),
         0
       ) / rows.length
     );
@@ -128,11 +128,7 @@ const CrossConnect = ({ selectedRegion, onMetricsChange }: any) => {
       header: "Provider",
       key: "provider",
       align: "center",
-      render: (item: any) => (
-        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-          {item.provider || "Platform"}
-        </span>
-      ),
+      render: (item: any) => <ProviderBadge provider={item.provider} />,
     },
     {
       header: "Updated",
@@ -210,13 +206,13 @@ const CrossConnect = ({ selectedRegion, onMetricsChange }: any) => {
       <ResourceDataExplorer
         title="Carrier cross connects"
         description="Manage dedicated network cross-connects and pricing for co-located customers."
-        columns={columns as any}
-        rows={rows as any}
+        columns={columns as Record<string, unknown>[]}
+        rows={rows as Record<string, unknown>[]}
         loading={isFetching}
-        page={meta?.current_page ?? (page as any)}
-        perPage={meta?.per_page ?? (perPage as any)}
-        total={total as any}
-        meta={meta as any}
+        page={(meta?.current_page as number) ?? page}
+        perPage={(meta?.per_page as number) ?? perPage}
+        total={total as number}
+        meta={meta as Record<string, unknown>}
         onPageChange={setPage}
         onPerPageChange={(next) => {
           setPerPage(next);

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import ModernModal, { ModalAction } from "../../ui/ModernModal";
 import ModernInput from "../../ui/ModernInput";
 import ModernSelect from "../../ui/ModernSelect";
-import { useElasticIps, useSubnets } from "../../../hooks/vpcInfraHooks";
+import { useElasticIps, useSubnets } from "@/shared/hooks/vpcInfraHooks";
 import { Subnet, ElasticIp } from "../types";
 
 interface CreateNatGatewayModalProps {
@@ -10,7 +10,16 @@ interface CreateNatGatewayModalProps {
   onClose: () => void;
   projectId: string;
   region: string;
-  onCreate: (data: any) => void;
+  onCreate: (data: {
+    project_id: string;
+    region: string;
+    payload: {
+      subnet_id: string;
+      vpc_id?: string;
+      elastic_ip_id?: string;
+      name?: string;
+    };
+  }) => void;
   isLoading?: boolean;
 }
 

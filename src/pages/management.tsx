@@ -10,12 +10,11 @@ interface ManagementMember {
   url: string;
   desc: string;
   processedName?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   [key: string]: any;
 }
 
 const Management = () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [manageArray] = useContext(ManageContext) as [ManagementMember[]];
   const processedArray = useMemo(
     () =>

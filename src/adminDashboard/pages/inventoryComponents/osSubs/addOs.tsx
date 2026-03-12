@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
-import { useCreateOsImage } from "../../../../hooks/adminHooks/os-imageHooks";
-import ToastUtils from "../../../../utils/toastUtil";
-import logger from "../../../../utils/logger";
+import { useCreateOsImage } from "@/hooks/adminHooks/os-imageHooks";
+import ToastUtils from "@/utils/toastUtil";
+import logger from "@/utils/logger";
 
 const AddOSImageModal = ({ isOpen, onClose }: any) => {
   const { mutate, isPending } = useCreateOsImage();

@@ -2,129 +2,43 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Loader2,
-  CheckCircle,
   AlertCircle,
   MapPin,
   Globe,
   Building2,
   Shield,
   KeyRound,
-  Lock,
-  RefreshCw,
   DollarSign,
-  PauseCircle,
-  PlayCircle,
-  Ban,
 } from "lucide-react";
-import adminRegionApi from "../../services/adminRegionApi";
-import { useFetchTenants } from "../../hooks/adminHooks/tenantHooks";
-import ToastUtils from "../../utils/toastUtil";
+import adminRegionApi from "@/services/adminRegionApi";
+import { useFetchTenants } from "@/hooks/adminHooks/tenantHooks";
+import ToastUtils from "@/utils/toastUtil";
 import AdminPageShell from "../components/AdminPageShell";
-import { ModernCard, ModernButton, ModernTable, StatusPill } from "../../shared/components/ui";
-import logger from "../../utils/logger";
+import { ModernCard, ModernButton, StatusPill } from "@/shared/components/ui";
+import logger from "@/utils/logger";
 
-type ApprovalStatus = "pending" | "approved" | "rejected" | "suspended";
-type FastTrackMode = "owner_only" | "grant_only" | "disabled";
+import type {
+  RegionApproval,
+  ApprovalStatus,
+  CredentialForm,
+  TenantOption,
+  FastTrackGrant,
+  FastTrackMode,
+  RevenueShare,
+} from "./regionApprovalDetail/types";
 
-interface TenantOption {
-  id?: string | number | null;
-  name?: string;
-  email?: string;
-  slug?: string;
-  identifier?: string;
-}
+import {
+  getErrorMessage,
+  statusToneMap,
+  statusLabelMap,
+  formatSegment,
+} from "./regionApprovalDetail/utils";
 
-interface CredentialForm {
-  username: string;
-  password: string;
-  domain: string;
-  domain_id: string;
-  [key: string]: string;
-}
-
-interface CredentialSummary {
-  domain?: string;
-  default_project?: string;
-  username_preview?: string;
-}
-
-interface RevenueShare {
-  id?: string | number | null;
-  created_at?: string;
-  gross_amount?: number | string;
-  platform_fee_amount?: number | string;
-  tenant_share_amount?: number | string;
-  status?: string;
-}
-
-interface FastTrackGrant {
-  id?: string | number | null;
-  tenant_id?: string | number | null;
-  tenant_name?: string;
-  granted_at?: string;
-  notes?: string;
-}
-
-interface RegionOwnerTenant {
-  id?: string | number | null;
-  name?: string;
-  email?: string;
-}
-
-interface RegionApproval {
-  id?: string | number | null;
-  name?: string;
-  code?: string;
-  country_code?: string;
-  city?: string;
-  platform_fee_percentage?: number | string | null;
-  base_url?: string;
-  ownership_type?: string;
-  fulfillment_mode?: string;
-  approval_status?: string;
-  has_msp_credentials?: boolean;
-  msp_credentials_verified_at?: string | null;
-  msp_credential_summary?: CredentialSummary;
-  owner_tenant?: RegionOwnerTenant | null;
-  recent_revenue_shares?: RevenueShare[];
-  fast_track_mode?: FastTrackMode;
-  fast_track_notes?: string;
-  fast_track_grants?: FastTrackGrant[];
-  admin_notes?: string;
-  rejection_reason?: string;
-}
-
-const getErrorMessage = (error: unknown, fallback: string): string => {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-  if (
-    typeof error === "object" &&
-    error !== null &&
-    "message" in error &&
-    typeof (error as { message?: unknown }).message === "string"
-  ) {
-    return (error as { message: string }).message;
-  }
-  return fallback;
-};
-
-const statusToneMap: Record<ApprovalStatus, "warning" | "success" | "danger" | "neutral"> = {
-  pending: "warning",
-  approved: "success",
-  rejected: "danger",
-  suspended: "neutral",
-};
-const statusLabelMap: Record<ApprovalStatus, string> = {
-  pending: "Pending Approval",
-  approved: "Approved",
-  rejected: "Rejected",
-  suspended: "Suspended",
-};
-const formatSegment = (value: string | null | undefined) =>
-  value
-    ? value.replaceAll(/[_-]/g, " ").replace(/\b\w/g, (char: string) => char.toUpperCase())
-    : "—";
+import CredentialModal from "./regionApprovalDetail/CredentialModal";
+import FastTrackSection from "./regionApprovalDetail/FastTrackSection";
+import RevenueSection from "./regionApprovalDetail/RevenueSection";
+import CredentialSummaryCard from "./regionApprovalDetail/CredentialSummaryCard";
+import HeaderActions from "./regionApprovalDetail/HeaderActions";
 
 const RegionApprovalDetail = () => {
   const { id } = useParams();
@@ -203,6 +117,7 @@ const RegionApprovalDetail = () => {
       setVerifying(false);
     }
   };
+
   const handleApprove = () => {
     navigate(`/admin-dashboard/region-approvals/${id}/edit?action=approve`);
   };
@@ -290,30 +205,25 @@ const RegionApprovalDetail = () => {
       logger.error("Error revoking fast track:", error);
     }
   };
+
   const credentialSummary = region?.msp_credential_summary || {};
   const hasMspCredentials = Boolean(region?.has_msp_credentials);
   const recentRevenue: RevenueShare[] = Array.isArray(region?.recent_revenue_shares)
     ? region.recent_revenue_shares
     : [];
 
-  const formatCurrency = (value: number | string | null | undefined) =>
-    new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-    }).format(Number(value ?? 0));
-
   const overviewItems = useMemo(
     () => [
-      { label: "Region Code", value: region?.code || "—", icon: KeyRound },
-      { label: "Country", value: region?.country_code || "—", icon: Globe },
-      { label: "City", value: region?.city || "—", icon: MapPin },
+      { label: "Region Code", value: region?.code || "\u2014", icon: KeyRound },
+      { label: "Country", value: region?.country_code || "\u2014", icon: Globe },
+      { label: "City", value: region?.city || "\u2014", icon: MapPin },
       {
         label: "Platform Fee",
-        value: region?.platform_fee_percentage != null ? `${region.platform_fee_percentage}%` : "—",
+        value:
+          region?.platform_fee_percentage != null ? `${region.platform_fee_percentage}%` : "\u2014",
         icon: DollarSign,
       },
-      { label: "Base URL", value: region?.base_url || "—", icon: Building2 },
+      { label: "Base URL", value: region?.base_url || "\u2014", icon: Building2 },
       {
         label: "Ownership Type",
         value: formatSegment(region?.ownership_type),
@@ -333,15 +243,15 @@ const RegionApprovalDetail = () => {
     return [
       {
         label: "Tenant Name",
-        value: region.owner_tenant.name || "—",
+        value: region.owner_tenant.name || "\u2014",
       },
       {
         label: "Tenant ID",
-        value: region.owner_tenant.id || "—",
+        value: region.owner_tenant.id || "\u2014",
       },
       {
         label: "Tenant Email",
-        value: region.owner_tenant.email || "—",
+        value: region.owner_tenant.email || "\u2014",
       },
     ];
   }, [region]);
@@ -357,145 +267,7 @@ const RegionApprovalDetail = () => {
     return allTenants.filter((tenant: TenantOption) => !grantedIds.has(tenant.id));
   }, [fastTrackGrants, allTenants]);
 
-  const renderFastTrackSection = () => (
-    <ModernCard padding="lg" className="space-y-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900">Fast-track Controls</h2>
-          <p className="text-sm text-gray-500">
-            Decide who can skip payments when provisioning through this region.
-          </p>
-        </div>
-      </div>
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="space-y-2 rounded-2xl border border-gray-100 bg-gray-50/60 p-4">
-          <label
-            htmlFor="fast-track-mode"
-            className="text-xs font-semibold uppercase tracking-wide text-gray-500"
-          >
-            Fast-track mode
-          </label>
-          <select
-            id="fast-track-mode"
-            value={fastTrackMode}
-            onChange={(event) => setFastTrackMode(event.target.value as FastTrackMode)}
-            className="w-full rounded-2xl border border-gray-200 px-4 py-2 text-sm focus:border-primary-300 focus:ring-primary-200"
-          >
-            <option value="owner_only">Owner only</option>
-            <option value="grant_only">Grants only</option>
-            <option value="disabled">Disabled</option>
-          </select>
-          <label htmlFor="fast-track-notes" className="sr-only">
-            Fast-track notes
-          </label>
-          <textarea
-            id="fast-track-notes"
-            value={fastTrackNotes}
-            onChange={(event) => setFastTrackNotes(event.target.value)}
-            placeholder="Notes for ops teams (optional)"
-            className="mt-2 h-20 w-full resize-none rounded-2xl border border-gray-200 px-4 py-2 text-sm focus:border-primary-300 focus:ring-primary-200"
-          />
-          <ModernButton
-            variant="primary"
-            size="sm"
-            isLoading={updatingFastTrack}
-            onClick={handleFastTrackSave}
-            className="mt-2"
-          >
-            Save fast-track settings
-          </ModernButton>
-        </div>
-        <div className="space-y-2 rounded-2xl border border-gray-100 bg-gray-50/60 p-4">
-          <label
-            htmlFor="fast-track-grant"
-            className="text-xs font-semibold uppercase tracking-wide text-gray-500"
-          >
-            Add fast-track grant
-          </label>
-          <select
-            id="fast-track-grant"
-            value={grantTenantId}
-            onChange={(event) => setGrantTenantId(event.target.value)}
-            disabled={fastTrackMode === "disabled"}
-            className="w-full rounded-2xl border border-gray-200 px-4 py-2 text-sm focus:border-primary-300 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <option value="">Select tenant</option>
-            {grantOptions.map((tenant: TenantOption) => (
-              <option key={String(tenant.id ?? "")} value={tenant.id ?? ""}>
-                {tenant.name || tenant.slug || tenant.identifier || tenant.id}
-              </option>
-            ))}
-          </select>
-          <ModernButton
-            variant="outline"
-            size="sm"
-            disabled={!grantTenantId || fastTrackMode === "disabled"}
-            isLoading={grantingFastTrack}
-            onClick={handleGrantFastTrack}
-          >
-            Grant access
-          </ModernButton>
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-gray-900">Current grants</h3>
-        {fastTrackGrants.length === 0 ? (
-          <p className="text-sm text-gray-500">No tenants have explicit fast-track access.</p>
-        ) : (
-          <ModernTable<FastTrackGrant>
-            data={fastTrackGrants.map((grant: FastTrackGrant, index: number) => ({
-              ...grant,
-              id: grant.id ?? `${grant.tenant_id ?? "grant"}-${index}`,
-            }))}
-            columns={[
-              {
-                key: "tenant_name",
-                header: "TENANT",
-                render: (_: unknown, grant: FastTrackGrant) => (
-                  <span className="text-gray-800">{grant.tenant_name || grant.tenant_id}</span>
-                ),
-              },
-              {
-                key: "granted_at",
-                header: "GRANTED AT",
-                render: (val: unknown) => (
-                  <span className="text-gray-600">
-                    {val ? new Date(val as string | number | Date).toLocaleString() : "—"}
-                  </span>
-                ),
-              },
-              {
-                key: "notes",
-                header: "NOTES",
-                render: (val: unknown) => (
-                  <span className="text-gray-600">{String(val || "—")}</span>
-                ),
-              },
-              {
-                key: "actions",
-                header: "ACTIONS",
-                render: (_: unknown, grant: FastTrackGrant) => (
-                  <button
-                    type="button"
-                    className="text-xs font-semibold text-rose-600 hover:text-rose-700"
-                    onClick={() => handleRevokeFastTrack(grant.tenant_id)}
-                  >
-                    Revoke
-                  </button>
-                ),
-              },
-            ]}
-            searchable={false}
-            filterable={false}
-            exportable={false}
-            paginated={false}
-            enableAnimations={false}
-          />
-        )}
-      </div>
-    </ModernCard>
-  );
+  const navigateBack = () => navigate("/admin-dashboard/region-approvals");
 
   const headerMeta = region ? (
     <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-gray-500">
@@ -505,237 +277,72 @@ const RegionApprovalDetail = () => {
       )}
       {region.ownership_type && (
         <>
-          <span className="hidden sm:inline text-gray-300">•</span>
+          <span className="hidden sm:inline text-gray-300">&bull;</span>
           <span className="capitalize">{formatSegment(region.ownership_type)} ownership</span>
         </>
       )}
       {region.platform_fee_percentage != null && (
         <>
-          <span className="hidden sm:inline text-gray-300">•</span>
+          <span className="hidden sm:inline text-gray-300">&bull;</span>
           <span>{region.platform_fee_percentage}% platform fee</span>
         </>
       )}
     </div>
   ) : null;
 
-  const buildHeaderActions = () => {
-    const actions = [
-      <ModernButton
-        key="back"
-        variant="outline"
-        size="sm"
-        onClick={() => navigate("/admin-dashboard/region-approvals")}
-      >
-        Back to approvals
-      </ModernButton>,
-    ];
-
-    if (!region) {
-      return <div className="flex flex-wrap gap-2">{actions}</div>;
-    }
-
-    if (region.approval_status === "pending") {
-      actions.push(
-        <ModernButton
-          key="approve"
-          variant="primary"
-          size="sm"
-          onClick={handleApprove}
-          className="flex items-center gap-2"
-        >
-          <CheckCircle size={16} />
-          Approve
-        </ModernButton>,
-        <ModernButton
-          key="reject"
-          variant="danger"
-          size="sm"
-          onClick={handleReject}
-          className="flex items-center gap-2"
-        >
-          <Ban size={16} />
-          Reject
-        </ModernButton>
-      );
-    }
-
-    if (region.approval_status === "approved") {
-      actions.push(
-        <ModernButton
-          key="update-fee"
-          variant="outline"
-          size="sm"
-          onClick={handleUpdateFee}
-          className="flex items-center gap-2"
-        >
-          <DollarSign size={16} />
-          Update Fee
-        </ModernButton>,
-        <ModernButton
-          key="suspend"
-          variant="danger"
-          size="sm"
-          onClick={handleSuspend}
-          className="flex items-center gap-2"
-        >
-          <PauseCircle size={16} />
-          Suspend
-        </ModernButton>
-      );
-    }
-
-    if (region.approval_status === "suspended") {
-      actions.push(
-        <ModernButton
-          key="reactivate"
-          variant="primary"
-          size="sm"
-          onClick={handleReactivate}
-          className="flex items-center gap-2"
-        >
-          <PlayCircle size={16} />
-          Reactivate
-        </ModernButton>
-      );
-    }
-
-    if (region.fulfillment_mode === "automated") {
-      actions.push(
-        <ModernButton
-          key="verify"
-          variant="ghost"
-          size="sm"
-          onClick={() => setShowCredentialModal(true)}
-          className="flex items-center gap-2"
-        >
-          <KeyRound size={16} />
-          Verify Credentials
-        </ModernButton>
-      );
-    }
-
-    actions.push(
-      <ModernButton
-        key="refresh"
-        variant="ghost"
-        size="sm"
-        onClick={fetchRegionDetail}
-        className="flex items-center gap-2"
-      >
-        <RefreshCw size={16} />
-        Refresh
-      </ModernButton>
-    );
-
-    return <div className="flex flex-wrap gap-2">{actions}</div>;
-  };
-  const renderLoadingShell = () => (
-    <AdminPageShell
-      title="Region Approval"
-      description="Review platform region request details."
-      actions={buildHeaderActions()}
-      contentClassName="flex min-h-[60vh] items-center justify-center"
-    >
-      <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-    </AdminPageShell>
+  const headerActions = (
+    <HeaderActions
+      region={region}
+      onBack={navigateBack}
+      onApprove={handleApprove}
+      onReject={handleReject}
+      onSuspend={handleSuspend}
+      onReactivate={handleReactivate}
+      onUpdateFee={handleUpdateFee}
+      onVerifyCredentials={() => setShowCredentialModal(true)}
+      onRefresh={fetchRegionDetail}
+    />
   );
 
-  const renderNotFoundShell = () => (
-    <AdminPageShell
-      title="Region Approval"
-      description="Review platform region request details."
-      actions={buildHeaderActions()}
-      contentClassName="flex min-h-[60vh] items-center justify-center"
-    >
-      <ModernCard className="max-w-md text-center space-y-3">
-        <AlertCircle className="w-8 h-8 mx-auto text-red-500" />
-        <p className="text-sm text-gray-600">Region approval could not be found.</p>
-        <ModernButton
-          variant="primary"
-          onClick={() => navigate("/admin-dashboard/region-approvals")}
-        >
-          Back to approvals
-        </ModernButton>
-      </ModernCard>
-    </AdminPageShell>
-  );
-
-  const renderRevenueSection = () => {
-    if (!recentRevenue.length) return null;
-    return (
-      <ModernCard padding="lg" className="space-y-4">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900">Recent Revenue Shares</h2>
-          <p className="text-sm text-gray-500">Latest disbursements recorded for this region.</p>
-        </div>
-        <ModernTable
-          data={recentRevenue.map((r: RevenueShare, index: number) => ({
-            ...r,
-            id: r.id ?? `revenue-${index}`,
-          }))}
-          columns={[
-            {
-              key: "created_at",
-              header: "DATE",
-              render: (val: unknown) => (
-                <span className="text-gray-700">
-                  {val ? new Date(val as string | number | Date).toLocaleString() : "N/A"}
-                </span>
-              ),
-            },
-            {
-              key: "gross_amount",
-              header: "GROSS",
-              render: (val: unknown) => (
-                <span className="text-gray-700">{formatCurrency(val as number | string)}</span>
-              ),
-            },
-            {
-              key: "platform_fee_amount",
-              header: "PLATFORM FEE",
-              render: (val: unknown) => (
-                <span className="text-gray-700">{formatCurrency(val as number | string)}</span>
-              ),
-            },
-            {
-              key: "tenant_share_amount",
-              header: "TENANT SHARE",
-              render: (val: unknown) => (
-                <span className="text-gray-700">{formatCurrency(val as number | string)}</span>
-              ),
-            },
-            {
-              key: "status",
-              header: "STATUS",
-              render: (val: unknown) => (
-                <span className="text-gray-700 capitalize">{String(val || "pending")}</span>
-              ),
-            },
-          ]}
-          searchable={false}
-          filterable={false}
-          exportable={false}
-          paginated={false}
-          enableAnimations={false}
-        />
-      </ModernCard>
-    );
-  };
   if (loading) {
-    return <>{renderLoadingShell()}</>;
+    return (
+      <AdminPageShell
+        title="Region Approval"
+        description="Review platform region request details."
+        actions={headerActions}
+        contentClassName="flex min-h-[60vh] items-center justify-center"
+      >
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </AdminPageShell>
+    );
   }
 
   if (!region) {
-    return <>{renderNotFoundShell()}</>;
+    return (
+      <AdminPageShell
+        title="Region Approval"
+        description="Review platform region request details."
+        actions={headerActions}
+        contentClassName="flex min-h-[60vh] items-center justify-center"
+      >
+        <ModernCard className="max-w-md text-center space-y-3">
+          <AlertCircle className="w-8 h-8 mx-auto text-red-500" />
+          <p className="text-sm text-gray-600">Region approval could not be found.</p>
+          <ModernButton variant="primary" onClick={navigateBack}>
+            Back to approvals
+          </ModernButton>
+        </ModernCard>
+      </AdminPageShell>
+    );
   }
 
   return (
     <>
       <AdminPageShell
         title={region.name || "Region Approval"}
-        description={`${region.code} • ${region.country_code}`}
+        description={`${region.code} \u2022 ${region.country_code}`}
         subHeaderContent={headerMeta}
-        actions={buildHeaderActions()}
+        actions={headerActions}
         breadcrumbs={[
           { label: "Home", href: "/admin-dashboard" },
           { label: "Region Approvals", href: "/admin-dashboard/region-approvals" },
@@ -743,6 +350,7 @@ const RegionApprovalDetail = () => {
         ]}
         contentClassName="space-y-6"
       >
+        {/* Overview grid */}
         <ModernCard padding="lg">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {overviewItems.map(({ label, value, icon: Icon }) => (
@@ -755,13 +363,14 @@ const RegionApprovalDetail = () => {
                   {label}
                 </div>
                 <p className="mt-1 text-sm font-semibold text-gray-900 break-words">
-                  {value || "—"}
+                  {value || "\u2014"}
                 </p>
               </div>
             ))}
           </div>
         </ModernCard>
 
+        {/* Owner tenant */}
         {ownerItems.length > 0 && (
           <ModernCard padding="lg" className="space-y-4">
             <div>
@@ -781,109 +390,35 @@ const RegionApprovalDetail = () => {
           </ModernCard>
         )}
 
-        <ModernCard padding="lg" className="space-y-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Credential Summary</h2>
-              <p className="text-sm text-gray-500">
-                MSP administrative credentials used for automated provisioning.
-              </p>
-            </div>
-            {region.fulfillment_mode === "automated" && (
-              <ModernButton
-                variant="outline"
-                size="sm"
-                onClick={() => setShowCredentialModal(true)}
-                className="flex items-center gap-2"
-              >
-                <Lock size={16} />
-                Manage Credentials
-              </ModernButton>
-            )}
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border border-gray-100 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Domain</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">
-                {credentialSummary.domain || "—"}
-              </p>
-            </div>
-            <div className="rounded-xl border border-gray-100 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                Default Project
-              </p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">
-                {credentialSummary.default_project || "—"}
-              </p>
-            </div>
-            <div className="rounded-xl border border-gray-100 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                Credentials Stored
-              </p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">
-                {hasMspCredentials ? "Yes" : "No"}
-              </p>
-            </div>
-            <div className="rounded-xl border border-gray-100 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                Username Preview
-              </p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">
-                {credentialSummary.username_preview || "—"}
-              </p>
-            </div>
-          </div>
+        {/* Credential summary */}
+        <CredentialSummaryCard
+          region={region}
+          credentialSummary={credentialSummary}
+          hasMspCredentials={hasMspCredentials}
+          onManageCredentials={() => setShowCredentialModal(true)}
+        />
 
-          {region.fulfillment_mode === "automated" && (
-            <div
-              className={`rounded-xl border px-4 py-3 ${
-                region.msp_credentials_verified_at
-                  ? "border-green-200 bg-green-50 text-green-700"
-                  : "border-yellow-200 bg-yellow-50 text-yellow-700"
-              }`}
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  {region.msp_credentials_verified_at ? (
-                    <CheckCircle size={18} />
-                  ) : (
-                    <AlertCircle size={18} />
-                  )}
-                  <div>
-                    <p className="text-sm font-semibold">
-                      {region.msp_credentials_verified_at
-                        ? "Credentials Verified"
-                        : "Credentials Not Verified"}
-                    </p>
-                    <p className="text-xs">
-                      {region.msp_credentials_verified_at
-                        ? `Last verified: ${new Date(
-                            region.msp_credentials_verified_at
-                          ).toLocaleString()}`
-                        : "Automated provisioning requires verified MSP admin credentials."}
-                    </p>
-                  </div>
-                </div>
-                {!region.msp_credentials_verified_at && (
-                  <ModernButton
-                    variant="primary"
-                    size="sm"
-                    onClick={() => setShowCredentialModal(true)}
-                    className="flex items-center gap-2"
-                  >
-                    <KeyRound size={16} />
-                    Verify Credentials
-                  </ModernButton>
-                )}
-              </div>
-            </div>
-          )}
-        </ModernCard>
+        {/* Fast-track controls */}
+        <FastTrackSection
+          fastTrackMode={fastTrackMode}
+          fastTrackNotes={fastTrackNotes}
+          updatingFastTrack={updatingFastTrack}
+          grantTenantId={grantTenantId}
+          grantingFastTrack={grantingFastTrack}
+          fastTrackGrants={fastTrackGrants}
+          grantOptions={grantOptions}
+          onModeChange={setFastTrackMode}
+          onNotesChange={setFastTrackNotes}
+          onSave={handleFastTrackSave}
+          onGrantTenantChange={setGrantTenantId}
+          onGrantAccess={handleGrantFastTrack}
+          onRevoke={handleRevokeFastTrack}
+        />
 
-        {renderFastTrackSection()}
+        {/* Revenue shares */}
+        <RevenueSection recentRevenue={recentRevenue} />
 
-        {renderRevenueSection()}
-
+        {/* Admin notes */}
         {region.admin_notes && (
           <ModernCard padding="lg" className="space-y-3">
             <h2 className="text-lg font-semibold text-gray-900">Admin Notes</h2>
@@ -891,6 +426,7 @@ const RegionApprovalDetail = () => {
           </ModernCard>
         )}
 
+        {/* Rejection / Suspension reason */}
         {(region.approval_status === "rejected" || region.approval_status === "suspended") &&
           region.rejection_reason && (
             <ModernCard padding="lg" className="space-y-3 border border-red-100 bg-red-50">
@@ -902,112 +438,15 @@ const RegionApprovalDetail = () => {
           )}
       </AdminPageShell>
 
+      {/* Credential verification modal */}
       {showCredentialModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6">
-          <ModernCard padding="xl" className="w-full max-w-lg space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Verify MSP Admin Credentials</h3>
-              <p className="text-sm text-gray-500">
-                Provide the MSP admin credentials to enable automated provisioning for this region.
-              </p>
-            </div>
-            <form onSubmit={handleVerifyCredentials} className="space-y-4">
-              <div className="space-y-3">
-                <div>
-                  <label
-                    htmlFor="modal-username"
-                    className="text-xs font-medium uppercase tracking-wide text-gray-500"
-                  >
-                    Username<span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="modal-username"
-                    type="text"
-                    value={credentials.username}
-                    onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
-                    placeholder="MSP admin username"
-                    required
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="modal-password"
-                    className="text-xs font-medium uppercase tracking-wide text-gray-500"
-                  >
-                    Password<span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="modal-password"
-                    type="password"
-                    value={credentials.password}
-                    onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
-                    placeholder="MSP admin password"
-                    required
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="modal-domain"
-                    className="text-xs font-medium uppercase tracking-wide text-gray-500"
-                  >
-                    Domain<span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="modal-domain"
-                    type="text"
-                    value={credentials.domain}
-                    onChange={(e) => setCredentials({ ...credentials, domain: e.target.value })}
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
-                    placeholder="cloud_msp"
-                    required
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="modal-domain-id"
-                    className="text-xs font-medium uppercase tracking-wide text-gray-500"
-                  >
-                    Domain ID <span className="text-gray-400">(optional)</span>
-                  </label>
-                  <input
-                    id="modal-domain-id"
-                    type="text"
-                    value={credentials.domain_id}
-                    onChange={(e) => setCredentials({ ...credentials, domain_id: e.target.value })}
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
-                    placeholder="dom-xxxxx"
-                  />
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-xs text-blue-700">
-                <strong>Note:</strong> MSP admins authenticate using the default project token.
-                Ensure the credentials include the <strong>msp_admin</strong> role.
-              </div>
-
-              <div className="flex items-center justify-end gap-3">
-                <ModernButton
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setShowCredentialModal(false)}
-                  className="px-4"
-                >
-                  Cancel
-                </ModernButton>
-                <ModernButton
-                  type="submit"
-                  variant="primary"
-                  isLoading={verifying}
-                  className="px-5"
-                >
-                  Verify Credentials
-                </ModernButton>
-              </div>
-            </form>
-          </ModernCard>
-        </div>
+        <CredentialModal
+          credentials={credentials}
+          verifying={verifying}
+          onCredentialsChange={setCredentials}
+          onSubmit={handleVerifyCredentials}
+          onClose={() => setShowCredentialModal(false)}
+        />
       )}
     </>
   );

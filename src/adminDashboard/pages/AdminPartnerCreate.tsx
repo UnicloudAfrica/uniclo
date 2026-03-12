@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import AdminPageShell from "../components/AdminPageShell";
 import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
 import AddPartner from "../components/partnersComponent/AddPartner";
-import { ModernButton } from "../../shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
 
 const AdminPartnerCreate = () => {
   const navigate = useNavigate();

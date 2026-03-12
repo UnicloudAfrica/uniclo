@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TenantPageShell from "../../components/TenantPageShell";
-import { ModernCard } from "../../../shared/components/ui";
-import { ModernButton } from "../../../shared/components/ui";
-import { ModernInput } from "../../../shared/components/ui";
-import ToastUtils from "../../../utils/toastUtil";
+import { ModernCard, ModernButton, ModernInput } from "@/shared/components/ui";
+import ToastUtils from "@/utils/toastUtil";
 import {
   useFetchTenantPartnerById,
   useUpdateTenantPartner,
-} from "../../../hooks/tenantHooks/partnerHooks";
+} from "@/hooks/tenantHooks/partnerHooks";
 
 const defaultForm = {
   name: "",
@@ -21,7 +19,23 @@ const defaultForm = {
   verified: false,
 };
 
-const Field = ({ label, children }: any) => (
+interface PartnerRecord {
+  name?: string;
+  verified?: boolean;
+  business?: {
+    name?: string;
+    registration_number?: string;
+    company_type?: string;
+    industry?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="space-y-2">
     <label className="text-sm font-medium text-slate-700">{label}</label>
     {children}
@@ -39,26 +53,28 @@ export default function EditPartnerPage() {
 
   useEffect(() => {
     if (partner) {
+      const p = partner as PartnerRecord;
       setForm({
-        name: (partner as any).business?.name ?? (partner as any).name ?? "",
-        registration_number: (partner as any).business?.registration_number ?? "",
-        company_type: (partner as any).business?.company_type ?? "",
-        industry: (partner as any).business?.industry ?? "",
-        address: (partner as any).business?.address ?? "",
-        city: (partner as any).business?.city ?? "",
-        state: (partner as any).business?.state ?? "",
-        verified: Boolean((partner as any).verified),
+        name: p.business?.name ?? p.name ?? "",
+        registration_number: p.business?.registration_number ?? "",
+        company_type: p.business?.company_type ?? "",
+        industry: p.business?.industry ?? "",
+        address: p.business?.address ?? "",
+        city: p.business?.city ?? "",
+        state: p.business?.state ?? "",
+        verified: Boolean(p.verified),
       });
     }
   }, [partner]);
 
-  const updateField = (key: any) => (event: any) => {
-    const value = event.target.type === "checkbox" ? event.target.checked : event.target.value;
-    setIsDirty(true);
-    setForm((prev) => ({ ...prev, [key]: value }));
-  };
+  const updateField =
+    (key: keyof typeof defaultForm) => (event: React.ChangeEvent<HTMLInputElement>) => {
+      const value = event.target.type === "checkbox" ? event.target.checked : event.target.value;
+      setIsDirty(true);
+      setForm((prev) => ({ ...prev, [key]: value }));
+    };
 
-  const handleSubmit = async (event: any) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!partnerId) return;
 
@@ -80,7 +96,7 @@ export default function EditPartnerPage() {
       ToastUtils.success("Partner updated.");
       navigate(`/dashboard/partners/${partnerId}`);
     } catch (error) {
-      ToastUtils.error((error as any)?.response?.data?.message || "Failed to update partner.");
+      ToastUtils.error((error as Error)?.message || "Failed to update partner.");
     }
   };
 

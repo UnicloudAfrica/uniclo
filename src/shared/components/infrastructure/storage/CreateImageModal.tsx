@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Layers, X, Loader2 } from "lucide-react";
 import ModernButton from "../../ui/ModernButton";
-import { useCreateInstanceImage } from "../../../../hooks/storageHooks";
+import { useCreateInstanceImage } from "@/hooks/storageHooks";
 
 interface CreateImageModalProps {
   isOpen: boolean;
@@ -17,8 +17,8 @@ const CreateImageModal: React.FC<CreateImageModalProps> = ({
   onClose,
   instanceId,
   instanceName,
-  projectId,
-  region,
+  projectId: _projectId,
+  region: _region,
 }) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");

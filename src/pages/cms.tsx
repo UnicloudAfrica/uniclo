@@ -12,26 +12,14 @@ import Cases from "../adminComps/cases";
 import General from "../adminComps/general";
 import Board from "../adminComps/board";
 import Career from "../adminComps/career";
-import { initializeApp, getApps } from "firebase/app";
-import { onAuthStateChanged, getAuth } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
+import { getFirebaseAuth } from "../shared/config/firebase";
 
 const Cms = () => {
   const Navigate = useNavigate();
   const [page] = useContext(PageContext);
 
-  const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    appId: import.meta.env.VITE_FIREBASE_APP_ID,
-    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
-  };
-
-  // Initialize Firebase
-  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-  const auth = getAuth(app);
+  const auth = getFirebaseAuth();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {

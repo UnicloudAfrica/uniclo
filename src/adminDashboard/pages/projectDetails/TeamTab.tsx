@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { XCircle } from "lucide-react";
-import { ModernButton, ModernTable } from "../../../shared/components/ui";
-import ToastUtils from "../../../utils/toastUtil";
+import { ModernButton, ModernTable } from "@/shared/components/ui";
+import ToastUtils from "@/utils/toastUtil";
 import { ApiResponse } from "src/shared/types/resource";
-import { ProjectUser, CloudPolicy } from "../../../types/project";
+import { ProjectUser, CloudPolicy } from "@/types/project";
 
 interface TeamTabProps {
   project: {

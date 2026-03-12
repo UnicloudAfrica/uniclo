@@ -1,17 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { BadgePercent, Inbox, Plus, Server, Trash2, Loader2 } from "lucide-react";
-import { ModernButton } from "../../../shared/components/ui";
-import ModernCard from "../../../shared/components/ui/ModernCard";
-import ModernInput from "../../../shared/components/ui/ModernInput";
-import SelectableInput, {
-  type SelectableOption,
-} from "../../../shared/components/ui/SelectableInput";
-import { useFetchCountries, useFetchProductPricing } from "../../../hooks/resource";
-import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
-import { useFormattedRegions } from "../../../utils/regionUtils";
-import type { RegionLike } from "../../../utils/regionUtils";
-import { getCurrencySymbol } from "../../../utils/resource";
+import { ModernButton } from "@/shared/components/ui";
+import ModernCard from "@/shared/components/ui/ModernCard";
+import ModernInput from "@/shared/components/ui/ModernInput";
+import SelectableInput, { type SelectableOption } from "@/shared/components/ui/SelectableInput";
+import { useFetchCountries, useFetchProductPricing } from "@/hooks/resource";
+import { useFetchRegions } from "@/hooks/adminHooks/regionHooks";
+import { useFormattedRegions } from "@/utils/regionUtils";
+import type { RegionLike } from "@/utils/regionUtils";
+import { getCurrencySymbol } from "@/utils/resource";
 import WorkloadCard from "./WorkloadCard";
 
 type WorkloadRequest = {

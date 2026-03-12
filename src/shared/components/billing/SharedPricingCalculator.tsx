@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, ChevronLeft } from "lucide-react";
-import { useSharedCalculatorPricing } from "../../../hooks/sharedCalculatorHooks";
-import { useFetchTenants } from "../../../hooks/adminHooks/tenantHooks";
-import { useFetchClients } from "../../../hooks/adminHooks/clientHooks";
-import { useFetchClientProfile } from "../../../hooks/clientHooks/resources";
-import { useFetchTenantBusinessSettings } from "../../../hooks/settingsHooks";
+import { useSharedCalculatorPricing } from "@/hooks/sharedCalculatorHooks";
+import { useFetchTenants } from "@/hooks/adminHooks/tenantHooks";
+import { useFetchClients } from "@/hooks/adminHooks/clientHooks";
+import { useFetchClientProfile } from "@/hooks/clientHooks/resources";
+import { useFetchTenantBusinessSettings } from "@/hooks/settingsHooks";
 import PricingCalculatorConfig from "./calculator/PricingCalculatorConfig";
 import CalculatorSummaryStep from "./calculator/CalculatorSummaryStep";
 import { CustomerContextSelector } from "../../components";
 import { ModernButton } from "../ui";
 import { CalculatorData, ObjectStorageRequest } from "./types";
-import logger from "../../../utils/logger";
+import logger from "@/utils/logger";
 
 interface SharedPricingCalculatorProps {
   mode?: "admin" | "tenant" | "client";
@@ -40,7 +40,7 @@ const SharedPricingCalculator: React.FC<SharedPricingCalculatorProps> = ({
   });
 
   // Customer Context State
-  const [contextType, setContextType] = useState(mode === "client" ? "none" : "none");
+  const [contextType, setContextType] = useState<"none" | "tenant" | "user">("none");
   const [selectedTenantId, setSelectedTenantId] = useState("");
   const [selectedUserId, setSelectedUserId] = useState("");
 
@@ -181,7 +181,7 @@ const SharedPricingCalculator: React.FC<SharedPricingCalculatorProps> = ({
       }
 
       const response = await calculatePricing(payload);
-      setPricingResult(response as any);
+      setPricingResult(response as Record<string, unknown>);
       setActiveStep(2);
     } catch (err) {
       logger.error("Calculation failed:", err);
@@ -195,7 +195,7 @@ const SharedPricingCalculator: React.FC<SharedPricingCalculatorProps> = ({
       {/* Step Indicator - Could be passed as prop or kept here if generic */}
       <div className="mb-6 flex items-center gap-2">
         <div
-          className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium ${activeStep === 1 ? "bg-primary-50 text-primary-700 ring-1 ring-primary-200" : "text-slate-500"}`}
+          className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium ${activeStep === 1 ? "bg-primary-50 text-primary-700 ring-1 ring-primary-200" : "text-slate-500"} `}
         >
           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold shadow-sm">
             1
@@ -204,7 +204,7 @@ const SharedPricingCalculator: React.FC<SharedPricingCalculatorProps> = ({
         </div>
         <div className="h-px w-8 bg-slate-200"></div>
         <div
-          className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium ${activeStep === 2 ? "bg-primary-50 text-primary-700 ring-1 ring-primary-200" : "text-slate-500"}`}
+          className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium ${activeStep === 2 ? "bg-primary-50 text-primary-700 ring-1 ring-primary-200" : "text-slate-500"} `}
         >
           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold shadow-sm border border-slate-200">
             2
@@ -239,7 +239,6 @@ const SharedPricingCalculator: React.FC<SharedPricingCalculatorProps> = ({
                 isTenantsFetching,
                 userPool,
                 isUsersFetching: isClientsFetching,
-                mode,
               } as any)}
             />
           )}

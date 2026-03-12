@@ -143,15 +143,20 @@ export const useInstanceTemplates = () => {
   // 2. CREATE Template
   const createMutation = useMutation({
     mutationFn: async (payload: CreateTemplatePayload) => {
-      const response = await api<ApiResponse>("POST", "/instance-templates", payload as any);
+      const response = await api<ApiResponse>(
+        "POST",
+        "/instance-templates",
+        payload as unknown as Record<string, unknown>
+      );
       return response.data || response;
     },
     onSuccess: () => {
       ToastUtils.success("Template created successfully!");
       queryClient.invalidateQueries({ queryKey });
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.message || err.message || "Failed to create template.";
+    onError: (err: unknown) => {
+      const error = err as any;
+      const msg = error.response?.data?.message || error.message || "Failed to create template.";
       ToastUtils.error(msg);
     },
   });
@@ -181,8 +186,9 @@ export const useInstanceTemplates = () => {
       ToastUtils.success("Template updated successfully!");
       queryClient.invalidateQueries({ queryKey });
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.message || err.message || "Failed to update template.";
+    onError: (err: unknown) => {
+      const error = err as any;
+      const msg = error.response?.data?.message || error.message || "Failed to update template.";
       ToastUtils.error(msg);
     },
   });

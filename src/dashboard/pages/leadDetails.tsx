@@ -13,21 +13,20 @@ import {
   Phone,
   PlusCircle,
   User,
-  UserCheck,
   Building,
 } from "lucide-react";
 import TenantPageShell from "../components/TenantPageShell";
-import { ModernCard } from "../../shared/components/ui";
-import { ModernButton } from "../../shared/components/ui";
-import { useFetchLeadById, useConvertLeadToUser } from "../../hooks/tenantHooks/leadsHook";
+import { ModernCard } from "@/shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
+import { useFetchLeadById, useConvertLeadToUser } from "@/hooks/tenantHooks/leadsHooks";
 import EditLead from "./leadComps/editLead";
 import AddLeadStage from "./leadComps/addLeadStage";
 import { EditLeadStage } from "./leadComps/editLeadStage";
 import AddLeadDocument from "./leadComps/addLeadDoc";
 import UpdateLeadDoc from "./leadComps/updateLeadDoc";
 import DocumentViewerModal from "./leadComps/documentViewer";
-import ToastUtils from "../../utils/toastUtil";
-import logger from "../../utils/logger";
+import ToastUtils from "@/utils/toastUtil";
+import logger from "@/utils/logger";
 
 const formatStatusForDisplay = (status: string | null | undefined) =>
   status?.replace(/_/g, " ") || "N/A";

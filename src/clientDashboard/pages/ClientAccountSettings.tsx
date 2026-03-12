@@ -1,7 +1,7 @@
 import React from "react";
 import ClientActiveTab from "../components/clientActiveTab";
 import ClientPageShell from "../components/ClientPageShell";
-import AccountSettingsContent from "../../shared/components/settings/AccountSettingsContent";
+import AccountSettingsContent from "@/shared/components/settings/AccountSettingsContent";
 
 const ClientAccountSettings: React.FC = () => {
   return (

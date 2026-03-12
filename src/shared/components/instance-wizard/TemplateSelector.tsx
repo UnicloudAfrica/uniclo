@@ -1,4 +1,4 @@
-import { useInstanceTemplates, InstanceTemplate } from "../../../hooks/useInstanceTemplates";
+import { useInstanceTemplates, InstanceTemplate } from "@/hooks/useInstanceTemplates";
 import { LayoutTemplate, Loader2, Trash2, Zap, Settings } from "lucide-react";
 
 interface Props {
@@ -71,14 +71,18 @@ const TemplateSelector: React.FC<Props> = ({
                         {tpl.configuration.region}
                       </span>
                     )}
-                    {(tpl.configuration?.compute as any)?.vcpu && (
+                    {(tpl.configuration?.compute as Record<string, unknown>)?.vcpu && (
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                        {(tpl.configuration.compute as any).vcpu} vCPU
+                        {(tpl.configuration.compute as Record<string, unknown>).vcpu as number} vCPU
                       </span>
                     )}
-                    {(tpl.configuration?.compute as any)?.ram_mb && (
+                    {(tpl.configuration?.compute as Record<string, unknown>)?.ram_mb && (
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                        {Math.round((tpl.configuration.compute as any).ram_mb / 1024)}GB RAM
+                        {Math.round(
+                          ((tpl.configuration.compute as Record<string, unknown>)
+                            .ram_mb as number) / 1024
+                        )}
+                        GB RAM
                       </span>
                     )}
                   </div>

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 
-import ToastUtils from "../../../../utils/toastUtil";
-import { useUpdateVmInstance } from "../../../../hooks/adminHooks/vmHooks";
-import logger from "../../../../utils/logger";
+import ToastUtils from "@/utils/toastUtil";
+import { useUpdateVmInstance } from "@/hooks/adminHooks/vmHooks";
+import logger from "@/utils/logger";
 
 const EditVMModal = ({ isOpen, onClose, vm }: any) => {
   const [formData, setFormData] = useState({
@@ -28,7 +28,7 @@ const EditVMModal = ({ isOpen, onClose, vm }: any) => {
           vm.price !== undefined && vm.price !== null
             ? parseFloat(vm.price).toFixed(2) // Format to 2 decimal places for display
             : "",
-      } as any);
+      } as never);
       setErrors({}); // Clear any previous errors
     } else if (!isOpen) {
       // Reset form when modal closes
@@ -58,8 +58,8 @@ const EditVMModal = ({ isOpen, onClose, vm }: any) => {
     ];
 
     numberFields.forEach((field: any) => {
-      const value = parseFloat((formData as any)[field]);
-      if (isNaN(value) || (formData as any)[field] === "") {
+      const value = parseFloat((formData as Record<string, string>)[field]);
+      if (isNaN(value) || (formData as Record<string, string>)[field] === "") {
         newErrors[field] = `${field
           .replace(/_/g, " ")
           .replace("gib", "GiB")

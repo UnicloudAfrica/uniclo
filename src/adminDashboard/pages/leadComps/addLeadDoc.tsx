@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
-import { FileInput } from "../../../utils/fileInput";
-import { useAddLeadDocument } from "../../../hooks/adminHooks/leadsHook";
+import ToastUtils from "@/utils/toastUtil";
+import { FileInput } from "@/utils/fileInput";
+import { useAddLeadDocument } from "@/hooks/adminHooks/leadsHooks";
 
 const documentTypeOptions = [
   "identity",

@@ -4,13 +4,13 @@ import { Shield } from "lucide-react";
 import ClientPageShell from "../components/ClientPageShell";
 import SecurityGroupsContainer, {
   SecurityGroupHooks,
-} from "../../shared/components/infrastructure/containers/SecurityGroupsContainer";
+} from "@/shared/components/infrastructure/containers/SecurityGroupsContainer";
 import {
   useSecurityGroups,
   useCreateSecurityGroup,
   useDeleteSecurityGroup,
-} from "../../shared/hooks/vpcInfraHooks";
-import { SecurityGroup } from "../../shared/components/infrastructure/types";
+} from "@/shared/hooks/vpcInfraHooks";
+import { SecurityGroup } from "@/shared/components/infrastructure/types";
 
 /**
  * Client Security Groups page - truly thin wrapper.

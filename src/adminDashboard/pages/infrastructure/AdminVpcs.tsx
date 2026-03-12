@@ -2,8 +2,8 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Network } from "lucide-react";
 import AdminPageShell from "../../components/AdminPageShell";
-import VpcsContainer from "../../../shared/components/infrastructure/containers/VpcsContainer";
-import { useVpcs, useCreateVpc, useDeleteVpc } from "../../../shared/hooks/vpcInfraHooks";
+import VpcsContainer from "@/shared/components/infrastructure/containers/VpcsContainer";
+import { useVpcs, useCreateVpc, useDeleteVpc } from "@/shared/hooks/vpcInfraHooks";
 
 /**
  * Admin VPCs page - truly thin wrapper.

@@ -2,20 +2,20 @@ import { useCallback, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
-import { ModernButton } from "../../shared/components/ui";
-import ToastUtils from "../../utils/toastUtil";
-import { useProjectStatus } from "../../hooks/adminHooks/projectHooks";
-import { Configuration, Option } from "../../types/InstanceConfiguration";
-import { useInstanceTemplates } from "../../hooks/useInstanceTemplates";
-import InstanceSummaryCard from "../../shared/components/instance-wizard/InstanceSummaryCard";
-import WorkflowSelectionStep from "../../shared/components/instance-wizard/WorkflowSelectionStep";
-import ReviewSubmitStep from "../../shared/components/instance-wizard/ReviewSubmitStep";
-import PaymentStep from "../../shared/components/instance-wizard/PaymentStep";
-import ConfigurationListStep from "../../shared/components/instance-wizard/ConfigurationListStep";
-import OrderSuccessStep from "../../shared/components/instance-wizard/OrderSuccessStep";
-import { ProvisioningWizardLayout } from "../../shared/components/instance-wizard";
-import { useAdminCreateInstanceLogic } from "../../hooks/useAdminCreateInstanceLogic";
-import { hasProjectNetworkFromStatus } from "../../utils/instanceCreationUtils";
+import { ModernButton } from "@/shared/components/ui";
+import ToastUtils from "@/utils/toastUtil";
+import { useProjectStatus } from "@/hooks/adminHooks/projectHooks";
+import { Configuration, Option } from "@/types/InstanceConfiguration";
+import { useInstanceTemplates } from "@/hooks/useInstanceTemplates";
+import InstanceSummaryCard from "@/shared/components/instance-wizard/InstanceSummaryCard";
+import WorkflowSelectionStep from "@/shared/components/instance-wizard/WorkflowSelectionStep";
+import ReviewSubmitStep from "@/shared/components/instance-wizard/ReviewSubmitStep";
+import PaymentStep from "@/shared/components/instance-wizard/PaymentStep";
+import ConfigurationListStep from "@/shared/components/instance-wizard/ConfigurationListStep";
+import OrderSuccessStep from "@/shared/components/instance-wizard/OrderSuccessStep";
+import { ProvisioningWizardLayout } from "@/shared/components/instance-wizard";
+import { useAdminCreateInstanceLogic } from "@/hooks/useAdminCreateInstanceLogic";
+import { hasProjectNetworkFromStatus } from "@/utils/instanceCreationUtils";
 
 const AdminCreateInstance = () => {
   const navigate = useNavigate();
@@ -92,9 +92,9 @@ const AdminCreateInstance = () => {
         String(regionCode)
     );
     return (
-      (candidate as any)?.provider ||
-      (candidate as any)?.provider_code ||
-      (candidate as any)?.provider_id ||
+      (candidate as Record<string, unknown>)?.provider ||
+      (candidate as Record<string, unknown>)?.provider_code ||
+      (candidate as Record<string, unknown>)?.provider_id ||
       ""
     );
   };

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import DetailedModules from "./detailsModules";
-import { ModernTable } from "../../shared/components";
+import { ModernTable } from "@/shared/components";
 
 const ClientModules = () => {
   const [selectedItem, setSelectedItem] = useState<any>(null);

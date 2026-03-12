@@ -5,8 +5,8 @@ import {
   useFetchTenantIpPools,
   useAssignTenantProjectEdge,
   useFetchTenantProjectEdgeConfig,
-} from "../../../hooks/tenantHooks/edgeHooks";
-import { useFetchTenantRegions } from "../../../hooks/tenantHooks/regionHooks";
+} from "@/hooks/tenantHooks/edgeHooks";
+import { useFetchTenantRegions } from "@/hooks/tenantHooks/regionHooks";
 
 interface TenantAssignEdgeConfigModalProps {
   isOpen: boolean;

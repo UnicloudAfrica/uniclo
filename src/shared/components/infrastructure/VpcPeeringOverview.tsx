@@ -1,6 +1,7 @@
 import React from "react";
-import { GitMerge, Check, RefreshCw } from "lucide-react";
+import { GitMerge, Check, Plus, RefreshCw } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
+import ModernButton from "../ui/ModernButton";
 import VpcPeeringTable from "./VpcPeeringTable";
 import type { VpcPeeringConnection, VpcPeeringStatus } from "./types";
 
@@ -11,6 +12,7 @@ interface VpcPeeringOverviewProps {
   onAccept?: (pc: VpcPeeringConnection) => void;
   onReject?: (pc: VpcPeeringConnection) => void;
   onDelete?: (pc: VpcPeeringConnection) => void;
+  onCreate?: () => void;
   showActions?: boolean;
 }
 
@@ -21,6 +23,7 @@ const VpcPeeringOverview: React.FC<VpcPeeringOverviewProps> = ({
   onAccept,
   onReject,
   onDelete,
+  onCreate,
   showActions,
 }) => {
   const resolveStatus = (status?: string | VpcPeeringStatus) =>
@@ -76,6 +79,14 @@ const VpcPeeringOverview: React.FC<VpcPeeringOverviewProps> = ({
         peeringConnections={peeringConnections}
         isLoading={isLoading}
         emptyMessage={emptyMessage}
+        emptyAction={
+          onCreate ? (
+            <ModernButton variant="primary" size="sm" onClick={onCreate}>
+              <Plus className="w-4 h-4 mr-1" />
+              Create Peering Connection
+            </ModernButton>
+          ) : undefined
+        }
         onAccept={onAccept}
         onReject={onReject}
         onDelete={onDelete}

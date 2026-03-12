@@ -13,15 +13,15 @@ import {
   X,
 } from "lucide-react";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
-import { ModernButton } from "../../shared/components/ui";
-import ToastUtils from "../../utils/toastUtil";
+import { ModernButton } from "@/shared/components/ui";
+import ToastUtils from "@/utils/toastUtil";
 import {
   useFetchBranding,
   useUpdateBranding,
   useVerifyDomain,
   useResetBranding,
   generateColorPalette,
-} from "../../hooks/brandingHooks";
+} from "@/hooks/brandingHooks";
 
 // ═══════════════════════════════════════════════════════════════════
 // COLOR PICKER COMPONENT
@@ -31,7 +31,7 @@ const ColorPickerField: React.FC<{
   label: string;
   value: string;
   onChange: (color: string) => void;
-}> = ({ label, value, onChange }: any) => {
+}> = ({ label, value, onChange }) => {
   const [showPicker, setShowPicker] = useState(false);
   const presets = [
     "var(--theme-color)",
@@ -64,7 +64,7 @@ const ColorPickerField: React.FC<{
 
       {showPicker && (
         <div className="flex flex-wrap gap-2 p-3 bg-gray-50 rounded-lg">
-          {presets.map((color: any) => (
+          {presets.map((color: string) => (
             <button
               key={color}
               onClick={() => {
@@ -163,14 +163,14 @@ const FileUploadField: React.FC<{
 const DomainVerification: React.FC<{
   currentDomain?: string;
   isVerified?: boolean;
-}> = ({ currentDomain, isVerified }: any) => {
+}> = ({ currentDomain, isVerified }) => {
   const [domain, setDomain] = useState(currentDomain || "");
-  const [verificationData, setVerificationData] = useState<any>(null);
+  const [verificationData, setVerificationData] = useState<Record<string, any> | null>(null);
   const { mutate: verifyDomain, isPending } = useVerifyDomain();
 
   const handleVerify = () => {
-    (verifyDomain as any)(domain, {
-      onSuccess: (data: any) => setVerificationData(data),
+    verifyDomain(domain as never, {
+      onSuccess: (data: unknown) => setVerificationData(data as Record<string, any>),
     });
   };
 
@@ -227,7 +227,7 @@ const DomainVerification: React.FC<{
 
 export const BrandingSettingsSkeleton = () => (
   <div className="animate-pulse space-y-4">
-    {[1, 2, 3].map((i: any) => (
+    {[1, 2, 3].map((i: number) => (
       <div key={i} className="h-24 bg-gray-100 rounded-xl" />
     ))}
   </div>
@@ -264,8 +264,8 @@ export const BrandingSettingsSections = ({
   onFileChange,
   showDomain = true,
 }: {
-  brandingData: any;
-  formData: any;
+  brandingData: Record<string, any> | null | undefined;
+  formData: Record<string, any>;
   palette: Record<string, string> | null;
   onChange: (field: string, value: string) => void;
   onFileChange: (field: string, file: File | null) => void;
@@ -422,8 +422,9 @@ const useTenantBrandingSettingsState = () => {
   const [files, setFiles] = useState<Record<string, File>>({});
 
   useEffect(() => {
-    if ((brandingData as any)?.settings) {
-      const { branding, business } = (brandingData as any).settings;
+    const data = brandingData as Record<string, any> | undefined;
+    if (data?.settings) {
+      const { branding, business } = data.settings;
       setFormData({
         primary_color: branding?.primary_color || "var(--theme-color)",
         secondary_color: branding?.secondary_color || "rgb(var(--theme-success-500))",
@@ -455,10 +456,11 @@ const useTenantBrandingSettingsState = () => {
   };
 
   const handleSave = () => {
+    const data = brandingData as Record<string, any> | undefined;
     const hasExistingFavicon = Boolean(
-      (brandingData as any)?.resolved?.favicon ||
-      (brandingData as any)?.settings?.branding?.favicon_url ||
-      (brandingData as any)?.settings?.branding?.favicon_path
+      data?.resolved?.favicon ||
+      data?.settings?.branding?.favicon_url ||
+      data?.settings?.branding?.favicon_path
     );
     const isLogoUpdate = Boolean(files.logo);
     const isFaviconUpdate = Boolean(files.favicon);
@@ -468,7 +470,7 @@ const useTenantBrandingSettingsState = () => {
       return;
     }
 
-    (updateBranding as any)({ ...formData, ...files });
+    updateBranding({ ...formData, ...files } as never);
   };
 
   const handleReset = () => {

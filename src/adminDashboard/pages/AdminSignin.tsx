@@ -3,18 +3,18 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import logo from "./assets/logo.png";
 import { useNavigate } from "react-router-dom";
 
-import useAdminAuthStore from "../../stores/adminAuthStore";
+import useAdminAuthStore from "@/stores/adminAuthStore";
 
-import useAuthRedirect from "../../utils/adminAuthRedirect";
-import { useLoginAdminAccount } from "../../hooks/adminHooks/authHooks";
+import useAuthRedirect from "@/utils/adminAuthRedirect";
+import { useLoginAdminAccount } from "@/hooks/adminHooks/authHooks";
 import {
   resolveBrandLogo,
   usePlatformBrandingTheme,
   useApplyBrandingTheme,
-} from "../../hooks/useBrandingTheme";
-import useImageFallback from "../../hooks/useImageFallback";
+} from "@/hooks/useBrandingTheme";
+import useImageFallback from "@/hooks/useImageFallback";
 import AuthShell from "../../components/auth/AuthShell";
-import logger from "../../utils/logger";
+import logger from "@/utils/logger";
 
 interface LoginErrors {
   email?: string;

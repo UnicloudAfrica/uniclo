@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import { createPortal } from "react-dom";
-import { useFetchTenantAdmins } from "../../../hooks/adminUserHooks";
-import { useUpdateLeadStage } from "../../../hooks/tenantHooks/leadsHook";
-import ToastUtils from "../../../utils/toastUtil";
+import { useFetchTenantAdmins } from "@/hooks/adminUserHooks";
+import { useUpdateLeadStage } from "@/hooks/tenantHooks/leadsHooks";
+import ToastUtils from "@/utils/toastUtil";
 
 const leadStatusOptions = ["pending", "in_progress", "completed", "skipped"];
 
@@ -51,11 +51,11 @@ export const EditLeadStage = ({ isOpen, onClose, stage, lead }: any) => {
       const updatedData = { status: formData.status, lead_id: lead.id };
 
       if (formData.notes) {
-        (updatedData as any).notes = formData.notes;
+        (updatedData as Record<string, unknown>).notes = formData.notes;
       }
 
       if (formData.assigned_to && formData.assigned_to !== "unassigned") {
-        (updatedData as any).assigned_to = formData.assigned_to;
+        (updatedData as Record<string, unknown>).assigned_to = formData.assigned_to;
       }
 
       mutate(
@@ -151,9 +151,13 @@ export const EditLeadStage = ({ isOpen, onClose, stage, lead }: any) => {
                 {isAdminsLoading ? (
                   <option disabled>Loading admins...</option>
                 ) : (
-                  (admins as any)?.map((admin: any) => (
-                    <option key={admin.id} value={admin.identifier || admin.id}>
-                      {admin.first_name} {admin.last_name} ({admin.email})
+                  (admins as Record<string, unknown>[])?.map((admin: Record<string, unknown>) => (
+                    <option
+                      key={admin.id as string}
+                      value={(admin.identifier as string) || (admin.id as string)}
+                    >
+                      {admin.first_name as string} {admin.last_name as string} (
+                      {admin.email as string})
                     </option>
                   ))
                 )}

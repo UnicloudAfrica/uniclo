@@ -1,13 +1,15 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { Globe, Layers, Shield, Trash2, Zap } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
 import ModernButton from "../ui/ModernButton";
+import { ResourceEmptyState } from "../ui/ResourceEmptyState";
 import type { LoadBalancer } from "./types";
 
 interface LoadBalancersTableProps {
   loadBalancers: LoadBalancer[];
   isLoading?: boolean;
   emptyMessage?: string;
+  emptyAction?: ReactNode;
   onDelete?: (lb: LoadBalancer) => void;
   onManage?: (lb: LoadBalancer) => void;
   showActions?: boolean;
@@ -32,6 +34,7 @@ const LoadBalancersTable: React.FC<LoadBalancersTableProps> = ({
   loadBalancers,
   isLoading = false,
   emptyMessage = "No Load Balancers found for this project",
+  emptyAction,
   onDelete,
   onManage,
   showActions,
@@ -51,10 +54,12 @@ const LoadBalancersTable: React.FC<LoadBalancersTableProps> = ({
 
   if (loadBalancers.length === 0) {
     return (
-      <ModernCard className="p-12 text-center">
-        <Zap className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-        <div className="text-gray-500">{emptyMessage}</div>
-      </ModernCard>
+      <ResourceEmptyState
+        title="No Load Balancers"
+        message={emptyMessage}
+        icon={<Zap className="w-5 h-5" />}
+        action={emptyAction}
+      />
     );
   }
 

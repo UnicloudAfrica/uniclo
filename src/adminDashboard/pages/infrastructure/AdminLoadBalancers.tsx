@@ -2,12 +2,9 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Zap, Trash2, RefreshCw, Layers, Shield, Globe } from "lucide-react";
 import AdminPageShell from "../../components/AdminPageShell";
-import ModernCard from "../../../shared/components/ui/ModernCard";
-import ModernButton from "../../../shared/components/ui/ModernButton";
-import {
-  useLoadBalancers,
-  useDeleteLoadBalancer,
-} from "../../../hooks/adminHooks/loadBalancerHooks";
+import ModernCard from "@/shared/components/ui/ModernCard";
+import ModernButton from "@/shared/components/ui/ModernButton";
+import { useLoadBalancers, useDeleteLoadBalancer } from "@/hooks/adminHooks/loadBalancerHooks";
 
 const AdminLoadBalancers: React.FC = () => {
   const [searchParams] = useSearchParams();

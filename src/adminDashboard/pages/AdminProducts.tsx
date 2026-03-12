@@ -17,23 +17,27 @@ import {
   ChevronDown,
 } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
-import { ModernCard } from "../../shared/components/ui";
-import { ModernButton } from "../../shared/components/ui";
-import ResourceHero from "../../shared/components/ui/ResourceHero";
+import {
+  ModernButton,
+  ModernCard,
+  ProviderBadge,
+  getRegionOptionLabel,
+} from "@/shared/components/ui";
+import ResourceHero from "@/shared/components/ui/ResourceHero";
 import ResourceDataExplorer from "../components/ResourceDataExplorer";
 import PricingSideMenu from "../components/pricingSideMenu";
-import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
-import { useFetchCountries } from "../../hooks/resource";
-import { useFetchProducts } from "../../hooks/adminHooks/adminProductHooks";
-import { useFetchProductPricing } from "../../hooks/adminHooks/adminproductPricingHook";
-import { matchesProductType, normalizeProductType } from "../../utils/productTypeUtils";
+import { useFetchRegions } from "@/hooks/adminHooks/regionHooks";
+import { useFetchCountries } from "@/hooks/resource";
+import { useFetchProducts } from "@/hooks/adminHooks/adminProductHooks";
+import { useFetchProductPricing } from "@/hooks/adminHooks/adminProductPricingHooks";
+import { matchesProductType, normalizeProductType } from "@/utils/productTypeUtils";
 
 import EditProduct from "./productComps/editProduct";
 
 import DeleteProduct from "./productComps/deleteProduct";
 
-import useAuthRedirect from "../../utils/adminAuthRedirect";
-import ToastUtils from "../../utils/toastUtil";
+import useAuthRedirect from "@/utils/adminAuthRedirect";
+import ToastUtils from "@/utils/toastUtil";
 
 interface ProductRow {
   id?: string | number | null;
@@ -70,6 +74,7 @@ interface ProductPricingResponse {
 interface RegionOption {
   code: string;
   name: string;
+  provider?: string;
   [key: string]: unknown;
 }
 
@@ -89,7 +94,7 @@ interface ExplorerColumn {
   render?: (row: Record<string, unknown>) => React.ReactNode;
 }
 
-const formatCurrency = (value: any) => {
+const formatCurrency = (value: number | string | null | undefined) => {
   if (value === null || value === undefined || Number.isNaN(Number(value))) {
     return "—";
   }
@@ -127,7 +132,7 @@ const PRODUCT_TAB_CONFIG = [
     tableDescription:
       "Review committed bandwidth tiers and confirm they are available for provisioning.",
     icon: Wifi,
-    metrics: (stats: any) => [
+    metrics: (stats: { total: number; active: number; regionCount: number }) => [
       {
         label: "Throughput tiers",
         value: stats.total,
@@ -161,7 +166,7 @@ const PRODUCT_TAB_CONFIG = [
     tableTitle: "OS image products",
     tableDescription: "Monitor curated operating system templates exposed to provisioning flows.",
     icon: HardDrive,
-    metrics: (stats: any) => [
+    metrics: (stats: { total: number; active: number; regionCount: number }) => [
       {
         label: "Templates",
         value: stats.total,
@@ -195,7 +200,7 @@ const PRODUCT_TAB_CONFIG = [
     tableTitle: "Volume products",
     tableDescription: "Review block storage options exposed to tenants and provisioning workflows.",
     icon: Database,
-    metrics: (stats: any) => [
+    metrics: (stats: { total: number; active: number; regionCount: number }) => [
       {
         label: "Volume profiles",
         value: stats.total,
@@ -231,7 +236,7 @@ const PRODUCT_TAB_CONFIG = [
     tableDescription:
       "Review regional Silo Storage SKUs and confirm pricing aligns with provider costs.",
     icon: HardDrive,
-    metrics: (stats: any) => [
+    metrics: (stats: { total: number; active: number; regionCount: number }) => [
       {
         label: "Storage SKUs",
         value: stats.total,
@@ -266,7 +271,7 @@ const PRODUCT_TAB_CONFIG = [
     tableTitle: "Compute products",
     tableDescription: "Inspect compute SKUs and confirm they are available for tenant workloads.",
     icon: Cpu,
-    metrics: (stats: any) => [
+    metrics: (stats: { total: number; active: number; regionCount: number }) => [
       {
         label: "Instance classes",
         value: stats.total,
@@ -301,7 +306,7 @@ const PRODUCT_TAB_CONFIG = [
     tableTitle: "Floating IP products",
     tableDescription: "Review floating IP pools exposed to tenant networking workflows.",
     icon: Globe,
-    metrics: (stats: any) => [
+    metrics: (stats: { total: number; active: number; regionCount: number }) => [
       {
         label: "IP pools",
         value: stats.total,
@@ -336,7 +341,7 @@ const PRODUCT_TAB_CONFIG = [
     tableTitle: "Cross connect products",
     tableDescription: "Review carrier cross connect SKUs and their availability.",
     icon: Cable,
-    metrics: (stats: any) => [
+    metrics: (stats: { total: number; active: number; regionCount: number }) => [
       {
         label: "Cross connect SKUs",
         value: stats.total,
@@ -361,10 +366,13 @@ const PRODUCT_TAB_CONFIG = [
   },
 ];
 
-const TAB_MAP = PRODUCT_TAB_CONFIG.reduce((acc: any, tab) => {
-  acc[tab.id] = tab;
-  return acc;
-}, {});
+const TAB_MAP = PRODUCT_TAB_CONFIG.reduce(
+  (acc: Record<string, (typeof PRODUCT_TAB_CONFIG)[number]>, tab) => {
+    acc[tab.id] = tab;
+    return acc;
+  },
+  {}
+);
 
 const FALLBACK_CONFIG = PRODUCT_TAB_CONFIG[0] ?? {
   id: "default",
@@ -414,7 +422,7 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
   const { isFetching: isRegionsFetching, data: regionsData } = useFetchRegions();
   const { isFetching: isCountriesFetching, data: countriesData } = useFetchCountries();
   const regions = useMemo<RegionOption[]>(
-    () => (Array.isArray(regionsData) ? (regionsData as any as RegionOption[]) : []),
+    () => (Array.isArray(regionsData) ? (regionsData as unknown as RegionOption[]) : []),
     [regionsData]
   );
   const countries = useMemo<CountryOption[]>(
@@ -667,11 +675,7 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
       align: "center",
       render: (rowData: Record<string, unknown>) => {
         const row = rowData as ProductRow;
-        return (
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-            {row.provider || "Platform"}
-          </span>
-        );
+        return <ProviderBadge provider={row.provider} />;
       },
     },
     {
@@ -767,9 +771,12 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
   const filterControls = (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-slate-600">Country</label>
+        <label htmlFor="country-select" className="text-sm font-medium text-slate-600">
+          Country
+        </label>
         <div className="relative">
           <select
+            id="country-select"
             value={selectedCountryCode}
             onChange={(event) => handleCountryChange(event.target.value)}
             className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
@@ -799,9 +806,12 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
         </div>
       </div>
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-slate-600">Region</label>
+        <label htmlFor="region-select" className="text-sm font-medium text-slate-600">
+          Region
+        </label>
         <div className="relative">
           <select
+            id="region-select"
             value={selectedRegion}
             onChange={(event) => handleRegionChange(event.target.value)}
             className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
@@ -810,7 +820,7 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
             <option value="">{isRegionsFetching ? "Loading regions..." : "All regions"}</option>
             {regions.map((region) => (
               <option key={region.code} value={region.code}>
-                {region.name}
+                {getRegionOptionLabel(region)}
               </option>
             ))}
           </select>

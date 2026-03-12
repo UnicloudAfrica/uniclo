@@ -1,5 +1,5 @@
 import React from "react";
-import { FileInput } from "../../../utils/fileInput";
+import { FileInput } from "@/utils/fileInput";
 
 interface UploadFilesProps {
   formData: any;

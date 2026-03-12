@@ -4,8 +4,8 @@ import { Network } from "lucide-react";
 import ClientPageShell from "../components/ClientPageShell";
 import SubnetsContainer, {
   SubnetHooks,
-} from "../../shared/components/infrastructure/containers/SubnetsContainer";
-import { useSubnets, useCreateSubnet, useDeleteSubnet } from "../../shared/hooks/vpcInfraHooks";
+} from "@/shared/components/infrastructure/containers/SubnetsContainer";
+import { useSubnets, useCreateSubnet, useDeleteSubnet } from "@/shared/hooks/vpcInfraHooks";
 
 /**
  * Client Subnets page - truly thin wrapper.

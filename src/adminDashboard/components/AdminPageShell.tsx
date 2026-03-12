@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import AdminPageHeader from "./AdminPageHeader";
-import { designTokens } from "../../styles/designTokens";
+import { designTokens } from "@/styles/designTokens";
 
 const friendlyPathMap: Record<string, string> = {
   "admin-dashboard": "Home",

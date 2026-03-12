@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import TenantPageShell from "../../components/TenantPageShell";
-import { StorageManagementContainer } from "../../../shared/components/infrastructure/storage";
+import { StorageManagementContainer } from "@/shared/components/infrastructure/storage";
 
 const TenantImages: React.FC = () => {
   const location = useLocation();

@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import api from "../../index/admin/api";
 import lapapi from "../../index/admin/lapapi";
-import logger from "../../utils/logger";
+import logger from "@/utils/logger";
 
 // **POST**: Create a new account
 const createAdminAccount = async (userData: any) => {

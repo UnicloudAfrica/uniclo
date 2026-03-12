@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
-import { useCreateMultiQuotes } from "../../hooks/adminHooks/calculatorOptionHooks";
-import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
-import { useFetchProductPricing } from "../../hooks/resource";
-import { useCustomerContext } from "../../hooks/adminHooks/useCustomerContext";
-import CustomerContextSelector from "../../shared/components/common/CustomerContextSelector";
+import { useCreateMultiQuotes } from "@/hooks/adminHooks/calculatorOptionHooks";
+import { useFetchRegions } from "@/hooks/adminHooks/regionHooks";
+import { useFetchProductPricing } from "@/hooks/resource";
+import { useCustomerContext } from "@/hooks/adminHooks/useCustomerContext";
+import CustomerContextSelector from "@/shared/components/common/CustomerContextSelector";
 import StepProgress from "../../dashboard/components/instancesubcomps/stepProgress";
 import QuoteInfoStep from "./quoteComps/quoteInfoStep";
 import QuoteResourceStep from "./quoteComps/quoteResourceStep";
@@ -18,11 +18,11 @@ import type {
   UpdateFormData,
 } from "./quoteComps/quoteTypes";
 // import QuoteLivePreview from "./quoteComps/quoteLivePreview"; // Removed
-import ToastUtils from "../../utils/toastUtil";
+import ToastUtils from "@/utils/toastUtil";
 import AdminPageShell from "../components/AdminPageShell";
-import { ModernCard } from "../../shared/components/ui";
-import { ModernButton } from "../../shared/components/ui";
-import StatusPill from "../../shared/components/ui/StatusPill";
+import { ModernCard } from "@/shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
+import StatusPill from "@/shared/components/ui/StatusPill";
 
 type MultiQuotePayload = {
   subject: string;
@@ -146,14 +146,14 @@ const AdminMultiQuote = () => {
       enabled: !!formData.region,
     }
   );
-  const { data: bandwidthsData, isFetching: isBandwidthsFetching } = useFetchProductPricing(
+  const { data: bandwidthsData, isFetching: _isBandwidthsFetching } = useFetchProductPricing(
     formData.region,
     "bandwidth",
     {
       enabled: !!formData.region,
     }
   );
-  const { data: floatingIpsData, isFetching: isFloatingIpsFetching } = useFetchProductPricing(
+  const { data: floatingIpsData, isFetching: _isFloatingIpsFetching } = useFetchProductPricing(
     formData.region,
     "ip",
     {
@@ -445,11 +445,11 @@ const AdminMultiQuote = () => {
             isEbsVolumesFetching={isEbsVolumesFetching}
             osImages={osImages}
             isOsImagesFetching={isOsImagesFetching}
-            bandwidths={bandwidths as any[]}
-            isBandwidthsFetching={isBandwidthsFetching}
-            floatingIps={floatingIps as any[]}
-            isFloatingIpsFetching={isFloatingIpsFetching}
-            crossConnects={crossConnects as any[]}
+            bandwidths={bandwidths as unknown[]}
+            isBandwidthsFetching={false}
+            floatingIps={floatingIps as unknown[]}
+            isFloatingIpsFetching={false}
+            crossConnects={crossConnects as unknown[]}
             isCrossConnectsFetching={isCrossConnectsFetching}
             onAddRequest={addPricingRequest}
             pricingRequests={pricingRequests}

@@ -1,6 +1,7 @@
 import {
   useState,
   forwardRef,
+  memo,
   isValidElement,
   cloneElement,
   type ReactNode,
@@ -9,7 +10,7 @@ import {
   type InputHTMLAttributes,
 } from "react";
 import { Eye, EyeOff, AlertCircle, Check } from "lucide-react";
-import { designTokens } from "../../../styles/designTokens";
+import { designTokens } from "@/styles/designTokens";
 import type { ControlSize } from "./types";
 
 const mergeClassNames = (...values: (string | undefined | null | false)[]) =>
@@ -320,4 +321,4 @@ const ModernInput = forwardRef<HTMLInputElement, ModernInputProps>(
 
 ModernInput.displayName = "ModernInput";
 
-export default ModernInput;
+export default memo(ModernInput);

@@ -1,9 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   Bell,
-  Check,
   CheckCheck,
-  Trash2,
   X,
   CreditCard,
   Server,
@@ -21,7 +19,7 @@ import {
   Notification,
   formatNotificationTime,
   getCategoryColor,
-} from "../../hooks/useNotifications";
+} from "@/hooks/useNotifications";
 
 // Icon mapping
 const categoryIcons: Record<string, React.ElementType> = {

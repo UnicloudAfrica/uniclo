@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { X, Search, User } from "lucide-react";
 import { ModernButton } from "../ui";
-import { useFetchAdmins } from "../../../hooks/adminHooks/adminHooks";
-import { useFetchTenantAdmins } from "../../../hooks/adminUserHooks";
+import { useFetchAdmins } from "@/hooks/adminHooks/adminHooks";
+import { useFetchTenantAdmins } from "@/hooks/adminUserHooks";
 
 interface UserType {
   id: string | number;
@@ -32,8 +32,10 @@ const UserSelectModal: React.FC<UserSelectModalProps> = ({
   const adminQuery = useFetchAdmins({ enabled: context === "admin" && isOpen });
   const tenantQuery = useFetchTenantAdmins({ enabled: context === "tenant" && isOpen });
 
-  const users: UserType[] =
-    context === "tenant" ? (tenantQuery.data as any) || [] : (adminQuery.data as any) || [];
+  const users = useMemo<UserType[]>(
+    () => (context === "tenant" ? (tenantQuery.data as any) || [] : (adminQuery.data as any) || []),
+    [context, tenantQuery.data, adminQuery.data]
+  );
   const loading = context === "tenant" ? tenantQuery.isLoading : adminQuery.isLoading;
 
   const filteredUsers = useMemo(() => {

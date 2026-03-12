@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import ClientActiveTab from "../components/clientActiveTab";
 import ClientPageShell from "../components/ClientPageShell";
-import { ModernButton } from "../../shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
 import CreateProjectModal from "./projectComps/addProject";
 
 const ClientProjectCreate: React.FC = () => {

@@ -4,8 +4,8 @@
  */
 import React from "react";
 import { Server, Database, Globe, Check, AlertCircle, Loader2 } from "lucide-react";
-import ModernInput from "../../../components/ui/ModernInput";
-import { ModernButton } from "../../../components/ui";
+import ModernInput from "@/shared/components/ui/ModernInput";
+import { ModernButton } from "@/shared/components/ui";
 import type {
   ServiceDefinition,
   FieldDefinition,

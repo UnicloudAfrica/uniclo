@@ -2,9 +2,9 @@ import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminPageShell from "../components/AdminPageShell";
-import { SharedTicketDetail } from "../../shared/components/support/SharedTicketDetail";
+import { SharedTicketDetail } from "@/shared/components/support/SharedTicketDetail";
 import adminApi, { adminSilentApi } from "../../index/admin/api";
-import { Thread, SlaStatus } from "../../shared/components/support/threadTypes";
+import { Thread, SlaStatus } from "@/shared/components/support/threadTypes";
 
 type ThreadDetailResponse = {
   data?: Thread;

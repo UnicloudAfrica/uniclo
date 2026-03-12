@@ -1,6 +1,7 @@
 import React from "react";
-import { Shield } from "lucide-react";
+import { Shield, Plus } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
+import ModernButton from "../ui/ModernButton";
 import SecurityGroupsTable from "./SecurityGroupsTable";
 import type { SecurityGroup } from "./types";
 import type { SecurityGroupPermissions } from "../../config/permissionPresets";
@@ -11,6 +12,7 @@ interface SecurityGroupsOverviewProps {
   emptyMessage?: string | undefined;
   onViewRules?: ((sg: SecurityGroup) => void) | undefined;
   onDelete?: ((sg: SecurityGroup) => void) | undefined;
+  onCreate?: (() => void) | undefined;
   showActions?: boolean | undefined;
   /** Optional permissions object for permission-based action gating */
   permissions?: SecurityGroupPermissions | undefined;
@@ -22,6 +24,7 @@ const SecurityGroupsOverview: React.FC<SecurityGroupsOverviewProps> = ({
   emptyMessage,
   onViewRules,
   onDelete,
+  onCreate,
   showActions,
   permissions,
 }) => {
@@ -50,6 +53,14 @@ const SecurityGroupsOverview: React.FC<SecurityGroupsOverviewProps> = ({
         securityGroups={securityGroups}
         isLoading={isLoading}
         emptyMessage={emptyMessage}
+        emptyAction={
+          onCreate ? (
+            <ModernButton variant="primary" size="sm" onClick={onCreate}>
+              <Plus className="w-4 h-4 mr-1" />
+              Create Security Group
+            </ModernButton>
+          ) : undefined
+        }
         onViewRules={effectiveOnViewRules}
         onDelete={effectiveOnDelete}
         showActions={shouldShowActions}

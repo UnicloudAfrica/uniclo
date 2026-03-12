@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Camera, X, Loader2 } from "lucide-react";
 import ModernButton from "../../ui/ModernButton";
-import { useCreateInstanceSnapshot } from "../../../../hooks/storageHooks";
+import { useCreateInstanceSnapshot } from "@/hooks/storageHooks";
 
 interface CreateSnapshotModalProps {
   isOpen: boolean;
@@ -17,8 +17,8 @@ const CreateSnapshotModal: React.FC<CreateSnapshotModalProps> = ({
   onClose,
   instanceId,
   instanceName,
-  projectId,
-  region,
+  projectId: _projectId,
+  region: _region,
 }) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");

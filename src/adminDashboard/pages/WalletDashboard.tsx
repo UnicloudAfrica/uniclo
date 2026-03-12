@@ -13,15 +13,15 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
-import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
-import { ModernButton } from "../../shared/components/ui";
-import ModernTable from "../../shared/components/ui/ModernTable";
+import ModernStatsCard from "@/shared/components/ui/ModernStatsCard";
+import { ModernButton } from "@/shared/components/ui";
+import ModernTable from "@/shared/components/ui/ModernTable";
 import {
   useFetchWalletBalance,
   useFetchWalletTransactions,
   useTopUpWallet,
-} from "../../hooks/walletHooks";
-import { type Column } from "../../shared/components/ui/ModernTable";
+} from "@/hooks/walletHooks";
+import { type Column } from "@/shared/components/ui/ModernTable";
 
 // ═══════════════════════════════════════════════════════════════════
 // TYPES

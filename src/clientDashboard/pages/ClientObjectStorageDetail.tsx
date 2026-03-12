@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import ClientActiveTab from "../components/clientActiveTab";
 import ClientPageShell from "../components/ClientPageShell";
-import ObjectStorageAccountDetail from "../../shared/components/object-storage/ObjectStorageAccountDetail";
+import ObjectStorageAccountDetail from "@/shared/components/object-storage/ObjectStorageAccountDetail";
 
 const ClientObjectStorageDetail = () => {
   const { accountId } = useParams();

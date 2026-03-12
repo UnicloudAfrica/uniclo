@@ -1,23 +1,50 @@
-import React from "react";
+import React, { useState } from "react";
 import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
-import {
-  getInternetGatewayPermissions,
-  type Hierarchy,
-  type InternetGatewayPermissions,
-} from "../../../config/permissionPresets";
+import { getInternetGatewayPermissions, type Hierarchy } from "@/shared/config/permissionPresets";
 import { InternetGatewaysOverview } from "..";
-import ToastUtils from "../../../../utils/toastUtil";
+import ToastUtils from "@/utils/toastUtil";
 import ModernButton from "../../ui/ModernButton";
+import ConfirmDialog from "../../ui/ConfirmDialog";
+
+import { InternetGateway, Vpc } from "../types";
 
 interface InternetGatewayHooks {
-  useList: (projectId: string, region?: string, options?: any) => UseQueryResult<any[], Error>;
-  useVpcs: (projectId: string, region?: string, options?: any) => UseQueryResult<any[], Error>;
+  useList: (
+    projectId: string,
+    region?: string,
+    options?: { enabled?: boolean }
+  ) => UseQueryResult<InternetGateway[], Error>;
+  useVpcs: (
+    projectId: string,
+    region?: string,
+    options?: { enabled?: boolean }
+  ) => UseQueryResult<Vpc[], Error>;
 
-  useCreate: () => UseMutationResult<any, any, any, unknown>;
-  useDelete: () => UseMutationResult<any, any, any, unknown>;
-  useAttach: () => UseMutationResult<any, any, any, unknown>;
-  useDetach: () => UseMutationResult<any, any, any, unknown>;
+  useCreate: () => UseMutationResult<
+    InternetGateway,
+    Error,
+    { projectId: string; region: string; payload: { name: string } },
+    unknown
+  >;
+  useDelete: () => UseMutationResult<
+    unknown,
+    Error,
+    { projectId: string; region: string; igwId: string },
+    unknown
+  >;
+  useAttach: () => UseMutationResult<
+    unknown,
+    Error,
+    { projectId: string; region: string; igwId: string; vpcId: string },
+    unknown
+  >;
+  useDetach: () => UseMutationResult<
+    unknown,
+    Error,
+    { projectId: string; region: string; igwId: string; vpcId: string },
+    unknown
+  >;
 }
 
 interface InternetGatewaysContainerProps {
@@ -40,9 +67,18 @@ const InternetGatewaysContainer: React.FC<InternetGatewaysContainerProps> = ({
 }) => {
   const permissions = getInternetGatewayPermissions(hierarchy);
 
+  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; data?: string }>({
+    open: false,
+  });
+  const [confirmDetach, setConfirmDetach] = useState<{
+    open: boolean;
+    data?: { igwId: string; vpcId: string };
+  }>({ open: false });
+
   const {
     data: gateways = [],
     isLoading,
+    isFetching,
     refetch,
   } = hooks.useList(projectId, region, {
     enabled: Boolean(projectId),
@@ -63,23 +99,32 @@ const InternetGatewaysContainer: React.FC<InternetGatewaysContainerProps> = ({
         payload: { name },
       });
       ToastUtils.success("Internet Gateway created successfully.");
-    } catch (error: any) {
-      ToastUtils.error(error?.message || "Failed to create gateway.");
+      refetch();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to create gateway.";
+      ToastUtils.error(message);
     }
   };
 
-  const handleDelete = async (igwId: string) => {
+  const handleDelete = (igwId: string) => {
     if (!permissions.canDelete) return;
-    if (!confirm("Delete this Internet Gateway?")) return;
+    setConfirmDelete({ open: true, data: igwId });
+  };
+
+  const executeDelete = async () => {
+    if (!confirmDelete.data) return;
+    setConfirmDelete({ open: false });
     try {
       await deleteMutation.mutateAsync({
         projectId,
         region,
-        igwId,
+        igwId: confirmDelete.data,
       });
       ToastUtils.success("Internet Gateway deleted.");
-    } catch (error: any) {
-      ToastUtils.error(error?.message || "Failed to delete gateway.");
+      refetch();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to delete gateway.";
+      ToastUtils.error(message);
     }
   };
 
@@ -93,50 +138,81 @@ const InternetGatewaysContainer: React.FC<InternetGatewaysContainerProps> = ({
         vpcId,
       });
       ToastUtils.success("Gateway attached successfully.");
-    } catch (error: any) {
-      ToastUtils.error(error?.message || "Failed to attach gateway.");
+      refetch();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to attach gateway.";
+      ToastUtils.error(message);
     }
   };
 
-  const handleDetach = async (igwId: string, vpcId: string) => {
+  const handleDetach = (igwId: string, vpcId: string) => {
     if (!permissions.canDetach) return;
-    if (!confirm("Detach this Gateway from VPC?")) return;
+    setConfirmDetach({ open: true, data: { igwId, vpcId } });
+  };
+
+  const executeDetach = async () => {
+    if (!confirmDetach.data) return;
+    setConfirmDetach({ open: false });
     try {
       await detachMutation.mutateAsync({
         projectId,
         region,
-        igwId,
-        vpcId,
+        igwId: confirmDetach.data.igwId,
+        vpcId: confirmDetach.data.vpcId,
       });
       ToastUtils.success("Gateway detached.");
-    } catch (error: any) {
-      ToastUtils.error(error?.message || "Failed to detach gateway.");
+      refetch();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to detach gateway.";
+      ToastUtils.error(message);
     }
   };
 
   const headerActions = (
     <div className="flex items-center gap-3">
-      <ModernButton variant="secondary" size="sm" onClick={() => refetch()} disabled={isLoading}>
-        <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-        Refresh
+      <ModernButton variant="secondary" size="sm" onClick={() => refetch()} disabled={isFetching}>
+        <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
+        {isFetching ? "Refreshing..." : "Refresh"}
       </ModernButton>
     </div>
   );
 
   return (
     <Wrapper headerActions={headerActions}>
-      <InternetGatewaysOverview
-        gateways={gateways}
-        vpcs={vpcs}
-        isLoading={isLoading}
-        permissions={permissions}
-        onCreate={handleCreate}
-        onDelete={handleDelete}
-        onAttach={handleAttach}
-        onDetach={handleDetach}
-        isCreating={createMutation.isPending}
-        isAttaching={attachMutation.isPending}
-      />
+      <>
+        <InternetGatewaysOverview
+          gateways={gateways}
+          vpcs={vpcs}
+          isLoading={isLoading}
+          permissions={permissions}
+          onCreate={handleCreate}
+          onDelete={handleDelete}
+          onAttach={handleAttach}
+          onDetach={handleDetach}
+          isCreating={createMutation.isPending}
+          isAttaching={attachMutation.isPending}
+        />
+
+        <ConfirmDialog
+          isOpen={confirmDelete.open}
+          title="Delete Internet Gateway?"
+          message="Delete this Internet Gateway?"
+          confirmLabel="Delete"
+          variant="danger"
+          onConfirm={executeDelete}
+          onCancel={() => setConfirmDelete({ open: false })}
+        />
+
+        <ConfirmDialog
+          isOpen={confirmDetach.open}
+          title="Detach Gateway?"
+          message="Detach this Gateway from VPC?"
+          confirmLabel="Detach"
+          variant="warning"
+          onConfirm={executeDetach}
+          onCancel={() => setConfirmDetach({ open: false })}
+        />
+      </>
     </Wrapper>
   );
 };

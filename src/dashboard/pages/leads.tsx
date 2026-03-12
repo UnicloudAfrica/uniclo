@@ -1,5 +1,5 @@
 import TenantPageShell from "../components/TenantPageShell";
-import LeadsDashboard from "../../shared/components/customer-management/LeadsDashboard";
+import LeadsDashboard from "@/shared/components/customer-management/LeadsDashboard";
 
 const Leads = () => {
   return (

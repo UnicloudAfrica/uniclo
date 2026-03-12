@@ -1,26 +1,34 @@
 import React, { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Layers, Lock, Network, Zap, GitMerge } from "lucide-react";
+import { Network } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import TenantPageShell from "../components/TenantPageShell";
-import { ModernButton } from "../../shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
+import TabErrorBoundary from "@/shared/components/ui/TabErrorBoundary";
+import ProjectStorageTab from "@/shared/components/projects/details/ProjectStorageTab";
+import ProjectImagesTab from "@/shared/components/projects/details/ProjectImagesTab";
+import ProjectDnsTab from "@/shared/components/projects/details/ProjectDnsTab";
+import ProjectAutoScalingTab from "@/shared/components/projects/details/ProjectAutoScalingTab";
+import ProjectLimitsTab from "@/shared/components/projects/details/ProjectLimitsTab";
+import ProjectSettingsTab from "@/shared/components/projects/details/ProjectSettingsTab";
+import ProjectTeamTab from "@/shared/components/projects/details/ProjectTeamTab";
 import {
   useFetchTenantProjectById,
   useTenantProjectStatus,
   useSetupInfrastructure,
   useTenantProjectNetworkStatus,
   useTenantEnableInternetAccess,
-} from "../../hooks/tenantHooks/projectHooks";
+} from "@/hooks/tenantHooks/projectHooks";
 import InfrastructureSetupWizard from "../../adminDashboard/components/provisioning/InfrastructureSetupWizard";
-import { useTenantProjectInfrastructureStatus } from "../../hooks/tenantHooks/projectInfrastructureHooks";
+import { useProjectInfrastructureStatus as useTenantProjectInfrastructureStatus } from "@/shared/hooks/resources/projectInfrastructureHooks";
 import {
   useFetchTenantIpPools,
   useFetchTenantProjectEdgeConfig,
-} from "../../hooks/tenantHooks/edgeHooks";
-import ProjectDetailsLayout from "../../shared/components/projects/details/ProjectDetailsLayout";
-import ProjectDetailsResourcePlaceholder from "../../shared/components/projects/details/ProjectDetailsResourcePlaceholder";
-import { useProjectDetailsAdapter } from "../../shared/components/projects/details/ProjectDetailsView";
-import { normalizeListResponse } from "../../shared/components/projects/details/projectDetailsUtils";
+} from "@/hooks/tenantHooks/edgeHooks";
+import ProjectDetailsLayout from "@/shared/components/projects/details/ProjectDetailsLayout";
+import ProjectDetailsResourcePlaceholder from "@/shared/components/projects/details/ProjectDetailsResourcePlaceholder";
+import { useProjectDetailsAdapter } from "@/shared/components/projects/details/ProjectDetailsView";
+import { normalizeListResponse } from "@/shared/components/projects/details/projectDetailsUtils";
 import TenantAssignEdgeConfigModal from "./projectComps/TenantAssignEdgeConfigModal";
 import SecurityGroup from "./infraComps/securityGroup";
 import VPCs from "./infraComps/vpcs";
@@ -29,17 +37,17 @@ import IGWs from "./infraComps/igws";
 import RouteTables from "./infraComps/routetable";
 import ENIs from "./infraComps/eni";
 import EIPs from "./infraComps/elasticIP";
-import ToastUtils from "../../utils/toastUtil";
-import ProvisioningFullScreen from "../../shared/components/provisioning/ProvisioningFullScreen";
+import NatGateways from "./infraComps/natGateways";
+import VpcPeering from "./infraComps/vpcPeering";
+import LoadBalancers from "./infraComps/loadBalancers";
+import NetworkAcls from "./infraComps/networkAcls";
+import ToastUtils from "@/utils/toastUtil";
+import ProvisioningFullScreen from "@/shared/components/provisioning/ProvisioningFullScreen";
 import api from "../../index/tenant/tenantApi";
-import { useFetchTenantInstances } from "../../hooks/tenantHooks/instancesHook";
-import {
-  useFetchKeyPairs,
-  useSyncKeyPairs,
-  useDeleteKeyPair,
-} from "../../hooks/tenantHooks/keyPairsHook";
-import type { KeyPairHooks } from "../../shared/components/infrastructure/containers/KeyPairsContainer";
-import logger from "../../utils/logger";
+import { useFetchInstanceRequests as useFetchTenantInstances } from "@/shared/hooks/resources/instanceHooks";
+import { useFetchKeyPairs, useSyncKeyPairs, useDeleteKeyPair } from "@/shared/hooks/keyPairsHooks";
+import type { KeyPairHooks } from "@/shared/components/infrastructure/containers/KeyPairsContainer";
+import logger from "@/utils/logger";
 
 interface User {
   id: number | string;
@@ -96,15 +104,18 @@ const ProjectDetails: React.FC = () => {
   const [forceHideProvisioning, setForceHideProvisioning] = useState(false);
 
   const { data: projectResponse, refetch: refetchProject } = useFetchTenantProjectById(
-    projectId as any
+    projectId ?? ""
   );
-  const project = (projectResponse?.data || projectResponse?.project || {}) as Project;
+  const project = useMemo(
+    () => (projectResponse?.data || projectResponse?.project || {}) as Project,
+    [projectResponse]
+  );
 
   const {
     data: statusData,
     isFetching: isStatusFetching,
     refetch: refetchStatus,
-  } = useTenantProjectStatus(projectId as any);
+  } = useTenantProjectStatus(projectId ?? "");
   const setupMutation = useSetupInfrastructure();
 
   const { data: infraStatusData, refetch: refetchInfraStatus } =
@@ -112,19 +123,14 @@ const ProjectDetails: React.FC = () => {
       data: InfraStatusData | undefined;
       refetch: () => void;
     };
-  const { data: edgeConfig } = useFetchTenantProjectEdgeConfig(projectId as any, project?.region);
-  const edgePayload = (edgeConfig as any)?.data ?? edgeConfig;
+  const { data: edgeConfig } = useFetchTenantProjectEdgeConfig(projectId ?? "", project?.region);
+  const edgePayload = (edgeConfig as Record<string, unknown> | undefined)?.data ?? edgeConfig;
   const edgeNetworkId = edgePayload?.edge_network_id;
-  const { data: ipPools } = useFetchTenantIpPools(
-    projectId as any,
-    project?.region,
-    edgeNetworkId,
-    {
-      enabled: Boolean(projectId && project?.region && edgeNetworkId),
-    }
-  );
+  const { data: ipPools } = useFetchTenantIpPools(projectId ?? "", project?.region, edgeNetworkId, {
+    enabled: Boolean(projectId && project?.region && edgeNetworkId),
+  });
   const { data: networkStatusData, refetch: refetchNetworkStatus } = useTenantProjectNetworkStatus(
-    projectId as any,
+    projectId ?? "",
     { enabled: Boolean(projectId) }
   );
 
@@ -148,13 +154,14 @@ const ProjectDetails: React.FC = () => {
     }
     try {
       ToastUtils.info(`Executing ${label}...`);
-      const res = await api(method.toUpperCase() as any, endpoint, payload || {});
+      const res = await api(method.toUpperCase(), endpoint, payload || {});
       ToastUtils.success(`${label} completed successfully!`);
       await Promise.all([refetchStatus(), refetchProject()]);
       return res;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error(`Action error [${label}]:`, error);
-      ToastUtils.error(error?.message || `Failed to execute ${label}`);
+      const errMsg = error instanceof Error ? error.message : `Failed to execute ${label}`;
+      ToastUtils.error(errMsg);
       throw error;
     }
   };
@@ -180,9 +187,9 @@ const ProjectDetails: React.FC = () => {
         refetchInfraStatus?.(),
         refetchNetworkStatus?.(),
       ]);
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("Failed to sync resources:", error);
-      ToastUtils.error(error?.message || "Failed to sync resources.");
+      ToastUtils.error(error instanceof Error ? error.message : "Failed to sync resources.");
     } finally {
       setIsSyncingResources(false);
     }
@@ -192,7 +199,9 @@ const ProjectDetails: React.FC = () => {
     if (!projectId) return;
     try {
       const result = await enableInternet(projectId);
-      const alreadyEnabled = result?.already_enabled || (result as any)?.data?.already_enabled;
+      const resultRec = (result ?? {}) as Record<string, unknown>;
+      const resultData = (resultRec.data ?? resultRec) as Record<string, unknown>;
+      const alreadyEnabled = resultData.already_enabled;
       if (alreadyEnabled) {
         ToastUtils.info("Internet access is already enabled for this project.");
       } else {
@@ -204,9 +213,9 @@ const ProjectDetails: React.FC = () => {
         refetchProject(),
         refetchInfraStatus?.(),
       ]);
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("Enable internet error:", error);
-      ToastUtils.error(error?.message || "Failed to enable internet access");
+      ToastUtils.error(error instanceof Error ? error.message : "Failed to enable internet access");
     }
   };
 
@@ -276,13 +285,13 @@ const ProjectDetails: React.FC = () => {
           />
         );
       case "nat":
-        return renderPlaceholder("NAT Gateways", "Outbound access for private subnets", Zap);
+        return <NatGateways projectId={projectId} region={project?.region} />;
       case "peering":
-        return renderPlaceholder("VPC Peering", "Private connectivity across VPCs", GitMerge);
+        return <VpcPeering projectId={projectId} region={project?.region} />;
       case "lbs":
-        return renderPlaceholder("Load Balancers", "Distribute traffic across instances", Layers);
+        return <LoadBalancers projectId={projectId} region={project?.region} />;
       case "acls":
-        return renderPlaceholder("Network ACLs", "Subnet-level stateless filters", Lock);
+        return <NetworkAcls projectId={projectId} region={project?.region} />;
       default:
         return renderPlaceholder(
           "Networking",
@@ -302,7 +311,11 @@ const ProjectDetails: React.FC = () => {
   };
 
   const tenantKeyPairHooks: KeyPairHooks = {
-    useList: ((projectIdValue: string, regionValue: string | undefined, options: any) => {
+    useList: ((
+      projectIdValue: string,
+      regionValue: string | undefined,
+      options?: Record<string, unknown>
+    ) => {
       // eslint-disable-next-line react-hooks/rules-of-hooks
       const query = useFetchKeyPairs(projectIdValue, regionValue, options);
       return {
@@ -310,13 +323,27 @@ const ProjectDetails: React.FC = () => {
         isFetching: query.isFetching ?? false,
         refetch: query.refetch,
       };
-    }) as any,
+    }) as KeyPairHooks["useList"] extends (...args: infer _A) => infer R ? R : never,
     useSync: useSyncKeyPairs,
     useDelete: useDeleteKeyPair,
   };
 
+  // Extract project users from status/project responses
+  const projectUsers = useMemo(() => {
+    const resp = projectResponse as Record<string, unknown> | undefined;
+    const detailsUsers = (resp?.data as Record<string, unknown>)?.users;
+    if (Array.isArray(detailsUsers)) return detailsUsers;
+    const statusProject =
+      (statusData as Record<string, unknown>)?.project ??
+      ((statusData as Record<string, unknown>)?.data as Record<string, unknown>)?.project;
+    if (statusProject && Array.isArray((statusProject as Record<string, unknown>).users))
+      return (statusProject as Record<string, unknown>).users as unknown[];
+    if (Array.isArray(project?.users)) return project.users;
+    return [];
+  }, [projectResponse, statusData, project]);
+
   const projectDetails = useProjectDetailsAdapter({
-    project: project as any,
+    project: project as Record<string, unknown>,
     projectId,
     projectStatus: statusData,
     infraStatusData,
@@ -339,11 +366,14 @@ const ProjectDetails: React.FC = () => {
       handleGenericAction({
         method: action?.method || "POST",
         endpoint: action?.endpoint,
-        label: action?.label as any,
+        label: String(action?.label ?? ""),
       }),
     computeTab: {
       hierarchy: "tenant",
-      useInstances: useTenantInstances as any,
+      useInstances: useTenantInstances as (
+        params: Record<string, unknown>,
+        options?: Record<string, unknown>
+      ) => { data: unknown[]; isFetching: boolean; refetch: () => void },
       keyPairHooks: tenantKeyPairHooks,
       onProvisionInstance: () =>
         navigate(
@@ -356,13 +386,92 @@ const ProjectDetails: React.FC = () => {
       navTitle: "Networking Resources",
       renderContent: renderNetworkingContent,
     },
+    renderStorageTab: () => (
+      <ProjectStorageTab projectId={projectId} region={project?.region ?? "lagos-1"} />
+    ),
+    renderImagesTab: () => (
+      <ProjectImagesTab projectId={projectId} region={project?.region ?? "lagos-1"} />
+    ),
+    renderDnsTab: () => (
+      <TabErrorBoundary tabName="DNS">
+        <ProjectDnsTab projectId={projectId} region={project?.region ?? "lagos-1"} />
+      </TabErrorBoundary>
+    ),
+    renderAutoScalingTab: () => (
+      <ProjectAutoScalingTab projectId={projectId} region={project?.region ?? "lagos-1"} />
+    ),
+    renderLimitsTab: () => <ProjectLimitsTab projectIdentifier={projectId} />,
+    renderSettingsTab: () => (
+      <ProjectSettingsTab
+        project={project as any}
+        onUpdateProject={async (data) => {
+          try {
+            const encodedId = encodeURIComponent(projectId || "");
+            await api("PUT", `/admin/projects/${encodedId}`, data);
+            ToastUtils.success("Project updated successfully");
+            await refetchProject();
+          } catch {
+            ToastUtils.error("Failed to update project");
+          }
+        }}
+        onDeleteProject={async () => {
+          try {
+            const encodedId = encodeURIComponent(projectId || "");
+            await api("DELETE", `/admin/projects/${encodedId}`);
+            ToastUtils.success("Project deleted");
+            navigate("/dashboard/projects");
+          } catch {
+            ToastUtils.error("Failed to delete project");
+          }
+        }}
+        onArchiveProject={async () => {
+          try {
+            const encodedId = encodeURIComponent(projectId || "");
+            await api("POST", `/admin/projects/${encodedId}/archive`);
+            ToastUtils.success("Project archived");
+            await refetchProject();
+          } catch {
+            ToastUtils.error("Failed to archive project");
+          }
+        }}
+        onActivateProject={async () => {
+          try {
+            const encodedId = encodeURIComponent(projectId || "");
+            await api("POST", `/admin/projects/${encodedId}/activate`);
+            ToastUtils.success("Project reactivated");
+            await refetchProject();
+          } catch {
+            ToastUtils.error("Failed to reactivate project");
+          }
+        }}
+      />
+    ),
+    renderTeamTab: () => (
+      <ProjectTeamTab
+        projectId={projectId}
+        region={project?.region}
+        provider={project?.provider}
+        hierarchy="tenant"
+        projectUsers={projectUsers as any[]}
+        onRefresh={async () => {
+          await Promise.all([refetchProject(), refetchStatus()]);
+        }}
+      />
+    ),
   });
 
   if (projectDetails.shouldShowProvisioning && !forceHideProvisioning) {
     return (
       <ProvisioningFullScreen
         project={project}
-        setupSteps={projectDetails.setupSteps as any}
+        setupSteps={
+          projectDetails.setupSteps as {
+            id: string;
+            label: string;
+            status: string;
+            description?: string;
+          }[]
+        }
         onRefresh={() => refetchStatus()}
         onViewProject={() => {
           setForceHideProvisioning(true);
@@ -383,8 +492,15 @@ const ProjectDetails: React.FC = () => {
       >
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 min-h-[600px]">
           <InfrastructureSetupWizard
-            project={project as any}
-            setupMutation={setupMutation as any}
+            project={project as unknown as import("@/types/project").Project}
+            setupMutation={
+              setupMutation as unknown as import("@tanstack/react-query").UseMutationResult<
+                unknown,
+                unknown,
+                Record<string, unknown>,
+                unknown
+              >
+            }
           />
         </div>
       </TenantPageShell>
@@ -420,7 +536,7 @@ const ProjectDetails: React.FC = () => {
         isOpen={isAssignEdgeModalOpen}
         onClose={() => setAssignEdgeModalOpen(false)}
         onSuccess={handleAssignEdgeSuccess}
-        projectId={projectId as any}
+        projectId={projectId ?? ""}
         region={project?.region}
       />
     </TenantPageShell>

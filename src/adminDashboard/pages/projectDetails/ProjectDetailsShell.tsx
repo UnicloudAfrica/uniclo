@@ -1,26 +1,31 @@
 import React from "react";
-import { ApiResponse } from "../../../shared/types/resource";
+import { ApiResponse } from "@/shared/types/resource";
 
 import TeamTab from "./TeamTab";
 import NetworkingTab from "./NetworkingTab";
 import ComputeTab from "./ComputeTab";
-import ProjectDetailsLayout from "../../../shared/components/projects/details/ProjectDetailsLayout";
-import ToastUtils from "../../../utils/toastUtil";
+import ProjectDetailsLayout from "@/shared/components/projects/details/ProjectDetailsLayout";
+import ProjectStorageTab from "@/shared/components/projects/details/ProjectStorageTab";
+import ProjectImagesTab from "@/shared/components/projects/details/ProjectImagesTab";
+import ProjectDnsTab from "@/shared/components/projects/details/ProjectDnsTab";
+import ProjectAutoScalingTab from "@/shared/components/projects/details/ProjectAutoScalingTab";
+import ProjectLimitsTab from "@/shared/components/projects/details/ProjectLimitsTab";
+import ProjectSettingsTab from "@/shared/components/projects/details/ProjectSettingsTab";
+import TabErrorBoundary from "@/shared/components/ui/TabErrorBoundary";
+import ToastUtils from "@/utils/toastUtil";
+import adminApi from "../../../index/admin/api";
 import {
   useProjectDetailsAdapter,
   InstanceSummary,
   ComputeSubView,
-} from "../../../shared/components/projects/details/ProjectDetailsView";
+} from "@/shared/components/projects/details/ProjectDetailsView";
 import {
   ResourceCounts as UnifiedResourceCounts,
   SetupStep as UnifiedSetupStep,
-} from "../../../shared/components/projects/details/ProjectUnifiedView";
-import { InfraStatusData } from "../../../shared/components/projects/details/projectDetailsResourceCounts";
-import {
-  useFetchIpPools,
-  useFetchProjectEdgeConfigAdmin,
-} from "../../../hooks/adminHooks/edgeHooks";
-import { Project, ProjectUser, CloudPolicy } from "../../../types/project";
+} from "@/shared/components/projects/details/ProjectUnifiedView";
+import { InfraStatusData } from "@/shared/components/projects/details/projectDetailsResourceCounts";
+import { useFetchIpPools, useFetchProjectEdgeConfigAdmin } from "@/hooks/adminHooks/edgeHooks";
+import { Project, ProjectUser, CloudPolicy } from "@/types/project";
 
 interface SummaryAction {
   method?: string;
@@ -185,6 +190,70 @@ const ProjectDetailsShell: React.FC<ProjectDetailsShellProps> = ({
         handleInviteSubmit={handleInviteSubmit}
         inviteForm={inviteForm}
         setInviteForm={setInviteForm}
+      />
+    ),
+    renderStorageTab: () => (
+      <ProjectStorageTab
+        projectId={project?.identifier}
+        region={project?.region ?? "lagos-1"}
+        volumes={((project as unknown as Record<string, unknown>)?.volumes as any[]) ?? []}
+        onRefresh={() => syncInfrastructure({ projectId: project?.identifier })}
+      />
+    ),
+    renderImagesTab: () => (
+      <ProjectImagesTab projectId={project?.identifier} region={project?.region ?? "lagos-1"} />
+    ),
+    renderDnsTab: () => (
+      <TabErrorBoundary tabName="DNS">
+        <ProjectDnsTab projectId={project?.identifier} region={project?.region ?? "lagos-1"} />
+      </TabErrorBoundary>
+    ),
+    renderAutoScalingTab: () => (
+      <ProjectAutoScalingTab
+        projectId={project?.identifier}
+        region={project?.region ?? "lagos-1"}
+      />
+    ),
+    renderLimitsTab: () => <ProjectLimitsTab projectIdentifier={project?.identifier} />,
+    renderSettingsTab: () => (
+      <ProjectSettingsTab
+        project={project}
+        onUpdateProject={async (data) => {
+          try {
+            await adminApi.put(`/projects/${project?.identifier}`, data);
+            ToastUtils.success("Project updated successfully");
+            await refetchProjectDetails();
+          } catch {
+            ToastUtils.error("Failed to update project");
+          }
+        }}
+        onDeleteProject={async () => {
+          try {
+            await adminApi.delete(`/projects/${project?.identifier}`);
+            ToastUtils.success("Project deleted");
+            window.location.href = "/admin-dashboard/projects";
+          } catch {
+            ToastUtils.error("Failed to delete project");
+          }
+        }}
+        onArchiveProject={async () => {
+          try {
+            await adminApi.post(`/projects/${project?.identifier}/archive`);
+            ToastUtils.success("Project archived");
+            await refetchProjectDetails();
+          } catch {
+            ToastUtils.error("Failed to archive project");
+          }
+        }}
+        onActivateProject={async () => {
+          try {
+            await adminApi.post(`/projects/${project?.identifier}/activate`);
+            ToastUtils.success("Project reactivated");
+            await refetchProjectDetails();
+          } catch {
+            ToastUtils.error("Failed to reactivate project");
+          }
+        }}
       />
     ),
   });

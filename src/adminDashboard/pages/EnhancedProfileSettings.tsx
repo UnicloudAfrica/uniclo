@@ -1,5 +1,5 @@
 import AdminPageShell from "../components/AdminPageShell";
-import AccountSettingsContent from "../../shared/components/settings/AccountSettingsContent";
+import AccountSettingsContent from "@/shared/components/settings/AccountSettingsContent";
 
 export default function EnhancedProfileSettings() {
   return (

@@ -12,7 +12,7 @@ export interface MachineImage {
   disk_format?: string;
   visibility: string;
   created_at: string;
-  raw?: any;
+  raw?: Record<string, unknown>;
 }
 
 interface ImageListProps {
@@ -110,7 +110,7 @@ const ImageList: React.FC<ImageListProps> = ({ images, isLoading, onDelete }) =>
     );
   }
 
-  return <ModernTable columns={columns as any} data={images} loading={isLoading} />;
+  return <ModernTable columns={columns} data={images} loading={isLoading} />;
 };
 
 export default ImageList;

@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import type { ReactNode } from "react";
 import { Wifi, Pencil, Trash2, Plus, TrendingUp, DollarSign } from "lucide-react";
-import { useFetchBandwidthProducts } from "../../../hooks/adminHooks/bandwidthHooks";
+import { useFetchBandwidthProducts } from "@/hooks/adminHooks/bandwidthHooks";
 import ResourceDataExplorer from "../../components/ResourceDataExplorer";
 import AddBandwidthModal from "./bandwidthSubs/addBandWidth";
 import EditBandwidthModal from "./bandwidthSubs/editBandwidth";
 import DeleteBandwidthModal from "./bandwidthSubs/deleteBandWidth";
-import { ModernButton } from "../../../shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
 
 const formatCurrency = (amount: number | string | null | undefined, currency = "USD") => {
   if (amount === null || amount === undefined || Number.isNaN(amount)) {
@@ -44,7 +44,7 @@ type ExplorerColumn = {
   render?: (row: Record<string, unknown>) => ReactNode;
 };
 
-const BandWidth = ({ selectedRegion, onMetricsChange }: any) => {
+const BandWidth = ({ selectedRegion, selectedProvider, onMetricsChange }: any) => {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [search, setSearch] = useState("");
@@ -61,12 +61,12 @@ const BandWidth = ({ selectedRegion, onMetricsChange }: any) => {
 
   const { data, isFetching } = useFetchBandwidthProducts(
     selectedRegion,
-    { page, perPage, search },
+    { page, perPage, search, provider: selectedProvider },
     { enabled: Boolean(selectedRegion), keepPreviousData: true }
   );
 
   const response = (data as BandwidthResponse | undefined) ?? null;
-  const rows = Array.isArray(response?.data) ? response?.data : [];
+  const rows = useMemo(() => (Array.isArray(response?.data) ? response?.data : []), [response]);
   const meta = response?.meta;
   const total = meta?.total ?? rows.length;
 

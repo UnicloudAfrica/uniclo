@@ -1,21 +1,53 @@
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import logo from "./assets/logo.png";
-import VerificationCodeInput from "../../utils/VerificationCodeInput";
-import useTenantAuthStore from "../../stores/tenantAuthStore";
-import useClientAuthStore from "../../stores/clientAuthStore";
-import useAdminAuthStore from "../../stores/adminAuthStore";
-import { clearAuthSessionsExcept } from "../../stores/sessionUtils";
-import { useVerifyMail } from "../../hooks/authHooks";
+import VerificationCodeInput from "@/utils/VerificationCodeInput";
+import useTenantAuthStore from "@/stores/tenantAuthStore";
+import useClientAuthStore from "@/stores/clientAuthStore";
+import useAdminAuthStore from "@/stores/adminAuthStore";
+import { clearAuthSessionsExcept } from "@/stores/sessionUtils";
+import { useVerifyMail } from "@/hooks/authHooks";
 import { useNavigate } from "react-router-dom";
 import {
   resolveBrandLogo,
   useApplyBrandingTheme,
   usePublicBrandingTheme,
-} from "../../hooks/useBrandingTheme";
-import useImageFallback from "../../hooks/useImageFallback";
-import { getSubdomain } from "../../utils/getSubdomain";
+} from "@/hooks/useBrandingTheme";
+import useImageFallback from "@/hooks/useImageFallback";
+import { getSubdomain } from "@/utils/getSubdomain";
 import AuthShell from "../../components/auth/AuthShell";
+
+/** Payload sent to the verify-email / 2FA endpoints */
+interface VerifyEmailPayload {
+  email: string | null;
+  google2fa_code?: string;
+  two_factor_code?: string;
+  code?: string;
+  otp?: string;
+  [key: string]: unknown;
+}
+
+/** Shape of the successful verification response */
+interface AuthVerifyResponse {
+  data?: {
+    role?: string;
+    domain?: string;
+    tenant?: { id?: string | number; domain?: string };
+    domain_account?: { account_domain?: string };
+    available_tenants?: unknown[];
+    availableTenants?: unknown[];
+    tenants?: unknown[];
+    tenant_id?: string | number;
+    email?: string;
+    cloud_roles?: unknown;
+    cloudRoles?: unknown;
+    cloud_abilities?: unknown;
+    cloudAbilities?: unknown;
+    [key: string]: unknown;
+  };
+  role?: string;
+  [key: string]: unknown;
+}
 
 export default function VerifyMail() {
   const [code, setCode] = useState(Array(6).fill("")); // Six-digit OTP input
@@ -27,7 +59,7 @@ export default function VerifyMail() {
   const twoFactorRequired = useTenantAuthStore((state) => state.twoFactorRequired);
   const setTwoFactorRequired = useTenantAuthStore((state) => state.setTwoFactorRequired);
   const clearTwoFactorRequirement = useTenantAuthStore((state) => state.clearTwoFactorRequirement);
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const { mutate: verifyEmail, isPending: isVerifyPending } = useVerifyMail();
   const navigate = useNavigate();
   const hostname = globalThis.window !== undefined ? globalThis.window.location.hostname : "";
@@ -54,7 +86,7 @@ export default function VerifyMail() {
   }, [twoFactorRequired]);
 
   // Handle OTP code changes from VerificationCodeInput
-  const handleCodeChange = (updatedCode: any) => {
+  const handleCodeChange = (updatedCode: string[]) => {
     setCode((prev) => {
       if (!Array.isArray(updatedCode)) return prev;
       if (
@@ -69,7 +101,7 @@ export default function VerifyMail() {
 
   // Validation function for OTP and email
   const validateForm = () => {
-    const newErrors: Record<string, any> = {};
+    const newErrors: Record<string, string> = {};
     const joinedCode = code.join("");
     if (!joinedCode || joinedCode.length !== 6) {
       if (twoFactorRequired) {
@@ -99,14 +131,14 @@ export default function VerifyMail() {
     if (!validateForm()) return;
 
     const email = userEmail;
-    const userData = { email };
     const resolvedCode = typeof enteredCode === "string" ? enteredCode : code.join("");
+    const userData: VerifyEmailPayload = { email };
     if (twoFactorRequired) {
-      (userData as any).google2fa_code = resolvedCode;
-      (userData as any).two_factor_code = resolvedCode;
-      (userData as any).code = resolvedCode;
+      userData.google2fa_code = resolvedCode;
+      userData.two_factor_code = resolvedCode;
+      userData.code = resolvedCode;
     } else {
-      (userData as any).otp = resolvedCode;
+      userData.otp = resolvedCode;
     }
 
     verifyEmail(userData, {
@@ -114,20 +146,21 @@ export default function VerifyMail() {
         clearUserEmail();
         clearTwoFactorRequirement?.();
 
-        const userRole = (res as any)?.data?.role ?? (res as any)?.role;
+        const response = res as AuthVerifyResponse;
+        const userRole = response?.data?.role ?? response?.role;
         const domainInfo =
-          (res as any)?.data?.domain ??
-          (res as any)?.data?.tenant?.domain ??
-          (res as any)?.data?.domain_account?.account_domain ??
+          response?.data?.domain ??
+          response?.data?.tenant?.domain ??
+          response?.data?.domain_account?.account_domain ??
           null;
 
         const availableTenants =
-          (res as any)?.data?.available_tenants ??
-          (res as any)?.data?.availableTenants ??
-          (res as any)?.data?.tenants ??
+          response?.data?.available_tenants ??
+          response?.data?.availableTenants ??
+          response?.data?.tenants ??
           undefined;
 
-        const userData = (res as any)?.data ?? null;
+        const userData = response?.data ?? null;
         const hasTenantContext = Boolean(userData?.tenant_id || userData?.tenant?.id);
         const normalizedRole = (userRole || "").toLowerCase();
         const resolvedRole = ["admin", "tenant", "client"].includes(normalizedRole)
@@ -149,11 +182,11 @@ export default function VerifyMail() {
         };
 
         if (resolvedRole === "client") {
-          clientAuth.setSession(sessionPayload);
+          clientAuth.setSession(sessionPayload as Record<string, unknown>);
         } else if (resolvedRole === "admin") {
-          adminAuth.setSession(sessionPayload);
+          adminAuth.setSession(sessionPayload as Record<string, unknown>);
         } else {
-          tenantAuth.setSession(sessionPayload);
+          tenantAuth.setSession(sessionPayload as Record<string, unknown>);
         }
 
         clearAuthSessionsExcept(resolvedRole);
@@ -227,7 +260,7 @@ export default function VerifyMail() {
           {errors.general && <p className="text-red-500 text-xs mt-1">{errors.general}</p>}
 
           <button
-            onClick={handleSubmit as any}
+            onClick={() => handleSubmit()}
             disabled={isVerifyPending}
             className="w-full hover:opacity-80 text-white font-semibold py-3 px-4 rounded-lg transition-opacity focus:outline-none focus:ring-1 focus:ring-offset-2 flex items-center justify-center"
             style={{

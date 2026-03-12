@@ -2,15 +2,15 @@ import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Loader2, ShieldCheck, Users2 } from "lucide-react";
 import TenantPageShell from "../../components/TenantPageShell";
-import { ModernCard } from "../../../shared/components/ui";
-import { ModernButton } from "../../../shared/components/ui";
-import { StatusPill } from "../../../shared/components/ui";
-import ToastUtils from "../../../utils/toastUtil";
+import { ModernCard } from "@/shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
+import { StatusPill } from "@/shared/components/ui";
+import ToastUtils from "@/utils/toastUtil";
 import {
   useDeleteTenantPartner,
   useFetchTenantPartnerById,
   useFetchTenantPartnerClients,
-} from "../../../hooks/tenantHooks/partnerHooks";
+} from "@/hooks/tenantHooks/partnerHooks";
 
 const InfoRow = ({ label, value }: { label: string; value: any }) => (
   <div className="flex flex-col gap-1">
@@ -70,12 +70,12 @@ export default function PartnerDetailsPage() {
   const { partnerId } = useParams();
 
   const { data: partner, isFetching: isPartnerFetching } = useFetchTenantPartnerById(partnerId) as {
-    data: any;
+    data: Record<string, any>;
     isFetching: boolean;
   };
-  const { data: partnerClients = [], isFetching: isClientsFetching } = (
-    useFetchTenantPartnerClients as any
-  )(partnerId) as { data: any[]; isFetching: boolean };
+  const { data: partnerClients = [], isFetching: isClientsFetching } = useFetchTenantPartnerClients(
+    partnerId
+  ) as { data: any[]; isFetching: boolean };
   const { mutateAsync: deletePartner, isPending: isDeleting } = useDeleteTenantPartner();
 
   const statistics = useMemo(() => {
@@ -109,7 +109,9 @@ export default function PartnerDetailsPage() {
       ToastUtils.success("Partner removed.");
       navigate("/dashboard/clients");
     } catch (error) {
-      ToastUtils.error((error as any)?.response?.data?.message || "Failed to remove partner.");
+      ToastUtils.error(
+        (error as Record<string, any>)?.response?.data?.message || "Failed to remove partner."
+      );
     }
   };
 
@@ -231,7 +233,9 @@ export default function PartnerDetailsPage() {
           <SimpleTable
             isLoading={isClientsFetching}
             data={partnerClients}
-            onRowClick={(client: any) => navigate(`/dashboard/clients/${client.identifier}`)}
+            onRowClick={(client: Record<string, any>) =>
+              navigate(`/dashboard/clients/${client.identifier}`)
+            }
           />
         </ModernCard>
       </div>

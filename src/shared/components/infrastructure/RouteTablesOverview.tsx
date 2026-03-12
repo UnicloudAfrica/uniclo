@@ -19,16 +19,16 @@ import { RouteTable, Subnet, InternetGateway, NatGateway } from "./types";
 interface RouteTablesOverviewProps {
   routeTables: RouteTable[];
   subnets: Subnet[];
-  internetGateways?: InternetGateway[] | undefined; // For Modal
-  natGateways?: NatGateway[] | undefined; // For Modal
+  internetGateways?: InternetGateway[]; // For Modal
+  natGateways?: NatGateway[]; // For Modal
   isLoading: boolean;
   permissions: RouteTablePermissions;
   // Actions
-  onAddRoute?: ((routeTableId: string, data: any) => void) | undefined;
-  onDeleteRoute?: ((routeTableId: string, destination: string) => void) | undefined;
-  onAssociate?: ((routeTableId: string, subnetId: string) => void) | undefined;
-  onDisassociate?: ((associationId: string) => void) | undefined;
-  onRefresh?: (() => void) | undefined;
+  onAddRoute?: (routeTableId: string, data: Record<string, unknown>) => void;
+  onDeleteRoute?: (routeTableId: string, destination: string) => void;
+  onAssociate?: (routeTableId: string, subnetId: string) => void;
+  onDisassociate?: (associationId: string) => void;
+  onRefresh?: () => void;
   // State for Modals (Controlled by Container usually, but Overview can emit "Request")
   // For simplicity, let's let Overview trigger the callbacks, and Container opens/handles Modals if needed?
   // OR Overview owns the "Show Modal" state and renders Modals?
@@ -72,7 +72,7 @@ const RouteTablesOverview: React.FC<RouteTablesOverviewProps> = ({
   const selectedRt = routeTables.find((rt) => rt.id === selectedRtId);
 
   // Handlers wrapper
-  const handleAddRoute = (data: any) => {
+  const handleAddRoute = (data: Record<string, unknown>) => {
     if (selectedRtId && onAddRoute) {
       onAddRoute(selectedRtId, data);
       setShowAddRoute(false);
@@ -108,7 +108,13 @@ const RouteTablesOverview: React.FC<RouteTablesOverviewProps> = ({
           {isLoading && routeTables.length === 0 ? (
             <div className="py-12 text-center text-gray-400">Loading route tables...</div>
           ) : routeTables.length === 0 ? (
-            <div className="py-12 text-center text-gray-400">No route tables found</div>
+            <div className="py-12 flex flex-col items-center text-center text-gray-400">
+              <RouteIcon size={32} className="mb-3 opacity-30" />
+              <div className="font-medium text-gray-500">No route tables found</div>
+              <div className="text-sm text-gray-400 mt-1">
+                Route tables will appear here once created.
+              </div>
+            </div>
           ) : (
             routeTables.map((rt) => (
               <button

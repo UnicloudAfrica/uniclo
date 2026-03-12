@@ -1,17 +1,29 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, X } from "lucide-react";
-import ToastUtils from "../../../../utils/toastUtil";
-import { useUpdateProductPricing } from "../../../../hooks/adminHooks/adminproductPricingHook";
-import logger from "../../../../utils/logger";
+import ToastUtils from "@/utils/toastUtil";
+import { useUpdateProductPricing } from "@/hooks/adminHooks/adminProductPricingHooks";
+import logger from "@/utils/logger";
 
-const formatNumber = (value: any, digits = 4) => {
+const formatNumber = (value: unknown, digits = 4) => {
   if (value === null || value === undefined || Number.isNaN(Number(value))) {
     return "";
   }
   return Number(value).toFixed(digits);
 };
 
-const EditObjectStorageTierModal = ({ isOpen, onClose, tier, onUpdated }: any) => {
+interface EditObjectStorageTierModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  tier: Record<string, any> | null;
+  onUpdated?: (tier: Record<string, any>, newPrice: number) => void;
+}
+
+const EditObjectStorageTierModal = ({
+  isOpen,
+  onClose,
+  tier,
+  onUpdated,
+}: EditObjectStorageTierModalProps) => {
   const { mutate: updatePricing, isPending } = useUpdateProductPricing();
   const quota = useMemo(() => tier?.quota ?? 0, [tier]);
   const existingPrice = useMemo(
@@ -26,8 +38,8 @@ const EditObjectStorageTierModal = ({ isOpen, onClose, tier, onUpdated }: any) =
     return existingPrice / quota;
   }, [existingPrice, quota]);
 
-  const [pricePerGb, setPricePerGb] = useState(initialPerGb || 0);
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [pricePerGb, setPricePerGb] = useState<string | number>(initialPerGb || 0);
+  const [errors, setErrors] = useState<Record<string, string | null>>({});
 
   useEffect(() => {
     if (isOpen) {
@@ -43,11 +55,11 @@ const EditObjectStorageTierModal = ({ isOpen, onClose, tier, onUpdated }: any) =
   const totalPrice = quota ? Number(pricePerGb || 0) * quota : 0;
 
   const validate = () => {
-    const nextErrors: Record<string, any> = {};
+    const nextErrors: Record<string, string> = {};
     if (!quota) {
       nextErrors.quota = "Invalid quota for this tier.";
     }
-    if (Number.isNaN(Number(pricePerGb as any))) {
+    if (Number.isNaN(Number(pricePerGb))) {
       nextErrors.pricePerGb = "Enter a valid price per GiB.";
     } else if (Number(pricePerGb) <= 0) {
       nextErrors.pricePerGb = "Price per GiB must be greater than zero.";
@@ -56,7 +68,7 @@ const EditObjectStorageTierModal = ({ isOpen, onClose, tier, onUpdated }: any) =
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = (event: any) => {
+  const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!tier?.pricing?.id) {
       ToastUtils.error("Pricing record not found for this tier.");
@@ -118,7 +130,7 @@ const EditObjectStorageTierModal = ({ isOpen, onClose, tier, onUpdated }: any) =
                 Region: {tier.product?.region || "—"}
               </span>
               <span className="rounded-full bg-white px-2.5 py-1 font-medium text-slate-500">
-                Provider: {tier.product?.provider || "zadara"}
+                Provider: {tier.product?.provider || "—"}
               </span>
               <span className="rounded-full bg-white px-2.5 py-1 font-medium text-slate-500">
                 Quota: {quota ? `${quota} GiB` : "—"}
@@ -136,7 +148,7 @@ const EditObjectStorageTierModal = ({ isOpen, onClose, tier, onUpdated }: any) =
               min="0"
               value={pricePerGb}
               onChange={(event) => {
-                setPricePerGb(event.target.value as any);
+                setPricePerGb(event.target.value);
                 setErrors((prev) => ({ ...prev, pricePerGb: null }));
               }}
               className={`w-full rounded-xl border px-4 py-2 text-sm text-slate-700 outline-none transition focus:border-primary-300 focus:ring-2 focus:ring-primary-100 ${

@@ -2,7 +2,7 @@ import { Outlet } from "react-router-dom";
 import TenantHeadbar from "./TenantHeadbar";
 import TenantSidebar from "./TenantSidebar";
 import ActiveTab from "../../dashboard/components/activeTab";
-import { useApplyBrandingTheme, useTenantBrandingTheme } from "../../hooks/useBrandingTheme";
+import { useApplyBrandingTheme, useTenantBrandingTheme } from "@/hooks/useBrandingTheme";
 
 const TenantDashboardLayout = () => {
   const { data: theme } = useTenantBrandingTheme();

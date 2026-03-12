@@ -1,0 +1,388 @@
+src/adminDashboard/components/adminHeadbar.tsx(37,21): error TS2339: Property 'accentColor' does not exist on type 'unknown'.
+src/adminDashboard/components/adminHeadbar.tsx(37,52): error TS2339: Property 'primaryColor' does not exist on type 'unknown'.
+src/adminDashboard/components/AdminInstanceConfigurationCard.tsx(357,8): error TS2339: Property 'map' does not exist on type 'Record<string, unknown>[] | { data?: unknown; }'.
+  Property 'map' does not exist on type '{ data?: unknown; }'.
+src/adminDashboard/pages/AdminCreateInstance.tsx(121,35): error TS2322: Type 'unknown' is not assignable to type 'string | number'.
+src/adminDashboard/pages/AdminPartners.tsx(264,7): error TS2322: Type 'string' is not assignable to type '(args_0: unknown, args_1: PartnerTenant, args_2: number, args_3: number, args_4: number) => ReactNode'.
+src/adminDashboard/pages/AdminPartners.tsx(272,7): error TS2322: Type 'string' is not assignable to type '(args_0: unknown, args_1: PartnerTenant, args_2: number, args_3: number, args_4: number) => ReactNode'.
+src/adminDashboard/pages/AdminPartners.tsx(280,7): error TS2322: Type 'string' is not assignable to type '(args_0: unknown, args_1: PartnerTenant, args_2: number, args_3: number, args_4: number) => ReactNode'.
+src/adminDashboard/pages/AdminPartners.tsx(288,7): error TS2322: Type 'string' is not assignable to type '(args_0: unknown, args_1: PartnerTenant, args_2: number, args_3: number, args_4: number) => ReactNode'.
+src/adminDashboard/pages/AdminPartners.tsx(296,7): error TS2322: Type 'string' is not assignable to type '(args_0: unknown, args_1: PartnerTenant, args_2: number, args_3: number, args_4: number) => ReactNode'.
+src/adminDashboard/pages/AdminPartners.tsx(304,7): error TS2322: Type 'string' is not assignable to type '(args_0: unknown, args_1: PartnerTenant, args_2: number, args_3: number, args_4: number) => ReactNode'.
+src/adminDashboard/pages/AdminPartners.tsx(317,7): error TS2322: Type 'string' is not assignable to type '(args_0: unknown, args_1: PartnerTenant, args_2: number, args_3: number, args_4: number) => ReactNode'.
+src/adminDashboard/pages/AdminProductCreate.tsx(117,38): error TS2694: Namespace '"papaparse"' has no exported member 'ParseResult'.
+src/adminDashboard/pages/AdminProductCreate.tsx(340,17): error TS2322: Type 'Record<string, unknown>[]' is not assignable to type 'SelectableOption[]'.
+  Type 'Record<string, unknown>' is missing the following properties from type 'SelectableOption': id, name
+src/adminDashboard/pages/AdminProducts.tsx(886,35): error TS2339: Property 'icon' does not exist on type '{ id: string; name: string; caption: string; productType: string; heroTitle: string; heroDescription: string; tableTitle: string; tableDescription: string; icon: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<...>>; metrics: (stats: { ...; }) => { ...; }[]; emptyTitle: string; emptyDescription: s...'.
+  Property 'icon' does not exist on type '{ id: string; name: string; heroTitle: string; heroDescription: string; productType: string; tableTitle: string; tableDescription: string; emptyTitle: string; emptyDescription: string; metrics: any[]; }'.
+src/adminDashboard/pages/AdminProducts.tsx(887,37): error TS2339: Property 'icon' does not exist on type '{ id: string; name: string; caption: string; productType: string; heroTitle: string; heroDescription: string; tableTitle: string; tableDescription: string; icon: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<...>>; metrics: (stats: { ...; }) => { ...; }[]; emptyTitle: string; emptyDescription: s...'.
+  Property 'icon' does not exist on type '{ id: string; name: string; heroTitle: string; heroDescription: string; productType: string; tableTitle: string; tableDescription: string; emptyTitle: string; emptyDescription: string; metrics: any[]; }'.
+src/adminDashboard/pages/AdminProjectDetails.tsx(163,76): error TS2352: Conversion of type 'UseQueryResult<AnyRecord, Error>' to type 'Record<string, unknown>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'QueryObserverPlaceholderResult<AnyRecord, Error>' is not comparable to type 'Record<string, unknown>'.
+    Index signature for type 'string' is missing in type 'QueryObserverPlaceholderResult<AnyRecord, Error>'.
+src/adminDashboard/pages/AdminProjectDetails.tsx(195,5): error TS2322: Type 'unknown' is not assignable to type '() => void'.
+  Type '{}' provides no match for the signature '(): void'.
+src/adminDashboard/pages/AdminProjectDetails.tsx(204,60): error TS2352: Conversion of type 'UseQueryResult<EdgeConfig, Error>' to type 'Record<string, unknown>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'QueryObserverPlaceholderResult<EdgeConfig, Error>' is not comparable to type 'Record<string, unknown>'.
+    Index signature for type 'string' is missing in type 'QueryObserverPlaceholderResult<EdgeConfig, Error>'.
+src/adminDashboard/pages/AdminProjectDetails.tsx(211,35): error TS2339: Property 'data' does not exist on type 'unknown'.
+src/adminDashboard/pages/AdminProjectDetails.tsx(212,57): error TS2339: Property 'data' does not exist on type 'unknown'.
+src/adminDashboard/pages/AdminProjectDetails.tsx(434,48): error TS2349: This expression is not callable.
+  Type '{}' has no call signatures.
+src/adminDashboard/pages/AdminProjectDetails.tsx(452,50): error TS2349: This expression is not callable.
+  Type '{}' has no call signatures.
+src/adminDashboard/pages/AdminProjectDetails.tsx(523,11): error TS2349: This expression is not callable.
+  Type '{}' has no call signatures.
+src/adminDashboard/pages/AdminProjectDetails.tsx(614,11): error TS2322: Type '{ id: string; label: string; status: "pending" | "completed" | "failed" | "in_progress"; description: string; updated_at: string; }[]' is not assignable to type 'SetupStep[]'.
+  Type '{ id: string; label: string; status: "pending" | "in_progress" | "completed" | "failed"; description: string; updated_at: string; }' is not assignable to type 'SetupStep'.
+    Types of property 'status' are incompatible.
+      Type '"pending" | "completed" | "failed" | "in_progress"' is not assignable to type '"pending" | "completed" | "failed" | "not_started"'.
+        Type '"in_progress"' is not assignable to type '"pending" | "completed" | "failed" | "not_started"'.
+src/adminDashboard/pages/AdminProjectDetails.tsx(632,11): error TS2322: Type 'unknown' is not assignable to type '() => Promise<unknown>'.
+  Type '{}' provides no match for the signature '(): Promise<unknown>'.
+src/adminDashboard/pages/AdminProjectDetails.tsx(691,17): error TS2349: This expression is not callable.
+  Type '{}' has no call signatures.
+src/adminDashboard/pages/AdminUsers.tsx(310,64): error TS2698: Spread types may only be created from object types.
+src/adminDashboard/pages/AnalyticsDashboard.tsx(34,28): error TS2339: Property 'data' does not exist on type 'Record<string, unknown>[]'.
+src/adminDashboard/pages/AnalyticsDashboard.tsx(44,28): error TS2339: Property 'data' does not exist on type 'Record<string, unknown>[]'.
+src/adminDashboard/pages/AnalyticsDashboard.tsx(54,28): error TS2339: Property 'data' does not exist on type 'Record<string, unknown>[]'.
+src/adminDashboard/pages/AnalyticsDashboard.tsx(79,40): error TS2339: Property 'revenue' does not exist on type 'unknown'.
+src/adminDashboard/pages/AnalyticsDashboard.tsx(94,47): error TS2339: Property 'revenue' does not exist on type 'unknown'.
+src/adminDashboard/pages/AnalyticsDashboard.tsx(96,28): error TS2339: Property 'revenue' does not exist on type 'unknown'.
+src/adminDashboard/pages/AnalyticsDashboard.tsx(97,33): error TS2339: Property 'revenue' does not exist on type 'unknown'.
+src/adminDashboard/pages/AnalyticsDashboard.tsx(105,40): error TS2339: Property 'users' does not exist on type 'unknown'.
+src/adminDashboard/pages/AnalyticsDashboard.tsx(106,43): error TS2339: Property 'users' does not exist on type 'unknown'.
+src/adminDashboard/pages/AnalyticsDashboard.tsx(113,40): error TS2339: Property 'subscriptions' does not exist on type 'unknown'.
+src/adminDashboard/pages/AnalyticsDashboard.tsx(114,45): error TS2339: Property 'subscriptions' does not exist on type 'unknown'.
+src/adminDashboard/pages/AnalyticsDashboard.tsx(121,40): error TS2339: Property 'payouts' does not exist on type 'unknown'.
+src/adminDashboard/pages/AnalyticsDashboard.tsx(122,45): error TS2339: Property 'payouts' does not exist on type 'unknown'.
+src/adminDashboard/pages/calculatorComps/WorkloadCard.tsx(100,39): error TS2352: Conversion of type 'Region[]' to type 'Record<string, unknown>[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'Region' is not comparable to type 'Record<string, unknown>'.
+    Index signature for type 'string' is missing in type 'Region'.
+src/adminDashboard/pages/infraComps/eips.tsx(40,11): error TS2322: Type 'unknown' is not assignable to type 'ReactNode | ReactNode[]'.
+src/adminDashboard/pages/infraComps/enis.tsx(25,9): error TS2322: Type '(projectId: string, region: string) => { data: any[]; isLoading: boolean; refetch: () => void; }' is not assignable to type '(projectId: string, region: string, options?: { enabled?: boolean; }) => UseQueryResult<NetworkInterface[], Error>'.
+  Type '{ data: any[]; isLoading: boolean; refetch: () => void; }' is not assignable to type 'UseQueryResult<NetworkInterface[], Error>'.
+    Type '{ data: any[]; isLoading: boolean; refetch: () => void; }' is not assignable to type 'QueryObserverRefetchErrorResult<NetworkInterface[], Error> | QueryObserverSuccessResult<NetworkInterface[], Error> | QueryObserverPlaceholderResult<...>'.
+      Type '{ data: any[]; isLoading: boolean; refetch: () => void; }' is missing the following properties from type 'QueryObserverPlaceholderResult<NetworkInterface[], Error>': isError, error, isPending, isLoadingError, and 19 more.
+src/adminDashboard/pages/infraComps/igw.tsx(20,19): error TS2352: Conversion of type 'Vpc[]' to type 'Record<string, unknown>[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'Vpc' is not comparable to type 'Record<string, unknown>'.
+    Index signature for type 'string' is missing in type 'Vpc'.
+src/adminDashboard/pages/infraComps/subNet.tsx(43,11): error TS2322: Type 'unknown' is not assignable to type 'ReactNode | ReactNode[]'.
+src/adminDashboard/pages/infrastructure/AdminElasticIps.tsx(44,9): error TS2322: Type '{ useList: (projectId: string, region?: string, options?: { enabled?: boolean; }) => UseQueryResult<ElasticIp[], Error>; useCreate: () => UseMutationResult<any, unknown, { ...; }, unknown>; useDelete: () => UseMutationResult<...>; useAssociate: () => UseMutationResult<...>; useDisassociate: () => UseMutationResult<....' is not assignable to type 'ElasticIpHooks'.
+  The types returned by 'useCreate()' are incompatible between these types.
+    Type 'UseMutationResult<any, unknown, { projectId: string; region?: string; }, unknown>' is not assignable to type 'UseMutationResult<any, Error, { projectId: string; region?: string; }, unknown>'.
+      Type 'Override<MutationObserverIdleResult<any, unknown, { projectId: string; region?: string; }, unknown>, { mutate: UseMutateFunction<any, unknown, { projectId: string; region?: string; }, unknown>; }> & { ...; }' is not assignable to type 'UseMutationResult<any, Error, { projectId: string; region?: string; }, unknown>'.
+        Type 'Override<MutationObserverIdleResult<any, unknown, { projectId: string; region?: string; }, unknown>, { mutate: UseMutateFunction<any, unknown, { projectId: string; region?: string; }, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<any, Error, { projectId: string; region?: string; }, unknown>, { mutate: UseMutateFunction<any, Error, { projectId: string; region?: string; }, unknown>; }> & { ...; }'.
+          Type 'Override<MutationObserverIdleResult<any, unknown, { projectId: string; region?: string; }, unknown>, { mutate: UseMutateFunction<any, unknown, { projectId: string; region?: string; }, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<any, Error, { projectId: string; region?: string; }, unknown>, { mutate: UseMutateFunction<any, Error, { projectId: string; region?: string; }, unknown>; }>'.
+            Types of property 'failureReason' are incompatible.
+              Type '{}' is missing the following properties from type 'Error': name, message
+src/adminDashboard/pages/infrastructure/AdminKeyPairs.tsx(29,9): error TS2322: Type '{ useList: (projectId: string, region?: string, options?: {}) => UseQueryResult<KeyPair[], Error>; useDelete: () => UseMutationResult<any, Error, string | { ...; }, unknown>; useSync: () => UseMutationResult<...>; }' is not assignable to type 'KeyPairHooks'.
+  The types returned by 'useDelete()' are incompatible between these types.
+    Type 'UseMutationResult<any, Error, string | { id?: string; payload?: KeyPairPayload; }, unknown>' is not assignable to type 'UseMutationResult<any, Error, { id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }, unknown>'.
+      Type 'Override<MutationObserverLoadingResult<any, Error, string | { id?: string; payload?: KeyPairPayload; }, unknown>, { mutate: UseMutateFunction<any, Error, string | { ...; }, unknown>; }> & { ...; }' is not assignable to type 'UseMutationResult<any, Error, { id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }, unknown>'.
+        Type 'Override<MutationObserverLoadingResult<any, Error, string | { id?: string; payload?: KeyPairPayload; }, unknown>, { mutate: UseMutateFunction<any, Error, string | { ...; }, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverLoadingResult<any, Error, { id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }, unknown>, { ...; }> & { ...; }'.
+          Type 'Override<MutationObserverLoadingResult<any, Error, string | { id?: string; payload?: KeyPairPayload; }, unknown>, { mutate: UseMutateFunction<any, Error, string | { ...; }, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverLoadingResult<any, Error, { id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }, unknown>, { ...; }>'.
+            Types of property 'variables' are incompatible.
+              Type 'string | { id?: string; payload?: KeyPairPayload; }' is not assignable to type '{ id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }'.
+                Type 'string' is not assignable to type '{ id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }'.
+src/adminDashboard/pages/infrastructure/AdminNetworkInterfaces.tsx(31,9): error TS2322: Type '{ useList: (projectId?: string, region?: string, options?: any) => UseQueryResult<AnyRecord[], Error>; onSync: () => Promise<void>; }' is not assignable to type 'NetworkInterfaceHooks'.
+  The types returned by 'useList(...)' are incompatible between these types.
+    Type 'UseQueryResult<AnyRecord[], Error>' is not assignable to type 'UseQueryResult<NetworkInterface[], Error>'.
+      Type 'QueryObserverRefetchErrorResult<AnyRecord[], Error>' is not assignable to type 'UseQueryResult<NetworkInterface[], Error>'.
+        Type 'QueryObserverRefetchErrorResult<AnyRecord[], Error>' is not assignable to type 'QueryObserverRefetchErrorResult<NetworkInterface[], Error>'.
+          Type 'AnyRecord[]' is not assignable to type 'NetworkInterface[]'.
+            Property 'id' is missing in type 'AnyRecord' but required in type 'NetworkInterface'.
+src/adminDashboard/pages/instanceDetails/AdminInstancesDetails.tsx(563,11): error TS2353: Object literal may only specify known properties, and 'action' does not exist in type '{ identifier: Identifier; }'.
+src/adminDashboard/pages/inventoryComponents/crossConnect.tsx(213,9): error TS2322: Type 'Record<string, unknown>[]' is not assignable to type 'LegacyExplorerColumn[]'.
+  Property 'header' is missing in type 'Record<string, unknown>' but required in type 'LegacyExplorerColumn'.
+src/adminDashboard/pages/inventoryComponents/floatingIP.tsx(192,9): error TS2322: Type 'Record<string, unknown>[]' is not assignable to type 'LegacyExplorerColumn[]'.
+  Property 'header' is missing in type 'Record<string, unknown>' but required in type 'LegacyExplorerColumn'.
+src/adminDashboard/pages/inventoryComponents/objectStorage.tsx(26,49): error TS2339: Property 'quota_gb' does not exist on type 'unknown'.
+src/adminDashboard/pages/inventoryComponents/objectStorage.tsx(26,82): error TS2339: Property 'quota_gb' does not exist on type 'unknown'.
+src/adminDashboard/pages/inventoryComponents/objectStorage.tsx(35,54): error TS2339: Property 'match' does not exist on type 'unknown'.
+src/adminDashboard/pages/inventoryComponents/objectStorage.tsx(41,39): error TS2339: Property 'match' does not exist on type 'unknown'.
+src/adminDashboard/pages/inventoryComponents/objectStorage.tsx(61,28): error TS2339: Property 'toLowerCase' does not exist on type 'unknown'.
+src/adminDashboard/pages/inventoryComponents/objectStorage.tsx(109,34): error TS2339: Property 'region' does not exist on type 'unknown'.
+src/adminDashboard/pages/inventoryComponents/objectStorage.tsx(111,9): error TS2698: Spread types may only be created from object types.
+src/adminDashboard/pages/inventoryComponents/objectStorage.tsx(113,43): error TS2339: Property 'provider_resource_id' does not exist on type 'unknown'.
+src/adminDashboard/pages/inventoryComponents/objectStorage.tsx(152,39): error TS2339: Property 'price_usd' does not exist on type 'unknown'.
+src/adminDashboard/pages/inventoryComponents/objectStorage.tsx(168,11): error TS2698: Spread types may only be created from object types.
+src/adminDashboard/pages/PayoutsDashboard.tsx(57,85): error TS2554: Expected 1 arguments, but got 2.
+src/adminDashboard/pages/PayoutsDashboard.tsx(68,28): error TS2339: Property 'data' does not exist on type 'PayoutSummary'.
+src/adminDashboard/pages/PayoutsDashboard.tsx(165,48): error TS2339: Property 'data' does not exist on type 'Payout[]'.
+src/adminDashboard/pages/PayoutsDashboard.tsx(471,25): error TS2339: Property 'last_page' does not exist on type '{}'.
+src/adminDashboard/pages/PayoutsDashboard.tsx(474,40): error TS2339: Property 'current_page' does not exist on type '{}'.
+src/adminDashboard/pages/PayoutsDashboard.tsx(474,71): error TS2339: Property 'per_page' does not exist on type '{}'.
+src/adminDashboard/pages/PayoutsDashboard.tsx(475,40): error TS2339: Property 'current_page' does not exist on type '{}'.
+src/adminDashboard/pages/PayoutsDashboard.tsx(475,66): error TS2339: Property 'per_page' does not exist on type '{}'.
+src/adminDashboard/pages/PayoutsDashboard.tsx(475,87): error TS2339: Property 'total' does not exist on type '{}'.
+src/adminDashboard/pages/PayoutsDashboard.tsx(476,31): error TS2339: Property 'total' does not exist on type '{}'.
+src/adminDashboard/pages/PayoutsDashboard.tsx(482,42): error TS2339: Property 'current_page' does not exist on type '{}'.
+src/adminDashboard/pages/PayoutsDashboard.tsx(490,42): error TS2339: Property 'current_page' does not exist on type '{}'.
+src/adminDashboard/pages/PayoutsDashboard.tsx(490,70): error TS2339: Property 'last_page' does not exist on type '{}'.
+src/adminDashboard/pages/projectDetails/ComputeTab.tsx(42,9): error TS2322: Type '() => UseMutationResult<KeyPair[], Error, KeyPairPayload, unknown>' is not assignable to type '() => UseMutationResult<any, Error, { project_id: string; region?: string; }, unknown>'.
+  Type 'UseMutationResult<KeyPair[], Error, KeyPairPayload, unknown>' is not assignable to type 'UseMutationResult<any, Error, { project_id: string; region?: string; }, unknown>'.
+    Type 'Override<MutationObserverLoadingResult<KeyPair[], Error, KeyPairPayload, unknown>, { mutate: UseMutateFunction<KeyPair[], Error, KeyPairPayload, unknown>; }> & { ...; }' is not assignable to type 'UseMutationResult<any, Error, { project_id: string; region?: string; }, unknown>'.
+      Type 'Override<MutationObserverLoadingResult<KeyPair[], Error, KeyPairPayload, unknown>, { mutate: UseMutateFunction<KeyPair[], Error, KeyPairPayload, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverLoadingResult<any, Error, { project_id: string; region?: string; }, unknown>, { mutate: UseMutateFunction<any, Error, { project_id: string; region?: string; }, unknown>; }> & { ...; }'.
+        Type 'Override<MutationObserverLoadingResult<KeyPair[], Error, KeyPairPayload, unknown>, { mutate: UseMutateFunction<KeyPair[], Error, KeyPairPayload, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverLoadingResult<any, Error, { project_id: string; region?: string; }, unknown>, { mutate: UseMutateFunction<any, Error, { project_id: string; region?: string; }, unknown>; }>'.
+          Types of property 'variables' are incompatible.
+            Type 'KeyPairPayload' is not assignable to type '{ project_id: string; region?: string; }'.
+              Property 'project_id' is optional in type 'KeyPairPayload' but required in type '{ project_id: string; region?: string; }'.
+src/adminDashboard/pages/projectDetails/ComputeTab.tsx(43,9): error TS2322: Type '() => UseMutationResult<any, Error, string | { id?: string; payload?: KeyPairPayload; }, unknown>' is not assignable to type '() => UseMutationResult<any, Error, { id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }, unknown>'.
+  Type 'UseMutationResult<any, Error, string | { id?: string; payload?: KeyPairPayload; }, unknown>' is not assignable to type 'UseMutationResult<any, Error, { id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }, unknown>'.
+    Type 'Override<MutationObserverLoadingResult<any, Error, string | { id?: string; payload?: KeyPairPayload; }, unknown>, { mutate: UseMutateFunction<any, Error, string | { ...; }, unknown>; }> & { ...; }' is not assignable to type 'UseMutationResult<any, Error, { id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }, unknown>'.
+      Type 'Override<MutationObserverLoadingResult<any, Error, string | { id?: string; payload?: KeyPairPayload; }, unknown>, { mutate: UseMutateFunction<any, Error, string | { ...; }, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverLoadingResult<any, Error, { id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }, unknown>, { ...; }> & { ...; }'.
+        Type 'Override<MutationObserverLoadingResult<any, Error, string | { id?: string; payload?: KeyPairPayload; }, unknown>, { mutate: UseMutateFunction<any, Error, string | { ...; }, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverLoadingResult<any, Error, { id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }, unknown>, { ...; }>'.
+          Types of property 'variables' are incompatible.
+            Type 'string | { id?: string; payload?: KeyPairPayload; }' is not assignable to type '{ id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }'.
+              Type 'string' is not assignable to type '{ id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }'.
+src/adminDashboard/pages/projectDetails/NetworkingTab.tsx(341,15): error TS2322: Type '() => UseMutationResult<any, unknown, { projectId: string; region?: string; }, unknown>' is not assignable to type '() => UseMutationResult<any, Error, { projectId: string; region?: string; }, unknown>'.
+  Type 'UseMutationResult<any, unknown, { projectId: string; region?: string; }, unknown>' is not assignable to type 'UseMutationResult<any, Error, { projectId: string; region?: string; }, unknown>'.
+    Type 'Override<MutationObserverIdleResult<any, unknown, { projectId: string; region?: string; }, unknown>, { mutate: UseMutateFunction<any, unknown, { projectId: string; region?: string; }, unknown>; }> & { ...; }' is not assignable to type 'UseMutationResult<any, Error, { projectId: string; region?: string; }, unknown>'.
+      Type 'Override<MutationObserverIdleResult<any, unknown, { projectId: string; region?: string; }, unknown>, { mutate: UseMutateFunction<any, unknown, { projectId: string; region?: string; }, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<any, Error, { projectId: string; region?: string; }, unknown>, { mutate: UseMutateFunction<any, Error, { projectId: string; region?: string; }, unknown>; }> & { ...; }'.
+        Type 'Override<MutationObserverIdleResult<any, unknown, { projectId: string; region?: string; }, unknown>, { mutate: UseMutateFunction<any, unknown, { projectId: string; region?: string; }, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<any, Error, { projectId: string; region?: string; }, unknown>, { mutate: UseMutateFunction<any, Error, { projectId: string; region?: string; }, unknown>; }>'.
+          Types of property 'failureReason' are incompatible.
+            Type '{}' is missing the following properties from type 'Error': name, message
+src/adminDashboard/pages/projectDetails/NetworkingTab.tsx(343,15): error TS2322: Type '() => UseMutationResult<any, Error, { projectId: string; region?: string; elasticIpId: string; payload: { instance_id?: string; network_interface_id?: string; }; }, unknown>' is not assignable to type '() => UseMutationResult<any, Error, { projectId: string; region?: string; elasticIpId: string; payload: { instance_id: string; }; }, unknown>'.
+  Type 'UseMutationResult<any, Error, { projectId: string; region?: string; elasticIpId: string; payload: { instance_id?: string; network_interface_id?: string; }; }, unknown>' is not assignable to type 'UseMutationResult<any, Error, { projectId: string; region?: string; elasticIpId: string; payload: { instance_id: string; }; }, unknown>'.
+    Type 'Override<MutationObserverLoadingResult<any, Error, { projectId: string; region?: string; elasticIpId: string; payload: { instance_id?: string; network_interface_id?: string; }; }, unknown>, { ...; }> & { ...; }' is not assignable to type 'UseMutationResult<any, Error, { projectId: string; region?: string; elasticIpId: string; payload: { instance_id: string; }; }, unknown>'.
+      Type 'Override<MutationObserverLoadingResult<any, Error, { projectId: string; region?: string; elasticIpId: string; payload: { instance_id?: string; network_interface_id?: string; }; }, unknown>, { ...; }> & { ...; }' is not assignable to type 'Override<MutationObserverLoadingResult<any, Error, { projectId: string; region?: string; elasticIpId: string; payload: { instance_id: string; }; }, unknown>, { ...; }> & { ...; }'.
+        Type 'Override<MutationObserverLoadingResult<any, Error, { projectId: string; region?: string; elasticIpId: string; payload: { instance_id?: string; network_interface_id?: string; }; }, unknown>, { ...; }> & { ...; }' is not assignable to type 'Override<MutationObserverLoadingResult<any, Error, { projectId: string; region?: string; elasticIpId: string; payload: { instance_id: string; }; }, unknown>, { ...; }>'.
+          The types of 'variables.payload' are incompatible between these types.
+            Type '{ instance_id?: string; network_interface_id?: string; }' is not assignable to type '{ instance_id: string; }'.
+              Property 'instance_id' is optional in type '{ instance_id?: string; network_interface_id?: string; }' but required in type '{ instance_id: string; }'.
+src/adminDashboard/pages/SettlementsDashboard.tsx(56,93): error TS2554: Expected 1 arguments, but got 2.
+src/adminDashboard/pages/SettlementsDashboard.tsx(67,28): error TS2339: Property 'data' does not exist on type 'SettlementSummary'.
+src/adminDashboard/pages/SettlementsDashboard.tsx(176,45): error TS2339: Property 'data' does not exist on type 'Settlement[]'.
+src/adminDashboard/pages/SettlementsDashboard.tsx(203,31): error TS2339: Property 'defaults' does not exist on type 'ApiClient'.
+src/adminDashboard/pages/taxComponents/addTax.tsx(198,33): error TS2322: Type 'unknown' is not assignable to type 'Key'.
+src/adminDashboard/pages/taxComponents/addTax.tsx(198,50): error TS2322: Type 'unknown' is not assignable to type 'string | number | readonly string[]'.
+src/adminDashboard/pages/taxComponents/addTax.tsx(199,27): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/adminDashboard/pages/tenantComps/EditTenant.tsx(81,21): error TS2345: Argument of type '(prev: { name: string; email: string; phone: string; address: string; country_id: string; country: string; state_id: string; state: string; city_id: string; city: string; zip_code: string; company_type: string; industry: string; registration_number: string; tin_number: string; website: string; }) => { ...; }' is not assignable to parameter of type 'SetStateAction<{ name: string; email: string; phone: string; address: string; country_id: string; country: string; state_id: string; state: string; city_id: string; city: string; zip_code: string; company_type: string; industry: string; registration_number: string; tin_number: string; website: string; }>'.
+  Type '(prev: { name: string; email: string; phone: string; address: string; country_id: string; country: string; state_id: string; state: string; city_id: string; city: string; zip_code: string; company_type: string; industry: string; registration_number: string; tin_number: string; website: string; }) => { ...; }' is not assignable to type '(prevState: { name: string; email: string; phone: string; address: string; country_id: string; country: string; state_id: string; state: string; city_id: string; city: string; zip_code: string; company_type: string; industry: string; registration_number: string; tin_number: string; website: string; }) => { ...; }'.
+    Call signature return types '{ country: unknown; name: string; email: string; phone: string; address: string; country_id: string; state_id: string; state: string; city_id: string; city: string; zip_code: string; company_type: string; industry: string; registration_number: string; tin_number: string; website: string; }' and '{ name: string; email: string; phone: string; address: string; country_id: string; country: string; state_id: string; state: string; city_id: string; city: string; zip_code: string; company_type: string; industry: string; registration_number: string; tin_number: string; website: string; }' are incompatible.
+      The types of 'country' are incompatible between these types.
+        Type 'unknown' is not assignable to type 'string'.
+src/adminDashboard/pages/tenantComps/EditTenant.tsx(93,21): error TS2345: Argument of type '(prev: { name: string; email: string; phone: string; address: string; country_id: string; country: string; state_id: string; state: string; city_id: string; city: string; zip_code: string; company_type: string; industry: string; registration_number: string; tin_number: string; website: string; }) => { ...; }' is not assignable to parameter of type 'SetStateAction<{ name: string; email: string; phone: string; address: string; country_id: string; country: string; state_id: string; state: string; city_id: string; city: string; zip_code: string; company_type: string; industry: string; registration_number: string; tin_number: string; website: string; }>'.
+  Type '(prev: { name: string; email: string; phone: string; address: string; country_id: string; country: string; state_id: string; state: string; city_id: string; city: string; zip_code: string; company_type: string; industry: string; registration_number: string; tin_number: string; website: string; }) => { ...; }' is not assignable to type '(prevState: { name: string; email: string; phone: string; address: string; country_id: string; country: string; state_id: string; state: string; city_id: string; city: string; zip_code: string; company_type: string; industry: string; registration_number: string; tin_number: string; website: string; }) => { ...; }'.
+    Call signature return types '{ state: unknown; name: string; email: string; phone: string; address: string; country_id: string; country: string; state_id: string; city_id: string; city: string; zip_code: string; company_type: string; industry: string; registration_number: string; tin_number: string; website: string; }' and '{ name: string; email: string; phone: string; address: string; country_id: string; country: string; state_id: string; state: string; city_id: string; city: string; zip_code: string; company_type: string; industry: string; registration_number: string; tin_number: string; website: string; }' are incompatible.
+      The types of 'state' are incompatible between these types.
+        Type 'unknown' is not assignable to type 'string'.
+src/adminDashboard/pages/tenantComps/EditTenant.tsx(105,21): error TS2345: Argument of type '(prev: { name: string; email: string; phone: string; address: string; country_id: string; country: string; state_id: string; state: string; city_id: string; city: string; zip_code: string; company_type: string; industry: string; registration_number: string; tin_number: string; website: string; }) => { ...; }' is not assignable to parameter of type 'SetStateAction<{ name: string; email: string; phone: string; address: string; country_id: string; country: string; state_id: string; state: string; city_id: string; city: string; zip_code: string; company_type: string; industry: string; registration_number: string; tin_number: string; website: string; }>'.
+  Type '(prev: { name: string; email: string; phone: string; address: string; country_id: string; country: string; state_id: string; state: string; city_id: string; city: string; zip_code: string; company_type: string; industry: string; registration_number: string; tin_number: string; website: string; }) => { ...; }' is not assignable to type '(prevState: { name: string; email: string; phone: string; address: string; country_id: string; country: string; state_id: string; state: string; city_id: string; city: string; zip_code: string; company_type: string; industry: string; registration_number: string; tin_number: string; website: string; }) => { ...; }'.
+    Call signature return types '{ city: unknown; name: string; email: string; phone: string; address: string; country_id: string; country: string; state_id: string; state: string; city_id: string; zip_code: string; company_type: string; industry: string; registration_number: string; tin_number: string; website: string; }' and '{ name: string; email: string; phone: string; address: string; country_id: string; country: string; state_id: string; state: string; city_id: string; city: string; zip_code: string; company_type: string; industry: string; registration_number: string; tin_number: string; website: string; }' are incompatible.
+      The types of 'city' are incompatible between these types.
+        Type 'unknown' is not assignable to type 'string'.
+src/clientDashboard/pages/ClientProjectDetails.tsx(265,5): error TS2322: Type '() => UseMutationResult<KeyPair[], Error, KeyPairPayload, unknown>' is not assignable to type '() => UseMutationResult<any, Error, { project_id: string; region?: string; }, unknown>'.
+  Type 'UseMutationResult<KeyPair[], Error, KeyPairPayload, unknown>' is not assignable to type 'UseMutationResult<any, Error, { project_id: string; region?: string; }, unknown>'.
+    Type 'Override<MutationObserverLoadingResult<KeyPair[], Error, KeyPairPayload, unknown>, { mutate: UseMutateFunction<KeyPair[], Error, KeyPairPayload, unknown>; }> & { ...; }' is not assignable to type 'UseMutationResult<any, Error, { project_id: string; region?: string; }, unknown>'.
+      Type 'Override<MutationObserverLoadingResult<KeyPair[], Error, KeyPairPayload, unknown>, { mutate: UseMutateFunction<KeyPair[], Error, KeyPairPayload, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverLoadingResult<any, Error, { project_id: string; region?: string; }, unknown>, { mutate: UseMutateFunction<any, Error, { project_id: string; region?: string; }, unknown>; }> & { ...; }'.
+        Type 'Override<MutationObserverLoadingResult<KeyPair[], Error, KeyPairPayload, unknown>, { mutate: UseMutateFunction<KeyPair[], Error, KeyPairPayload, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverLoadingResult<any, Error, { project_id: string; region?: string; }, unknown>, { mutate: UseMutateFunction<any, Error, { project_id: string; region?: string; }, unknown>; }>'.
+          Types of property 'variables' are incompatible.
+            Type 'KeyPairPayload' is not assignable to type '{ project_id: string; region?: string; }'.
+              Property 'project_id' is optional in type 'KeyPairPayload' but required in type '{ project_id: string; region?: string; }'.
+src/clientDashboard/pages/ClientProjectDetails.tsx(314,9): error TS2322: Type 'unknown[]' is not assignable to type 'SetupStep[]'.
+  Type 'unknown' is not assignable to type 'SetupStep'.
+    Index signature for type 'string' is missing in type '{}'.
+src/clientDashboard/pages/ClientProjectDetails.tsx(350,13): error TS2739: Type 'Project' is missing the following properties from type 'Project': tenant_id, updated_at
+src/clientDashboard/pages/ClientProvisioningWizard.tsx(126,31): error TS2345: Argument of type '(cfg: Record<string, unknown>) => { id: string; title: string; regionLabel: string; computeLabel: string; osLabel: string; termLabel: string; storageLabel: string; floatingIpLabel: string; keypairLabel: string; subnetLabel: string; statusLabel: string; isComplete: boolean; }' is not assignable to parameter of type '(value: Configuration, index: number, array: Configuration[]) => { id: string; title: string; regionLabel: string; computeLabel: string; osLabel: string; ... 6 more ...; isComplete: boolean; }'.
+  Types of parameters 'cfg' and 'value' are incompatible.
+    Type 'Configuration' is not assignable to type 'Record<string, unknown>'.
+      Index signature for type 'string' is missing in type 'Configuration'.
+src/clientDashboard/pages/ClientProvisioningWizard.tsx(127,56): error TS2345: Argument of type 'Record<string, unknown>' is not assignable to parameter of type 'Configuration'.
+  Type 'Record<string, unknown>' is missing the following properties from type 'Configuration': id, launch_mode, name, instance_count, and 19 more.
+src/clientDashboard/pages/ClientProvisioningWizard.tsx(159,40): error TS2345: Argument of type 'Record<string, unknown>' is not assignable to parameter of type 'Configuration'.
+  Type 'Record<string, unknown>' is missing the following properties from type 'Configuration': id, launch_mode, name, instance_count, and 19 more.
+src/clientDashboard/pages/ClientProvisioningWizard.tsx(310,15): error TS2322: Type 'unknown' is not assignable to type 'string'.
+src/clientDashboard/pages/ClientProvisioningWizard.tsx(359,17): error TS2740: Type 'Record<string, unknown>' is missing the following properties from type 'InstanceResources': projects, regions, instance_types, os_images, and 4 more.
+src/clientDashboard/pages/ClientProvisioningWizard.tsx(377,17): error TS2322: Type '(...args: unknown[]) => unknown' is not assignable to type 'FetchHookFn<unknown, unknown[]>'.
+  Property 'data' is missing in type '{}' but required in type 'FetchHookResult<unknown>'.
+src/clientDashboard/pages/ClientProvisioningWizard.tsx(378,17): error TS2322: Type '(...args: unknown[]) => unknown' is not assignable to type 'FetchHookFn<unknown, unknown[]>'.
+  Property 'data' is missing in type '{}' but required in type 'FetchHookResult<unknown>'.
+src/clientDashboard/pages/ClientProvisioningWizard.tsx(379,17): error TS2322: Type '(...args: unknown[]) => unknown' is not assignable to type 'FetchHookFn<unknown, unknown[]>'.
+  Property 'data' is missing in type '{}' but required in type 'FetchHookResult<unknown>'.
+src/clientDashboard/pages/ClientProvisioningWizard.tsx(380,17): error TS2322: Type '(...args: unknown[]) => unknown' is not assignable to type 'FetchHookFn<unknown, unknown[]>'.
+  Property 'data' is missing in type '{}' but required in type 'FetchHookResult<unknown>'.
+src/clientDashboard/pages/ClientProvisioningWizard.tsx(381,17): error TS2322: Type '(...args: unknown[]) => unknown' is not assignable to type 'FetchHookFn<unknown, unknown[]>'.
+  Property 'data' is missing in type '{}' but required in type 'FetchHookResult<unknown>'.
+src/clientDashboard/pages/ClientProvisioningWizard.tsx(382,17): error TS2322: Type '(...args: unknown[]) => unknown' is not assignable to type 'FetchHookFn<unknown, unknown[]>'.
+  Property 'data' is missing in type '{}' but required in type 'FetchHookResult<unknown>'.
+src/clientDashboard/pages/ClientProvisioningWizard.tsx(417,13): error TS2322: Type 'unknown' is not assignable to type 'string'.
+src/dashboard/pages/clientComps/editClient.tsx(101,21): error TS2345: Argument of type '(prev: { first_name: string; last_name: string; email: string; phone: string; verified: boolean; country_id: string; country: string; state_id: string; state: string; city: string; zip_code: string; force_password_reset: boolean; }) => { ...; }' is not assignable to parameter of type 'SetStateAction<{ first_name: string; last_name: string; email: string; phone: string; verified: boolean; country_id: string; country: string; state_id: string; state: string; city: string; zip_code: string; force_password_reset: boolean; }>'.
+  Type '(prev: { first_name: string; last_name: string; email: string; phone: string; verified: boolean; country_id: string; country: string; state_id: string; state: string; city: string; zip_code: string; force_password_reset: boolean; }) => { ...; }' is not assignable to type '(prevState: { first_name: string; last_name: string; email: string; phone: string; verified: boolean; country_id: string; country: string; state_id: string; state: string; city: string; zip_code: string; force_password_reset: boolean; }) => { ...; }'.
+    Call signature return types '{ country: unknown; first_name: string; last_name: string; email: string; phone: string; verified: boolean; country_id: string; state_id: string; state: string; city: string; zip_code: string; force_password_reset: boolean; }' and '{ first_name: string; last_name: string; email: string; phone: string; verified: boolean; country_id: string; country: string; state_id: string; state: string; city: string; zip_code: string; force_password_reset: boolean; }' are incompatible.
+      The types of 'country' are incompatible between these types.
+        Type 'unknown' is not assignable to type 'string'.
+src/dashboard/pages/clientComps/editClient.tsx(113,21): error TS2345: Argument of type '(prev: { first_name: string; last_name: string; email: string; phone: string; verified: boolean; country_id: string; country: string; state_id: string; state: string; city: string; zip_code: string; force_password_reset: boolean; }) => { ...; }' is not assignable to parameter of type 'SetStateAction<{ first_name: string; last_name: string; email: string; phone: string; verified: boolean; country_id: string; country: string; state_id: string; state: string; city: string; zip_code: string; force_password_reset: boolean; }>'.
+  Type '(prev: { first_name: string; last_name: string; email: string; phone: string; verified: boolean; country_id: string; country: string; state_id: string; state: string; city: string; zip_code: string; force_password_reset: boolean; }) => { ...; }' is not assignable to type '(prevState: { first_name: string; last_name: string; email: string; phone: string; verified: boolean; country_id: string; country: string; state_id: string; state: string; city: string; zip_code: string; force_password_reset: boolean; }) => { ...; }'.
+    Call signature return types '{ state: unknown; first_name: string; last_name: string; email: string; phone: string; verified: boolean; country_id: string; country: string; state_id: string; city: string; zip_code: string; force_password_reset: boolean; }' and '{ first_name: string; last_name: string; email: string; phone: string; verified: boolean; country_id: string; country: string; state_id: string; state: string; city: string; zip_code: string; force_password_reset: boolean; }' are incompatible.
+      The types of 'state' are incompatible between these types.
+        Type 'unknown' is not assignable to type 'string'.
+src/dashboard/pages/clientComps/editClient.tsx(232,36): error TS2322: Type '{ first_name: string; last_name: string; email: string; phone: string; role: string; tenant_id: unknown; verified: boolean; force_password_reset: boolean; country_id: number; country: string; state: string; city: string; zip_code: string; }' is not assignable to type 'Partial<Client>'.
+  Types of property 'tenant_id' are incompatible.
+    Type 'unknown' is not assignable to type 'string | number'.
+src/dashboard/pages/infraComps/elasticIP.tsx(34,11): error TS2322: Type 'unknown' is not assignable to type 'ReactNode | ReactNode[]'.
+src/dashboard/pages/infraComps/igws.tsx(47,11): error TS2322: Type 'unknown' is not assignable to type 'ReactNode | ReactNode[]'.
+src/dashboard/pages/ProjectDetails.tsx(113,38): error TS2339: Property 'edge_network_id' does not exist on type 'unknown'.
+src/dashboard/pages/ProjectDetails.tsx(142,29): error TS2345: Argument of type 'string' is not assignable to parameter of type 'HttpMethod'.
+src/dashboard/pages/ProjectDetails.tsx(225,13): error TS2322: Type '{ projectId: string; region: string; actionRequest: null; onActionHandled: () => void; onStatsUpdate: () => void; }' is not assignable to type 'IntrinsicAttributes & { projectId?: string; region?: string; }'.
+  Property 'actionRequest' does not exist on type 'IntrinsicAttributes & { projectId?: string; region?: string; }'.
+src/dashboard/pages/ProjectDetails.tsx(247,13): error TS2322: Type '{ projectId: string; region: string; actionRequest: null; onActionHandled: () => void; onStatsUpdate: () => void; }' is not assignable to type 'IntrinsicAttributes & { projectId?: string; region?: string; }'.
+  Property 'actionRequest' does not exist on type 'IntrinsicAttributes & { projectId?: string; region?: string; }'.
+src/dashboard/pages/ProjectDetails.tsx(267,13): error TS2322: Type '{ projectId: string; region: string; actionRequest: null; onActionHandled: () => void; onStatsUpdate: () => void; }' is not assignable to type 'IntrinsicAttributes & { projectId?: string; region?: string; }'.
+  Property 'actionRequest' does not exist on type 'IntrinsicAttributes & { projectId?: string; region?: string; }'.
+src/dashboard/pages/ProjectDetails.tsx(299,5): error TS2322: Type 'UseQueryResult<KeyPair[], Error>' is not assignable to type '(projectId: string, region?: string, options?: { enabled?: boolean; }) => UseQueryResult<KeyPair[], Error>'.
+  Type 'QueryObserverRefetchErrorResult<KeyPair[], Error>' is not assignable to type '(projectId: string, region?: string, options?: { enabled?: boolean; }) => UseQueryResult<KeyPair[], Error>'.
+    Type 'QueryObserverRefetchErrorResult<KeyPair[], Error>' provides no match for the signature '(projectId: string, region?: string, options?: { enabled?: boolean; }): UseQueryResult<KeyPair[], Error>'.
+src/dashboard/pages/ProjectDetails.tsx(299,14): error TS2352: Conversion of type '(projectIdValue: string, regionValue: string | undefined, options?: Record<string, unknown>) => { data: KeyPair[]; isFetching: boolean; refetch: (options?: RefetchOptions) => Promise<...>; }' to type 'UseQueryResult<KeyPair[], Error>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+src/dashboard/pages/ProjectDetails.tsx(312,5): error TS2322: Type '() => UseMutationResult<KeyPair[], Error, KeyPairPayload, unknown>' is not assignable to type '() => UseMutationResult<any, Error, { project_id: string; region?: string; }, unknown>'.
+  Type 'UseMutationResult<KeyPair[], Error, KeyPairPayload, unknown>' is not assignable to type 'UseMutationResult<any, Error, { project_id: string; region?: string; }, unknown>'.
+    Type 'Override<MutationObserverLoadingResult<KeyPair[], Error, KeyPairPayload, unknown>, { mutate: UseMutateFunction<KeyPair[], Error, KeyPairPayload, unknown>; }> & { ...; }' is not assignable to type 'UseMutationResult<any, Error, { project_id: string; region?: string; }, unknown>'.
+      Type 'Override<MutationObserverLoadingResult<KeyPair[], Error, KeyPairPayload, unknown>, { mutate: UseMutateFunction<KeyPair[], Error, KeyPairPayload, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverLoadingResult<any, Error, { project_id: string; region?: string; }, unknown>, { mutate: UseMutateFunction<any, Error, { project_id: string; region?: string; }, unknown>; }> & { ...; }'.
+        Type 'Override<MutationObserverLoadingResult<KeyPair[], Error, KeyPairPayload, unknown>, { mutate: UseMutateFunction<KeyPair[], Error, KeyPairPayload, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverLoadingResult<any, Error, { project_id: string; region?: string; }, unknown>, { mutate: UseMutateFunction<any, Error, { project_id: string; region?: string; }, unknown>; }>'.
+          Types of property 'variables' are incompatible.
+            Type 'KeyPairPayload' is not assignable to type '{ project_id: string; region?: string; }'.
+              Property 'project_id' is optional in type 'KeyPairPayload' but required in type '{ project_id: string; region?: string; }'.
+src/dashboard/pages/ProjectDetails.tsx(313,5): error TS2322: Type '() => UseMutationResult<any, Error, string | { id?: string; payload?: KeyPairPayload; }, unknown>' is not assignable to type '() => UseMutationResult<any, Error, { id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }, unknown>'.
+  Type 'UseMutationResult<any, Error, string | { id?: string; payload?: KeyPairPayload; }, unknown>' is not assignable to type 'UseMutationResult<any, Error, { id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }, unknown>'.
+    Type 'Override<MutationObserverLoadingResult<any, Error, string | { id?: string; payload?: KeyPairPayload; }, unknown>, { mutate: UseMutateFunction<any, Error, string | { ...; }, unknown>; }> & { ...; }' is not assignable to type 'UseMutationResult<any, Error, { id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }, unknown>'.
+      Type 'Override<MutationObserverLoadingResult<any, Error, string | { id?: string; payload?: KeyPairPayload; }, unknown>, { mutate: UseMutateFunction<any, Error, string | { ...; }, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverLoadingResult<any, Error, { id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }, unknown>, { ...; }> & { ...; }'.
+        Type 'Override<MutationObserverLoadingResult<any, Error, string | { id?: string; payload?: KeyPairPayload; }, unknown>, { mutate: UseMutateFunction<any, Error, string | { ...; }, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverLoadingResult<any, Error, { id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }, unknown>, { ...; }>'.
+          Types of property 'variables' are incompatible.
+            Type 'string | { id?: string; payload?: KeyPairPayload; }' is not assignable to type '{ id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }'.
+              Type 'string' is not assignable to type '{ id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }'.
+src/dashboard/pages/ProjectDetails.tsx(317,14): error TS2352: Conversion of type 'Project' to type 'Record<string, unknown>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Index signature for type 'string' is missing in type 'Project'.
+src/dashboard/pages/ProjectDetails.tsx(344,7): error TS2322: Type '(params: Record<string, unknown>, options?: Record<string, unknown>) => { data: unknown[]; isFetching: boolean; refetch: () => void; }' is not assignable to type '(params: { project_id?: string; }, options?: { enabled?: boolean; }) => { data?: InstanceSummary[] | { data: InstanceSummary[]; }; isFetching?: boolean; refetch?: () => void; }'.
+  Call signature return types '{ data: unknown[]; isFetching: boolean; refetch: () => void; }' and '{ data?: InstanceSummary[] | { data: InstanceSummary[]; }; isFetching?: boolean; refetch?: () => void; }' are incompatible.
+    The types of 'data' are incompatible between these types.
+      Type 'unknown[]' is not assignable to type 'InstanceSummary[] | { data: InstanceSummary[]; }'.
+        Type 'unknown[]' is not assignable to type 'InstanceSummary[]'.
+          Type 'unknown' is not assignable to type 'InstanceSummary'.
+            Index signature for type 'string' is missing in type '{}'.
+src/dashboard/pages/ProjectDetails.tsx(395,13): error TS2322: Type 'UseMutationResult<unknown, unknown, Record<string, unknown>, unknown>' is not assignable to type 'UseMutationResult<unknown, unknown, SetupInfrastructureInput, unknown>'.
+  Type 'Override<MutationObserverLoadingResult<unknown, unknown, Record<string, unknown>, unknown>, { mutate: UseMutateFunction<unknown, unknown, Record<string, unknown>, unknown>; }> & { ...; }' is not assignable to type 'UseMutationResult<unknown, unknown, SetupInfrastructureInput, unknown>'.
+    Type 'Override<MutationObserverLoadingResult<unknown, unknown, Record<string, unknown>, unknown>, { mutate: UseMutateFunction<unknown, unknown, Record<string, unknown>, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverLoadingResult<unknown, unknown, SetupInfrastructureInput, unknown>, { mutate: UseMutateFunction<unknown, unknown, SetupInfrastructureInput, unknown>; }> & { ...; }'.
+      Type 'Override<MutationObserverLoadingResult<unknown, unknown, Record<string, unknown>, unknown>, { mutate: UseMutateFunction<unknown, unknown, Record<string, unknown>, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverLoadingResult<unknown, unknown, SetupInfrastructureInput, unknown>, { mutate: UseMutateFunction<unknown, unknown, SetupInfrastructureInput, unknown>; }>'.
+        Types of property 'variables' are incompatible.
+          Type 'Record<string, unknown>' is missing the following properties from type 'SetupInfrastructureInput': id, blueprint
+src/hooks/adminHooks/leadsHooks.ts(339,15): error TS2554: Expected 4 arguments, but got 3.
+src/hooks/adminHooks/leadsHooks.ts(355,15): error TS2554: Expected 4 arguments, but got 3.
+src/hooks/adminHooks/leadsHooks.ts(371,15): error TS2554: Expected 4 arguments, but got 3.
+src/hooks/adminHooks/leadsHooks.ts(388,15): error TS2554: Expected 4 arguments, but got 3.
+src/hooks/adminHooks/leadsHooks.ts(402,15): error TS2554: Expected 4 arguments, but got 3.
+src/hooks/adminHooks/leadsHooks.ts(416,15): error TS2554: Expected 4 arguments, but got 3.
+src/hooks/adminHooks/leadsHooks.ts(433,15): error TS2554: Expected 4 arguments, but got 3.
+src/hooks/objectStorage/useOrderManagement.ts(452,15): error TS2353: Object literal may only specify known properties, and 'payment_reference' does not exist in type 'TransactionSummary'.
+src/hooks/objectStorage/useOrderManagement.ts(461,15): error TS2322: Type 'unknown' is not assignable to type 'string'.
+src/shared/components/billing/calculator/CalculatorSummaryStep.tsx(196,22): error TS2339: Property 'map' does not exist on type 'unknown'.
+src/shared/components/billing/invoice/InvoiceFinalReviewStep.tsx(58,22): error TS2339: Property 'name' does not exist on type 'unknown'.
+src/shared/components/billing/invoice/InvoiceFinalReviewStep.tsx(58,45): error TS2339: Property 'company_name' does not exist on type 'unknown'.
+src/shared/components/billing/invoice/InvoiceFinalReviewStep.tsx(58,86): error TS2339: Property 'id' does not exist on type 'unknown'.
+src/shared/components/customer-management/ClientEditModal.tsx(127,7): error TS2554: Expected 1 arguments, but got 2.
+src/shared/components/infrastructure/KeyPairsSection.tsx(83,9): error TS2322: Type 'string' is not assignable to type 'number'.
+src/shared/components/infrastructure/KeyPairsSection.tsx(188,9): error TS2322: Type '{ label: string; value: number; tone: string; icon: Element; }[]' is not assignable to type 'MetaItem[]'.
+  Type '{ label: string; value: number; tone: string; icon: JSX.Element; }' is not assignable to type 'MetaItem'.
+    Types of property 'tone' are incompatible.
+      Type 'string' is not assignable to type 'Tone'.
+src/shared/components/instance-wizard/InstanceConfigurationForm.tsx(187,24): error TS2339: Property 'code' does not exist on type 'unknown'.
+src/shared/components/instance-wizard/InstanceConfigurationForm.tsx(188,24): error TS2339: Property 'slug' does not exist on type 'unknown'.
+src/shared/components/instance-wizard/InstanceConfigurationForm.tsx(196,26): error TS2339: Property 'network_preset' does not exist on type 'unknown'.
+src/shared/components/instance-wizard/InstanceConfigurationForm.tsx(197,26): error TS2339: Property 'networkPreset' does not exist on type 'unknown'.
+src/shared/components/instance-wizard/InstanceConfigurationForm.tsx(209,56): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'Record<string, unknown>'.
+  Index signature for type 'string' is missing in type '{}'.
+src/shared/components/instance-wizard/InstanceConfigurationForm.tsx(227,48): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'Record<string, unknown>'.
+  Index signature for type 'string' is missing in type '{}'.
+src/shared/components/instance-wizard/InstanceConfigurationForm.tsx(230,48): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'Record<string, unknown>'.
+  Index signature for type 'string' is missing in type '{}'.
+src/shared/components/instance-wizard/InstanceConfigurationForm.tsx(458,81): error TS2339: Property 'setSelectionRange' does not exist on type 'HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement'.
+  Property 'setSelectionRange' does not exist on type 'HTMLSelectElement'.
+src/shared/components/instance-wizard/InstanceConfigurationForm.tsx(459,20): error TS2339: Property 'setSelectionRange' does not exist on type 'HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement'.
+  Property 'setSelectionRange' does not exist on type 'HTMLSelectElement'.
+src/shared/components/instance-wizard/InstanceSummaryCard.tsx(343,25): error TS2352: Conversion of type 'Configuration' to type 'Record<string, unknown[]>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Index signature for type 'string' is missing in type 'Configuration'.
+src/shared/components/instance-wizard/InstanceSummaryCard.tsx(343,76): error TS2352: Conversion of type 'Configuration' to type 'Record<string, unknown[]>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Index signature for type 'string' is missing in type 'Configuration'.
+src/shared/components/instance-wizard/InstanceSummaryCard.tsx(345,29): error TS2352: Conversion of type 'Configuration' to type 'Record<string, Record<string, unknown>[]>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Index signature for type 'string' is missing in type 'Configuration'.
+src/shared/components/instance-wizard/InstanceSummaryCard.tsx(349,54): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/shared/components/instances/SharedInstanceList.tsx(234,39): error TS2339: Property 'filter' does not exist on type 'unknown'.
+src/shared/components/instances/SharedInstanceList.tsx(261,76): error TS2339: Property 'length' does not exist on type 'unknown'.
+src/shared/components/instances/SharedInstanceList.tsx(276,9): error TS2740: Type '{}' is missing the following properties from type 'TableRowBase[]': length, pop, push, concat, and 35 more.
+src/shared/components/object-storage/ObjectStorageTransactions.tsx(54,74): error TS2304: Cannot find name 'InvoiceTransaction'.
+src/shared/components/projects/details/ProjectComputeTab.tsx(173,14): error TS2352: Conversion of type 'KeyPair[]' to type 'Record<string, unknown>[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'KeyPair' is not comparable to type 'Record<string, unknown>'.
+    Index signature for type 'string' is missing in type 'KeyPair'.
+src/shared/components/projects/details/ProjectComputeTab.tsx(244,13): error TS2322: Type '(projectIdValue: string, regionValue?: string, options?: {}) => { data: Record<string, unknown>[]; isFetching: boolean; refetch: (options?: RefetchOptions) => Promise<QueryObserverResult<KeyPair[], Error>>; }' is not assignable to type '(projectId: string, region?: string, options?: { enabled?: boolean; }) => UseQueryResult<KeyPair[], Error>'.
+  Type '{ data: Record<string, unknown>[]; isFetching: boolean; refetch: (options?: RefetchOptions) => Promise<QueryObserverResult<KeyPair[], Error>>; }' is not assignable to type 'UseQueryResult<KeyPair[], Error>'.
+    Type '{ data: Record<string, unknown>[]; isFetching: boolean; refetch: (options?: RefetchOptions) => Promise<QueryObserverResult<KeyPair[], Error>>; }' is missing the following properties from type 'QueryObserverPlaceholderResult<KeyPair[], Error>': isError, error, isPending, isLoading, and 19 more.
+src/shared/components/settings/FieldControl.tsx(20,11): error TS2322: Type 'string | number | boolean' is not assignable to type 'string | number | readonly string[]'.
+  Type 'boolean' is not assignable to type 'string | number | readonly string[]'.
+src/shared/components/settings/FieldControl.tsx(32,11): error TS2322: Type 'string | number | boolean' is not assignable to type 'string | number | readonly string[]'.
+  Type 'boolean' is not assignable to type 'string | number | readonly string[]'.
+src/shared/components/settings/FieldControl.tsx(67,11): error TS2322: Type 'string | number | boolean' is not assignable to type 'string | number | readonly string[]'.
+  Type 'boolean' is not assignable to type 'string | number | readonly string[]'.
+src/shared/components/templates/TemplateManager.tsx(487,39): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/shared/components/templates/TemplateManager.tsx(488,40): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/shared/components/templates/TemplateManager.tsx(489,39): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/tenantDashboard/pages/infrastructure/TenantElasticIps.tsx(37,7): error TS2322: Type '{ useList: (projectId: string, region?: string, options?: { enabled?: boolean; }) => UseQueryResult<ElasticIp[], Error>; useCreate: () => UseMutationResult<any, unknown, { ...; }, unknown>; useDelete: () => UseMutationResult<...>; useAssociate: () => UseMutationResult<...>; useDisassociate: () => UseMutationResult<....' is not assignable to type 'ElasticIpHooks'.
+  The types returned by 'useCreate()' are incompatible between these types.
+    Type 'UseMutationResult<any, unknown, { projectId: string; region?: string; }, unknown>' is not assignable to type 'UseMutationResult<any, Error, { projectId: string; region?: string; }, unknown>'.
+      Type 'Override<MutationObserverIdleResult<any, unknown, { projectId: string; region?: string; }, unknown>, { mutate: UseMutateFunction<any, unknown, { projectId: string; region?: string; }, unknown>; }> & { ...; }' is not assignable to type 'UseMutationResult<any, Error, { projectId: string; region?: string; }, unknown>'.
+        Type 'Override<MutationObserverIdleResult<any, unknown, { projectId: string; region?: string; }, unknown>, { mutate: UseMutateFunction<any, unknown, { projectId: string; region?: string; }, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<any, Error, { projectId: string; region?: string; }, unknown>, { mutate: UseMutateFunction<any, Error, { projectId: string; region?: string; }, unknown>; }> & { ...; }'.
+          Type 'Override<MutationObserverIdleResult<any, unknown, { projectId: string; region?: string; }, unknown>, { mutate: UseMutateFunction<any, unknown, { projectId: string; region?: string; }, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<any, Error, { projectId: string; region?: string; }, unknown>, { mutate: UseMutateFunction<any, Error, { projectId: string; region?: string; }, unknown>; }>'.
+            Types of property 'failureReason' are incompatible.
+              Type '{}' is missing the following properties from type 'Error': name, message
+src/tenantDashboard/pages/infrastructure/TenantKeyPairs.tsx(29,7): error TS2322: Type '{ useList: (projectId: string, region?: string, options?: {}) => UseQueryResult<KeyPair[], Error>; useDelete: () => UseMutationResult<any, Error, string | { ...; }, unknown>; useSync: () => UseMutationResult<...>; }' is not assignable to type 'KeyPairHooks'.
+  The types returned by 'useDelete()' are incompatible between these types.
+    Type 'UseMutationResult<any, Error, string | { id?: string; payload?: KeyPairPayload; }, unknown>' is not assignable to type 'UseMutationResult<any, Error, { id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }, unknown>'.
+      Type 'Override<MutationObserverLoadingResult<any, Error, string | { id?: string; payload?: KeyPairPayload; }, unknown>, { mutate: UseMutateFunction<any, Error, string | { ...; }, unknown>; }> & { ...; }' is not assignable to type 'UseMutationResult<any, Error, { id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }, unknown>'.
+        Type 'Override<MutationObserverLoadingResult<any, Error, string | { id?: string; payload?: KeyPairPayload; }, unknown>, { mutate: UseMutateFunction<any, Error, string | { ...; }, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverLoadingResult<any, Error, { id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }, unknown>, { ...; }> & { ...; }'.
+          Type 'Override<MutationObserverLoadingResult<any, Error, string | { id?: string; payload?: KeyPairPayload; }, unknown>, { mutate: UseMutateFunction<any, Error, string | { ...; }, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverLoadingResult<any, Error, { id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }, unknown>, { ...; }>'.
+            Types of property 'variables' are incompatible.
+              Type 'string | { id?: string; payload?: KeyPairPayload; }' is not assignable to type '{ id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }'.
+                Type 'string' is not assignable to type '{ id: string; project_id: string; region?: string; payload: { project_id: string; region?: string; }; }'.
+src/tenantDashboard/pages/infrastructure/TenantRouteTables.tsx(38,7): error TS2739: Type '{ useList: (projectId: string, region?: string, options?: { enabled?: boolean; }) => UseQueryResult<ResourceLike[], Error>; useSubnets: (projectId: string, region?: string, options?: { ...; }) => UseQueryResult<...>; ... 5 more ...; useDisassociate: () => UseMutationResult<...>; }' is missing the following properties from type 'RouteTableHooks': useCreate, useDelete
+src/tenantDashboard/pages/TenantProvisioningWizard.tsx(140,33): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(predicate: (value: Configuration, index: number, array: Configuration[]) => value is Configuration, thisArg?: any): Configuration[]', gave the following error.
+    Argument of type '(cfg: Record<string, unknown>) => boolean' is not assignable to parameter of type '(value: Configuration, index: number, array: Configuration[]) => value is Configuration'.
+      Types of parameters 'cfg' and 'value' are incompatible.
+        Type 'Configuration' is not assignable to type 'Record<string, unknown>'.
+          Index signature for type 'string' is missing in type 'Configuration'.
+  Overload 2 of 2, '(predicate: (value: Configuration, index: number, array: Configuration[]) => unknown, thisArg?: any): Configuration[]', gave the following error.
+    Argument of type '(cfg: Record<string, unknown>) => boolean' is not assignable to parameter of type '(value: Configuration, index: number, array: Configuration[]) => unknown'.
+      Types of parameters 'cfg' and 'value' are incompatible.
+        Type 'Configuration' is not assignable to type 'Record<string, unknown>'.
+          Index signature for type 'string' is missing in type 'Configuration'.
+src/tenantDashboard/pages/TenantProvisioningWizard.tsx(144,33): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(predicate: (value: Configuration, index: number, array: Configuration[]) => value is Configuration, thisArg?: any): Configuration[]', gave the following error.
+    Argument of type '(cfg: Record<string, unknown>) => boolean' is not assignable to parameter of type '(value: Configuration, index: number, array: Configuration[]) => value is Configuration'.
+      Types of parameters 'cfg' and 'value' are incompatible.
+        Type 'Configuration' is not assignable to type 'Record<string, unknown>'.
+          Index signature for type 'string' is missing in type 'Configuration'.
+  Overload 2 of 2, '(predicate: (value: Configuration, index: number, array: Configuration[]) => unknown, thisArg?: any): Configuration[]', gave the following error.
+    Argument of type '(cfg: Record<string, unknown>) => boolean' is not assignable to parameter of type '(value: Configuration, index: number, array: Configuration[]) => unknown'.
+      Types of parameters 'cfg' and 'value' are incompatible.
+        Type 'Configuration' is not assignable to type 'Record<string, unknown>'.
+          Index signature for type 'string' is missing in type 'Configuration'.
+src/tenantDashboard/pages/TenantProvisioningWizard.tsx(169,31): error TS2345: Argument of type '(cfg: Record<string, unknown>) => { id: string; title: string; regionLabel: string; computeLabel: string; osLabel: string; termLabel: string; storageLabel: string; floatingIpLabel: string; keypairLabel: string; subnetLabel: string; statusLabel: string; isComplete: boolean; }' is not assignable to parameter of type '(value: Configuration, index: number, array: Configuration[]) => { id: string; title: string; regionLabel: string; computeLabel: string; osLabel: string; ... 6 more ...; isComplete: boolean; }'.
+  Types of parameters 'cfg' and 'value' are incompatible.
+    Type 'Configuration' is not assignable to type 'Record<string, unknown>'.
+      Index signature for type 'string' is missing in type 'Configuration'.
+src/tenantDashboard/pages/TenantProvisioningWizard.tsx(170,56): error TS2345: Argument of type 'Record<string, unknown>' is not assignable to parameter of type 'Configuration'.
+  Type 'Record<string, unknown>' is missing the following properties from type 'Configuration': id, launch_mode, name, instance_count, and 19 more.
+src/tenantDashboard/pages/TenantProvisioningWizard.tsx(202,40): error TS2345: Argument of type 'Record<string, unknown>' is not assignable to parameter of type 'Configuration'.
+  Type 'Record<string, unknown>' is missing the following properties from type 'Configuration': id, launch_mode, name, instance_count, and 19 more.
+src/tenantDashboard/pages/TenantProvisioningWizard.tsx(369,17): error TS2740: Type 'Record<string, unknown>' is missing the following properties from type 'InstanceResources': projects, regions, instance_types, os_images, and 4 more.
+src/tenantDashboard/pages/TenantProvisioningWizard.tsx(387,17): error TS2322: Type '(...args: unknown[]) => unknown' is not assignable to type 'FetchHookFn<unknown, unknown[]>'.
+  Property 'data' is missing in type '{}' but required in type 'FetchHookResult<unknown>'.
+src/tenantDashboard/pages/TenantProvisioningWizard.tsx(388,17): error TS2322: Type '(...args: unknown[]) => unknown' is not assignable to type 'FetchHookFn<unknown, unknown[]>'.
+  Property 'data' is missing in type '{}' but required in type 'FetchHookResult<unknown>'.
+src/tenantDashboard/pages/TenantProvisioningWizard.tsx(389,17): error TS2322: Type '(...args: unknown[]) => unknown' is not assignable to type 'FetchHookFn<unknown, unknown[]>'.
+  Property 'data' is missing in type '{}' but required in type 'FetchHookResult<unknown>'.
+src/tenantDashboard/pages/TenantProvisioningWizard.tsx(390,17): error TS2322: Type '(...args: unknown[]) => unknown' is not assignable to type 'FetchHookFn<unknown, unknown[]>'.
+  Property 'data' is missing in type '{}' but required in type 'FetchHookResult<unknown>'.
+src/tenantDashboard/pages/TenantProvisioningWizard.tsx(391,17): error TS2322: Type '(...args: unknown[]) => unknown' is not assignable to type 'FetchHookFn<unknown, unknown[]>'.
+  Property 'data' is missing in type '{}' but required in type 'FetchHookResult<unknown>'.
+src/tenantDashboard/pages/TenantProvisioningWizard.tsx(392,17): error TS2322: Type '(...args: unknown[]) => unknown' is not assignable to type 'FetchHookFn<unknown, unknown[]>'.
+  Property 'data' is missing in type '{}' but required in type 'FetchHookResult<unknown>'.

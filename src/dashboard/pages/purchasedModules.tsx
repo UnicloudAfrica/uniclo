@@ -1,11 +1,11 @@
 import { Settings2 } from "lucide-react";
 import TenantPageShell from "../components/TenantPageShell";
-import useAuthRedirect from "../../utils/authRedirect";
-import { useFetchPurchasedInstances } from "../../hooks/instancesHook";
-import { ModernTable } from "../../shared/components";
+import useAuthRedirect from "@/utils/authRedirect";
+import { useFetchPurchasedInstances } from "@/shared/hooks/resources/instanceHooks";
+import { ModernTable } from "@/shared/components";
 
 export default function PurchasedModules() {
-  const { isLoading } = useAuthRedirect();
+  useAuthRedirect();
 
   const { data: fetchedInstances = { data: [], meta: {} }, isFetching: isInstancesFetching } =
     useFetchPurchasedInstances();

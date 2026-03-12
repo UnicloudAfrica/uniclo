@@ -12,8 +12,8 @@ interface KeyPairsOverviewProps {
   keyPairs: KeyPair[];
   isLoading: boolean;
   permissions: KeyPairPermissions;
-  projectId: string;
-  region: string;
+  projectId?: string;
+  region?: string;
   onSync: () => Promise<void>;
   onDelete: (id: string, name: string) => Promise<void>;
   isSyncing?: boolean;
@@ -91,10 +91,10 @@ const KeyPairsOverview: React.FC<KeyPairsOverviewProps> = ({
       {
         key: "name",
         header: "Name",
-        render: (_value: unknown, name: any) => (
+        render: (value: unknown) => (
           <div className="flex items-center gap-3">
             <KeyRound size={16} className="text-gray-400" />
-            <span className="font-medium text-gray-900">{String(name)}</span>
+            <span className="font-medium text-gray-900">{String(value ?? "")}</span>
           </div>
         ),
         sortable: true,
@@ -102,9 +102,9 @@ const KeyPairsOverview: React.FC<KeyPairsOverviewProps> = ({
       {
         key: "fingerprint",
         header: "Fingerprint",
-        render: (_value: unknown, fingerprint: any) => (
+        render: (value: unknown) => (
           <code className="text-[10px] bg-gray-50 px-2 py-1 rounded text-gray-600 font-mono">
-            {String(fingerprint || "—")}
+            {String(value || "—")}
           </code>
         ),
       },
@@ -182,7 +182,7 @@ const KeyPairsOverview: React.FC<KeyPairsOverviewProps> = ({
         {keyPairs.length > 0 ? (
           <ModernTable
             data={keyPairs}
-            columns={columns as any}
+            columns={columns as never}
             actions={tableActions}
             paginated={true}
             pageSize={itemsPerPage}
@@ -217,7 +217,7 @@ const KeyPairsOverview: React.FC<KeyPairsOverviewProps> = ({
         isOpen={Boolean(deleteModal)}
         onClose={() => setDeleteModal(null)}
         keyPairName={deleteModal?.name || ""}
-        onConfirm={() => deleteModal && handleDelete(deleteModal as any)}
+        onConfirm={() => deleteModal && handleDelete(deleteModal as never)}
         isDeleting={isDeleting}
       />
     </>

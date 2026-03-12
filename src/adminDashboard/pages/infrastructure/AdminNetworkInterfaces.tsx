@@ -2,12 +2,12 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Cable } from "lucide-react";
 import AdminPageShell from "../../components/AdminPageShell";
-import NetworkInterfacesContainer from "../../../shared/components/infrastructure/containers/NetworkInterfacesContainer";
+import NetworkInterfacesContainer from "@/shared/components/infrastructure/containers/NetworkInterfacesContainer";
 import {
   useFetchNetworkInterfaces,
   syncNetworkInterfacesFromProvider,
-} from "../../../hooks/adminHooks/networkHooks";
-import ToastUtils from "../../../utils/toastUtil";
+} from "@/hooks/adminHooks/networkHooks";
+import ToastUtils from "@/utils/toastUtil";
 
 const AdminNetworkInterfaces: React.FC = () => {
   const [searchParams] = useSearchParams();

@@ -1,0 +1,137 @@
+import { useMemo, type CSSProperties } from "react";
+import { designTokens } from "@/styles/designTokens";
+import { getFontSize, getColor } from "./utils";
+
+export interface TableStyleMap {
+  container: CSSProperties;
+  header: CSSProperties;
+  title: CSSProperties;
+  searchContainer: CSSProperties;
+  searchInput: CSSProperties;
+  table: CSSProperties;
+  thead: CSSProperties;
+  th: CSSProperties;
+  td: CSSProperties;
+  emptyState: CSSProperties;
+  pagination: CSSProperties;
+  loadingOverlay: CSSProperties;
+}
+
+interface UseTableStylesOptions {
+  searchFocused: boolean;
+  sortable: boolean;
+  enableAnimations: boolean;
+  tableLoaded: boolean;
+  isInView: boolean;
+  prefersReducedMotion: boolean;
+}
+
+export function useTableStyles({
+  searchFocused,
+  sortable,
+  enableAnimations,
+  tableLoaded,
+  isInView,
+  prefersReducedMotion,
+}: UseTableStylesOptions): TableStyleMap {
+  return useMemo(
+    () =>
+      ({
+        container: {
+          backgroundColor: designTokens.colors.neutral[0],
+          border: `1px solid ${designTokens.colors.neutral[200]}`,
+          borderRadius: designTokens.borderRadius.xl,
+          boxShadow: "var(--shadow-xs)",
+          overflow: "hidden",
+          opacity: !enableAnimations || tableLoaded || isInView ? 1 : 0,
+          transform:
+            !enableAnimations || tableLoaded || isInView ? "translateY(0)" : "translateY(20px)",
+          transition: prefersReducedMotion ? "none" : "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+        },
+        header: {
+          padding: "20px 24px",
+          borderBottom: `1px solid ${designTokens.colors.neutral[200]}`,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "16px",
+        },
+        title: {
+          fontSize: getFontSize("lg"),
+          fontWeight: designTokens.typography.fontWeight.semibold,
+          color: getColor("neutral", 900),
+          margin: 0,
+        },
+        searchContainer: {
+          position: "relative",
+          flex: 1,
+          maxWidth: "300px",
+        },
+        searchInput: {
+          width: "100%",
+          height: "40px",
+          paddingLeft: "40px",
+          paddingRight: "16px",
+          border: `1px solid ${searchFocused ? getColor("primary", 300) : getColor("neutral", 300)}`,
+          borderRadius: designTokens.borderRadius.lg,
+          backgroundColor: searchFocused ? getColor("neutral", 0) : getColor("neutral", 50),
+          fontSize: getFontSize("sm"),
+          outline: "none",
+          transition: prefersReducedMotion ? "none" : "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          fontFamily: designTokens.typography.fontFamily.sans.join(", "),
+          transform: searchFocused ? "translateY(-1px)" : "translateY(0)",
+        },
+        table: {
+          width: "100%",
+          borderCollapse: "collapse",
+        },
+        thead: {
+          backgroundColor: getColor("neutral", 50),
+        },
+        th: {
+          padding: "12px 16px",
+          textAlign: "left",
+          fontSize: getFontSize("xs"),
+          fontWeight: designTokens.typography.fontWeight.medium,
+          color: getColor("neutral", 600),
+          textTransform: "uppercase",
+          letterSpacing: "0.05em",
+          borderBottom: `1px solid ${getColor("neutral", 200)}`,
+          cursor: sortable ? "pointer" : "default",
+          transition: prefersReducedMotion ? "none" : "all 0.2s ease",
+        },
+        td: {
+          padding: "16px",
+          fontSize: getFontSize("sm"),
+          color: getColor("neutral", 900),
+          borderBottom: `1px solid ${getColor("neutral", 100)}`,
+          transition: prefersReducedMotion ? "none" : "all 0.2s ease",
+        },
+        emptyState: {
+          padding: "48px 24px",
+          textAlign: "center",
+          color: getColor("neutral", 500),
+          fontSize: getFontSize("sm"),
+        },
+        pagination: {
+          padding: "16px 24px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          borderTop: `1px solid ${getColor("neutral", 200)}`,
+          backgroundColor: getColor("neutral", 50),
+        },
+        loadingOverlay: {
+          position: "absolute",
+          inset: 0,
+          backgroundColor: "rgb(var(--theme-neutral-50) / 0.8)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 10,
+        },
+      }) satisfies TableStyleMap,
+    [searchFocused, sortable, enableAnimations, tableLoaded, isInView, prefersReducedMotion]
+  );
+}

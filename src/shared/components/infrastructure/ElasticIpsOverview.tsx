@@ -1,6 +1,7 @@
 import React from "react";
-import { Globe2, Link2, Unplug } from "lucide-react";
+import { Globe2, Link2, Plus, Unplug } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
+import ModernButton from "../ui/ModernButton";
 import ElasticIpsTable from "./ElasticIpsTable";
 import type { ElasticIp } from "./types";
 import type { ElasticIpPermissions } from "../../config/permissionPresets";
@@ -12,6 +13,7 @@ interface ElasticIpsOverviewProps {
   onAssociate?: (eip: ElasticIp) => void;
   onDisassociate?: (eip: ElasticIp) => void;
   onRelease?: (eip: ElasticIp) => void;
+  onCreate?: () => void;
   showActions?: boolean;
   /** Optional permissions object for permission-based action gating */
   permissions?: ElasticIpPermissions;
@@ -24,6 +26,7 @@ const ElasticIpsOverview: React.FC<ElasticIpsOverviewProps> = ({
   onAssociate,
   onDisassociate,
   onRelease,
+  onCreate,
   showActions,
   permissions,
 }) => {
@@ -81,6 +84,14 @@ const ElasticIpsOverview: React.FC<ElasticIpsOverviewProps> = ({
         elasticIps={elasticIps}
         isLoading={isLoading}
         emptyMessage={emptyMessage}
+        emptyAction={
+          onCreate ? (
+            <ModernButton variant="primary" size="sm" onClick={onCreate}>
+              <Plus className="w-4 h-4 mr-1" />
+              Allocate Elastic IP
+            </ModernButton>
+          ) : undefined
+        }
         onAssociate={effectiveOnAssociate}
         onDisassociate={effectiveOnDisassociate}
         onRelease={effectiveOnRelease}

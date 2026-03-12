@@ -3,9 +3,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import AdminActiveTab from "../components/adminActiveTab";
 import InfrastructureSetupFlow from "./infraComps/InfrastructureSetupFlow";
-import { useFetchProjectById } from "../../hooks/adminHooks/projectHooks";
-import ToastUtils from "../../utils/toastUtil";
-import logger from "../../utils/logger";
+import { useFetchProjectById } from "@/hooks/adminHooks/projectHooks";
+import ToastUtils from "@/utils/toastUtil";
+import logger from "@/utils/logger";
 
 interface ProjectDetails {
   identifier: string;

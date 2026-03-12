@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import AdminPageShell from "../components/AdminPageShell";
 import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
-import ClientCreateForm from "../../shared/components/customer-management/ClientCreateForm";
-import { ModernButton } from "../../shared/components/ui";
+import ClientCreateForm from "@/shared/components/customer-management/ClientCreateForm";
+import { ModernButton } from "@/shared/components/ui";
 
 const AdminClientCreate = () => {
   const navigate = useNavigate();

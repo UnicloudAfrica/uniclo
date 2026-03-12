@@ -17,12 +17,11 @@ interface BlogItem {
   date: string;
   drawin: string;
   processedName?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   [key: string]: any;
 }
 
 const Blog = () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [blogArray] = useContext(BlogContext) as [BlogItem[]];
   const [selectedTag, setSelectedTag] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");

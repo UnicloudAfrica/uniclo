@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { GitMerge, Plus, X } from "lucide-react";
 import TenantPageShell from "../../components/TenantPageShell";
-import ModernCard from "../../../shared/components/ui/ModernCard";
-import { VpcPeeringOverview } from "../../../shared/components/infrastructure";
+import ModernCard from "@/shared/components/ui/ModernCard";
+import { VpcPeeringOverview } from "@/shared/components/infrastructure";
 import {
   useVpcPeering,
   useCreateVpcPeering,
@@ -11,12 +11,21 @@ import {
   useRejectVpcPeering,
   useDeleteVpcPeering,
   useVpcs,
-} from "../../../shared/hooks/vpcInfraHooks";
+} from "@/shared/hooks/vpcInfraHooks";
+import type { Vpc } from "@/shared/components/infrastructure/types";
+import { useFetchProjectById } from "@/shared/hooks/resources/projectHooks";
+import { isFeatureSupported } from "@/utils/featureGating";
+import { UnsupportedFeature } from "@/shared/components/UnsupportedFeature";
 
 const TenantVpcPeering: React.FC = () => {
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get("project") || "";
   const region = searchParams.get("region") || "";
+
+  const { data: projectData } = useFetchProjectById(projectId);
+  const projectObj =
+    projectData && typeof projectData === "object" ? (projectData as Record<string, any>) : null;
+  const provider = projectObj?.provider || searchParams.get("provider");
 
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -33,6 +42,14 @@ const TenantVpcPeering: React.FC = () => {
   const acceptMutation = useAcceptVpcPeering();
   const rejectMutation = useRejectVpcPeering();
   const deleteMutation = useDeleteVpcPeering();
+
+  if (provider && !isFeatureSupported(provider, "vpc_peering")) {
+    return (
+      <TenantPageShell title="VPC Peering" description="">
+        <UnsupportedFeature feature="VPC Peering" provider={provider} />
+      </TenantPageShell>
+    );
+  }
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,7 +124,7 @@ const TenantVpcPeering: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-violet-500 focus:border-violet-500"
               >
                 <option value="">Select VPC</option>
-                {vpcs.map((vpc: any) => (
+                {vpcs.map((vpc: Vpc) => (
                   <option key={vpc.id} value={vpc.id}>
                     {vpc.name} ({vpc.cidr_block})
                   </option>

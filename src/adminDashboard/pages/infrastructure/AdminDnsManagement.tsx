@@ -2,13 +2,12 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Globe } from "lucide-react";
 import AdminPageShell from "../../components/AdminPageShell";
-import DnsManagementContainer from "../../../shared/components/infrastructure/dns/DnsManagementContainer";
+import DnsManagementContainer from "@/shared/components/infrastructure/dns/DnsManagementContainer";
 
 const AdminDnsManagement: React.FC = () => {
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get("project") || "";
-  // Default to lagos-1 for admin view if not specified
-  const region = searchParams.get("region") || "lagos-1";
+  const region = searchParams.get("region") || "";
 
   return (
     <>

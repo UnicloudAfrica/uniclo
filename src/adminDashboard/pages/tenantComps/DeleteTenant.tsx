@@ -1,8 +1,8 @@
 import React from "react";
 import { X, Loader2, AlertTriangle } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
-import { useDeleteTenant } from "../../../hooks/adminHooks/tenantHooks";
-import logger from "../../../utils/logger";
+import ToastUtils from "@/utils/toastUtil";
+import { useDeleteTenant } from "@/hooks/adminHooks/tenantHooks";
+import logger from "@/utils/logger";
 
 interface DeleteTenantModalProps {
   isOpen: boolean;

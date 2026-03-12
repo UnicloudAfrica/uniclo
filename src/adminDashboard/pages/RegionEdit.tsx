@@ -1,322 +1,22 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { AlertCircle, Loader2, MapPin, Save, Globe, Server, Database, Check } from "lucide-react";
-import adminRegionApi from "../../services/adminRegionApi";
-import { useFetchTenants } from "../../hooks/adminHooks";
-import { useFetchCountries } from "../../hooks/resource";
-import ToastUtils from "../../utils/toastUtil";
+import { AlertCircle, Loader2, MapPin, Save, Globe, Check } from "lucide-react";
+import adminRegionApi from "@/services/adminRegionApi";
+import { useFetchTenants } from "@/hooks/adminHooks";
+import { useFetchCountries } from "@/hooks/resource";
+import ToastUtils from "@/utils/toastUtil";
 import AdminPageShell from "../components/AdminPageShell";
-import { ModernCard, ModernButton } from "../../shared/components/ui";
-import ModernInput from "../../shared/components/ui/ModernInput";
-import StatusPill from "../../shared/components/ui/StatusPill";
-import { designTokens } from "../../styles/designTokens";
-import logger from "../../utils/logger";
-
-const statusOptions = [
-  { value: "healthy", label: "Healthy" },
-  { value: "degraded", label: "Degraded" },
-  { value: "down", label: "Down" },
-];
-
-const statusToneMap: Record<string, "success" | "warning" | "danger" | "info" | "neutral"> = {
-  healthy: "success",
-  degraded: "warning",
-  down: "danger",
-};
-
-const statusLabelMap: Record<string, string> = {
-  healthy: "Healthy",
-  degraded: "Degraded",
-  down: "Down",
-};
-
-const formatSegment = (value: any) => {
-  if (!value) return "";
-  return value
-    .toString()
-    .split(/[_-]/)
-    .filter(Boolean)
-    .map((segment: any) => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(" ");
-};
-
-// Service icons
-const SERVICE_ICONS: Record<string, any> = {
-  compute: Server,
-  object_storage: Database,
-  network: Globe,
-};
-
-type ServiceFieldDefinition = {
-  type?: string;
-  label?: string;
-  required?: boolean;
-  placeholder?: string;
-  help?: string;
-};
-
-type ServiceDefinition = {
-  label?: string;
-  description?: string;
-  fields?: Record<string, ServiceFieldDefinition>;
-};
-
-type ServiceConfigCardProps = {
-  serviceType: string;
-  serviceConfig?: ServiceDefinition;
-  enabled: boolean;
-  onToggle: () => void;
-  fulfillmentMode: string;
-  onModeChange: (mode: string) => void;
-  credentials: Record<string, any>;
-  onCredentialChange: (fieldName: string, value: string) => void;
-  onTestConnection: () => void;
-  status?: string;
-  testing?: boolean;
-  isExistingConnection?: boolean;
-};
-
-const ServiceConfigCard = ({
-  serviceType,
-  serviceConfig,
-  enabled,
-  onToggle,
-  fulfillmentMode,
-  onModeChange,
-  credentials,
-  onCredentialChange,
-  onTestConnection,
-  status = "not_configured",
-  testing = false,
-  isExistingConnection = false, // New prop to indicate credentials already exist
-}: ServiceConfigCardProps) => {
-  const Icon = SERVICE_ICONS[serviceType] || Server;
-  const label = serviceConfig?.label || serviceType;
-  const description = serviceConfig?.description || "";
-  const fields: Record<string, ServiceFieldDefinition> = serviceConfig?.fields || {};
-  const [showUpdateForm, setShowUpdateForm] = useState(false);
-
-  const getInputType = (fieldDef: ServiceFieldDefinition) => {
-    if (fieldDef.type === "password") return "password";
-    if (fieldDef.type === "number") return "number";
-    if (fieldDef.type === "email") return "email";
-    if (fieldDef.type === "url") return "url";
-    return "text";
-  };
-
-  // Determine if we should show the credential form
-  const hasCredentialsEntered = Object.values(credentials || {}).some((v: any) => v && v !== "");
-  const shouldShowCredentialsForm =
-    !isExistingConnection || showUpdateForm || hasCredentialsEntered;
-
-  return (
-    <div
-      className={`rounded-2xl border-2 transition-all ${enabled ? "border-blue-500 bg-blue-50/30" : "border-gray-200 bg-white hover:border-gray-300"}`}
-    >
-      {/* Header with toggle */}
-      <div className="flex items-center justify-between p-4 cursor-pointer" onClick={onToggle}>
-        <div className="flex items-center gap-3">
-          <div
-            className={`flex h-12 w-12 items-center justify-center rounded-xl ${enabled ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-500"}`}
-          >
-            <Icon className="h-6 w-6" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-gray-900">{label}</h3>
-              {/* Verified indicator - shows even when collapsed */}
-              {(status === "connected" || status === "verified") && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                  <Check className="h-3 w-3" />
-                  Verified
-                </span>
-              )}
-            </div>
-            <p className="text-sm text-gray-500">{description}</p>
-          </div>
-        </div>
-        <div
-          className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${enabled ? "border-blue-500 bg-blue-500" : "border-gray-300"}`}
-        >
-          {enabled && <Check className="h-4 w-4 text-white" />}
-        </div>
-      </div>
-
-      {/* Expanded configuration when enabled */}
-      {enabled && (
-        <div className="border-t border-blue-200 p-4 space-y-4">
-          {/* Status Banner */}
-          {fulfillmentMode === "automated" && (
-            <div
-              className={`p-3 rounded-lg flex items-center gap-2 text-sm font-medium ${status === "connected" || status === "verified" ? "bg-green-50 text-green-700 border border-green-200" : "bg-gray-50 text-gray-600 border border-gray-200"}`}
-            >
-              {status === "connected" || status === "verified" ? (
-                <>
-                  <Check className="h-4 w-4" />
-                  <span>Connection Verified</span>
-                </>
-              ) : (
-                <>
-                  <AlertCircle className="h-4 w-4" />
-                  <span>Not Connected</span>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Fulfillment Mode */}
-          <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">Fulfillment Mode</p>
-            <div className="flex gap-4">
-              <label
-                className={`flex-1 flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${fulfillmentMode === "manual" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}
-              >
-                <input
-                  type="radio"
-                  name={`${serviceType}-mode`}
-                  value="manual"
-                  checked={fulfillmentMode === "manual"}
-                  onChange={() => onModeChange("manual")}
-                  className="sr-only"
-                />
-                <div
-                  className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${fulfillmentMode === "manual" ? "border-blue-500" : "border-gray-300"}`}
-                >
-                  {fulfillmentMode === "manual" && (
-                    <div className="h-2 w-2 rounded-full bg-blue-500" />
-                  )}
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Manual</p>
-                  <p className="text-xs text-gray-500">Process orders manually</p>
-                </div>
-              </label>
-
-              <label
-                className={`flex-1 flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                  fulfillmentMode === "automated"
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name={`${serviceType}-mode`}
-                  value="automated"
-                  checked={fulfillmentMode === "automated"}
-                  onChange={() => onModeChange("automated")}
-                  className="sr-only"
-                />
-                <div
-                  className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
-                    fulfillmentMode === "automated" ? "border-blue-500" : "border-gray-300"
-                  }`}
-                >
-                  {fulfillmentMode === "automated" && (
-                    <div className="h-2 w-2 rounded-full bg-blue-500" />
-                  )}
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Automated</p>
-                  <p className="text-xs text-gray-500">Requires credentials</p>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          {/* Credentials Form (only for automated) */}
-          {fulfillmentMode === "automated" && Object.keys(fields).length > 0 && (
-            <div className="space-y-3 pt-2">
-              <p className="text-sm font-medium text-gray-700">Credentials</p>
-
-              {/* Show existing connection message when credentials are already saved */}
-              {isExistingConnection && !showUpdateForm && !hasCredentialsEntered && (
-                <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Check className="h-5 w-5 text-blue-600" />
-                      <div>
-                        <p className="text-sm font-medium text-blue-800">
-                          Credentials are configured
-                        </p>
-                        <p className="text-xs text-blue-600">
-                          Your credentials are securely stored. Click update to modify them.
-                        </p>
-                      </div>
-                    </div>
-                    <ModernButton
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowUpdateForm(true)}
-                    >
-                      Update Credentials
-                    </ModernButton>
-                  </div>
-                </div>
-              )}
-
-              {/* Show form when updating or for new connections */}
-              {shouldShowCredentialsForm && (
-                <>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {Object.entries(fields).map(
-                      ([fieldName, fieldDef]: [string, ServiceFieldDefinition]) => (
-                        <ModernInput
-                          key={fieldName}
-                          label={`${fieldDef.label}${fieldDef.required ? "" : " (optional)"}`}
-                          name={fieldName}
-                          type={getInputType(fieldDef)}
-                          value={credentials[fieldName] || ""}
-                          onChange={(e) => onCredentialChange(fieldName, e.target.value)}
-                          placeholder={
-                            isExistingConnection
-                              ? "Enter new value to update..."
-                              : fieldDef.placeholder || ""
-                          }
-                          helper={fieldDef.help}
-                          required={!isExistingConnection && fieldDef.required}
-                        />
-                      )
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <ModernButton
-                      type="button"
-                      variant={
-                        status === "connected" || status === "verified" ? "outline" : "secondary"
-                      }
-                      className="w-full md:w-auto"
-                      onClick={onTestConnection}
-                      disabled={testing}
-                    >
-                      {testing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                      {testing
-                        ? "Testing..."
-                        : status === "connected" || status === "verified"
-                          ? "Re-test Connection"
-                          : "Test Connection"}
-                    </ModernButton>
-                    {isExistingConnection && showUpdateForm && (
-                      <ModernButton
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowUpdateForm(false)}
-                      >
-                        Cancel
-                      </ModernButton>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
+import { ModernCard, ModernButton } from "@/shared/components/ui";
+import ModernInput from "@/shared/components/ui/ModernInput";
+import StatusPill from "@/shared/components/ui/StatusPill";
+import { designTokens } from "@/styles/designTokens";
+import logger from "@/utils/logger";
+import { statusOptions, statusToneMap, statusLabelMap, formatSegment } from "./regionEditUtils";
+import type { ServiceDefinition, RegionFormData } from "./regionEditTypes";
+import ServiceConfigCard from "./ServiceConfigCard";
+import RegionHeroBanner from "./RegionHeroBanner";
+import VisibilityApprovalCard from "./VisibilityApprovalCard";
+import FastTrackConfigCard from "./FastTrackConfigCard";
 
 const RegionEdit = () => {
   const { id: code } = useParams();
@@ -325,13 +25,13 @@ const RegionEdit = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const { data: tenantsData } = useFetchTenants();
-  const tenants = (tenantsData as any)?.data || [];
+  const tenants = (tenantsData as { data?: unknown[] })?.data || [];
   const { data: countriesData = [] } = useFetchCountries();
   const countries = Array.isArray(countriesData) ? countriesData : [];
   const [selectedTenantsToGrant, setSelectedTenantsToGrant] = useState<string[]>([]);
   const [tenantSearch, setTenantSearch] = useState("");
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<RegionFormData>({
     name: "",
     code: "",
     country_code: "",
@@ -349,11 +49,7 @@ const RegionEdit = () => {
 
   const formId = "region-edit-form";
 
-  useEffect(() => {
-    fetchRegionDetail();
-  }, [code]);
-
-  const fetchRegionDetail = async () => {
+  const fetchRegionDetail = useCallback(async () => {
     try {
       setLoading(true);
       const response = await adminRegionApi.fetchRegionByCode(code as string);
@@ -373,12 +69,12 @@ const RegionEdit = () => {
       if (regionData.provider) {
         // 1. Get definitions
         const servicesRes = await adminRegionApi.getProviderServices(regionData.provider as string);
-        const servicesDef = (servicesRes.data as any)?.services || {};
+        const servicesDef = (servicesRes.data as { services?: unknown })?.services || {};
         setProviderServices(servicesRes.data);
 
         // 2. Get current status/config
         const credsRes = await adminRegionApi.getCredentialStatus(regionData.code);
-        const currentCreds = (credsRes.data as any)?.credentials || {}; // Fix: access credentials nested object
+        const currentCreds = (credsRes.data as { credentials?: unknown })?.credentials || {}; // Fix: access credentials nested object
 
         const initialConfigs: Record<string, any> = {};
         const verifiedSet = new Set<string>();
@@ -410,7 +106,12 @@ const RegionEdit = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [code]);
+
+  useEffect(() => {
+    fetchRegionDetail();
+  }, [fetchRegionDetail]);
+
   const handleChange = (event: any) => {
     const { name, value, type, checked } = event.target;
     setFormData((prev) => {
@@ -714,51 +415,12 @@ const RegionEdit = () => {
       contentClassName="space-y-8"
     >
       <div className="space-y-8">
-        <div className="brand-hero rounded-[32px] text-white shadow-2xl">
-          <div className="relative p-6 sm:p-8 lg:p-10">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-              <div className="space-y-3">
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-white/70">
-                  Edit Region
-                </div>
-                <div className="space-y-2">
-                  <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                    {formData.name || region.name || "Region"}
-                  </h2>
-                  <p className="text-sm text-white/80 sm:text-base">
-                    {locationLabel || "Location not specified"} • {formData.code}
-                  </p>
-                </div>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
-                <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
-                  <p className="text-xs font-medium uppercase tracking-wide text-white/70">
-                    Provider
-                  </p>
-                  <p className="mt-2 text-lg font-semibold text-white capitalize">
-                    {region?.provider || "—not set"}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
-                  <p className="text-xs font-medium uppercase tracking-wide text-white/70">
-                    Active State
-                  </p>
-                  <p className="mt-2 text-lg font-semibold text-white">
-                    {formData.is_active ? "Active" : "Inactive"}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
-                  <p className="text-xs font-medium uppercase tracking-wide text-white/70">
-                    Country
-                  </p>
-                  <p className="mt-2 text-sm font-semibold text-white">
-                    {formData.country_code || "—not set"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <RegionHeroBanner
+          formData={formData}
+          regionName={region.name}
+          regionProvider={region?.provider}
+          locationLabel={locationLabel}
+        />
 
         <form id={formId} onSubmit={handleSubmit} className="space-y-6">
           <ModernCard title="Identity & Routing" className="space-y-4">
@@ -870,419 +532,27 @@ const RegionEdit = () => {
             </div>
           </ModernCard>
 
-          <ModernCard title="Region Access & Visibility" className="space-y-4">
-            <div className="flex gap-4">
-              <label
-                className={`flex-1 flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                  formData.visibility === "public"
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="visibility"
-                  value="public"
-                  checked={formData.visibility === "public"}
-                  onChange={() => setFormData((p) => ({ ...p, visibility: "public" }))}
-                  className="sr-only"
-                />
-                <Globe
-                  className={`h-5 w-5 ${formData.visibility === "public" ? "text-blue-500" : "text-gray-400"}`}
-                />
-                <div>
-                  <p className="font-medium text-gray-900">Public</p>
-                  <p className="text-xs text-gray-500">Available for new provisioning & access</p>
-                </div>
-              </label>
-              <label
-                className={`flex-1 flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                  formData.visibility === "private"
-                    ? "border-amber-500 bg-amber-50"
-                    : "border-gray-200"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="visibility"
-                  value="private"
-                  checked={formData.visibility === "private"}
-                  onChange={() => setFormData((p) => ({ ...p, visibility: "private" }))}
-                  className="sr-only"
-                />
-                <AlertCircle
-                  className={`h-5 w-5 ${formData.visibility === "private" ? "text-amber-500" : "text-gray-400"}`}
-                />
-                <div>
-                  <p className="font-medium text-gray-900">Private</p>
-                  <p className="text-xs text-gray-500">
-                    Restricted to existing resources (No new provisioning)
-                  </p>
-                </div>
-              </label>
-            </div>
+          <VisibilityApprovalCard
+            formData={formData}
+            setFormData={setFormData}
+            region={region}
+            setRegion={setRegion}
+            submitting={submitting}
+            setSubmitting={setSubmitting}
+            regionCode={code as string}
+          />
 
-            <div className="pt-4 border-t border-gray-100">
-              <div className="flex items-center justify-between">
-                <div className="flex flex-col">
-                  <span className="text-sm font-semibold text-gray-900">Admin Approval Status</span>
-                  <span className="text-xs text-gray-500">
-                    Required for any access (public or private).
-                  </span>
-                </div>
-                <div
-                  className={`px-3 py-1 rounded-full text-xs font-medium border ${
-                    region?.is_verified
-                      ? "bg-green-50 text-green-700 border-green-200"
-                      : "bg-yellow-50 text-yellow-700 border-yellow-200"
-                  }`}
-                >
-                  {region?.is_verified ? "Approved" : "Pending Approval"}
-                </div>
-              </div>
-              {!region?.is_verified && (
-                <div className="mt-3">
-                  <ModernButton
-                    variant="primary"
-                    size="sm"
-                    className="w-full"
-                    onClick={async () => {
-                      try {
-                        await adminRegionApi.verifyRegion(region.code);
-                        // Update local state immediately to reflect the change
-                        setRegion((prev: any) => ({
-                          ...prev,
-                          is_verified: true,
-                          approval_status: "approved",
-                        }));
-                        ToastUtils.success("Region approved successfully");
-                      } catch (e) {
-                        logger.error(e);
-                        ToastUtils.error("Failed to approve region");
-                      }
-                    }}
-                  >
-                    Approve Region
-                  </ModernButton>
-                </div>
-              )}
-              {region?.is_verified && (
-                <div className="mt-3">
-                  <ModernButton
-                    variant="outline"
-                    size="sm"
-                    className="w-full text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-200"
-                    onClick={async () => {
-                      if (
-                        globalThis.window.confirm(
-                          "Are you sure you want to revoke approval for this region? It will immediately become inaccessible to tenants."
-                        )
-                      ) {
-                        try {
-                          setSubmitting(true);
-                          const res = await adminRegionApi.unverifyRegion(code as string);
-                          if (res.success) {
-                            ToastUtils.success("Region approval revoked");
-                            // Update local state
-                            setRegion((prev: any) => ({
-                              ...prev,
-                              is_verified: false,
-                              approval_status: "pending",
-                            }));
-                          }
-                        } catch (error: any) {
-                          logger.error("Error revoking region:", error);
-                          ToastUtils.error(error.message || "Failed to revoke region");
-                        } finally {
-                          setSubmitting(false);
-                        }
-                      }
-                    }}
-                  >
-                    Revoke Approval
-                  </ModernButton>
-                </div>
-              )}
-            </div>
-          </ModernCard>
-
-          <ModernCard title="Fast Track Configuration" className="space-y-6">
-            <div className="space-y-4">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Fast Track Access Mode
-                </label>
-                <p className="text-xs text-gray-500 mb-3">
-                  Control how tenants can bypass standard visibility rules or access
-                  restricted/private regions.
-                </p>
-                <div className="grid gap-4 md:grid-cols-3">
-                  <label
-                    className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${region?.fast_track_mode === "disabled" ? "border-red-500 bg-red-50" : "border-gray-200"}`}
-                  >
-                    <input
-                      type="radio"
-                      name="fast_track_mode"
-                      value="disabled"
-                      checked={region?.fast_track_mode === "disabled"}
-                      onChange={async () => {
-                        try {
-                          await adminRegionApi.updateFastTrackSettings(region.id, {
-                            fast_track_mode: "disabled",
-                          });
-                          setRegion((prev: any) => ({ ...prev, fast_track_mode: "disabled" }));
-                          ToastUtils.success("Fast Track disabled");
-                        } catch (e) {
-                          logger.error(e);
-                        }
-                      }}
-                      className="mt-1"
-                    />
-                    <div>
-                      <p className="font-medium text-gray-900">Disabled</p>
-                      <p className="text-xs text-gray-500">No fast track access allowed.</p>
-                    </div>
-                  </label>
-
-                  <label
-                    className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${region?.fast_track_mode === "owner_only" ? "border-blue-500 bg-blue-50" : "border-gray-200"}`}
-                  >
-                    <input
-                      type="radio"
-                      name="fast_track_mode"
-                      value="owner_only"
-                      checked={region?.fast_track_mode === "owner_only"}
-                      onChange={async () => {
-                        try {
-                          await adminRegionApi.updateFastTrackSettings(region.id, {
-                            fast_track_mode: "owner_only",
-                          });
-                          setRegion((prev: any) => ({ ...prev, fast_track_mode: "owner_only" }));
-                          ToastUtils.success("Set to Owner Only");
-                        } catch (e) {
-                          logger.error(e);
-                        }
-                      }}
-                      className="mt-1"
-                    />
-                    <div>
-                      <p className="font-medium text-gray-900">Owner Only</p>
-                      <p className="text-xs text-gray-500">
-                        Only the tenant who owns this region has access.
-                      </p>
-                    </div>
-                  </label>
-
-                  <label
-                    className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${region?.fast_track_mode === "grant_only" ? "border-purple-500 bg-purple-50" : "border-gray-200"}`}
-                  >
-                    <input
-                      type="radio"
-                      name="fast_track_mode"
-                      value="grant_only"
-                      checked={region?.fast_track_mode === "grant_only"}
-                      onChange={async () => {
-                        try {
-                          await adminRegionApi.updateFastTrackSettings(region.id, {
-                            fast_track_mode: "grant_only",
-                          });
-                          setRegion((prev: any) => ({ ...prev, fast_track_mode: "grant_only" }));
-                          ToastUtils.success("Set to Grant Based");
-                        } catch (e) {
-                          logger.error(e);
-                        }
-                      }}
-                      className="mt-1"
-                    />
-                    <div>
-                      <p className="font-medium text-gray-900">Grant Based</p>
-                      <p className="text-xs text-gray-500">
-                        Specific tenants must be explicitly granted access.
-                      </p>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              {region?.fast_track_mode === "grant_only" && (
-                <div className="pt-4 border-t border-gray-100">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-3">Active Grants</h4>
-                  <div className="space-y-3">
-                    {/* Search input */}
-                    <input
-                      type="text"
-                      placeholder="Search tenants..."
-                      value={tenantSearch}
-                      onChange={(e) => setTenantSearch(e.target.value)}
-                      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                    />
-
-                    {/* Multi-select tenant list */}
-                    <div className="border border-gray-200 rounded-xl max-h-56 overflow-y-auto">
-                      {tenants.length === 0 ? (
-                        <p className="p-3 text-sm text-gray-500">No tenants available</p>
-                      ) : (
-                        (() => {
-                          const searchLower = tenantSearch.toLowerCase();
-                          const filteredTenants = tenants.filter(
-                            (t: any) =>
-                              t.name?.toLowerCase().includes(searchLower) ||
-                              t.email?.toLowerCase().includes(searchLower)
-                          );
-
-                          // Sort: already granted first, then ungranted
-                          const sortedTenants = [...filteredTenants].sort((a: any, b: any) => {
-                            const aGranted = region.fast_track_grants?.some(
-                              (g: any) => g.tenant_id === a.id
-                            );
-                            const bGranted = region.fast_track_grants?.some(
-                              (g: any) => g.tenant_id === b.id
-                            );
-                            if (aGranted && !bGranted) return -1;
-                            if (!aGranted && bGranted) return 1;
-                            return 0;
-                          });
-
-                          if (sortedTenants.length === 0) {
-                            return (
-                              <p className="p-3 text-sm text-gray-500">
-                                No tenants match your search
-                              </p>
-                            );
-                          }
-
-                          return sortedTenants.map((t: any) => {
-                            const isAlreadyGranted = region.fast_track_grants?.some(
-                              (g: any) => g.tenant_id === t.id
-                            );
-                            const isSelected = selectedTenantsToGrant.includes(t.id);
-
-                            return (
-                              <label
-                                key={t.id}
-                                className={`flex items-center gap-3 p-3 border-b border-gray-100 last:border-b-0 cursor-pointer transition-colors ${
-                                  isAlreadyGranted
-                                    ? "bg-green-50"
-                                    : isSelected
-                                      ? "bg-blue-50"
-                                      : "hover:bg-gray-50"
-                                }`}
-                              >
-                                {isAlreadyGranted ? (
-                                  <div className="h-4 w-4 rounded border-green-500 bg-green-500 flex items-center justify-center">
-                                    <Check className="h-3 w-3 text-white" />
-                                  </div>
-                                ) : (
-                                  <input
-                                    type="checkbox"
-                                    checked={isSelected}
-                                    onChange={(e) => {
-                                      if (e.target.checked) {
-                                        setSelectedTenantsToGrant((prev) => [...prev, t.id]);
-                                      } else {
-                                        setSelectedTenantsToGrant((prev) =>
-                                          prev.filter((id: any) => id !== t.id)
-                                        );
-                                      }
-                                    }}
-                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                  />
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-gray-900 truncate">
-                                    {t.name}
-                                  </p>
-                                  <p className="text-xs text-gray-500 truncate">{t.email}</p>
-                                </div>
-                                {isAlreadyGranted && (
-                                  <span className="text-xs text-green-600 font-medium bg-green-100 px-2 py-0.5 rounded-full">
-                                    Connected
-                                  </span>
-                                )}
-                              </label>
-                            );
-                          });
-                        })()
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">
-                        {selectedTenantsToGrant.length} tenant(s) selected
-                      </span>
-                      <ModernButton
-                        type="button"
-                        variant="secondary"
-                        disabled={selectedTenantsToGrant.length === 0}
-                        onClick={async () => {
-                          if (selectedTenantsToGrant.length === 0) return;
-                          try {
-                            // Grant access to all selected tenants
-                            for (const tenantId of selectedTenantsToGrant) {
-                              await adminRegionApi.grantFastTrack(
-                                region.id,
-                                tenantId,
-                                "Manual Grant via Admin UI"
-                              );
-                            }
-                            setSelectedTenantsToGrant([]);
-                            fetchRegionDetail(); // Refresh to see new grants
-                            ToastUtils.success(
-                              `Granted access to ${selectedTenantsToGrant.length} tenant(s)`
-                            );
-                          } catch (e) {
-                            logger.error(e);
-                            ToastUtils.error("Failed to grant access");
-                          }
-                        }}
-                      >
-                        Grant Access
-                      </ModernButton>
-                    </div>
-                  </div>
-
-                  {region.fast_track_grants && region.fast_track_grants.length > 0 ? (
-                    <div className="bg-gray-50 rounded-lg p-3 space-y-2">
-                      {region.fast_track_grants.map((grant: any) => (
-                        <div
-                          key={grant.id}
-                          className="flex justify-between items-center text-sm p-2 bg-white rounded border border-gray-200 shadow-sm"
-                        >
-                          <div className="flex flex-col">
-                            <span className="font-medium text-gray-900">
-                              {grant.tenant?.name || grant.tenant_id}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              Granted: {new Date(grant.created_at).toLocaleDateString()}
-                            </span>
-                          </div>
-                          <ModernButton
-                            title="Revoke Access"
-                            variant="ghost"
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto"
-                            onClick={async () => {
-                              if (
-                                globalThis.window.confirm(
-                                  "Are you sure you want to revoke Fast Track access for this tenant?"
-                                )
-                              ) {
-                                handleRevokeFastTrack(grant.tenant_id);
-                              }
-                              fetchRegionDetail();
-                            }}
-                          >
-                            Revoke
-                          </ModernButton>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-500 italic">No active grants found.</p>
-                  )}
-                </div>
-              )}
-            </div>
-          </ModernCard>
+          <FastTrackConfigCard
+            region={region}
+            setRegion={setRegion}
+            tenants={tenants}
+            selectedTenantsToGrant={selectedTenantsToGrant}
+            setSelectedTenantsToGrant={setSelectedTenantsToGrant}
+            tenantSearch={tenantSearch}
+            setTenantSearch={setTenantSearch}
+            onRevokeFastTrack={handleRevokeFastTrack}
+            fetchRegionDetail={fetchRegionDetail}
+          />
 
           <ModernCard
             title={`Service Connections${region?.provider ? ` (${region.provider.charAt(0).toUpperCase() + region.provider.slice(1)})` : ""}`}
@@ -1313,9 +583,14 @@ const RegionEdit = () => {
               <div className="space-y-4">
                 {Object.entries(providerServices.services as Record<string, ServiceDefinition>)
                   .filter(([serviceType]) => {
-                    // Filter Zadara to only Compute and Object Storage (matching RegionCreate)
-                    if (region?.provider === "zadara") {
-                      return ["compute", "object_storage"].includes(serviceType);
+                    // Filter services to only those supported by the provider
+                    const providerServiceMap: Record<string, string[]> = {
+                      zadara: ["compute", "object_storage"],
+                      nobus: ["compute", "object_storage"],
+                    };
+                    const allowed = providerServiceMap[region?.provider?.toLowerCase()];
+                    if (allowed) {
+                      return allowed.includes(serviceType);
                     }
                     return true;
                   })

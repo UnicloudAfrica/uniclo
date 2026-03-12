@@ -4,13 +4,13 @@ import {
   useInstanceTemplates,
   InstanceTemplate,
   TemplateConfiguration,
-} from "../../../hooks/useInstanceTemplates";
-import { useInstanceResources } from "../../../hooks/useInstanceResources";
-import { useApiContext } from "../../../hooks/useApiContext";
+} from "@/hooks/useInstanceTemplates";
+import { useInstanceResources } from "@/hooks/useInstanceResources";
+import { useApiContext } from "@/hooks/useApiContext";
 import adminSilentApi from "../../../index/admin/silent";
 import tenantSilentApi from "../../../index/tenant/silentTenant";
 import clientSilentApi from "../../../index/client/silent";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "@/utils/toastUtil";
 import {
   ModernButton,
   ModernModal,
@@ -440,24 +440,27 @@ const TemplateManager: React.FC = () => {
           {filteredTemplates.map((template) => {
             const config = template.configuration || {};
             const compute = config.compute || {};
+            const computeRecord = compute as Record<string, unknown>;
             const computeMeta: string[] = [];
-            if ((compute as any)?.vcpu) computeMeta.push(`${(compute as any).vcpu} vCPU`);
-            if ((compute as any)?.ram_mb) {
-              computeMeta.push(`${Math.round(Number((compute as any).ram_mb) / 1024)} GB RAM`);
+            if (computeRecord?.vcpu) computeMeta.push(`${computeRecord.vcpu} vCPU`);
+            if (computeRecord?.ram_mb) {
+              computeMeta.push(`${Math.round(Number(computeRecord.ram_mb) / 1024)} GB RAM`);
             }
-            const computeLabel = (compute as any)?.name
+            const computeLabel = computeRecord?.name
               ? computeMeta.length
-                ? `${(compute as any).name} • ${computeMeta.join(" • ")}`
-                : (compute as any).name
+                ? `${computeRecord.name} • ${computeMeta.join(" • ")}`
+                : computeRecord.name
               : config.compute_instance_id || "—";
 
-            const osLabel = (config.os_image as any)?.name || config.os_image_id || "—";
+            const osImageRecord = config.os_image as Record<string, unknown>;
+            const osLabel = osImageRecord?.name || config.os_image_id || "—";
 
             const volume =
               (Array.isArray(config.volumes) && config.volumes[0]) ||
               (Array.isArray(config.volume_types) && config.volume_types[0]) ||
               {};
-            const volumeLabel = (volume as any)?.name || volume?.volume_type_id || "—";
+            const volumeRecord = volume as Record<string, unknown>;
+            const volumeLabel = volumeRecord?.name || volume?.volume_type_id || "—";
             const volumeSize = volume?.size_gb ?? volume?.storage_size_gb;
             const storageLabel = volumeSize ? `${volumeLabel} • ${volumeSize} GB` : volumeLabel;
 

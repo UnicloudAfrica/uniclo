@@ -2,13 +2,13 @@ import { useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import AdminPageShell from "../components/AdminPageShell";
 import { useObjectStorage } from "../../contexts/ObjectStorageContext";
-import useAdminAuthStore from "../../stores/adminAuthStore";
-import ObjectStorageDashboardContent from "../../shared/components/object-storage/ObjectStorageDashboardContent";
+import useAdminAuthStore from "@/stores/adminAuthStore";
+import ObjectStorageDashboardContent from "@/shared/components/object-storage/ObjectStorageDashboardContent";
 import type {
   Account as ObjectStorageAccount,
   Silo as ObjectStorageSilo,
-} from "../../shared/components/object-storage/ObjectStorageTable";
-import { objectStoragePresets } from "../../shared/config/objectStoragePresets";
+} from "@/shared/components/object-storage/ObjectStorageTable";
+import { objectStoragePresets } from "@/shared/config/objectStoragePresets";
 
 const parseCreatedAt = (value: unknown): number => {
   if (typeof value !== "string") return 0;

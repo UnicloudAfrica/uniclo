@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import ClientPageShell from "../components/ClientPageShell";
-import { AutoScalingManagementContainer } from "../../shared/components/infrastructure/autoscaling";
+import { AutoScalingManagementContainer } from "@/shared/components/infrastructure/autoscaling";
 
 const ClientAutoScaling: React.FC = () => {
   const location = useLocation();

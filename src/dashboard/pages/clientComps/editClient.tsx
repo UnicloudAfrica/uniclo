@@ -1,14 +1,9 @@
 import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
-import {
-  useFetchCitiesById,
-  useFetchCountries,
-  useFetchStatesById,
-  useFetchProfile,
-} from "../../../hooks/resource";
-import { useUpdateClient } from "../../../hooks/adminHooks/clientHooks";
-import ToastUtils from "../../../utils/toastUtil";
-import logger from "../../../utils/logger";
+import { useFetchCountries, useFetchStatesById, useFetchProfile } from "@/hooks/resource";
+import { useUpdateClient } from "@/hooks/adminHooks/clientHooks";
+import ToastUtils from "@/utils/toastUtil";
+import logger from "@/utils/logger";
 
 const EditClientModal = ({ isOpen, onClose, clientData }: any) => {
   const { data: profile, isFetching: isProfileFetching } = useFetchProfile();
@@ -94,7 +89,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }: any) => {
   // Update country name in formData when country_id changes and countries data is available
   useEffect(() => {
     if (formData.country_id && countries) {
-      const selectedCountry = (countries as any).find(
+      const selectedCountry = (countries as Record<string, unknown>[]).find(
         (c: any) => c.id === parseInt(formData.country_id)
       );
       if (selectedCountry) {
@@ -108,7 +103,9 @@ const EditClientModal = ({ isOpen, onClose, clientData }: any) => {
   // Update state name in formData when state_id changes and states data is available
   useEffect(() => {
     if (formData.state_id && states) {
-      const selectedState = (states as any).find((s: any) => s.id === parseInt(formData.state_id));
+      const selectedState = (states as Record<string, unknown>[]).find(
+        (s: Record<string, unknown>) => s.id === parseInt(String(formData.state_id))
+      );
       if (selectedState) {
         setFormData((prev) => ({ ...prev, state: selectedState.name }));
       }
@@ -217,7 +214,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }: any) => {
       email: formData.email,
       phone: formData.phone,
       role: "client",
-      tenant_id: (profile as any)?.tenant_id,
+      tenant_id: (profile as Record<string, unknown>)?.tenant_id,
       verified: formData.verified,
       force_password_reset: formData.force_password_reset,
       country_id: parseInt(formData.country_id),

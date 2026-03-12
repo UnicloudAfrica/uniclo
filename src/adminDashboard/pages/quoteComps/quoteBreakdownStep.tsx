@@ -1,7 +1,7 @@
 import { Download, CheckCircle, FileText } from "lucide-react";
-import ModernCard from "../../../shared/components/ui/ModernCard";
-import { ModernButton } from "../../../shared/components/ui";
-import ModernTable from "../../../shared/components/ui/ModernTable";
+import ModernCard from "@/shared/components/ui/ModernCard";
+import { ModernButton } from "@/shared/components/ui";
+import ModernTable from "@/shared/components/ui/ModernTable";
 
 const formatCurrency = (amount: any, currency = "USD") => {
   if (amount === null || amount === undefined) return "—";

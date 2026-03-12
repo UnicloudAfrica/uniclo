@@ -1,5 +1,5 @@
 import AdminPageShell from "../components/AdminPageShell";
-import LeadsDashboard from "../../shared/components/customer-management/LeadsDashboard";
+import LeadsDashboard from "@/shared/components/customer-management/LeadsDashboard";
 
 const AdminLeads = () => {
   return (

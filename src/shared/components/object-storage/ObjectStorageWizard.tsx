@@ -1,5 +1,5 @@
 import React from "react";
-import { ResolvedProfile, SummaryTotals } from "../../../hooks/useObjectStoragePricing";
+import { ResolvedProfile, SummaryTotals } from "@/hooks/useObjectStoragePricing";
 
 // Common types for Silo Storage components
 export interface Step {
@@ -127,17 +127,17 @@ const ObjectStorageOrderSummaryCompact: React.FC<OrderSummaryCompactProps> = ({
 };
 
 export const ObjectStorageWizard: React.FC<ObjectStorageWizardProps> = ({
-  mode,
+  mode: _mode,
   isFastTrack,
   activeStep,
   steps,
-  onModeChange,
+  onModeChange: _onModeChange,
   onStepChange,
   onNextStep,
   onPreviousStep,
   isFirstStep,
   isLastStep,
-  dashboardContext,
+  dashboardContext: _dashboardContext,
   profiles,
   summaryTotals,
   assignmentLabel,

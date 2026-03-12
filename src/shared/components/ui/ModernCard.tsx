@@ -1,5 +1,5 @@
-import React from "react";
-import { designTokens } from "../../../styles/designTokens";
+import React, { memo } from "react";
+import { designTokens } from "@/styles/designTokens";
 import type { CardPadding, CardVariant } from "./types";
 
 /**
@@ -102,7 +102,7 @@ const ModernCard: React.FC<ModernCardProps> = ({
     : {};
 
   const titleStyles: React.CSSProperties = {
-    fontSize: designTokens.typography.fontSize.lg[0] as any,
+    fontSize: String(designTokens.typography.fontSize.lg[0]),
     fontWeight: designTokens.typography.fontWeight.semibold,
     color: designTokens.colors.neutral[900],
     marginBottom: designTokens.spacing[4],
@@ -124,7 +124,8 @@ const ModernCard: React.FC<ModernCardProps> = ({
         if (hover) {
           e.currentTarget.style.transform = "translateY(0)";
 
-          e.currentTarget.style.boxShadow = (getVariantStyles() as any).boxShadow || "none";
+          e.currentTarget.style.boxShadow =
+            (getVariantStyles() as Record<string, string>).boxShadow || "none";
         }
       }}
       {...props}
@@ -135,4 +136,4 @@ const ModernCard: React.FC<ModernCardProps> = ({
   );
 };
 
-export default ModernCard;
+export default memo(ModernCard);

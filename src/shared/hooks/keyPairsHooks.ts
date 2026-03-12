@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import config from "../../config";
-import { useApiContext, ApiContext } from "../../hooks/useApiContext";
-import useAdminAuthStore from "../../stores/adminAuthStore";
-import useTenantAuthStore from "../../stores/tenantAuthStore";
-import useClientAuthStore from "../../stores/clientAuthStore";
+import { useApiContext, ApiContext } from "@/hooks/useApiContext";
+import useAdminAuthStore from "@/stores/adminAuthStore";
+import useTenantAuthStore from "@/stores/tenantAuthStore";
+import useClientAuthStore from "@/stores/clientAuthStore";
 
 export interface KeyPair {
   id: string;
@@ -145,10 +145,10 @@ const requestKeyPairs = async ({
   region?: string;
   refresh?: boolean;
 }) => {
-  if (!projectId) return [];
-  const params: Record<string, string | number> = {
-    project_id: projectId,
-  };
+  const params: Record<string, string | number> = {};
+  if (projectId) {
+    params.project_id = projectId;
+  }
   if (region) {
     params.region = region;
   }
@@ -170,7 +170,11 @@ export const keyPairsKeys = {
   detail: (context: ApiContext, id?: string) => ["keyPairs", context, "detail", id ?? ""] as const,
 };
 
-export const useFetchKeyPairs = (projectId: string, region?: string, options = {}) => {
+export const useFetchKeyPairs = (
+  projectId?: string,
+  region?: string,
+  options: Record<string, any> = {}
+) => {
   const { apiBaseUrl, context, authHeaders, isAuthenticated } = useApiContext();
   const resolvedRegion = resolveOptionalRegion(region);
 
@@ -181,10 +185,10 @@ export const useFetchKeyPairs = (projectId: string, region?: string, options = {
         apiBaseUrl,
         context,
         authHeaders,
-        projectId,
+        projectId: projectId || "",
         region: resolvedRegion,
       }),
-    enabled: isAuthenticated && !!projectId,
+    enabled: isAuthenticated && options.enabled !== false,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,

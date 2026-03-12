@@ -12,7 +12,7 @@ import {
   Clock,
 } from "lucide-react";
 import { ModernButton, ModernCard, ModernInput, SelectableInput } from "../../ui";
-import { useFetchProductPricing } from "../../../../hooks/resource";
+import { useFetchProductPricing } from "@/hooks/resource";
 import { BillingRegion, PricingRequest, ProductPricing } from "../types";
 
 const formatCurrency = (amount: number | null | undefined, currency: string = "USD") => {
@@ -617,7 +617,7 @@ const PricingWorkloadCard: React.FC<PricingWorkloadCardProps> = ({
       const nameKey = nameKeyMap[field];
       const newData = { ...data, [field]: value };
       if (nameKey) {
-        (newData as any)[nameKey] = name;
+        (newData as Record<string, unknown>)[nameKey] = name;
       }
 
       onChange(newData);
@@ -626,7 +626,7 @@ const PricingWorkloadCard: React.FC<PricingWorkloadCardProps> = ({
       const getSearchKey = (f: keyof PricingRequest) => {
         if (f === "compute_instance_id") return "compute";
         if (f === "os_image_id") return "os";
-        if ((f as any) === "volume_type_id") return "volume";
+        if (String(f) === "volume_type_id") return "volume";
         if (f === "bandwidth_id") return "bandwidth";
         if (f === "floating_ip_id") return "floatingIp";
         if (f === "cross_connect_id") return "crossConnect";

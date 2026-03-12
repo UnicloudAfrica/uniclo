@@ -1,8 +1,8 @@
 import React from "react";
 import { useLocation } from "react-router-dom";
-import UnifiedInstanceDetails from "../../shared/components/instances/UnifiedInstanceDetails";
-import { useInstanceHierarchy } from "../../shared/hooks/useInstanceDetails";
-import TenantPageShell from "../../tenantDashboard/components/TenantPageShell";
+import UnifiedInstanceDetails from "@/shared/components/instances/UnifiedInstanceDetails";
+import { useInstanceHierarchy } from "@/shared/hooks/useInstanceDetails";
+import TenantPageShell from "@/shared/layouts/TenantPageShell";
 import ClientPageShell from "../../clientDashboard/components/ClientPageShell";
 
 const InstanceDetails: React.FC = () => {

@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import ModernModal, { ModalAction } from "../../ui/ModernModal";
 import ModernSelect from "../../ui/ModernSelect";
 
+import { Subnet } from "../types";
+
 interface AssociateSubnetModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAssociate: (subnetId: string) => void;
-  subnets: unknown;
+  subnets: Subnet[];
   isLoading?: boolean;
 }
 
@@ -32,9 +34,9 @@ const AssociateSubnetModal: React.FC<AssociateSubnetModalProps> = ({
   };
 
   const getSubnetOptions = () => {
-    return (subnets as any).map((s: any) => ({
+    return subnets.map((s) => ({
       value: s.id,
-      label: `${s.name || s.id} (${s.cidr_block || s.cidr})`,
+      label: `${s.name || s.id} (${s.cidr_block || s.cidr || "N/A"})`,
     }));
   };
 

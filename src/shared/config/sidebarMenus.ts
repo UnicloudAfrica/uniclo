@@ -7,6 +7,7 @@ import {
   CreditCard,
   Package,
   Layers,
+  Database,
   DollarSign,
   FolderOpen,
   MapPin,
@@ -33,6 +34,7 @@ import {
   FolderKanban,
   TrendingUp,
   LayoutTemplate,
+  KeyRound,
 } from "lucide-react";
 
 type InfraRole = "admin" | "tenant" | "client";
@@ -67,9 +69,21 @@ const INFRA_MENU_ITEMS: Array<{
     roles: ["admin", "tenant"],
   },
   {
+    label: "Key Pairs",
+    icon: KeyRound,
+    path: "/key-pairs",
+    roles: ["admin", "tenant", "client"],
+  },
+  {
     label: "Silo Storage",
     icon: HardDrive,
     path: "/object-storage",
+    roles: ["admin", "tenant", "client"],
+  },
+  {
+    label: "Managed Databases",
+    icon: Database,
+    path: "/databases",
     roles: ["admin", "tenant", "client"],
   },
 ];

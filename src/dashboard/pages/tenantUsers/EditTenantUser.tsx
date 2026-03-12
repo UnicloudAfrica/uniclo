@@ -1,13 +1,21 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TenantPageShell from "../../components/TenantPageShell";
-import { ModernCard } from "../../../shared/components/ui";
-import { ModernButton } from "../../../shared/components/ui";
-import { ModernInput } from "../../../shared/components/ui";
-import ToastUtils from "../../../utils/toastUtil";
-import { useFetchTenantAdminById, useUpdateTenantAdmin } from "../../../hooks/adminUserHooks";
+import { ModernCard, ModernButton, ModernInput } from "@/shared/components/ui";
+import ToastUtils from "@/utils/toastUtil";
+import { useFetchTenantAdminById, useUpdateTenantAdmin } from "@/hooks/adminUserHooks";
 
-const Field = ({ label, children }: any) => (
+interface TenantUserRecord {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  pivot?: { role?: string; accepted_at?: string; [key: string]: unknown };
+  [key: string]: unknown;
+}
+
+const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="space-y-2">
     <label className="text-sm font-medium text-slate-700">{label}</label>
     {children}
@@ -28,31 +36,36 @@ export default function EditTenantUserPage() {
   });
   const [isDirty, setIsDirty] = useState(false);
 
-  const { data: user, isFetching: isLoading } = useFetchTenantAdminById(userId as any);
+  const { data: user, isFetching: isLoading } = useFetchTenantAdminById(userId ?? "");
   const { mutateAsync: updateUser, isPending: isSaving } = useUpdateTenantAdmin();
 
   useEffect(() => {
     if (user) {
+      const u = user as TenantUserRecord;
       setForm((prev) => ({
         ...prev,
-        first_name: (user as any).first_name ?? "",
-        last_name: (user as any).last_name ?? "",
-        email: (user as any).email ?? "",
-        phone: (user as any).phone ?? "",
-        role: (user as any).pivot?.role ?? (user as any).role ?? "admin",
+        first_name: u.first_name ?? "",
+        last_name: u.last_name ?? "",
+        email: u.email ?? "",
+        phone: u.phone ?? "",
+        role: u.pivot?.role ?? u.role ?? "admin",
       }));
     }
   }, [user]);
 
-  const updateField = (key: any) => (event: any) => {
-    setIsDirty(true);
-    setForm((prev) => ({
-      ...prev,
-      [key]: event.target.type === "checkbox" ? event.target.checked : event.target.value,
-    }));
-  };
+  const updateField =
+    (key: string) => (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+      setIsDirty(true);
+      setForm((prev) => ({
+        ...prev,
+        [key]:
+          (event.target as HTMLInputElement).type === "checkbox"
+            ? (event.target as HTMLInputElement).checked
+            : event.target.value,
+      }));
+    };
 
-  const handleSubmit = async (event: any) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!userId) return;
 
@@ -61,7 +74,7 @@ export default function EditTenantUserPage() {
       return;
     }
 
-    const payload = {
+    const payload: Record<string, unknown> = {
       first_name: form.first_name,
       last_name: form.last_name,
       phone: form.phone,
@@ -69,8 +82,8 @@ export default function EditTenantUserPage() {
     };
 
     if (form.password) {
-      (payload as any).password = form.password;
-      (payload as any).password_confirmation = form.confirm_password;
+      payload.password = form.password;
+      payload.password_confirmation = form.confirm_password;
     }
 
     try {
@@ -78,7 +91,7 @@ export default function EditTenantUserPage() {
       ToastUtils.success("Tenant user updated.");
       navigate(`/dashboard/tenant-users/${userId}`);
     } catch (error) {
-      ToastUtils.error((error as any)?.response?.data?.message || "Failed to update tenant user.");
+      ToastUtils.error((error as Error)?.message || "Failed to update tenant user.");
     }
   };
 

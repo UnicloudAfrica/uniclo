@@ -1,4 +1,4 @@
-import { designTokens } from "../../../styles/designTokens";
+import { designTokens } from "@/styles/designTokens";
 
 const ProductSideMenu = ({ items = [], activeTab, onTabChange, className = "" }: any) => {
   return (

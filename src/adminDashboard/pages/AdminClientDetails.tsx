@@ -16,10 +16,10 @@ import {
   ClipboardList,
   LucideIcon,
 } from "lucide-react";
-import { useFetchClientById } from "../../hooks/adminHooks/clientHooks";
+import { useFetchClientById } from "@/hooks/adminHooks/clientHooks";
 import AdminPageShell from "../components/AdminPageShell";
 import OnboardingStatusBoard from "../components/onboarding/OnboardingStatusBoard";
-import { useUserBroadcasting } from "../../hooks/useUserBroadcasting";
+import { useUserBroadcasting } from "@/hooks/useUserBroadcasting";
 
 type ClientTenant = {
   name?: string;

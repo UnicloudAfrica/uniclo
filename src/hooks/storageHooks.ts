@@ -54,8 +54,9 @@ export const useCreateSnapshot = () => {
       ToastUtils.success("Snapshot creation initiated");
       queryClient.invalidateQueries({ queryKey: ["snapshots", variables.project_id] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.message || "Failed to create snapshot");
+    onError: (error: unknown) => {
+      const axiosError = error as { response?: { data?: { message?: string } } };
+      ToastUtils.error(axiosError.response?.data?.message || "Failed to ... ");
     },
   });
 };
@@ -207,7 +208,7 @@ export const useCreateInstanceImage = () => {
     }: {
       instanceId: string;
       name: string;
-      metadata?: any;
+      metadata?: unknown;
     }) => {
       const { data } = await axios.post(
         `${apiBaseUrl}${prefix}/instance-management/${instanceId}/actions`,

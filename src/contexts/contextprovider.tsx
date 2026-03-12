@@ -1,9 +1,8 @@
 import { createContext, useEffect, useState, type JSX } from "react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
-import { initializeApp, getApp, getApps } from "firebase/app";
-import { getFirestore, collection, query, onSnapshot } from "firebase/firestore";
+import { collection, query, onSnapshot } from "firebase/firestore";
 import type { Firestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { getFirestoreDb, getFirebaseAuth } from "../shared/config/firebase";
 import blogData from "../../content/blog.json";
 import boardData from "../../content/board.json";
 import careerData from "../../content/career.json";
@@ -84,19 +83,8 @@ type ContextProviderProps = {
 };
 
 const ContextProvider = ({ children }: ContextProviderProps): JSX.Element => {
-  const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    appId: import.meta.env.VITE_FIREBASE_APP_ID,
-    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
-  };
-
-  const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+  const auth = getFirebaseAuth();
+  const db = getFirestoreDb();
 
   const [page, setPage] = useState("General");
 
@@ -145,8 +133,7 @@ const ContextProvider = ({ children }: ContextProviderProps): JSX.Element => {
   const initialGeneral =
     Array.isArray(generalData) && generalData.length > 0
       ? (generalData[0] as GeneralItem)
-      : // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ((generalData as any as GeneralItem) ?? {});
+      : ((generalData as unknown as GeneralItem) ?? {});
   const [generalitem, setGeneralItem] = useState<GeneralItem>(initialGeneral);
 
   useEffect(() => {
@@ -160,31 +147,27 @@ const ContextProvider = ({ children }: ContextProviderProps): JSX.Element => {
   }, [auth, db]);
 
   return (
-    <>
-      <PageContext.Provider value={[page, setPage]}>
-        <EventsContext.Provider value={[eventArray]}>
-          <ResourcesContext.Provider value={[resourceArray]}>
-            <SolutionsContext.Provider value={[solutionArray]}>
-              <CasesContext.Provider value={[caseArray]}>
-                <PartnerContext.Provider value={[partnersArray]}>
-                  <BoardContext.Provider value={[boardArray]}>
-                    <ManageContext.Provider value={[manageArray]}>
-                      <CareerContext.Provider value={[careerArray]}>
-                        <GeneralContext.Provider value={[generalitem, setGeneralItem]}>
-                          <BlogContext.Provider value={[blogArray]}>
-                            {children}
-                          </BlogContext.Provider>
-                        </GeneralContext.Provider>
-                      </CareerContext.Provider>
-                    </ManageContext.Provider>
-                  </BoardContext.Provider>
-                </PartnerContext.Provider>
-              </CasesContext.Provider>
-            </SolutionsContext.Provider>
-          </ResourcesContext.Provider>
-        </EventsContext.Provider>
-      </PageContext.Provider>
-    </>
+    <PageContext.Provider value={[page, setPage]}>
+      <EventsContext.Provider value={[eventArray]}>
+        <ResourcesContext.Provider value={[resourceArray]}>
+          <SolutionsContext.Provider value={[solutionArray]}>
+            <CasesContext.Provider value={[caseArray]}>
+              <PartnerContext.Provider value={[partnersArray]}>
+                <BoardContext.Provider value={[boardArray]}>
+                  <ManageContext.Provider value={[manageArray]}>
+                    <CareerContext.Provider value={[careerArray]}>
+                      <GeneralContext.Provider value={[generalitem, setGeneralItem]}>
+                        <BlogContext.Provider value={[blogArray]}>{children}</BlogContext.Provider>
+                      </GeneralContext.Provider>
+                    </CareerContext.Provider>
+                  </ManageContext.Provider>
+                </BoardContext.Provider>
+              </PartnerContext.Provider>
+            </CasesContext.Provider>
+          </SolutionsContext.Provider>
+        </ResourcesContext.Provider>
+      </EventsContext.Provider>
+    </PageContext.Provider>
   );
 };
 

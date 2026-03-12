@@ -240,7 +240,7 @@ const ObjectStorageTable: React.FC<ObjectStorageTableProps> = ({
     if (!paginationMeta) {
       return {
         total: accounts.length,
-        perPage: resolveNumber(paginationState?.per_page, DEFAULT_PAGE_SIZES[0] as any),
+        perPage: resolveNumber(paginationState?.per_page, DEFAULT_PAGE_SIZES[0] as number),
         currentPage: resolveNumber(paginationState?.page, 1),
         lastPage: 1,
       };
@@ -249,7 +249,7 @@ const ObjectStorageTable: React.FC<ObjectStorageTableProps> = ({
       total: resolveNumber(paginationMeta.total ?? paginationMeta.total_items, accounts.length),
       perPage: resolveNumber(
         paginationMeta.per_page ?? paginationMeta.perPage ?? paginationState?.per_page,
-        DEFAULT_PAGE_SIZES[0] as any
+        DEFAULT_PAGE_SIZES[0] as number
       ),
       currentPage: resolveNumber(
         paginationMeta.current_page ?? paginationMeta.currentPage ?? paginationState?.page,

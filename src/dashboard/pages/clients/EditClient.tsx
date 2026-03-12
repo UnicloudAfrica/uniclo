@@ -1,13 +1,38 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TenantPageShell from "../../components/TenantPageShell";
-import { ModernCard } from "../../../shared/components/ui";
-import { ModernButton } from "../../../shared/components/ui";
-import { ModernInput } from "../../../shared/components/ui";
-import ToastUtils from "../../../utils/toastUtil";
-import { useFetchClientById, useUpdateClient } from "../../../hooks/clientHooks";
+import { ModernCard } from "@/shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
+import { ModernInput } from "@/shared/components/ui";
+import ToastUtils from "@/utils/toastUtil";
+import { useFetchClientById, useUpdateClient } from "@/hooks/clientHooks";
 
-const Field = ({ label, children }: any) => (
+/** Minimal shape of the client record returned by the API. */
+interface ClientRecord {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  country?: string;
+  state?: string;
+  city?: string;
+  address?: string;
+}
+
+/** Payload sent to the update endpoint, optionally including password fields. */
+interface UpdatePayload {
+  first_name: string;
+  last_name: string;
+  phone: string;
+  country: string;
+  state: string;
+  city: string;
+  address: string;
+  password?: string;
+  password_confirmation?: string;
+}
+
+const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="space-y-1.5">
     <label className="text-sm font-medium text-slate-700">{label}</label>
     {children}
@@ -31,31 +56,34 @@ export default function EditClientPage() {
   });
   const [isDirty, setIsDirty] = useState(false);
 
-  const { data: client, isFetching: isLoading } = useFetchClientById(clientId);
+  const { data: rawClient, isFetching: isLoading } = useFetchClientById(clientId);
   const { mutateAsync: updateClient, isPending: isSaving } = useUpdateClient();
+
+  // Cast the untyped API response once
+  const client = rawClient as ClientRecord | undefined;
 
   useEffect(() => {
     if (client) {
       setForm((prev) => ({
         ...prev,
-        first_name: (client as any).first_name ?? "",
-        last_name: (client as any).last_name ?? "",
-        email: (client as any).email ?? "",
-        phone: (client as any).phone ?? "",
-        country: (client as any).country ?? "",
-        state: (client as any).state ?? "",
-        city: (client as any).city ?? "",
-        address: (client as any).address ?? "",
+        first_name: client.first_name ?? "",
+        last_name: client.last_name ?? "",
+        email: client.email ?? "",
+        phone: client.phone ?? "",
+        country: client.country ?? "",
+        state: client.state ?? "",
+        city: client.city ?? "",
+        address: client.address ?? "",
       }));
     }
   }, [client]);
 
-  const updateField = (key: any) => (event: any) => {
+  const updateField = (key: keyof typeof form) => (event: React.ChangeEvent<HTMLInputElement>) => {
     setIsDirty(true);
     setForm((prev) => ({ ...prev, [key]: event.target.value }));
   };
 
-  const handleSubmit = async (event: any) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!clientId) return;
 
@@ -64,7 +92,7 @@ export default function EditClientPage() {
       return;
     }
 
-    const payload = {
+    const payload: UpdatePayload = {
       first_name: form.first_name,
       last_name: form.last_name,
       phone: form.phone,
@@ -75,8 +103,8 @@ export default function EditClientPage() {
     };
 
     if (form.password) {
-      (payload as any).password = form.password;
-      (payload as any).password_confirmation = form.confirm_password;
+      payload.password = form.password;
+      payload.password_confirmation = form.confirm_password;
     }
 
     try {
@@ -84,7 +112,8 @@ export default function EditClientPage() {
       ToastUtils.success("Client updated.");
       navigate(`/dashboard/clients/${clientId}`);
     } catch (error) {
-      ToastUtils.error((error as any)?.response?.data?.message || "Failed to update client.");
+      const msg = error instanceof Error ? error.message : "Failed to update client.";
+      ToastUtils.error(msg);
     }
   };
 

@@ -2,10 +2,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ClientActiveTab from "../components/clientActiveTab";
 import ClientPageShell from "../components/ClientPageShell";
-import { SharedTicketDetail } from "../../shared/components/support/SharedTicketDetail";
+import { SharedTicketDetail } from "@/shared/components/support/SharedTicketDetail";
 import clientApi from "../../index/client/api";
 import clientSilentApi from "../../index/client/silent";
-import { Thread, SlaStatus } from "../../shared/components/support/threadTypes";
+import { Thread, SlaStatus } from "@/shared/components/support/threadTypes";
 
 type ThreadDetailResponse = {
   data?: Thread;

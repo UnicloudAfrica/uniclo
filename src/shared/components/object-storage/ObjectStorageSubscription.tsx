@@ -11,8 +11,8 @@ import {
   Loader2,
   ArrowRight,
 } from "lucide-react";
-import objectStorageApi from "../../../services/objectStorageApi";
-import ToastUtils from "../../../utils/toastUtil";
+import objectStorageApi from "@/services/objectStorageApi";
+import ToastUtils from "@/utils/toastUtil";
 import PaymentModal from "../ui/PaymentModal";
 
 interface ObjectStorageSubscriptionProps {
@@ -458,8 +458,8 @@ export const ObjectStorageSubscription: React.FC<ObjectStorageSubscriptionProps>
           mode="modal"
           transactionData={{
             data: {
-              transaction: renewResult.transaction as any,
-              payment: renewResult.payment as any,
+              transaction: renewResult.transaction as never,
+              payment: renewResult.payment as never,
               order: {
                 storage_profiles: [
                   {

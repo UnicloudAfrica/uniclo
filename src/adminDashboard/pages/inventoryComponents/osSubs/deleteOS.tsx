@@ -1,6 +1,6 @@
 import { X, Loader2 } from "lucide-react";
-import { useDeleteOsImage } from "../../../../hooks/adminHooks/os-imageHooks"; //
-import logger from "../../../../utils/logger";
+import { useDeleteOsImage } from "@/hooks/adminHooks/os-imageHooks"; //
+import logger from "@/utils/logger";
 
 const DeleteOS = ({ isOpen, onClose, osImage }: any) => {
   // Use the useDeleteOsImage hook without global onSuccess/onError

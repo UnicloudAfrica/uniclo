@@ -2,13 +2,13 @@ import React from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Shield } from "lucide-react";
 import TenantPageShell from "../../components/TenantPageShell";
-import SecurityGroupsContainer from "../../../shared/components/infrastructure/containers/SecurityGroupsContainer";
+import SecurityGroupsContainer from "@/shared/components/infrastructure/containers/SecurityGroupsContainer";
 import {
   useSecurityGroups,
   useCreateSecurityGroup,
   useDeleteSecurityGroup,
-} from "../../../shared/hooks/vpcInfraHooks";
-import type { SecurityGroup } from "../../../shared/components/infrastructure/types";
+} from "@/shared/hooks/vpcInfraHooks";
+import type { SecurityGroup } from "@/shared/components/infrastructure/types";
 
 /**
  * Tenant Security Groups page - truly thin wrapper.
@@ -39,7 +39,7 @@ const TenantSecurityGroups: React.FC = () => {
       hierarchy="tenant"
       projectId={projectId}
       region={region}
-      hooks={hooks as any}
+      hooks={hooks}
       onNavigateToRules={handleNavigateToRules}
       wrapper={({ headerActions, children }) => (
         <TenantPageShell

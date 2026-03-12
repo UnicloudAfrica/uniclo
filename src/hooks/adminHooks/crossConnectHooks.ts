@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
-import logger from "../../utils/logger";
+import logger from "@/utils/logger";
 
 type CollectionResponse = {
   data: unknown[];

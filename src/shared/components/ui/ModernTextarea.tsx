@@ -1,6 +1,6 @@
 import React, { useState, forwardRef } from "react";
 import { AlertCircle, Check } from "lucide-react";
-import { designTokens } from "../../../styles/designTokens";
+import { designTokens } from "@/styles/designTokens";
 
 export interface ModernTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;

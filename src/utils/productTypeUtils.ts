@@ -11,6 +11,7 @@ const PRODUCT_TYPE_ALIASES: Record<string, string[]> = {
     "object_storage_storage",
     "object_storage",
   ],
+  managed_database_plan: ["managed_database_plan", "managed_database", "database_plan"],
 };
 
 const ALIAS_TO_CANONICAL = Object.entries(PRODUCT_TYPE_ALIASES).reduce(

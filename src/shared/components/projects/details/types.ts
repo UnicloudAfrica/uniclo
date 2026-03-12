@@ -1,5 +1,5 @@
 import type React from "react";
-import { Project } from "../../../../types/project";
+import { Project } from "@/types/project";
 
 export interface ProjectDetailsResourceStats {
   vCPUs: number;
@@ -9,6 +9,8 @@ export interface ProjectDetailsResourceStats {
   snapshots: number;
   ipPoolUsed: number;
   ipPoolTotal: number;
+  edgeNetworkConnected?: boolean;
+  edgeNetworkName?: string;
 }
 
 export type ProjectDetailsTabIcon = React.ElementType<{
@@ -22,6 +24,7 @@ export interface ProjectDetailsTab {
   icon?: ProjectDetailsTabIcon;
   content?: React.ReactNode;
   hidden?: boolean;
+  tooltip?: string;
 }
 
 export interface ProjectDetailsLayoutProps {

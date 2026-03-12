@@ -1,7 +1,7 @@
 import { useMemo, type ChangeEvent, type Dispatch, type SetStateAction } from "react";
-import ToastUtils from "../../utils/toastUtil";
+import ToastUtils from "@/utils/toastUtil";
 import FileDropInput from "./FileDropInput";
-import type { OnboardingFileValue, UploadedFileValue } from "../../types/onboarding";
+import type { OnboardingFileValue, UploadedFileValue } from "@/types/onboarding";
 
 export interface BrandingThemePayload extends Record<string, unknown> {
   logo: OnboardingFileValue;

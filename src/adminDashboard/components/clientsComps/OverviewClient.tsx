@@ -3,10 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { CalendarClock, SquarePen, Trash2 } from "lucide-react";
 import EditClientModal from "../../pages/clientComps/EditClient";
 import DeleteClientModal from "../../pages/clientComps/DeleteClient";
-import { ModernButton } from "../../../shared/components/ui";
-import StatusPill from "../../../shared/components/ui/StatusPill";
+import { ModernButton } from "@/shared/components/ui";
+import StatusPill from "@/shared/components/ui/StatusPill";
 import IconBadge from "../IconBadge";
-import SetupProgressCard from "../../../shared/components/projects/details/SetupProgressCard";
+import SetupProgressCard from "@/shared/components/projects/details/SetupProgressCard";
 
 const encodeId = (id: string) => encodeURIComponent(btoa(id));
 

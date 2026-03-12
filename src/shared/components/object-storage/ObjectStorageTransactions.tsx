@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Receipt, Check, Clock, XCircle, AlertCircle, Loader2, RefreshCw } from "lucide-react";
-import objectStorageApi from "../../../services/objectStorageApi";
-import ToastUtils from "../../../utils/toastUtil";
+import objectStorageApi from "@/services/objectStorageApi";
+import ToastUtils from "@/utils/toastUtil";
 
 interface Transaction {
   id: string;
@@ -41,24 +41,26 @@ export const ObjectStorageTransactions: React.FC<ObjectStorageTransactionsProps>
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [total, setTotal] = useState(0);
 
-  useEffect(() => {
-    if (accountId) {
-      loadTransactions();
-    }
-  }, [accountId]);
-
-  const loadTransactions = async () => {
+  const loadTransactions = useCallback(async () => {
     setLoading(true);
     try {
       const data = await objectStorageApi.getTransactions(accountId);
-      setTransactions((data as any).transactions || []);
-      setTotal((data as any).total || 0);
+      setTransactions(
+        ((data as Record<string, unknown>).transactions as InvoiceTransaction[]) || []
+      );
+      setTotal(((data as Record<string, unknown>).total as number) || 0);
     } catch (err) {
       ToastUtils.error(getErrorMessage(err, "Failed to load transactions"));
     } finally {
       setLoading(false);
     }
-  };
+  }, [accountId]);
+
+  useEffect(() => {
+    if (accountId) {
+      loadTransactions();
+    }
+  }, [accountId, loadTransactions]);
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, { bg: string; text: string; icon: React.ReactNode }> = {

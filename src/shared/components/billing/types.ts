@@ -1,4 +1,4 @@
-import {} from "../../../types/project";
+import {} from "@/types/project";
 
 export interface BillingRegion {
   code: string;

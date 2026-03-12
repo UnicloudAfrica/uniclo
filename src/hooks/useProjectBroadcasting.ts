@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import createEchoClient from "../echo";
+import { useRealtimeQuery } from "./useRealtimeQuery";
 import { useApiContext } from "./useApiContext";
+import { projectExtendedKeys, projectKeys } from "../shared/hooks/resources/projectHooks";
 import logger from "../utils/logger";
 
 type ProjectBroadcastEvent = {
@@ -16,38 +17,26 @@ const asRecord = (value: unknown): Record<string, unknown> => (isRecord(value) ?
 /**
  * Hook to listen for real-time project provisioning updates.
  * When an event is received, it updates the React Query cache immediately.
+ *
+ * Uses `useRealtimeQuery` to manage Echo channel lifecycle.
  */
 export const useProjectBroadcasting = (projectId: string | number | null) => {
   const queryClient = useQueryClient();
-  const echoRef = useRef<ReturnType<typeof createEchoClient> | null>(null);
   const { isAuthenticated, context } = useApiContext();
 
-  useEffect(() => {
-    if (!projectId || !isAuthenticated) return;
+  const handleEvent = useCallback(
+    (event: unknown) => {
+      if (!projectId) return;
 
-    // Initialize Echo
-    const echo = createEchoClient();
-    echoRef.current = echo;
+      const evt = event as ProjectBroadcastEvent;
+      logger.log("Real-time Provisioning Update:", evt);
 
-    // Listen on the private project channel
-    const channel = echo.private(`projects.${projectId}`);
-
-    channel.listen(".ProjectProvisioningUpdated", (event: ProjectBroadcastEvent) => {
-      logger.log("🚀 Real-time Provisioning Update:", event);
-
-      // Determine query key based on context
-      const queryKeyPrefix =
-        context === "admin"
-          ? "admin-project-status"
-          : context === "tenant"
-            ? "tenant-project-status"
-            : "clientProjectStatus";
-
-      const newStep = asRecord(event.step);
+      const statusKey = projectExtendedKeys.status(context, projectId);
+      const newStep = asRecord(evt.step);
       const newStepId = String(newStep.id ?? "");
 
       // Update the project status query cache
-      queryClient.setQueryData([queryKeyPrefix, projectId], (oldData: unknown) => {
+      queryClient.setQueryData(statusKey, (oldData: unknown) => {
         if (!oldData || !isRecord(oldData)) return oldData;
         const oldRecord = asRecord(oldData);
 
@@ -90,29 +79,29 @@ export const useProjectBroadcasting = (projectId: string | number | null) => {
         return { ...oldRecord, provisioning_progress: updatedProgress };
       });
 
-      const detailsKeyPrefix = context === "admin" ? "admin-project" : "clientProject";
-
       // Invalidate project details to keep everything in sync
-      queryClient.invalidateQueries({ queryKey: [detailsKeyPrefix, projectId] });
+      queryClient.invalidateQueries({
+        queryKey: projectKeys.detail(context, projectId),
+      });
 
-      // Invalidate other related queries to trigger background refreshes if needed
+      // Invalidate network queries for network-related steps
       if (newStepId === "provision_vpc" || newStepId === "create_subnets") {
-        const networkQueryKey =
-          context === "admin"
-            ? "admin-project-network-status"
-            : context === "tenant"
-              ? "tenant-project-network-status"
-              : "client-project-network-status";
-        queryClient.invalidateQueries({ queryKey: [networkQueryKey, projectId] });
+        queryClient.invalidateQueries({
+          queryKey: projectExtendedKeys.networkStatus(context, projectId),
+        });
       }
-    });
+    },
+    [projectId, context, queryClient]
+  );
 
-    return () => {
-      if (echoRef.current) {
-        echoRef.current.leave(`projects.${projectId}`);
-      }
-    };
-  }, [projectId, isAuthenticated, context, queryClient]);
+  useRealtimeQuery({
+    channels: {
+      channel: `projects.${projectId}`,
+      event: ".ProjectProvisioningUpdated",
+    },
+    onEvent: handleEvent,
+    enabled: isAuthenticated && !!projectId,
+  });
 
   return null;
 };

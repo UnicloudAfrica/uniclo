@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import AdminPageShell from "../components/AdminPageShell";
-import { ModernButton } from "../../shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
 import AdminCreateProjectForm from "./projectComps/addProject";
 
 const AdminProjectCreate = () => {

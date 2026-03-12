@@ -35,12 +35,11 @@ const PartnerCard = ({ partner }: { partner: Partner }) => {
 
 const Partnership = () => {
   const isBrowser = globalThis.window !== undefined;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const { data: partners = [], isFetching } = useFetchMarketingPartners() as any;
 
   const partnerList: Partner[] = Array.isArray(partners)
-    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      partners.map((partner: any) => ({
+    ? partners.map((partner: any) => ({
         id: partner.id || partner.source_id || partner.name,
         name: partner.name,
         logo: partner.logo_url || partner.logo,

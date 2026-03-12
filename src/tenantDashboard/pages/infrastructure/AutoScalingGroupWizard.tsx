@@ -2,14 +2,14 @@ import React, { useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { TrendingUp, ArrowLeft, ArrowRight, Check, Settings } from "lucide-react";
 import TenantPageShell from "../../components/TenantPageShell";
-import ModernCard from "../../../shared/components/ui/ModernCard";
-import ModernButton from "../../../shared/components/ui/ModernButton";
-import { useSubnets } from "../../../shared/hooks/vpcInfraHooks";
+import ModernCard from "@/shared/components/ui/ModernCard";
+import ModernButton from "@/shared/components/ui/ModernButton";
+import { useSubnets } from "@/shared/hooks/vpcInfraHooks";
 import {
   useLaunchConfigurations,
   useCreateAutoScalingGroup,
   useCreateScalingPolicy,
-} from "../../../hooks/autoScalingHooks";
+} from "@/hooks/autoScalingHooks";
 
 const AutoScalingGroupWizard: React.FC = () => {
   const navigate = useNavigate();

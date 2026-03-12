@@ -2,7 +2,7 @@ import React, { useMemo, type ChangeEvent, type Dispatch, type SetStateAction } 
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import api from "../../index/api";
-import type { LookupItem, OnboardingOption } from "../../types/onboarding";
+import type { LookupItem, OnboardingOption } from "@/types/onboarding";
 
 const COMPANY_TYPE_OPTIONS: OnboardingOption[] = [
   { value: "", label: "Select business type" },
@@ -165,7 +165,7 @@ const setNestedValue = (
     cursor = cursor[key] as Record<string, unknown>;
   });
 
-  cursor[finalKey as any] = nextValue;
+  cursor[finalKey] = nextValue;
 };
 
 interface BusinessProfileFormProps {
@@ -219,7 +219,9 @@ const BusinessProfileForm = ({ value, onChange }: BusinessProfileFormProps) => {
       const stateData =
         nestedData ??
         responseData ??
-        (isRecord((response as any)?.data?.state) ? (response as any).data.state : null);
+        (isRecord((response as Record<string, any>)?.data?.state)
+          ? (response as Record<string, any>).data.state
+          : null);
       const cityCollection =
         (stateData && isRecord(stateData) ? stateData.cities : undefined) ??
         (responseData && isRecord(responseData) ? responseData.cities : undefined) ??

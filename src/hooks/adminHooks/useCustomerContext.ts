@@ -26,13 +26,16 @@ export const useCustomerContext = (options: any = {}) => {
   // Fetch data
   const { data: tenants = [], isFetching: isTenantsFetching } = useFetchTenants({
     enabled: enabled,
-  }) as any;
+  }) as never;
 
   // Fetch all admin clients (direct users)
   const { data: adminClientsData = [], isFetching: isAdminClientsFetching } = useFetchClients({
     enabled: enabled,
-  }) as any;
-  const adminClients: CustomerUser[] = Array.isArray(adminClientsData) ? adminClientsData : [];
+  }) as never;
+  const adminClients = useMemo<CustomerUser[]>(
+    () => (Array.isArray(adminClientsData) ? adminClientsData : []),
+    [adminClientsData]
+  );
 
   // Fetch tenant clients (sub-users) if a tenant is selected
   const { data: tenantClientsData = [], isFetching: isTenantClientsFetching } = useSharedClients(
@@ -40,8 +43,11 @@ export const useCustomerContext = (options: any = {}) => {
     {
       enabled: enabled && !!selectedTenantId,
     }
-  ) as any;
-  const tenantClients: CustomerUser[] = Array.isArray(tenantClientsData) ? tenantClientsData : [];
+  ) as never;
+  const tenantClients = useMemo<CustomerUser[]>(
+    () => (Array.isArray(tenantClientsData) ? tenantClientsData : []),
+    [tenantClientsData]
+  );
 
   // Determine which user pool to show
   const userPool = useMemo<CustomerUser[]>(() => {

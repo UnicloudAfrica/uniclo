@@ -1,6 +1,6 @@
 import React from "react";
 import { StatusPill } from "../../ui";
-import { designTokens } from "../../../../styles/designTokens";
+import { designTokens } from "@/styles/designTokens";
 
 interface QuickStatusItem {
   label: string;

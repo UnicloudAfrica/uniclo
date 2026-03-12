@@ -1,6 +1,6 @@
 // Template Gallery - Simple Quick Deploy
 import React, { useState } from "react";
-import { useInstanceTemplates } from "../../hooks/useInstanceTemplates";
+import { useInstanceTemplates } from "@/hooks/useInstanceTemplates";
 import { LayoutTemplate, Loader2 } from "lucide-react";
 
 interface TemplateGalleryProps {

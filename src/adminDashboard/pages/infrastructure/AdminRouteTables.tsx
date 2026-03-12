@@ -2,7 +2,7 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Route as RouteIcon } from "lucide-react";
 import AdminPageShell from "../../components/AdminPageShell";
-import RouteTablesContainer from "../../../shared/components/infrastructure/containers/RouteTablesContainer";
+import RouteTablesContainer from "@/shared/components/infrastructure/containers/RouteTablesContainer";
 import {
   useRouteTables,
   useSubnets,
@@ -12,7 +12,7 @@ import {
   useDeleteRoute,
   useAssociateRouteTable,
   useDisassociateRouteTable,
-} from "../../../shared/hooks/vpcInfraHooks";
+} from "@/shared/hooks/vpcInfraHooks";
 
 const AdminRouteTables: React.FC = () => {
   const [searchParams] = useSearchParams();

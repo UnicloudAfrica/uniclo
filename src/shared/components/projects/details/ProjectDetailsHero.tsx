@@ -1,7 +1,7 @@
 import React from "react";
 import { Activity, Layers, MapPin, Plus, Shield, Wifi, LucideIcon } from "lucide-react";
 import { ModernCard, StatusPill } from "../../ui";
-import { designTokens } from "../../../../styles/designTokens";
+import { designTokens } from "@/styles/designTokens";
 
 interface NeutralPillProps {
   icon?: LucideIcon;

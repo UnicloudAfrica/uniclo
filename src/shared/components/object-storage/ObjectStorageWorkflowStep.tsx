@@ -1,6 +1,6 @@
 import React from "react";
 import { CreditCard, Gauge } from "lucide-react";
-import { Option } from "../../../hooks/objectStorageUtils";
+import { Option } from "@/hooks/objectStorageUtils";
 import CustomerContextSelector from "../common/CustomerContextSelector";
 import { ModernCard, ModernSelect } from "../ui";
 

@@ -1,12 +1,26 @@
 import { useNavigate, useParams } from "react-router-dom";
 import TenantPageShell from "../../components/TenantPageShell";
-import { ModernCard } from "../../../shared/components/ui";
-import { ModernButton } from "../../../shared/components/ui";
-import { StatusPill } from "../../../shared/components/ui";
-import ToastUtils from "../../../utils/toastUtil";
-import { useFetchClientById, useDeleteClient } from "../../../hooks/clientHooks";
+import { ModernCard } from "@/shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
+import { StatusPill } from "@/shared/components/ui";
+import ToastUtils from "@/utils/toastUtil";
+import { useFetchClientById, useDeleteClient } from "@/hooks/clientHooks";
 
-const InfoRow = ({ label, value }: any) => (
+/** Minimal shape of the client record returned by the API. */
+interface ClientRecord {
+  verified?: boolean;
+  name?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  identifier?: string;
+  country?: string;
+  state?: string;
+  city?: string;
+}
+
+const InfoRow = ({ label, value }: { label: string; value?: string | null }) => (
   <div className="space-y-1">
     <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
     <p className="text-sm font-semibold text-slate-900">{value ?? "—"}</p>
@@ -17,8 +31,11 @@ export default function ClientDetailsPage() {
   const navigate = useNavigate();
   const { clientId } = useParams();
 
-  const { data: client, isFetching: isLoading } = useFetchClientById(clientId);
+  const { data: rawClient, isFetching: isLoading } = useFetchClientById(clientId);
   const { mutateAsync: deleteClient, isPending: isDeleting } = useDeleteClient();
+
+  // Cast the untyped API response once
+  const client = rawClient as ClientRecord | undefined;
 
   const handleDelete = async () => {
     if (!clientId) return;
@@ -32,7 +49,8 @@ export default function ClientDetailsPage() {
       ToastUtils.success("Client removed.");
       navigate("/dashboard/clients");
     } catch (error) {
-      ToastUtils.error((error as any)?.response?.data?.message || "Failed to remove client.");
+      const msg = error instanceof Error ? error.message : "Failed to remove client.";
+      ToastUtils.error(msg);
     }
   };
 
@@ -57,12 +75,12 @@ export default function ClientDetailsPage() {
           <>
             <div className="flex flex-col gap-2">
               <StatusPill
-                label={(client as any).verified ? "Verified" : "Pending verification"}
-                tone={(client as any).verified ? "success" : "warning"}
+                label={client.verified ? "Verified" : "Pending verification"}
+                tone={client.verified ? "success" : "warning"}
               />
               <h2 className="text-2xl font-semibold text-slate-900">
-                {(client as any).name ||
-                  `${(client as any).first_name ?? ""} ${(client as any).last_name ?? ""}`.trim() ||
+                {client.name ||
+                  `${client.first_name ?? ""} ${client.last_name ?? ""}`.trim() ||
                   "Client"}
               </h2>
               <p className="text-sm text-slate-500">
@@ -71,15 +89,15 @@ export default function ClientDetailsPage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
-              <InfoRow label="Email" value={(client as any).email} />
-              <InfoRow label="Phone" value={(client as any).phone} />
-              <InfoRow label="Workspace ID" value={(client as any).identifier} />
+              <InfoRow label="Email" value={client.email} />
+              <InfoRow label="Phone" value={client.phone} />
+              <InfoRow label="Workspace ID" value={client.identifier} />
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
-              <InfoRow label="Country" value={(client as any).country} />
-              <InfoRow label="State" value={(client as any).state} />
-              <InfoRow label="City" value={(client as any).city} />
+              <InfoRow label="Country" value={client.country} />
+              <InfoRow label="State" value={client.state} />
+              <InfoRow label="City" value={client.city} />
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -91,7 +109,7 @@ export default function ClientDetailsPage() {
               </ModernButton>
               <ModernButton
                 variant="outline"
-                tone={"destructive" as any}
+                tone="destructive"
                 onClick={handleDelete}
                 isDisabled={isDeleting}
                 isLoading={isDeleting}

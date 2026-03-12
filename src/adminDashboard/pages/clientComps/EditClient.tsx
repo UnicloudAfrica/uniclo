@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { useUpdateClient } from "../../../hooks/adminHooks/clientHooks";
-import ToastUtils from "../../../utils/toastUtil";
-import { useFetchCountries } from "../../../hooks/resource"; // Import the resource hook
+import { useUpdateClient } from "@/hooks/adminHooks/clientHooks";
+import ToastUtils from "@/utils/toastUtil";
+import { useFetchCountries } from "@/hooks/resource"; // Import the resource hook
 import FormLayout, { formAccent, getAccentRgba } from "../../components/FormLayout";
 
 interface EditClientModalProps {

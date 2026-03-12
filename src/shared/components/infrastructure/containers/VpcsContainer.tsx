@@ -4,17 +4,32 @@ import { Plus, RefreshCw, RefreshCcw } from "lucide-react";
 import VpcsOverview from "../VpcsOverview";
 import CreateVpcModal from "../modals/CreateVpcModal";
 import ModernButton from "../../ui/ModernButton";
+import ConfirmDialog from "../../ui/ConfirmDialog";
 import {
   getVpcPermissions,
   type Hierarchy,
   type VpcPermissions,
-} from "../../../config/permissionPresets";
+} from "@/shared/config/permissionPresets";
 import { Vpc } from "../types";
 
 interface VpcHooks {
-  useList: (projectId: string, region?: string, options?: any) => UseQueryResult<Vpc[], Error>;
-  useCreate: () => UseMutationResult<any, any, any, unknown>;
-  useDelete: () => UseMutationResult<any, any, any, unknown>;
+  useList: (projectId: string, region?: string, options?: unknown) => UseQueryResult<Vpc[], Error>;
+  useCreate: () => UseMutationResult<
+    any,
+    Error,
+    {
+      projectId: string;
+      region?: string;
+      payload: { name: string; cidr: string; is_default?: boolean };
+    },
+    unknown
+  >;
+  useDelete: () => UseMutationResult<
+    any,
+    Error,
+    { projectId: string; region?: string; vpcId: string },
+    unknown
+  >;
   /** Optional sync function - only for Client dashboard */
   onSync?: () => Promise<void>;
 }
@@ -55,9 +70,12 @@ const VpcsContainer: React.FC<VpcsContainerProps> = ({
   // Modal state
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; data?: Vpc }>({
+    open: false,
+  });
 
   // Use injected hooks - SINGLE SOURCE OF TRUTH
-  const { data: vpcs = [], isLoading, refetch } = hooks.useList(projectId, region);
+  const { data: vpcs = [], isLoading, isFetching, refetch } = hooks.useList(projectId, region);
   const { mutate: createVpc, isPending: isCreating } = hooks.useCreate();
   const { mutate: deleteVpc } = hooks.useDelete();
 
@@ -73,6 +91,7 @@ const VpcsContainer: React.FC<VpcsContainerProps> = ({
       {
         onSuccess: () => {
           setShowCreateModal(false);
+          refetch();
         },
       }
     );
@@ -80,9 +99,13 @@ const VpcsContainer: React.FC<VpcsContainerProps> = ({
 
   const handleDelete = (vpc: Vpc) => {
     if (!permissions.canDelete) return;
-    if (confirm("Are you sure you want to delete this VPC? This action cannot be undone.")) {
-      deleteVpc({ projectId, region, vpcId: vpc.id });
-    }
+    setConfirmDelete({ open: true, data: vpc });
+  };
+
+  const executeDelete = () => {
+    if (!confirmDelete.data) return;
+    deleteVpc({ projectId, region, vpcId: confirmDelete.data.id }, { onSuccess: () => refetch() });
+    setConfirmDelete({ open: false });
   };
 
   const handleSync = async () => {
@@ -105,9 +128,9 @@ const VpcsContainer: React.FC<VpcsContainerProps> = ({
           {isSyncing ? "Syncing..." : "Sync VPCs"}
         </ModernButton>
       )}
-      <ModernButton variant="secondary" size="sm" onClick={() => refetch()} disabled={isLoading}>
-        <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-        Refresh
+      <ModernButton variant="secondary" size="sm" onClick={() => refetch()} disabled={isFetching}>
+        <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
+        {isFetching ? "Refreshing..." : "Refresh"}
       </ModernButton>
       {permissions.canCreate && (
         <ModernButton variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
@@ -137,6 +160,16 @@ const VpcsContainer: React.FC<VpcsContainerProps> = ({
           isCreating={isCreating}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDelete.open}
+        title="Delete VPC?"
+        message="Are you sure you want to delete this VPC? This action cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={executeDelete}
+        onCancel={() => setConfirmDelete({ open: false })}
+      />
     </>
   );
 

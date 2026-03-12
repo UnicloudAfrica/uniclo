@@ -2,8 +2,8 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Shield } from "lucide-react";
 import ClientPageShell from "../components/ClientPageShell";
-import ModernCard from "../../shared/components/ui/ModernCard";
-import { useSecurityGroupRules } from "../../shared/hooks/vpcInfraHooks";
+import ModernCard from "@/shared/components/ui/ModernCard";
+import { useSecurityGroupRules } from "@/shared/hooks/vpcInfraHooks";
 
 interface SecurityRule {
   protocol?: string;

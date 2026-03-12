@@ -1,17 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import { designTokens } from "../../../styles/designTokens";
+import { designTokens } from "@/styles/designTokens";
+import type { ButtonSize, ButtonVariant } from "./types";
 import ModernButton from "./ModernButton";
 
 export interface ModalAction {
   label: string;
-  variant?: any;
-  size?: "sm" | "md" | "lg";
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   onClick: () => void;
   disabled?: boolean;
   icon?: React.ReactNode;
-  props?: Record<string, any>;
-  [key: string]: any;
+  props?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
 export interface ModernModalProps {
@@ -31,7 +32,8 @@ export interface ModernModalProps {
   backdropClassName?: string;
 }
 
-const mergeClassNames = (...values: any[]): string => values.flat().filter(Boolean).join(" ");
+const mergeClassNames = (...values: (string | undefined | null | false)[]): string =>
+  values.flat().filter(Boolean).join(" ");
 
 const ModernModal: React.FC<ModernModalProps> = ({
   isOpen = false,

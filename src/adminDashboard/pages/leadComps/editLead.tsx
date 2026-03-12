@@ -1,12 +1,12 @@
 import { useMemo } from "react";
-import { useFetchAdmins } from "../../../hooks/adminHooks/adminHooks";
-import { useUpdateLead } from "../../../hooks/adminHooks/leadsHook";
-import ToastUtils from "../../../utils/toastUtil";
+import { useFetchAdmins } from "@/hooks/adminHooks/adminHooks";
+import { useUpdateLead } from "@/hooks/adminHooks/leadsHooks";
+import ToastUtils from "@/utils/toastUtil";
 import EditLeadModal, {
   type LeadAssigneeOption,
   type LeadEditLead,
   type LeadUpdatePayload,
-} from "../../../shared/components/leads/EditLeadModal";
+} from "@/shared/components/leads/EditLeadModal";
 
 type AdminUser = {
   id?: string | number;

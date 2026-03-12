@@ -1,6 +1,7 @@
 import React from "react";
-import { Network } from "lucide-react";
+import { Network, Plus } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
+import ModernButton from "../ui/ModernButton";
 import SubnetsTable from "./SubnetsTable";
 import type { Subnet } from "./types";
 import type { SubnetPermissions } from "../../config/permissionPresets";
@@ -13,6 +14,7 @@ interface SubnetsOverviewProps {
   showDefaultBadge?: boolean;
   showDefaultStats?: boolean;
   onDelete?: (subnet: Subnet) => void;
+  onCreate?: () => void;
   showActions?: boolean;
   /** Optional permissions object for permission-based action and display gating */
   permissions?: SubnetPermissions;
@@ -26,6 +28,7 @@ const SubnetsOverview: React.FC<SubnetsOverviewProps> = ({
   showDefaultBadge,
   showDefaultStats,
   onDelete,
+  onCreate,
   showActions,
   permissions,
 }) => {
@@ -77,6 +80,14 @@ const SubnetsOverview: React.FC<SubnetsOverviewProps> = ({
         subnets={subnets}
         isLoading={isLoading}
         emptyMessage={emptyMessage}
+        emptyAction={
+          onCreate ? (
+            <ModernButton variant="primary" size="sm" onClick={onCreate}>
+              <Plus className="w-4 h-4 mr-1" />
+              Create Subnet
+            </ModernButton>
+          ) : undefined
+        }
         showVpcColumn={effectiveShowVpcColumn}
         showDefaultBadge={effectiveShowDefaultBadge}
         onDelete={effectiveOnDelete}

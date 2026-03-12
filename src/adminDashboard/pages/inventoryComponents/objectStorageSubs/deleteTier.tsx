@@ -1,8 +1,8 @@
 import { Loader2, Trash2, X } from "lucide-react";
-import ToastUtils from "../../../../utils/toastUtil";
-import { useDeleteProduct } from "../../../../hooks/adminHooks/adminProductHooks";
-import { useDeleteProductPricing } from "../../../../hooks/adminHooks/adminproductPricingHook";
-import logger from "../../../../utils/logger";
+import ToastUtils from "@/utils/toastUtil";
+import { useDeleteProduct } from "@/hooks/adminHooks/adminProductHooks";
+import { useDeleteProductPricing } from "@/hooks/adminHooks/adminProductPricingHooks";
+import logger from "@/utils/logger";
 
 const DeleteObjectStorageTierModal = ({ isOpen, onClose, tier, onDeleted }: any) => {
   const { mutate: deleteProduct, isPending: isDeletingProduct } = useDeleteProduct();

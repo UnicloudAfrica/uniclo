@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import TenantPageShell from "../../components/TenantPageShell";
-import { ModernButton } from "../../../shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
 import TenantAddPartnerWizard from "../../components/partners/TenantAddPartnerWizard";
 
 export default function NewPartnerPage() {

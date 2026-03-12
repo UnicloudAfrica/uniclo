@@ -6,16 +6,16 @@ import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Loader2, AlertCircle } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
-import { ModernCard, ModernButton } from "../../shared/components/ui";
-import adminRegionApi, { RegionCreatePayload } from "../../services/adminRegionApi";
-import ToastUtils from "../../utils/toastUtil";
-import InvoiceWizardStepper from "../../shared/components/billing/invoice/InvoiceWizardStepper";
-import { useFetchCountries } from "../../hooks/resource";
+import { ModernCard, ModernButton } from "@/shared/components/ui";
+import adminRegionApi, { RegionCreatePayload } from "@/services/adminRegionApi";
+import ToastUtils from "@/utils/toastUtil";
+import InvoiceWizardStepper from "@/shared/components/billing/invoice/InvoiceWizardStepper";
+import { useFetchCountries } from "@/hooks/resource";
 import {
   ServiceConfigState,
   ServiceDefinition,
   FieldDefinition,
-} from "../../shared/domains/regions/types/serviceConfig.types";
+} from "@/shared/domains/regions/types/serviceConfig.types";
 
 // Shared region components
 import {
@@ -23,8 +23,8 @@ import {
   RegionInfoForm,
   AvailabilityAccessForm,
   type Country,
-} from "../../shared/domains/regions/components";
-import { useRegionFormLogic } from "../../shared/domains/regions/hooks";
+} from "@/shared/domains/regions/components";
+import { useRegionFormLogic } from "@/shared/domains/regions/hooks";
 
 /**
  * Main Region Create Page
@@ -44,24 +44,45 @@ const RegionCreate = () => {
     const res = await adminRegionApi.getProviderServices(provider);
     if (!res.success || !res.data) return null;
 
-    // Transform ProviderService[] to ProviderServicesSchema
+    // Backend returns { provider, provider_config, services: { compute: { label, ..., fields: {...} } } }
+    const raw = res.data as any;
+    const servicesMap = raw?.services || raw || {};
+
+    // Transform keyed services object to ProviderServicesSchema
     const services: Record<string, ServiceDefinition> = {};
-    res.data.forEach((s) => {
+    for (const [serviceType, svcConfig] of Object.entries(servicesMap as Record<string, any>)) {
       const fields: Record<string, FieldDefinition> = {};
-      (s.fields || []).forEach((f) => {
-        fields[f.name] = {
-          label: f.label,
-          type: f.type as any, // Cast to ServiceFieldType since it comes from API
-          required: f.required,
-          ...(f.description ? { help: f.description } : {}),
-        };
-      });
-      services[s.type] = {
-        label: s.name,
+      const rawFields = svcConfig?.fields || {};
+
+      // fields can be a keyed object { base_url: { label, type, ... } } or an array
+      if (Array.isArray(rawFields)) {
+        rawFields.forEach((f: any) => {
+          fields[f.name] = {
+            label: f.label,
+            type: f.type as any,
+            required: f.required,
+            ...(f.placeholder ? { placeholder: f.placeholder } : {}),
+            ...(f.description || f.help ? { help: f.description || f.help } : {}),
+          };
+        });
+      } else {
+        for (const [fieldName, fieldDef] of Object.entries(rawFields as Record<string, any>)) {
+          fields[fieldName] = {
+            label: fieldDef.label || fieldName,
+            type: fieldDef.type as any,
+            required: fieldDef.required ?? true,
+            ...(fieldDef.placeholder ? { placeholder: fieldDef.placeholder } : {}),
+            ...(fieldDef.help ? { help: fieldDef.help } : {}),
+          };
+        }
+      }
+
+      services[serviceType] = {
+        label: svcConfig?.label || serviceType,
         fields,
-        ...(s.description ? { description: s.description } : {}),
+        ...(svcConfig?.description ? { description: svcConfig.description } : {}),
       };
-    });
+    }
     return { services };
   }, []);
 
@@ -100,12 +121,16 @@ const RegionCreate = () => {
     verifyServiceCredentials,
   });
 
-  // Filter services for Zadara (only Compute and Storage)
+  // Filter services to only those supported by the selected provider
   const services = (() => {
     const all = providerServices?.services || {};
-    if (regionData.provider === "zadara") {
-      const allowed = new Set(["compute", "object_storage"]);
-      return Object.fromEntries(Object.entries(all).filter(([key]) => allowed.has(key)));
+    const providerServiceMap: Record<string, string[]> = {
+      zadara: ["compute", "object_storage"],
+      nobus: ["compute", "object_storage"],
+    };
+    const allowed = providerServiceMap[regionData.provider?.toLowerCase()];
+    if (allowed) {
+      return Object.fromEntries(Object.entries(all).filter(([key]) => allowed.includes(key)));
     }
     return all;
   })();
@@ -149,7 +174,7 @@ const RegionCreate = () => {
   };
 
   const storeServiceCredentials = async (
-    regionId: number,
+    regionCode: string,
     enabledServices: [string, ServiceConfigState][]
   ) => {
     for (const [serviceType, config] of enabledServices) {
@@ -157,7 +182,7 @@ const RegionCreate = () => {
         try {
           const isAlreadyVerified = connectedServices.has(serviceType);
           await adminRegionApi.storeServiceCredentials(
-            regionId,
+            regionCode,
             serviceType,
             config.credentials,
             isAlreadyVerified
@@ -196,15 +221,14 @@ const RegionCreate = () => {
         throw new Error("Failed to create region");
       }
 
-      const newRegionId = regionRes.data?.id;
       const newRegionCode = regionRes.data?.code || regionData.code;
 
-      await storeServiceCredentials(Number(newRegionId), getEnabledServices());
+      await storeServiceCredentials(newRegionCode, getEnabledServices());
 
       ToastUtils.success("Region created successfully!");
 
-      if (regionData.fast_track_mode === "grant_only" && newRegionId) {
-        navigate(`/admin-dashboard/regions/${newRegionId}/edit`);
+      if (regionData.fast_track_mode === "grant_only" && newRegionCode) {
+        navigate(`/admin-dashboard/regions/${newRegionCode}/edit`);
         ToastUtils.info("Please configure Fast Track grants now.");
       } else {
         navigate(`/admin-dashboard/regions/${newRegionCode}`);

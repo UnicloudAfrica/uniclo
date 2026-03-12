@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
-import { useUpdateFloatingIP } from "../../../../hooks/adminHooks/floatingIPHooks";
-import ToastUtils from "../../../../utils/toastUtil";
+import { useUpdateFloatingIP } from "@/hooks/adminHooks/floatingIPHooks";
+import ToastUtils from "@/utils/toastUtil";
 
 const EditFloatingIP = ({ isOpen, onClose, floatingIP }: any) => {
   const [formData, setFormData] = useState({

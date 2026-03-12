@@ -1,9 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
-import { useUpdateAdmin } from "../../../hooks/adminHooks/adminHooks";
+import ToastUtils from "@/utils/toastUtil";
+import { useUpdateAdmin } from "@/hooks/adminHooks/adminHooks";
 import FormLayout, { formAccent, getAccentRgba } from "../../components/FormLayout";
-import logger from "../../../utils/logger";
+import logger from "@/utils/logger";
+
+interface EditAdminModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  admin: Record<string, any> | null;
+  onUpdateSuccess?: (data: any) => void;
+  mode?: "modal" | "page";
+}
 
 export const EditAdminModal = ({
   isOpen,
@@ -11,7 +19,7 @@ export const EditAdminModal = ({
   admin,
   onUpdateSuccess,
   mode = "modal",
-}: any) => {
+}: EditAdminModalProps) => {
   // State to hold form data, initialized with admin prop
   const [formData, setFormData] = useState({
     first_name: "",
@@ -53,7 +61,7 @@ export const EditAdminModal = ({
   } = useUpdateAdmin();
 
   // Handle input changes
-  const handleChange = (e: any) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
@@ -64,7 +72,7 @@ export const EditAdminModal = ({
   const isPageMode = mode === "page";
 
   // Handle form submission
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!admin?.identifier) {
       //   ToastUtils.error("Admin ID is missing for update.");
@@ -99,7 +107,7 @@ export const EditAdminModal = ({
       },
       onError: (err) => {
         logger.error("Failed to update admin:", err);
-        ToastUtils.error((err as any)?.message || "Failed to update admin. Please try again.");
+        ToastUtils.error((err as Error)?.message || "Failed to update admin. Please try again.");
       },
     });
   };
@@ -200,14 +208,14 @@ export const EditAdminModal = ({
         </p>
       </div>
 
-      {summarySections.map((section: any) => (
+      {summarySections.map((section: { title: string; items: any[] }) => (
         <div
           key={section.title}
           className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
         >
           <h3 className="text-sm font-semibold text-slate-800">{section.title}</h3>
           <dl className="mt-3 space-y-3 text-sm">
-            {section.items.map((item: any) => (
+            {section.items.map((item: { label: string; value: string }) => (
               <div
                 key={`${section.title}-${item.label}`}
                 className="flex items-start justify-between gap-3"
@@ -225,7 +233,7 @@ export const EditAdminModal = ({
       <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-100 p-5 shadow-sm">
         <h3 className="text-sm font-semibold text-slate-800">Update checklist</h3>
         <ul className="mt-3 space-y-2 text-sm text-slate-600">
-          {guidanceItems.map((tip: any) => (
+          {guidanceItems.map((tip: string) => (
             <li key={tip} className="flex items-start gap-2">
               <span
                 className="mt-1 h-1.5 w-1.5 rounded-full"
@@ -285,7 +293,7 @@ export const EditAdminModal = ({
       <form id={formId} onSubmit={handleSubmit} className="space-y-8">
         {isError && (
           <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {(error as any)?.message || "Failed to update admin. Please try again."}
+            {(error as Error)?.message || "Failed to update admin. Please try again."}
           </div>
         )}
 

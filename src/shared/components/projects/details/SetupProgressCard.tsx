@@ -65,7 +65,7 @@ const SetupProgressCard: React.FC<SetupProgressCardProps> = ({
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm h-full flex flex-col overflow-hidden">
-      <div className="p-6 pb-2 border-b border-gray-50">
+      <div className="p-4 pb-2 md:p-6 md:pb-2 border-b border-gray-50">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">
@@ -90,7 +90,7 @@ const SetupProgressCard: React.FC<SetupProgressCardProps> = ({
       </div>
 
       {/* Steps Checklist */}
-      <div className="p-6 space-y-4 flex-grow overflow-y-auto max-h-[500px]">
+      <div className="p-4 space-y-3 md:p-6 md:space-y-4 flex-grow overflow-y-auto max-h-[300px] md:max-h-[500px]">
         {steps.map((step) => {
           const hasContext = step.context && Object.keys(step.context).length > 0;
           const isExpanded = expandedSteps[step.id];
@@ -178,7 +178,7 @@ const SetupProgressCard: React.FC<SetupProgressCardProps> = ({
 
       {/* Terminal Console View */}
       {latestLogs.length > 0 && (
-        <div className="bg-gray-900 mx-4 mb-4 rounded-lg p-3 font-mono text-[11px] text-gray-300">
+        <div className="bg-gray-900 mx-3 mb-3 md:mx-4 md:mb-4 rounded-lg p-3 font-mono text-[11px] text-gray-300">
           <div className="flex items-center justify-between mb-2 pb-1 border-b border-gray-700">
             <span className="text-[9px] text-gray-500 uppercase tracking-widest">
               Live Activity Log
@@ -217,7 +217,7 @@ const SetupProgressCard: React.FC<SetupProgressCardProps> = ({
 
       {/* Complete Setup Button */}
       {onCompleteSetup && calculatedPercent < 100 && (
-        <div className="p-4 pt-0">
+        <div className="p-3 pt-0 md:p-4 md:pt-0">
           <button
             type="button"
             onClick={onCompleteSetup}

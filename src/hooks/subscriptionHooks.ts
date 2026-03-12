@@ -121,7 +121,7 @@ export const useDeleteSubscriptionPlan = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await api<unknown>("DELETE", `/admin/v1/subscription-plans/${id}`);
+      const res = await api<{ data: unknown }>("DELETE", `/admin/v1/subscription-plans/${id}`);
       return res.data;
     },
     onSuccess: () => {
@@ -218,7 +218,7 @@ export const useCancelSubscription = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, reason, note, immediately }: CancelSubscriptionPayload) => {
-      const res = await api<unknown>("POST", `/admin/v1/subscriptions/${id}/cancel`, {
+      const res = await api<{ data: unknown }>("POST", `/admin/v1/subscriptions/${id}/cancel`, {
         reason,
         note,
         immediately,
@@ -238,10 +238,14 @@ export const useChangeSubscriptionPlan = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, plan_id, prorate }: ChangeSubscriptionPlanPayload) => {
-      const res = await api<Subscription>("POST", `/admin/v1/subscriptions/${id}/change-plan`, {
-        plan_id,
-        prorate,
-      });
+      const res = await api<{ data: Subscription }>(
+        "POST",
+        `/admin/v1/subscriptions/${id}/change-plan`,
+        {
+          plan_id,
+          prorate,
+        }
+      );
       return res.data;
     },
     onSuccess: (_, variables) => {
@@ -256,7 +260,7 @@ export const useRenewSubscription = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await api<unknown>("POST", `/admin/v1/subscriptions/${id}/renew`);
+      const res = await api<{ data: unknown }>("POST", `/admin/v1/subscriptions/${id}/renew`);
       return res.data;
     },
     onSuccess: (_, id) => {

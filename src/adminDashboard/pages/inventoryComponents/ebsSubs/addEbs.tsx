@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import type { FormEvent } from "react";
 import { X, Loader2 } from "lucide-react";
-import ToastUtils from "../../../../utils/toastUtil";
-import { useCreateEbsVolume } from "../../../../hooks/adminHooks/ebsHooks";
-import logger from "../../../../utils/logger";
+import ToastUtils from "@/utils/toastUtil";
+import { useCreateEbsVolume } from "@/hooks/adminHooks/ebsHooks";
+import logger from "@/utils/logger";
 
 type EbsFormData = {
   name: string;

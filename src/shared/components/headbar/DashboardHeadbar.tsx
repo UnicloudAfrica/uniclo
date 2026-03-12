@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, HelpCircle, Settings, LogOut, ChevronDown } from "lucide-react";
-import { designTokens } from "../../../styles/designTokens";
+import { designTokens } from "@/styles/designTokens";
 import NotificationCenter from "../NotificationCenter";
 
 const logoCache = new Map<string, string>();

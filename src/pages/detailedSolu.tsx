@@ -2,8 +2,8 @@ import Footer from "../components/footer";
 import Navbar from "../components/navbar";
 import { useParams, Link } from "react-router-dom";
 import { useContext, useEffect, useMemo, useState } from "react";
-import { initializeApp, getApps } from "firebase/app";
-import { getFirestore, getDoc, doc, getDocs, collection, query } from "firebase/firestore";
+import { getDoc, doc, getDocs, collection, query } from "firebase/firestore";
+import { getFirestoreDb } from "../shared/config/firebase";
 import { motion } from "framer-motion";
 import adbg from "./assets/adBG.svg";
 import admob from "./assets/adMob.svg";
@@ -24,18 +24,6 @@ interface SolutionItem {
 }
 
 const DetailedSolution = () => {
-  // ... firebase config
-  const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    appId: import.meta.env.VITE_FIREBASE_APP_ID,
-    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
-  };
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [solutionsArray] = useContext(SolutionsContext) as [SolutionItem[]];
 
   const emptySolution = {
@@ -67,8 +55,7 @@ const DetailedSolution = () => {
 
   const db = useMemo(() => {
     if (typeof window === "undefined") return null;
-    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-    return getFirestore(app);
+    return getFirestoreDb();
   }, []);
 
   useEffect(() => {

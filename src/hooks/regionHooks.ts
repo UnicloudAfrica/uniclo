@@ -10,9 +10,9 @@ const fetchRegions = async () => {
   return res.data;
 };
 
-const fetchRegionById = async (id: any) => {
-  const res = await silentApi("GET", `/regions/${id}`);
-  if (!res.data) throw new Error(`Failed to fetch region with ID ${id}`);
+const fetchRegionByCode = async (code: string) => {
+  const res = await silentApi("GET", `/regions/${code}`);
+  if (!res.data) throw new Error(`Failed to fetch region ${code}`);
   return res.data;
 };
 
@@ -22,15 +22,15 @@ const createRegion = async (regionData: any) => {
   return res.data;
 };
 
-const updateRegion = async ({ id, regionData }: any) => {
-  const res = await api("PATCH", `/regions/${id}`, regionData);
-  if (!res.data) throw new Error(`Failed to update region with ID ${id}`);
+const updateRegion = async ({ code, regionData }: any) => {
+  const res = await api("PATCH", `/regions/${code}`, regionData);
+  if (!res.data) throw new Error(`Failed to update region ${code}`);
   return res.data;
 };
 
-const deleteRegion = async (id: any) => {
-  const res = await api("DELETE", `/regions/${id}`);
-  if (!res.data) throw new Error(`Failed to delete region with ID ${id}`);
+const deleteRegion = async (code: string) => {
+  const res = await api("DELETE", `/regions/${code}`);
+  if (!res.data) throw new Error(`Failed to delete region ${code}`);
   return res.data;
 };
 
@@ -44,11 +44,11 @@ export const useFetchTenantRegions = (options: any = {}) => {
   });
 };
 
-export const useFetchTenantRegionById = (id: any, options = {}) => {
+export const useFetchTenantRegionById = (code: string, options = {}) => {
   return useQuery({
-    queryKey: ["region", id],
-    queryFn: () => fetchRegionById(id),
-    enabled: !!id,
+    queryKey: ["region", code],
+    queryFn: () => fetchRegionByCode(code),
+    enabled: !!code,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
@@ -74,7 +74,7 @@ export const useUpdateTenantRegion = () => {
     mutationFn: updateRegion,
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["regions"] });
-      queryClient.invalidateQueries({ queryKey: ["region", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["region", variables.code] });
     },
     onError: (error) => {
       logger.error("Error updating region:", error);

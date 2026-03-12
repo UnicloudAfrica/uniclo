@@ -1,24 +1,38 @@
 import React, { useCallback, useMemo } from "react";
-import ConfigurationListStep from "../../shared/components/instance-wizard/ConfigurationListStep";
-import PaymentStep from "../../shared/components/instance-wizard/PaymentStep";
-import InstanceSummaryCard from "../../shared/components/instance-wizard/InstanceSummaryCard";
-import ReviewSubmitStep from "../../shared/components/instance-wizard/ReviewSubmitStep";
-import OrderSuccessStep from "../../shared/components/instance-wizard/OrderSuccessStep";
-import { useTenantProvisioningLogic } from "../../hooks/useTenantProvisioningLogic";
-import {
-  useFetchTenantProjects,
-  useTenantProjectStatus,
-} from "../../hooks/tenantHooks/projectHooks";
-import { useFetchTenantSecurityGroups } from "../../hooks/tenantHooks/securityGroupHooks";
-import { useFetchTenantKeyPairs } from "../../hooks/tenantHooks/keyPairsHook";
-import { useFetchTenantSubnets } from "../../hooks/tenantHooks/subnetHooks";
-import { useFetchTenantNetworks } from "../../hooks/tenantHooks/networkHooks";
-import { useTenantProjectMembershipSuggestions } from "../../hooks/projectHooks";
+import ConfigurationListStep from "@/shared/components/instance-wizard/ConfigurationListStep";
+import PaymentStep from "@/shared/components/instance-wizard/PaymentStep";
+import InstanceSummaryCard from "@/shared/components/instance-wizard/InstanceSummaryCard";
+import ReviewSubmitStep from "@/shared/components/instance-wizard/ReviewSubmitStep";
+import OrderSuccessStep from "@/shared/components/instance-wizard/OrderSuccessStep";
+import { useTenantProvisioningLogic } from "@/hooks/useTenantProvisioningLogic";
+import { useFetchTenantProjects, useTenantProjectStatus } from "@/hooks/tenantHooks/projectHooks";
+import { useFetchSecurityGroups } from "@/shared/hooks/resources/securityGroupHooks";
+import { useFetchTenantKeyPairs } from "@/shared/hooks/keyPairsHooks";
+import { useFetchSubnets } from "@/shared/hooks/resources/subnetHooks";
+import { useFetchNetworks } from "@/shared/hooks/resources/networkHooks";
+
+// Local positional-arg wrappers for provisioning wizard hook-passing pattern
+const useFetchTenantSecurityGroups = (
+  projectId: string | undefined,
+  region: string | undefined,
+  opts: Record<string, unknown> = {}
+) => useFetchSecurityGroups({ projectId, region }, opts);
+const useFetchTenantSubnets = (
+  projectId: string | undefined,
+  region: string | undefined,
+  opts: Record<string, unknown> = {}
+) => useFetchSubnets({ projectId, region }, opts);
+const useFetchTenantNetworks = (
+  projectId: string | undefined,
+  region: string | undefined,
+  opts: Record<string, unknown> = {}
+) => useFetchNetworks({ projectId, region }, opts);
+import { useProjectMembershipSuggestions as useTenantProjectMembershipSuggestions } from "@/shared/hooks/resources/projectHooks";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
 import {
   ProvisioningWizardLayout,
   WorkflowSelectionStep,
-} from "../../shared/components/instance-wizard";
+} from "@/shared/components/instance-wizard";
 import {
   evaluateConfigurationCompleteness,
   formatComputeLabel,
@@ -27,7 +41,7 @@ import {
   formatKeypairLabel,
   formatSubnetLabel,
   hasProjectNetworkFromStatus,
-} from "../../utils/instanceCreationUtils";
+} from "@/utils/instanceCreationUtils";
 
 // ═══════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
@@ -129,11 +143,17 @@ const TenantProvisioningWizard: React.FC = () => {
 
   // Calculate which configurations are fast-track eligible vs paid
   const fastTrackConfigs = useMemo(
-    () => configurations.filter((cfg: any) => fastTrackRegions.includes(cfg.region || "")),
+    () =>
+      configurations.filter((cfg: Record<string, unknown>) =>
+        fastTrackRegions.includes((cfg.region as string) || "")
+      ),
     [configurations, fastTrackRegions]
   );
   const paidConfigs = useMemo(
-    () => configurations.filter((cfg: any) => !fastTrackRegions.includes(cfg.region || "")),
+    () =>
+      configurations.filter(
+        (cfg: Record<string, unknown>) => !fastTrackRegions.includes((cfg.region as string) || "")
+      ),
     [configurations, fastTrackRegions]
   );
 
@@ -145,7 +165,7 @@ const TenantProvisioningWizard: React.FC = () => {
   const paymentStepIndex = useMemo(() => steps.findIndex((step) => step.id === "payment"), [steps]);
   const successStepIndex = useMemo(() => steps.findIndex((step) => step.id === "success"), [steps]);
   const selectedProjectId = configurations[0]?.project_id;
-  const { data: projectStatus } = useTenantProjectStatus(selectedProjectId as any, {
+  const { data: projectStatus } = useTenantProjectStatus(selectedProjectId as string, {
     enabled: Boolean(selectedProjectId),
   });
   const projectHasNetwork = useMemo(
@@ -158,29 +178,35 @@ const TenantProvisioningWizard: React.FC = () => {
     const volumeTypes = resources.volume_types || [];
     const keyPairs = resources.keyPairs || [];
 
-    return configurations.map((cfg: any) => {
+    return configurations.map((cfg: Record<string, unknown>) => {
       const status = evaluateConfigurationCompleteness(cfg);
       const computeLabel =
-        cfg.compute_label || formatComputeLabel(cfg.compute_instance_id, instanceTypes);
+        (cfg.compute_label as string) ||
+        formatComputeLabel(cfg.compute_instance_id as string, instanceTypes);
       const resolvedComputeLabel =
         computeLabel && !["Not selected", "Instance selected"].includes(computeLabel)
           ? computeLabel
           : "";
       const defaultTitle =
-        cfg.name?.trim() ||
+        (cfg.name as string)?.trim() ||
         (resolvedComputeLabel ? resolvedComputeLabel : "Instance configuration");
-      const osLabel = cfg.os_image_label || formatOsLabel(cfg.os_image_id, osImages);
+      const osLabel =
+        (cfg.os_image_label as string) || formatOsLabel(cfg.os_image_id as string, osImages);
       const storageLabel = cfg.volume_type_label
         ? `${cfg.volume_type_label}${cfg.storage_size_gb ? ` • ${cfg.storage_size_gb} GB` : ""}`
-        : formatVolumeLabel(cfg.volume_type_id, cfg.storage_size_gb, volumeTypes);
+        : formatVolumeLabel(
+            cfg.volume_type_id as string,
+            cfg.storage_size_gb as number,
+            volumeTypes
+          );
 
       return {
-        id: cfg.id,
+        id: cfg.id as string,
         title: defaultTitle,
         regionLabel:
-          cfg.region_label ||
+          (cfg.region_label as string) ||
           allRegionOptions.find((opt) => opt.value === cfg.region)?.label ||
-          cfg.region ||
+          (cfg.region as string) ||
           "No region selected",
         computeLabel,
         osLabel,
@@ -191,7 +217,11 @@ const TenantProvisioningWizard: React.FC = () => {
         floatingIpLabel: `${Number(cfg.floating_ip_count || 0)} floating IP${
           Number(cfg.floating_ip_count || 0) === 1 ? "" : "s"
         }`,
-        keypairLabel: formatKeypairLabel(cfg.keypair_name, keyPairs, cfg.keypair_label),
+        keypairLabel: formatKeypairLabel(
+          cfg.keypair_name as string,
+          keyPairs,
+          cfg.keypair_label as string
+        ),
         subnetLabel: formatSubnetLabel(cfg),
         statusLabel: status.isComplete ? "Complete" : "Incomplete",
         isComplete: status.isComplete,
@@ -359,7 +389,7 @@ const TenantProvisioningWizard: React.FC = () => {
             {currentStep?.id === "services" && (
               <ConfigurationListStep
                 configurations={configurations}
-                resources={resources as any}
+                resources={resources as Record<string, unknown>}
                 generalRegions={generalRegions}
                 regionOptions={regionOptions}
                 isLoadingResources={isLoadingResources}
@@ -377,12 +407,16 @@ const TenantProvisioningWizard: React.FC = () => {
                 onBack={() => setActiveStep(0)}
                 onSubmit={handleCreateOrder}
                 submitErrorMessage={submissionErrorMessage}
-                useProjectsHook={useFetchTenantProjects as any}
-                useSecurityGroupsHook={useFetchTenantSecurityGroups as any}
-                useKeyPairsHook={useFetchTenantKeyPairs as any}
-                useSubnetsHook={useFetchTenantSubnets as any}
-                useNetworksHook={useFetchTenantNetworks as any}
-                useProjectMembershipSuggestionsHook={useTenantProjectMembershipSuggestions as any}
+                useProjectsHook={useFetchTenantProjects as (...args: unknown[]) => unknown}
+                useSecurityGroupsHook={
+                  useFetchTenantSecurityGroups as (...args: unknown[]) => unknown
+                }
+                useKeyPairsHook={useFetchTenantKeyPairs as (...args: unknown[]) => unknown}
+                useSubnetsHook={useFetchTenantSubnets as (...args: unknown[]) => unknown}
+                useNetworksHook={useFetchTenantNetworks as (...args: unknown[]) => unknown}
+                useProjectMembershipSuggestionsHook={
+                  useTenantProjectMembershipSuggestions as (...args: unknown[]) => unknown
+                }
                 skipProjectFetch={false}
                 skipNetworkResourcesFetch={false}
                 formVariant="cube"

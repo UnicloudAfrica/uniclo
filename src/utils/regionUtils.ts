@@ -49,18 +49,17 @@ export const formatRegionName = (regionName: string, isAdmin: boolean | null = n
     return regionName;
   }
 
-  // For non-admin users, remove only "Zadara" provider name but keep core region identifiers
+  // For non-admin users, remove provider name prefix but keep core region identifiers
+  // This strips "Zadara", "Nobus", or any future provider name from the display
   let displayName = regionName;
 
-  // Remove "Zadara" (case insensitive) but preserve the rest
-  // This keeps region identifiers like "Lagos 1", "Lagos 2", etc.
-  displayName = displayName
-    .replace(/zadara\s+/gi, "") // Remove "Zadara " but keep everything else
-    .trim();
+  // Remove known provider names (case insensitive) but preserve the rest
+  // This keeps region identifiers like "Lagos 1", "West Africa AZ1", etc.
+  displayName = displayName.replace(/\b(zadara|nobus)\s+/gi, "").trim();
 
-  // If the result is empty or too short, fallback to original name without Zadara
+  // If the result is empty or too short, try again without word boundary
   if (displayName.length < 2) {
-    displayName = regionName.replace(/zadara\s+/gi, "").trim();
+    displayName = regionName.replace(/\b(zadara|nobus)\s*/gi, "").trim();
   }
 
   return displayName || regionName; // Fallback to original if processing fails

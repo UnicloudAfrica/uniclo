@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { Users, Server, Activity, ArrowRight, Zap } from "lucide-react";
 import TenantPageShell from "../components/TenantPageShell";
-import { ModernStatsCard, ModernCard } from "../../shared/components/ui";
-import { useFetchClients } from "../../hooks/clientHooks";
-import { useFetchTenantProjects } from "../../hooks/tenantHooks/projectHooks";
+import { ModernStatsCard, ModernCard } from "@/shared/components/ui";
+import { useFetchClients } from "@/hooks/clientHooks";
+import { useFetchTenantProjects } from "@/hooks/tenantHooks/projectHooks";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -13,16 +13,19 @@ const Dashboard = () => {
   const { data: projectsResponse, isLoading: projectsLoading } = useFetchTenantProjects();
 
   // Calculate Stats
-  const clientCount = (clients as any)?.length || 0;
+  const clientCount = (clients as unknown[])?.length || 0;
   const projects = Array.isArray(projectsResponse)
     ? projectsResponse
-    : projectsResponse?.data || [];
-  const projectCount = (projects as any).length;
+    : (projectsResponse as { data?: { instances_count?: number }[] })?.data || [];
+  const projectCount = (projects as unknown[]).length;
 
   // Calculate active instances across all projects
-  const activeInstancesCount = (projects as any).reduce((acc: number, project: any) => {
-    return acc + (project.instances_count || 0);
-  }, 0);
+  const activeInstancesCount = (projects as { instances_count?: number }[]).reduce(
+    (acc: number, project: { instances_count?: number }) => {
+      return acc + (project.instances_count || 0);
+    },
+    0
+  );
 
   const quickActions = [
     {

@@ -21,15 +21,15 @@ import {
   CloudConnectionIllustration,
   MobileIllustration,
   MonitorIllustration,
-} from "../../shared/components/branding/BrandIllustrations";
+} from "@/shared/components/branding/BrandIllustrations";
 import { Link } from "react-router-dom";
-import { useFetchClientProfile } from "../../hooks/clientHooks/resources";
+import { useFetchClientProfile } from "@/hooks/clientHooks/resources";
 import VerifyAccountPromptModal from "../components/verifyAccountPrompt";
 import ClientActiveTab from "../components/clientActiveTab";
 import ClientPageShell from "../components/ClientPageShell";
-import { useFetchClientProductOffers } from "../../hooks/clientHooks/productsHook";
-import { useFetchClientProjects } from "../../hooks/clientHooks/projectHooks";
-import { useFetchClientPurchasedInstances } from "../../hooks/clientHooks/instanceHooks";
+import { useFetchClientProductOffers } from "@/hooks/clientHooks/productsHooks";
+import { useFetchClientProjects } from "@/hooks/clientHooks/projectHooks";
+import { useFetchClientPurchasedInstances } from "@/hooks/clientHooks/instanceHooks";
 import clientSilentApi from "../../index/client/silent";
 import { useQuery } from "@tanstack/react-query";
 
@@ -108,7 +108,7 @@ const useFetchClientTicketStats = () => {
     queryKey: ["client", "support", "stats"],
     queryFn: async () => {
       const res = await clientSilentApi("GET", "/business/support");
-      const tickets = ((res as any)?.data || []) as Ticket[];
+      const tickets = ((res as Record<string, unknown>)?.data || []) as Ticket[];
       const open = tickets.filter((t) => t.status !== "resolved" && t.status !== "closed").length;
       return { open, total: tickets.length };
     },
@@ -117,13 +117,19 @@ const useFetchClientTicketStats = () => {
 };
 
 const useFetchClientDashboardStats = () => {
-  const { data: projectsData, isFetching: isProjectsFetching } = useFetchClientProjects() as any;
+  const { data: projectsData, isFetching: isProjectsFetching } = useFetchClientProjects() as {
+    data: { data: Record<string, unknown>[] };
+    isFetching: boolean;
+  };
   const { data: instancesData, isFetching: isInstancesFetching } =
-    useFetchClientPurchasedInstances() as any;
+    useFetchClientPurchasedInstances() as {
+      data: { data: Record<string, unknown>[] };
+      isFetching: boolean;
+    };
   const { data: ticketStats, isFetching: isTicketsFetching } = useFetchClientTicketStats();
 
-  const projects = (projectsData?.data as any[]) || [];
-  const instances = (instancesData?.data as any[]) || [];
+  const projects = projectsData?.data || [];
+  const instances = instancesData?.data || [];
 
   const activeInstances = instances.filter((i: any) =>
     ["running", "active", "ready", "online"].includes(i.status?.toLowerCase())
@@ -368,8 +374,8 @@ const ClientDashboard: React.FC = () => {
     isFetching: isDashboardFetching,
   } = useFetchClientDashboardStats();
   const { data: offers = DEFAULT_OFFERS, isFetching: isOffersFetching } = (
-    useFetchClientProductOffers as any
-  )() as { data: Offers; isFetching: boolean };
+    useFetchClientProductOffers as unknown as () => { data: Offers; isFetching: boolean }
+  )();
 
   const [showVerifyModal, setShowVerifyModal] = useState(false);
 

@@ -1,9 +1,9 @@
 import React from "react";
-import { DashboardHeadbar } from "../../shared/components/headbar";
-import { useDashboardProfile } from "../../shared/hooks/useDashboardProfile";
-import useClientTheme from "../../hooks/clientHooks/useClientTheme";
-import useSidebarStore from "../../stores/sidebarStore";
-import { buildClientHeadbarPreset } from "../../shared/config/headbarPresets";
+import { DashboardHeadbar } from "@/shared/components/headbar";
+import { useDashboardProfile } from "@/shared/hooks/useDashboardProfile";
+import useClientTheme from "@/hooks/clientHooks/useClientTheme";
+import useSidebarStore from "@/stores/sidebarStore";
+import { buildClientHeadbarPreset } from "@/shared/config/headbarPresets";
 
 interface ClientHeadbarProps {
   onMenuClick?: () => void;

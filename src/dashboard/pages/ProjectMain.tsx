@@ -1,24 +1,18 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import TenantPageShell from "../components/TenantPageShell";
-import ProjectsPageContainer from "../../shared/components/projects/ProjectsPageContainer";
+import ProjectsPageContainer from "@/shared/components/projects/ProjectsPageContainer";
 import {
   useFetchTenantProjects,
   useDeleteTenantProject,
   useArchiveTenantProject,
   useActivateTenantProject,
-} from "../../hooks/tenantHooks/projectHooks";
-import { encodeProjectId } from "../../utils/projectUtils";
-import ToastUtils from "../../utils/toastUtil";
-import logger from "../../utils/logger";
+} from "@/hooks/tenantHooks/projectHooks";
+import { encodeProjectId } from "@/utils/projectUtils";
+import ToastUtils from "@/utils/toastUtil";
+import logger from "@/utils/logger";
 
-interface Project {
-  id: number | string;
-  identifier: string;
-  name: string;
-  status: string;
-  [key: string]: any;
-}
+import { Project } from "@/types/project";
 
 const Projects: React.FC = () => {
   const navigate = useNavigate();
@@ -38,7 +32,7 @@ const Projects: React.FC = () => {
   const activateProjectMutation = useActivateTenantProject();
 
   // Extract projects array from response
-  const projects = projectsResponse?.data || [];
+  const projects = (projectsResponse as { data?: Project[] })?.data || [];
 
   // Navigation handlers
   const handleCreateProject = () => {
@@ -60,9 +54,10 @@ const Projects: React.FC = () => {
     try {
       await archiveProjectMutation.mutateAsync(project.identifier);
       ToastUtils.success(`Project "${project.name}" archived successfully`);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorObj = err as { message?: string };
       logger.error("Failed to archive project:", err);
-      ToastUtils.error(err?.message || "Failed to archive project");
+      ToastUtils.error(errorObj?.message || "Failed to archive project");
     }
   };
 
@@ -70,9 +65,10 @@ const Projects: React.FC = () => {
     try {
       await activateProjectMutation.mutateAsync(project.identifier);
       ToastUtils.success(`Project "${project.name}" activated successfully`);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorObj = err as { message?: string };
       logger.error("Failed to activate project:", err);
-      ToastUtils.error(err?.message || "Failed to activate project");
+      ToastUtils.error(errorObj?.message || "Failed to activate project");
     }
   };
 
@@ -88,9 +84,10 @@ const Projects: React.FC = () => {
     try {
       await deleteProjectMutation.mutateAsync(project.identifier);
       ToastUtils.success(`Project "${project.name}" deleted successfully`);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorObj = err as { message?: string };
       logger.error("Failed to delete project:", err);
-      ToastUtils.error(err?.message || "Failed to delete project");
+      ToastUtils.error(errorObj?.message || "Failed to delete project");
     }
   };
 
@@ -122,23 +119,28 @@ const Projects: React.FC = () => {
   const handleBulkExport = async (selectedIds: string[]) => {
     const { exportSelectedProjects } = await import("../../utils/projectExport");
     try {
-      await exportSelectedProjects(projects as any, selectedIds, "csv");
+      await exportSelectedProjects(
+        projects as unknown as Record<string, unknown>[],
+        selectedIds,
+        "csv"
+      );
       ToastUtils.success(`Exported ${selectedIds.length} projects successfully`);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorObj = err as { message?: string };
       logger.error("Failed to export projects:", err);
-      ToastUtils.error(err?.message || "Failed to export projects");
+      ToastUtils.error(errorObj?.message || "Failed to export projects");
     }
   };
 
   return (
     <TenantPageShell title="Projects" description="Manage and monitor your infrastructure projects">
       <ProjectsPageContainer
-        projects={projects as any}
+        projects={projects as never}
         isLoading={isLoading}
         isFetching={isFetching}
         isError={isError}
-        error={error as any}
-        onRefresh={refetch as any}
+        error={error as Error | null}
+        onRefresh={refetch as () => void}
         onCreateProject={handleCreateProject}
         onViewProject={handleViewProject}
         onArchiveProject={handleArchiveProject}

@@ -1,6 +1,7 @@
 import React from "react";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Plus } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
+import ModernButton from "../ui/ModernButton";
 import NetworkAclsTable from "./NetworkAclsTable";
 import type { NetworkAcl } from "./types";
 
@@ -10,6 +11,7 @@ interface NetworkAclsOverviewProps {
   emptyMessage?: string;
   onDelete?: (acl: NetworkAcl) => void;
   onManageRules?: (acl: NetworkAcl) => void;
+  onCreate?: () => void;
   showActions?: boolean;
 }
 
@@ -19,6 +21,7 @@ const NetworkAclsOverview: React.FC<NetworkAclsOverviewProps> = ({
   emptyMessage,
   onDelete,
   onManageRules,
+  onCreate,
   showActions,
 }) => {
   const shouldShowActions = showActions ?? Boolean(onDelete || onManageRules);
@@ -41,6 +44,14 @@ const NetworkAclsOverview: React.FC<NetworkAclsOverviewProps> = ({
         networkAcls={networkAcls}
         isLoading={isLoading}
         emptyMessage={emptyMessage}
+        emptyAction={
+          onCreate ? (
+            <ModernButton variant="primary" size="sm" onClick={onCreate}>
+              <Plus className="w-4 h-4 mr-1" />
+              Create Network ACL
+            </ModernButton>
+          ) : undefined
+        }
         onDelete={onDelete}
         onManageRules={onManageRules}
         showActions={shouldShowActions}

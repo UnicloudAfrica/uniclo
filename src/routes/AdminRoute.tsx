@@ -1,0 +1,26 @@
+import React, { type JSX } from "react";
+import { Navigate, Outlet } from "react-router-dom";
+import { Loader2 } from "lucide-react";
+import useAuthStore from "../stores/authStore";
+
+interface AdminRouteProps {
+  children?: React.ReactNode;
+}
+
+const LoaderScreen = (): JSX.Element => (
+  <div className="w-full h-svh flex items-center justify-center">
+    <Loader2 className="w-10 h-10 text-[var(--theme-color)] animate-spin" />
+  </div>
+);
+
+// Guard: blocks until hydrated, then checks for an admin session.
+export default function AdminRoute({ children }: AdminRouteProps): JSX.Element {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const role = useAuthStore((s) => s.session?.role);
+  const hasHydrated = useAuthStore((s) => s.hasHydrated);
+
+  if (!hasHydrated) return <LoaderScreen />;
+  if (!isAuthenticated || role !== "admin") return <Navigate to="/admin-signin" replace />;
+
+  return (children || <Outlet />) as JSX.Element;
+}

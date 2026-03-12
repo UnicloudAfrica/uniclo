@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { X, Loader2 } from "lucide-react";
-import { useUploadProductPricingFile } from "../../../hooks/adminHooks/adminproductPricingHook";
-import { FileInput } from "../../../utils/fileInput";
-import logger from "../../../utils/logger";
+import { useUploadProductPricingFile } from "@/hooks/adminHooks/adminProductPricingHooks";
+import { FileInput } from "@/utils/fileInput";
+import logger from "@/utils/logger";
 
 const UploadPricingFileModal = ({ isOpen, onClose }: any) => {
   const queryClient = useQueryClient();

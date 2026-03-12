@@ -3,10 +3,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, ArrowLeft, Loader2 } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
 import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
-import { ModernButton } from "../../shared/components/ui";
-import { useFetchAdminById } from "../../hooks/adminHooks/adminHooks";
+import { ModernButton } from "@/shared/components/ui";
+import { useFetchAdminById } from "@/hooks/adminHooks/adminHooks";
 import { EditAdminModal } from "./adminComps/editAdmin";
-import logger from "../../utils/logger";
+import logger from "@/utils/logger";
 
 interface AdminRecord {
   id?: string | number;

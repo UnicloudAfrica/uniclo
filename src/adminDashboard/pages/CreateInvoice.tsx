@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import AdminPageShell from "../components/AdminPageShell";
-import { SharedCreateInvoice } from "../../shared/components";
+import { SharedCreateInvoice } from "@/shared/components";
 
 const CreateInvoice = () => {
   const navigate = useNavigate();

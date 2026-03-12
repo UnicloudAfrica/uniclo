@@ -4,19 +4,42 @@ import { Plus, RefreshCw } from "lucide-react";
 import { SubnetsOverview } from "../index";
 import CreateSubnetModal from "../modals/CreateSubnetModal";
 import ModernButton from "../../ui/ModernButton";
+import ConfirmDialog from "../../ui/ConfirmDialog";
 import {
   getSubnetPermissions,
   type Hierarchy,
   type SubnetPermissions,
-} from "../../../config/permissionPresets";
-import type { Subnet } from "../types";
+} from "@/shared/config/permissionPresets";
+import type { Subnet, Vpc } from "../types";
 
 interface SubnetHooks {
-  useList: (projectId: string, region?: string, options?: any) => UseQueryResult<Subnet[], Error>;
-  useCreate: () => UseMutationResult<any, any, any, unknown>;
-  useDelete: () => UseMutationResult<any, any, any, unknown>;
+  useList: (
+    projectId: string,
+    region?: string,
+    options?: { enabled?: boolean }
+  ) => UseQueryResult<Subnet[], Error>;
+  useCreate: () => UseMutationResult<
+    any,
+    Error,
+    {
+      projectId: string;
+      region?: string;
+      payload: { name: string; cidr_block: string; vpc_id: string };
+    },
+    unknown
+  >;
+  useDelete: () => UseMutationResult<
+    any,
+    Error,
+    { projectId: string; region?: string; subnetId: string },
+    unknown
+  >;
   /** Optional - only needed for hierarchies that can create subnets */
-  useVpcs?: (projectId: string, region?: string, options?: any) => UseQueryResult<any[], Error>;
+  useVpcs?: (
+    projectId: string,
+    region?: string,
+    options?: { enabled?: boolean }
+  ) => UseQueryResult<Vpc[], Error>;
 }
 
 interface SubnetsContainerProps {
@@ -53,9 +76,12 @@ const SubnetsContainer: React.FC<SubnetsContainerProps> = ({
 
   // Modal state
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; data?: Subnet }>({
+    open: false,
+  });
 
   // Use injected hooks - SINGLE SOURCE OF TRUTH
-  const { data: subnets = [], isLoading, refetch } = hooks.useList(projectId, region);
+  const { data: subnets = [], isLoading, isFetching, refetch } = hooks.useList(projectId, region);
   // VPCs: use stub if hook not provided (read-only roles don't need VPCs)
   const useVpcsHook = hooks.useVpcs ?? (() => ({ data: [] }));
   const { data: vpcs = [] } = useVpcsHook(projectId, region);
@@ -74,6 +100,7 @@ const SubnetsContainer: React.FC<SubnetsContainerProps> = ({
       {
         onSuccess: () => {
           setShowCreateModal(false);
+          refetch();
         },
       }
     );
@@ -85,17 +112,24 @@ const SubnetsContainer: React.FC<SubnetsContainerProps> = ({
       alert("Cannot delete the default subnet");
       return;
     }
-    if (confirm("Are you sure you want to delete this subnet?")) {
-      deleteSubnet({ projectId, region, subnetId: subnet.id });
-    }
+    setConfirmDelete({ open: true, data: subnet });
+  };
+
+  const executeDelete = () => {
+    if (!confirmDelete.data) return;
+    deleteSubnet(
+      { projectId, region, subnetId: confirmDelete.data.id },
+      { onSuccess: () => refetch() }
+    );
+    setConfirmDelete({ open: false });
   };
 
   // Build header actions
   const headerActions = (
     <div className="flex items-center gap-3">
-      <ModernButton variant="secondary" size="sm" onClick={refetch as any} disabled={isLoading}>
-        <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-        Refresh
+      <ModernButton variant="secondary" size="sm" onClick={() => refetch()} disabled={isFetching}>
+        <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
+        {isFetching ? "Refreshing..." : "Refresh"}
       </ModernButton>
       {permissions.canCreate && (
         <ModernButton variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
@@ -126,6 +160,16 @@ const SubnetsContainer: React.FC<SubnetsContainerProps> = ({
           vpcs={vpcs}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDelete.open}
+        title="Delete Subnet?"
+        message="Are you sure you want to delete this subnet?"
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={executeDelete}
+        onCancel={() => setConfirmDelete({ open: false })}
+      />
     </>
   );
 

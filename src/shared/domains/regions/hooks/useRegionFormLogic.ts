@@ -10,7 +10,7 @@ import type {
   ProviderServicesSchema,
 } from "../types/serviceConfig.types";
 import { DEFAULT_REGION_FORM_DATA } from "../types/serviceConfig.types";
-import logger from "../../../../utils/logger";
+import logger from "@/utils/logger";
 
 export interface UseRegionFormLogicOptions {
   initialData?: Partial<RegionFormData>;
@@ -137,7 +137,7 @@ export function useRegionFormLogic({
         ...prev[serviceType],
         enabled: !prev[serviceType]?.enabled,
       },
-    })) as any);
+    })) as never);
   }, []);
 
   const handleModeChange = useCallback((serviceType: string, mode: "manual" | "automated") => {
@@ -147,7 +147,7 @@ export function useRegionFormLogic({
         ...prev[serviceType],
         mode,
       },
-    })) as any);
+    })) as never);
   }, []);
 
   const handleCredentialChange = useCallback(
@@ -161,7 +161,7 @@ export function useRegionFormLogic({
             [fieldName]: value,
           },
         },
-      })) as any);
+      })) as never);
       // Invalidate connection status on change
       setConnectedServices((prev) => {
         const next = new Set(prev);

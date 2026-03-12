@@ -23,8 +23,13 @@ export const useClientProvisioningLogic = () => {
   // ─────────────────────────────────────────────────────────────────
   // Auth & Config
   // ─────────────────────────────────────────────────────────────────
-  const isAuthenticated = useClientAuthStore((state: any) => state.isAuthenticated);
-  const profile = useClientAuthStore((state: any) => state.user);
+  const isAuthenticated = useClientAuthStore(
+    (state: { isAuthenticated: boolean; user: Record<string, unknown> | null }) =>
+      state.isAuthenticated
+  );
+  const profile = useClientAuthStore(
+    (state: { user: Record<string, unknown> | null }) => state.user
+  );
   const apiBaseUrl = config.baseURL;
 
   // ─────────────────────────────────────────────────────────────────
@@ -63,7 +68,7 @@ export const useClientProvisioningLogic = () => {
   // Ensure value is string to match resolveCountryCodeFromEntity expectation
   const countryOptions: Option[] = useMemo(
     () =>
-      (countriesData as any).map((c: any) => ({
+      (countriesData as Record<string, any>[]).map((c: Record<string, any>) => ({
         value: String(c.iso2 || c.code || c.id),
         label: c.name,
       })),
@@ -79,7 +84,7 @@ export const useClientProvisioningLogic = () => {
   // Auto-set billing country from profile
   useEffect(() => {
     // Cast countryOptions to any to avoid strict Option type conflict if needed, or ensure mismatch is handled
-    const code = resolveCountryCodeFromEntity(profile, countryOptions as any);
+    const code = resolveCountryCodeFromEntity(profile, countryOptions as never);
     if (code) {
       setBillingCountry(code);
       setIsCountryLocked(true);
@@ -91,7 +96,7 @@ export const useClientProvisioningLogic = () => {
   });
 
   // Fetch pricing using client API (public product-pricing endpoint is fine for clients)
-  const [pricingData, setPricingData] = useState<any>(null);
+  const [pricingData, setPricingData] = useState<Record<string, any> | null>(null);
   const [isPricingLoading, setIsPricingLoading] = useState(false);
 
   useEffect(() => {
@@ -107,7 +112,7 @@ export const useClientProvisioningLogic = () => {
         const response = (await silentClientApi(
           "GET",
           `/product-pricing?${params.toString()}`
-        )) as any;
+        )) as Record<string, any>;
         setPricingData(response?.data || response || []);
       } catch {
         setPricingData([]);
@@ -124,7 +129,7 @@ export const useClientProvisioningLogic = () => {
 
   const regionOptions: Option[] = useMemo(
     () =>
-      (generalRegions as any).map((r: any) => ({
+      (generalRegions as Record<string, any>[]).map((r: Record<string, any>) => ({
         value: r.code || r.region || r.id || r.slug,
         label: r.label || r.name || r.region || r.code,
       })),
@@ -173,8 +178,8 @@ export const useClientProvisioningLogic = () => {
   // Order Creation & Submission
   // ─────────────────────────────────────────────────────────────────
   const createOrderAction = useAsyncAction();
-  const [submissionResult, setSubmissionResult] = useState<any>(null);
-  const [orderReceipt, setOrderReceipt] = useState<any>(null);
+  const [submissionResult, setSubmissionResult] = useState<Record<string, any> | null>(null);
+  const [orderReceipt, setOrderReceipt] = useState<Record<string, any> | null>(null);
   const [isPaymentSuccessful, setIsPaymentSuccessful] = useState(false);
   const paymentStepIndex = useMemo(() => steps.findIndex((step) => step.id === "payment"), [steps]);
   const reviewStepIndex = useMemo(() => steps.findIndex((step) => step.id === "review"), [steps]);
@@ -197,7 +202,7 @@ export const useClientProvisioningLogic = () => {
           const isNewProject = cfg.project_mode === "new" || Boolean(cfg.template_locked);
           const assignmentScopePayload = cfg.assignment_scope || undefined;
           const sanitizedMemberIds = Array.isArray(cfg.member_user_ids)
-            ? cfg.member_user_ids.map((id: any) => Number(id)).filter(Boolean)
+            ? cfg.member_user_ids.map((id: string | number) => Number(id)).filter(Boolean)
             : [];
           const parsedBandwidthCount = cfg.bandwidth_id ? 1 : 0;
           const parsedFloatingIpCount = Number(cfg.floating_ip_count) || 0;
@@ -211,10 +216,10 @@ export const useClientProvisioningLogic = () => {
           const sanitizedSgIds = (
             Array.isArray(cfg.security_group_ids)
               ? cfg.security_group_ids
-              : ((cfg.security_group_ids as any) || "").split(",")
+              : ((cfg.security_group_ids as string) || "").split(",")
           )
-            .map((v: any) => (v && v.value ? v.value : v))
-            .map((v: any) => (v || "").toString().trim())
+            .map((v: unknown) => (v && (v as any).value ? (v as any).value : v))
+            .map((v: unknown) => (v || "").toString().trim())
             .filter(Boolean);
 
           const extraVolumes = (cfg.additional_volumes || [])
@@ -274,8 +279,8 @@ export const useClientProvisioningLogic = () => {
         const response = (await clientApi(
           "POST",
           "/business/instances/create",
-          payload as any
-        )) as any;
+          payload as never
+        )) as Record<string, any>;
         const data = response?.data || response;
 
         const normalizedGatewayOptions = normalizePaymentOptions(
@@ -359,7 +364,7 @@ export const useClientProvisioningLogic = () => {
       ? orderReceipt?.pricing_breakdown
       : [];
     const totals = breakdown.reduce(
-      (acc: any, item: any) => {
+      (acc: Record<string, any>, item: Record<string, any>) => {
         acc.subtotal += Number(item?.subtotal || 0);
         acc.tax += Number(item?.tax || 0);
         acc.total += Number(item?.total || 0);

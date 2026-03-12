@@ -1,4 +1,4 @@
-import type { OnboardingStepDefinition } from "../../types/onboarding";
+import type { OnboardingStepDefinition } from "@/types/onboarding";
 
 const tenantBusinessSteps: OnboardingStepDefinition[] = [
   {

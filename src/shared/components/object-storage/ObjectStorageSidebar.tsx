@@ -21,8 +21,8 @@ import {
   AlertTriangle,
   CreditCard,
 } from "lucide-react";
-import objectStorageApi from "../../../services/objectStorageApi";
-import ToastUtils from "../../../utils/toastUtil";
+import objectStorageApi from "@/services/objectStorageApi";
+import ToastUtils from "@/utils/toastUtil";
 import StorageGauge3D from "./StorageGauge3D";
 import ObjectStorageCredentials from "./ObjectStorageCredentials";
 import ExtendStorageModal from "./ExtendStorageModal";

@@ -1,21 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { X, Loader2 } from "lucide-react";
-import {
-  useCreateProject,
-  useProjectMembershipSuggestions,
-} from "../../../hooks/adminHooks/projectHooks";
+import { useCreateProject, useProjectMembershipSuggestions } from "@/hooks/adminHooks/projectHooks";
 import { useNavigate } from "react-router-dom";
-import ToastUtils from "../../../utils/toastUtil";
-import { useFetchTenants } from "../../../hooks/adminHooks/tenantHooks";
-import { useFetchClients } from "../../../hooks/adminHooks/clientHooks";
+import ToastUtils from "@/utils/toastUtil";
+import { useFetchTenants } from "@/hooks/adminHooks/tenantHooks";
+import { useFetchClients } from "@/hooks/adminHooks/clientHooks";
 import { DropdownSelect } from "./dropdownSelect"; // Ensure this path is correct
-import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
+import { useFetchRegions } from "@/hooks/adminHooks/regionHooks";
 import NetworkPresetSelector, {
   DEFAULT_PRESETS,
   type NetworkPreset,
-} from "../../../shared/components/network/NetworkPresetSelector";
-import { useNetworkPresets } from "../../../hooks/networkPresetHooks";
-import { useCloudPolicies } from "../../../hooks/adminHooks/cloudPolicyHooks";
+} from "@/shared/components/network/NetworkPresetSelector";
+import { useNetworkPresets } from "@/hooks/networkPresetHooks";
+import { useCloudPolicies } from "@/hooks/adminHooks/cloudPolicyHooks";
 const MAX_ATTEMPTS = 10;
 
 type AssignmentScope = "internal" | "tenant" | "client";
@@ -77,6 +74,8 @@ type RegionOption = {
   code?: string;
   name?: string;
   provider?: string;
+  is_active?: boolean;
+  is_verified?: boolean;
 };
 
 type ScopeOption = {
@@ -136,19 +135,27 @@ const CreateProjectModal = ({ onClose, mode = "modal" }: CreateProjectModalProps
   const { data: networkPresets = DEFAULT_PRESETS } = useNetworkPresets();
   const [selectedMembers, setSelectedMembers] = useState<MemberOption[]>([]);
   const [userPolicies, setUserPolicies] = useState<Record<string, Array<string | number>>>({});
+  const regionList = useMemo<RegionOption[]>(() => {
+    if (!Array.isArray(regionsData)) return [];
+    return (regionsData as RegionOption[]).filter(
+      (r) => r.name && r.name !== r.code && r.is_active !== false
+    );
+  }, [regionsData]);
+  const selectedRegionProvider = useMemo(() => {
+    if (!formData.region || !regionList.length) return "";
+    const match = regionList.find((r) => r.code === formData.region);
+    return (match as any)?.provider || "";
+  }, [formData.region, regionList]);
+
   const { data: cloudPoliciesData = [] } = useCloudPolicies(
     {
       region: formData.region,
-      provider: "zadara",
+      provider: selectedRegionProvider,
       active_only: true,
     },
     {
       enabled: !!formData.region,
     }
-  );
-  const regionList = useMemo<RegionOption[]>(
-    () => (Array.isArray(regionsData) ? (regionsData as RegionOption[]) : []),
-    [regionsData]
   );
   const tenantList = useMemo<TenantOption[]>(() => {
     if (Array.isArray(tenantsData)) return tenantsData as TenantOption[];
@@ -746,7 +753,7 @@ const CreateProjectModal = ({ onClose, mode = "modal" }: CreateProjectModalProps
           </option>
           {regionList.map((region, index) => (
             <option key={region.code ?? region.name ?? index} value={region.code ?? ""}>
-              {region.name ?? region.code ?? "Unnamed region"}
+              {region.name || region.code || "Unnamed region"}
             </option>
           ))}
         </select>

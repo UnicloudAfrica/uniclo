@@ -1,7 +1,15 @@
 import { X } from "lucide-react";
 
-const DetailedModules = ({ selectedItem, isModalOpen, closeModal }: any) => {
-  const StatusBadge = ({ status }: any) => {
+const DetailedModules = ({
+  selectedItem,
+  isModalOpen,
+  closeModal,
+}: {
+  selectedItem: Record<string, any>;
+  isModalOpen: boolean;
+  closeModal: () => void;
+}) => {
+  const StatusBadge = ({ status }: { status: string }) => {
     const baseClass =
       "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize";
 
@@ -11,12 +19,13 @@ const DetailedModules = ({ selectedItem, isModalOpen, closeModal }: any) => {
       pending: "bg-[rgb(var(--theme-warning-500) / 0.2)] text-[rgb(var(--theme-warning-500))]", // amber/orange
     };
 
-    const styleClass = (statusStyles as any)[status] || "bg-gray-100 text-gray-600";
+    const styleClass =
+      statusStyles[status as keyof typeof statusStyles] || "bg-gray-100 text-gray-600";
 
     return <span className={`${baseClass} ${styleClass}`}>{status}</span>;
   };
 
-  const CredentialsBadge = ({ credentials }: any) => {
+  const CredentialsBadge = ({ credentials }: { credentials: unknown }) => {
     const isReady = credentials !== null;
     const displayText = isReady ? "Ready" : "Not Ready";
 
@@ -33,7 +42,7 @@ const DetailedModules = ({ selectedItem, isModalOpen, closeModal }: any) => {
     );
   };
 
-  const formatDate = (dateString: any) => {
+  const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(dateString);
 
@@ -45,7 +54,7 @@ const DetailedModules = ({ selectedItem, isModalOpen, closeModal }: any) => {
     };
 
     return date
-      .toLocaleString("en-US", options as any)
+      .toLocaleString("en-US", options as Intl.DateTimeFormatOptions)
       .replace(/,([^,]*)$/, isDateOnly ? "$1" : " -$1");
   };
 

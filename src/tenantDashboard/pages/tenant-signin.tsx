@@ -2,18 +2,18 @@ import React, { useEffect, useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import logo from "./assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
-import { useLoginAccount } from "../../hooks/authHooks";
-import useTenantAuthStore from "../../stores/tenantAuthStore";
-import useAuthRedirect from "../../utils/authRedirect";
+import { useLoginAccount } from "@/hooks/authHooks";
+import useTenantAuthStore from "@/stores/tenantAuthStore";
+import useAuthRedirect from "@/utils/authRedirect";
 import {
   resolveBrandLogo,
   useApplyBrandingTheme,
   usePublicBrandingTheme,
-} from "../../hooks/useBrandingTheme";
-import useImageFallback from "../../hooks/useImageFallback";
-import { getSubdomain } from "../../utils/getSubdomain";
+} from "@/hooks/useBrandingTheme";
+import useImageFallback from "@/hooks/useImageFallback";
+import { getSubdomain } from "@/utils/getSubdomain";
 import AuthShell from "../../components/auth/AuthShell";
-import logger from "../../utils/logger";
+import logger from "@/utils/logger";
 
 interface TenantLoginProps {
   tenant?: string;

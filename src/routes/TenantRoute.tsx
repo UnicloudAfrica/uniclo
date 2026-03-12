@@ -1,7 +1,7 @@
 import React, { type JSX } from "react";
 import { Navigate, useLocation, Outlet } from "react-router-dom";
 import { Loader2 } from "lucide-react";
-import useTenantAuthStore from "../stores/tenantAuthStore";
+import useAuthStore from "../stores/authStore";
 import { useOnboardingState } from "../hooks/onboardingHooks";
 
 interface TenantRouteProps {
@@ -15,9 +15,9 @@ const LoaderScreen = (): JSX.Element => (
 );
 
 export default function TenantRoute({ children }: TenantRouteProps): JSX.Element {
-  const isAuthenticated = useTenantAuthStore((s) => s.isAuthenticated);
-  const role = useTenantAuthStore((s) => s.role);
-  const hasHydrated = useTenantAuthStore((s) => s.hasHydrated);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const role = useAuthStore((s) => s.session?.role);
+  const hasHydrated = useAuthStore((s) => s.hasHydrated);
   const location = useLocation();
 
   const isTenant = role === "tenant";

@@ -26,6 +26,7 @@ export interface IpPool {
   total?: number;
   total_ips?: number;
   total_ip_count?: number;
+  total_ip_address_count?: number;
   ip_total?: number;
   ip_count?: number;
   capacity?: number;
@@ -40,6 +41,7 @@ export interface IpPool {
   assigned?: number;
   consumed?: number;
   available?: number;
+  available_ip_address_count?: number;
   free?: number;
   free_ips?: number;
   available_ips?: number;
@@ -78,6 +80,7 @@ const extractPoolCounts = (
       pool.total,
       pool.total_ips,
       pool.total_ip_count,
+      pool.total_ip_address_count,
       pool.ip_total,
       pool.ip_count,
       pool.capacity,
@@ -96,7 +99,13 @@ const extractPoolCounts = (
       pool.consumed
     ) ?? null;
   const available =
-    pickNumber(pool.available, pool.free, pool.free_ips, pool.available_ips) ?? null;
+    pickNumber(
+      pool.available,
+      pool.available_ip_address_count,
+      pool.free,
+      pool.free_ips,
+      pool.available_ips
+    ) ?? null;
 
   if (typeof total === "number") {
     if (typeof used === "number") {
@@ -149,6 +158,22 @@ export const deriveIpPoolStats = ({
     const match = candidates.find((pool) => matchPoolById(pool, poolId));
     const matchTotals = extractPoolCounts(match);
     if (matchTotals) return matchTotals;
+  }
+
+  // Prefer the VPC default IP pool (public IPs), then any vpc_ip_pool, then any pool
+  const typedCandidates = candidates as (IpPool & {
+    is_vpc_default_ip_pool?: boolean;
+    pool_type?: string;
+  })[];
+  const vpcDefault = typedCandidates.find((p) => p.is_vpc_default_ip_pool === true);
+  if (vpcDefault) {
+    const counts = extractPoolCounts(vpcDefault);
+    if (counts) return counts;
+  }
+  const vpcPool = typedCandidates.find((p) => p.pool_type === "vpc_ip_pool");
+  if (vpcPool) {
+    const counts = extractPoolCounts(vpcPool);
+    if (counts) return counts;
   }
 
   for (const pool of candidates) {

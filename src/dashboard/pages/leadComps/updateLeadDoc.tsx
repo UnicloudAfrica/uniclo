@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { X, Loader2, Upload } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
-import { FileInput } from "../../../utils/fileInput";
-import { useUpdateDoc } from "../../../hooks/tenantHooks/leadsHook";
+import ToastUtils from "@/utils/toastUtil";
+import { FileInput } from "@/utils/fileInput";
+import { useUpdateDoc } from "@/hooks/tenantHooks/leadsHooks";
 
 const documentTypeOptions = [
   "identity",
@@ -72,7 +72,7 @@ const UpdateLeadDoc = ({ isOpen, onClose, document }: any) => {
     };
 
     if (formData.file) {
-      (docData as any).file = formData.file;
+      (docData as Record<string, unknown>).file = formData.file;
     }
 
     mutate(
@@ -172,11 +172,11 @@ const UpdateLeadDoc = ({ isOpen, onClose, document }: any) => {
               </label>
               <FileInput
                 id="documentFileUpdate"
-                icon={Upload as any}
+                icon={Upload as never}
                 accept=".pdf,.png,.jpg,.jpeg,.svg,.webp"
                 label={
                   formData.file
-                    ? `Selected: ${(formData.file as any).name}`
+                    ? `Selected: ${(formData.file as { name?: string })?.name}`
                     : "Click to upload a new file"
                 }
                 onChange={handleFileChange}

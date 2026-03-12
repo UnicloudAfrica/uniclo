@@ -2,16 +2,16 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import ClientActiveTab from "../components/clientActiveTab";
 import ClientPageShell from "../components/ClientPageShell";
-import ProjectsPageContainer from "../../shared/components/projects/ProjectsPageContainer";
+import ProjectsPageContainer from "@/shared/components/projects/ProjectsPageContainer";
 import {
   useFetchClientProjects,
   useDeleteClientProject,
   Project as HookProject,
-} from "../../hooks/clientHooks/projectHooks";
-import { Project } from "../../types/project";
-import { ProjectExportRecord } from "../../utils/projectExport";
-import { encodeProjectId } from "../../utils/projectUtils";
-import ToastUtils from "../../utils/toastUtil";
+} from "@/hooks/clientHooks/projectHooks";
+import { Project } from "@/types/project";
+import { ProjectExportRecord } from "@/utils/projectExport";
+import { encodeProjectId } from "@/utils/projectUtils";
+import ToastUtils from "@/utils/toastUtil";
 
 const ClientProjects: React.FC = () => {
   const navigate = useNavigate();
@@ -59,7 +59,7 @@ const ClientProjects: React.FC = () => {
 
   // Bulk operations
   const handleBulkExport = async (selectedIds: string[]) => {
-    const projectsRaw = (projectsResponse?.data || []) as HookProject[];
+    const projectsRaw = ((projectsResponse as Record<string, any>)?.data || []) as HookProject[];
     const { exportSelectedProjects } = await import("../../utils/projectExport");
     try {
       await exportSelectedProjects(
@@ -75,7 +75,7 @@ const ClientProjects: React.FC = () => {
   };
 
   // Convert HookProject[] to GlobalProject[] for the container
-  const projects = (projectsResponse?.data as unknown as Project[]) || [];
+  const projects = ((projectsResponse as Record<string, any>)?.data as unknown as Project[]) || [];
 
   return (
     <>

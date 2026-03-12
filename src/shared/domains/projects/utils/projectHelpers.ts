@@ -3,7 +3,7 @@
  * Shared utility functions for project-related operations
  */
 
-import logger from "../../../../utils/logger";
+import logger from "@/utils/logger";
 
 type Project = {
   id?: string | number;

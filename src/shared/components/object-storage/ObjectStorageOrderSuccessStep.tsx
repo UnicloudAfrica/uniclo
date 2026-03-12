@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle2, Download, Loader2 } from "lucide-react";
-import objectStorageApi from "../../../services/objectStorageApi";
-import { useObjectStorageBroadcasting } from "../../../hooks/useObjectStorageBroadcasting";
+import objectStorageApi from "@/services/objectStorageApi";
+import { useObjectStorageBroadcasting } from "@/hooks/useObjectStorageBroadcasting";
 import SetupProgressCard from "../projects/details/SetupProgressCard";
 import { ModernButton } from "../ui";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "@/utils/toastUtil";
 import ObjectStorageCredentials from "./ObjectStorageCredentials";
-import logger from "../../../utils/logger";
+import logger from "@/utils/logger";
 
 interface ObjectStorageOrderSuccessStepProps {
   accountId?: string | null;

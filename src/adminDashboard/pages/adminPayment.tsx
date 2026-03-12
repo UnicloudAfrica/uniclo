@@ -10,14 +10,14 @@ import {
   Wallet,
 } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
-import ResourceHero from "../../shared/components/ui/ResourceHero";
+import ResourceHero from "@/shared/components/ui/ResourceHero";
 import ResourceDataExplorer from "../components/ResourceDataExplorer";
-import { ModernCard } from "../../shared/components/ui";
-import { ModernButton } from "../../shared/components/ui";
+import { ModernCard } from "@/shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
 import {
   useDownloadAdminTransactionReceipt,
   useFetchAdminTransactions,
-} from "../../hooks/adminHooks/paymentHooks";
+} from "@/hooks/adminHooks/paymentHooks";
 
 interface StatusOption {
   label: string;
@@ -164,9 +164,13 @@ export default function AdminPayment() {
     useDownloadAdminTransactionReceipt();
 
   const typedResponse = response as TransactionCollectionResponse | undefined;
-  const transactions: ExplorerRow[] = Array.isArray(typedResponse?.data)
-    ? typedResponse.data.map((transaction) => transaction as ExplorerRow)
-    : [];
+  const transactions: ExplorerRow[] = useMemo(
+    () =>
+      Array.isArray(typedResponse?.data)
+        ? typedResponse.data.map((transaction) => transaction as ExplorerRow)
+        : [],
+    [typedResponse]
+  );
   const meta = (typedResponse?.meta ?? {}) as TransactionMeta;
   const totalRecords = meta?.total ?? transactions.length;
 

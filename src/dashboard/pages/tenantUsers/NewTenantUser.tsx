@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TenantPageShell from "../../components/TenantPageShell";
-import { ModernCard } from "../../../shared/components/ui";
-import { ModernButton } from "../../../shared/components/ui";
-import { ModernInput } from "../../../shared/components/ui";
-import ToastUtils from "../../../utils/toastUtil";
-import { useCreateTenantAdmin } from "../../../hooks/adminUserHooks";
+import { ModernCard } from "@/shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
+import { ModernInput } from "@/shared/components/ui";
+import ToastUtils from "@/utils/toastUtil";
+import { useCreateTenantAdmin } from "@/hooks/adminUserHooks";
 
 const defaultForm = {
   first_name: "",
@@ -63,8 +63,8 @@ export default function InviteTenantUserPage() {
       navigate("/dashboard/clients");
     } catch (error) {
       ToastUtils.error(
-        (error as any)?.response?.data?.message ||
-          (error as any)?.message ||
+        (error as Record<string, any>)?.response?.data?.message ||
+          (error as Error)?.message ||
           "Failed to invite tenant user."
       );
     } finally {

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Layers, Globe, Network, Shield, HardDrive } from "lucide-react";
-import { encodeProjectId } from "../../../shared/domains/projects/utils/projectHelpers";
+import { encodeProjectId } from "@/shared/domains/projects/utils/projectHelpers";
 import { DisplayInstance, GenericRecord } from "../adminInstancesDetails";
 
 // Implied imports from main file context, but for extraction we assume they are available or passed.

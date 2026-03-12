@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Plus, RefreshCw, GitMerge } from "lucide-react";
 import AdminPageShell from "../../components/AdminPageShell";
-import ModernButton from "../../../shared/components/ui/ModernButton";
-import { VpcPeeringOverview } from "../../../shared/components/infrastructure";
+import ModernButton from "@/shared/components/ui/ModernButton";
+import { VpcPeeringOverview } from "@/shared/components/infrastructure";
 import {
   useVpcPeering,
   useCreateVpcPeering,
@@ -11,12 +11,20 @@ import {
   useRejectVpcPeering,
   useDeleteVpcPeering,
   useVpcs,
-} from "../../../shared/hooks/vpcInfraHooks";
+} from "@/shared/hooks/vpcInfraHooks";
+import { useFetchProjectById } from "@/shared/hooks/resources/projectHooks";
+import { isFeatureSupported } from "@/utils/featureGating";
+import { UnsupportedFeature } from "@/shared/components/UnsupportedFeature";
 
 const AdminVpcPeering: React.FC = () => {
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get("project") || "";
   const region = searchParams.get("region") || "";
+
+  const { data: projectData } = useFetchProjectById(projectId);
+  const projectObj =
+    projectData && typeof projectData === "object" ? (projectData as Record<string, any>) : null;
+  const provider = projectObj?.provider || searchParams.get("provider");
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [vpcId, setVpcId] = useState("");
@@ -29,6 +37,14 @@ const AdminVpcPeering: React.FC = () => {
   const { mutate: acceptPeering } = useAcceptVpcPeering();
   const { mutate: rejectPeering } = useRejectVpcPeering();
   const { mutate: deletePeering } = useDeleteVpcPeering();
+
+  if (provider && !isFeatureSupported(provider, "vpc_peering")) {
+    return (
+      <AdminPageShell title="VPC Peering" description="">
+        <UnsupportedFeature feature="VPC Peering" provider={provider} />
+      </AdminPageShell>
+    );
+  }
 
   const handleCreate = () => {
     if (!vpcId || !peerVpcId) return;

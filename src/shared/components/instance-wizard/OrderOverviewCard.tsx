@@ -1,8 +1,8 @@
 import React from "react";
 import { ModernCard } from "../ui";
 import { StatusPill, type StatusTone } from "../ui";
-import { Configuration } from "../../../types/InstanceConfiguration";
-import { formatCurrencyValue } from "../../../utils/instanceCreationUtils";
+import { Configuration } from "@/types/InstanceConfiguration";
+import { formatCurrencyValue } from "@/utils/instanceCreationUtils";
 
 export type TransactionSummary = {
   identifier?: string;

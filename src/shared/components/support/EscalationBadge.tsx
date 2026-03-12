@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { ESCALATION_CONFIG } from "./threadTypes";
 
 interface EscalationBadgeProps {
@@ -7,7 +7,7 @@ interface EscalationBadgeProps {
   size?: "sm" | "md" | "lg";
 }
 
-export const EscalationBadge: React.FC<EscalationBadgeProps> = ({
+const EscalationBadgeBase: React.FC<EscalationBadgeProps> = ({
   level,
   showLabel = true,
   size = "md",
@@ -34,5 +34,7 @@ export const EscalationBadge: React.FC<EscalationBadgeProps> = ({
     </div>
   );
 };
+
+export const EscalationBadge = memo(EscalationBadgeBase);
 
 export default EscalationBadge;

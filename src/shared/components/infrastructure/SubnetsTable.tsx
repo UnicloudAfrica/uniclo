@@ -1,6 +1,7 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { Network } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
+import { ResourceEmptyState } from "../ui/ResourceEmptyState";
 import type { Subnet } from "./types";
 
 interface SubnetsTableProps {
@@ -9,6 +10,7 @@ interface SubnetsTableProps {
   showVpcColumn?: boolean;
   showDefaultBadge?: boolean;
   emptyMessage?: string;
+  emptyAction?: ReactNode;
   onDelete?: (subnet: Subnet) => void;
   showActions?: boolean;
 }
@@ -19,6 +21,7 @@ const SubnetsTable: React.FC<SubnetsTableProps> = ({
   showVpcColumn = true,
   showDefaultBadge = false,
   emptyMessage = "No subnets found",
+  emptyAction,
   onDelete,
   showActions = false,
 }) => {
@@ -43,10 +46,12 @@ const SubnetsTable: React.FC<SubnetsTableProps> = ({
 
   if (subnets.length === 0) {
     return (
-      <ModernCard className="p-12 text-center">
-        <Network className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-        <div className="text-gray-500">{emptyMessage}</div>
-      </ModernCard>
+      <ResourceEmptyState
+        title="No Subnets"
+        message={emptyMessage}
+        icon={<Network className="w-5 h-5" />}
+        action={emptyAction}
+      />
     );
   }
 

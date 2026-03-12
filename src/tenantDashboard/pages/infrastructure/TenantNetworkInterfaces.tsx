@@ -2,8 +2,8 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Cable } from "lucide-react";
 import TenantPageShell from "../../../dashboard/components/TenantPageShell";
-import NetworkInterfacesContainer from "../../../shared/components/infrastructure/containers/NetworkInterfacesContainer";
-import { useFetchNetworkInterfaces } from "../../../hooks/adminHooks/networkHooks";
+import NetworkInterfacesContainer from "@/shared/components/infrastructure/containers/NetworkInterfacesContainer";
+import { useFetchNetworkInterfaces } from "@/hooks/adminHooks/networkHooks";
 
 /**
  * Tenant Network Interfaces - thin wrapper.
@@ -23,7 +23,7 @@ const TenantNetworkInterfaces: React.FC = () => {
       hierarchy="tenant"
       projectId={projectId}
       region={region}
-      hooks={hooks}
+      hooks={hooks as any}
       wrapper={({ headerActions, children }) => (
         <TenantPageShell
           title={

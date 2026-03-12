@@ -1,5 +1,5 @@
 import { X, Loader2 } from "lucide-react";
-import { useDeleteAdmin } from "../../../hooks/adminHooks/adminHooks";
+import { useDeleteAdmin } from "@/hooks/adminHooks/adminHooks";
 
 export const DeleteAdminModal = ({ isOpen, onClose, admin }: any) => {
   // Use the useDeleteAdmin hook

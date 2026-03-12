@@ -4,15 +4,13 @@ import {
   DollarSign,
   TrendingUp,
   TrendingDown,
-  Clock,
   CheckCircle,
-  AlertCircle,
   Filter,
   Download,
   RefreshCw,
 } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
-import { ModernButton } from "../../shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
 import adminApi from "../../index/admin/api";
 
 // Types
@@ -49,11 +47,13 @@ interface SettlementSummary {
 }
 
 // API hooks
-const useSettlements = (params: Record<string, any>) => {
+const useSettlements = (params: Record<string, unknown>) => {
   return useQuery({
     queryKey: ["settlements", params],
     queryFn: async () => {
-      const response = await (adminApi.get as any)("/settlements", { params });
+      const response = await adminApi.get<{ data: { data: Settlement[] } }>("/settlements", {
+        params,
+      });
       return response.data;
     },
   });
@@ -63,8 +63,8 @@ const useSettlementSummary = () => {
   return useQuery({
     queryKey: ["settlements", "summary"],
     queryFn: async () => {
-      const response = await adminApi.get("/settlements/summary");
-      return (response as any).data.data as SettlementSummary;
+      const response = await adminApi.get<{ data: SettlementSummary }>("/settlements/summary");
+      return response.data.data;
     },
   });
 };
@@ -174,8 +174,8 @@ const SettlementsDashboard: React.FC = () => {
   const markSettled = useMarkSettled();
   const sendReminder = useSendReminder();
 
-  const settlements = (settlementData as any)?.data?.data || [];
-  const _pagination = (settlementData as any)?.data || {};
+  const settlements = settlementData?.data?.data || [];
+  const _pagination = settlementData?.data || {};
 
   const handleMarkSettled = async (id: number) => {
     if (globalThis.window.confirm("Mark this settlement as paid?")) {
@@ -188,8 +188,9 @@ const SettlementsDashboard: React.FC = () => {
       try {
         await sendReminder.mutateAsync(id);
         alert("Reminder sent successfully!");
-      } catch (error: any) {
-        alert(error.response?.data?.error || "Failed to send reminder");
+      } catch (error: unknown) {
+        const err = error as { response?: { data?: { error?: string } } };
+        alert(err.response?.data?.error || "Failed to send reminder");
       }
     }
   };
@@ -200,7 +201,7 @@ const SettlementsDashboard: React.FC = () => {
     if (filters.payer_type) params.append("payer_type", filters.payer_type);
 
     // Open export URL in new tab (will download CSV)
-    const baseUrl = (adminApi as any).defaults.baseURL || "";
+    const baseUrl = (adminApi.defaults as unknown as { baseURL?: string }).baseURL || "";
     globalThis.window.open(`${baseUrl}/settlements/export?${params.toString()}`, "_blank");
   };
 

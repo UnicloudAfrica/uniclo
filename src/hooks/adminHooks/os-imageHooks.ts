@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
-import logger from "../../utils/logger";
+import logger from "@/utils/logger";
 
 type CollectionResponse = {
   data: unknown[];
@@ -13,6 +13,7 @@ type CollectionResponse = {
 const buildQueryString = (params: any = {}) => {
   const query = new URLSearchParams();
   if (params.region) query.append("region", params.region);
+  if (params.provider) query.append("provider", params.provider);
   if (params.page) query.append("page", params.page);
   if (params.perPage) query.append("per_page", params.perPage);
   if (params.search) query.append("search", params.search);
@@ -34,8 +35,8 @@ const normaliseCollectionResponse = (res: any) => {
   };
 };
 
-const fetchOsImages = async ({ region, page, perPage, search }: any) => {
-  const queryString = buildQueryString({ region, page, perPage, search });
+const fetchOsImages = async ({ region, provider, page, perPage, search }: any) => {
+  const queryString = buildQueryString({ region, provider, page, perPage, search });
   const res = await silentApi("GET", `/product-os-image${queryString}`);
   const payload = normaliseCollectionResponse(res);
   if (!Array.isArray(payload.data)) {
@@ -78,12 +79,12 @@ const deleteOsImage = async (id: any) => {
 
 export const useFetchOsImages = (
   region: any,
-  { page = 1, perPage = 10, search = "" }: any = {},
+  { page = 1, perPage = 10, search = "", provider = "" }: any = {},
   options: any = {}
 ) => {
   return useQuery<CollectionResponse>({
-    queryKey: ["osImages", region, page, perPage, search],
-    queryFn: () => fetchOsImages({ region, page, perPage, search }),
+    queryKey: ["osImages", region, provider, page, perPage, search],
+    queryFn: () => fetchOsImages({ region, provider, page, perPage, search }),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     enabled: !!region,

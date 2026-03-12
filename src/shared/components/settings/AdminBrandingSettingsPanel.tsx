@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "@/utils/toastUtil";
 import {
   generateColorPalette,
   useFetchAdminBranding,
   useResetAdminBranding,
   useUpdateAdminBranding,
-} from "../../../hooks/brandingHooks";
+} from "@/hooks/brandingHooks";
 import {
   BrandingSettingsActions,
   BrandingSettingsSections,
@@ -40,8 +40,9 @@ const useAdminBrandingSettingsState = () => {
   const [files, setFiles] = useState<Record<string, File>>({});
 
   useEffect(() => {
-    if ((brandingData as any)?.settings) {
-      const { branding, business } = (brandingData as any).settings;
+    const data = brandingData as Record<string, any>;
+    if (data?.settings) {
+      const { branding, business } = data.settings;
       setFormData({
         primary_color: branding?.primary_color || "var(--theme-color)",
         secondary_color: branding?.secondary_color || "var(--secondary-color)",
@@ -71,10 +72,11 @@ const useAdminBrandingSettingsState = () => {
   };
 
   const handleSave = () => {
+    const data = brandingData as Record<string, any>;
     const hasExistingFavicon = Boolean(
-      (brandingData as any)?.resolved?.favicon ||
-      (brandingData as any)?.settings?.branding?.favicon_url ||
-      (brandingData as any)?.settings?.branding?.favicon_path
+      data?.resolved?.favicon ||
+      data?.settings?.branding?.favicon_url ||
+      data?.settings?.branding?.favicon_path
     );
     const isLogoUpdate = Boolean(files.logo);
     const isFaviconUpdate = Boolean(files.favicon);

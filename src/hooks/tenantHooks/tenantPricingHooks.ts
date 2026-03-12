@@ -3,7 +3,7 @@ import tenantSilentApi from "../../index/tenant/silentTenant";
 import tenantApi from "../../index/tenant/tenantApi";
 import tenantMultipartApi from "../../index/tenant/multipartTenantApi";
 import tenantFileApi from "../../index/tenant/fileapi";
-import logger from "../../utils/logger";
+import logger from "@/utils/logger";
 
 type QueryMeta = Record<string, unknown>;
 
@@ -112,12 +112,17 @@ const normalizeCollectionResponse = (res: unknown): TenantPricingOverridesRespon
       ? nestedData
       : [];
 
+  let meta = record.meta as QueryMeta | undefined;
+  if (!meta) {
+    meta = record.pagination as QueryMeta | undefined;
+  }
+  if (!meta) {
+    meta = record as QueryMeta;
+  }
+
   return {
     data: data as TenantPricingOverride[],
-    meta:
-      (record.meta as QueryMeta | undefined) ??
-      (record.pagination as QueryMeta | undefined) ??
-      record,
+    meta,
     message: typeof record.message === "string" ? record.message : undefined,
     success: typeof record.success === "boolean" ? record.success : undefined,
   };
@@ -144,7 +149,7 @@ const fetchTenantPricingOverrides = async (
   const res = await tenantSilentApi("GET", `/admin/product-pricing${queryString}`);
   const payload = normalizeCollectionResponse(res);
   if (!Array.isArray(payload.data)) {
-    throw new Error("Failed to fetch tenant price settings");
+    throw new TypeError("Failed to fetch tenant price settings: data is not an array");
   }
   return payload;
 };
@@ -152,7 +157,7 @@ const fetchTenantPricingOverrides = async (
 const createTenantPricingOverride = async (
   payload: TenantPricingCreatePayload
 ): Promise<unknown> => {
-  const res = await tenantApi("POST", "/admin/product-pricing", payload as any);
+  const res = await tenantApi("POST", "/admin/product-pricing", payload as never);
   if (!res) {
     throw new Error("Failed to set tenant price setting");
   }
@@ -166,7 +171,7 @@ const updateTenantPricingOverride = async ({
   if (!id) {
     throw new Error("Pricing identifier is required");
   }
-  const res = await tenantApi("PATCH", `/admin/product-pricing/${id}`, payload as any);
+  const res = await tenantApi("PATCH", `/admin/product-pricing/${id}`, payload as never);
   if (!res) {
     throw new Error("Failed to update tenant price setting");
   }

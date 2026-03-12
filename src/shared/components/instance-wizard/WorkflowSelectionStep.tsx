@@ -4,7 +4,7 @@ import { ModernCard } from "../ui";
 import { ModernButton } from "../ui";
 import { ModernSelect } from "../ui";
 import CustomerContextSelector from "../common/CustomerContextSelector";
-import { Option } from "../../../types/InstanceConfiguration";
+import { Option } from "@/types/InstanceConfiguration";
 
 interface WorkflowSelectionStepProps {
   title?: string;
@@ -219,15 +219,15 @@ const WorkflowSelectionStep: React.FC<WorkflowSelectionStepProps> = ({
 
           {showContextSelector && (
             <CustomerContextSelector
-              contextType={contextType as any}
+              contextType={contextType as never}
               setContextType={onContextTypeChange}
               selectedTenantId={selectedTenantId}
               setSelectedTenantId={onTenantChange}
               selectedUserId={selectedUserId}
               setSelectedUserId={onUserChange}
-              tenants={tenants as any}
+              tenants={tenants as never}
               isTenantsFetching={isTenantsFetching}
-              userPool={userPool as any}
+              userPool={userPool as never}
               isUsersFetching={isUsersFetching}
             />
           )}

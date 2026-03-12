@@ -19,8 +19,8 @@ import {
   usePaySettlements,
   type InvoiceItem,
   type EnforcementSummary,
-} from "../../hooks/useTenantBilling";
-import logger from "../../utils/logger";
+} from "@/hooks/useTenantBilling";
+import logger from "@/utils/logger";
 
 type InvoiceStatus = "paid" | "pending" | "overdue" | "void";
 type PaymentMethod = "wallet" | "bank_transfer" | "card";

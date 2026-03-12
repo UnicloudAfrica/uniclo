@@ -1,5 +1,5 @@
 import React from "react";
-import SubheaderBlock from "../../shared/components/SubheaderBlock";
+import SubheaderBlock from "@/shared/components/SubheaderBlock";
 
 interface BreadcrumbItem {
   label: string;

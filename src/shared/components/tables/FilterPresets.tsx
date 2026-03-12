@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { Star, Flame, Zap } from "lucide-react";
 
 interface FilterPresetsProps {
@@ -65,4 +65,4 @@ const FilterPresets: React.FC<FilterPresetsProps> = ({ activePreset, onPresetCha
   );
 };
 
-export default FilterPresets;
+export default memo(FilterPresets);

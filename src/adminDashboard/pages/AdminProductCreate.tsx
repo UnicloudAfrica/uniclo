@@ -6,24 +6,24 @@ import Papa from "papaparse";
 import { read as readWorkbook, utils as xlsxUtils } from "xlsx";
 import AdminActiveTab from "../components/adminActiveTab";
 import AdminPageShell from "../components/AdminPageShell";
-import { ModernCard } from "../../shared/components/ui";
-import { ModernButton } from "../../shared/components/ui";
+import { ModernCard } from "@/shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
 
-import SelectableInput from "../../shared/components/ui/SelectableInput";
-import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
-import { useCreateProducts } from "../../hooks/adminHooks/adminProductHooks";
-import ToastUtils from "../../utils/toastUtil";
+import SelectableInput from "@/shared/components/ui/SelectableInput";
+import { useFetchRegions } from "@/hooks/adminHooks/regionHooks";
+import { useCreateProducts } from "@/hooks/adminHooks/adminProductHooks";
+import ToastUtils from "@/utils/toastUtil";
 
-import useAuthRedirect from "../../utils/adminAuthRedirect";
-import { useProductForm } from "../../hooks/adminHooks/useProductForm";
-import ModernTable from "../../shared/components/ui/ModernTable";
+import useAuthRedirect from "@/utils/adminAuthRedirect";
+import { useProductForm } from "@/hooks/adminHooks/useProductForm";
+import ModernTable from "@/shared/components/ui/ModernTable";
 import {
   ProductEntry,
   OBJECT_STORAGE_TYPE,
   productTypes,
   mapRowToEntry,
-} from "../../utils/productImportUtils";
-import logger from "../../utils/logger";
+} from "@/utils/productImportUtils";
+import logger from "@/utils/logger";
 
 interface RegionOption {
   code: string;
@@ -39,10 +39,12 @@ const AdminProductCreate = () => {
 
   const { isFetching: isRegionsFetching, data: regionsData } = useFetchRegions();
   const { mutate: createProducts, isPending: isCreating } = useCreateProducts();
-  const regions = useMemo<RegionOption[]>(
-    () => (Array.isArray(regionsData) ? (regionsData as any as RegionOption[]) : []),
-    [regionsData]
-  );
+  const regions = useMemo<RegionOption[]>(() => {
+    if (!Array.isArray(regionsData)) return [];
+    return (regionsData as unknown as RegionOption[]).filter(
+      (r) => r.name && r.is_active !== false
+    );
+  }, [regionsData]);
 
   const regionLookup = useMemo(() => {
     return regions.reduce((acc: Record<string, RegionOption>, region) => {
@@ -72,7 +74,7 @@ const AdminProductCreate = () => {
     }
 
     const payload = {
-      products: entries.map((entry: any) => ({
+      products: entries.map((entry: ProductEntry) => ({
         name: entry.name.trim(),
         productable_type: entry.productable_type,
         productable_id: Number(entry.productable_id),
@@ -87,9 +89,9 @@ const AdminProductCreate = () => {
         ToastUtils.success("Products added successfully!");
         navigate("/admin-dashboard/products");
       },
-      onError: (error: any) => {
-        const message =
-          error?.response?.data?.message || error?.message || "Failed to add products.";
+      onError: (error: unknown) => {
+        const err = error as { response?: { data?: { message?: string } }; message?: string };
+        const message = err?.response?.data?.message || err?.message || "Failed to add products.";
         ToastUtils.error(message);
       },
     });
@@ -107,14 +109,14 @@ const AdminProductCreate = () => {
     setIsImporting(true);
 
     try {
-      let rows: any[] = [];
+      let rows: Record<string, unknown>[] = [];
       if (extension === "csv") {
         rows = await new Promise((resolve, reject) => {
           Papa.parse(file, {
             header: true,
             skipEmptyLines: true,
-            complete: (results: any) => resolve(results.data),
-            error: (error: any) => reject(error),
+            complete: (results: Papa.ParseResult<Record<string, unknown>>) => resolve(results.data),
+            error: (error: Error) => reject(error),
           });
         });
       } else if (extension === "xlsx" || extension === "xls") {
@@ -140,7 +142,7 @@ const AdminProductCreate = () => {
       }
 
       const nextEntries: ProductEntry[] = [];
-      const errors: any[] = [];
+      const errors: unknown[] = [];
 
       rows.forEach((row, index) => {
         const result = mapRowToEntry(row, index, regionLookup);
@@ -180,7 +182,7 @@ const AdminProductCreate = () => {
       {
         key: "index",
         header: "#",
-        render: (_: any, __: any, index: number) => (
+        render: (_: unknown, __: unknown, index: number) => (
           <span className="text-gray-500">{index + 1}</span>
         ),
         className: "w-12",
@@ -188,7 +190,7 @@ const AdminProductCreate = () => {
       {
         key: "name",
         header: "Product Name",
-        render: (_: any, entry: ProductEntry, index: number) => (
+        render: (_: unknown, entry: ProductEntry, index: number) => (
           <div>
             <input
               type="text"
@@ -207,7 +209,7 @@ const AdminProductCreate = () => {
       {
         key: "region",
         header: "Region",
-        render: (_: any, entry: ProductEntry, index: number) => (
+        render: (_: unknown, entry: ProductEntry, index: number) => (
           <div>
             <select
               value={entry.region}
@@ -234,7 +236,7 @@ const AdminProductCreate = () => {
       {
         key: "type",
         header: "Type",
-        render: (_: any, entry: ProductEntry, index: number) => (
+        render: (_: unknown, entry: ProductEntry, index: number) => (
           <div>
             <select
               value={entry.productable_type}
@@ -243,7 +245,7 @@ const AdminProductCreate = () => {
               disabled={isSubmitting}
             >
               <option value="">Select type</option>
-              {productTypes.map((type: any) => (
+              {productTypes.map((type: { value: string; label: string }) => (
                 <option key={type.value} value={type.value}>
                   {type.label}
                 </option>
@@ -258,7 +260,7 @@ const AdminProductCreate = () => {
       {
         key: "product",
         header: "Product",
-        render: (_: any, entry: ProductEntry, index: number) => {
+        render: (_: unknown, entry: ProductEntry, index: number) => {
           const isObjectStorageRow = entry.productable_type === OBJECT_STORAGE_TYPE;
           const isProductDisabled =
             isObjectStorageRow ||
@@ -336,11 +338,13 @@ const AdminProductCreate = () => {
           return (
             <div>
               <SelectableInput
-                options={entry.options as any}
+                options={entry.options as unknown as Record<string, unknown>[]}
                 value={entry.productable_id}
                 searchValue={entry.productSearch}
-                onSearchChange={(val: string) => handleProductSearchChange(index, val) as any}
-                onSelect={(option: any) => handleProductSelect(index, option) as any}
+                onSearchChange={(val: string) => handleProductSearchChange(index, val)}
+                onSelect={(option: unknown) =>
+                  handleProductSelect(index, option as Record<string, unknown>)
+                }
                 placeholder={productPlaceholder}
                 disabled={isProductDisabled}
                 isLoading={entry.loadingOptions}
@@ -357,7 +361,7 @@ const AdminProductCreate = () => {
       {
         key: "price",
         header: "Price (USD)",
-        render: (_: any, entry: ProductEntry, index: number) => {
+        render: (_: unknown, entry: ProductEntry, index: number) => {
           const isObjectStorageRow = entry.productable_type === OBJECT_STORAGE_TYPE;
           return (
             <div>
@@ -381,7 +385,7 @@ const AdminProductCreate = () => {
       {
         key: "actions",
         header: "Actions",
-        render: (_: any, __: any, index: number) => (
+        render: (_: unknown, __: unknown, index: number) => (
           <div className="text-right">
             {entries.length > 1 && (
               <ModernButton

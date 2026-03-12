@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
-import ToastUtils from "../../../../utils/toastUtil";
-import { useUpdateBandwidthProduct } from "../../../../hooks/adminHooks/bandwidthHooks";
-import logger from "../../../../utils/logger";
+import ToastUtils from "@/utils/toastUtil";
+import { useUpdateBandwidthProduct } from "@/hooks/adminHooks/bandwidthHooks";
+import logger from "@/utils/logger";
 
 const EditBandwidthModal = ({ isOpen, onClose, bandwidth }: any) => {
   const [formData, setFormData] = useState({

@@ -6,10 +6,10 @@ import {
   DEFAULT_OBJECT_STORAGE_PRICE_PER_GB,
   objectStorageNameForQuota,
   typeToEndpoint,
-} from "../../utils/productImportUtils";
+} from "@/utils/productImportUtils";
 import silentApi from "../../index/admin/silent";
-import ToastUtils from "../../utils/toastUtil";
-import logger from "../../utils/logger";
+import ToastUtils from "@/utils/toastUtil";
+import logger from "@/utils/logger";
 
 export const useProductForm = (regionLookup: Record<string, any>) => {
   const [entries, setEntries] = useState<ProductEntry[]>([createEmptyEntry()]);

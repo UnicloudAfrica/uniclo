@@ -1,13 +1,13 @@
 import React from "react";
-import useAdminAuthStore from "../../stores/adminAuthStore";
-import { logoutActiveSession } from "../../stores/sessionUtils";
-import { DashboardSidebar } from "../../shared/components/sidebar";
-import { adminMenuItems } from "../../shared/config/sidebarMenus";
+import useAdminAuthStore from "@/stores/adminAuthStore";
+import { logoutActiveSession } from "@/stores/sessionUtils";
+import { DashboardSidebar } from "@/shared/components/sidebar";
+import { adminMenuItems } from "@/shared/config/sidebarMenus";
 import { useNavigate } from "react-router-dom";
-import useSidebarStore from "../../stores/sidebarStore";
-import { useAdminBrandingTheme } from "../../hooks/useBrandingTheme";
+import useSidebarStore from "@/stores/sidebarStore";
+import { useAdminBrandingTheme } from "@/hooks/useBrandingTheme";
 import { useAdminShellContext } from "./AdminShellContext";
-import logger from "../../utils/logger";
+import logger from "@/utils/logger";
 
 interface AdminSidebarProps {
   forceRender?: boolean;

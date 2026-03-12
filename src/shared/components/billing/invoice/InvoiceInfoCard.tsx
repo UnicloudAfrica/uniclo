@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect } from "react";
 import { CreditCard, Globe } from "lucide-react";
 import { ModernInput } from "../../ui";
-import { useFetchCountries } from "../../../../hooks/adminHooks/countriesHooks";
+import { useFetchCountries } from "@/hooks/adminHooks/countriesHooks";
 import { InvoiceFormData, UpdateInvoiceFormData } from "../types";
 
 type CountryRecord = {
@@ -39,7 +39,10 @@ const InvoiceInfoCard: React.FC<InvoiceInfoCardProps> = ({
     "w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400";
 
   const { data: countries = [], isFetching: isCountriesFetching } = useFetchCountries();
-  const countryList = Array.isArray(countries) ? (countries as CountryRecord[]) : [];
+  const countryList = useMemo(
+    () => (Array.isArray(countries) ? (countries as CountryRecord[]) : []),
+    [countries]
+  );
 
   // Calculate default dates
   const today = new Date().toISOString().split("T")[0];
@@ -69,7 +72,7 @@ const InvoiceInfoCard: React.FC<InvoiceInfoCardProps> = ({
         "USD"
       ).toUpperCase();
     };
-  }, [countries]);
+  }, [countries, countryList]);
 
   const handleCountrySelect = (value: string) => {
     if (!onCurrencyChange) return;

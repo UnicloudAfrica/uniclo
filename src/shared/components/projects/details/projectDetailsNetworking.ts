@@ -14,6 +14,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import type { ResourceNavItem } from "./ResourceLayout";
 import type { ResourceCounts } from "./ProjectUnifiedView";
+import { isFeatureSupported } from "@/utils/featureGating";
 
 export type NetworkingResourceId =
   | "vpcs"
@@ -130,12 +131,31 @@ const COUNT_KEY_MAP: Record<NetworkingResourceId, keyof ResourceCounts> = {
   acls: "network_acls",
 };
 
+const RESOURCE_FEATURE_MAP: Record<NetworkingResourceId, string> = {
+  vpcs: "vpcs",
+  subnets: "subnets",
+  routes: "route_tables",
+  sgs: "security_groups",
+  igw: "internet_gateways",
+  nat: "nat_gateways",
+  eips: "elastic_ips",
+  enis: "network_interfaces",
+  peering: "vpc_peering",
+  lbs: "load_balancers",
+  acls: "network_acls",
+};
+
 export const getNetworkingResourceMeta = (id: string): NetworkingResourceDefinition | undefined => {
   return NETWORKING_RESOURCE_DEFS.find((item) => item.id === id);
 };
 
-export const buildNetworkingItems = (counts: ResourceCounts): ResourceNavItem[] => {
-  return NETWORKING_RESOURCE_DEFS.map((item) => ({
+export const buildNetworkingItems = (
+  counts: ResourceCounts,
+  provider?: string
+): ResourceNavItem[] => {
+  return NETWORKING_RESOURCE_DEFS.filter((item) =>
+    isFeatureSupported(provider, RESOURCE_FEATURE_MAP[item.id])
+  ).map((item) => ({
     ...item,
     count: counts[COUNT_KEY_MAP[item.id]] as number | undefined,
   }));

@@ -4,14 +4,14 @@ import { Globe2 } from "lucide-react";
 import ClientPageShell from "../components/ClientPageShell";
 import ElasticIpsContainer, {
   ElasticIpHooks,
-} from "../../shared/components/infrastructure/containers/ElasticIpsContainer";
+} from "@/shared/components/infrastructure/containers/ElasticIpsContainer";
 import {
   useElasticIps,
   useCreateElasticIp,
   useDeleteElasticIp,
   useAssociateElasticIp,
   useDisassociateElasticIp,
-} from "../../shared/hooks/vpcInfraHooks";
+} from "@/shared/hooks/vpcInfraHooks";
 
 /**
  * Client Elastic IPs page - truly thin wrapper.

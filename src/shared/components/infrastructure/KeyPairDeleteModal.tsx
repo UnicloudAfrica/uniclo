@@ -1,6 +1,6 @@
 import React from "react";
 import ModernModal from "../ui/ModernModal";
-import { designTokens } from "../../../styles/designTokens";
+import { designTokens } from "@/styles/designTokens";
 
 interface KeyPairDeleteModalProps {
   isOpen: boolean;

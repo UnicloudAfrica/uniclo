@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { X, Search, User } from "lucide-react";
-import { ModernButton } from "../../shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
 import adminSilentApi from "../../index/admin/silent";
-import logger from "../../utils/logger";
+import logger from "@/utils/logger";
 
 /**
  * UserSelectModal - Modal for selecting a user to assign leads to

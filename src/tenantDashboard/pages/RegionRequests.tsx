@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Plus, MapPin } from "lucide-react";
-import tenantRegionApi from "../../services/tenantRegionApi";
+import tenantRegionApi from "@/services/tenantRegionApi";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
 
 interface Region {

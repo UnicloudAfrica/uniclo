@@ -1,18 +1,2 @@
-import React from "react";
-
-import DashboardPageShell from "../../shared/layouts/DashboardPageShell";
-
-interface TenantPageShellProps {
-  [key: string]: any;
-}
-
-const TenantPageShell: React.FC<TenantPageShellProps> = (props: any) => (
-  <DashboardPageShell
-    homeHref="/dashboard"
-    mainClassName="tenant-dashboard-shell"
-    backgroundColor="var(--theme-surface-alt)"
-    {...props}
-  />
-);
-
-export default TenantPageShell;
+/** @deprecated Import from "@/shared/layouts/TenantPageShell" instead */
+export { default } from "@/shared/layouts/TenantPageShell";

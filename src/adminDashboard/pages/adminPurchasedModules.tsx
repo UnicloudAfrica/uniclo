@@ -1,10 +1,10 @@
-import useAuthRedirect from "../../utils/adminAuthRedirect";
-import { useFetchProducts } from "../../hooks/adminHooks/productsHook";
+import useAuthRedirect from "@/utils/adminAuthRedirect";
+import { useFetchProducts } from "@/hooks/adminHooks/productsHooks";
 import AdminActiveTab from "../components/adminActiveTab";
-import ModernTable, { Column } from "../../shared/components/ui/ModernTable";
-import { ModernCard } from "../../shared/components/ui";
-import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
-import { ModernButton } from "../../shared/components/ui";
+import ModernTable, { Column } from "@/shared/components/ui/ModernTable";
+import { ModernCard } from "@/shared/components/ui";
+import ModernStatsCard from "@/shared/components/ui/ModernStatsCard";
+import { ModernButton } from "@/shared/components/ui";
 import {
   Loader2,
   Package,
@@ -16,8 +16,8 @@ import {
   Trash2,
   Download,
 } from "lucide-react";
-import { designTokens } from "../../styles/designTokens";
-import logger from "../../utils/logger";
+import { designTokens } from "@/styles/designTokens";
+import logger from "@/utils/logger";
 
 interface PurchasedModule {
   id?: string | number;

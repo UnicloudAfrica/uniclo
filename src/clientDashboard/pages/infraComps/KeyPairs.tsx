@@ -1,5 +1,12 @@
 import React from "react";
-import KeyPairsSection from "../../../shared/components/infrastructure/KeyPairsSection";
+import KeyPairsContainer, {
+  type KeyPairHooks,
+} from "@/shared/components/infrastructure/containers/KeyPairsContainer";
+import {
+  useFetchClientKeyPairs,
+  useDeleteClientKeyPair,
+  useSyncKeyPairs,
+} from "@/shared/hooks/keyPairsHooks";
 
 interface KeyPairsProps {
   projectId?: string;
@@ -7,6 +14,21 @@ interface KeyPairsProps {
   onStatsUpdate?: (count: number) => void;
 }
 
-const KeyPairs: React.FC<KeyPairsProps> = (props) => <KeyPairsSection {...props} />;
+const hooks: KeyPairHooks = {
+  useList: useFetchClientKeyPairs as KeyPairHooks["useList"],
+  useDelete: useDeleteClientKeyPair as KeyPairHooks["useDelete"],
+  useSync: useSyncKeyPairs as KeyPairHooks["useSync"],
+};
+
+const KeyPairs: React.FC<KeyPairsProps> = ({ projectId = "", region = "", onStatsUpdate }) => (
+  <KeyPairsContainer
+    hierarchy="client"
+    projectId={projectId}
+    region={region}
+    hooks={hooks}
+    onStatsUpdate={onStatsUpdate}
+    wrapper={({ children }) => <>{children}</>}
+  />
+);
 
 export default KeyPairs;

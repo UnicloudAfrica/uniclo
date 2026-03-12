@@ -32,7 +32,7 @@ const ProjectDetailsLayout: React.FC<ProjectDetailsLayoutProps> = ({
     <div className="flex flex-col min-h-[calc(100vh-180px)]">
       <ProjectDetailsHeader project={project} resourceStats={resourceStats} />
 
-      <div className="bg-white border-b border-gray-200 px-6 md:px-8 sticky top-0 z-20 shadow-sm">
+      <div className="bg-white border-b border-gray-200 px-3 sm:px-4 md:px-6 lg:px-8 sticky top-0 z-20 shadow-sm">
         <div className="max-w-[1600px] mx-auto flex overflow-x-auto no-scrollbar">
           {visibleTabs.map((tab) => {
             const Icon = tab.icon;
@@ -41,7 +41,8 @@ const ProjectDetailsLayout: React.FC<ProjectDetailsLayoutProps> = ({
               <button
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
-                className={`flex items-center gap-2 px-6 py-4 border-b-2 text-sm font-medium transition-all whitespace-nowrap ${
+                title={tab.tooltip}
+                className={`flex items-center gap-2 px-3 py-3 md:px-6 md:py-4 border-b-2 text-sm font-medium transition-all whitespace-nowrap ${
                   isActive
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -55,7 +56,7 @@ const ProjectDetailsLayout: React.FC<ProjectDetailsLayoutProps> = ({
         </div>
       </div>
 
-      <main className={`flex-1 p-6 overflow-auto ${contentClassName}`.trim()}>
+      <main className={`flex-1 p-3 sm:p-4 md:p-6 overflow-auto ${contentClassName}`.trim()}>
         <div className="max-w-[1600px] mx-auto">
           {currentTab?.content ? currentTab.content : renderPlaceholder(currentTab?.label)}
         </div>

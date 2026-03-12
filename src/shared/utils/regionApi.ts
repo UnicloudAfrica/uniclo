@@ -75,6 +75,12 @@ export const normalizeRegionList = (payload: unknown): NormalizedRegion[] => {
   const raw = extractArray(nestedData) ?? extractArray(payloadData) ?? extractArray(payload) ?? [];
 
   return raw
+    .filter((region: RegionLike) => {
+      // Filter out regions without a proper display name (raw codes only)
+      const hasName = Boolean(region?.name || region?.label);
+      const isActive = (region as any)?.is_active !== false;
+      return hasName && isActive;
+    })
     .map((region: RegionLike) => {
       const value = resolveRegionValue(region);
       if (!value) return null;

@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { X, Loader2, Upload, CheckCircle } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
-import { FileInput } from "../../../utils/fileInput";
-import { useAddLeadDocument } from "../../../hooks/tenantHooks/leadsHook";
+import ToastUtils from "@/utils/toastUtil";
+import { FileInput } from "@/utils/fileInput";
+import { useAddLeadDocument } from "@/hooks/tenantHooks/leadsHooks";
 
 const documentTypeOptions = [
   "identity",
@@ -14,7 +14,15 @@ const documentTypeOptions = [
   "other",
 ];
 
-const AddLeadDocument = ({ isOpen, onClose, lead }: any) => {
+const AddLeadDocument = ({
+  isOpen,
+  onClose,
+  lead,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  lead: Record<string, any>;
+}) => {
   const [formData, setFormData] = useState({
     document_type: "",
     name: "",
@@ -52,21 +60,20 @@ const AddLeadDocument = ({ isOpen, onClose, lead }: any) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field: any, value: any) => {
+  const updateFormData = (field: keyof typeof formData, value: string | File | null) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleFileChange = (event: any) => {
-    const fileBase64 = event.target.files[0];
-    if (fileBase64) {
-      updateFormData("file", fileBase64);
+  const handleFileChange = (value: any) => {
+    if (value) {
+      updateFormData("file", value);
     } else {
       updateFormData("file", null);
     }
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
     if (!validateForm()) return;
@@ -96,8 +103,8 @@ const AddLeadDocument = ({ isOpen, onClose, lead }: any) => {
 
   if (!isOpen) return null;
 
-  const formatDocumentNameForDisplay = (name: any) =>
-    name.replace(/_/g, " ").replace(/\b\w/g, (c: any) => c.toUpperCase());
+  const formatDocumentNameForDisplay = (name: string) =>
+    name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
@@ -176,7 +183,7 @@ const AddLeadDocument = ({ isOpen, onClose, lead }: any) => {
                 className="w-full rounded-[10px] border border-gray-300 px-3 py-2 text-sm input-field"
               >
                 <option value="">No linked stage</option>
-                {lead?.stages?.map((stage: any) => (
+                {lead?.stages?.map((stage: Record<string, any>) => (
                   <option key={stage.id} value={stage.id}>
                     {formatDocumentNameForDisplay(stage.stage_name)} •{" "}
                     {formatDocumentNameForDisplay(stage.status)}
@@ -197,8 +204,9 @@ const AddLeadDocument = ({ isOpen, onClose, lead }: any) => {
                 icon={Upload as any}
                 accept=".pdf,.png,.jpg,.jpeg,.svg,.webp"
                 label={
-                  formData.file ? `Selected: ${(formData.file as any).name}` : "Click to upload"
+                  formData.file ? `Selected: ${(formData.file as File).name}` : "Click to upload"
                 }
+                outputAs="file"
                 onChange={handleFileChange}
               />
               {errors.file && <p className="text-red-500 text-xs mt-1">{errors.file}</p>}

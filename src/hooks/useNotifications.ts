@@ -3,8 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 // Import all context-specific APIs
 import silentApi from "../index/silent";
 import api from "../index/api";
-import { adminSilentApi } from "../index/admin/api";
-import adminApi from "../index/admin/api";
+import adminApi, { adminSilentApi } from "../index/admin/api";
 import tenantApi from "../index/tenant/tenantApi";
 import silentTenantApi from "../index/tenant/silentTenant";
 import clientApi from "../index/client/api";
@@ -125,7 +124,7 @@ export function useUnreadCount(enabled = true) {
         return { data: { unread_count: 0 } };
       }
     },
-    enabled,
+    enabled: enabled as boolean,
     refetchInterval: 30000,
     refetchIntervalInBackground: false,
     retry: false,
@@ -209,7 +208,8 @@ export function useNotificationPreferences() {
       try {
         const response = await apiClient("GET", "/settings/profile?category=notifications");
         // Transform from { notifications: { key: value } } to preference array format
-        const settings = (response as any)?.data?.settings || {};
+        const settings =
+          (response as { data?: { settings?: Record<string, any> } })?.data?.settings || {};
         const preferences = [
           {
             category: "billing",
@@ -268,9 +268,13 @@ export function useUpdateNotificationPreferences() {
         value,
       }));
 
-      return await (apiClient as any)("PUT", "/settings/profile/batch", {
-        settings: settingsArray,
-      });
+      return await (apiClient as (method: string, url: string, data?: unknown) => Promise<unknown>)(
+        "PUT",
+        "/settings/profile/batch",
+        {
+          settings: settingsArray,
+        }
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notificationKeys.preferences() });

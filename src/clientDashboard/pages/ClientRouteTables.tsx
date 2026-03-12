@@ -4,7 +4,7 @@ import { Route as RouteIcon } from "lucide-react";
 import ClientPageShell from "../components/ClientPageShell";
 import RouteTablesContainer, {
   RouteTableHooks,
-} from "../../shared/components/infrastructure/containers/RouteTablesContainer";
+} from "@/shared/components/infrastructure/containers/RouteTablesContainer";
 import {
   useRouteTables,
   useSubnets,
@@ -14,7 +14,7 @@ import {
   useDeleteRoute,
   useAssociateRouteTable,
   useDisassociateRouteTable,
-} from "../../shared/hooks/vpcInfraHooks";
+} from "@/shared/hooks/vpcInfraHooks";
 
 const ClientRouteTables: React.FC = () => {
   const [searchParams] = useSearchParams();

@@ -1,19 +1,39 @@
 import React from "react";
-import type { UseMutationResult } from "@tanstack/react-query";
-import { getKeyPairPermissions, type Hierarchy } from "../../../config/permissionPresets";
+import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
+import { getKeyPairPermissions, type Hierarchy } from "@/shared/config/permissionPresets";
 import KeyPairsOverview from "../KeyPairsOverview";
-import ToastUtils from "../../../../utils/toastUtil";
+import ToastUtils from "@/utils/toastUtil";
+import type { KeyPair } from "../types";
 
 interface KeyPairHooks {
-  useList: (projectId: string, region?: string, options?: any) => any;
-  useDelete: () => UseMutationResult<any, any, any, unknown>;
-  useSync: () => UseMutationResult<any, any, any, unknown>;
+  useList: (
+    projectId?: string,
+    region?: string,
+    options?: { enabled?: boolean }
+  ) => UseQueryResult<KeyPair[], Error>;
+  useDelete: () => UseMutationResult<
+    unknown,
+    Error,
+    {
+      id: string;
+      project_id: string;
+      region?: string;
+      payload: { project_id: string; region?: string };
+    },
+    unknown
+  >;
+  useSync: () => UseMutationResult<
+    unknown,
+    Error,
+    { project_id: string; region?: string },
+    unknown
+  >;
 }
 
 interface KeyPairsContainerProps {
   hierarchy: Hierarchy;
-  projectId: string;
-  region: string;
+  projectId?: string;
+  region?: string;
   hooks: KeyPairHooks;
   wrapper: (props: {
     headerActions: React.ReactNode;
@@ -40,23 +60,22 @@ const KeyPairsContainer: React.FC<KeyPairsContainerProps> = ({
   const permissions = getKeyPairPermissions(hierarchy);
 
   // Hooks
-  const { data: keyPairs = [], isFetching } = hooks.useList(projectId, region, {
-    enabled: Boolean(projectId),
-  });
+  const { data: keyPairs = [], isFetching } = hooks.useList(projectId, region);
   const { mutate: deleteKeyPair, isPending: isDeleting } = hooks.useDelete();
   const { mutateAsync: syncKeyPairs, isPending: isSyncing } = hooks.useSync();
 
   const handleSync = async () => {
     if (!permissions.canSync) return;
     if (!projectId) {
-      ToastUtils.error("Provide a project before syncing key pairs.");
+      ToastUtils.info("Select a project to sync key pairs from the cloud provider.");
       return;
     }
     try {
       await syncKeyPairs({ project_id: projectId, region });
       ToastUtils.success("Key pairs synced successfully.");
-    } catch (error: any) {
-      ToastUtils.error(error?.message || "Unable to sync key pairs.");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unable to sync key pairs.";
+      ToastUtils.error(message);
     }
   };
 
@@ -78,8 +97,9 @@ const KeyPairsContainer: React.FC<KeyPairsContainerProps> = ({
             ToastUtils.success(`Deleted key pair "${name}".`);
             resolve();
           },
-          onError: (error: any) => {
-            ToastUtils.error(error?.message || "Failed to delete key pair.");
+          onError: (error: unknown) => {
+            const message = error instanceof Error ? error.message : "Failed to delete key pair.";
+            ToastUtils.error(message);
             reject(error);
           },
         }

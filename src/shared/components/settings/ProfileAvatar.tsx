@@ -1,8 +1,8 @@
 import React, { useRef, useState } from "react";
 import { Camera, Loader2, Upload, Trash2 } from "lucide-react";
 import { ModernButton, ModernCard } from "../ui";
-import ToastUtils from "../../../utils/toastUtil";
-import logger from "../../../utils/logger";
+import ToastUtils from "@/utils/toastUtil";
+import logger from "@/utils/logger";
 
 interface ProfileAvatarProps {
   name?: string;

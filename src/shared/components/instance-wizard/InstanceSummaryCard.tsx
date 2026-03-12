@@ -10,11 +10,11 @@ import {
   Folder,
   Shield,
 } from "lucide-react";
-import { Configuration } from "../../../types/InstanceConfiguration";
+import { Configuration } from "@/types/InstanceConfiguration";
 import { ModernCard } from "../ui";
 import { DEFAULT_PRESETS } from "../network/NetworkPresetSelector";
-import { formatCurrencyValue, toNumber } from "../../../utils/instanceCreationUtils";
-import { useNetworkPresets } from "../../../hooks/networkPresetHooks";
+import { formatCurrencyValue, toNumber } from "@/utils/instanceCreationUtils";
+import { useNetworkPresets } from "@/hooks/networkPresetHooks";
 
 interface ConfigurationSummary {
   id: string;
@@ -340,18 +340,21 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
                         </div>
                       )}
 
-                      {(cfg as any).volume_types && (cfg as any).volume_types.length > 0 && (
-                        <div className="pl-5 border-l-2 border-gray-100 space-y-1">
-                          {(cfg as any).volume_types.map((vol: any, vIdx: any) => (
-                            <div key={vIdx} className="flex items-center gap-2 text-gray-500">
-                              <HardDrive className="h-3 w-3 flex-shrink-0" />
-                              <span>
-                                Data Vol {vIdx + 1}: {vol.storage_size_gb} GB
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      {(cfg as Record<string, unknown[]>).volume_types &&
+                        (cfg as Record<string, unknown[]>).volume_types.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {(cfg as Record<string, Record<string, unknown>[]>).volume_types.map(
+                              (vol: Record<string, unknown>, vIdx: number) => (
+                                <div key={vIdx} className="flex items-center gap-2 text-gray-500">
+                                  <HardDrive className="h-3 w-3 flex-shrink-0" />
+                                  <span>
+                                    Data Vol {vIdx + 1}: {vol.storage_size_gb} GB
+                                  </span>
+                                </div>
+                              )
+                            )}
+                          </div>
+                        )}
 
                       {cfg.months && (
                         <div className="flex items-center gap-2 text-gray-600">

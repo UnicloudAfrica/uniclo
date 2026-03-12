@@ -1,7 +1,7 @@
 import React, { ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 import ModernCard from "./ModernCard";
-import { designTokens } from "../../../styles/designTokens";
+import { designTokens } from "@/styles/designTokens";
 
 // Define strict types for the tone keys
 // Define strict types for the tone keys

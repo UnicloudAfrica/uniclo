@@ -1,26 +1,38 @@
 import React, { useCallback, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import ConfigurationListStep from "../../shared/components/instance-wizard/ConfigurationListStep";
-import PaymentStep from "../../shared/components/instance-wizard/PaymentStep";
-import InstanceSummaryCard from "../../shared/components/instance-wizard/InstanceSummaryCard";
-import ReviewSubmitStep from "../../shared/components/instance-wizard/ReviewSubmitStep";
-import OrderSuccessStep from "../../shared/components/instance-wizard/OrderSuccessStep";
+import ConfigurationListStep from "@/shared/components/instance-wizard/ConfigurationListStep";
+import PaymentStep from "@/shared/components/instance-wizard/PaymentStep";
+import InstanceSummaryCard from "@/shared/components/instance-wizard/InstanceSummaryCard";
+import ReviewSubmitStep from "@/shared/components/instance-wizard/ReviewSubmitStep";
+import OrderSuccessStep from "@/shared/components/instance-wizard/OrderSuccessStep";
 import {
   ProvisioningWizardLayout,
   WorkflowSelectionStep,
-} from "../../shared/components/instance-wizard";
-import { useClientProvisioningLogic } from "../../hooks/useClientProvisioningLogic";
+} from "@/shared/components/instance-wizard";
+import { useClientProvisioningLogic } from "@/hooks/useClientProvisioningLogic";
 import {
   useFetchClientProjects,
   useClientProjectStatus,
   useClientProjectMembershipSuggestions,
-} from "../../hooks/clientHooks/projectHooks";
-import { useFetchClientSecurityGroups } from "../../hooks/clientHooks/securityGroupHooks";
-import { useFetchClientKeyPairs } from "../../hooks/clientHooks/keyPairsHook";
-import { useFetchClientSubnets } from "../../hooks/clientHooks/subnetHooks";
-import { useFetchClientNetworks } from "../../hooks/clientHooks/networkHooks";
+} from "@/hooks/clientHooks/projectHooks";
+import { useFetchSecurityGroups } from "@/shared/hooks/resources/securityGroupHooks";
+import { useFetchClientKeyPairs } from "@/shared/hooks/keyPairsHooks";
+import { useFetchSubnets } from "@/shared/hooks/resources/subnetHooks";
+import { useFetchClientNetworks } from "@/hooks/clientHooks/networkHooks";
+
+// Local positional-arg wrappers for provisioning wizard hook-passing pattern
+const useFetchClientSecurityGroups = (
+  projectId: string | undefined,
+  region: string | undefined,
+  opts: Record<string, unknown> = {}
+) => useFetchSecurityGroups({ projectId, region }, opts);
+const useFetchClientSubnets = (
+  projectId: string | undefined,
+  region: string | undefined,
+  opts: Record<string, unknown> = {}
+) => useFetchSubnets({ projectId, region }, opts);
 import ClientPageShell from "../components/ClientPageShell";
-import ToastUtils from "../../utils/toastUtil";
+import ToastUtils from "@/utils/toastUtil";
 import {
   buildConfigurationFromTemplate,
   evaluateConfigurationCompleteness,
@@ -30,7 +42,7 @@ import {
   formatKeypairLabel,
   formatSubnetLabel,
   hasProjectNetworkFromStatus,
-} from "../../utils/instanceCreationUtils";
+} from "@/utils/instanceCreationUtils";
 
 // ═══════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
@@ -117,29 +129,35 @@ const ClientProvisioningWizard: React.FC = () => {
     const volumeTypes = resources.volume_types || [];
     const keyPairs = resources.keyPairs || [];
 
-    return configurations.map((cfg: any) => {
+    return configurations.map((cfg: Record<string, unknown>) => {
       const status = evaluateConfigurationCompleteness(cfg);
       const computeLabel =
-        cfg.compute_label || formatComputeLabel(cfg.compute_instance_id, instanceTypes);
+        (cfg.compute_label as string) ||
+        formatComputeLabel(cfg.compute_instance_id as string, instanceTypes);
       const resolvedComputeLabel =
         computeLabel && !["Not selected", "Instance selected"].includes(computeLabel)
           ? computeLabel
           : "";
       const defaultTitle =
-        cfg.name?.trim() ||
+        (cfg.name as string)?.trim() ||
         (resolvedComputeLabel ? resolvedComputeLabel : "Instance configuration");
-      const osLabel = cfg.os_image_label || formatOsLabel(cfg.os_image_id, osImages);
+      const osLabel =
+        (cfg.os_image_label as string) || formatOsLabel(cfg.os_image_id as string, osImages);
       const storageLabel = cfg.volume_type_label
         ? `${cfg.volume_type_label}${cfg.storage_size_gb ? ` • ${cfg.storage_size_gb} GB` : ""}`
-        : formatVolumeLabel(cfg.volume_type_id, cfg.storage_size_gb, volumeTypes);
+        : formatVolumeLabel(
+            cfg.volume_type_id as string,
+            cfg.storage_size_gb as number,
+            volumeTypes
+          );
 
       return {
-        id: cfg.id,
+        id: cfg.id as string,
         title: defaultTitle,
         regionLabel:
-          cfg.region_label ||
+          (cfg.region_label as string) ||
           regionOptions.find((opt) => opt.value === cfg.region)?.label ||
-          cfg.region ||
+          (cfg.region as string) ||
           "No region selected",
         computeLabel,
         osLabel,
@@ -150,7 +168,11 @@ const ClientProvisioningWizard: React.FC = () => {
         floatingIpLabel: `${Number(cfg.floating_ip_count || 0)} floating IP${
           Number(cfg.floating_ip_count || 0) === 1 ? "" : "s"
         }`,
-        keypairLabel: formatKeypairLabel(cfg.keypair_name, keyPairs, cfg.keypair_label),
+        keypairLabel: formatKeypairLabel(
+          cfg.keypair_name as string,
+          keyPairs,
+          cfg.keypair_label as string
+        ),
         subnetLabel: formatSubnetLabel(cfg),
         statusLabel: status.isComplete ? "Complete" : "Incomplete",
         isComplete: status.isComplete,
@@ -217,7 +239,7 @@ const ClientProvisioningWizard: React.FC = () => {
   const paymentStepIndex = useMemo(() => steps.findIndex((step) => step.id === "payment"), [steps]);
   const successStepIndex = useMemo(() => steps.findIndex((step) => step.id === "success"), [steps]);
   const selectedProjectId = configurations[0]?.project_id;
-  const { data: projectStatus } = useClientProjectStatus(selectedProjectId as any, {
+  const { data: projectStatus } = useClientProjectStatus(selectedProjectId as string, {
     enabled: Boolean(selectedProjectId),
   });
   const projectHasNetwork = useMemo(
@@ -351,7 +373,7 @@ const ClientProvisioningWizard: React.FC = () => {
             {currentStep?.id === "services" && (
               <ConfigurationListStep
                 configurations={configurations}
-                resources={resources as any}
+                resources={resources as Record<string, unknown>}
                 generalRegions={generalRegions}
                 regionOptions={regionOptions}
                 isLoadingResources={isLoadingResources}
@@ -369,12 +391,16 @@ const ClientProvisioningWizard: React.FC = () => {
                 onBack={() => setActiveStep(workflowStepIndex >= 0 ? workflowStepIndex : 0)}
                 onSubmit={handleCreateOrder}
                 submitErrorMessage={submissionErrorMessage}
-                useProjectsHook={useFetchClientProjects as any}
-                useSecurityGroupsHook={useFetchClientSecurityGroups as any}
-                useKeyPairsHook={useFetchClientKeyPairs as any}
-                useSubnetsHook={useFetchClientSubnets as any}
-                useNetworksHook={useFetchClientNetworks as any}
-                useProjectMembershipSuggestionsHook={useClientProjectMembershipSuggestions as any}
+                useProjectsHook={useFetchClientProjects as (...args: unknown[]) => unknown}
+                useSecurityGroupsHook={
+                  useFetchClientSecurityGroups as (...args: unknown[]) => unknown
+                }
+                useKeyPairsHook={useFetchClientKeyPairs as (...args: unknown[]) => unknown}
+                useSubnetsHook={useFetchClientSubnets as (...args: unknown[]) => unknown}
+                useNetworksHook={useFetchClientNetworks as (...args: unknown[]) => unknown}
+                useProjectMembershipSuggestionsHook={
+                  useClientProjectMembershipSuggestions as (...args: unknown[]) => unknown
+                }
                 skipProjectFetch={false}
                 skipNetworkResourcesFetch={false}
                 formVariant="cube"

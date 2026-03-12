@@ -1,6 +1,6 @@
 import React from "react";
 import AdminPageShell from "../components/AdminPageShell";
-import { SupportThreadsPanel } from "../../shared/components/support";
+import { SupportThreadsPanel } from "@/shared/components/support";
 import adminApi, { adminSilentApi } from "../../index/admin/api";
 
 const buildQuery = (filters: { status?: string; search?: string; page?: number }) => {

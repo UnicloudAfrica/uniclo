@@ -7,9 +7,9 @@ import {
 } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
-import { type Client } from "../../shared/types/client";
-import { type ApiResponse } from "../../shared/types/resource";
-import logger from "../../utils/logger";
+import { type Client } from "@/shared/types/client";
+import { type ApiResponse } from "@/shared/types/resource";
+import logger from "@/utils/logger";
 
 // GET: Fetch all clients
 const fetchClients = async (): Promise<Client[]> => {

@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, ChevronLeft, Loader2 } from "lucide-react";
-import { useCreateProduct } from "../../hooks/adminHooks/productsHook";
+import { useCreateProduct } from "@/hooks/adminHooks/productsHooks";
 
-const StepProgress = ({ currentStep, steps }: any) => (
+const StepProgress = ({ currentStep, steps }: { currentStep: number; steps: string[] }) => (
   <div className="flex items-center justify-between mb-8">
-    {steps.map((step: any, index: any) => (
+    {steps.map((step, index) => (
       <React.Fragment key={step}>
         <div className="flex flex-col items-center text-center">
           <div
@@ -52,9 +52,15 @@ const ProductForm = () => {
     password: "",
     password_confirmation: "",
   });
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [showPassword, setShowPassword] = useState(false);
-  const { mutate: createProduct, isPending } = useCreateProduct() as any;
+  const { mutate: createProduct, isPending } = useCreateProduct() as {
+    mutate: (
+      data: unknown,
+      options: { onSuccess: () => void; onError: (error: Error) => void }
+    ) => void;
+    isPending: boolean;
+  };
 
   const steps = ["Solution Selection", "Storage", "Compute", "Personal Info"];
   const computeSteps = ["Solution Selection", "Compute", "Personal Info"];
@@ -66,7 +72,7 @@ const ProductForm = () => {
     } else if (currentStep === 1 && formData.solution !== "Compute") {
       if (!formData.data_type.length) newErrors.data_type = "At least one data type is required";
       if (!formData.usable_capacity) newErrors.usable_capacity = "Usable capacity is required";
-      else if (isNaN(formData.usable_capacity as any) || (formData as any).usable_capacity <= 0)
+      else if (isNaN(Number(formData.usable_capacity)) || Number(formData.usable_capacity) <= 0)
         newErrors.usable_capacity = "Usable capacity must be a positive number";
       if (!formData.term_of_use) newErrors.term_of_use = "Term of use is required";
     } else if (
@@ -100,16 +106,16 @@ const ProductForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field: any, value: any) => {
+  const updateFormData = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleCheckboxChange = (field: any, value: any) => {
+  const handleCheckboxChange = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => {
-      const currentValues = (prev as any)[field];
+      const currentValues = prev[field] as string[];
       if (currentValues.includes(value)) {
-        return { ...prev, [field]: currentValues.filter((v: any) => v !== value) };
+        return { ...prev, [field]: currentValues.filter((v: string) => v !== value) };
       } else {
         return { ...prev, [field]: [...currentValues, value] };
       }
@@ -205,7 +211,7 @@ const ProductForm = () => {
                   <label key={type} className="flex items-center">
                     <input
                       type="checkbox"
-                      checked={formData.data_type.includes(type as any)}
+                      checked={formData.data_type.includes(type as never)}
                       onChange={() => handleCheckboxChange("data_type", type)}
                       className="h-4 w-4 text-[var(--theme-color)] border-gray-300 rounded focus:ring-[var(--theme-color)]"
                     />
@@ -293,7 +299,7 @@ const ProductForm = () => {
                   <label key={use} className="flex items-center">
                     <input
                       type="checkbox"
-                      checked={formData.application_use.includes(use as any)}
+                      checked={formData.application_use.includes(use as never)}
                       onChange={() => handleCheckboxChange("application_use", use)}
                       className="h-4 w-4 text-[var(--theme-color)] border-gray-300 rounded focus:ring-[var(--theme-color)]"
                     />

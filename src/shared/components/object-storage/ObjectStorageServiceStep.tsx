@@ -1,7 +1,7 @@
 import React from "react";
 import { Plus } from "lucide-react";
-import { Option } from "../../../hooks/objectStorageUtils";
-import { ResolvedProfile } from "../../../hooks/useObjectStoragePricing";
+import { Option } from "@/hooks/objectStorageUtils";
+import { ResolvedProfile } from "@/hooks/useObjectStoragePricing";
 import { ModernButton, ModernCard } from "../ui";
 import { ObjectStorageProfileCard } from "./ObjectStorageProfileCard";
 

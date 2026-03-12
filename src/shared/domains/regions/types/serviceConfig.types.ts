@@ -1,13 +1,15 @@
+import { getFrontendVisibleProvidersWithCapability } from "@/config/providers";
+
 export interface ProviderOption {
   value: string;
   label: string;
 }
 
 export const CLOUD_PROVIDERS: ProviderOption[] = [
-  { value: "zadara", label: "Zadara" },
-  { value: "aws", label: "AWS" },
-  { value: "azure", label: "Azure" },
-  { value: "gcp", label: "Google Cloud" },
+  ...getFrontendVisibleProvidersWithCapability("compute").map(({ key, config }) => ({
+    value: key,
+    label: config.label.replace(/\s*\(.+\)\s*$/, ""),
+  })),
 ];
 
 export type RegionVisibility = "public" | "private";
@@ -29,7 +31,7 @@ export const DEFAULT_REGION_FORM_DATA: RegionFormData = {
   code: "",
   country_code: "",
   city: "",
-  provider: "zadara",
+  provider: "",
   is_active: true,
   visibility: "public",
   fast_track_mode: "disabled",

@@ -2,8 +2,8 @@ import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import TenantPageShell from "../components/TenantPageShell";
 import { useObjectStorage } from "../../contexts/ObjectStorageContext";
-import ObjectStorageDashboardContent from "../../shared/components/object-storage/ObjectStorageDashboardContent";
-import { objectStoragePresets } from "../../shared/config/objectStoragePresets";
+import ObjectStorageDashboardContent from "@/shared/components/object-storage/ObjectStorageDashboardContent";
+import { objectStoragePresets } from "@/shared/config/objectStoragePresets";
 
 const ObjectStorage = () => {
   const navigate = useNavigate();
@@ -26,8 +26,8 @@ const ObjectStorage = () => {
     () =>
       [...(accounts || [])].sort(
         (a, b) =>
-          new Date((b as any).created_at as any).getTime() -
-          new Date((a as any).created_at as any).getTime()
+          new Date((b as { created_at: string }).created_at).getTime() -
+          new Date((a as { created_at: string }).created_at).getTime()
       ),
     [accounts]
   );

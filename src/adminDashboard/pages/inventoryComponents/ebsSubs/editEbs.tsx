@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import type { FormEvent } from "react";
 import { X, Loader2 } from "lucide-react";
 
-import ToastUtils from "../../../../utils/toastUtil"; // Ensure ToastUtils is
-import { useUpdateEbsVolume } from "../../../../hooks/adminHooks/ebsHooks";
+import ToastUtils from "@/utils/toastUtil"; // Ensure ToastUtils is
+import { useUpdateEbsVolume } from "@/hooks/adminHooks/ebsHooks";
 
 type EbsVolume = {
   id?: string | number;

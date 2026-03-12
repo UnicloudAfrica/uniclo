@@ -11,7 +11,7 @@ export interface Snapshot {
   size: number;
   volume_id?: string;
   created_at: string;
-  raw?: any;
+  raw?: Record<string, unknown>;
 }
 
 interface SnapshotListProps {
@@ -105,7 +105,7 @@ const SnapshotList: React.FC<SnapshotListProps> = ({ snapshots, isLoading, onDel
     );
   }
 
-  return <ModernTable columns={columns as any} data={snapshots} loading={isLoading} />;
+  return <ModernTable columns={columns} data={snapshots} loading={isLoading} />;
 };
 
 export default SnapshotList;

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import useTenantAuthStore from "../../stores/tenantAuthStore";
+import useTenantAuthStore from "@/stores/tenantAuthStore";
 import { useFetchTenantPartners, useFetchTenantPartnerClients } from "./partnerHooks";
 import { useSharedClients } from "../sharedCalculatorHooks";
 
@@ -24,13 +24,17 @@ export const useTenantCustomerContext = (options: { enabled?: boolean } = {}) =>
     if (selfTenantId && !selectedTenantId) {
       setSelectedTenantId(String(selfTenantId));
     }
-  }, [selfTenantId]);
+  }, [selfTenantId, selectedTenantId]);
 
-  const partners = Array.isArray(partnerTenants)
-    ? partnerTenants
-    : Array.isArray((partnerTenants as any)?.data)
-      ? (partnerTenants as any).data
-      : [];
+  const partners = useMemo(
+    () =>
+      Array.isArray(partnerTenants)
+        ? partnerTenants
+        : Array.isArray((partnerTenants as Record<string, unknown>)?.data)
+          ? ((partnerTenants as Record<string, unknown>).data as unknown[])
+          : [],
+    [partnerTenants]
+  );
 
   const tenants = useMemo(() => {
     const list: any[] = [];
@@ -82,7 +86,7 @@ export const useTenantCustomerContext = (options: { enabled?: boolean } = {}) =>
   const isSelfSelected = selectedTenantId && String(selectedTenantId) === String(selfTenantId);
 
   const { data: sharedClients = [], isFetching: isSharedClientsFetching } = useSharedClients(
-    contextType === "user" ? ((selectedTenantId || null) as any) : null,
+    contextType === "user" ? ((selectedTenantId || null) as unknown as string) : null,
     { enabled: enabled && contextType === "user" && (isSelfSelected || !selectedTenantIdentifier) }
   );
 
@@ -96,7 +100,8 @@ export const useTenantCustomerContext = (options: { enabled?: boolean } = {}) =>
     if (contextType !== "user") return [];
     const source = !isSelfSelected && selectedTenantIdentifier ? partnerClients : sharedClients;
     if (Array.isArray(source)) return source;
-    if (Array.isArray((source as any)?.data)) return (source as any).data;
+    if (Array.isArray((source as Record<string, unknown>)?.data))
+      return (source as Record<string, unknown>).data as unknown[];
     return [];
   }, [contextType, isSelfSelected, selectedTenantIdentifier, partnerClients, sharedClients]);
 

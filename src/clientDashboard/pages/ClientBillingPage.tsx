@@ -16,11 +16,10 @@ import {
   useBillingSummary,
   usePayInvoice,
   Invoice,
-  getStatusColor,
   getStatusLabel,
   formatCurrency,
-} from "../../hooks/useClientInvoices";
-import logger from "../../utils/logger";
+} from "@/hooks/useClientInvoices";
+import logger from "@/utils/logger";
 
 // Status badge component
 const StatusBadge: React.FC<{ status: Invoice["status"] }> = ({ status }: any) => {

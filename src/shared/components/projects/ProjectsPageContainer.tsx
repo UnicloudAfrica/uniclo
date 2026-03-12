@@ -12,10 +12,10 @@ import {
   sortProjects,
   calculateProjectStats,
   getUniqueValues,
-} from "../../../utils/projectUtils";
-import ToastUtils from "../../../utils/toastUtil";
-import { Project } from "../../../types/project";
-import logger from "../../../utils/logger";
+} from "@/utils/projectUtils";
+import ToastUtils from "@/utils/toastUtil";
+import { Project } from "@/types/project";
+import logger from "@/utils/logger";
 
 export interface ProjectsPageContainerProps {
   projects?: Project[];

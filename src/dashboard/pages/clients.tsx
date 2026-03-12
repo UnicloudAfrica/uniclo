@@ -1,8 +1,8 @@
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import TenantPageShell from "../components/TenantPageShell";
-import { ModernButton } from "../../shared/components/ui";
-import ClientsManagement from "../../shared/components/customer-management/ClientsManagement";
+import { ModernButton } from "@/shared/components/ui";
+import ClientsManagement from "@/shared/components/customer-management/ClientsManagement";
 
 const Clients = () => {
   const navigate = useNavigate();

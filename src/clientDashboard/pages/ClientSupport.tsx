@@ -2,10 +2,10 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import ClientActiveTab from "../components/clientActiveTab";
 import ClientPageShell from "../components/ClientPageShell";
-import { SupportThreadsPanel } from "../../shared/components/support";
+import { SupportThreadsPanel } from "@/shared/components/support";
 import clientApi from "../../index/client/api";
 import clientSilentApi from "../../index/client/silent";
-import type { Thread } from "../../shared/components/support/threadTypes";
+import type { Thread } from "@/shared/components/support/threadTypes";
 
 interface SupportFilters {
   status?: string;
@@ -52,8 +52,10 @@ const ClientSupport: React.FC = () => {
           queryKey={["client", "support"]}
           fetchThreads={fetchThreads}
           fetchThread={fetchThread}
-          createThread={createThread as any}
-          replyThread={replyThread as any}
+          createThread={createThread as (payload: Record<string, unknown>) => Promise<any>}
+          replyThread={
+            replyThread as (id: string | number, payload: Record<string, unknown>) => Promise<any>
+          }
           resolveThread={resolveThread}
           canCreate
           canResolve

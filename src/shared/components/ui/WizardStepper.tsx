@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { CheckCircle } from "lucide-react";
 
 export interface WizardStep {
@@ -83,4 +83,4 @@ const WizardStepper: React.FC<WizardStepperProps> = ({
   );
 };
 
-export default WizardStepper;
+export default memo(WizardStepper);

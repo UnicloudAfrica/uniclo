@@ -1,4 +1,4 @@
-import ModernInput from "../../../shared/components/ui/ModernInput";
+import ModernInput from "@/shared/components/ui/ModernInput";
 import type { MultiQuoteFormData, MultiQuoteFormErrors, UpdateFormData } from "./quoteTypes";
 
 const selectBaseClass =

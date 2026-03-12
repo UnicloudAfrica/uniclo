@@ -1,16 +1,17 @@
 import React, { useState } from "react";
+import type { UseQueryResult } from "@tanstack/react-query";
 import { RefreshCw, RefreshCcw } from "lucide-react";
 import NetworkInterfacesOverview from "../NetworkInterfacesOverview";
 import ModernButton from "../../ui/ModernButton";
-import { getNetworkInterfacePermissions, type Hierarchy } from "../../../config/permissionPresets";
+import { getNetworkInterfacePermissions, type Hierarchy } from "@/shared/config/permissionPresets";
 import type { NetworkInterface } from "../NetworkInterfacesTable";
 
 interface NetworkInterfaceHooks {
   useList: (
     projectId: string,
     region: string,
-    options?: any
-  ) => { data?: NetworkInterface[] | unknown; isLoading: boolean; refetch: () => void };
+    options?: { enabled?: boolean }
+  ) => UseQueryResult<NetworkInterface[], Error>;
   /** Optional sync function - triggers refresh/sync */
   onSync?: () => Promise<void>;
 }
@@ -44,8 +45,8 @@ const NetworkInterfacesContainer: React.FC<NetworkInterfacesContainerProps> = ({
   const [isSyncing, setIsSyncing] = useState(false);
 
   // Hook call
-  const { data, isLoading, refetch } = hooks.useList(projectId, region);
-  const networkInterfaces = Array.isArray(data) ? (data as NetworkInterface[]) : [];
+  const { data, isLoading, isFetching, refetch } = hooks.useList(projectId, region);
+  const networkInterfaces = Array.isArray(data) ? data : [];
 
   const handleSync = async () => {
     if (!permissions.canSync || !hooks.onSync) return;
@@ -71,9 +72,9 @@ const NetworkInterfacesContainer: React.FC<NetworkInterfacesContainerProps> = ({
           {isSyncing ? "Syncing..." : "Sync from Provider"}
         </ModernButton>
       )}
-      <ModernButton variant="secondary" size="sm" onClick={handleRefresh} disabled={isLoading}>
-        <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-        Refresh
+      <ModernButton variant="secondary" size="sm" onClick={handleRefresh} disabled={isFetching}>
+        <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
+        {isFetching ? "Refreshing..." : "Refresh"}
       </ModernButton>
     </div>
   );

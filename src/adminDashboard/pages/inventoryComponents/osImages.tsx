@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { HardDrive, ShieldCheck, AlertTriangle, Pencil, Trash2, Plus } from "lucide-react";
-import { useFetchOsImages } from "../../../hooks/adminHooks/os-imageHooks";
+import { useFetchOsImages } from "@/hooks/adminHooks/os-imageHooks";
 import ResourceDataExplorer from "../../components/ResourceDataExplorer";
 import AddOSImageModal from "./osSubs/addOs";
 import DeleteOS from "./osSubs/deleteOS";
 import EditOS from "./osSubs/editOs";
-import { ModernButton } from "../../../shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
 
 const toTitleCase = (value = "") =>
   value
     .split(/[\s_-]+/)
     .filter(Boolean)
-    .map((segment: any) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .map((segment: string) => segment.charAt(0).toUpperCase() + segment.slice(1))
     .join(" ");
 
 const getOsDescriptor = (image: any) =>
@@ -103,7 +103,7 @@ const buildDetailChips = (image: any) => {
   return Array.from(new Set(values));
 };
 
-const formatNumber = (value: any) => {
+const formatNumber = (value: unknown) => {
   if (typeof value === "number" && Number.isFinite(value)) {
     return value.toLocaleString();
   }
@@ -114,7 +114,15 @@ const formatNumber = (value: any) => {
   return value ?? "—";
 };
 
-const OSImages = ({ selectedRegion, onMetricsChange }: any) => {
+const OSImages = ({
+  selectedRegion,
+  selectedProvider,
+  onMetricsChange,
+}: {
+  selectedRegion?: string;
+  selectedProvider?: string;
+  onMetricsChange?: (metrics: Record<string, unknown>) => void;
+}) => {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [search, setSearch] = useState("");
@@ -122,7 +130,7 @@ const OSImages = ({ selectedRegion, onMetricsChange }: any) => {
   const [isAddOSImageModalOpen, setIsAddOSImageModalOpen] = useState(false);
   const [isEditOSImageModalOpen, setIsEditOSImageModalOpen] = useState(false);
   const [isDeleteOSImageModalOpen, setIsDeleteOSImageModalOpen] = useState(false);
-  const [selectedOSImage, setSelectedOSImage] = useState<any>(null);
+  const [selectedOSImage, setSelectedOSImage] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     setPage(1);
@@ -131,14 +139,14 @@ const OSImages = ({ selectedRegion, onMetricsChange }: any) => {
 
   const { data, isFetching } = useFetchOsImages(
     selectedRegion,
-    { page, perPage, search },
+    { page, perPage, search, provider: selectedProvider },
     {
       enabled: Boolean(selectedRegion),
       keepPreviousData: true,
     }
   );
 
-  const rows = data?.data ?? [];
+  const rows = useMemo(() => data?.data ?? [], [data]);
   const meta = data?.meta ?? null;
   const total = meta?.total ?? rows.length;
 
@@ -158,7 +166,7 @@ const OSImages = ({ selectedRegion, onMetricsChange }: any) => {
   };
 
   const licensedCount = useMemo(
-    () => rows.filter((image: any) => image.is_licenced).length,
+    () => rows.filter((image: Record<string, unknown>) => image?.is_licenced).length,
     [rows]
   );
 
@@ -311,7 +319,7 @@ const OSImages = ({ selectedRegion, onMetricsChange }: any) => {
   };
 
   const handleSearch = useCallback(
-    (value: any) => {
+    (value: string) => {
       setSearch(value);
       setPage(1);
     },
@@ -323,15 +331,15 @@ const OSImages = ({ selectedRegion, onMetricsChange }: any) => {
       <ResourceDataExplorer
         title="Operating system templates"
         description="Curate and maintain the golden images available to provisioning flows across your regions."
-        columns={columns as any}
-        rows={rows as any}
+        columns={columns as never}
+        rows={rows as Record<string, unknown>[]}
         loading={isFetching}
-        page={meta?.current_page ?? (page as any)}
-        perPage={meta?.per_page ?? (perPage as any)}
-        total={total as any}
-        meta={meta as any}
+        page={(meta?.current_page as number) ?? page}
+        perPage={(meta?.per_page as number) ?? perPage}
+        total={(total as number) ?? 0}
+        meta={meta as Record<string, unknown>}
         onPageChange={setPage}
-        onPerPageChange={(next) => {
+        onPerPageChange={(next: number) => {
           setPerPage(next);
           setPage(1);
         }}

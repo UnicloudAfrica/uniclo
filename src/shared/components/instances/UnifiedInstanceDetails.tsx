@@ -49,8 +49,8 @@ import {
   ModernInput,
 } from "../ui";
 import { useInstanceDetails } from "../../hooks/useInstanceDetails";
-import { useInstanceBroadcasting } from "../../../hooks/useInstanceBroadcasting";
-import ToastUtils from "../../../utils/toastUtil";
+import { useInstanceBroadcasting } from "@/hooks/useInstanceBroadcasting";
+import ToastUtils from "@/utils/toastUtil";
 
 // --- Types ---
 
@@ -71,8 +71,13 @@ interface Transaction {
   created_at: string;
 }
 
-// NetworkAddress interface removed as it was causing unused-vars warning.
-// Using inline types for network stability.
+interface NetworkAddress {
+  id?: string;
+  network: string;
+  addr: string;
+  version: number;
+  type: string;
+}
 
 interface VolumeInfo {
   id: string;
@@ -80,6 +85,33 @@ interface VolumeInfo {
   size: number;
   device: string;
   bootable: boolean;
+}
+
+/** Shape returned by the instance-details API endpoint. */
+interface InstanceDetailsResponse {
+  instance?: {
+    id?: string;
+    name?: string;
+    status?: string;
+    region?: string;
+    private_ip?: string;
+    type?: string;
+    image_name?: string;
+    provisioned_at?: string;
+    specs?: { cpu?: string; ram?: string };
+    compute?: { vcpus?: string; ram?: number; name?: string };
+    transactions?: Transaction[];
+  };
+  provider_details?: {
+    provider_status?: string;
+  };
+  network_info?: {
+    flat_addresses?: NetworkAddress[];
+  };
+  security_info?: {
+    key_pair?: string;
+    volumes?: VolumeInfo[];
+  };
 }
 
 // --- Action Library (Refined Colors) ---
@@ -179,9 +211,8 @@ const formatDateTime = (value: string | number | Date | null | undefined) => {
 };
 
 const UnifiedInstanceDetails: React.FC<{ identifier: string }> = ({ identifier }) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const {
-    details,
+    details: rawDetails,
     isLoading,
     isError,
     error,
@@ -189,8 +220,10 @@ const UnifiedInstanceDetails: React.FC<{ identifier: string }> = ({ identifier }
     refreshStatus,
     isRefreshing,
     refetch,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } = useInstanceDetails(identifier) as any;
+  } = useInstanceDetails(identifier);
+
+  // Cast API response once — all downstream accesses are typed
+  const details = rawDetails as InstanceDetailsResponse | undefined;
 
   // Real-time status updates integration
   useInstanceBroadcasting([details?.instance?.id, identifier], () => {
@@ -562,37 +595,36 @@ const UnifiedInstanceDetails: React.FC<{ identifier: string }> = ({ identifier }
                     {
                       header: "Interface",
                       key: "network",
-                      render: ((val: string) => (
-                        <span className="font-bold text-slate-800">{val}</span>
-                      )) as any,
+                      render: (val) => (
+                        <span className="font-bold text-slate-800">{String(val)}</span>
+                      ),
                     },
                     {
                       header: "IP Address",
                       key: "addr",
-                      render: ((val: string) => (
-                        <span className="font-mono text-sm text-indigo-500">{val}</span>
-                      )) as any,
+                      render: (val) => (
+                        <span className="font-mono text-sm text-indigo-500">{String(val)}</span>
+                      ),
                     },
                     {
                       header: "Stack",
                       key: "version",
-                      render: ((val: number) => (
-                        <span className="text-xs text-slate-400">IPv{val}</span>
-                      )) as any,
+                      render: (val) => (
+                        <span className="text-xs text-slate-400">IPv{String(val)}</span>
+                      ),
                     },
                     {
                       header: "Type",
                       key: "type",
-                      render: ((val: string) => (
+                      render: (val) => (
                         <span className="capitalize text-[10px] font-bold px-2 py-0.5 bg-slate-100 rounded text-slate-500">
-                          {val || "Public"}
+                          {String(val || "Public")}
                         </span>
-                      )) as any,
+                      ),
                     },
                   ]}
                   data={
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    (details?.network_info?.flat_addresses as any[]) || [
+                    (details?.network_info?.flat_addresses as NetworkAddress[]) || [
                       {
                         network: "primary",
                         addr: instance?.private_ip || "N/A",
@@ -613,36 +645,36 @@ const UnifiedInstanceDetails: React.FC<{ identifier: string }> = ({ identifier }
                     {
                       header: "Volume ID",
                       key: "id",
-                      render: ((val: string) => (
-                        <span className="font-mono text-[11px] text-slate-400">{val}</span>
-                      )) as any,
+                      render: (val) => (
+                        <span className="font-mono text-[11px] text-slate-400">{String(val)}</span>
+                      ),
                     },
                     {
                       header: "Mount",
                       key: "device",
-                      render: ((val: string) => (
+                      render: (val) => (
                         <code className="bg-slate-50 px-1.5 py-0.5 border border-slate-100 rounded text-[11px] font-mono">
-                          {val}
+                          {String(val)}
                         </code>
-                      )) as any,
+                      ),
                     },
                     {
                       header: "Size",
                       key: "size",
-                      render: ((val: number) => (
-                        <span className="font-bold text-slate-800">{val} GiB</span>
-                      )) as any,
+                      render: (val) => (
+                        <span className="font-bold text-slate-800">{String(val)} GiB</span>
+                      ),
                     },
                     {
                       header: "Label",
                       key: "bootable",
-                      render: ((val: boolean) => (
+                      render: (val) => (
                         <span
                           className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ${val ? "bg-indigo-50 text-indigo-600" : "bg-slate-50 text-slate-400"}`}
                         >
                           {val ? "System" : "Storage"}
                         </span>
-                      )) as any,
+                      ),
                     },
                   ]}
                   data={(details?.security_info?.volumes as VolumeInfo[]) || []}
@@ -652,40 +684,39 @@ const UnifiedInstanceDetails: React.FC<{ identifier: string }> = ({ identifier }
 
             {activeTab === "history" && (
               <motion.div key="history" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <ModernTable
+                <ModernTable<Transaction>
                   title="Lifecycle Events"
                   columns={[
                     {
                       header: "Activity",
                       key: "description",
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      render: ((val: string, row: any) => (
+                      render: (val, row) => (
                         <div>
                           <div className="font-bold text-slate-800 text-sm">
-                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                            {val || (row as any).action}
+                            {String(val || row.action || "")}
                           </div>
                           <div className="text-[10px] text-slate-400 font-mono">
-                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                            {(row as any).id || "TXN-ID"}
+                            {row.id || "TXN-ID"}
                           </div>
                         </div>
-                      )) as any,
+                      ),
                     },
                     {
                       header: "Status",
                       key: "status",
-                      render: ((val: string) => <StatusPill status={val} />) as any,
+                      render: (val) => <StatusPill status={String(val)} />,
                     },
                     {
                       header: "Logged At",
                       key: "created_at",
-                      render: ((val: string) => (
-                        <span className="text-slate-400 text-xs">{formatDateTime(val)}</span>
-                      )) as any,
+                      render: (val) => (
+                        <span className="text-slate-400 text-xs">
+                          {formatDateTime(String(val))}
+                        </span>
+                      ),
                     },
                   ]}
-                  data={(instance?.transactions as Transaction[]) || []}
+                  data={instance?.transactions || []}
                 />
               </motion.div>
             )}

@@ -8,7 +8,6 @@ import {
   CheckCircle,
   Plus,
   Settings,
-  DollarSign,
   Key,
   Loader2,
 } from "lucide-react";
@@ -17,7 +16,7 @@ import {
   useAdminTenantBillingSummary,
   useUpdateTenantBillingConfig,
   useAddTenantCredit,
-} from "../../../hooks/useAdminTenantBilling";
+} from "@/hooks/useAdminTenantBilling";
 
 const BILLING_MODELS = [
   { value: "direct", label: "Direct Payment", icon: CreditCard },

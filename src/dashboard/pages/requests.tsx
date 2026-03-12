@@ -1,9 +1,9 @@
 import TenantPageShell from "../components/TenantPageShell";
-import useAuthRedirect from "../../utils/authRedirect";
+import useAuthRedirect from "@/utils/authRedirect";
 import ProductForm from "../components/productform";
 
 export default function Requests() {
-  const { isLoading } = useAuthRedirect();
+  useAuthRedirect();
 
   return (
     <TenantPageShell

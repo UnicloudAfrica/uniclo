@@ -1,7 +1,7 @@
 import { X, Loader2 } from "lucide-react";
 
-import ToastUtils from "../../../../utils/toastUtil";
-import { useDeleteVmInstance } from "../../../../hooks/adminHooks/vmHooks";
+import ToastUtils from "@/utils/toastUtil";
+import { useDeleteVmInstance } from "@/hooks/adminHooks/vmHooks";
 const DeleteVMModal = ({ isOpen, onClose, vm }: any) => {
   const { mutate, isPending } = useDeleteVmInstance();
 

@@ -1,12 +1,14 @@
 import React from "react";
-import { Cable, Server, Network } from "lucide-react";
+import { Cable, Server, Network, Plus } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
+import ModernButton from "../ui/ModernButton";
 import NetworkInterfacesTable, { type NetworkInterface } from "./NetworkInterfacesTable";
 import type { NetworkInterfacePermissions } from "../../config/permissionPresets";
 
 interface NetworkInterfacesOverviewProps {
   networkInterfaces: NetworkInterface[];
   isLoading?: boolean;
+  onCreate?: () => void;
   permissions?: NetworkInterfacePermissions;
 }
 
@@ -16,6 +18,7 @@ interface NetworkInterfacesOverviewProps {
 const NetworkInterfacesOverview: React.FC<NetworkInterfacesOverviewProps> = ({
   networkInterfaces,
   isLoading = false,
+  onCreate,
 }) => {
   const attachedCount = networkInterfaces.filter((eni) => eni.attachment?.instance_id).length;
   const availableCount = networkInterfaces.length - attachedCount;
@@ -60,7 +63,18 @@ const NetworkInterfacesOverview: React.FC<NetworkInterfacesOverviewProps> = ({
       </div>
 
       {/* Table */}
-      <NetworkInterfacesTable networkInterfaces={networkInterfaces} isLoading={isLoading} />
+      <NetworkInterfacesTable
+        networkInterfaces={networkInterfaces}
+        isLoading={isLoading}
+        emptyAction={
+          onCreate ? (
+            <ModernButton variant="primary" size="sm" onClick={onCreate}>
+              <Plus className="w-4 h-4 mr-1" />
+              Create Network Interface
+            </ModernButton>
+          ) : undefined
+        }
+      />
 
       {/* Info Note */}
       <ModernCard className="p-4 bg-blue-50 border-blue-200">

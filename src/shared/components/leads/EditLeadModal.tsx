@@ -5,7 +5,7 @@ import {
   type Lead,
   type LeadUpdateData,
   type LeadAssigneeOption,
-} from "../../../hooks/adminHooks/leadsHook";
+} from "@/hooks/adminHooks/leadsHooks";
 
 export type { LeadAssigneeOption };
 export type LeadUpdatePayload = LeadUpdateData;

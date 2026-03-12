@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import AdminPageShell from "../components/AdminPageShell";
-import { SharedPricingCalculator } from "../../shared/components";
+import { SharedPricingCalculator } from "@/shared/components";
 
 const AdminPricingCalculator = () => {
   const navigate = useNavigate();

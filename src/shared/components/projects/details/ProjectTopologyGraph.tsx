@@ -137,7 +137,7 @@ const ProjectTopologyGraph: React.FC<ProjectTopologyGraphProps> = ({
   }, [vpc, subnets, igw, activeStepId]);
 
   return (
-    <div className="w-full h-[500px] bg-[rgb(var(--theme-neutral-50))] rounded-xl border border-[rgb(var(--theme-neutral-200))] overflow-hidden relative shadow-inner">
+    <div className="w-full h-[280px] sm:h-[350px] md:h-[450px] lg:h-[500px] bg-[rgb(var(--theme-neutral-50))] rounded-xl border border-[rgb(var(--theme-neutral-200))] overflow-hidden relative shadow-inner">
       <ReactFlow
         nodes={nodes}
         edges={edges}

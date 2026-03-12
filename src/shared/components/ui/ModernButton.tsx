@@ -1,5 +1,5 @@
-import React from "react";
-import { designTokens } from "../../../styles/designTokens";
+import React, { memo } from "react";
+import { designTokens } from "@/styles/designTokens";
 import type { ButtonSize, ButtonVariant } from "./types";
 
 /**
@@ -11,7 +11,7 @@ import type { ButtonSize, ButtonVariant } from "./types";
 
 export interface ModernButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
-  tone?: any;
+  tone?: string; // Or StatusTone if imported
   size?: ButtonSize;
   loading?: boolean;
   isLoading?: boolean;
@@ -117,13 +117,13 @@ const ModernButton: React.FC<ModernButtonProps> = ({
             ...base,
             backgroundColor: "transparent",
             color: error[600],
-            border: `1px solid ${(error as any)[300]}`,
+            border: `1px solid ${(error as Record<number, string>)[300]}`,
             boxShadow: "none",
           },
           hover: {
             backgroundColor: error[50],
             color: error[700],
-            border: `1px solid ${(error as any)[400]}`,
+            border: `1px solid ${(error as Record<number, string>)[400]}`,
           },
           active: {
             backgroundColor: error[100],
@@ -328,4 +328,4 @@ const ModernButton: React.FC<ModernButtonProps> = ({
   );
 };
 
-export default ModernButton;
+export default memo(ModernButton);

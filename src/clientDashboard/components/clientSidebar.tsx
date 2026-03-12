@@ -1,8 +1,8 @@
 import React from "react";
-import { useFetchClientProfile } from "../../hooks/clientHooks/resources";
-import { useFetchClientProjects, Project } from "../../hooks/clientHooks/projectHooks";
-import { DashboardSidebar } from "../../shared/components/sidebar";
-import { buildClientMenuItems } from "../../shared/config/sidebarMenus";
+import { useFetchClientProfile } from "@/hooks/clientHooks/resources";
+import { useFetchClientProjects, Project } from "@/hooks/clientHooks/projectHooks";
+import { DashboardSidebar } from "@/shared/components/sidebar";
+import { buildClientMenuItems } from "@/shared/config/sidebarMenus";
 
 interface ClientSidebarProps {
   isMobileMenuOpen?: boolean | undefined;
@@ -21,7 +21,7 @@ const ClientSidebar: React.FC<ClientSidebarProps> = ({ isMobileMenuOpen, onClose
   const { data: projectsResponse } = useFetchClientProjects();
 
   // Extract projects array from response
-  const projects: Project[] = projectsResponse?.data || [];
+  const projects: Project[] = (projectsResponse as any)?.data || [];
 
   const menuItems = React.useMemo(
     () => buildClientMenuItems(projects.length > 0),

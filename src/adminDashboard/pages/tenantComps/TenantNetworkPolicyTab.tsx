@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { NetworkPolicySettingsCard } from "../../../shared/components/settings";
+import { NetworkPolicySettingsCard } from "@/shared/components/settings";
 import {
   useAdminTenantNetworkSettings,
   useUpdateAdminTenantNetworkSettings,
-} from "../../../hooks/useAdminTenantNetworkSettings";
+} from "@/hooks/useAdminTenantNetworkSettings";
 
 interface Props {
   tenantId: string;

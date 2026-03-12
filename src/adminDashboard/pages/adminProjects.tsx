@@ -1,14 +1,14 @@
 import { useNavigate } from "react-router-dom";
 import AdminPageShell from "../components/AdminPageShell";
-import ProjectsPageContainer from "../../shared/components/projects/ProjectsPageContainer";
+import ProjectsPageContainer from "@/shared/components/projects/ProjectsPageContainer";
 import {
   useFetchProjects,
   useDeleteProject,
   useBulkSyncProjectStatus,
-} from "../../hooks/adminHooks/projectHooks";
-import ToastUtils from "../../utils/toastUtil";
-import { Project } from "../../types/project";
-import logger from "../../utils/logger";
+} from "@/hooks/adminHooks/projectHooks";
+import ToastUtils from "@/utils/toastUtil";
+import { Project } from "@/types/project";
+import logger from "@/utils/logger";
 
 interface ProjectsResponse {
   data?: Project[];

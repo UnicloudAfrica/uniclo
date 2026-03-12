@@ -1,16 +1,25 @@
 import React, { useMemo, type ChangeEvent, type Dispatch, type SetStateAction } from "react";
 import { AlertCircle, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
-import ToastUtils from "../../utils/toastUtil";
-import { useVerifyPartnerRegionQualification } from "../../hooks/onboardingHooks";
-import { useTenantBrandingTheme } from "../../hooks/useBrandingTheme";
-import type { OnboardingOption } from "../../types/onboarding";
+import ToastUtils from "@/utils/toastUtil";
+import { useVerifyPartnerRegionQualification } from "@/hooks/onboardingHooks";
+import { useTenantBrandingTheme } from "@/hooks/useBrandingTheme";
+import { getFrontendVisibleProvidersWithCapability } from "@/config/providers";
+import type { OnboardingOption } from "@/types/onboarding";
 
 const PROVIDER_OPTIONS: OnboardingOption[] = [
-  { value: "zadara", label: "Zadara" },
+  ...getFrontendVisibleProvidersWithCapability("compute").map(({ key, config }) => ({
+    value: key,
+    label: config.label.replace(/\s*\(.+\)\s*$/, ""),
+  })),
   { value: "aws", label: "AWS (coming soon)" },
   { value: "azure", label: "Azure (coming soon)" },
   { value: "openstack", label: "OpenStack (coming soon)" },
 ];
+
+/** Providers that support automated provisioning and credential verification */
+const AUTOMATED_PROVIDERS = new Set<string>(
+  getFrontendVisibleProvidersWithCapability("compute").map(({ key }) => key)
+);
 
 interface ObjectStorageCredentials {
   enabled: boolean;
@@ -44,7 +53,7 @@ interface PartnerRegionData {
   name: string;
   country_code: string;
   city: string;
-  fulfillment_mode: "manual" | "automated" | (string & {});
+  fulfillment_mode: "manual" | "automated" | string;
   features: Record<string, unknown>;
   meta: RegionMeta;
   msp_credentials: MspCredentials;
@@ -90,7 +99,7 @@ const DEFAULT_PAYLOAD: PartnerRegionPayload = {
   },
 };
 
-const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+const clone = <T,>(value: T): T => structuredClone(value);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object";
@@ -107,6 +116,48 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
   return fallback;
 };
 
+const ensureMetaDefaults = (meta: unknown): RegionMeta => {
+  if (!isRecord(meta)) return clone(DEFAULT_PAYLOAD.region.meta);
+  return {
+    ...DEFAULT_PAYLOAD.region.meta,
+    crm_sync:
+      typeof meta.crm_sync === "boolean" ? meta.crm_sync : DEFAULT_PAYLOAD.region.meta.crm_sync,
+    crm_auto_onboard:
+      typeof meta.crm_auto_onboard === "boolean"
+        ? meta.crm_auto_onboard
+        : DEFAULT_PAYLOAD.region.meta.crm_auto_onboard,
+    pricing_profile: typeof meta.pricing_profile === "string" ? meta.pricing_profile : "",
+    support_lead_email: typeof meta.support_lead_email === "string" ? meta.support_lead_email : "",
+  };
+};
+
+const ensureObjectStorageDefaults = (os: unknown): ObjectStorageCredentials => {
+  if (!isRecord(os)) return clone(DEFAULT_PAYLOAD.region.msp_credentials.object_storage);
+  return {
+    ...DEFAULT_PAYLOAD.region.msp_credentials.object_storage,
+    enabled: typeof os.enabled === "boolean" ? os.enabled : false,
+    base_url: typeof os.base_url === "string" ? os.base_url : "",
+    account: typeof os.account === "string" ? os.account : "",
+    access_key: typeof os.access_key === "string" ? os.access_key : "",
+    default_quota_gb: typeof os.default_quota_gb === "string" ? os.default_quota_gb : "",
+    notification_email: typeof os.notification_email === "string" ? os.notification_email : "",
+  };
+};
+
+const ensureMspDefaults = (msp: unknown): MspCredentials => {
+  if (!isRecord(msp)) return clone(DEFAULT_PAYLOAD.region.msp_credentials);
+  return {
+    ...DEFAULT_PAYLOAD.region.msp_credentials,
+    base_url: typeof msp.base_url === "string" ? msp.base_url : "",
+    username: typeof msp.username === "string" ? msp.username : "",
+    password: typeof msp.password === "string" ? msp.password : "",
+    domain: typeof msp.domain === "string" ? msp.domain : "",
+    domain_id: typeof msp.domain_id === "string" ? msp.domain_id : "",
+    default_project: typeof msp.default_project === "string" ? msp.default_project : "",
+    object_storage: ensureObjectStorageDefaults(msp.object_storage),
+  };
+};
+
 const ensureDefaults = (value: unknown): PartnerRegionPayload => {
   if (!isRecord(value)) {
     return clone(DEFAULT_PAYLOAD);
@@ -121,7 +172,7 @@ const ensureDefaults = (value: unknown): PartnerRegionPayload => {
     const region = value.region;
 
     if (typeof region.provider === "string") {
-      merged.region.provider = region.provider;
+      merged.region.provider = region.provider.toLowerCase();
     }
     if (typeof region.code === "string") {
       merged.region.code = region.code;
@@ -142,85 +193,9 @@ const ensureDefaults = (value: unknown): PartnerRegionPayload => {
       merged.region.features = region.features;
     }
 
-    if (isRecord(region.meta)) {
-      merged.region.meta = {
-        ...DEFAULT_PAYLOAD.region.meta,
-        crm_sync:
-          typeof region.meta.crm_sync === "boolean"
-            ? region.meta.crm_sync
-            : DEFAULT_PAYLOAD.region.meta.crm_sync,
-        crm_auto_onboard:
-          typeof region.meta.crm_auto_onboard === "boolean"
-            ? region.meta.crm_auto_onboard
-            : DEFAULT_PAYLOAD.region.meta.crm_auto_onboard,
-        pricing_profile:
-          typeof region.meta.pricing_profile === "string" ? region.meta.pricing_profile : "",
-        support_lead_email:
-          typeof region.meta.support_lead_email === "string" ? region.meta.support_lead_email : "",
-      };
-    }
-
-    if (isRecord(region.msp_credentials)) {
-      merged.region.msp_credentials = {
-        ...DEFAULT_PAYLOAD.region.msp_credentials,
-        base_url:
-          typeof region.msp_credentials.base_url === "string"
-            ? region.msp_credentials.base_url
-            : "",
-        username:
-          typeof region.msp_credentials.username === "string"
-            ? region.msp_credentials.username
-            : "",
-        password:
-          typeof region.msp_credentials.password === "string"
-            ? region.msp_credentials.password
-            : "",
-        domain:
-          typeof region.msp_credentials.domain === "string" ? region.msp_credentials.domain : "",
-        domain_id:
-          typeof region.msp_credentials.domain_id === "string"
-            ? region.msp_credentials.domain_id
-            : "",
-        default_project:
-          typeof region.msp_credentials.default_project === "string"
-            ? region.msp_credentials.default_project
-            : "",
-        object_storage: clone(DEFAULT_PAYLOAD.region.msp_credentials.object_storage),
-      };
-
-      if (isRecord(region.msp_credentials.object_storage)) {
-        merged.region.msp_credentials.object_storage = {
-          ...DEFAULT_PAYLOAD.region.msp_credentials.object_storage,
-          enabled:
-            typeof region.msp_credentials.object_storage.enabled === "boolean"
-              ? region.msp_credentials.object_storage.enabled
-              : false,
-          base_url:
-            typeof region.msp_credentials.object_storage.base_url === "string"
-              ? region.msp_credentials.object_storage.base_url
-              : "",
-          account:
-            typeof region.msp_credentials.object_storage.account === "string"
-              ? region.msp_credentials.object_storage.account
-              : "",
-          access_key:
-            typeof region.msp_credentials.object_storage.access_key === "string"
-              ? region.msp_credentials.object_storage.access_key
-              : "",
-          default_quota_gb:
-            typeof region.msp_credentials.object_storage.default_quota_gb === "string"
-              ? region.msp_credentials.object_storage.default_quota_gb
-              : "",
-          notification_email:
-            typeof region.msp_credentials.object_storage.notification_email === "string"
-              ? region.msp_credentials.object_storage.notification_email
-              : "",
-        };
-      }
-    }
+    merged.region.meta = ensureMetaDefaults(region.meta);
+    merged.region.msp_credentials = ensureMspDefaults(region.msp_credentials);
   }
-
-  merged.region.provider = merged.region.provider.toLowerCase();
 
   return merged;
 };
@@ -231,7 +206,8 @@ const setNestedValue = (
   value: unknown
 ) => {
   const keys = Array.isArray(path) ? path : path.split(".");
-  const finalKey = keys[keys.length - 1];
+  const finalKey = keys.at(-1);
+  if (finalKey === undefined) return;
   let cursor: Record<string, unknown> = object;
 
   keys.slice(0, -1).forEach((key) => {
@@ -262,6 +238,25 @@ const PartnerRegionQualificationForm = ({
   const brandName = branding?.company?.name || "the platform";
   const payload = useMemo(() => ensureDefaults(value), [value]);
   const verificationMutation = useVerifyPartnerRegionQualification();
+  const providerOptions = useMemo(() => {
+    if (
+      !payload.region.provider ||
+      PROVIDER_OPTIONS.some((option) => option.value === payload.region.provider)
+    ) {
+      return PROVIDER_OPTIONS;
+    }
+
+    return [
+      {
+        value: payload.region.provider,
+        label:
+          payload.region.provider === "nobus"
+            ? "Nobus Cloud (legacy)"
+            : `${payload.region.provider.toUpperCase()} (legacy)`,
+      },
+      ...PROVIDER_OPTIONS,
+    ];
+  }, [payload.region.provider]);
 
   const updateValue = (path: string | string[], nextValue: unknown) => {
     onChange((previous) => {
@@ -300,7 +295,7 @@ const PartnerRegionQualificationForm = ({
       const normalized = providerValue.toLowerCase();
       setNestedValue(updated, "region.provider", normalized);
 
-      if (normalized !== "zadara") {
+      if (!AUTOMATED_PROVIDERS.has(normalized)) {
         setNestedValue(updated, "region.fulfillment_mode", "manual");
         setNestedValue(
           updated,
@@ -314,8 +309,8 @@ const PartnerRegionQualificationForm = ({
   };
 
   const handleVerifyCredentials = async () => {
-    if (payload.region.provider !== "zadara") {
-      ToastUtils.error("Credential verification is only available for Zadara at the moment.");
+    if (!AUTOMATED_PROVIDERS.has(payload.region.provider)) {
+      ToastUtils.error("Credential verification is not yet available for this provider.");
       return;
     }
 
@@ -342,31 +337,36 @@ const PartnerRegionQualificationForm = ({
 
   const hasNode = payload.has_datacenter_node === true;
   const submissionMeta = isRecord(meta) ? meta : {};
-  const verificationStatus = submissionMeta.msp_verified === true ? "verified" : "pending";
-  const verificationMessage =
-    typeof submissionMeta.msp_verification_message === "string"
-      ? submissionMeta.msp_verification_message
-      : submissionMeta.msp_verified === true
-        ? "Credentials verified and pending region approval."
-        : "Verify credentials so we can automate provisioning.";
+  const isVerified = submissionMeta.msp_verified === true;
+  const verificationStatus = isVerified ? "verified" : "pending";
+  const verificationMessage = useMemo(() => {
+    if (isVerified) return "Credentials verified and pending region approval.";
+    return "Verify credentials so we can automate provisioning.";
+  }, [isVerified]);
+
+  const statusBarMetaUpdatedAt =
+    typeof submissionMeta.msp_verified_at === "string" ? submissionMeta.msp_verified_at : undefined;
 
   const canAttemptVerification =
     hasNode &&
-    payload.region.provider === "zadara" &&
+    AUTOMATED_PROVIDERS.has(payload.region.provider) &&
     payload.region.fulfillment_mode === "automated" &&
-    payload.region.msp_credentials.username &&
+    payload.region.msp_credentials.base_url &&
     payload.region.msp_credentials.password &&
-    payload.region.msp_credentials.domain &&
-    payload.region.msp_credentials.base_url;
+    (payload.region.provider === "nobus"
+      ? Boolean(
+          payload.region.msp_credentials.username || (payload.region.msp_credentials as any).email
+        )
+      : Boolean(payload.region.msp_credentials.username && payload.region.msp_credentials.domain));
 
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="operate-node" className="block text-sm font-medium text-gray-700 mb-2">
             Do you operate a partner-owned region or data centre node?
           </label>
-          <div className="flex items-center gap-4">
+          <div id="operate-node" className="flex items-center gap-4">
             <button
               type="button"
               onClick={() => updateValue("has_datacenter_node", true)}
@@ -397,31 +397,30 @@ const PartnerRegionQualificationForm = ({
         </div>
       </div>
 
-      {!hasNode ? (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
-          Let us know whenever you operate a region, and we’ll help with approval and automated
-          provisioning.
-        </div>
-      ) : (
+      {hasNode ? (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="cloud-provider"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Cloud provider <span className="text-red-500">*</span>
               </label>
               <select
+                id="cloud-provider"
                 value={payload.region.provider}
                 onChange={(event) => handleProviderChange(event.target.value)}
                 className="w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-[--theme-color] focus:outline-none text-sm p-3 bg-white"
               >
                 <option value="">Select a provider</option>
-                {PROVIDER_OPTIONS.map((option) => (
+                {providerOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
                 ))}
               </select>
-              {payload.region.provider && payload.region.provider !== "zadara" && (
+              {payload.region.provider && !AUTOMATED_PROVIDERS.has(payload.region.provider) && (
                 <p className="text-xs text-amber-600 mt-2">
                   Automated onboarding for {payload.region.provider.toUpperCase()} is coming soon.
                   We will request MSP credentials once the integration is available.
@@ -457,10 +456,14 @@ const PartnerRegionQualificationForm = ({
               placeholder="e.g. Lagos"
             />
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="fulfillment-mode"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Fulfilment mode <span className="text-red-500">*</span>
               </label>
               <select
+                id="fulfillment-mode"
                 value={payload.region.fulfillment_mode}
                 onChange={(event) =>
                   updateValue("region.fulfillment_mode", event.target.value || "manual")
@@ -477,9 +480,9 @@ const PartnerRegionQualificationForm = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">CRM automation</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">CRM automation</label>
               <div className="flex items-center gap-3 text-sm">
-                <label className="inline-flex items-center gap-2">
+                <label className="inline-flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={payload.region.meta.crm_sync}
@@ -490,7 +493,7 @@ const PartnerRegionQualificationForm = ({
                 </label>
               </div>
               <div className="flex items-center gap-3 text-sm mt-2">
-                <label className="inline-flex items-center gap-2">
+                <label className="inline-flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={payload.region.meta.crm_auto_onboard}
@@ -522,199 +525,215 @@ const PartnerRegionQualificationForm = ({
           </div>
 
           <div className="rounded-lg border border-gray-200 p-5 space-y-4">
-            {payload.region.provider !== "zadara" ? (
+            {AUTOMATED_PROVIDERS.has(payload.region.provider) ? (
+              payload.region.fulfillment_mode === "automated" ? (
+                <>
+                  <MspCredentialsSection
+                    payload={payload}
+                    onUpdate={updateValue}
+                    onVerify={handleVerifyCredentials}
+                    isVerifying={verificationMutation.isPending}
+                    canVerify={canAttemptVerification}
+                  />
+
+                  <ObjectStorageSection payload={payload} onUpdate={updateValue} />
+
+                  <VerificationStatus
+                    status={verificationStatus}
+                    message={verificationMessage}
+                    updatedAt={statusBarMetaUpdatedAt}
+                  />
+                </>
+              ) : (
+                <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-600">
+                  <p className="font-medium text-gray-800">Manual fulfilment selected</p>
+                  <p className="mt-1">
+                    You can manage provisioning in your own consoles. Credentials are optional
+                    unless you switch to automated fulfilment later.
+                  </p>
+                </div>
+              )
+            ) : (
               <div className="text-sm text-gray-600">
                 Automated provisioning for {payload.region.provider || "this provider"} is coming
                 soon. We will ask for the specific credentials once the integration is live.
               </div>
-            ) : payload.region.fulfillment_mode === "automated" ? (
-              <>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-base font-semibold text-gray-800">
-                      MSP credentials (platform admin)
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      We keep these encrypted. Required for automated fulfilment.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleVerifyCredentials}
-                    disabled={!canAttemptVerification || verificationMutation.isPending}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[--theme-color] text-white text-sm font-semibold hover:opacity-90 disabled:opacity-60"
-                  >
-                    {verificationMutation.isPending ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Verifying…
-                      </>
-                    ) : (
-                      <>
-                        <ShieldCheck className="w-4 h-4" />
-                        Verify credentials
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <Field
-                    label="MSP base URL"
-                    value={payload.region.msp_credentials.base_url}
-                    onChange={(event) =>
-                      updateValue("region.msp_credentials.base_url", event.target.value)
-                    }
-                    placeholder="https://compute.partner.example"
-                    required
-                  />
-                  <Field
-                    label="Domain"
-                    value={payload.region.msp_credentials.domain}
-                    onChange={(event) =>
-                      updateValue("region.msp_credentials.domain", event.target.value)
-                    }
-                    required
-                  />
-                  <Field
-                    label="Username"
-                    value={payload.region.msp_credentials.username}
-                    onChange={(event) =>
-                      updateValue("region.msp_credentials.username", event.target.value)
-                    }
-                    required
-                  />
-                  <Field
-                    label="Password"
-                    type="password"
-                    value={payload.region.msp_credentials.password}
-                    onChange={(event) =>
-                      updateValue("region.msp_credentials.password", event.target.value)
-                    }
-                    required
-                  />
-                  <Field
-                    label="Domain ID"
-                    value={payload.region.msp_credentials.domain_id}
-                    onChange={(event) =>
-                      updateValue("region.msp_credentials.domain_id", event.target.value)
-                    }
-                  />
-                  <Field
-                    label="Default project"
-                    value={payload.region.msp_credentials.default_project}
-                    onChange={(event) =>
-                      updateValue("region.msp_credentials.default_project", event.target.value)
-                    }
-                  />
-                </div>
-
-                <div className="rounded-lg border border-dashed border-gray-300 p-4 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-700">
-                        Object storage automation (optional)
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Provide access keys if you want us to manage silos and quotas.
-                      </p>
-                    </div>
-                    <label className="inline-flex items-center gap-2 text-sm font-medium text-gray-700">
-                      <input
-                        type="checkbox"
-                        checked={payload.region.msp_credentials.object_storage.enabled}
-                        onChange={(event) =>
-                          updateValue(
-                            "region.msp_credentials.object_storage.enabled",
-                            event.target.checked
-                          )
-                        }
-                        className="rounded border-gray-300 text-[--theme-color] focus:ring-[--theme-color]"
-                      />
-                      Enable automation
-                    </label>
-                  </div>
-
-                  {payload.region.msp_credentials.object_storage.enabled && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <Field
-                        label="Object storage base URL"
-                        value={payload.region.msp_credentials.object_storage.base_url}
-                        onChange={(event) =>
-                          updateValue(
-                            "region.msp_credentials.object_storage.base_url",
-                            event.target.value
-                          )
-                        }
-                        placeholder="https://object.partner.example"
-                      />
-                      <Field
-                        label="Service account / tenant"
-                        value={payload.region.msp_credentials.object_storage.account}
-                        onChange={(event) =>
-                          updateValue(
-                            "region.msp_credentials.object_storage.account",
-                            event.target.value
-                          )
-                        }
-                      />
-                      <Field
-                        label="Access key"
-                        value={payload.region.msp_credentials.object_storage.access_key}
-                        onChange={(event) =>
-                          updateValue(
-                            "region.msp_credentials.object_storage.access_key",
-                            event.target.value
-                          )
-                        }
-                      />
-                      <Field
-                        label="Default quota (GB)"
-                        value={payload.region.msp_credentials.object_storage.default_quota_gb}
-                        onChange={(event) =>
-                          updateValue(
-                            "region.msp_credentials.object_storage.default_quota_gb",
-                            event.target.value.replace(/[^\d]/g, "")
-                          )
-                        }
-                        placeholder="500"
-                      />
-                      <Field
-                        label="Notification email"
-                        value={payload.region.msp_credentials.object_storage.notification_email}
-                        onChange={(event) =>
-                          updateValue(
-                            "region.msp_credentials.object_storage.notification_email",
-                            event.target.value
-                          )
-                        }
-                        placeholder="alerts@partner.io"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <VerificationStatus
-                  status={verificationStatus}
-                  message={verificationMessage}
-                  updatedAt={
-                    typeof submissionMeta.msp_verified_at === "string"
-                      ? submissionMeta.msp_verified_at
-                      : undefined
-                  }
-                />
-              </>
-            ) : (
-              <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-600">
-                <p className="font-medium text-gray-800">Manual fulfilment selected</p>
-                <p className="mt-1">
-                  You can manage provisioning in your own consoles. Credentials are optional unless
-                  you switch to automated fulfilment later.
-                </p>
-              </div>
             )}
           </div>
         </>
+      ) : (
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+          Let us know whenever you operate a region, and we’ll help with approval and automated
+          provisioning.
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface MspCredentialsSectionProps {
+  payload: PartnerRegionPayload;
+  onUpdate: (path: string, value: unknown) => void;
+  onVerify: () => void;
+  isVerifying: boolean;
+  canVerify: boolean;
+}
+
+const MspCredentialsSection = ({
+  payload,
+  onUpdate,
+  onVerify,
+  isVerifying,
+  canVerify,
+}: MspCredentialsSectionProps) => (
+  <>
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-base font-semibold text-gray-800">MSP credentials (platform admin)</p>
+        <p className="text-sm text-gray-500">
+          We keep these encrypted. Required for automated fulfilment.
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={onVerify}
+        disabled={!canVerify || isVerifying}
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[--theme-color] text-white text-sm font-semibold hover:opacity-90 disabled:opacity-60 transition"
+      >
+        {isVerifying ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Verifying…
+          </>
+        ) : (
+          <>
+            <ShieldCheck className="w-4 h-4" />
+            Verify credentials
+          </>
+        )}
+      </button>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <Field
+        label="MSP base URL"
+        value={payload.region.msp_credentials.base_url}
+        onChange={(event) => onUpdate("region.msp_credentials.base_url", event.target.value)}
+        placeholder="https://compute.partner.example"
+        required
+      />
+      <Field
+        label="Domain"
+        value={payload.region.msp_credentials.domain}
+        onChange={(event) => onUpdate("region.msp_credentials.domain", event.target.value)}
+        required
+      />
+      <Field
+        label="Username"
+        value={payload.region.msp_credentials.username}
+        onChange={(event) => onUpdate("region.msp_credentials.username", event.target.value)}
+        required
+      />
+      <Field
+        label="Password"
+        type="password"
+        value={payload.region.msp_credentials.password}
+        onChange={(event) => onUpdate("region.msp_credentials.password", event.target.value)}
+        required
+      />
+      <Field
+        label="Domain ID"
+        value={payload.region.msp_credentials.domain_id}
+        onChange={(event) => onUpdate("region.msp_credentials.domain_id", event.target.value)}
+      />
+      <Field
+        label="Default project"
+        value={payload.region.msp_credentials.default_project}
+        onChange={(event) => onUpdate("region.msp_credentials.default_project", event.target.value)}
+      />
+    </div>
+  </>
+);
+
+interface ObjectStorageSectionProps {
+  payload: PartnerRegionPayload;
+  onUpdate: (path: string, value: unknown) => void;
+}
+
+const ObjectStorageSection = ({ payload, onUpdate }: ObjectStorageSectionProps) => {
+  const isEnabled = payload.region.msp_credentials.object_storage.enabled;
+
+  return (
+    <div className="rounded-lg border border-dashed border-gray-300 p-4 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-semibold text-gray-700">
+            Object storage automation (optional)
+          </p>
+          <p className="text-xs text-gray-500">
+            Provide access keys if you want us to manage silos and quotas.
+          </p>
+        </div>
+        <label className="inline-flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={isEnabled}
+            onChange={(event) =>
+              onUpdate("region.msp_credentials.object_storage.enabled", event.target.checked)
+            }
+            className="rounded border-gray-300 text-[--theme-color] focus:ring-[--theme-color]"
+          />
+          Enable automation
+        </label>
+      </div>
+
+      {isEnabled && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <Field
+            label="Object storage base URL"
+            value={payload.region.msp_credentials.object_storage.base_url}
+            onChange={(event) =>
+              onUpdate("region.msp_credentials.object_storage.base_url", event.target.value)
+            }
+            placeholder="https://object.partner.example"
+          />
+          <Field
+            label="Service account / tenant"
+            value={payload.region.msp_credentials.object_storage.account}
+            onChange={(event) =>
+              onUpdate("region.msp_credentials.object_storage.account", event.target.value)
+            }
+          />
+          <Field
+            label="Access key"
+            value={payload.region.msp_credentials.object_storage.access_key}
+            onChange={(event) =>
+              onUpdate("region.msp_credentials.object_storage.access_key", event.target.value)
+            }
+          />
+          <Field
+            label="Default quota (GB)"
+            value={payload.region.msp_credentials.object_storage.default_quota_gb}
+            onChange={(event) =>
+              onUpdate(
+                "region.msp_credentials.object_storage.default_quota_gb",
+                event.target.value.replaceAll(/[^\d]/g, "")
+              )
+            }
+            placeholder="500"
+          />
+          <Field
+            label="Notification email"
+            value={payload.region.msp_credentials.object_storage.notification_email}
+            onChange={(event) =>
+              onUpdate(
+                "region.msp_credentials.object_storage.notification_email",
+                event.target.value
+              )
+            }
+            placeholder="alerts@partner.io"
+          />
+        </div>
       )}
     </div>
   );
@@ -736,21 +755,26 @@ const Field = ({
   placeholder,
   required = false,
   type = "text",
-}: FieldProps) => (
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1">
-      {label}
-      {required && <span className="text-red-500"> *</span>}
-    </label>
-    <input
-      type={type}
-      value={value ?? ""}
-      onChange={onChange}
-      placeholder={placeholder}
-      className="w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-[--theme-color] focus:outline-none text-sm p-3"
-    />
-  </div>
-);
+}: FieldProps) => {
+  const id = useMemo(() => `field-${label.toLowerCase().replaceAll(/\s+/g, "-")}`, [label]);
+
+  return (
+    <div>
+      <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
+        {label}
+        {required && <span className="text-red-500"> *</span>}
+      </label>
+      <input
+        id={id}
+        type={type}
+        value={value ?? ""}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-[--theme-color] focus:outline-none text-sm p-3"
+      />
+    </div>
+  );
+};
 
 interface VerificationStatusProps {
   status: "verified" | "pending";

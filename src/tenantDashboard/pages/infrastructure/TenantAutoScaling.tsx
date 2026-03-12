@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import TenantPageShell from "../../components/TenantPageShell";
-import { AutoScalingManagementContainer } from "../../../shared/components/infrastructure/autoscaling";
+import { AutoScalingManagementContainer } from "@/shared/components/infrastructure/autoscaling";
 
 const TenantAutoScaling: React.FC = () => {
   const location = useLocation();

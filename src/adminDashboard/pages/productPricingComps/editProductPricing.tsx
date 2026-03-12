@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { X, Loader2 } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
-import { useUpdateProductPricing } from "../../../hooks/adminHooks/adminproductPricingHook";
+import ToastUtils from "@/utils/toastUtil";
+import { useUpdateProductPricing } from "@/hooks/adminHooks/adminProductPricingHooks";
 
 const EditProductPricingModal = ({ isOpen, onClose, pricing }: any) => {
   const [priceUsd, setPriceUsd] = useState("");

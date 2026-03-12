@@ -1,9 +1,9 @@
 import React from "react";
-import { DashboardHeadbar } from "../../shared/components/headbar";
-import { useDashboardProfile } from "../../shared/hooks/useDashboardProfile";
-import useSidebarStore from "../../stores/sidebarStore";
-import { buildTenantHeadbarPreset } from "../../shared/config/headbarPresets";
-import { resolveBrandLogo, useTenantBrandingTheme } from "../../hooks/useBrandingTheme";
+import { DashboardHeadbar } from "@/shared/components/headbar";
+import { useDashboardProfile } from "@/shared/hooks/useDashboardProfile";
+import useSidebarStore from "@/stores/sidebarStore";
+import { buildTenantHeadbarPreset } from "@/shared/config/headbarPresets";
+import { resolveBrandLogo, useTenantBrandingTheme } from "@/hooks/useBrandingTheme";
 
 interface TenantHeadbarProps {
   tenantData?: {
@@ -21,10 +21,10 @@ const TenantHeadbar: React.FC<TenantHeadbarProps> = ({ tenantData, onMenuClick }
   const { data: branding } = useTenantBrandingTheme();
   const resolvedTenantData = {
     name: branding?.company?.name || tenantData?.name,
-    logo: resolveBrandLogo(branding, tenantData?.logo as any),
+    logo: resolveBrandLogo(branding, tenantData?.logo as string | undefined),
     color: branding?.accentColor || tenantData?.color,
   };
-  const preset = buildTenantHeadbarPreset(resolvedTenantData as any);
+  const preset = buildTenantHeadbarPreset(resolvedTenantData as never);
 
   const handleMobileMenuToggle = () => {
     toggleMobile();

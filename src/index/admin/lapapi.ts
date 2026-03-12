@@ -1,11 +1,14 @@
-import config from "../../config";
-import useAdminAuthStore from "../../stores/adminAuthStore";
-import { createApiClient } from "../../utils/createApiClient";
+/**
+ * @deprecated Use `import { api } from "@/lib/api"` instead.
+ */
+import { api } from "../../lib/api";
 
-export default createApiClient({
-  baseURL: config.baseURL,
-  authStore: useAdminAuthStore,
-  showToasts: true,
-  redirectPath: "/admin-signin",
-  useSafeJsonParsing: false,
-});
+type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+
+const adminLapApi = <T = unknown>(
+  method: HttpMethod,
+  path: string,
+  body: Record<string, unknown> | null = null
+): Promise<T> => api.request<T>(method, path, body as any);
+
+export default adminLapApi;

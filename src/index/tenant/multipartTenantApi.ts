@@ -1,10 +1,14 @@
-import config from "../../config";
-import useTenantAuthStore from "../../stores/tenantAuthStore";
-import { createMultipartApiClient } from "../../utils/createApiClient";
+/**
+ * @deprecated Use `import { api } from "@/lib/api"` and `api.upload()`.
+ */
+import { api } from "../../lib/api";
 
-export default createMultipartApiClient({
-  baseURL: config.tenantURL,
-  authStore: useTenantAuthStore,
-  showToasts: true,
-  redirectPath: "/tenant-signin",
-});
+type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+
+const multipartTenantApi = <T = unknown>(
+  method: HttpMethod,
+  path: string,
+  body: FormData | Record<string, unknown> | null = null
+): Promise<T> => api.request<T>(method, path, body as any);
+
+export default multipartTenantApi;

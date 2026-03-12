@@ -1,20 +1,42 @@
 import React from "react";
 
 interface BusinessAddressProps {
-  formData: any;
+  formData: {
+    business: {
+      address?: string;
+      zip?: string;
+      country?: string;
+      country_id?: string;
+      city?: string;
+      state?: string;
+    };
+  };
   setFormData: (data: any) => void;
-  errors: any;
+  errors: Record<string, string>;
   countries: unknown;
   isCountriesFetching: boolean;
   states?: unknown;
   isStatesFetching?: boolean;
   cities?: unknown;
   isCitiesFetching?: boolean;
-  setErrors?: (errors: any) => void;
+  setErrors?: (errors: Record<string, string>) => void;
+}
+
+interface CountryOptions {
+  id: number;
+  name: string;
 }
 
 const BusinessAddress: React.FC<BusinessAddressProps> & {
-  validate: (data: any) => any;
+  validate: (data: {
+    business: {
+      address?: string;
+      zip?: string;
+      country_id?: string;
+      city?: string;
+      state?: string;
+    };
+  }) => Record<string, string>;
 } = ({ formData, setFormData, errors, countries, isCountriesFetching }) => {
   return (
     <div className="space-y-4 font-Outfit">
@@ -75,9 +97,8 @@ const BusinessAddress: React.FC<BusinessAddressProps> & {
               value={formData.business.country_id || ""}
               onChange={(e) => {
                 const value = e.target.value;
-                const selectedCountry = (countries as any)?.find(
-                  (c: any) => c.id === parseInt(value)
-                );
+                const countriesList = (countries as CountryOptions[]) || [];
+                const selectedCountry = countriesList.find((c) => c.id === parseInt(value));
                 setFormData({
                   ...formData,
                   business: {
@@ -88,13 +109,13 @@ const BusinessAddress: React.FC<BusinessAddressProps> & {
                 });
               }}
               className="w-full bg-transparent outline-none"
-              disabled={isCountriesFetching || !(countries as any)?.length}
+              disabled={isCountriesFetching || !(countries as CountryOptions[])?.length}
             >
               <option value="" disabled>
                 {isCountriesFetching ? "Loading countries..." : "Select country"}
               </option>
-              {(countries as any)?.length ? (
-                (countries as any).map((country: any) => (
+              {(countries as CountryOptions[])?.length ? (
+                (countries as CountryOptions[]).map((country) => (
                   <option key={country.id} value={country.id.toString()}>
                     {country.name}
                   </option>
@@ -157,8 +178,8 @@ const BusinessAddress: React.FC<BusinessAddressProps> & {
   );
 };
 
-BusinessAddress.validate = (formData: any) => {
-  const newErrors: any = {};
+BusinessAddress.validate = (formData) => {
+  const newErrors: Record<string, string> = {};
   if (!formData.business.address) newErrors.address = "Address is required";
   if (!formData.business.zip) newErrors.zip = "Zip code is required";
   if (!formData.business.country_id) newErrors.country = "Country is required";

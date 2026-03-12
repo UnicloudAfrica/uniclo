@@ -5,8 +5,8 @@ import {
   useFetchIpPools,
   useAssignProjectEdge,
   useFetchProjectEdgeConfigAdmin,
-} from "../../../hooks/adminHooks/edgeHooks";
-import { useFetchGeneralRegions } from "../../../hooks/resource";
+} from "@/hooks/adminHooks/edgeHooks";
+import { useFetchGeneralRegions } from "@/hooks/resource";
 
 interface AssignEdgeConfigModalProps {
   isOpen: boolean;
@@ -92,7 +92,7 @@ const AssignEdgeConfigModal = ({
   const regions = asArray<RegionOption>(regionsData);
 
   const { data: currentConfigData } = useFetchProjectEdgeConfigAdmin(
-    projectId as any,
+    projectId as string,
     selectedRegion,
     {
       enabled: isOpen && !!selectedRegion,
@@ -108,7 +108,7 @@ const AssignEdgeConfigModal = ({
     isFetching: isFetchingNetworks,
     error: networksError,
     refetch: refetchNetworks,
-  } = useFetchEdgeNetworks(projectId as any, selectedRegion, {
+  } = useFetchEdgeNetworks(projectId as string, selectedRegion, {
     enabled: isOpen && !!selectedRegion,
   });
   const edgeNetworks = asArray<EdgeNetworkOption>(edgeNetworksData);
@@ -117,7 +117,7 @@ const AssignEdgeConfigModal = ({
     isFetching: isFetchingPools,
     error: poolsError,
     refetch: refetchPools,
-  } = useFetchIpPools(projectId as any, selectedRegion, formData.edge_network_id, {
+  } = useFetchIpPools(projectId as string, selectedRegion, formData.edge_network_id, {
     enabled: isOpen && !!selectedRegion && !!formData.edge_network_id,
   });
   const ipPools = asArray<IpPoolOption>(ipPoolsData);

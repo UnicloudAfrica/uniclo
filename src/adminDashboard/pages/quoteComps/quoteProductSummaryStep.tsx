@@ -1,8 +1,8 @@
 import React, { useMemo } from "react";
 import { Cpu, HardDrive, Network, ListChecks, Tag, BadgePercent } from "lucide-react";
-import ModernCard from "../../../shared/components/ui/ModernCard";
-import ModernTable from "../../../shared/components/ui/ModernTable";
-import type { Column } from "../../../shared/components/ui/ModernTable";
+import ModernCard from "@/shared/components/ui/ModernCard";
+import ModernTable from "@/shared/components/ui/ModernTable";
+import type { Column } from "@/shared/components/ui/ModernTable";
 
 type SummaryTone = "primary" | "success" | "neutral";
 

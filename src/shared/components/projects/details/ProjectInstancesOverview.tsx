@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { Plus } from "lucide-react";
 import { ModernCard, ModernButton, ModernTable, StatusPill } from "../../ui";
-import { designTokens } from "../../../../styles/designTokens";
+import { designTokens } from "@/styles/designTokens";
 
 interface InstanceStats {
   total: number;
@@ -38,7 +38,7 @@ const ProjectInstancesOverview: React.FC<ProjectInstancesOverviewProps> = ({
   onViewInstance,
   onAddInstance,
   onViewAllInstances,
-  canCreateInstances,
+  canCreateInstances: _canCreateInstances,
   resolvedProjectId,
 }) => {
   // Define columns for ModernTable

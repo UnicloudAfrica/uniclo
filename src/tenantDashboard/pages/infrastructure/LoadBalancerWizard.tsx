@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Zap, ArrowLeft, ArrowRight, Check, Globe, Layers, Shield } from "lucide-react";
 import TenantPageShell from "../../components/TenantPageShell";
-import ModernCard from "../../../shared/components/ui/ModernCard";
-import ModernButton from "../../../shared/components/ui/ModernButton";
-import { useVpcs, useSubnets, useSecurityGroups } from "../../../shared/hooks/vpcInfraHooks";
-import { useCreateLoadBalancer } from "../../../hooks/adminHooks/loadBalancerHooks";
+import ModernCard from "@/shared/components/ui/ModernCard";
+import ModernButton from "@/shared/components/ui/ModernButton";
+import { useVpcs, useSubnets, useSecurityGroups } from "@/shared/hooks/vpcInfraHooks";
+import { useCreateLoadBalancer } from "@/hooks/adminHooks/loadBalancerHooks";
 
 const LoadBalancerWizard: React.FC = () => {
   const navigate = useNavigate();

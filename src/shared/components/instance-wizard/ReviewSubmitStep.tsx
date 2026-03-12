@@ -9,8 +9,8 @@ import OrderOverviewCard, {
   type PaymentOption,
   type SubmissionResult,
 } from "./OrderOverviewCard";
-import ToastUtils from "../../../utils/toastUtil";
-import { Configuration } from "../../../types/InstanceConfiguration";
+import ToastUtils from "@/utils/toastUtil";
+import { Configuration } from "@/types/InstanceConfiguration";
 
 interface ReviewSubmitStepProps {
   isFastTrack: boolean;
@@ -59,7 +59,7 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({
   taxLabelSuffix,
   backendPricingData,
   onBack,
-  onEditConfiguration,
+  onEditConfiguration: _onEditConfiguration,
   onConfirm,
   confirmLabel,
   fastTrackSummary,

@@ -1,21 +1,11 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import {
-  Loader2,
-  AlertCircle,
-  CheckCircle,
-  Ban,
-  PauseCircle,
-  PlayCircle,
-  DollarSign,
-  Info,
-} from "lucide-react";
-import adminRegionApi from "../../services/adminRegionApi";
-import ToastUtils from "../../utils/toastUtil";
+import { Loader2, AlertCircle, CheckCircle, DollarSign, Info } from "lucide-react";
+import adminRegionApi from "@/services/adminRegionApi";
+import ToastUtils from "@/utils/toastUtil";
 import AdminPageShell from "../components/AdminPageShell";
-import { ModernCard } from "../../shared/components/ui";
-import { ModernButton } from "../../shared/components/ui";
-import logger from "../../utils/logger";
+import { ModernCard, ModernButton } from "@/shared/components/ui";
+import logger from "@/utils/logger";
 
 const ACTION_COPY = {
   approve: {
@@ -54,7 +44,14 @@ const ACTION_COPY = {
     tone: "primary",
   },
 };
-const ReasonField = ({ label, value, onChange, placeholder }: any) => (
+interface ReasonFieldProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+}
+
+const ReasonField = ({ label, value, onChange, placeholder }: ReasonFieldProps) => (
   <div className="space-y-2">
     <label className="text-sm font-medium text-gray-700">
       {label} <span className="text-red-500">*</span>
@@ -73,7 +70,12 @@ const ReasonField = ({ label, value, onChange, placeholder }: any) => (
   </div>
 );
 
-const FeeField = ({ value, onChange }: any) => (
+interface FeeFieldProps {
+  value: string;
+  onChange: (value: string) => void;
+}
+
+const FeeField = ({ value, onChange }: FeeFieldProps) => (
   <div className="space-y-2">
     <label className="text-sm font-medium text-gray-700">
       Platform Fee Percentage <span className="text-red-500">*</span>
@@ -98,7 +100,12 @@ const FeeField = ({ value, onChange }: any) => (
   </div>
 );
 
-const NotesField = ({ value, onChange }: any) => (
+interface NotesFieldProps {
+  value: string;
+  onChange: (value: string) => void;
+}
+
+const NotesField = ({ value, onChange }: NotesFieldProps) => (
   <div className="space-y-2">
     <label className="text-sm font-medium text-gray-700">
       Admin Notes <span className="text-xs text-gray-400">(optional)</span>
@@ -119,7 +126,12 @@ const RegionApprovalEdit = () => {
   const [searchParams] = useSearchParams();
   const action = searchParams.get("action") || "approve";
 
-  const [region, setRegion] = useState<any>(null);
+  const [region, setRegion] = useState<{
+    name?: string;
+    code?: string;
+    country_code?: string;
+    [key: string]: unknown;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -137,7 +149,7 @@ const RegionApprovalEdit = () => {
   const fetchRegionDetail = async () => {
     try {
       setLoading(true);
-      const response = await adminRegionApi.fetchRegionApprovalById(id as any);
+      const response = await adminRegionApi.fetchRegionApprovalById(id as string);
       setRegion(response.data);
       setFormData({
         platform_fee_percentage: String(response.data.platform_fee_percentage ?? 20),
@@ -151,30 +163,30 @@ const RegionApprovalEdit = () => {
       setLoading(false);
     }
   };
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
       setSubmitting(true);
 
       if (action === "approve") {
-        await adminRegionApi.approveRegion(id as any, {
+        await adminRegionApi.approveRegion(id as string, {
           platform_fee_percentage: parseFloat(formData.platform_fee_percentage),
           notes: formData.notes,
         });
         ToastUtils.success("Region approved successfully");
       } else if (action === "reject") {
-        await adminRegionApi.rejectRegion(id as any, formData.reason);
+        await adminRegionApi.rejectRegion(id as string, formData.reason);
         ToastUtils.success("Region rejected");
       } else if (action === "suspend") {
-        await adminRegionApi.suspendRegion(id as any, formData.reason);
+        await adminRegionApi.suspendRegion(id as string, formData.reason);
         ToastUtils.success("Region suspended");
       } else if (action === "reactivate") {
-        await adminRegionApi.reactivateRegion(id as any);
+        await adminRegionApi.reactivateRegion(id as string);
         ToastUtils.success("Region reactivated successfully");
       } else if (action === "update_fee") {
         await adminRegionApi.updatePlatformFee(
-          id as any,
+          id as string,
           parseFloat(formData.platform_fee_percentage)
         );
         ToastUtils.success("Platform fee updated");
@@ -183,12 +195,12 @@ const RegionApprovalEdit = () => {
       navigate(`/admin-dashboard/region-approvals/${id}`);
     } catch (error) {
       logger.error(`Error performing ${action}:`, error);
-      ToastUtils.error((error as any)?.message || "Unable to complete the action");
+      ToastUtils.error((error as Error)?.message || "Unable to complete the action");
     } finally {
       setSubmitting(false);
     }
   };
-  const copy = (ACTION_COPY as any)[action] || ACTION_COPY.approve;
+  const copy = ACTION_COPY[action as keyof typeof ACTION_COPY] || ACTION_COPY.approve;
 
   const headerMeta = region ? (
     <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-gray-500">
@@ -294,7 +306,7 @@ const RegionApprovalEdit = () => {
     return <>{renderNotFoundShell()}</>;
   }
 
-  const actionTone = (ACTION_COPY as any)[action]?.tone || "primary";
+  const actionTone = ACTION_COPY[action as keyof typeof ACTION_COPY]?.tone || "primary";
 
   return (
     <>
@@ -330,7 +342,7 @@ const RegionApprovalEdit = () => {
               {(action === "approve" || action === "update_fee") && (
                 <FeeField
                   value={formData.platform_fee_percentage}
-                  onChange={(value: any) =>
+                  onChange={(value: string) =>
                     setFormData((prev) => ({
                       ...prev,
                       platform_fee_percentage: value,
@@ -343,7 +355,7 @@ const RegionApprovalEdit = () => {
                 <ReasonField
                   label="Reason"
                   value={formData.reason}
-                  onChange={(value: any) => setFormData((prev) => ({ ...prev, reason: value }))}
+                  onChange={(value: string) => setFormData((prev) => ({ ...prev, reason: value }))}
                   placeholder={`Provide a reason for ${
                     action === "reject" ? "rejecting" : "suspending"
                   } this region...`}
@@ -353,7 +365,7 @@ const RegionApprovalEdit = () => {
               {action === "approve" && (
                 <NotesField
                   value={formData.notes}
-                  onChange={(value: any) => setFormData((prev) => ({ ...prev, notes: value }))}
+                  onChange={(value: string) => setFormData((prev) => ({ ...prev, notes: value }))}
                 />
               )}
 

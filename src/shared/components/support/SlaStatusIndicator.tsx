@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { getSlaStatusColor, SlaStatus } from "./threadTypes";
 
 interface SlaStatusIndicatorProps {
@@ -6,7 +6,7 @@ interface SlaStatusIndicatorProps {
   compact?: boolean;
 }
 
-export const SlaStatusIndicator: React.FC<SlaStatusIndicatorProps> = ({ sla, compact = false }) => {
+const SlaStatusIndicatorBase: React.FC<SlaStatusIndicatorProps> = ({ sla, compact = false }) => {
   if (compact) {
     const isBad = sla.response.status === "breached" || sla.resolution.status === "breached";
     const isRisk = sla.response.status === "at_risk" || sla.resolution.status === "at_risk";
@@ -38,5 +38,7 @@ export const SlaStatusIndicator: React.FC<SlaStatusIndicatorProps> = ({ sla, com
     </div>
   );
 };
+
+export const SlaStatusIndicator = memo(SlaStatusIndicatorBase);
 
 export default SlaStatusIndicator;

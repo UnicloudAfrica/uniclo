@@ -4,7 +4,7 @@ import {
   useAutoScalingGroups,
   useDeleteAutoScalingGroup,
   useLaunchConfigurations,
-} from "../../../../hooks/autoScalingHooks";
+} from "@/hooks/autoScalingHooks";
 import ModernTable from "../../ui/ModernTable";
 import ModernCard from "../../ui/ModernCard";
 import StatusPill from "../../ui/StatusPill";
@@ -112,7 +112,7 @@ const AutoScalingManagementContainer: React.FC<AutoScalingManagementContainerPro
       key: "created_at",
       header: "Created",
       accessor: "created_at",
-      render: (date: any) => (
+      render: (date: string) => (
         <div className="text-sm text-gray-500">{new Date(date).toLocaleString()}</div>
       ),
     },
@@ -164,7 +164,7 @@ const AutoScalingManagementContainer: React.FC<AutoScalingManagementContainerPro
       key: "instance_type",
       header: "Instance Type",
       accessor: "instance_type",
-      render: (type: any) => (
+      render: (type: string) => (
         <div className="text-sm">
           <span className="px-2 py-1 bg-gray-100 rounded text-gray-700 font-mono text-xs">
             {type}
@@ -176,7 +176,7 @@ const AutoScalingManagementContainer: React.FC<AutoScalingManagementContainerPro
       key: "image_id",
       header: "Image",
       accessor: "image_id",
-      render: (imageId: any) => (
+      render: (imageId: string) => (
         <div className="text-xs text-gray-500 font-mono">{imageId || "Not specified"}</div>
       ),
     },
@@ -184,13 +184,13 @@ const AutoScalingManagementContainer: React.FC<AutoScalingManagementContainerPro
       key: "key_pair",
       header: "Key Pair",
       accessor: "key_pair",
-      render: (keyPair: any) => <div className="text-sm text-gray-600">{keyPair || "—"}</div>,
+      render: (keyPair: string) => <div className="text-sm text-gray-600">{keyPair || "—"}</div>,
     },
     {
       key: "created_at",
       header: "Created",
       accessor: "created_at",
-      render: (date: any) => (
+      render: (date: string) => (
         <div className="text-sm text-gray-500">{new Date(date).toLocaleString()}</div>
       ),
     },
@@ -235,7 +235,7 @@ const AutoScalingManagementContainer: React.FC<AutoScalingManagementContainerPro
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as "groups" | "configs")}
               className={`
                                 flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
                                 ${

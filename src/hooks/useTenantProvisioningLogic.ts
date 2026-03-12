@@ -90,13 +90,14 @@ export const useTenantProvisioningLogic = () => {
   // ─────────────────────────────────────────────────────────────────
   const { data: countriesData = [], isLoading: isCountriesLoading } = useFetchCountries();
 
+  const countries = countriesData as Array<Record<string, any>>;
   const countryOptions: Option[] = useMemo(
     () =>
-      (countriesData as any).map((c: any) => ({
+      countries.map((c) => ({
         value: String(c.iso2 || c.code || c.id),
         label: c.name,
       })),
-    [countriesData]
+    [countries]
   );
 
   // ─────────────────────────────────────────────────────────────────
@@ -112,20 +113,20 @@ export const useTenantProvisioningLogic = () => {
     // 1. Resolve based on context selection (if acting as a Partner/Reseller)
     if (contextType === "tenant" && selectedTenantId) {
       const selected = tenants.find((t: any) => String(t.id) === String(selectedTenantId));
-      candidate = resolveCountryCodeFromEntity(selected, countryOptions as any);
+      candidate = resolveCountryCodeFromEntity(selected, countryOptions as never);
     } else if (contextType === "user" && selectedUserId) {
       const selected = userPool.find((u: any) => String(u.id) === String(selectedUserId));
-      candidate = resolveCountryCodeFromEntity(selected, countryOptions as any);
+      candidate = resolveCountryCodeFromEntity(selected, countryOptions as never);
     }
 
     // 2. Fallback to self-tenant (Standard Tenant)
     if (!candidate && selfTenant) {
-      candidate = resolveCountryCodeFromEntity(selfTenant, countryOptions as any);
+      candidate = resolveCountryCodeFromEntity(selfTenant, countryOptions as never);
     }
 
     // 3. Fallback to user profile
     if (!candidate && profile) {
-      candidate = resolveCountryCodeFromEntity(profile, countryOptions as any);
+      candidate = resolveCountryCodeFromEntity(profile, countryOptions as never);
     }
 
     if (candidate) {
@@ -164,7 +165,10 @@ export const useTenantProvisioningLogic = () => {
         if (pricingTenantId) {
           params.append("tenant_id", String(pricingTenantId));
         }
-        const response = (await silentApi("GET", `/product-pricing?${params.toString()}`)) as any;
+        const response = (await silentApi(
+          "GET",
+          `/product-pricing?${params.toString()}`
+        )) as Record<string, any>;
         setPricingData(response?.data || response || []);
       } catch {
         setPricingData([]);
@@ -175,18 +179,19 @@ export const useTenantProvisioningLogic = () => {
     fetchPricing();
   }, [isAuthenticated, billingCountry, contextType, selectedTenantId, selfTenant?.id]);
 
-  const { data: generalRegions = [], isFetching: isRegionsLoading } = useFetchGeneralRegions({
+  const { data: generalRegionsRaw = [], isFetching: isRegionsLoading } = useFetchGeneralRegions({
     enabled: isAuthenticated,
   });
+  const generalRegions = generalRegionsRaw as Array<Record<string, any>>;
 
   // ─────────────────────────────────────────────────────────────────
   // Fast-Track Region Eligibility
   // ─────────────────────────────────────────────────────────────────
   const fastTrackRegions = useMemo(
     () =>
-      (generalRegions as any)
-        .filter((region: any) => region?.can_fast_track === true)
-        .map((region: any) => region?.code || region?.region || region?.slug || region?.id)
+      generalRegions
+        .filter((region) => region?.can_fast_track === true)
+        .map((region) => region?.code || region?.region || region?.slug || region?.id)
         .filter(Boolean),
     [generalRegions]
   );
@@ -199,7 +204,7 @@ export const useTenantProvisioningLogic = () => {
   // ─────────────────────────────────────────────────────────────────
 
   const regionOptions: Option[] = useMemo(() => {
-    const allRegions = (generalRegions as any).map((r: any) => {
+    const allRegions = generalRegions.map((r) => {
       const value = r.code || r.region || r.id || r.slug;
       return {
         value,
@@ -210,7 +215,7 @@ export const useTenantProvisioningLogic = () => {
 
     // If in fast-track mode, only show eligible regions
     if (isFastTrack) {
-      return allRegions.filter((r: any) => r.canFastTrack);
+      return allRegions.filter((r) => r.canFastTrack);
     }
     return allRegions;
   }, [generalRegions, fastTrackRegions, isFastTrack]);
@@ -237,7 +242,7 @@ export const useTenantProvisioningLogic = () => {
   // All regions for display purposes (even when filtering)
   const allRegionOptions: Option[] = useMemo(
     () =>
-      (generalRegions as any).map((r: any): Option & { canFastTrack: boolean } => {
+      generalRegions.map((r): Option & { canFastTrack: boolean } => {
         const value = r.code || r.region || r.id || r.slug;
         return {
           value,
@@ -332,7 +337,7 @@ export const useTenantProvisioningLogic = () => {
           const isNewProject = cfg.project_mode === "new" || Boolean(cfg.template_locked);
           const assignmentScopePayload = cfg.assignment_scope || undefined;
           const sanitizedMemberIds = Array.isArray(cfg.member_user_ids)
-            ? cfg.member_user_ids.map((id: any) => Number(id)).filter(Boolean)
+            ? cfg.member_user_ids.map((id: string | number) => Number(id)).filter(Boolean)
             : [];
           const parsedBandwidthCount = cfg.bandwidth_id ? 1 : 0;
           const parsedFloatingIpCount = Number(cfg.floating_ip_count) || 0;
@@ -346,10 +351,10 @@ export const useTenantProvisioningLogic = () => {
           const sanitizedSgIds = (
             Array.isArray(cfg.security_group_ids)
               ? cfg.security_group_ids
-              : ((cfg.security_group_ids as any) || "").split(",")
+              : ((cfg.security_group_ids as string) || "").split(",")
           )
-            .map((v: any) => (v && v.value ? v.value : v))
-            .map((v: any) => (v || "").toString().trim())
+            .map((v: unknown) => (v && (v as any).value ? (v as any).value : v))
+            .map((v: unknown) => (v || "").toString().trim())
             .filter(Boolean);
 
           const extraVolumes = (cfg.additional_volumes || [])
@@ -400,11 +405,11 @@ export const useTenantProvisioningLogic = () => {
           };
         });
 
-        const payload = {
+        const payload: Record<string, any> = {
           country_iso: billingCountry,
           fast_track: isFastTrack,
           pricing_requests,
-        } as any;
+        };
         if (contextType === "tenant" && selectedTenantId) {
           payload.tenant_id = selectedTenantId;
         } else if (contextType === "user" && selectedUserId) {
@@ -414,45 +419,43 @@ export const useTenantProvisioningLogic = () => {
           }
         }
 
-        const response = await tenantApi("POST", "/admin/instances/create", payload as any);
-        const data = response?.data || response;
+        const response = await tenantApi("POST", "/admin/instances/create", payload);
+        const data = (response?.data || response) as Record<string, any>;
 
         const normalizedGatewayOptions = normalizePaymentOptions(
-          (data as any)?.payment?.payment_gateway_options ||
-            (data as any)?.payment?.options ||
-            (data as any)?.payment_options
+          data?.payment?.payment_gateway_options || data?.payment?.options || data?.payment_options
         );
         const pricingBreakdownPayload =
-          (data as any)?.pricing_breakdown ||
-          (data as any)?.transaction?.metadata?.pricing_breakdown ||
-          (data as any)?.order?.pricing_breakdown ||
+          data?.pricing_breakdown ||
+          data?.transaction?.metadata?.pricing_breakdown ||
+          data?.order?.pricing_breakdown ||
           null;
 
-        const mergedTransaction = (data as any)?.transaction
+        const mergedTransaction = data?.transaction
           ? {
-              ...(data as any).transaction,
+              ...data.transaction,
               metadata: {
-                ...((data as any).transaction.metadata || {}),
+                ...(data.transaction.metadata || {}),
                 ...(pricingBreakdownPayload ? { pricing_breakdown: pricingBreakdownPayload } : {}),
               },
             }
           : null;
 
-        const mergedResult = {
-          ...((data as any) || {}),
+        const mergedResult: Record<string, any> = {
+          ...(data || {}),
           transaction: mergedTransaction,
-          payment: (data as any)?.payment
-            ? { ...(data as any).payment, payment_gateway_options: normalizedGatewayOptions }
+          payment: data?.payment
+            ? { ...data.payment, payment_gateway_options: normalizedGatewayOptions }
             : normalizedGatewayOptions.length
               ? { payment_gateway_options: normalizedGatewayOptions }
-              : (data as any)?.payment,
-          pricing_breakdown: pricingBreakdownPayload || (data as any)?.pricing_breakdown || null,
+              : data?.payment,
+          pricing_breakdown: pricingBreakdownPayload || data?.pricing_breakdown || null,
         };
 
         setSubmissionResult(mergedResult);
         setOrderReceipt({
           transaction: mergedResult?.transaction || null,
-          order: (mergedResult as any)?.order || null,
+          order: mergedResult?.order || null,
           payment: mergedResult?.payment || null,
           pricing_breakdown: mergedResult?.pricing_breakdown || null,
         });

@@ -3,16 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { Users, ShieldCheck, UserCog, Plus } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
 import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
-import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
-import { ModernButton } from "../../shared/components/ui";
-import ModernTable from "../../shared/components/ui/ModernTable";
-import { useFetchAdmins } from "../../hooks/adminHooks/adminHooks";
+import ModernStatsCard from "@/shared/components/ui/ModernStatsCard";
+import { ModernButton } from "@/shared/components/ui";
+import ModernTable from "@/shared/components/ui/ModernTable";
+import { useFetchAdmins } from "@/hooks/adminHooks/adminHooks";
 import adminFileApi from "../../index/admin/fileapi";
 
 import { DeleteAdminModal } from "./adminComps/deleteAdmin";
-import { TableActionButtons } from "../../shared/components/tables";
-import ToastUtils from "../../utils/toastUtil";
-import logger from "../../utils/logger";
+import { TableActionButtons } from "@/shared/components/tables";
+import ToastUtils from "@/utils/toastUtil";
+import logger from "@/utils/logger";
 
 interface AdminUser {
   identifier: string;
@@ -308,7 +308,7 @@ export default function AdminUsers() {
             description="Manage system administrators and their permissions"
             actions={headerActions}
           >
-            <TenantClientsSideMenu activeTab="admin-users" {...({} as any)} />
+            <TenantClientsSideMenu activeTab="admin-users" {...({} as never)} />
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-6">
@@ -316,7 +316,7 @@ export default function AdminUsers() {
                 title="Total Admins"
                 value={totalAdmins}
                 icon={<Users />}
-                trend={{ value: 12, isPositive: true } as any}
+                trend={{ value: 12, isPositive: true } as never}
                 color="primary"
               />
               <ModernStatsCard
@@ -336,7 +336,7 @@ export default function AdminUsers() {
             {/* Table */}
             <ModernTable
               data={tableData}
-              columns={columns as any}
+              columns={columns as never}
               title="Admins List"
               searchable
               searchKeys={["first_name", "last_name", "email", "phone"]}
@@ -354,7 +354,7 @@ export default function AdminUsers() {
         <DeleteAdminModal
           isOpen={showDeleteAdminModal}
           onClose={closeDeleteAdminModal}
-          admin={selectedAdmin as any}
+          admin={selectedAdmin as never}
         />
       )}
     </div>

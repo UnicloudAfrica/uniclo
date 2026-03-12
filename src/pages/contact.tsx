@@ -33,7 +33,6 @@ interface Country {
 }
 
 const Contact = () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [generalitem] = useContext(GeneralContext) as [GeneralItem, any];
 
   const [isSelectOpen, setIsSelectOpen] = useState(false);
@@ -83,7 +82,7 @@ const Contact = () => {
     }));
 
     setCountryList(country);
-  }, [countries]);
+  }, []);
 
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedCode = e.target.value;

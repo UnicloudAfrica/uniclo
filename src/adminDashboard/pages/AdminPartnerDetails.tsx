@@ -18,14 +18,14 @@ import {
   ClipboardList,
   Wallet,
 } from "lucide-react";
-import { useFetchTenantById } from "../../hooks/adminHooks/tenantHooks";
+import { useFetchTenantById } from "@/hooks/adminHooks/tenantHooks";
 import PartnerClients from "../components/partnersComponent/PartnerClients";
 import AdminPageShell from "../components/AdminPageShell";
 import OnboardingStatusBoard from "../components/onboarding/OnboardingStatusBoard";
 import TenantBillingTab from "./tenantComps/TenantBillingTab";
 import TenantNetworkPolicyTab from "./tenantComps/TenantNetworkPolicyTab";
-import { useTenantBroadcasting } from "../../hooks/useTenantBroadcasting";
-import logger from "../../utils/logger";
+import { useTenantBroadcasting } from "@/hooks/useTenantBroadcasting";
+import logger from "@/utils/logger";
 
 type PartnerBusiness = {
   name?: string;

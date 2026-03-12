@@ -153,6 +153,52 @@ const ResourceCanvas: React.FC<ResourceCanvasProps> = ({
   );
 };
 
+interface MobileResourceNavProps {
+  items: ResourceNavItem[];
+  activeId: string;
+  onSelect: (id: string) => void;
+}
+
+const MobileResourceNav: React.FC<MobileResourceNavProps> = ({ items, activeId, onSelect }) => {
+  return (
+    <div className="overflow-x-auto no-scrollbar -mx-1">
+      <div className="flex gap-2 px-1 py-1">
+        {items.map((item) => {
+          const isActive = activeId === item.id;
+          const Icon = item.icon;
+          const countValue = typeof item.count === "number" ? item.count : null;
+
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onSelect(item.id)}
+              disabled={item.disabled}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all border ${
+                isActive
+                  ? "bg-blue-50 text-blue-700 border-blue-200 shadow-sm"
+                  : "bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 border-gray-200"
+              } ${item.disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              <Icon size={14} />
+              <span>{item.label}</span>
+              {countValue !== null && (
+                <span
+                  className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                    isActive ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"
+                  }`}
+                >
+                  {countValue}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 interface ResourceSplitLayoutProps {
   navTitle?: string | undefined;
   items: ResourceNavItem[];
@@ -171,8 +217,16 @@ const ResourceSplitLayout: React.FC<ResourceSplitLayoutProps> = ({
   className,
 }) => {
   return (
-    <div className={`grid grid-cols-1 xl:grid-cols-[280px_1fr] gap-8 ${className || ""}`}>
-      <div className="xl:sticky xl:top-24 self-start">
+    <div
+      className={`flex flex-col xl:grid xl:grid-cols-[280px_1fr] gap-4 xl:gap-8 ${className || ""}`}
+    >
+      {/* Mobile/Tablet: horizontal scrollable pill nav */}
+      <div className="xl:hidden">
+        <MobileResourceNav items={items} activeId={activeId} onSelect={onSelect} />
+      </div>
+
+      {/* Desktop: vertical sidebar */}
+      <div className="hidden xl:block xl:sticky xl:top-24 self-start">
         <ResourceIndexPanel
           title={navTitle}
           items={items}
@@ -180,6 +234,7 @@ const ResourceSplitLayout: React.FC<ResourceSplitLayoutProps> = ({
           onSelect={onSelect}
         />
       </div>
+
       <div className="space-y-6">{children}</div>
     </div>
   );

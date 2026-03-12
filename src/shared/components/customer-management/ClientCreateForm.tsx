@@ -5,12 +5,12 @@ import {
   useFetchStatesById,
   useFetchCitiesById,
   useFetchIndustries,
-} from "../../../hooks/resource";
-import { useFetchTenants } from "../../../hooks/adminHooks/tenantHooks";
-import { useCreateClient as useAdminCreateClient } from "../../../hooks/adminHooks/clientHooks";
-import { useCreateClient as useTenantCreateClient } from "../../../hooks/clientHooks";
-import { useAssignDiscount } from "../../../hooks/useDiscounts";
-import ToastUtils from "../../../utils/toastUtil";
+} from "@/hooks/resource";
+import { useFetchTenants } from "@/hooks/adminHooks/tenantHooks";
+import { useCreateClient as useAdminCreateClient } from "@/hooks/adminHooks/clientHooks";
+import { useCreateClient as useTenantCreateClient } from "@/hooks/clientHooks";
+import { useAssignDiscount } from "@/hooks/useDiscounts";
+import ToastUtils from "@/utils/toastUtil";
 import DiscountFormSection, {
   getDefaultDiscountFormData,
   DiscountFormData,
@@ -285,12 +285,12 @@ const ClientCreateForm: React.FC<ClientCreateFormProps> = ({
     if (field in formData) {
       const key = field as ClientFormKey;
       if (key === "verified" || key === "force_password_reset") {
-        updateFormData(key, Boolean(value) as ClientFormData[ClientFormKey] as any);
+        updateFormData(key, Boolean(value) as never);
         return;
       }
       const normalizedValue =
         typeof value === "string" ? value : value == null ? "" : String(value);
-      updateFormData(key, normalizedValue as ClientFormData[ClientFormKey] as any);
+      updateFormData(key, normalizedValue as never);
     }
   };
 

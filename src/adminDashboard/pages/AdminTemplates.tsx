@@ -1,6 +1,6 @@
 import React from "react";
 import AdminPageShell from "../components/AdminPageShell";
-import TemplateManager from "../../shared/components/templates/TemplateManager";
+import TemplateManager from "@/shared/components/templates/TemplateManager";
 
 const AdminTemplates: React.FC = () => {
   return (

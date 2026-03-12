@@ -1,6 +1,6 @@
 import React from "react";
 import { ModernButton } from "../ui";
-import { ResolvedProfile, SummaryTotals } from "../../../hooks/useObjectStoragePricing";
+import { ResolvedProfile, SummaryTotals } from "@/hooks/useObjectStoragePricing";
 import { ObjectStorageOrderSummary } from "./ObjectStorageOrderSummary";
 
 export interface ObjectStorageReviewStepProps {

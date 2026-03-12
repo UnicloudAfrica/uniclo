@@ -1,12 +1,14 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { ShieldCheck } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
+import { ResourceEmptyState } from "../ui/ResourceEmptyState";
 import type { NetworkAcl } from "./types";
 
 interface NetworkAclsTableProps {
   networkAcls: NetworkAcl[];
   isLoading?: boolean;
   emptyMessage?: string;
+  emptyAction?: ReactNode;
   onDelete?: (acl: NetworkAcl) => void;
   onManageRules?: (acl: NetworkAcl) => void;
   manageLabel?: string;
@@ -17,6 +19,7 @@ const NetworkAclsTable: React.FC<NetworkAclsTableProps> = ({
   networkAcls,
   isLoading = false,
   emptyMessage = "No network ACLs found",
+  emptyAction,
   onDelete,
   onManageRules,
   manageLabel = "Manage Rules",
@@ -32,10 +35,12 @@ const NetworkAclsTable: React.FC<NetworkAclsTableProps> = ({
 
   if (networkAcls.length === 0) {
     return (
-      <ModernCard className="p-12 text-center">
-        <ShieldCheck className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-        <div className="text-gray-500">{emptyMessage}</div>
-      </ModernCard>
+      <ResourceEmptyState
+        title="No Network ACLs"
+        message={emptyMessage}
+        icon={<ShieldCheck className="w-5 h-5" />}
+        action={emptyAction}
+      />
     );
   }
 

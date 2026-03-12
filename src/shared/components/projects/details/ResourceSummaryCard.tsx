@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  Key,
   Route,
   Globe,
   Cable,
@@ -16,9 +15,10 @@ import {
   Zap,
   Users,
 } from "lucide-react";
+import { isFeatureSupported } from "@/utils/featureGating";
 
 interface ResourceSummaryCardProps {
-  keyPairs?: number;
+  provider?: string;
   routeTables?: number;
   elasticIps?: number;
   networkInterfaces?: number;
@@ -32,7 +32,6 @@ interface ResourceSummaryCardProps {
   loadBalancers?: number;
   users?: number;
   onViewAll?: () => void;
-  onViewKeyPairs?: () => void;
   onViewRouteTables?: () => void;
   onViewElasticIps?: () => void;
   onViewNetworkInterfaces?: () => void;
@@ -48,7 +47,7 @@ interface ResourceSummaryCardProps {
 }
 
 const ResourceSummaryCard: React.FC<ResourceSummaryCardProps> = ({
-  keyPairs = 0,
+  provider,
   routeTables = 0,
   elasticIps = 0,
   networkInterfaces = 0,
@@ -62,7 +61,6 @@ const ResourceSummaryCard: React.FC<ResourceSummaryCardProps> = ({
   loadBalancers = 0,
   users = 0,
   onViewAll,
-  onViewKeyPairs,
   onViewRouteTables,
   onViewElasticIps,
   onViewNetworkInterfaces,
@@ -103,15 +101,6 @@ const ResourceSummaryCard: React.FC<ResourceSummaryCardProps> = ({
       bgColor: "bg-red-50",
       onClick: onViewSecurityGroups,
       description: "Firewall rules for instances",
-    },
-    {
-      icon: Key,
-      label: "Key Pairs",
-      count: keyPairs,
-      color: "text-purple-500",
-      bgColor: "bg-purple-50",
-      onClick: onViewKeyPairs,
-      description: "SSH keys for secure instance access",
     },
     {
       icon: Route,
@@ -196,10 +185,32 @@ const ResourceSummaryCard: React.FC<ResourceSummaryCardProps> = ({
     },
   ];
 
+  // Feature key mapping for provider-based filtering
+  const RESOURCE_FEATURE_KEYS: Record<string, string> = {
+    VPCs: "vpcs",
+    Subnets: "subnets",
+    "Security Groups": "security_groups",
+    "Route Tables": "route_tables",
+    "Elastic IPs": "elastic_ips",
+    "Network Interfaces": "network_interfaces",
+    "NAT Gateways": "nat_gateways",
+    "Internet Gateways": "internet_gateways",
+    "Network ACLs": "network_acls",
+    "VPC Peering": "vpc_peering",
+    "Load Balancers": "load_balancers",
+    Members: "identity",
+  };
+
+  const filteredResources = resources.filter((r) => {
+    const featureKey = RESOURCE_FEATURE_KEYS[r.label];
+    if (!featureKey) return true;
+    return isFeatureSupported(provider, featureKey);
+  });
+
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm h-full">
+    <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6 shadow-sm h-full">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3 md:mb-4">
         <h3 className="text-lg font-semibold text-gray-900">Resource Summary</h3>
         <span className="text-xs text-gray-400 flex items-center gap-1">
           <Info className="w-3 h-3" />
@@ -208,14 +219,14 @@ const ResourceSummaryCard: React.FC<ResourceSummaryCardProps> = ({
       </div>
 
       {/* Resource List - Scrollable */}
-      <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
-        {resources.map((resource) => {
+      <div className="space-y-2 max-h-[250px] md:max-h-[400px] overflow-y-auto pr-1">
+        {filteredResources.map((resource) => {
           const isClickable = !!resource.onClick;
 
           return (
             <div
               key={resource.label}
-              className={`w-full flex items-center justify-between py-2.5 px-3 rounded-lg transition-colors ${
+              className={`w-full flex items-center justify-between py-2 px-2.5 md:py-2.5 md:px-3 rounded-lg transition-colors ${
                 isClickable
                   ? "bg-gray-50 hover:bg-blue-50 hover:border-blue-200 border border-transparent cursor-pointer group"
                   : "bg-gray-50/50 border border-gray-100"

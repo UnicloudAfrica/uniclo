@@ -1,9 +1,9 @@
 import { useState, useContext } from "react";
 import load from "./assets/load.gif";
-import { initializeApp } from "firebase/app";
 import { Editor } from "@tinymce/tinymce-react";
-import { getFirestore, collection, addDoc, doc, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, doc, deleteDoc } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { getFirestoreDb, getFirebaseApp } from "../shared/config/firebase";
 import { BlogContext } from "../contexts/contextprovider";
 
 interface BlogRecord {
@@ -14,19 +14,8 @@ interface BlogRecord {
 }
 
 const BlogAdmin = () => {
-  const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    appId: import.meta.env.VITE_FIREBASE_APP_ID,
-    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const storage = getStorage(app);
+  const db = getFirestoreDb();
+  const storage = getStorage(getFirebaseApp());
 
   //states
   // const [page, setPage] = useContext(PageContext);

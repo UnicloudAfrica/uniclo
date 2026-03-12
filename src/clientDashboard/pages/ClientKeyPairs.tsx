@@ -4,17 +4,17 @@ import { Key } from "lucide-react";
 import ClientPageShell from "../components/ClientPageShell";
 import KeyPairsContainer, {
   KeyPairHooks,
-} from "../../shared/components/infrastructure/containers/KeyPairsContainer";
+} from "@/shared/components/infrastructure/containers/KeyPairsContainer";
 import {
   useFetchClientKeyPairs,
   useDeleteClientKeyPair,
   useSyncKeyPairs,
-} from "../../hooks/clientHooks/keyPairsHook";
+} from "@/shared/hooks/keyPairsHooks";
 
 const ClientKeyPairs: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const projectId = searchParams.get("project") || "";
-  const region = searchParams.get("region") || "";
+  const projectId = searchParams.get("project") || undefined;
+  const region = searchParams.get("region") || undefined;
 
   const hooks: KeyPairHooks = {
     useList: useFetchClientKeyPairs as KeyPairHooks["useList"],

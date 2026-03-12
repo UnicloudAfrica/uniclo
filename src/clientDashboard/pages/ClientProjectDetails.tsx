@@ -1,7 +1,15 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import ClientPageShell from "../components/ClientPageShell";
-import { ModernButton } from "../../shared/components/ui";
+import { ModernButton } from "@/shared/components/ui";
+import TabErrorBoundary from "@/shared/components/ui/TabErrorBoundary";
+import ProjectStorageTab from "@/shared/components/projects/details/ProjectStorageTab";
+import ProjectImagesTab from "@/shared/components/projects/details/ProjectImagesTab";
+import ProjectDnsTab from "@/shared/components/projects/details/ProjectDnsTab";
+import ProjectAutoScalingTab from "@/shared/components/projects/details/ProjectAutoScalingTab";
+import ProjectLimitsTab from "@/shared/components/projects/details/ProjectLimitsTab";
+import ProjectSettingsTab from "@/shared/components/projects/details/ProjectSettingsTab";
+import ProjectTeamTab from "@/shared/components/projects/details/ProjectTeamTab";
 import {
   useFetchClientProjectById,
   useClientProjectNetworkStatus,
@@ -9,15 +17,15 @@ import {
   useClientProjectStatus,
   useSetupInfrastructure,
   Project as HookProject,
-} from "../../hooks/clientHooks/projectHooks";
-import { useClientProjectInfrastructureStatus } from "../../hooks/clientHooks/projectInfrastructureHooks";
-import ProjectDetailsLayout from "../../shared/components/projects/details/ProjectDetailsLayout";
-import { useProjectDetailsAdapter } from "../../shared/components/projects/details/ProjectDetailsView";
+} from "@/hooks/clientHooks/projectHooks";
+import { useProjectInfrastructureStatus as useClientProjectInfrastructureStatus } from "@/shared/hooks/resources/projectInfrastructureHooks";
+import ProjectDetailsLayout from "@/shared/components/projects/details/ProjectDetailsLayout";
+import { useProjectDetailsAdapter } from "@/shared/components/projects/details/ProjectDetailsView";
 import ProjectNetworkingContent, {
   NetworkingRendererMap,
-} from "../../shared/components/projects/details/ProjectNetworkingContent";
-import { normalizeListResponse } from "../../shared/components/projects/details/projectDetailsUtils";
-import type { KeyPairHooks } from "../../shared/components/infrastructure/containers/KeyPairsContainer";
+} from "@/shared/components/projects/details/ProjectNetworkingContent";
+import { normalizeListResponse } from "@/shared/components/projects/details/projectDetailsUtils";
+import type { KeyPairHooks } from "@/shared/components/infrastructure/containers/KeyPairsContainer";
 
 // Infrastructure Components
 import VPCs from "./infraComps/Vpcs";
@@ -27,18 +35,22 @@ import RouteTables from "./infraComps/RouteTables";
 import InternetGateways from "./infraComps/InternetGateways";
 import ENIs from "./infraComps/ENIs";
 import ElasticIPs from "./infraComps/ElasticIPs";
-import ProvisioningFullScreen from "../../shared/components/provisioning/ProvisioningFullScreen";
-import ToastUtils from "../../utils/toastUtil";
+import NatGateways from "./infraComps/NatGateways";
+import VpcPeering from "./infraComps/VpcPeering";
+import LoadBalancers from "./infraComps/LoadBalancers";
+import NetworkAcls from "./infraComps/NetworkAcls";
+import ProvisioningFullScreen from "@/shared/components/provisioning/ProvisioningFullScreen";
+import ToastUtils from "@/utils/toastUtil";
 import api from "../../index/client/api";
 import InfrastructureSetupWizard from "../../adminDashboard/components/provisioning/InfrastructureSetupWizard";
-import { useFetchClientPurchasedInstances } from "../../hooks/clientHooks/instanceHooks";
+import { useFetchClientPurchasedInstances } from "@/hooks/clientHooks/instanceHooks";
 import {
   useFetchClientKeyPairs,
   useDeleteClientKeyPair,
   useSyncKeyPairs,
-} from "../../hooks/clientHooks/keyPairsHook";
-import type { StatusResponse, NetworkStatusResponse } from "../../hooks/clientHooks/projectHooks";
-import logger from "../../utils/logger";
+} from "@/shared/hooks/keyPairsHooks";
+import type { StatusResponse, NetworkStatusResponse } from "@/hooks/clientHooks/projectHooks";
+import logger from "@/utils/logger";
 
 interface ProjectUser {
   id: string | number;
@@ -134,7 +146,7 @@ const ClientProjectDetails: React.FC = () => {
     projectId || "",
     { enabled: Boolean(projectId) }
   );
-  const project: ClientProject = projectResponse ?? {};
+  const project: ClientProject = useMemo(() => projectResponse ?? {}, [projectResponse]);
 
   const statusQuery = useClientProjectStatus(projectId || "");
   const statusData = statusQuery.data as StatusResponse | undefined;
@@ -179,7 +191,11 @@ const ClientProjectDetails: React.FC = () => {
     }
     try {
       ToastUtils.info(`Executing ${label}...`);
-      const res = await api(method.toUpperCase() as any, endpoint, payload);
+      const res = await api(
+        method.toUpperCase() as "GET" | "POST" | "PUT" | "DELETE" | "PATCH",
+        endpoint,
+        payload
+      );
       ToastUtils.success(`${label} completed successfully!`);
       await Promise.all([refetchStatus(), refetchProject()]);
       return res;
@@ -239,8 +255,12 @@ const ClientProjectDetails: React.FC = () => {
     routes: () => <RouteTables projectId={projectId} region={project?.region} />,
     sgs: () => <SecurityGroup projectId={projectId} region={project?.region} />,
     igw: () => <InternetGateways projectId={projectId} region={project?.region} />,
-    enis: () => <ENIs projectId={projectId} region={project?.region} />,
+    nat: () => <NatGateways projectId={projectId} region={project?.region} />,
     eips: () => <ElasticIPs projectId={projectId} region={project?.region} />,
+    enis: () => <ENIs projectId={projectId} region={project?.region} />,
+    peering: () => <VpcPeering projectId={projectId} region={project?.region} />,
+    lbs: () => <LoadBalancers projectId={projectId} region={project?.region} />,
+    acls: () => <NetworkAcls projectId={projectId} region={project?.region} />,
   };
 
   const renderNetworkingContent = (resourceId: string): React.ReactNode => (
@@ -265,6 +285,20 @@ const ClientProjectDetails: React.FC = () => {
     useSync: useSyncKeyPairs,
     useDelete: useDeleteClientKeyPair as KeyPairHooks["useDelete"],
   };
+
+  // Extract project users from status/project responses
+  const projectUsers = useMemo(() => {
+    const resp = projectResponse as Record<string, unknown> | undefined;
+    const detailsUsers = (resp?.data as Record<string, unknown>)?.users;
+    if (Array.isArray(detailsUsers)) return detailsUsers;
+    const statusProject =
+      (statusData as Record<string, unknown>)?.project ??
+      ((statusData as Record<string, unknown>)?.data as Record<string, unknown>)?.project;
+    if (statusProject && Array.isArray((statusProject as Record<string, unknown>).users))
+      return (statusProject as Record<string, unknown>).users as unknown[];
+    if (Array.isArray(project?.users)) return project.users;
+    return [];
+  }, [projectResponse, statusData, project]);
 
   const projectDetails = useProjectDetailsAdapter({
     project,
@@ -305,13 +339,85 @@ const ClientProjectDetails: React.FC = () => {
       navTitle: "Networking Resources",
       renderContent: renderNetworkingContent,
     },
+    renderStorageTab: () => (
+      <ProjectStorageTab projectId={projectId} region={project?.region ?? "lagos-1"} />
+    ),
+    renderImagesTab: () => (
+      <ProjectImagesTab projectId={projectId} region={project?.region ?? "lagos-1"} />
+    ),
+    renderDnsTab: () => (
+      <TabErrorBoundary tabName="DNS">
+        <ProjectDnsTab projectId={projectId} region={project?.region ?? "lagos-1"} />
+      </TabErrorBoundary>
+    ),
+    renderAutoScalingTab: () => (
+      <ProjectAutoScalingTab projectId={projectId} region={project?.region ?? "lagos-1"} />
+    ),
+    renderLimitsTab: () => <ProjectLimitsTab projectIdentifier={projectId} />,
+    renderSettingsTab: () => (
+      <ProjectSettingsTab
+        project={project as any}
+        onUpdateProject={async (data) => {
+          try {
+            const encodedId = encodeURIComponent(projectId || "");
+            await api("PUT", `/business/projects/${encodedId}`, data);
+            ToastUtils.success("Project updated successfully");
+            await refetchProject();
+          } catch {
+            ToastUtils.error("Failed to update project");
+          }
+        }}
+        onDeleteProject={async () => {
+          try {
+            const encodedId = encodeURIComponent(projectId || "");
+            await api("DELETE", `/business/projects/${encodedId}`);
+            ToastUtils.success("Project deleted");
+            navigate("/client-dashboard/projects");
+          } catch {
+            ToastUtils.error("Failed to delete project");
+          }
+        }}
+        onArchiveProject={async () => {
+          try {
+            const encodedId = encodeURIComponent(projectId || "");
+            await api("POST", `/business/projects/${encodedId}/archive`);
+            ToastUtils.success("Project archived");
+            await refetchProject();
+          } catch {
+            ToastUtils.error("Failed to archive project");
+          }
+        }}
+        onActivateProject={async () => {
+          try {
+            const encodedId = encodeURIComponent(projectId || "");
+            await api("POST", `/business/projects/${encodedId}/activate`);
+            ToastUtils.success("Project reactivated");
+            await refetchProject();
+          } catch {
+            ToastUtils.error("Failed to reactivate project");
+          }
+        }}
+      />
+    ),
+    renderTeamTab: () => (
+      <ProjectTeamTab
+        projectId={projectId}
+        region={project?.region}
+        provider={project?.provider}
+        hierarchy="client"
+        projectUsers={projectUsers as any[]}
+        onRefresh={async () => {
+          await Promise.all([refetchProject(), refetchStatus()]);
+        }}
+      />
+    ),
   });
 
   if (projectDetails.shouldShowProvisioning && !forceHideProvisioning) {
     return (
       <ProvisioningFullScreen
         project={project}
-        setupSteps={projectDetails.setupSteps as any}
+        setupSteps={projectDetails.setupSteps as unknown[]}
         onRefresh={() => refetchStatus()}
         onViewProject={() => {
           // Force hide overlay immediately to prevent the loop
@@ -347,8 +453,8 @@ const ClientProjectDetails: React.FC = () => {
       >
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 min-h-[600px]">
           <InfrastructureSetupWizard
-            project={project as any}
-            setupMutation={setupMutation as any}
+            project={project as HookProject}
+            setupMutation={setupMutation as never}
           />
         </div>
       </ClientPageShell>

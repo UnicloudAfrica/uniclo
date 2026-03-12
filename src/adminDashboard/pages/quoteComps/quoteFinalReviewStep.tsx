@@ -8,10 +8,10 @@ import {
   Loader2,
   ShieldCheck,
 } from "lucide-react";
-import { useFetchCountries } from "../../../hooks/adminHooks/countriesHooks";
-import ModernCard from "../../../shared/components/ui/ModernCard";
-import ModernInput from "../../../shared/components/ui/ModernInput";
-import { ModernButton } from "../../../shared/components/ui";
+import { useFetchCountries } from "@/hooks/adminHooks/countriesHooks";
+import ModernCard from "@/shared/components/ui/ModernCard";
+import ModernInput from "@/shared/components/ui/ModernInput";
+import { ModernButton } from "@/shared/components/ui";
 import type { MultiQuoteFormData, MultiQuoteFormErrors, UpdateFormData } from "./quoteTypes";
 
 const selectBaseClass =
@@ -35,7 +35,7 @@ const QuoteFinalReviewStep = ({
   formData,
   pricingRequests,
   objectStorageRequests,
-  tenants,
+  tenants: _tenants,
   updateFormData,
   errors = {},
   assignmentDetails = {},

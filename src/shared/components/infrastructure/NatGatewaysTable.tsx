@@ -1,12 +1,14 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { Globe } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
+import { ResourceEmptyState } from "../ui/ResourceEmptyState";
 import type { NatGateway } from "./types";
 
 interface NatGatewaysTableProps {
   natGateways: NatGateway[];
   isLoading?: boolean | undefined;
   emptyMessage?: string | undefined;
+  emptyAction?: ReactNode;
   onDelete?: ((nat: NatGateway) => void) | undefined;
   showActions?: boolean | undefined;
 }
@@ -15,6 +17,7 @@ const NatGatewaysTable: React.FC<NatGatewaysTableProps> = ({
   natGateways,
   isLoading = false,
   emptyMessage = "No NAT gateways found",
+  emptyAction,
   onDelete,
   showActions = false,
 }) => {
@@ -41,10 +44,12 @@ const NatGatewaysTable: React.FC<NatGatewaysTableProps> = ({
 
   if (natGateways.length === 0) {
     return (
-      <ModernCard className="p-12 text-center">
-        <Globe className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-        <div className="text-gray-500">{emptyMessage}</div>
-      </ModernCard>
+      <ResourceEmptyState
+        title="No NAT Gateways"
+        message={emptyMessage}
+        icon={<Globe className="w-5 h-5" />}
+        action={emptyAction}
+      />
     );
   }
 

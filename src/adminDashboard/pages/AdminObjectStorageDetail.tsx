@@ -10,16 +10,16 @@ import {
   Trash2,
 } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
-import ObjectStorageSidebar from "../../shared/components/object-storage/ObjectStorageSidebar";
-import ObjectStorageFileBrowser from "../../shared/components/object-storage/ObjectStorageFileBrowser";
-import ObjectStorageAnalytics from "../../shared/components/object-storage/ObjectStorageAnalytics";
-import ObjectStorageSubscription from "../../shared/components/object-storage/ObjectStorageSubscription";
-import ObjectStorageTransactions from "../../shared/components/object-storage/ObjectStorageTransactions";
-import ExtendStorageModal from "../../shared/components/object-storage/ExtendStorageModal";
-import DeleteStorageAccountModal from "../../shared/components/object-storage/DeleteStorageAccountModal";
-import objectStorageApi from "../../services/objectStorageApi";
-import ToastUtils from "../../utils/toastUtil";
-import logger from "../../utils/logger";
+import ObjectStorageSidebar from "@/shared/components/object-storage/ObjectStorageSidebar";
+import ObjectStorageFileBrowser from "@/shared/components/object-storage/ObjectStorageFileBrowser";
+import ObjectStorageAnalytics from "@/shared/components/object-storage/ObjectStorageAnalytics";
+import ObjectStorageSubscription from "@/shared/components/object-storage/ObjectStorageSubscription";
+import ObjectStorageTransactions from "@/shared/components/object-storage/ObjectStorageTransactions";
+import ExtendStorageModal from "@/shared/components/object-storage/ExtendStorageModal";
+import DeleteStorageAccountModal from "@/shared/components/object-storage/DeleteStorageAccountModal";
+import objectStorageApi from "@/services/objectStorageApi";
+import ToastUtils from "@/utils/toastUtil";
+import logger from "@/utils/logger";
 
 /**
  * Admin Silo Storage Detail Page
@@ -222,7 +222,7 @@ const AdminObjectStorageDetail: React.FC = () => {
         return (
           <ObjectStorageAnalytics
             accountId={accountId}
-            accountName={account.name as any}
+            accountName={account.name as never}
             onExtendStorage={() => setShowExtendModal(true)}
           />
         );
@@ -325,7 +325,7 @@ const AdminObjectStorageDetail: React.FC = () => {
                 setSelectedBucket(name);
                 setShowMobileSidebar(false);
               }}
-              onCreateBucket={handleCreateBucket as any}
+              onCreateBucket={handleCreateBucket as never}
               onDeleteBucket={handleDeleteBucket}
               onRefresh={handleRefresh}
               bucketsLoading={bucketsLoading}
@@ -344,7 +344,7 @@ const AdminObjectStorageDetail: React.FC = () => {
               buckets={buckets}
               selectedBucket={selectedBucket}
               onSelectBucket={setSelectedBucket}
-              onCreateBucket={handleCreateBucket as any}
+              onCreateBucket={handleCreateBucket as never}
               onDeleteBucket={handleDeleteBucket}
               onRefresh={handleRefresh}
               bucketsLoading={bucketsLoading}

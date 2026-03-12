@@ -3,7 +3,7 @@ import { Download, CheckCircle, FileText, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ModernCard, ModernButton, ModernTable, Column } from "../../ui";
 import { InvoiceResponse, LineItem } from "../types";
-import logger from "../../../../utils/logger";
+import logger from "@/utils/logger";
 
 const formatCurrency = (amount: number | null | undefined, currency: string = "USD") => {
   if (amount === null || amount === undefined) return "—";

@@ -2,7 +2,7 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Globe } from "lucide-react";
 import AdminPageShell from "../../components/AdminPageShell";
-import InternetGatewaysContainer from "../../../shared/components/infrastructure/containers/InternetGatewaysContainer";
+import InternetGatewaysContainer from "@/shared/components/infrastructure/containers/InternetGatewaysContainer";
 import {
   useInternetGateways,
   useVpcs,
@@ -10,7 +10,7 @@ import {
   useDeleteInternetGateway,
   useAttachInternetGateway,
   useDetachInternetGateway,
-} from "../../../shared/hooks/vpcInfraHooks";
+} from "@/shared/hooks/vpcInfraHooks";
 
 const AdminInternetGateways: React.FC = () => {
   const [searchParams] = useSearchParams();

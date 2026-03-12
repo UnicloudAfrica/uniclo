@@ -1,13 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BadgePercent,
   CircleDollarSign,
   Inbox,
-  Layers,
   Plus,
   Server,
   Trash2,
-  HardDrive,
   Globe,
   CreditCard,
   Lock,
@@ -17,13 +15,45 @@ import {
   resolveCountryCodeFromEntity,
 } from "../../../../shared/utils/countryUtils";
 import { ModernButton, ModernCard, ModernInput, SelectableInput } from "../../ui";
-import { useFetchCountries, useFetchProductPricing } from "../../../../hooks/resource";
-import { useSharedFetchRegions } from "../../../../hooks/sharedCalculatorHooks";
-import { useFormattedRegions } from "../../../../utils/regionUtils";
-import { getCurrencySymbol } from "../../../../utils/resource";
+import { useFetchCountries, useFetchProductPricing } from "@/hooks/resource";
+import { useSharedFetchRegions } from "@/hooks/sharedCalculatorHooks";
+import { useFormattedRegions, type RegionLike } from "@/utils/regionUtils";
+import { getCurrencySymbol } from "@/utils/resource";
 import PricingWorkloadCard from "./PricingWorkloadCard";
 import PricingLiveSummary from "./PricingLiveSummary";
 import { CalculatorData, ObjectStorageRequest, PricingRequest } from "../types";
+
+interface CountryRecord {
+  code?: string;
+  iso2?: string;
+  name?: string;
+  label?: string;
+  currency_code?: string;
+  currency?: string;
+  currencyCode?: string;
+  currency_symbol?: string;
+  currencySymbol?: string;
+  [key: string]: unknown;
+}
+
+interface ObjectStorageTier {
+  id?: number | string;
+  product?: {
+    productable_id?: number | string;
+    name?: string;
+    [key: string]: unknown;
+  };
+  product_name?: string;
+  pricing?: {
+    effective?: {
+      price_local?: number;
+      currency?: string;
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
 
 const createInitialItemState = (): PricingRequest => ({
   region: "",
@@ -94,9 +124,14 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
 
   const { data: countries = [], isFetching: isCountriesFetching } = useFetchCountries();
   const { data: rawRegions, isFetching: isRegionsFetching } = useSharedFetchRegions(mode);
-  const regions = useFormattedRegions(rawRegions as any);
+  const regions = useFormattedRegions(
+    (Array.isArray(rawRegions) ? rawRegions : []) as RegionLike[]
+  );
 
-  const countryOptions = useMemo(() => formatCountryOptions(countries as any), [countries]);
+  const countryOptions = useMemo(
+    () => formatCountryOptions(Array.isArray(countries) ? countries : []),
+    [countries]
+  );
 
   const { isCountryLocked, lockedCountry } = useMemo(() => {
     let resolved = "";
@@ -119,7 +154,7 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
         return calculatorData.currency_code || "USD";
       }
 
-      const country = countries.find((c: any) => c.code === code);
+      const country = (countries as CountryRecord[]).find((c) => c.code === code);
 
       if (!country) {
         return calculatorData.currency_code || "USD";
@@ -143,7 +178,7 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
   );
 
   const { data: objectStorageTiers, isFetching: isObjectStorageFetching } = useFetchProductPricing(
-    storageItem.region as any,
+    String(storageItem.region ?? ""),
     "object_storage_configuration",
     {
       enabled: !!storageItem.region,
@@ -157,11 +192,14 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
     onCountryChange(upper, resolveCurrencyForCountry(upper));
   };
 
-  const handleCountrySelect = (value: string | null) => {
-    if (!onCountryChange) return;
-    const upper = value ? value.toUpperCase() : "";
-    onCountryChange(upper, resolveCurrencyForCountry(upper));
-  };
+  const handleCountrySelect = useCallback(
+    (value: string | null) => {
+      if (!onCountryChange) return;
+      const upper = value ? value.toUpperCase() : "";
+      onCountryChange(upper, resolveCurrencyForCountry(upper));
+    },
+    [onCountryChange, resolveCurrencyForCountry]
+  );
 
   useEffect(() => {
     if (!onCountryChange || !selectedCountryCode) return;
@@ -170,15 +208,20 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
       return;
     }
     handleCountrySelect(selectedCountryCode);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCountryCode, resolveCurrencyForCountry]);
+  }, [
+    selectedCountryCode,
+    resolveCurrencyForCountry,
+    onCountryChange,
+    calculatorData.currency_code,
+    handleCountrySelect,
+  ]);
 
   // Enforce locked country
   useEffect(() => {
     if (isCountryLocked && lockedCountry && selectedCountryCode !== lockedCountry) {
       handleCountrySelect(lockedCountry);
     }
-  }, [isCountryLocked, lockedCountry, selectedCountryCode]);
+  }, [isCountryLocked, lockedCountry, selectedCountryCode, handleCountrySelect]);
 
   // Ensure at least one workload exists
   useEffect(() => {
@@ -201,8 +244,8 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
   const addWorkload = () => {
     const newWorkload: PricingRequest = {
       region: "",
-      compute_instance_id: null as any,
-      os_image_id: null as any,
+      compute_instance_id: null,
+      os_image_id: null,
       months: 1,
       number_of_instances: 1,
       volume_types: [],
@@ -256,8 +299,8 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
   const addObjectStorageItem = () => {
     if (!validateStorageItem()) return;
 
-    const tier = (objectStorageTiers as any)?.find(
-      (item: any) => String(item.product?.productable_id ?? item.id) === String(storageItem.tier_id)
+    const tier = (objectStorageTiers as ObjectStorageTier[] | undefined)?.find(
+      (item) => String(item.product?.productable_id ?? item.id) === String(storageItem.tier_id)
     );
 
     const symbol = getCurrencySymbol(
@@ -418,8 +461,8 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
                 {isCountryLocked ? (
                   <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 font-medium h-[42px] flex items-center justify-between">
                     <span className="flex items-center gap-2">
-                      {(countries as any).find(
-                        (c: any) => (c.iso2 || c.code || "").toUpperCase() === selectedCountryCode
+                      {(countries as CountryRecord[]).find(
+                        (c) => (c.iso2 || c.code || "").toUpperCase() === selectedCountryCode
                       )?.name || selectedCountryCode}
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-md bg-slate-200 px-2 py-0.5 text-xs text-slate-600">
@@ -476,9 +519,11 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
                   onRemove={() => removeWorkload(index)}
                   countryCode={calculatorData.country_code}
                   currencyCode={selectedCurrency}
-                  errors={(errors?.[`pricing_requests.${index}`] as any) || {}}
-                  isLastItem={calculatorData.pricing_requests.length === (1 as any)}
-                  regions={regions as any}
+                  errors={
+                    (errors?.[`pricing_requests.${index}`] ?? {}) as Record<string, string | null>
+                  }
+                  isLastItem={calculatorData.pricing_requests.length === 1}
+                  regions={regions as unknown as import("../types").BillingRegion[]}
                   isRegionsFetching={isRegionsFetching}
                 />
               ))}
@@ -517,7 +562,10 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
                 </label>
                 <SelectableInput
                   options={
-                    regions?.map((region) => ({ id: region.code, name: region.name as any })) || []
+                    regions?.map((region) => ({
+                      id: region.code,
+                      name: region.displayName ?? region.name ?? "",
+                    })) || []
                   }
                   value={storageItem.region}
                   searchValue={searchTerms.region}
@@ -536,10 +584,12 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
                 </label>
                 <SelectableInput
                   options={
-                    (objectStorageTiers as any)?.map(({ product, pricing }: any) => ({
-                      id: product.productable_id,
-                      name: `${product.name} • ${formatCurrency(pricing?.effective?.price_local, pricing?.effective?.currency) || "N/A"}`,
-                    })) || []
+                    (objectStorageTiers as ObjectStorageTier[] | undefined)?.map(
+                      ({ product, pricing }) => ({
+                        id: product.productable_id,
+                        name: `${product.name} • ${formatCurrency(pricing?.effective?.price_local, pricing?.effective?.currency) || "N/A"}`,
+                      })
+                    ) || []
                   }
                   value={storageItem.tier_id ?? undefined}
                   searchValue={searchTerms.tier}

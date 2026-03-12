@@ -5,8 +5,7 @@
     },
     "extends": [
         "eslint:recommended",
-        "plugin:react-hooks/recommended",
-        "prettier"
+        "plugin:react-hooks/recommended"
     ],
     "parserOptions": {
         "ecmaFeatures": {
@@ -16,7 +15,6 @@
         "sourceType": "module"
     },
     "plugins": [
-        "prettier",
         "react-hooks"
     ],
     "ignorePatterns": [
@@ -45,7 +43,7 @@
                     "varsIgnorePattern": "^_",
                     "caughtErrorsIgnorePattern": "^_"
                 }],
-                "@typescript-eslint/no-explicit-any": "off",
+                "@typescript-eslint/no-explicit-any": "warn",
                 "@typescript-eslint/ban-ts-comment": "error"
             }
         },
@@ -99,13 +97,15 @@
         }
     ],
     "rules": {
-        "prettier/prettier": "error",
         "no-unused-vars": "off",
         "@typescript-eslint/no-unused-vars": ["warn", {
             "argsIgnorePattern": "^_",
             "varsIgnorePattern": "^_",
             "caughtErrorsIgnorePattern": "^_"
         }],
-        "no-console": "warn"
+        "no-console": ["warn", { "allow": ["warn", "error"] }],
+        "prefer-const": "error",
+        "no-var": "error",
+        "eqeqeq": ["error", "smart"]
     }
 }

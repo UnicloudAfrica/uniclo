@@ -20,7 +20,7 @@ const DeleteStorageAccountModal: React.FC<DeleteStorageAccountModalProps> = ({
   onClose,
   onConfirm,
   accountName,
-  accountId,
+  accountId: _accountId,
   bucketCount = 0,
   accessKeyCount = 0,
 }) => {

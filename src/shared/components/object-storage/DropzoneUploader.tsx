@@ -56,98 +56,104 @@ const DropzoneUploader: React.FC<DropzoneUploaderProps> = ({
   const [uploads, setUploads] = useState<UploadFile[]>([]);
   const [_isUploading, setIsUploading] = useState(false);
 
-  const uploadFile = async (uploadFile: UploadFile) => {
-    const { id, file } = uploadFile;
-    const objectKey = currentPrefix + file.name;
-    const startTime = Date.now();
+  const uploadFile = useCallback(
+    async (uploadFile: UploadFile) => {
+      const { id, file } = uploadFile;
+      const objectKey = currentPrefix + file.name;
+      const startTime = Date.now();
 
-    setUploads((prev) =>
-      prev.map((u) => (u.id === id ? { ...u, status: "uploading", progress: 0, startTime } : u))
-    );
-
-    try {
-      // Use XMLHttpRequest for progress tracking
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("key", objectKey);
-
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            const progress = Math.round((event.loaded / event.total) * 100);
-            const elapsed = (Date.now() - startTime) / 1000;
-            const speed = elapsed > 0 ? event.loaded / elapsed : 0;
-
-            setUploads((prev) => prev.map((u) => (u.id === id ? { ...u, progress, speed } : u)));
-          }
-        };
-
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            setUploads((prev) =>
-              prev.map((u) => (u.id === id ? { ...u, status: "success", progress: 100 } : u))
-            );
-            resolve();
-          } else {
-            reject(new Error(`Upload failed: ${xhr.statusText}`));
-          }
-        };
-
-        xhr.onerror = () => reject(new Error("Network error"));
-
-        // Determine the correct API base URL using the same logic as objectStorageApi
-        const apiBase = import.meta.env.VITE_API_USER_BASE_URL || "";
-        let baseUrl: string;
-
-        if (globalThis.window.location.pathname.includes("admin-dashboard")) {
-          // Admin routes: admin/v1/object-storage (no /api prefix)
-          baseUrl = `${apiBase}/admin/v1/object-storage`;
-        } else if (
-          globalThis.window.location.pathname.includes("dashboard") &&
-          !globalThis.window.location.pathname.includes("client")
-        ) {
-          // Tenant routes: tenant/v1/admin/object-storage (no /api prefix)
-          baseUrl = `${apiBase}/tenant/v1/admin/object-storage`;
-        } else {
-          // Client routes: api/v1/business/object-storage (has /api prefix)
-          baseUrl = `${apiBase}/api/v1/business/object-storage`;
-        }
-
-        xhr.open("POST", `${baseUrl}/accounts/${accountId}/buckets/${bucketName}/upload`);
-        xhr.setRequestHeader("Accept", "application/json");
-        xhr.withCredentials = true;
-        xhr.send(formData);
-      });
-    } catch (error) {
-      const message = getErrorMessage(error, "Upload failed");
       setUploads((prev) =>
-        prev.map((u) => (u.id === id ? { ...u, status: "error", error: message } : u))
+        prev.map((u) => (u.id === id ? { ...u, status: "uploading", progress: 0, startTime } : u))
       );
-    }
-  };
 
-  const processUploads = async (files: UploadFile[]) => {
-    setIsUploading(true);
+      try {
+        // Use XMLHttpRequest for progress tracking
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("key", objectKey);
 
-    for (const file of files) {
-      if (file.status === "pending") {
-        await uploadFile(file);
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              const progress = Math.round((event.loaded / event.total) * 100);
+              const elapsed = (Date.now() - startTime) / 1000;
+              const speed = elapsed > 0 ? event.loaded / elapsed : 0;
+
+              setUploads((prev) => prev.map((u) => (u.id === id ? { ...u, progress, speed } : u)));
+            }
+          };
+
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              setUploads((prev) =>
+                prev.map((u) => (u.id === id ? { ...u, status: "success", progress: 100 } : u))
+              );
+              resolve();
+            } else {
+              reject(new Error(`Upload failed: ${xhr.statusText}`));
+            }
+          };
+
+          xhr.onerror = () => reject(new Error("Network error"));
+
+          // Determine the correct API base URL using the same logic as objectStorageApi
+          const apiBase = import.meta.env.VITE_API_USER_BASE_URL || "";
+          let baseUrl: string;
+
+          if (globalThis.window.location.pathname.includes("admin-dashboard")) {
+            // Admin routes: admin/v1/object-storage (no /api prefix)
+            baseUrl = `${apiBase}/admin/v1/object-storage`;
+          } else if (
+            globalThis.window.location.pathname.includes("dashboard") &&
+            !globalThis.window.location.pathname.includes("client")
+          ) {
+            // Tenant routes: tenant/v1/admin/object-storage (no /api prefix)
+            baseUrl = `${apiBase}/tenant/v1/admin/object-storage`;
+          } else {
+            // Client routes: api/v1/business/object-storage (has /api prefix)
+            baseUrl = `${apiBase}/api/v1/business/object-storage`;
+          }
+
+          xhr.open("POST", `${baseUrl}/accounts/${accountId}/buckets/${bucketName}/upload`);
+          xhr.setRequestHeader("Accept", "application/json");
+          xhr.withCredentials = true;
+          xhr.send(formData);
+        });
+      } catch (error) {
+        const message = getErrorMessage(error, "Upload failed");
+        setUploads((prev) =>
+          prev.map((u) => (u.id === id ? { ...u, status: "error", error: message } : u))
+        );
       }
-    }
+    },
+    [accountId, bucketName, currentPrefix]
+  );
 
-    setIsUploading(false);
+  const processUploads = useCallback(
+    async (files: UploadFile[]) => {
+      setIsUploading(true);
 
-    // Check if all succeeded
-    const allSuccess = files.every((f) => {
-      const current = uploads.find((u) => u.id === f.id);
-      return current?.status === "success";
-    });
+      for (const file of files) {
+        if (file.status === "pending") {
+          await uploadFile(file);
+        }
+      }
 
-    if (allSuccess && onUploadComplete) {
-      onUploadComplete();
-    }
-  };
+      setIsUploading(false);
+
+      // Check if all succeeded
+      const allSuccess = files.every((f) => {
+        const current = uploads.find((u) => u.id === f.id);
+        return current?.status === "success";
+      });
+
+      if (allSuccess && onUploadComplete) {
+        onUploadComplete();
+      }
+    },
+    [uploadFile, uploads, onUploadComplete]
+  );
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
@@ -163,7 +169,7 @@ const DropzoneUploader: React.FC<DropzoneUploaderProps> = ({
       setUploads((prev) => [...prev, ...newUploads]);
       processUploads(newUploads);
     },
-    [accountId, bucketName, currentPrefix]
+    [processUploads]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({

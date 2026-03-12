@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import ObjectStorageTable, {
   Account,
   PaginationMeta,
@@ -76,12 +76,15 @@ const ObjectStorageDashboardContent: React.FC<ObjectStorageDashboardContentProps
     return base;
   }, [table.accounts]);
 
-  const resolveActionHandler = (action: ObjectStorageEmptyActionConfig) => {
-    if (action.id === "standard") return planActions?.onStandardPlan;
-    if (action.id === "fastTrack") return planActions?.onFastTrack;
-    if (action.id === "refresh") return table.onRefresh;
-    return undefined;
-  };
+  const resolveActionHandler = useCallback(
+    (action: ObjectStorageEmptyActionConfig) => {
+      if (action.id === "standard") return planActions?.onStandardPlan;
+      if (action.id === "fastTrack") return planActions?.onFastTrack;
+      if (action.id === "refresh") return table.onRefresh;
+      return undefined;
+    },
+    [planActions?.onStandardPlan, planActions?.onFastTrack, table.onRefresh]
+  );
 
   const resolvedEmptyState = useMemo(() => {
     if (emptyState) return emptyState;
@@ -102,7 +105,7 @@ const ObjectStorageDashboardContent: React.FC<ObjectStorageDashboardContentProps
       description: preset.emptyState.description,
       actions,
     };
-  }, [emptyState, preset, planActions, table.onRefresh]);
+  }, [emptyState, preset, planActions, resolveActionHandler]);
 
   return (
     <div className="space-y-6">

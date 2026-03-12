@@ -343,7 +343,6 @@ const ProjectTeamTab: React.FC<ProjectTeamTabProps> = ({
     isAssigningPolicy,
     isRevokingPolicy,
     onUserAction,
-    projectId,
     handleAssignPolicy,
     handleRevokePolicy,
   ]);

@@ -64,21 +64,26 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
     }
   }, [context]);
 
-  const navigateToDetails = (instance: any) => {
-    const identifier = instance.identifier || instance.id;
-    if (!identifier) {
-      ToastUtils.error("Instance identifier missing.");
-      return;
-    }
+  const navigateToDetails = useCallback(
+    (instance: any) => {
+      const identifier = instance.identifier || instance.id;
+      if (!identifier) {
+        ToastUtils.error("Instance identifier missing.");
+        return;
+      }
 
-    if (context === "client") {
-      const encodedId = encodeURIComponent(btoa(identifier));
-      const instanceName = encodeURIComponent(instance.name || `Instance-${identifier.slice(-8)}`);
-      navigate(`${basePath}/instances/details?id=${encodedId}&name=${instanceName}`);
-    } else {
-      navigate(`${basePath}/instances/details?identifier=${encodeURIComponent(identifier)}`);
-    }
-  };
+      if (context === "client") {
+        const encodedId = encodeURIComponent(btoa(identifier));
+        const instanceName = encodeURIComponent(
+          instance.name || `Instance-${identifier.slice(-8)}`
+        );
+        navigate(`${basePath}/instances/details?id=${encodedId}&name=${instanceName}`);
+      } else {
+        navigate(`${basePath}/instances/details?identifier=${encodeURIComponent(identifier)}`);
+      }
+    },
+    [context, basePath, navigate]
+  );
 
   const handleConsoleAccess = useCallback(
     (instanceIdentifier: string) => {

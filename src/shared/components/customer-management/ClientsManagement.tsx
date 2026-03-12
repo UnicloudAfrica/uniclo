@@ -337,7 +337,7 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
     if (context !== "admin") return clientData;
     if (!selectedTenantId) return clientData;
     // eqeqeq
-    return clientData.filter((item) => String(item.tenant_id) == String(selectedTenantId));
+    return clientData.filter((item) => String(item.tenant_id) === String(selectedTenantId));
   }, [clientData, selectedTenantId, context]);
 
   return (

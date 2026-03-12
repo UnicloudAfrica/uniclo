@@ -74,7 +74,7 @@ const QuoteResourceStep = ({
   const hasQueuedItems = pricingRequests.length > 0 || objectStorageRequests?.length > 0;
 
   const _selectedOsImage = osImages?.find(
-    (img) => img.product.productable_id == formData.os_image_id
+    (img) => String(img.product.productable_id) === String(formData.os_image_id)
   );
 
   return (

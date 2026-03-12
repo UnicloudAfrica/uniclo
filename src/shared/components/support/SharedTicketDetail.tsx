@@ -169,21 +169,24 @@ export const SharedTicketDetail: React.FC<SharedTicketDetailProps> = ({
     return container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
   };
 
-  const queueLastReadUpdate = (messageId: number) => {
-    if (!onUpdateLastRead) return;
-    if (lastReadUpdateTimeoutRef.current) {
-      clearTimeout(lastReadUpdateTimeoutRef.current);
-    }
-    lastReadUpdateTimeoutRef.current = setTimeout(() => {
-      if (lastReadReportedRef.current === messageId) {
-        return;
+  const queueLastReadUpdate = useCallback(
+    (messageId: number) => {
+      if (!onUpdateLastRead) return;
+      if (lastReadUpdateTimeoutRef.current) {
+        clearTimeout(lastReadUpdateTimeoutRef.current);
       }
-      Promise.resolve(onUpdateLastRead(messageId)).catch(() => {
-        // Ignore read tracking errors to avoid breaking scroll
-      });
-      lastReadReportedRef.current = messageId;
-    }, 800);
-  };
+      lastReadUpdateTimeoutRef.current = setTimeout(() => {
+        if (lastReadReportedRef.current === messageId) {
+          return;
+        }
+        Promise.resolve(onUpdateLastRead(messageId)).catch(() => {
+          // Ignore read tracking errors to avoid breaking scroll
+        });
+        lastReadReportedRef.current = messageId;
+      }, 800);
+    },
+    [onUpdateLastRead]
+  );
 
   useEffect(() => {
     setLastReadMessageId(thread.last_read_message_id ?? null);
@@ -235,7 +238,7 @@ export const SharedTicketDetail: React.FC<SharedTicketDetailProps> = ({
   useEffect(() => {
     if (!hasScrolledInitially) return;
     handleScroll();
-  }, [hasScrolledInitially, allMessages.length]);
+  }, [hasScrolledInitially, allMessages.length, handleScroll]);
 
   useEffect(() => {
     return () => {
@@ -296,7 +299,7 @@ export const SharedTicketDetail: React.FC<SharedTicketDetailProps> = ({
     }
   }, [allMessages.length, hasNextPage, isFetchingNextPage, isLoadingMore, loadMoreMessages]);
 
-  const handleScroll = () => {
+  const handleScroll = useCallback(() => {
     const container = containerRef.current;
     if (!container) return;
 
@@ -331,7 +334,15 @@ export const SharedTicketDetail: React.FC<SharedTicketDetailProps> = ({
       setLastReadMessageId(lastVisibleMessageId);
       queueLastReadUpdate(lastVisibleMessageId);
     }
-  };
+  }, [
+    allMessages,
+    hasNextPage,
+    hasScrolledInitially,
+    isLoadingMore,
+    lastReadMessageId,
+    loadMoreMessages,
+    queueLastReadUpdate,
+  ]);
 
   const lastReadIndex = lastReadMessageId
     ? allMessages.findIndex((msg) => msg.id === lastReadMessageId)

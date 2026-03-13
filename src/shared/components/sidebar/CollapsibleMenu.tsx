@@ -10,6 +10,8 @@ export interface MenuItem {
   isLucide?: boolean;
   path: string;
   activeIcon?: string;
+  /** Permission string required to see this item. Omit to always show. */
+  requiredPermission?: string;
 }
 
 export interface MenuGroup {
@@ -18,6 +20,8 @@ export interface MenuGroup {
   isLucide?: boolean;
   children: MenuItem[];
   defaultOpen?: boolean;
+  /** Permission string required to see this group. Omit to always show. */
+  requiredPermission?: string;
 }
 
 export type MenuEntry = MenuItem | MenuGroup;

@@ -3,8 +3,10 @@ import TenantHeadbar from "./TenantHeadbar";
 import TenantSidebar from "./TenantSidebar";
 import ActiveTab from "../../dashboard/components/activeTab";
 import { useApplyBrandingTheme, useTenantBrandingTheme } from "@/hooks/useBrandingTheme";
+import usePermissionRefresh from "@/hooks/usePermissionRefresh";
 
 const TenantDashboardLayout = () => {
+  usePermissionRefresh();
   const { data: theme } = useTenantBrandingTheme();
   useApplyBrandingTheme(theme, { fallbackLogo: theme?.logo, updateFavicon: true });
 

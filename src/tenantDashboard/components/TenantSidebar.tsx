@@ -1,8 +1,9 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import useAuthStore from "@/stores/authStore";
 import { logoutActiveSession } from "@/stores/sessionUtils";
 import { DashboardSidebar } from "@/shared/components/sidebar";
-import { tenantMenuItems } from "@/shared/config/sidebarMenus";
+import { tenantMenuItems, filterMenuByPermissions } from "@/shared/config/sidebarMenus";
 import useSidebarStore from "@/stores/sidebarStore";
 import logger from "@/utils/logger";
 
@@ -13,7 +14,7 @@ interface TenantData {
   email?: string;
   first_name?: string;
   last_name?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface TenantSidebarProps {
@@ -22,9 +23,15 @@ interface TenantSidebarProps {
 
 const TenantSidebar: React.FC<TenantSidebarProps> = ({ tenantData }) => {
   const navigate = useNavigate();
+  const permissions = useAuthStore((s) => s.permissions);
   const { isMobileOpen, closeMobile } = useSidebarStore();
 
   const themeColor = tenantData?.color || "var(--theme-color)";
+
+  const filteredItems = React.useMemo(
+    () => filterMenuByPermissions(tenantMenuItems, permissions),
+    [permissions]
+  );
 
   const handleLogout = async () => {
     try {
@@ -38,7 +45,7 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({ tenantData }) => {
 
   return (
     <DashboardSidebar
-      menuItems={tenantMenuItems}
+      menuItems={filteredItems}
       sidebarLabel="TENANT"
       themeColor={themeColor}
       logoutPath="/tenant-signin"

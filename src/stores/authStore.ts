@@ -26,6 +26,7 @@ export interface Session {
   abilities: string[];
   cloudRoles: string[];
   cloudAbilities: string[];
+  permissions: string[];
   expiresAt: string | null;
   isCentralDomain: boolean;
   currentDomain: string | null;
@@ -52,6 +53,8 @@ export interface UnifiedAuthState {
   cloudAbilities: string[];
   /** @deprecated Use `session?.abilities` */
   abilities: string[];
+  /** Granular user permissions from RBAC system. */
+  permissions: string[];
   /** @deprecated Use `session?.workspaceRole` */
   workspaceRole: string | null;
   /** @deprecated Use `session?.isCentralDomain` */
@@ -114,6 +117,10 @@ export interface UnifiedAuthState {
   isAdmin: () => boolean;
   isTenant: () => boolean;
   isClient: () => boolean;
+  setPermissions: (permissions: string[]) => void;
+  hasPermission: (perm: string) => boolean;
+  hasAnyPermission: (perms: string[]) => boolean;
+  hasAllPermissions: (perms: string[]) => boolean;
 }
 
 export interface LoginResponse {
@@ -126,6 +133,7 @@ export interface LoginResponse {
   cloudRoles?: string[];
   cloudAbilities?: string[];
   workspaceRole?: string | null;
+  permissions?: string[];
   [key: string]: unknown;
 }
 
@@ -138,6 +146,7 @@ interface SessionUpdate {
   isAuthenticated: boolean;
   twoFactorRequired: boolean;
   abilities: string[];
+  permissions: string[];
   cloudRoles: string[];
   cloudAbilities: string[];
   workspaceRole: string | null;
@@ -184,6 +193,7 @@ const createInitialState = () => ({
   cloudRoles: [] as string[],
   cloudAbilities: [] as string[],
   abilities: [] as string[],
+  permissions: [] as string[],
   workspaceRole: null as string | null,
   isCentralDomain: INITIAL_CONTEXT.isCentralDomain,
   currentDomain: INITIAL_CONTEXT.currentDomain,
@@ -225,6 +235,7 @@ const useAuthStore = create<UnifiedAuthState>()(
           const cloudAbilitiesArr = Array.isArray(response.cloudAbilities)
             ? response.cloudAbilities
             : [];
+          const permissionsArr = Array.isArray(response.permissions) ? response.permissions : [];
 
           set({
             user: response.user || null,
@@ -236,6 +247,7 @@ const useAuthStore = create<UnifiedAuthState>()(
             abilities: abilitiesArr,
             cloudRoles: cloudRolesArr,
             cloudAbilities: cloudAbilitiesArr,
+            permissions: permissionsArr,
             workspaceRole: response.workspaceRole ?? null,
             isCentralDomain: context.isCentralDomain,
             currentDomain: context.currentDomain,
@@ -250,6 +262,7 @@ const useAuthStore = create<UnifiedAuthState>()(
               abilities: abilitiesArr,
               cloudRoles: cloudRolesArr,
               cloudAbilities: cloudAbilitiesArr,
+              permissions: permissionsArr,
               expiresAt: null,
               isCentralDomain: context.isCentralDomain,
               currentDomain: context.currentDomain,
@@ -325,6 +338,7 @@ const useAuthStore = create<UnifiedAuthState>()(
                 abilities: partial.abilities || state.session?.abilities || [],
                 cloudRoles: partial.cloudRoles || state.session?.cloudRoles || [],
                 cloudAbilities: partial.cloudAbilities || state.session?.cloudAbilities || [],
+                permissions: partial.permissions || state.session?.permissions || [],
                 expiresAt: state.session?.expiresAt || null,
                 isCentralDomain:
                   partial.isCentralDomain !== undefined
@@ -385,6 +399,11 @@ const useAuthStore = create<UnifiedAuthState>()(
           set((state) => ({
             abilities,
             session: state.session ? { ...state.session, abilities } : state.session,
+          })),
+        setPermissions: (permissions: string[]) =>
+          set((state) => ({
+            permissions,
+            session: state.session ? { ...state.session, permissions } : state.session,
           })),
         setWorkspaceRole: (workspaceRole: string | null) =>
           set((state) => ({
@@ -466,6 +485,19 @@ const useAuthStore = create<UnifiedAuthState>()(
         isAdmin: () => get().session?.role === "admin",
         isTenant: () => get().session?.role === "tenant",
         isClient: () => get().session?.role === "client",
+
+        hasPermission: (perm: string) => {
+          const perms = get().permissions;
+          return perms.includes(perm);
+        },
+        hasAnyPermission: (perms: string[]) => {
+          const userPerms = get().permissions;
+          return perms.some((p) => userPerms.includes(p));
+        },
+        hasAllPermissions: (perms: string[]) => {
+          const userPerms = get().permissions;
+          return perms.every((p) => userPerms.includes(p));
+        },
       };
     },
     {
@@ -493,6 +525,7 @@ const useAuthStore = create<UnifiedAuthState>()(
           cloudRoles: state.cloudRoles,
           cloudAbilities: state.cloudAbilities,
           abilities: state.abilities,
+          permissions: state.permissions,
           workspaceRole: state.workspaceRole,
           isCentralDomain: state.isCentralDomain,
           currentDomain: state.currentDomain,

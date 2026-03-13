@@ -1,8 +1,9 @@
 import React from "react";
 import useAdminAuthStore from "@/stores/adminAuthStore";
+import useAuthStore from "@/stores/authStore";
 import { logoutActiveSession } from "@/stores/sessionUtils";
 import { DashboardSidebar } from "@/shared/components/sidebar";
-import { adminMenuItems } from "@/shared/config/sidebarMenus";
+import { adminMenuItems, filterMenuByPermissions } from "@/shared/config/sidebarMenus";
 import { useNavigate } from "react-router-dom";
 import useSidebarStore from "@/stores/sidebarStore";
 import { useAdminBrandingTheme } from "@/hooks/useBrandingTheme";
@@ -19,8 +20,14 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ forceRender = false }) => {
   const navigate = useNavigate();
   const clearUserEmail = useAdminAuthStore((state) => state.clearUserEmail);
   const { isMobileOpen, closeMobile } = useSidebarStore();
+  const permissions = useAuthStore((s) => s.permissions);
   const { data: branding } = useAdminBrandingTheme({ enabled: shouldRender });
   const themeColor = branding?.accentColor || branding?.primaryColor;
+
+  const filteredItems = React.useMemo(
+    () => filterMenuByPermissions(adminMenuItems, permissions),
+    [permissions]
+  );
 
   if (!shouldRender) {
     return null;
@@ -40,7 +47,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ forceRender = false }) => {
 
   return (
     <DashboardSidebar
-      menuItems={adminMenuItems}
+      menuItems={filteredItems}
       sidebarLabel="ADMIN"
       logoutPath="/admin-signin"
       themeColor={themeColor}

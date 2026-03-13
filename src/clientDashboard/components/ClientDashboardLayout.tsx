@@ -4,11 +4,13 @@ import Headbar from "./clientHeadbar";
 import Sidebar from "./clientSidebar";
 import useClientTheme from "@/hooks/clientHooks/useClientTheme";
 import { useApplyBrandingTheme } from "@/hooks/useBrandingTheme";
+import usePermissionRefresh from "@/hooks/usePermissionRefresh";
 import useClientAuthStore from "@/stores/clientAuthStore";
 import { ClientTheme } from "@/types/branding";
 import { AuthState } from "@/types/auth";
 
 const ClientDashboardLayout = () => {
+  usePermissionRefresh();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isAuthenticated = useClientAuthStore((s: AuthState) => s.isAuthenticated);
   const hasHydrated = useClientAuthStore((s: AuthState) => s.hasHydrated);

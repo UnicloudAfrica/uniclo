@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   AlertTriangle,
@@ -7,14 +7,18 @@ import {
   Loader2,
   Mail,
   MapPin,
+  Shield,
   ShieldCheck,
   SquarePen,
+  User as UserIcon,
 } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
 import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
 import { ModernButton } from "@/shared/components/ui";
 import { ModernCard } from "@/shared/components/ui";
 import { useFetchAdminById } from "@/hooks/adminHooks/adminHooks";
+import { PermissionChecklist } from "@/shared/components/PermissionChecklist";
+import { useFetchUserPermissions, useUpdateUserPermissions } from "@/hooks/adminHooks/permissionHooks";
 import logger from "@/utils/logger";
 
 interface AdminRecord {
@@ -65,9 +69,37 @@ const formatDate = (value: any) => {
     return "Unknown";
   }
 };
+function PermissionsTab({ userId }: { userId: string | number }) {
+  const { data: permData, isLoading } = useFetchUserPermissions(userId);
+  const { mutateAsync: updatePermissions, isPending: isSaving } = useUpdateUserPermissions();
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center py-12 text-sm text-gray-500">Loading permissions...</div>;
+  }
+
+  if (!permData) {
+    return <div className="text-sm text-gray-500 py-4">Unable to load permissions.</div>;
+  }
+
+  return (
+    <PermissionChecklist
+      registry={permData.registry}
+      currentPermissions={permData.permissions}
+      onSave={async (overrides) => {
+        await updatePermissions({
+          userId,
+          permissions: overrides,
+        });
+      }}
+      isSaving={isSaving}
+    />
+  );
+}
+
 const AdminUserDetails = () => {
   const { adminId } = useParams();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("profile");
 
   const decodedAdminId = useMemo(() => decodeId(adminId), [adminId]);
 
@@ -206,87 +238,126 @@ const AdminUserDetails = () => {
 
         {!isFetching && adminRecord && (
           <>
-            <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {summaryCards.map(({ label, value, hint, icon: Icon, accentBg, accentText }: any) => (
-                <div
-                  key={label}
-                  className="rounded-3xl border border-[var(--theme-surface-alt)] bg-white p-5 shadow-sm transition hover:border-primary/50 hover:shadow-md"
-                >
-                  <div className="flex items-start gap-3">
-                    <span
-                      className={`flex h-10 w-10 items-center justify-center rounded-2xl ${accentBg} ${accentText}`}
+            {/* Tab Navigation */}
+            <div className="flex gap-3 mb-6">
+              <button
+                type="button"
+                onClick={() => setActiveTab("profile")}
+                className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition ${
+                  activeTab === "profile"
+                    ? "bg-[var(--theme-color)] text-white shadow-sm"
+                    : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                }`}
+              >
+                <UserIcon className="h-4 w-4" />
+                Profile
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("permissions")}
+                className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition ${
+                  activeTab === "permissions"
+                    ? "bg-[var(--theme-color)] text-white shadow-sm"
+                    : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                }`}
+              >
+                <Shield className="h-4 w-4" />
+                Permissions
+              </button>
+            </div>
+
+            {/* Tab Content */}
+            {activeTab === "profile" ? (
+              <>
+                <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  {summaryCards.map(({ label, value, hint, icon: Icon, accentBg, accentText }: any) => (
+                    <div
+                      key={label}
+                      className="rounded-3xl border border-[var(--theme-surface-alt)] bg-white p-5 shadow-sm transition hover:border-primary/50 hover:shadow-md"
                     >
-                      <Icon className="h-5 w-5" />
-                    </span>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        {label}
-                      </p>
-                      <p className="mt-1 text-base font-semibold text-slate-900">{value}</p>
-                      {hint && <p className="mt-2 text-xs font-medium text-slate-500">{hint}</p>}
+                      <div className="flex items-start gap-3">
+                        <span
+                          className={`flex h-10 w-10 items-center justify-center rounded-2xl ${accentBg} ${accentText}`}
+                        >
+                          <Icon className="h-5 w-5" />
+                        </span>
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            {label}
+                          </p>
+                          <p className="mt-1 text-base font-semibold text-slate-900">{value}</p>
+                          {hint && <p className="mt-2 text-xs font-medium text-slate-500">{hint}</p>}
+                        </div>
+                      </div>
                     </div>
+                  ))}
+                </section>
+
+                <ModernCard title="Contact & Access">
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <dl className="space-y-4">
+                      {profileDetails.slice(0, 3).map(({ label, value }: any) => (
+                        <div key={label} className="flex items-center justify-between gap-4">
+                          <dt className="text-sm font-medium text-slate-500">{label}</dt>
+                          <dd className="text-sm font-semibold text-slate-900">{value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <dl className="space-y-4">
+                      {profileDetails.slice(3).map(({ label, value }: any) => (
+                        <div key={label} className="flex items-center justify-between gap-4">
+                          <dt className="text-sm font-medium text-slate-500">{label}</dt>
+                          <dd className="text-sm font-semibold text-slate-900">{value}</dd>
+                        </div>
+                      ))}
+                    </dl>
                   </div>
-                </div>
-              ))}
-            </section>
+                </ModernCard>
 
-            <ModernCard title="Contact & Access">
-              <div className="grid gap-6 md:grid-cols-2">
-                <dl className="space-y-4">
-                  {profileDetails.slice(0, 3).map(({ label, value }: any) => (
-                    <div key={label} className="flex items-center justify-between gap-4">
-                      <dt className="text-sm font-medium text-slate-500">{label}</dt>
-                      <dd className="text-sm font-semibold text-slate-900">{value}</dd>
-                    </div>
-                  ))}
-                </dl>
-                <dl className="space-y-4">
-                  {profileDetails.slice(3).map(({ label, value }: any) => (
-                    <div key={label} className="flex items-center justify-between gap-4">
-                      <dt className="text-sm font-medium text-slate-500">{label}</dt>
-                      <dd className="text-sm font-semibold text-slate-900">{value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </div>
-            </ModernCard>
-
-            <ModernCard title="Location & Activity">
-              <div className="grid gap-6 md:grid-cols-2">
-                <dl className="space-y-4">
-                  {locationDetails.slice(0, 3).map(({ label, value }: any) => (
-                    <div key={label} className="flex items-center justify-between gap-4">
-                      <dt className="text-sm font-medium text-slate-500">{label}</dt>
-                      <dd className="text-sm font-semibold text-slate-900">{value}</dd>
-                    </div>
-                  ))}
-                </dl>
-                <dl className="space-y-4">
-                  {locationDetails.slice(3).map(({ label, value }: any) => (
-                    <div key={label} className="flex items-center justify-between gap-4">
-                      <dt className="text-sm font-medium text-slate-500">{label}</dt>
-                      <dd className="text-sm font-semibold text-slate-900">{value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </div>
-            </ModernCard>
-
-            <ModernCard title="Security Controls">
-              <dl className="grid gap-4 md:grid-cols-3">
-                {devicesDetails.map(({ label, value }: any) => (
-                  <div
-                    key={label}
-                    className="rounded-2xl border border-[var(--theme-surface-alt)] bg-[var(--theme-surface-alt)] px-4 py-3"
-                  >
-                    <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      {label}
-                    </dt>
-                    <dd className="mt-2 text-sm font-semibold text-slate-900">{value}</dd>
+                <ModernCard title="Location & Activity">
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <dl className="space-y-4">
+                      {locationDetails.slice(0, 3).map(({ label, value }: any) => (
+                        <div key={label} className="flex items-center justify-between gap-4">
+                          <dt className="text-sm font-medium text-slate-500">{label}</dt>
+                          <dd className="text-sm font-semibold text-slate-900">{value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <dl className="space-y-4">
+                      {locationDetails.slice(3).map(({ label, value }: any) => (
+                        <div key={label} className="flex items-center justify-between gap-4">
+                          <dt className="text-sm font-medium text-slate-500">{label}</dt>
+                          <dd className="text-sm font-semibold text-slate-900">{value}</dd>
+                        </div>
+                      ))}
+                    </dl>
                   </div>
-                ))}
-              </dl>
-            </ModernCard>
+                </ModernCard>
+
+                <ModernCard title="Security Controls">
+                  <dl className="grid gap-4 md:grid-cols-3">
+                    {devicesDetails.map(({ label, value }: any) => (
+                      <div
+                        key={label}
+                        className="rounded-2xl border border-[var(--theme-surface-alt)] bg-[var(--theme-surface-alt)] px-4 py-3"
+                      >
+                        <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          {label}
+                        </dt>
+                        <dd className="mt-2 text-sm font-semibold text-slate-900">{value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </ModernCard>
+              </>
+            ) : (
+              adminRecord.id !== undefined ? (
+                <PermissionsTab userId={adminRecord.id} />
+              ) : (
+                <div className="text-sm text-gray-500 py-4">No user ID available for permissions.</div>
+              )
+            )}
           </>
         )}
       </AdminPageShell>

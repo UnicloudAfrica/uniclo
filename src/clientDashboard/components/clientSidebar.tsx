@@ -1,8 +1,9 @@
 import React from "react";
 import { useFetchClientProfile } from "@/hooks/clientHooks/resources";
 import { useFetchClientProjects, Project } from "@/hooks/clientHooks/projectHooks";
+import useAuthStore from "@/stores/authStore";
 import { DashboardSidebar } from "@/shared/components/sidebar";
-import { buildClientMenuItems } from "@/shared/config/sidebarMenus";
+import { buildClientMenuItems, filterMenuByPermissions } from "@/shared/config/sidebarMenus";
 
 interface ClientSidebarProps {
   isMobileMenuOpen?: boolean | undefined;
@@ -19,13 +20,14 @@ interface ClientProfile {
 const ClientSidebar: React.FC<ClientSidebarProps> = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   const { data: profile } = useFetchClientProfile();
   const { data: projectsResponse } = useFetchClientProjects();
+  const permissions = useAuthStore((s) => s.permissions);
 
   // Extract projects array from response
-  const projects: Project[] = (projectsResponse as any)?.data || [];
+  const projects: Project[] = ((projectsResponse as unknown) as Record<string, unknown>)?.data as Project[] ?? [];
 
   const menuItems = React.useMemo(
-    () => buildClientMenuItems(projects.length > 0),
-    [projects.length]
+    () => filterMenuByPermissions(buildClientMenuItems(projects.length > 0), permissions),
+    [projects.length, permissions]
   );
 
   const clientProfile = profile as ClientProfile | undefined;

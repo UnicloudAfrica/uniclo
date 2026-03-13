@@ -14,9 +14,16 @@ const StepStatus = {
   COMPLETED: "completed",
   ERROR: "error",
   AVAILABLE: "available",
-};
+} as const;
 
-const StepIcon = ({ status, isLoading }: any) => {
+type StepStatusType = (typeof StepStatus)[keyof typeof StepStatus];
+
+interface StepIconProps {
+  status: string;
+  isLoading?: boolean;
+}
+
+const StepIcon = ({ status, isLoading }: StepIconProps) => {
   if (isLoading) {
     return <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />;
   }
@@ -33,7 +40,11 @@ const StepIcon = ({ status, isLoading }: any) => {
   }
 };
 
-const ProgressBar = ({ progress }: any) => (
+interface ProgressBarProps {
+  progress: number;
+}
+
+const ProgressBar = ({ progress }: ProgressBarProps) => (
   <div className="w-full bg-gray-200 rounded-full h-2 mb-6">
     <div
       className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-out"
@@ -42,7 +53,21 @@ const ProgressBar = ({ progress }: any) => (
   </div>
 );
 
-const ActionButton = ({ onClick, disabled, isLoading, children, variant = "primary" }: any) => {
+interface ActionButtonProps {
+  onClick?: () => void;
+  disabled?: boolean;
+  isLoading?: boolean;
+  children: React.ReactNode;
+  variant?: "primary" | "secondary" | "danger";
+}
+
+const ActionButton = ({
+  onClick,
+  disabled,
+  isLoading,
+  children,
+  variant = "primary",
+}: ActionButtonProps) => {
   const baseClasses =
     "px-6 py-2 rounded-lg font-medium text-sm transition-all duration-200 flex items-center gap-2";
   const variants = {
@@ -58,13 +83,34 @@ const ActionButton = ({ onClick, disabled, isLoading, children, variant = "prima
     <button
       onClick={onClick}
       disabled={disabled || isLoading}
-      className={`${baseClasses} ${variants[variant as keyof typeof variants]}`}
+      className={`${baseClasses} ${variants[variant]}`}
     >
       {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
       {children}
     </button>
   );
 };
+
+interface InfrastructureStepData {
+  id: string;
+  title: string;
+  description: string;
+  component: string;
+  prerequisites: string[];
+  troubleshooting?: string;
+}
+
+interface InfrastructureStepProps {
+  step: InfrastructureStepData;
+  status: string;
+  isActive: boolean;
+  onAction?: () => void;
+  isLoading?: boolean;
+  error?: string;
+  details?: Record<string, unknown>;
+  actionText?: string;
+  canProceed: boolean;
+}
 
 const InfrastructureStep = ({
   step,
@@ -76,7 +122,7 @@ const InfrastructureStep = ({
   details,
   actionText,
   canProceed,
-}: any) => {
+}: InfrastructureStepProps) => {
   const getStatusColor = () => {
     switch (status) {
       case StepStatus.COMPLETED:
@@ -126,7 +172,7 @@ const InfrastructureStep = ({
               <div className="text-sm text-gray-600 mb-2">
                 <strong>Prerequisites:</strong>
                 <ul className="list-disc list-inside ml-2">
-                  {step.prerequisites.map((prereq: any, index: number) => (
+                  {step.prerequisites.map((prereq: string, index: number) => (
                     <li key={index}>{prereq}</li>
                   ))}
                 </ul>
@@ -159,7 +205,24 @@ const InfrastructureStep = ({
   );
 };
 
-const InfrastructureSetupFlow = ({ projectId, projectName }: any) => {
+interface InfrastructureSetupFlowProps {
+  projectId: string;
+  projectName: string;
+}
+
+interface ComponentStatus {
+  status: string;
+  error?: string;
+  details?: Record<string, unknown>;
+}
+
+interface InfrastructureStatusData {
+  components?: Record<string, ComponentStatus>;
+  overall_status?: string;
+  estimated_completion?: string;
+}
+
+const InfrastructureSetupFlow = ({ projectId, projectName }: InfrastructureSetupFlowProps) => {
   const [activeStep, setActiveStep] = useState(0);
   const [pollingEnabled, setPollingEnabled] = useState(true);
 
@@ -173,13 +236,15 @@ const InfrastructureSetupFlow = ({ projectId, projectName }: any) => {
     refetchInterval: pollingEnabled ? 5000 : false, // Poll every 5 seconds
     refetchIntervalInBackground: false,
   });
-  const infrastructureStatus = (infraStatus as any)?.data ?? infraStatus;
+  const infrastructureStatus =
+    ((infraStatus as { data?: InfrastructureStatusData })?.data as InfrastructureStatusData) ??
+    (infraStatus as InfrastructureStatusData);
 
   const { mutate: setupComponent, isPending: isSettingUp } = useSetupInfrastructureComponent();
   const { mutate: ensureDomain, isPending: isEnsuringDomain } = useEnsureRootDomain();
 
   // Define infrastructure setup steps (matching backend components)
-  const infrastructureSteps = useMemo(
+  const infrastructureSteps = useMemo<InfrastructureStepData[]>(
     () => [
       {
         id: "domain",
@@ -228,14 +293,14 @@ const InfrastructureSetupFlow = ({ projectId, projectName }: any) => {
   // Calculate progress percentage
   const completedSteps = infrastructureStatus?.components
     ? Object.values(infrastructureStatus.components).filter(
-        (comp: any) => comp.status === "completed"
+        (comp) => comp.status === "completed"
       ).length
     : 0;
   const totalSteps = infrastructureSteps.length;
   const progress = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0;
 
   // Handle component setup
-  const handleSetupComponent = (componentType: any) => {
+  const handleSetupComponent = (componentType: string) => {
     if (componentType === "domain") {
       ensureDomain(undefined, {
         onSuccess: () => {
@@ -269,7 +334,7 @@ const InfrastructureSetupFlow = ({ projectId, projectName }: any) => {
   };
 
   // Determine if a step can proceed based on prerequisites
-  const canStepProceed = (stepIndex: any) => {
+  const canStepProceed = (stepIndex: number) => {
     if (stepIndex === 0) return true; // Domain setup can always proceed
 
     // Check if previous steps are completed
@@ -287,7 +352,7 @@ const InfrastructureSetupFlow = ({ projectId, projectName }: any) => {
 
   // Get step status from API response
   const getStepStatus = useCallback(
-    (step: any) => {
+    (step: InfrastructureStepData): StepStatusType => {
       if (!infrastructureStatus?.components) return StepStatus.PENDING;
 
       const component = infrastructureStatus.components[step.component];

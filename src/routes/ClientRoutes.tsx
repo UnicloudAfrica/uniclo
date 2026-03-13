@@ -40,6 +40,7 @@ import ClientTicketDetail from "../clientDashboard/pages/ClientTicketDetail";
 import ClientManagedDatabases from "../clientDashboard/pages/ClientManagedDatabases";
 import ClientDatabaseCreate from "../clientDashboard/pages/ClientDatabaseCreate";
 import ClientDatabaseDetail from "../clientDashboard/pages/ClientDatabaseDetail";
+import ClientTeam from "../clientDashboard/pages/ClientTeam";
 
 import type { JSX } from "react";
 
@@ -119,6 +120,7 @@ const ClientRoutes = (): JSX.Element => (
     <Route path="/client-dashboard/orders-payments" element={<ClientPaymentHistory />} />
     <Route path="/client-dashboard/billing" element={<ClientBillingPage />} />
     <Route path="/client-dashboard/account-settings" element={<ClientSettings />} />
+    <Route path="/client-dashboard/team" element={<ClientTeam />} />
     <Route path="/client-dashboard/support" element={<ClientSupport />} />
     <Route path="/client-dashboard/support/:id" element={<ClientTicketDetail />} />
   </Route>

@@ -63,8 +63,8 @@ const useSettlementSummary = () => {
   return useQuery({
     queryKey: ["settlements", "summary"],
     queryFn: async () => {
-      const response = await adminApi.get<{ data: SettlementSummary }>("/settlements/summary");
-      return response.data.data;
+      const response = await adminApi.get<Record<string, unknown>>("/settlements/summary");
+      return (response.data ?? response) as SettlementSummary;
     },
   });
 };

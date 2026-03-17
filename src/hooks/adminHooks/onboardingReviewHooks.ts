@@ -144,32 +144,32 @@ export const useAdminOnboardingQueue = (
 };
 
 export const useAdminOnboardingSubmission = (
-  {
-    target,
-    tenantId,
-    userId,
-    step,
-  }: {
+  args: {
     target: string;
     tenantId?: string | number | null;
     userId?: string | number | null;
     step: string;
-  },
+  } | null,
   options: Omit<
     UseQueryOptions<{ submission: SubmissionData | null; meta: Record<string, unknown> }>,
     "queryKey" | "queryFn"
   > = {}
 ) => {
+  const target = args?.target ?? "";
+  const tenantId = args?.tenantId ?? null;
+  const userId = args?.userId ?? null;
+  const step = args?.step ?? "";
+
   return useQuery({
-    queryKey: submissionQueryKey(target, tenantId ?? null, userId ?? null, step),
+    queryKey: submissionQueryKey(target, tenantId, userId, step),
     queryFn: () =>
       fetchAdminOnboardingSubmission({
         target,
-        tenantId: tenantId ?? null,
-        userId: userId ?? null,
+        tenantId,
+        userId,
         step,
       }),
-    enabled: Boolean(step && target && (tenantId || userId)),
+    enabled: Boolean(args && step && target && (tenantId || userId)),
     ...options,
   });
 };

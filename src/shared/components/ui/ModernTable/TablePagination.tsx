@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { designTokens } from "@/styles/designTokens";
+import { useResponsive } from "@/hooks/useResponsive";
 import type { PaginationStats } from "./types";
 import type { TableStyleMap } from "./useTableStyles";
 
@@ -20,6 +21,8 @@ function TablePagination({
   onInternalPageChange,
   styles,
 }: TablePaginationProps) {
+  const { isMobile } = useResponsive();
+
   const goToPage = (newPage: number) => {
     if (onPageChange) {
       onPageChange(newPage);
@@ -38,17 +41,27 @@ function TablePagination({
   });
 
   return (
-    <div style={styles.pagination}>
+    <div style={styles.pagination} className="table-pagination">
       <div
         style={{
           fontSize: designTokens.typography.fontSize.sm[0],
           color: designTokens.colors.neutral[600],
+          textAlign: isMobile ? "center" : undefined,
         }}
+        className="table-pagination-stats"
       >
         Showing {paginationStats.from} to {paginationStats.to} of {paginationStats.total} entries
       </div>
 
-      <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: "4px",
+          alignItems: "center",
+          justifyContent: isMobile ? "center" : undefined,
+        }}
+        className="table-pagination-nav"
+      >
         <button
           onClick={() => goToPage(1)}
           disabled={currentPage === 1}

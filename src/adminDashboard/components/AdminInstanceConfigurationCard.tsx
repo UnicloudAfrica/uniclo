@@ -69,6 +69,7 @@ interface Props {
   membershipTenantId?: string;
   membershipUserId?: string;
   lockAssignmentScope?: boolean;
+  regions?: any[];
 }
 
 const extractRegionCode = (region: any) => {
@@ -136,9 +137,40 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
   membershipTenantId,
   membershipUserId,
   lockAssignmentScope = false,
+  regions = [],
 }) => {
   const selectedRegion = cfg.region || "";
   const projectIdentifier = cfg.project_id || "";
+
+  // Derive availability zone props from the selected region's data
+  const selectedRegionData = useMemo(() => {
+    if (!selectedRegion || !Array.isArray(regions)) return null;
+    return regions.find(
+      (r: any) =>
+        String(r?.code || r?.region || r?.slug || r?.id || "") === String(selectedRegion)
+    ) || null;
+  }, [regions, selectedRegion]);
+
+  const azSelectionMode = useMemo(() => {
+    if (!selectedRegionData) return undefined;
+    return (selectedRegionData as any)?.az_selection_mode as
+      | "auto"
+      | "user_selectable"
+      | "disabled"
+      | undefined;
+  }, [selectedRegionData]);
+
+  const availabilityZoneOptions = useMemo(() => {
+    if (!selectedRegionData) return [];
+    const azs = (selectedRegionData as any)?.availability_zones;
+    if (!Array.isArray(azs)) return [];
+    return azs
+      .filter((az: any) => az?.status === "active" || !az?.status)
+      .map((az: any) => ({
+        value: String(az.code || az.id || ""),
+        label: `${az.name || az.code || ""}${az.provider ? ` (${az.provider})` : ""}`,
+      }));
+  }, [selectedRegionData]);
 
   // 1. Fetch Projects (Region-Aware) - uses hook override if provided
   const projectsHook = useProjectsHook || useFetchProjects;
@@ -478,6 +510,8 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
       variant={formVariant}
       showProjectMembership={showProjectMembership}
       lockAssignmentScope={lockAssignmentScope}
+      azSelectionMode={azSelectionMode}
+      availabilityZoneOptions={availabilityZoneOptions}
       {...optionalFormProps}
     />
   );

@@ -71,6 +71,24 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
 };
 
 /**
+ * Resolve the error message to display based on the user's role.
+ *
+ * Admins always see the raw API error so they can diagnose issues.
+ * Tenants and clients see a friendlier "contact support" message for
+ * server errors (5xx) to avoid exposing internal details.
+ * Validation (422) and business-logic errors are shown to all roles.
+ */
+const resolveDisplayMessage = (
+  rawMessage: string,
+  status: number,
+  role: string | null | undefined
+): string => {
+  if (role === "admin") return rawMessage;
+  if (status >= 500) return "Something went wrong. Please contact support.";
+  return rawMessage;
+};
+
+/**
  * Safe JSON parser that handles edge cases
  */
 const parseJsonSafely = async (response: Response): Promise<unknown> => {
@@ -185,14 +203,16 @@ export const createApiClient = ({
           );
         }
 
-        // Clear session on auth errors
-        if (response.status === 401 || response.status === 403) {
-          authState?.clearSession?.();
-        }
-
+        // Try auth redirect first — it will return false for business-logic 403s
         const handled = handleAuthRedirect(response, res, redirectPath);
         if (handled) {
+          authState?.clearSession?.();
           throw new Error("Unauthorized");
+        }
+
+        // Only clear session on 401 (expired token), not on business-logic 403s
+        if (response.status === 401) {
+          authState?.clearSession?.();
         }
 
         const errorMessage =
@@ -202,7 +222,8 @@ export const createApiClient = ({
           "An error occurred";
 
         if (showToasts) {
-          ToastUtils.error(errorMessage);
+          const effectiveRole = authState?.getEffectiveRole?.() || authState?.role;
+          ToastUtils.error(resolveDisplayMessage(errorMessage, response.status, effectiveRole));
         }
 
         throw new Error(errorMessage);
@@ -210,7 +231,9 @@ export const createApiClient = ({
     } catch (err) {
       const message = getErrorMessage(err, "An error occurred");
       if (showToasts && !message.includes("Unauthorized")) {
-        ToastUtils.error(message);
+        const effectiveRole =
+          authStore?.getState?.()?.getEffectiveRole?.() || authStore?.getState?.()?.role;
+        ToastUtils.error(resolveDisplayMessage(message, 0, effectiveRole));
       }
       throw err;
     }
@@ -301,13 +324,16 @@ export const createMultipartApiClient = ({
           );
         }
 
-        if (response.status === 401 || response.status === 403) {
-          authState?.clearSession?.();
-        }
-
+        // Try auth redirect first — it will return false for business-logic 403s
         const handled = handleAuthRedirect(response, res, redirectPath);
         if (handled) {
+          authState?.clearSession?.();
           throw new Error("Unauthorized");
+        }
+
+        // Only clear session on 401 (expired token), not on business-logic 403s
+        if (response.status === 401) {
+          authState?.clearSession?.();
         }
 
         const errorMessage =
@@ -317,7 +343,8 @@ export const createMultipartApiClient = ({
           "An error occurred";
 
         if (showToasts) {
-          ToastUtils.error(errorMessage);
+          const effectiveRole = authState?.getEffectiveRole?.() || authState?.role;
+          ToastUtils.error(resolveDisplayMessage(errorMessage, response.status, effectiveRole));
         }
 
         throw new Error(errorMessage);
@@ -325,7 +352,9 @@ export const createMultipartApiClient = ({
     } catch (err) {
       const message = getErrorMessage(err, "An error occurred");
       if (showToasts && !message.includes("Unauthorized")) {
-        ToastUtils.error(message);
+        const effectiveRole =
+          authStore?.getState?.()?.getEffectiveRole?.() || authStore?.getState?.()?.role;
+        ToastUtils.error(resolveDisplayMessage(message, 0, effectiveRole));
       }
       throw err;
     }
@@ -411,13 +440,14 @@ export const createFileApiClient = ({
           );
         }
 
-        if (response.status === 401 || response.status === 403) {
-          authState?.clearSession?.();
-        }
-
         const handled = handleAuthRedirect(response, parsed, redirectPath);
         if (handled) {
+          authState?.clearSession?.();
           throw new Error("Unauthorized");
+        }
+
+        if (response.status === 401) {
+          authState?.clearSession?.();
         }
 
         const errorMessage =

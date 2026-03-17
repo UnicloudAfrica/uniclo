@@ -6,15 +6,13 @@ import {
   Building2,
   CheckCircle,
   Clock,
-  Database,
   DollarSign,
   Edit,
   KeyRound,
-  Link as _LinkIcon,
+  Layers,
   Loader2,
   MapPin,
   RefreshCw,
-  Server,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -23,12 +21,14 @@ import {
 import adminRegionApi from "@/services/adminRegionApi";
 import ToastUtils from "@/utils/toastUtil";
 import AdminPageShell from "../components/AdminPageShell";
-import { ModernCard } from "@/shared/components/ui";
+import { ModernCard, ProviderBadge } from "@/shared/components/ui";
 import ModernStatsCard from "@/shared/components/ui/ModernStatsCard";
 import { ModernButton } from "@/shared/components/ui";
 import StatusPill from "@/shared/components/ui/StatusPill";
 import { designTokens } from "@/styles/designTokens";
 import logger from "@/utils/logger";
+import { useFetchAvailabilityZones } from "@/hooks/adminHooks/regionHooks";
+import type { AvailabilityZone } from "@/shared/types/resource";
 
 const statusToneMap = {
   healthy: "success",
@@ -69,72 +69,22 @@ const AttributeTile = ({ label, value, hint, icon: Icon }: any) => {
     </div>
   );
 };
-/** Icon lookup for service types */
-const SERVICE_ICON_MAP: Record<string, React.ElementType> = {
-  compute: Server,
-  object_storage: Database,
-  database: Database,
-  cdn: _LinkIcon,
-  network: Activity,
-};
-
-interface ProviderServiceDef {
-  type: string;
-  name: string;
-  description?: string;
-  auth_type?: string;
-  label?: string;
-}
 
 const RegionDetail = () => {
   const { id: code } = useParams();
   const navigate = useNavigate();
   const [region, setRegion] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [credentialStatus, setCredentialStatus] = useState<Record<string, any>>({});
-  const [providerServices, setProviderServices] = useState<ProviderServiceDef[]>([]);
+
+  const { data: availabilityZones = [], isLoading: azLoading } = useFetchAvailabilityZones(
+    region?.code
+  );
 
   const fetchRegionDetail = useCallback(async () => {
     try {
       setLoading(true);
       const response = await adminRegionApi.fetchRegionByCode(code as string);
       setRegion(response.data);
-
-      // Fetch credential status and provider services
-      if (response.data?.code) {
-        try {
-          const credsRes = await adminRegionApi.getCredentialStatus(response.data.code);
-          setCredentialStatus(
-            (credsRes.data as { credentials?: Record<string, unknown> })?.credentials || {}
-          );
-        } catch (err) {
-          logger.warn("Could not fetch credential status", err);
-        }
-
-        // Fetch provider-specific services so Service Connections renders dynamically
-        if (response.data?.provider) {
-          try {
-            const svcRes = await adminRegionApi.getProviderServices(
-              response.data.provider as string
-            );
-            // Backend returns { provider, provider_config, services: { compute: {...}, ... } }
-            const raw = svcRes.data as any;
-            const servicesMap = raw?.services || raw || {};
-            const parsed: ProviderServiceDef[] = Object.entries(servicesMap).map(
-              ([key, val]: [string, any]) => ({
-                type: key,
-                name: val?.label || key,
-                label: val?.label,
-                description: val?.description,
-                auth_type: val?.auth_type,
-              })
-            );
-            setProviderServices(parsed);
-          } catch (err) {
-            logger.warn("Could not fetch provider services", err);
-          }
-        }
-      }
     } catch (error) {
       logger.error("Error fetching region:", error);
       ToastUtils.error("Failed to load region details");
@@ -152,6 +102,13 @@ const RegionDetail = () => {
     const segments = [region.city, region.country_code].filter(Boolean);
     return segments.join(", ");
   }, [region]);
+
+  /** Derive unique provider labels from the AZs */
+  const azProvidersSummary = useMemo(() => {
+    if (!availabilityZones || availabilityZones.length === 0) return null;
+    const unique = [...new Set(availabilityZones.map((az: AvailabilityZone) => az.provider))];
+    return unique;
+  }, [availabilityZones]);
 
   const headerMeta = useMemo(() => {
     if (!region) return null;
@@ -180,16 +137,6 @@ const RegionDetail = () => {
       />,
     ];
 
-    if (region.fulfillment_mode) {
-      pills.push(
-        <StatusPill
-          key="fulfillment"
-          label={`${formatSegment(region.fulfillment_mode)} Fulfillment`}
-          tone="info"
-        />
-      );
-    }
-
     if (region.ownership_type) {
       pills.push(
         <StatusPill
@@ -200,8 +147,19 @@ const RegionDetail = () => {
       );
     }
 
-    return <div className="flex flex-wrap items-center gap-2">{pills}</div>;
-  }, [region]);
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        {pills}
+        {azProvidersSummary && azProvidersSummary.length > 0 && (
+          <>
+            {azProvidersSummary.map((p: string) => (
+              <ProviderBadge key={p} provider={p} size="sm" />
+            ))}
+          </>
+        )}
+      </div>
+    );
+  }, [region, azProvidersSummary]);
 
   const headerActions = useMemo(() => {
     if (!region) return null;
@@ -265,17 +223,19 @@ const RegionDetail = () => {
       },
     ];
 
-    if (region.fulfillment_mode) {
+    if (region.az_selection_mode) {
       cards.push({
-        key: "fulfillment",
-        title: "Fulfillment Mode",
-        value: formatSegment(region.fulfillment_mode),
-        color: region.fulfillment_mode === "automated" ? "primary" : "info",
-        icon: <Settings size={24} />,
+        key: "az-selection",
+        title: "AZ Selection Mode",
+        value: formatSegment(region.az_selection_mode),
+        color: region.az_selection_mode === "auto" ? "primary" : "info",
+        icon: <Layers size={24} />,
         description:
-          region.fulfillment_mode === "automated"
-            ? "Provisioning handled automatically"
-            : "Provisioning requires manual steps",
+          region.az_selection_mode === "auto"
+            ? "Platform selects the best AZ automatically"
+            : region.az_selection_mode === "user_selectable"
+              ? "Users can choose their availability zone"
+              : "AZ selection is disabled",
       });
     }
 
@@ -342,8 +302,6 @@ const RegionDetail = () => {
     region.platform_fee_percentage !== null && region.platform_fee_percentage !== undefined
       ? `${region.platform_fee_percentage}%`
       : "—";
-
-  const _shouldShowAutomationCard = region.fulfillment_mode === "automated";
 
   return (
     <>
@@ -443,9 +401,11 @@ const RegionDetail = () => {
                     icon={CheckCircle}
                   />
                   <AttributeTile
-                    label="Fulfillment Mode"
-                    value={region.fulfillment_mode ? formatSegment(region.fulfillment_mode) : "—"}
-                    icon={Settings}
+                    label="AZ Selection Mode"
+                    value={
+                      region.az_selection_mode ? formatSegment(region.az_selection_mode) : "—"
+                    }
+                    icon={Layers}
                   />
                   <AttributeTile
                     label="Platform Fee"
@@ -467,7 +427,7 @@ const RegionDetail = () => {
               </ModernCard>
             </div>
 
-            {/* Right Column: Ownership & Access + Service Connections */}
+            {/* Right Column: Ownership & Access + Availability Zones */}
             <div className="space-y-6">
               <ModernCard title="Ownership & Access" className="space-y-4">
                 <div className="grid gap-4">
@@ -487,139 +447,85 @@ const RegionDetail = () => {
                 </div>
               </ModernCard>
 
-              {/* Service Connections — rendered dynamically from provider config */}
-              <ModernCard title="Service Connections" className="space-y-4">
+              {/* Availability Zones */}
+              <ModernCard title="Availability Zones" className="space-y-4">
                 <div className="grid gap-3">
-                  {providerServices.length > 0 ? (
-                    providerServices.map((svc) => {
-                      const svcKey = svc.type || svc.name;
-                      const cred = credentialStatus[svcKey];
-                      const SvcIcon = SERVICE_ICON_MAP[svcKey] || Server;
+                  {azLoading ? (
+                    <div className="flex items-center justify-center py-6">
+                      <Loader2
+                        className="h-5 w-5 animate-spin text-gray-400"
+                      />
+                      <span className="ml-2 text-sm text-gray-500">Loading zones...</span>
+                    </div>
+                  ) : availabilityZones.length > 0 ? (
+                    availabilityZones.map((az: AvailabilityZone) => {
+                      const azStatus = az.status || "down";
+                      const isVerified = az.is_verified;
 
                       return (
                         <div
-                          key={svcKey}
+                          key={az.code}
                           className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${
-                            cred?.status === "verified"
+                            azStatus === "healthy"
                               ? "border-green-200 bg-green-50"
-                              : cred?.configured
+                              : azStatus === "degraded"
                                 ? "border-yellow-200 bg-yellow-50"
-                                : "border-gray-200 bg-gray-50"
+                                : azStatus === "maintenance"
+                                  ? "border-blue-200 bg-blue-50"
+                                  : "border-gray-200 bg-gray-50"
                           }`}
                         >
                           <div
                             className={`rounded-lg p-1.5 ${
-                              cred?.status === "verified"
+                              azStatus === "healthy"
                                 ? "bg-green-100 text-green-600"
-                                : "bg-gray-100 text-gray-500"
+                                : azStatus === "degraded"
+                                  ? "bg-yellow-100 text-yellow-600"
+                                  : "bg-gray-100 text-gray-500"
                             }`}
                           >
-                            <SvcIcon size={18} />
+                            <Layers size={18} />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900">
-                              {svc.label || svc.name || formatSegment(svcKey)}
-                            </p>
-                            <p className="text-xs text-gray-500 truncate">
-                              {svc.description ||
-                                (svc.auth_type
-                                  ? `${formatSegment(svc.auth_type)} authentication`
-                                  : "")}
-                            </p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-medium text-gray-900">
+                                {az.name || az.code}
+                              </p>
+                              {isVerified && (
+                                <span className="flex items-center gap-0.5 rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700">
+                                  <ShieldCheck size={10} />
+                                  Verified
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="font-mono text-xs text-gray-500">{az.code}</span>
+                              <ProviderBadge provider={az.provider} size="sm" />
+                            </div>
                           </div>
-                          {cred?.status === "verified" ? (
-                            <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-                              <CheckCircle size={12} />
-                              Verified
-                            </span>
-                          ) : cred?.configured ? (
-                            <span className="flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
-                              <AlertCircle size={12} />
-                              Pending
-                            </span>
-                          ) : (
-                            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
-                              —
-                            </span>
-                          )}
+                          <StatusPill
+                            label={
+                              statusLabelMap[azStatus as keyof typeof statusLabelMap] ||
+                              formatSegment(azStatus)
+                            }
+                            tone={
+                              (statusToneMap[azStatus as keyof typeof statusToneMap] ||
+                                (azStatus === "maintenance" ? "info" : "neutral")) as
+                                | "success"
+                                | "warning"
+                                | "danger"
+                                | "info"
+                                | "neutral"
+                            }
+                          />
                         </div>
                       );
                     })
                   ) : (
                     <p className="text-sm text-gray-500 py-2">
-                      No services configured for this provider.
+                      No availability zones configured for this region.
                     </p>
                   )}
-                </div>
-              </ModernCard>
-
-              {/* MSP Credentials - Shows the admin stored in regions table */}
-              <ModernCard title="MSP Admin Credentials" className="space-y-4">
-                <div className="grid gap-3">
-                  <AttributeTile
-                    label="MSP Username"
-                    value={
-                      region.msp_credential_summary?.username ||
-                      region.msp_credential_summary?.username_preview ||
-                      "Not configured"
-                    }
-                    icon={KeyRound}
-                    hint="The service account used for provisioning operations"
-                  />
-                  <AttributeTile
-                    label="Domain"
-                    value={region.msp_credential_summary?.domain || "—"}
-                    icon={Building2}
-                  />
-                  <AttributeTile
-                    label="Default Project"
-                    value={region.msp_credential_summary?.default_project || "—"}
-                    icon={Server}
-                  />
-                  <div
-                    className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${
-                      region.msp_credentials_verified_at
-                        ? "border-green-200 bg-green-50"
-                        : region.has_msp_credentials
-                          ? "border-yellow-200 bg-yellow-50"
-                          : "border-gray-200 bg-gray-50"
-                    }`}
-                  >
-                    <div
-                      className={`rounded-lg p-1.5 ${
-                        region.msp_credentials_verified_at
-                          ? "bg-green-100 text-green-600"
-                          : "bg-gray-100 text-gray-500"
-                      }`}
-                    >
-                      <ShieldCheck size={18} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">Verification Status</p>
-                      <p className="text-xs text-gray-500 truncate">
-                        {region.msp_credentials_verified_at
-                          ? `Verified on ${formatDateTime(region.msp_credentials_verified_at)}`
-                          : region.has_msp_credentials
-                            ? "Credentials saved but not verified"
-                            : "No credentials configured"}
-                      </p>
-                    </div>
-                    {region.msp_credentials_verified_at ? (
-                      <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-                        <CheckCircle size={12} />
-                        Verified
-                      </span>
-                    ) : region.has_msp_credentials ? (
-                      <span className="flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
-                        <AlertCircle size={12} />
-                        Pending
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
-                        —
-                      </span>
-                    )}
-                  </div>
                 </div>
               </ModernCard>
             </div>

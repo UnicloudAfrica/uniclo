@@ -4,7 +4,7 @@ import AdminPageShell from "../components/AdminPageShell";
 import { ModernButton } from "@/shared/components/ui";
 import PricingSideMenu from "../components/pricingSideMenu";
 import ColocationSetting from "./inventoryComponents/colocation";
-import { useFetchRegions } from "@/hooks/adminHooks/regionHooks";
+import { useFetchRegions, useFetchAvailabilityZones } from "@/hooks/adminHooks/regionHooks";
 import {
   useFetchProductPricing,
   useExportProductPricingTemplate,
@@ -27,7 +27,6 @@ import {
   Cable,
   Building2,
 } from "lucide-react";
-import AddProductPricing from "./productPricingComps/addProductPricing";
 import EditProductPricingModal from "./productPricingComps/editProductPricing";
 import DeleteProductPricingModal from "./productPricingComps/deleteProductPricing";
 import ToastUtils from "@/utils/toastUtil";
@@ -36,9 +35,22 @@ import ResourceHero from "@/shared/components/ui/ResourceHero";
 import ResourceDataExplorer from "../components/ResourceDataExplorer";
 import { ModernCard, ProviderBadge, getRegionOptionLabel } from "@/shared/components/ui";
 import { matchesProductType } from "@/utils/productTypeUtils";
+import { getCurrencySymbol } from "@/utils/resource";
 
-const formatCurrency = (value: any) =>
-  typeof value === "number" || value ? `$${Number(value || 0).toFixed(2)}` : "—";
+const SUPPORTED_CURRENCIES = [
+  { code: "", label: "Original" },
+  { code: "USD", label: "USD ($)" },
+  { code: "NGN", label: "NGN (₦)" },
+  { code: "GBP", label: "GBP (£)" },
+  { code: "EUR", label: "EUR (€)" },
+] as const;
+
+const formatCurrencyValue = (value: any, currencyCode?: string) => {
+  if (typeof value !== "number" && !value) return "—";
+  const num = Number(value || 0);
+  const symbol = getCurrencySymbol(currencyCode || "USD");
+  return `${symbol}${num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
 
 const computeStats = (rows: any) => {
   const total = rows.length;
@@ -46,7 +58,7 @@ const computeStats = (rows: any) => {
     return { total: 0, average: 0, highest: 0, uniqueRegions: 0 };
   }
 
-  const prices = rows.map((item: any) => Number(item.price_usd || 0));
+  const prices = rows.map((item: any) => Number(item.display_price ?? item.price_usd ?? 0));
   const sum = prices.reduce((acc: number, price: number) => acc + price, 0);
   const highest = Math.max(...prices);
   const uniqueRegions = new Set(rows.map((item: any) => item.region || "global")).size;
@@ -70,7 +82,7 @@ const PRICING_TAB_CONFIG = [
     tableTitle: "Bandwidth pricing catalogue",
     tableDescription: "Review committed data rate SKUs and their monthly pricing per region.",
     icon: Wifi,
-    metrics: (stats: any) => [
+    metrics: (stats: any, currency?: string) => [
       {
         label: "Throughput tiers",
         value: stats.total,
@@ -79,13 +91,13 @@ const PRICING_TAB_CONFIG = [
       },
       {
         label: "Avg monthly price",
-        value: formatCurrency(stats.average),
+        value: formatCurrencyValue(stats.average, currency),
         description: "Across selected region",
         icon: <DollarSign className="h-5 w-5" />,
       },
       {
         label: "Premium tier",
-        value: formatCurrency(stats.highest),
+        value: formatCurrencyValue(stats.highest, currency),
         description: "Highest configured rate",
         icon: <TrendingUp className="h-5 w-5" />,
       },
@@ -105,7 +117,7 @@ const PRICING_TAB_CONFIG = [
     tableTitle: "OS image pricing",
     tableDescription: "Monitor licence costs for curated operating system templates.",
     icon: HardDrive,
-    metrics: (stats: any) => [
+    metrics: (stats: any, currency?: string) => [
       {
         label: "Licensed templates",
         value: stats.total,
@@ -114,13 +126,13 @@ const PRICING_TAB_CONFIG = [
       },
       {
         label: "Average licence",
-        value: formatCurrency(stats.average),
+        value: formatCurrencyValue(stats.average, currency),
         description: "Across selected region",
         icon: <DollarSign className="h-5 w-5" />,
       },
       {
         label: "Highest licence",
-        value: formatCurrency(stats.highest),
+        value: formatCurrencyValue(stats.highest, currency),
         description: "Premium image cost",
         icon: <TrendingUp className="h-5 w-5" />,
       },
@@ -138,7 +150,7 @@ const PRICING_TAB_CONFIG = [
     tableTitle: "Volume pricing",
     tableDescription: "Review block storage profiles and their configured price points.",
     icon: Database,
-    metrics: (stats: any) => [
+    metrics: (stats: any, currency?: string) => [
       {
         label: "Volume profiles",
         value: stats.total,
@@ -147,13 +159,13 @@ const PRICING_TAB_CONFIG = [
       },
       {
         label: "Average price",
-        value: formatCurrency(stats.average),
+        value: formatCurrencyValue(stats.average, currency),
         description: "Across selected region",
         icon: <DollarSign className="h-5 w-5" />,
       },
       {
         label: "Highest price",
-        value: formatCurrency(stats.highest),
+        value: formatCurrencyValue(stats.highest, currency),
         description: "Premium storage tier",
         icon: <TrendingUp className="h-5 w-5" />,
       },
@@ -172,7 +184,7 @@ const PRICING_TAB_CONFIG = [
     tableTitle: "Object storage pricing",
     tableDescription: "Review per-GB-month pricing for Silo Storage across each region.",
     icon: HardDrive,
-    metrics: (stats: any) => [
+    metrics: (stats: any, currency?: string) => [
       {
         label: "Storage SKUs",
         value: stats.total,
@@ -181,13 +193,13 @@ const PRICING_TAB_CONFIG = [
       },
       {
         label: "Avg GB-month",
-        value: formatCurrency(stats.average),
+        value: formatCurrencyValue(stats.average, currency),
         description: "Across selected region",
         icon: <DollarSign className="h-5 w-5" />,
       },
       {
         label: "Highest rate",
-        value: formatCurrency(stats.highest),
+        value: formatCurrencyValue(stats.highest, currency),
         description: "Premium storage tier",
         icon: <TrendingUp className="h-5 w-5" />,
       },
@@ -207,7 +219,7 @@ const PRICING_TAB_CONFIG = [
     tableTitle: "Compute pricing",
     tableDescription: "Track compute classes and their per-instance pricing across regions.",
     icon: Cpu,
-    metrics: (stats: any) => [
+    metrics: (stats: any, currency?: string) => [
       {
         label: "Instance classes",
         value: stats.total,
@@ -216,13 +228,13 @@ const PRICING_TAB_CONFIG = [
       },
       {
         label: "Average hourly rate",
-        value: formatCurrency(stats.average),
+        value: formatCurrencyValue(stats.average, currency),
         description: "Across selected region",
         icon: <DollarSign className="h-5 w-5" />,
       },
       {
         label: "Top rate",
-        value: formatCurrency(stats.highest),
+        value: formatCurrencyValue(stats.highest, currency),
         description: "Highest compute SKU",
         icon: <TrendingUp className="h-5 w-5" />,
       },
@@ -240,7 +252,7 @@ const PRICING_TAB_CONFIG = [
     tableTitle: "Floating IP pricing",
     tableDescription: "Manage routable IP pools and the rates exposed to tenants.",
     icon: Globe,
-    metrics: (stats: any) => [
+    metrics: (stats: any, currency?: string) => [
       {
         label: "IP pools",
         value: stats.total,
@@ -249,13 +261,13 @@ const PRICING_TAB_CONFIG = [
       },
       {
         label: "Average price",
-        value: formatCurrency(stats.average),
+        value: formatCurrencyValue(stats.average, currency),
         description: "Across selected region",
         icon: <DollarSign className="h-5 w-5" />,
       },
       {
         label: "Highest price",
-        value: formatCurrency(stats.highest),
+        value: formatCurrencyValue(stats.highest, currency),
         description: "Premium IP tier",
         icon: <TrendingUp className="h-5 w-5" />,
       },
@@ -273,7 +285,7 @@ const PRICING_TAB_CONFIG = [
     tableTitle: "Cross connect pricing",
     tableDescription: "Review carrier cross connect offers and their monthly pricing.",
     icon: Cable,
-    metrics: (stats: any) => [
+    metrics: (stats: any, currency?: string) => [
       {
         label: "Cross connect SKUs",
         value: stats.total,
@@ -282,13 +294,13 @@ const PRICING_TAB_CONFIG = [
       },
       {
         label: "Average price",
-        value: formatCurrency(stats.average),
+        value: formatCurrencyValue(stats.average, currency),
         description: "Across selected region",
         icon: <DollarSign className="h-5 w-5" />,
       },
       {
         label: "Highest price",
-        value: formatCurrency(stats.highest),
+        value: formatCurrencyValue(stats.highest, currency),
         description: "Premium cross connect",
         icon: <TrendingUp className="h-5 w-5" />,
       },
@@ -306,7 +318,7 @@ const PRICING_TAB_CONFIG = [
     tableTitle: "Managed database pricing",
     tableDescription: "Review database plan pricing for MongoDB, PostgreSQL, MySQL, and Redis.",
     icon: Database,
-    metrics: (stats: any) => [
+    metrics: (stats: any, currency?: string) => [
       {
         label: "Database plans",
         value: stats.total,
@@ -315,13 +327,13 @@ const PRICING_TAB_CONFIG = [
       },
       {
         label: "Average price",
-        value: formatCurrency(stats.average),
+        value: formatCurrencyValue(stats.average, currency),
         description: "Across selected region",
         icon: <DollarSign className="h-5 w-5" />,
       },
       {
         label: "Highest price",
-        value: formatCurrency(stats.highest),
+        value: formatCurrencyValue(stats.highest, currency),
         description: "Premium database plan",
         icon: <TrendingUp className="h-5 w-5" />,
       },
@@ -360,6 +372,8 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
   const [activeTab, setActiveTab] = useState(initialTabId);
 
   const [selectedRegion, setSelectedRegion] = useState("");
+  const [selectedAZ, setSelectedAZ] = useState("");
+  const [displayCurrency, setDisplayCurrency] = useState("");
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [search, setSearch] = useState("");
@@ -371,7 +385,6 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
       metrics: [],
     };
   });
-  const [isAddProductPricingOpen, setAddProductPricing] = useState(false);
   const [isUploadModalOpen, setUploadModalOpen] = useState(false);
   const [selectedPricing, setSelectedPricing] = useState<any>(null);
   const [isEditPricingOpen, setEditPricingOpen] = useState(false);
@@ -381,6 +394,10 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
   const isColocationTab = Boolean(activeConfig?.isColocation);
 
   const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
+  const { isFetching: isAZsFetching, data: azData } = useFetchAvailabilityZones(
+    selectedRegion || undefined
+  );
+  const azList = useMemo(() => (Array.isArray(azData) ? azData : []), [azData]);
   const {
     isFetching: isPricingFetching,
     data: pricingData,
@@ -392,6 +409,8 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
       perPage,
       search,
       productType: isColocationTab ? "" : activeConfig?.productType,
+      availabilityZone: selectedAZ,
+      displayCurrency,
     },
     {
       enabled: !isRegionsFetching && !isColocationTab,
@@ -474,17 +493,20 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
     }
 
     const metrics =
-      typeof activeConfig.metrics === "function" ? activeConfig.metrics(pricingStats) : [];
+      typeof activeConfig.metrics === "function"
+        ? activeConfig.metrics(pricingStats, displayCurrency || undefined)
+        : [];
 
     setHeroState({
       title: activeConfig.heroTitle,
       description: activeConfig.heroDescription,
       metrics,
     });
-  }, [activeConfig, pricingStats, isColocationTab]);
+  }, [activeConfig, pricingStats, isColocationTab, displayCurrency]);
 
   const handleRegionChange = (regionCode: any) => {
     setSelectedRegion(regionCode);
+    setSelectedAZ("");
     setPage(1);
   };
   const handleSearch = useCallback((value: any) => {
@@ -536,6 +558,12 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
     setDeletePricingOpen(false);
     setSelectedPricing(null);
   };
+
+  const bulkActions: { label: string; icon: React.ReactNode; onClick: (ids: string[], rows: Record<string, unknown>[]) => void }[] = useMemo(
+    () => [],
+    []
+  );
+
   const columns = useMemo<any[]>(() => {
     if (isColocationTab) return [];
     return [
@@ -573,12 +601,38 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
         ),
       },
       {
+        header: "AZ",
+        key: "availability_zone",
+        align: "center",
+        render: (row: any) =>
+          row.availability_zone ? (
+            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600">
+              {row.availability_zone}
+            </span>
+          ) : (
+            <span className="text-xs text-slate-400">All</span>
+          ),
+      },
+      {
         header: "Price",
         key: "price_usd",
         align: "right",
-        render: (row: any) => (
-          <span className="font-semibold text-slate-900">{formatCurrency(row.price_usd)}</span>
-        ),
+        render: (row: any) => {
+          const price = row.display_price ?? row.price_usd;
+          const currency = row.display_currency ?? row.currency_code ?? "USD";
+          return (
+            <div className="text-right">
+              <span className="font-semibold text-slate-900">
+                {formatCurrencyValue(price, currency)}
+              </span>
+              {row.display_currency && row.currency_code && row.display_currency !== row.currency_code && (
+                <p className="text-xs text-slate-400">
+                  {formatCurrencyValue(row.price_usd, row.currency_code)}
+                </p>
+              )}
+            </div>
+          );
+        },
       },
       {
         header: "",
@@ -632,7 +686,22 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
         Upload
       </ModernButton>
       <ModernButton
-        onClick={() => setAddProductPricing(true)}
+        onClick={() => {
+          const params = new URLSearchParams();
+          if (selectedRegion) params.set("region", selectedRegion);
+          if (selectedAZ) params.set("az", selectedAZ);
+          if (activeConfig?.productType) params.set("tab", activeConfig.productType);
+          navigate(`/admin-dashboard/pricing/edit?${params.toString()}`);
+        }}
+        variant="outline"
+        size="sm"
+        className="flex items-center gap-2"
+      >
+        <Pencil size={16} />
+        Edit All
+      </ModernButton>
+      <ModernButton
+        onClick={() => navigate("/admin-dashboard/pricing/add")}
         size="sm"
         className="flex items-center gap-2"
       >
@@ -643,27 +712,71 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
   ) : null;
 
   const regionSelector = (
-    <div className="w-full sm:w-auto">
-      <label className="mb-2 block text-sm font-medium text-slate-600">Select Region</label>
-      <select
-        value={selectedRegion}
-        onChange={(event) => handleRegionChange(event.target.value)}
-        className="w-full min-w-[220px] rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 transition focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:opacity-60"
-        disabled={isRegionsFetching}
-      >
-        <option value="">All Regions</option>
-        {isRegionsFetching ? (
-          <option value="" disabled>
-            Loading regions...
-          </option>
-        ) : (
-          regionsList.map((region: any) => (
-            <option key={region.code} value={region.code}>
-              {getRegionOptionLabel(region)}
+    <div className="flex flex-col gap-3 w-full sm:w-auto">
+      <div className="w-full sm:w-auto">
+        <label className="mb-2 block text-sm font-medium text-slate-600">Select Region</label>
+        <select
+          value={selectedRegion}
+          onChange={(event) => handleRegionChange(event.target.value)}
+          className="w-full min-w-[220px] rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 transition focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={isRegionsFetching}
+        >
+          <option value="">All Regions</option>
+          {isRegionsFetching ? (
+            <option value="" disabled>
+              Loading regions...
             </option>
-          ))
-        )}
-      </select>
+          ) : (
+            regionsList.map((region: any) => (
+              <option key={region.code} value={region.code}>
+                {getRegionOptionLabel(region)}
+              </option>
+            ))
+          )}
+        </select>
+      </div>
+      <div className="w-full sm:w-auto">
+        <label className="mb-2 block text-sm font-medium text-slate-600">Availability Zone</label>
+        <select
+          value={selectedAZ}
+          onChange={(event) => {
+            setSelectedAZ(event.target.value);
+            setPage(1);
+          }}
+          className="w-full min-w-[220px] rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 transition focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={!selectedRegion || isAZsFetching}
+        >
+          <option value="">All AZs</option>
+          {isAZsFetching ? (
+            <option value="" disabled>
+              Loading availability zones...
+            </option>
+          ) : (
+            azList.map((az: any) => (
+              <option key={az.code} value={az.code}>
+                {az.name || az.code} ({az.provider})
+              </option>
+            ))
+          )}
+        </select>
+      </div>
+      <div className="w-full sm:w-auto">
+        <label className="mb-2 block text-sm font-medium text-slate-600">Currency</label>
+        <select
+          value={displayCurrency}
+          onChange={(event) => {
+            setDisplayCurrency(event.target.value);
+            setPage(1);
+          }}
+          className="w-full min-w-[220px] rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 transition focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100"
+        >
+          {SUPPORTED_CURRENCIES.map((c) => (
+            <option key={c.code} value={c.code}>
+              {c.label}
+            </option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 
@@ -686,6 +799,8 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
       searchValue={search}
       onSearch={handleSearch}
       toolbarSlot={null}
+      selectable
+      bulkActions={bulkActions}
       emptyState={{
         icon: (
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-500/10 text-primary-500">
@@ -702,7 +817,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
           "Add pricing data to unlock quoting workflows for this region.",
         action: (
           <ModernButton
-            onClick={() => setAddProductPricing(true)}
+            onClick={() => navigate("/admin-dashboard/pricing/add")}
             className="flex items-center gap-2"
           >
             <Plus className="h-4 w-4" />
@@ -749,10 +864,6 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
         </div>
       </AdminPageShell>
 
-      <AddProductPricing
-        isOpen={isAddProductPricingOpen}
-        onClose={() => setAddProductPricing(false)}
-      />
       <UploadPricingFileModal
         isOpen={isUploadModalOpen}
         onClose={() => setUploadModalOpen(false)}

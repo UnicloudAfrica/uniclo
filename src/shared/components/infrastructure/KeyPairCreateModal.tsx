@@ -125,9 +125,29 @@ const KeyPairCreateModal: React.FC<KeyPairCreateModalProps> = ({
     setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
+  const parseCloudError = (error: unknown): string => {
+    const raw =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+          ? error
+          : "Failed to create key pair. Try again.";
+
+    if (raw.includes("driver_not_found") || raw.includes("No driver bound")) {
+      return "The cloud provider for this region is not configured yet. Please contact your administrator to set up provider credentials.";
+    }
+    if (raw.includes("not provisioned")) {
+      return "This project has not been provisioned on the cloud provider yet. Please provision the project first from Project Settings.";
+    }
+    if (raw.includes("no Nobus project mapping") || raw.includes("no project mapping")) {
+      return "This project is not linked to a cloud provider project. Please provision or link the project first.";
+    }
+    return raw;
+  };
+
   const handleSubmit = () => {
     if (!projectId) {
-      ToastUtils.error("Provide a project before creating a key pair.");
+      ToastUtils.error("Select a project before creating a key pair.");
       return;
     }
     if (!validateForm()) return;
@@ -148,9 +168,7 @@ const KeyPairCreateModal: React.FC<KeyPairCreateModalProps> = ({
           ToastUtils.success("Key pair generated successfully.");
         },
         onError: (error: unknown) => {
-          const message =
-            error instanceof Error ? error.message : "Failed to create key pair. Try again.";
-          ToastUtils.error(message);
+          ToastUtils.error(parseCloudError(error));
         },
       }
     );

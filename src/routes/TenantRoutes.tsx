@@ -55,6 +55,11 @@ import TenantDiscountManager from "../tenantDashboard/pages/TenantDiscountManage
 import TenantPayoutsPage from "../tenantDashboard/pages/TenantPayoutsPage";
 import TenantBillingSettings from "../tenantDashboard/pages/TenantBillingSettings";
 import TenantInvoicesPage from "../tenantDashboard/pages/TenantInvoicesPage";
+import TenantPocTrials from "../tenantDashboard/pages/TenantPocTrials";
+import TenantProtection from "../dashboard/pages/TenantProtection";
+import TenantMigrations from "../dashboard/pages/TenantMigrations";
+import TenantMigrationWizard from "../dashboard/pages/TenantMigrationWizard";
+import TenantDestinations from "../dashboard/pages/TenantDestinations";
 import {
   TenantKeyPairs,
   TenantNetworkInterfaces,
@@ -129,6 +134,12 @@ const TenantRoutes = (): JSX.Element => (
         <Route path="/dashboard/databases" element={<TenantManagedDatabases />} />
         <Route path="/dashboard/databases/create" element={<TenantDatabaseCreate />} />
         <Route path="/dashboard/databases/:identifier" element={<TenantDatabaseDetail />} />
+
+        <Route path="/dashboard/protection" element={<TenantProtection />} />
+
+        <Route path="/dashboard/migrations" element={<TenantMigrations />} />
+        <Route path="/dashboard/migrations/new" element={<TenantMigrationWizard />} />
+        <Route path="/dashboard/destinations" element={<TenantDestinations />} />
 
         <Route element={<ObjectStorageRouteProvider />}>
           <Route path="/dashboard/object-storage" element={<DashboardObjectStorage />} />
@@ -213,6 +224,7 @@ const TenantRoutes = (): JSX.Element => (
         <Route path="/dashboard/payouts" element={<TenantPayoutsPage />} />
         <Route path="/dashboard/billing" element={<TenantBillingSettings />} />
         <Route path="/dashboard/invoices" element={<TenantInvoicesPage />} />
+        <Route path="/dashboard/poc-trials" element={<TenantPocTrials />} />
 
         {/* Standalone */}
         <Route path="/dashboard/products" element={<Products />} />

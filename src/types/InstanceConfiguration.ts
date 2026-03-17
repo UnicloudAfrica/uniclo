@@ -19,6 +19,8 @@ export interface Configuration {
   network_preset?: string;
   region: string;
   region_label?: string;
+  availability_zone?: string;
+  availability_zone_label?: string;
   months: number | string;
   compute_instance_id: string;
   compute_label?: string;

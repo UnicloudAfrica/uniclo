@@ -3,7 +3,6 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import { BrowserRouter as Router } from "react-router-dom";
-import ContextProvider from "./contexts/contextprovider";
 import { Toaster } from "sonner";
 import QueryProvider from "./utils/queryProvider";
 import { HelmetProvider } from "@dr.pogodin/react-helmet";
@@ -15,9 +14,7 @@ root.render(
       <HelmetProvider>
         <QueryProvider>
           <Toaster position="top-right" richColors closeButton />
-          <ContextProvider>
-            <App />
-          </ContextProvider>
+          <App />
         </QueryProvider>
       </HelmetProvider>
     </Router>

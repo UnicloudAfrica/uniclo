@@ -248,6 +248,8 @@ export interface DatabaseFormState {
   projectId: string | number | null;
   deploymentType: DeploymentType;
   replicaCount: number;
+  /** Region codes auto-assigned for each read replica */
+  replicaRegions: string[];
   backupEnabled: boolean;
   drEnabled: boolean;
   firewallCidrs: string[];
@@ -264,6 +266,7 @@ export const DEFAULT_DATABASE_FORM: DatabaseFormState = {
   projectId: null,
   deploymentType: "dedicated",
   replicaCount: 1,
+  replicaRegions: [],
   backupEnabled: true,
   drEnabled: false,
   firewallCidrs: ["0.0.0.0/0"],

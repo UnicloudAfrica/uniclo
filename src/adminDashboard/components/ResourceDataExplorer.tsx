@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { ModernTable, Column } from "@/shared/components/ui";
+import type { BulkAction } from "@/shared/components/ui/ModernTable/types";
 
 const buildClassName = (...classes: (string | undefined | null | false)[]) =>
   classes.filter(Boolean).join(" ");
@@ -46,6 +47,10 @@ interface ResourceDataExplorerProps {
   };
   meta?: ResourceExplorerMeta;
   highlight?: boolean;
+  selectable?: boolean;
+  bulkActions?: BulkAction<Record<string, unknown>>[];
+  onSelectionChange?: (selectedIds: string[]) => void;
+  selectedIds?: string[];
 }
 
 const ResourceDataExplorer: React.FC<ResourceDataExplorerProps> = ({
@@ -66,6 +71,10 @@ const ResourceDataExplorer: React.FC<ResourceDataExplorerProps> = ({
   emptyState,
   meta,
   highlight,
+  selectable = false,
+  bulkActions = [],
+  onSelectionChange,
+  selectedIds,
 }) => {
   const lastPage = meta?.last_page ?? (perPage > 0 ? Math.max(1, Math.ceil(total / perPage)) : 1);
 
@@ -187,8 +196,11 @@ const ResourceDataExplorer: React.FC<ResourceDataExplorerProps> = ({
         columns={tableColumns}
         loading={loading}
         emptyMessage={renderEmptyState()}
-        // Use ResourceDataExplorer's search input for now, disable internal search
         searchable={false}
+        selectable={selectable}
+        bulkActions={bulkActions}
+        onSelectionChange={onSelectionChange}
+        selectedIds={selectedIds}
         // Controlled pagination
         page={currentPage}
         pageSize={perPage}

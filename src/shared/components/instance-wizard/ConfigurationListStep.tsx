@@ -147,6 +147,7 @@ const ConfigurationListStep: React.FC<ConfigurationListStepProps> = ({
           membershipUserId={membershipUserId}
           lockAssignmentScope={lockAssignmentScope}
           pricingTenantId={pricingTenantId}
+          regions={resources.regions as any[]}
         />
       ))}
     </div>

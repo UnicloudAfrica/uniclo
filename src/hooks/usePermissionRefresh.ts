@@ -37,8 +37,13 @@ async function fetchPermissions(
   role: AuthRole | null,
   headers: Record<string, string>,
 ): Promise<string[] | null> {
+  // The permissions endpoint only exists on the public API (/api/v1),
+  // not on admin or tenant prefixes. Skip for admin users.
+  if (role === "admin") return null;
+
   try {
-    const baseUrl = getBaseUrlForRole(role);
+    // Always use the public API base URL since the route is in api.php
+    const baseUrl = config.baseURL;
 
     const response = await fetch(`${baseUrl}/business/auth/permissions`, {
       method: "GET",

@@ -35,6 +35,12 @@ import {
   TrendingUp,
   LayoutTemplate,
   KeyRound,
+  CloudDownload,
+  ShieldCheck,
+  ArrowLeftRight,
+  FolderOutput,
+  FlaskConical,
+  GitMerge,
 } from "lucide-react";
 
 type InfraRole = "admin" | "tenant" | "client";
@@ -92,6 +98,27 @@ const INFRA_MENU_ITEMS: Array<{
     path: "/databases",
     roles: ["admin", "tenant", "client"],
     requiredPermission: "storage.view",
+  },
+  {
+    label: "Protection Services",
+    icon: ShieldCheck,
+    path: "/protection",
+    roles: ["admin", "tenant", "client"],
+    requiredPermission: "instances.view",
+  },
+  {
+    label: "Migrations",
+    icon: ArrowLeftRight,
+    path: "/migrations",
+    roles: ["admin", "tenant", "client"],
+    requiredPermission: "migrations.view",
+  },
+  {
+    label: "Destinations",
+    icon: FolderOutput,
+    path: "/destinations",
+    roles: ["admin", "tenant"],
+    requiredPermission: "backups.manage",
   },
 ];
 
@@ -162,6 +189,13 @@ export const adminMenuItems: MenuEntry[] = [
     ...buildInfrastructureMenuGroup("/admin-dashboard", "admin"),
   },
   {
+    name: "Provider Discovery",
+    icon: CloudDownload,
+    isLucide: true,
+    requiredPermission: "provider_discovery.view",
+    path: "/admin-dashboard/provider-discovery",
+  },
+  {
     name: "Billing & Pricing",
     icon: DollarSign,
     isLucide: true,
@@ -172,6 +206,13 @@ export const adminMenuItems: MenuEntry[] = [
         isLucide: true,
         requiredPermission: "products.view",
         path: "/admin-dashboard/products",
+      },
+      {
+        name: "Product Families",
+        icon: GitMerge,
+        isLucide: true,
+        requiredPermission: "products.view",
+        path: "/admin-dashboard/product-families",
       },
       {
         name: "Inventory",
@@ -242,6 +283,13 @@ export const adminMenuItems: MenuEntry[] = [
         isLucide: true,
         requiredPermission: "payouts.view",
         path: "/admin-dashboard/payouts",
+      },
+      {
+        name: "POC Trials",
+        icon: FlaskConical,
+        isLucide: true,
+        requiredPermission: "billing.manage",
+        path: "/admin-dashboard/poc-trials",
       },
     ],
   },
@@ -416,6 +464,13 @@ export const tenantMenuItems: MenuEntry[] = [
         isLucide: true,
         requiredPermission: "invoices.view",
         path: "/dashboard/invoices",
+      },
+      {
+        name: "POC Trials",
+        icon: FlaskConical,
+        isLucide: true,
+        requiredPermission: "billing.view",
+        path: "/dashboard/poc-trials",
       },
     ],
   },

@@ -25,31 +25,36 @@ import {
   type Workspace,
 } from "../shared/types/resource";
 import logger from "../utils/logger";
+import { api } from "../lib/api";
+import config from "../config";
 
 // Basic API Response interface (moved to shared/types/resource.ts)
 
-// **GET**: fetchCountries
+// **GET**: fetchCountries — uses public /api/v1 (not role-based URL)
 const fetchCountries = async (): Promise<Country[]> => {
-  const res: ApiResponse<Country[]> = await silentApi("GET", "/countries");
-  return res.data ?? [];
+  const res = await api.get<ApiResponse<Country[]>>("/countries", {
+    silent: true,
+    baseUrl: config.baseURL,
+  });
+  return res.data ?? (Array.isArray(res) ? res : []);
 };
 
-// GET: Fetch state by country ID
+// GET: Fetch state by country ID — uses public /api/v1
 const fetchStatesById = async (id: string | number): Promise<State[]> => {
-  const res: ApiResponse<State[]> = await silentApi("GET", `/countries/${id}`);
-  if (!res.data) {
-    throw new Error(`Failed to fetch states with ID ${id}`);
-  }
-  return res.data;
+  const res = await api.get<ApiResponse<State[]>>(`/countries/${id}`, {
+    silent: true,
+    baseUrl: config.baseURL,
+  });
+  return res.data ?? (Array.isArray(res) ? res : []);
 };
 
-// GET: Fetch cities by state ID
+// GET: Fetch cities by state ID — uses public /api/v1
 const fetchCitiesById = async (id: string | number): Promise<City[]> => {
-  const res: ApiResponse<City[]> = await silentApi("GET", `/states/${id}`);
-  if (!res.data) {
-    throw new Error(`Failed to fetch cities with ID ${id}`);
-  }
-  return res.data;
+  const res = await api.get<ApiResponse<City[]>>(`/states/${id}`, {
+    silent: true,
+    baseUrl: config.baseURL,
+  });
+  return res.data ?? (Array.isArray(res) ? res : []);
 };
 
 // **GET**: fetchProfile

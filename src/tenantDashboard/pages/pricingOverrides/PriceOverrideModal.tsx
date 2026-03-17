@@ -1,10 +1,11 @@
-import { useCallback, useState } from "react";
-import { ModernButton, ModernInput, ModernModal } from "@/shared/components/ui";
+import { useCallback, useMemo, useState } from "react";
+import { ModernButton, ModernInput, ModernModal, ModernSelect } from "@/shared/components/ui";
 import type { ModalAction } from "@/shared/components/ui/ModernModal";
 import type {
   TenantPricingCreatePayload,
   TenantPricingOverride,
 } from "@/hooks/tenantHooks/tenantPricingHooks";
+import { useFetchAvailabilityZones } from "@/hooks/adminHooks/regionHooks";
 import ToastUtils from "@/utils/toastUtil";
 import type {
   OverrideScope,
@@ -25,6 +26,7 @@ export interface PriceOverrideModalProps {
   overrideInfo: OverrideLookup | null;
   activeRegion: TenantRegion | undefined;
   selectedRegion: string;
+  regions: TenantRegion[];
   isSaving: boolean;
   onUpsert: (payload: TenantPricingCreatePayload) => Promise<unknown>;
   onUpdate: (params: { id: string | number; payload: { price_usd: number } }) => Promise<unknown>;
@@ -42,6 +44,7 @@ const PriceOverrideModal: React.FC<PriceOverrideModalProps> = ({
   overrideInfo,
   activeRegion,
   selectedRegion,
+  regions,
   isSaving,
   onUpsert,
   onUpdate,
@@ -58,6 +61,23 @@ const PriceOverrideModal: React.FC<PriceOverrideModalProps> = ({
   );
   const [priceValue, setPriceValue] = useState(
     hasExistingOverride ? String(override?.price_usd ?? "") : String(adminDefault ?? "")
+  );
+
+  /* AZ scope state */
+  const [azRegion, setAzRegion] = useState(selectedRegion);
+  const [selectedAz, setSelectedAz] = useState("");
+
+  const { data: availabilityZones, isFetching: isAzFetching } = useFetchAvailabilityZones(
+    overrideScope === "availability_zone" ? azRegion : null
+  );
+
+  const azOptions = useMemo(
+    () =>
+      (availabilityZones ?? []).map((az) => ({
+        value: az.code,
+        label: az.name ? `${az.name} (${az.code})` : az.code,
+      })),
+    [availabilityZones]
   );
 
   /* Re-sync local state when the modal opens with new data */
@@ -77,8 +97,16 @@ const PriceOverrideModal: React.FC<PriceOverrideModalProps> = ({
           ? String(newOverride?.price_usd ?? "")
           : String(newRow?.pricing?.admin?.price_usd ?? "")
       );
+
+      /* Reset AZ state */
+      setAzRegion(selectedRegion);
+      if (newOverrideInfo?.scope === "availability_zone" && newOverride) {
+        setSelectedAz(String(newOverride.availability_zone ?? ""));
+      } else {
+        setSelectedAz("");
+      }
     },
-    []
+    [selectedRegion]
   );
 
   /* Expose resetForRow so the parent can call it when opening the modal.
@@ -127,6 +155,10 @@ const PriceOverrideModal: React.FC<PriceOverrideModalProps> = ({
       ToastUtils.error("Country price settings require a country-level admin default price.");
       return;
     }
+    if (overrideScope === "availability_zone" && !selectedAz) {
+      ToastUtils.error("Select an availability zone.");
+      return;
+    }
 
     const parsed = Number(priceValue);
     if (!Number.isFinite(parsed) || parsed < 0) {
@@ -160,6 +192,9 @@ const PriceOverrideModal: React.FC<PriceOverrideModalProps> = ({
             return;
           }
           payload.country_code = activeRegion.country_code;
+        } else if (overrideScope === "availability_zone") {
+          payload.region = azRegion;
+          payload.availability_zone = selectedAz;
         } else {
           payload.region = selectedRegion;
         }
@@ -183,6 +218,8 @@ const PriceOverrideModal: React.FC<PriceOverrideModalProps> = ({
     onUpdate,
     onUpsert,
     selectedRegion,
+    selectedAz,
+    azRegion,
     onSaveComplete,
     onClose,
   ]);
@@ -239,6 +276,18 @@ const PriceOverrideModal: React.FC<PriceOverrideModalProps> = ({
             >
               Country ({activeRegion?.country_code || "\u2014"})
             </ModernButton>
+            <ModernButton
+              variant={overrideScope === "availability_zone" ? "primary" : "outline"}
+              size="sm"
+              onClick={() => {
+                setOverrideScope("availability_zone");
+                setAzRegion(selectedRegion);
+                setSelectedAz("");
+              }}
+              isDisabled={hasExistingOverride}
+            >
+              Availability Zone
+            </ModernButton>
           </div>
           {hasExistingOverride && (
             <p className="text-xs text-slate-400">
@@ -251,6 +300,32 @@ const PriceOverrideModal: React.FC<PriceOverrideModalProps> = ({
             </p>
           )}
         </div>
+
+        {overrideScope === "availability_zone" && (
+          <div className="space-y-3">
+            <ModernSelect
+              label="Region"
+              value={azRegion}
+              onChange={(event) => {
+                setAzRegion(event.target.value);
+                setSelectedAz("");
+              }}
+              options={regions.map((region) => ({
+                value: region.code,
+                label: `${region.name} (${region.code})`,
+              }))}
+              disabled={hasExistingOverride || !regions.length}
+            />
+            <ModernSelect
+              label="Availability Zone"
+              value={selectedAz}
+              onChange={(event) => setSelectedAz(event.target.value)}
+              options={azOptions}
+              disabled={hasExistingOverride || !azRegion || isAzFetching}
+              placeholder={isAzFetching ? "Loading zones..." : "Select availability zone"}
+            />
+          </div>
+        )}
 
         <ModernInput
           label="Tenant price (USD)"

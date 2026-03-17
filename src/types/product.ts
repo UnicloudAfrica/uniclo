@@ -44,6 +44,7 @@ export interface ProductPricingEntry {
   id: string | number;
   product_id?: string | number;
   region?: string;
+  availability_zone?: string;
   provider?: string;
   price?: number | string;
   local_price?: number | string;

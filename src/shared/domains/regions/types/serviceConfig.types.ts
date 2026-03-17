@@ -15,6 +15,8 @@ export const CLOUD_PROVIDERS: ProviderOption[] = [
 export type RegionVisibility = "public" | "private";
 export type FastTrackMode = "disabled" | "owner_only" | "grant_only";
 
+export type AzSelectionMode = "auto" | "user_selectable" | "disabled";
+
 export interface RegionFormData {
   name: string;
   code: string;
@@ -24,6 +26,7 @@ export interface RegionFormData {
   is_active: boolean;
   visibility: RegionVisibility;
   fast_track_mode: FastTrackMode;
+  az_selection_mode: AzSelectionMode;
 }
 
 export const DEFAULT_REGION_FORM_DATA: RegionFormData = {
@@ -35,6 +38,21 @@ export const DEFAULT_REGION_FORM_DATA: RegionFormData = {
   is_active: true,
   visibility: "public",
   fast_track_mode: "disabled",
+  az_selection_mode: "disabled",
+};
+
+export interface AZFormData {
+  code: string;
+  name: string;
+  provider: string;
+  is_active: boolean;
+}
+
+export const DEFAULT_AZ_FORM_DATA: AZFormData = {
+  code: "",
+  name: "",
+  provider: "",
+  is_active: true,
 };
 
 export type RegionFormChangeHandler = <K extends keyof RegionFormData>(

@@ -43,6 +43,22 @@ export interface ProductCharge {
   currency: string;
 }
 
+export interface AvailabilityZone {
+  id?: number;
+  code: string;
+  name: string | null;
+  provider: string;
+  status: "healthy" | "degraded" | "down" | "maintenance";
+  is_active?: boolean;
+  is_verified?: boolean;
+  priority?: number;
+  features?: Record<string, unknown> | null;
+  meta?: Record<string, unknown> | null;
+  metrics?: Record<string, unknown> | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Region {
   id: string | number;
   name: string;
@@ -53,6 +69,9 @@ export interface Region {
   provider?: string;
   country_code?: string;
   city?: string;
+  az_selection_mode?: "auto" | "user_selectable" | "disabled";
+  availability_zones?: AvailabilityZone[];
+  availability_zones_count?: number;
 }
 
 export interface ComputeInstance {

@@ -14,6 +14,8 @@ const buildQueryString = ({
   productType,
   countryCode,
   currencyCode,
+  availabilityZone,
+  displayCurrency,
 }: any) => {
   const params = new URLSearchParams();
   if (region) params.append("region", region);
@@ -24,6 +26,8 @@ const buildQueryString = ({
   if (productType) params.append("productable_type", productType);
   if (countryCode) params.append("country_code", countryCode.toUpperCase());
   if (currencyCode) params.append("currency_code", currencyCode.toUpperCase());
+  if (availabilityZone) params.append("availability_zone", availabilityZone);
+  if (displayCurrency) params.append("display_currency", displayCurrency.toUpperCase());
   const query = params.toString();
   return query ? `?${query}` : "";
 };
@@ -49,6 +53,8 @@ const fetchProductPricing = async ({
   productType,
   countryCode,
   currencyCode,
+  availabilityZone,
+  displayCurrency,
 }: any) => {
   const queryString = buildQueryString({
     region,
@@ -58,6 +64,8 @@ const fetchProductPricing = async ({
     productType,
     countryCode,
     currencyCode,
+    availabilityZone,
+    displayCurrency,
   });
   const res = await silentApi("GET", `/product-pricing${queryString}`);
   const payload = normaliseCollectionResponse(res);
@@ -129,6 +137,8 @@ export const useFetchProductPricing = (
     productType = "",
     countryCode = "",
     currencyCode = "",
+    availabilityZone = "",
+    displayCurrency = "",
   }: any = {},
   options: any = {}
 ) => {
@@ -143,6 +153,8 @@ export const useFetchProductPricing = (
       productType,
       countryCode,
       currencyCode,
+      availabilityZone,
+      displayCurrency,
     ],
     queryFn: () =>
       fetchProductPricing({
@@ -154,6 +166,8 @@ export const useFetchProductPricing = (
         productType,
         countryCode,
         currencyCode,
+        availabilityZone,
+        displayCurrency,
       }),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
@@ -220,6 +234,27 @@ export const useExportProductPricingTemplate = () => {
     },
     onError: (error: any) => {
       logger.error("Error downloading product pricing template:", error);
+    },
+  });
+};
+
+const bulkUpdateProductPricing = async (updates: { id: number; price_usd: number }[]) => {
+  const res = await api("PATCH", "/product-pricing/bulk-update", { updates });
+  if (!res) {
+    throw new Error("Failed to bulk update product pricing");
+  }
+  return res;
+};
+
+export const useBulkUpdateProductPricing = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: bulkUpdateProductPricing,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["product-pricing-admin"] });
+    },
+    onError: (error: any) => {
+      logger.error("Error bulk updating product pricing:", error);
     },
   });
 };

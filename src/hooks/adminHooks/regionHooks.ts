@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
-import { type Region, type ApiResponse } from "@/shared/types/resource";
+import { type Region, type AvailabilityZone, type ApiResponse } from "@/shared/types/resource";
 
 const fetchRegions = async (): Promise<Region[]> => {
   const res: ApiResponse<Region[]> = await silentApi("GET", "/regions");
@@ -152,6 +152,140 @@ export const useUpdateCredentials = () => {
     ) => {
       queryClient.invalidateQueries({ queryKey: ["credential-health", variables.regionId] });
       queryClient.invalidateQueries({ queryKey: ["regions"] });
+    },
+  });
+};
+
+// ── Availability Zone Hooks ──────────────────────────────────
+
+const fetchAvailabilityZones = async (regionCode: string): Promise<AvailabilityZone[]> => {
+  const res: ApiResponse<AvailabilityZone[]> = await silentApi("GET", `/regions/${regionCode}/availability-zones`);
+  if (!res.data) throw new Error("Failed to fetch availability zones");
+  return res.data;
+};
+
+export const useFetchAvailabilityZones = (regionCode: string | null | undefined) => {
+  return useQuery({
+    queryKey: ["availability-zones", regionCode],
+    queryFn: () => fetchAvailabilityZones(regionCode!),
+    enabled: !!regionCode,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  });
+};
+
+const createAvailabilityZone = async ({
+  regionCode,
+  data,
+}: {
+  regionCode: string;
+  data: Partial<AvailabilityZone>;
+}): Promise<AvailabilityZone> => {
+  const res: ApiResponse<AvailabilityZone> = await api("POST", `/regions/${regionCode}/availability-zones`, data);
+  if (!res.data) throw new Error("Failed to create availability zone");
+  return res.data;
+};
+
+export const useCreateAvailabilityZone = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createAvailabilityZone,
+    onSuccess: (_data: any, variables: any) => {
+      queryClient.invalidateQueries({ queryKey: ["availability-zones", variables.regionCode] });
+      queryClient.invalidateQueries({ queryKey: ["regions"] });
+    },
+  });
+};
+
+const updateAvailabilityZone = async ({
+  regionCode,
+  azCode,
+  data,
+}: {
+  regionCode: string;
+  azCode: string;
+  data: Partial<AvailabilityZone>;
+}): Promise<AvailabilityZone> => {
+  const res: ApiResponse<AvailabilityZone> = await api(
+    "PATCH",
+    `/regions/${regionCode}/availability-zones/${azCode}`,
+    data
+  );
+  if (!res.data) throw new Error("Failed to update availability zone");
+  return res.data;
+};
+
+export const useUpdateAvailabilityZone = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateAvailabilityZone,
+    onSuccess: (_data: any, variables: any) => {
+      queryClient.invalidateQueries({ queryKey: ["availability-zones", variables.regionCode] });
+      queryClient.invalidateQueries({ queryKey: ["regions"] });
+    },
+  });
+};
+
+const deleteAvailabilityZone = async ({
+  regionCode,
+  azCode,
+}: {
+  regionCode: string;
+  azCode: string;
+}): Promise<unknown> => {
+  const res: ApiResponse<unknown> = await api("DELETE", `/regions/${regionCode}/availability-zones/${azCode}`);
+  return res?.data ?? null;
+};
+
+export const useDeleteAvailabilityZone = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteAvailabilityZone,
+    onSuccess: (_data: any, variables: any) => {
+      queryClient.invalidateQueries({ queryKey: ["availability-zones", variables.regionCode] });
+      queryClient.invalidateQueries({ queryKey: ["regions"] });
+    },
+  });
+};
+
+const verifyAvailabilityZone = async ({
+  regionCode,
+  azCode,
+}: {
+  regionCode: string;
+  azCode: string;
+}): Promise<unknown> => {
+  const res = await api("POST", `/regions/${regionCode}/availability-zones/${azCode}/verify`);
+  return res?.data ?? null;
+};
+
+export const useVerifyAvailabilityZone = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: verifyAvailabilityZone,
+    onSuccess: (_data: any, variables: any) => {
+      queryClient.invalidateQueries({ queryKey: ["availability-zones", variables.regionCode] });
+    },
+  });
+};
+
+const unverifyAvailabilityZone = async ({
+  regionCode,
+  azCode,
+}: {
+  regionCode: string;
+  azCode: string;
+}): Promise<unknown> => {
+  const res = await api("POST", `/regions/${regionCode}/availability-zones/${azCode}/unverify`);
+  return res?.data ?? null;
+};
+
+export const useUnverifyAvailabilityZone = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: unverifyAvailabilityZone,
+    onSuccess: (_data: any, variables: any) => {
+      queryClient.invalidateQueries({ queryKey: ["availability-zones", variables.regionCode] });
     },
   });
 };

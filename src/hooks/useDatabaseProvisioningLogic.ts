@@ -4,7 +4,7 @@
  * Follows the useClientProvisioningLogic pattern:
  * steps → form state → quote pricing → create order → payment → success.
  */
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useAsyncAction } from "@/shared/hooks/useAsyncAction";
 import {
   useDatabaseQuote,
@@ -102,6 +102,32 @@ export const PLAN_SPECS: Record<
   xlarge: { label: "XLarge", vcpu: 16, memoryMb: 16384, storageGb: 250 },
 };
 
+// ─── Helpers ────────────────────────────────────────────────────────
+
+/** Look up a region label by code. Falls back to the code itself. */
+export function getRegionLabel(
+  regions: { value: string; label: string }[],
+  code: string,
+): string {
+  const match = regions.find((r) => r.value === code);
+  return match?.label || code;
+}
+
+/**
+ * Auto-assign replica regions by picking randomly from available regions
+ * (excluding the primary).
+ */
+function assignReplicaRegions(
+  additionalReplicas: number,
+  primaryRegion: string,
+  allRegions: { value: string; label: string }[],
+): string[] {
+  if (additionalReplicas <= 0 || !primaryRegion) return [];
+  const available = allRegions.filter((r) => r.value !== primaryRegion);
+  const shuffled = [...available].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, Math.min(additionalReplicas, available.length)).map((r) => r.value);
+}
+
 // ─── Hook ──────────────────────────────────────────────────────────
 
 export const useDatabaseProvisioningLogic = () => {
@@ -119,7 +145,9 @@ export const useDatabaseProvisioningLogic = () => {
     projectId: null,
     deploymentType: "dedicated",
     replicaCount: 1,
+    replicaRegions: [],
     backupEnabled: true,
+    drEnabled: false,
     firewallCidrs: ["0.0.0.0/0"],
     months: 1,
     fastTrack: false,
@@ -199,6 +227,57 @@ export const useDatabaseProvisioningLogic = () => {
       .filter((r) => r.value);
   }, [regionsData]);
 
+  // ─── Replica Logic ────────────────────────────────────────────────
+
+  /** Max additional replicas the user can select. */
+  const maxReplicaCount = useMemo(() => {
+    if (!form.engine || !form.region || regions.length <= 1) return 0;
+    const engineMeta = engines[form.engine as DatabaseEngine];
+    // maxReplicas is total nodes; subtract 1 for the primary
+    const maxByEngine = (engineMeta?.maxReplicas ?? 5) - 1;
+    const maxByRegions = regions.length - 1;
+    return Math.max(0, Math.min(maxByEngine, maxByRegions));
+  }, [form.engine, form.region, engines, regions]);
+
+  /**
+   * Set the number of additional read replicas.
+   * Automatically assigns replica regions from the remaining available regions.
+   */
+  const setReplicaCount = useCallback(
+    (additionalReplicas: number) => {
+      const clamped = Math.max(0, Math.min(additionalReplicas, maxReplicaCount));
+      const replicaRegions = assignReplicaRegions(clamped, form.region, regions);
+      setForm((prev) => ({
+        ...prev,
+        replicaCount: clamped + 1, // total nodes = primary + replicas
+        replicaRegions,
+      }));
+    },
+    [maxReplicaCount, form.region, regions],
+  );
+
+  // Reassign replica regions when primary region changes
+  useEffect(() => {
+    const additionalReplicas = form.replicaCount - 1;
+    if (additionalReplicas <= 0 || !form.region || regions.length <= 1) {
+      return;
+    }
+    // Check if current assignment is still valid (no overlap with new primary)
+    const stillValid =
+      form.replicaRegions.length === additionalReplicas &&
+      form.replicaRegions.every((r) => r !== form.region && regions.some((reg) => reg.value === r));
+    if (stillValid) return;
+
+    const available = regions.filter((r) => r.value !== form.region);
+    const newCount = Math.min(additionalReplicas, available.length);
+    const assigned = assignReplicaRegions(newCount, form.region, regions);
+    setForm((prev) => ({
+      ...prev,
+      replicaCount: newCount + 1,
+      replicaRegions: assigned,
+    }));
+  }, [form.region, regions]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ─── Form Helpers ────────────────────────────────────────────────
 
   const updateForm = useCallback((patch: Partial<DatabaseFormState>) => {
@@ -212,6 +291,7 @@ export const useDatabaseProvisioningLogic = () => {
         engine,
         engineVersion: meta.defaultVersion,
         replicaCount: 1,
+        replicaRegions: [],
       });
     },
     [engines, updateForm]
@@ -274,6 +354,7 @@ export const useDatabaseProvisioningLogic = () => {
           region: form.region,
           deployment_type: form.deploymentType,
           replica_count: form.replicaCount,
+          replica_regions: form.replicaRegions,
           backup_enabled: form.backupEnabled,
           firewall_cidrs: form.firewallCidrs.filter(Boolean),
           months: form.months,
@@ -417,6 +498,10 @@ export const useDatabaseProvisioningLogic = () => {
     projects,
     regions,
     plansData,
+
+    // Replicas
+    maxReplicaCount,
+    setReplicaCount,
 
     // Validation
     isEngineStepValid,

@@ -48,6 +48,7 @@ const EditProductPricingModal = ({ isOpen, onClose, pricing }: any) => {
           provider: pricing.provider,
           region: pricing.region,
           country_code: pricing.country_code,
+          ...(pricing.availability_zone ? { availability_zone: pricing.availability_zone } : {}),
         },
       },
       {
@@ -93,6 +94,11 @@ const EditProductPricingModal = ({ isOpen, onClose, pricing }: any) => {
               <span className="rounded-full bg-white px-2.5 py-1 font-medium text-slate-500">
                 Country: {pricing.country_code || "—"}
               </span>
+              {pricing.availability_zone && (
+                <span className="rounded-full bg-white px-2.5 py-1 font-medium text-slate-500">
+                  AZ: {pricing.availability_zone}
+                </span>
+              )}
             </p>
           </div>
 

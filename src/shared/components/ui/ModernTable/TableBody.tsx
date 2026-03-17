@@ -1,6 +1,7 @@
-import { Fragment, type ReactNode } from "react";
+import { Fragment, useMemo, type ReactNode } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { designTokens } from "@/styles/designTokens";
+import { useResponsive } from "@/hooks/useResponsive";
 import type { Action, Column, TableRowBase } from "./types";
 import type { TableStyleMap } from "./useTableStyles";
 import { getRowValue, formatCellValue, getActionToneStyles, getFontSize, getColor } from "./utils";
@@ -50,8 +51,15 @@ function TableBody<T extends TableRowBase>({
   renderExpandedRow,
   styles,
 }: TableBodyProps<T>) {
+  const { isMobile } = useResponsive();
+
+  const visibleColumns = useMemo(
+    () => (isMobile ? columns.filter((c) => !c.hideOnMobile) : columns),
+    [columns, isMobile]
+  );
+
   const totalColSpan =
-    columns.length + (actions.length > 0 ? 1 : 0) + (selectable ? 1 : 0) + (expandable ? 1 : 0);
+    visibleColumns.length + (actions.length > 0 ? 1 : 0) + (selectable ? 1 : 0) + (expandable ? 1 : 0);
 
   if (paginatedData.length === 0) {
     return (
@@ -142,7 +150,7 @@ function TableBody<T extends TableRowBase>({
                   />
                 </td>
               )}
-              {columns.map((column) => (
+              {visibleColumns.map((column) => (
                 <td key={column.key} style={styles.td}>
                   {(() => {
                     const cellValue = getRowValue(row, column.key);
@@ -156,7 +164,7 @@ function TableBody<T extends TableRowBase>({
                 </td>
               ))}
               {actions.length > 0 && (
-                <td style={styles.td}>
+                <td style={styles.td} className="table-actions">
                   <div style={{ display: "flex", gap: "8px" }}>
                     {actions.map((action, actionIndex) => {
                       const tone = getActionToneStyles(action.tone);

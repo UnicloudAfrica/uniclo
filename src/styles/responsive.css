@@ -160,6 +160,65 @@
   }
 }
 
+/* Modern Table Toolbar & Pagination Responsive */
+@media (max-width: 767px) {
+  .modern-table-responsive .table-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .modern-table-responsive .table-toolbar-left {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .modern-table-responsive .table-toolbar-search {
+    max-width: 100%;
+    min-width: 100%;
+  }
+
+  .modern-table-responsive .table-toolbar-right {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .modern-table-responsive .table-pagination {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .modern-table-responsive .table-pagination-stats {
+    text-align: center;
+  }
+
+  .modern-table-responsive .table-pagination-nav {
+    justify-content: center;
+  }
+
+  .modern-table-responsive th {
+    font-size: 10px;
+    padding: 8px 12px;
+  }
+
+  .modern-table-responsive td {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .modern-table-responsive th {
+    padding: 10px 14px;
+  }
+
+  .modern-table-responsive td {
+    padding: 12px 14px;
+  }
+}
+
 /* Stats Card Responsive Sizes */
 .stats-card-responsive {
   min-height: 120px;

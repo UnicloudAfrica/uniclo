@@ -24,6 +24,7 @@ import {
   useDatabaseProvisioningLogic,
   ENGINE_METADATA,
   PLAN_SPECS,
+  getRegionLabel,
 } from "@/hooks/useDatabaseProvisioningLogic";
 import type { DatabaseEngine, PlanSize } from "@/types/managedDatabase";
 
@@ -118,7 +119,9 @@ const ConfigureStep: React.FC<{
   selectedEngineMeta: ReturnType<typeof useDatabaseProvisioningLogic>["selectedEngineMeta"];
   projects: { value: number; label: string }[];
   regions: { value: string; label: string }[];
-}> = ({ form, updateForm, selectedEngineMeta, projects, regions }) => (
+  maxReplicaCount: number;
+  setReplicaCount: (count: number) => void;
+}> = ({ form, updateForm, selectedEngineMeta, projects, regions, maxReplicaCount, setReplicaCount }) => (
   <div className="space-y-6">
     {/* Name */}
     <div>
@@ -191,11 +194,53 @@ const ConfigureStep: React.FC<{
         <option value="">Select region...</option>
         {regions.map((r) => (
           <option key={r.value} value={r.value}>
-            {r.label} ({r.value})
+            {r.label}
           </option>
         ))}
       </select>
     </div>
+
+    {/* Read Replicas */}
+    {form.region && maxReplicaCount > 0 && (
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Read Replicas
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {Array.from({ length: maxReplicaCount + 1 }, (_, i) => i).map((count) => {
+            const isSelected = form.replicaCount - 1 === count;
+            return (
+              <button
+                key={count}
+                onClick={() => setReplicaCount(count)}
+                className={`rounded-lg border-2 px-4 py-2 text-sm font-medium transition-all ${
+                  isSelected
+                    ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300"
+                    : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300"
+                }`}
+              >
+                {count}
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+          Replicas are automatically distributed across available regions for high availability.
+        </p>
+        {form.replicaCount > 1 && form.replicaRegions.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {form.replicaRegions.map((regionCode) => (
+              <span
+                key={regionCode}
+                className="inline-flex items-center gap-1 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-300"
+              >
+                {getRegionLabel(regions, regionCode)}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    )}
 
     {/* Project (optional) */}
     {projects.length > 0 && (
@@ -217,33 +262,6 @@ const ConfigureStep: React.FC<{
             </option>
           ))}
         </select>
-      </div>
-    )}
-
-    {/* Replicas */}
-    {selectedEngineMeta && selectedEngineMeta.supportsReplication && (
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Replica Count
-        </label>
-        <div className="flex items-center gap-3">
-          <input
-            type="range"
-            min={selectedEngineMeta.minReplicas}
-            max={selectedEngineMeta.maxReplicas}
-            value={form.replicaCount}
-            onChange={(e) => updateForm({ replicaCount: Number(e.target.value) })}
-            className="flex-1"
-          />
-          <span className="text-sm font-medium text-gray-900 dark:text-gray-100 w-8 text-center">
-            {form.replicaCount}
-          </span>
-        </div>
-        <p className="text-xs text-gray-400 mt-1">
-          {form.replicaCount === 1
-            ? "Single node (no replication)"
-            : `${form.replicaCount} replicas for high availability`}
-        </p>
       </div>
     )}
 
@@ -296,6 +314,7 @@ const ConfigureStep: React.FC<{
 
 const ReviewContent: React.FC<{
   form: ReturnType<typeof useDatabaseProvisioningLogic>["form"];
+  regions: { value: string; label: string }[];
   quoteResult: ReturnType<typeof useDatabaseProvisioningLogic>["quoteResult"];
   pricingSummary: ReturnType<typeof useDatabaseProvisioningLogic>["pricingSummary"];
   isQuoteLoading: boolean;
@@ -305,6 +324,7 @@ const ReviewContent: React.FC<{
   onBack: () => void;
 }> = ({
   form,
+  regions,
   quoteResult,
   pricingSummary,
   isQuoteLoading,
@@ -340,8 +360,13 @@ const ReviewContent: React.FC<{
             value={`${PLAN_SPECS[form.planSize as PlanSize]?.vcpu} vCPU · ${Math.round((PLAN_SPECS[form.planSize as PlanSize]?.memoryMb || 0) / 1024)} GB RAM · ${PLAN_SPECS[form.planSize as PlanSize]?.storageGb} GB SSD`}
           />
         )}
-        <SummaryRow label="Region" value={form.region || "—"} />
-        <SummaryRow label="Replicas" value={String(form.replicaCount)} />
+        <SummaryRow label="Region" value={getRegionLabel(regions, form.region) || "—"} />
+        {form.replicaCount > 1 && (
+          <SummaryRow
+            label="Read Replicas"
+            value={`${form.replicaCount - 1} — ${form.replicaRegions.map((r) => getRegionLabel(regions, r)).join(", ")}`}
+          />
+        )}
         <SummaryRow
           label="Billing Period"
           value={`${form.months} month${form.months > 1 ? "s" : ""}`}
@@ -463,8 +488,9 @@ const ReviewContent: React.FC<{
 
 const SuccessContent: React.FC<{
   submissionResult: ReturnType<typeof useDatabaseProvisioningLogic>["submissionResult"];
+  regions: { value: string; label: string }[];
   onViewDatabases: () => void;
-}> = ({ submissionResult, onViewDatabases }) => {
+}> = ({ submissionResult, regions, onViewDatabases }) => {
   const db = submissionResult?.data?.database;
 
   return (
@@ -487,7 +513,10 @@ const SuccessContent: React.FC<{
           <SummaryRow label="Identifier" value={db.identifier} copyable />
           <SummaryRow label="Engine" value={`${getEngineLabel(db.engine)} v${db.engine_version}`} />
           <SummaryRow label="Plan" value={db.plan_size} />
-          <SummaryRow label="Region" value={db.region} />
+          <SummaryRow label="Region" value={getRegionLabel(regions, db.region)} />
+          {db.replica_count > 1 && (
+            <SummaryRow label="Replicas" value={`${db.replica_count - 1} read replica(s)`} />
+          )}
           <SummaryRow label="Status" value={db.status} />
         </div>
       )}
@@ -506,9 +535,10 @@ const SuccessContent: React.FC<{
 
 const WizardSidebar: React.FC<{
   form: ReturnType<typeof useDatabaseProvisioningLogic>["form"];
+  regions: { value: string; label: string }[];
   quoteResult: ReturnType<typeof useDatabaseProvisioningLogic>["quoteResult"];
   pricingSummary: ReturnType<typeof useDatabaseProvisioningLogic>["pricingSummary"];
-}> = ({ form, quoteResult, pricingSummary }) => (
+}> = ({ form, regions, quoteResult, pricingSummary }) => (
   <div className="space-y-4">
     {/* Selected Configuration */}
     <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
@@ -533,10 +563,15 @@ const WizardSidebar: React.FC<{
           </div>
         )}
         {form.region && (
-          <div className="text-gray-600 dark:text-gray-400">Region: {form.region}</div>
+          <div className="text-gray-600 dark:text-gray-400">
+            Region: {getRegionLabel(regions, form.region)}
+          </div>
         )}
         {form.replicaCount > 1 && (
-          <div className="text-gray-600 dark:text-gray-400">{form.replicaCount} replicas</div>
+          <div className="text-gray-600 dark:text-gray-400">
+            Replicas: {form.replicaCount - 1} ×{" "}
+            {form.replicaRegions.map((r) => getRegionLabel(regions, r)).join(", ")}
+          </div>
         )}
       </div>
     </div>
@@ -653,6 +688,8 @@ const DatabaseCreationWizard: React.FC<DatabaseCreationWizardProps> = ({
               selectedEngineMeta={logic.selectedEngineMeta}
               projects={logic.projects}
               regions={logic.regions}
+              maxReplicaCount={logic.maxReplicaCount}
+              setReplicaCount={logic.setReplicaCount}
             />
             <div className="flex items-center justify-between">
               <button
@@ -709,6 +746,7 @@ const DatabaseCreationWizard: React.FC<DatabaseCreationWizardProps> = ({
     logic.currentStepId === "engine" || logic.currentStepId === "configure" ? (
       <WizardSidebar
         form={logic.form}
+        regions={logic.regions}
         quoteResult={logic.quoteResult}
         pricingSummary={logic.pricingSummary}
       />
@@ -746,6 +784,7 @@ const DatabaseCreationWizard: React.FC<DatabaseCreationWizardProps> = ({
         reviewContent={
           <ReviewContent
             form={logic.form}
+            regions={logic.regions}
             quoteResult={logic.quoteResult}
             pricingSummary={logic.pricingSummary}
             isQuoteLoading={logic.isQuoteLoading}
@@ -758,6 +797,7 @@ const DatabaseCreationWizard: React.FC<DatabaseCreationWizardProps> = ({
         successContent={
           <SuccessContent
             submissionResult={logic.submissionResult}
+            regions={logic.regions}
             onViewDatabases={() => navigate(listPath)}
           />
         }

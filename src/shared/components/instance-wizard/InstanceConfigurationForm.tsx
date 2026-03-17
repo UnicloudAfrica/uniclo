@@ -80,6 +80,8 @@ interface Props {
     isFetching?: boolean;
     isLoading?: boolean;
   };
+  azSelectionMode?: "auto" | "user_selectable" | "disabled";
+  availabilityZoneOptions?: Option[];
 }
 
 const InstanceConfigurationForm: React.FC<Props> = ({
@@ -120,6 +122,8 @@ const InstanceConfigurationForm: React.FC<Props> = ({
   membershipUserId,
   lockAssignmentScope = false,
   useProjectMembershipSuggestionsHook,
+  azSelectionMode,
+  availabilityZoneOptions,
 }) => {
   const { context } = useApiContext();
   const { data: networkPresets = DEFAULT_PRESETS } = useNetworkPresets();
@@ -769,6 +773,8 @@ const InstanceConfigurationForm: React.FC<Props> = ({
     handleProjectModeChange,
     handleProjectSelection,
     projectModeOptions: PROJECT_MODE_OPTIONS,
+    azSelectionMode,
+    availabilityZoneOptions,
   };
 
   const accessKeysProps = {

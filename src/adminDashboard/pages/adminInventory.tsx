@@ -12,7 +12,7 @@ import CrossConnect from "./inventoryComponents/crossConnect";
 import ObjectStorageInventory from "./inventoryComponents/objectStorage";
 import ManagedDatabaseInventory from "./inventoryComponents/managedDatabaseInventory";
 
-import { useFetchRegions } from "@/hooks/adminHooks/regionHooks";
+import { useFetchRegions, useFetchAvailabilityZones } from "@/hooks/adminHooks/regionHooks";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Wifi, HardDrive, Database, Server, Globe, Cable, Cylinder } from "lucide-react";
 import ResourceHero from "@/shared/components/ui/ResourceHero";
@@ -47,6 +47,7 @@ interface ProductDefinition {
   Component: ComponentType<{
     selectedRegion: string;
     selectedProvider?: string;
+    selectedAZ?: string;
     onMetricsChange?: (payload: { description?: string; metrics?: InventoryMetric[] }) => void;
   }>;
   icon: ComponentType<SVGProps<SVGSVGElement>>;
@@ -59,7 +60,10 @@ interface ProductDefinition {
 export default function AdminInventory() {
   const [activeProductTab, setActiveProductTab] = useState("os-images");
   const [selectedRegion, setSelectedRegion] = useState("");
+  const [selectedAZ, setSelectedAZ] = useState("");
   const { isFetching: isRegionsFetching, data: regionsData } = useFetchRegions();
+  const { data: availabilityZones = [], isFetching: isAZsFetching } =
+    useFetchAvailabilityZones(selectedRegion || undefined);
   const regions: RegionRecord[] = useMemo(
     () => (Array.isArray(regionsData) ? (regionsData as RegionRecord[]) : []),
     [regionsData]
@@ -207,12 +211,22 @@ export default function AdminInventory() {
     []
   );
 
-  // Derive the selected provider from the selected region
+  // Derive the selected provider from the selected AZ (preferred) or from the region's AZs
   const selectedProvider = useMemo(() => {
+    // If a specific AZ is selected, use its provider
+    if (selectedAZ && Array.isArray(availabilityZones)) {
+      const az = (availabilityZones as any[]).find((a) => a.code === selectedAZ);
+      if (az?.provider) return az.provider.toLowerCase();
+    }
+    // Derive from first AZ of the region (provider no longer lives on region)
+    if (Array.isArray(availabilityZones) && availabilityZones.length > 0) {
+      return (availabilityZones[0] as any)?.provider?.toLowerCase() || "";
+    }
+    // Legacy fallback
     if (!selectedRegion || !regions.length) return "";
     const region = regions.find((r) => r.code === selectedRegion);
     return region?.provider?.toLowerCase() || "";
-  }, [selectedRegion, regions]);
+  }, [selectedRegion, selectedAZ, regions, availabilityZones]);
 
   // Filter products to only show categories supported by the selected provider
   const visibleProducts = useMemo(() => {
@@ -317,31 +331,60 @@ export default function AdminInventory() {
     params.set("tab", tabId);
     navigate(`${location.pathname}?${params.toString()}`, { replace: false });
   };
-  const handleRegionChange = (regionCode: string) => setSelectedRegion(regionCode);
+  const handleRegionChange = (regionCode: string) => {
+    setSelectedRegion(regionCode);
+    setSelectedAZ("");
+  };
 
   const regionSelector = (
-    <div className="flex flex-col gap-2 text-left">
-      <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-        Region
-      </label>
-      <select
-        value={selectedRegion}
-        onChange={(event) => handleRegionChange(event.target.value)}
-        className="min-w-[200px] rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-primary-200 focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:opacity-60"
-        disabled={isRegionsFetching}
-      >
-        {isRegionsFetching ? (
-          <option value="" disabled>
-            Loading regions...
-          </option>
-        ) : (
-          regions.map((region) => (
-            <option key={region.code} value={region.code}>
-              {getRegionOptionLabel(region)}
+    <div className="flex items-end gap-4">
+      <div className="flex flex-col gap-2 text-left">
+        <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+          Region
+        </label>
+        <select
+          value={selectedRegion}
+          onChange={(event) => handleRegionChange(event.target.value)}
+          className="min-w-[200px] rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-primary-200 focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={isRegionsFetching}
+        >
+          {isRegionsFetching ? (
+            <option value="" disabled>
+              Loading regions...
             </option>
-          ))
-        )}
-      </select>
+          ) : (
+            regions.map((region) => (
+              <option key={region.code} value={region.code}>
+                {getRegionOptionLabel(region)}
+              </option>
+            ))
+          )}
+        </select>
+      </div>
+
+      {selectedRegion && (
+        <div className="flex flex-col gap-2 text-left">
+          <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Availability Zone
+          </label>
+          <select
+            value={selectedAZ}
+            onChange={(event) => setSelectedAZ(event.target.value)}
+            className="min-w-[200px] rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-primary-200 focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={isAZsFetching}
+          >
+            <option value="">
+              {isAZsFetching ? "Loading AZs..." : "All AZs"}
+            </option>
+            {Array.isArray(availabilityZones) &&
+              availabilityZones.map((az: { code: string; name: string | null; provider: string }) => (
+                <option key={az.code} value={az.code}>
+                  {az.name || az.code} ({az.provider})
+                </option>
+              ))}
+          </select>
+        </div>
+      )}
     </div>
   );
 
@@ -377,6 +420,7 @@ export default function AdminInventory() {
               <ActiveComponent
                 selectedRegion={selectedRegion}
                 selectedProvider={selectedProvider}
+                selectedAZ={selectedAZ || undefined}
                 onMetricsChange={handleSummaryChange}
               />
             ) : (

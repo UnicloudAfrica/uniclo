@@ -273,6 +273,153 @@ export async function deleteServiceCredentials(
   }
 }
 
+// ─── Availability Zone-scoped credential endpoints ───
+
+/**
+ * Get credential status for all services in an availability zone
+ */
+export async function getAZCredentialStatus(
+  regionCode: string,
+  azCode: string
+): Promise<ApiResponse<CredentialStatus[]>> {
+  try {
+    const response = await fetch(
+      `${config.adminURL}/regions/${regionCode}/availability-zones/${azCode}/credential-status`,
+      {
+        method: "GET",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      }
+    );
+
+    const data = await response.json();
+
+    if (data.success || response.ok) {
+      return { success: true, data: data.data || data };
+    }
+
+    throw new Error(data.message || "Failed to fetch AZ credential status");
+  } catch (error: unknown) {
+    logger.error(`Error fetching credential status for AZ ${azCode}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Store credentials for a specific service type in an availability zone
+ */
+export async function storeAZServiceCredentials(
+  regionCode: string,
+  azCode: string,
+  serviceType: string,
+  credentials: Record<string, string>,
+  skipVerification: boolean = false
+): Promise<ApiResponse<null>> {
+  try {
+    const payload: Record<string, unknown> = { ...credentials };
+    if (skipVerification) {
+      payload["skip_verification"] = true;
+    }
+
+    const response = await fetch(
+      `${config.adminURL}/regions/${regionCode}/availability-zones/${azCode}/credentials/${serviceType}`,
+      {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const data = await response.json();
+
+    if (data.success || response.ok) {
+      const label = serviceType.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+      ToastUtils.success(data.message || `${label} credentials saved for AZ ${azCode}`);
+      return { success: true, data: data.data || null };
+    }
+
+    throw new Error(data.message || `Failed to store ${serviceType} credentials for AZ`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "An unknown error occurred";
+    logger.error(`Error storing ${serviceType} credentials for AZ ${azCode}:`, error);
+    ToastUtils.error(message);
+    throw error;
+  }
+}
+
+/**
+ * Verify credentials for a specific service type in an availability zone
+ */
+export async function verifyAZServiceCredentials(
+  regionCode: string,
+  azCode: string,
+  serviceType: string,
+  credentials: Record<string, string>
+): Promise<ApiResponse<null>> {
+  try {
+    const response = await fetch(
+      `${config.adminURL}/regions/${regionCode}/availability-zones/${azCode}/credentials/${serviceType}/verify`,
+      {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify(credentials),
+      }
+    );
+
+    const data = await response.json();
+
+    if (data.success || response.ok) {
+      return {
+        success: true,
+        data: null,
+        message: data.message || "Credentials verified successfully",
+      };
+    }
+
+    throw new Error(data.message || "Verification failed");
+  } catch (error: unknown) {
+    logger.error(`Error verifying ${serviceType} credentials for AZ ${azCode}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Delete credentials for a specific service type in an availability zone
+ */
+export async function deleteAZServiceCredentials(
+  regionCode: string,
+  azCode: string,
+  serviceType: string
+): Promise<ApiResponse<null>> {
+  try {
+    const response = await fetch(
+      `${config.adminURL}/regions/${regionCode}/availability-zones/${azCode}/credentials/${serviceType}`,
+      {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      }
+    );
+
+    const data = await response.json();
+
+    if (data.success || response.ok) {
+      const label = serviceType.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+      ToastUtils.success(data.message || `${label} credentials deleted for AZ ${azCode}`);
+      return { success: true, data: null };
+    }
+
+    throw new Error(data.message || `Failed to delete ${serviceType} credentials for AZ`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "An unknown error occurred";
+    logger.error(`Error deleting ${serviceType} credentials for AZ ${azCode}:`, error);
+    ToastUtils.error(message);
+    throw error;
+  }
+}
+
 /**
  * Verify credentials for a provider service before region creation
  */

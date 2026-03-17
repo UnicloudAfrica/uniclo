@@ -1,22 +1,31 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { AlertCircle, Loader2, MapPin, Save, Globe, Check } from "lucide-react";
+import { AlertCircle, Loader2, MapPin, Save, Globe, Check, Plus, Trash2, ChevronDown, ChevronUp, ShieldCheck } from "lucide-react";
 import adminRegionApi from "@/services/adminRegionApi";
 import { useFetchTenants } from "@/hooks/adminHooks";
+import {
+  useFetchAvailabilityZones,
+  useCreateAvailabilityZone,
+  useDeleteAvailabilityZone,
+  useUpdateAvailabilityZone,
+} from "@/hooks/adminHooks/regionHooks";
 import { useFetchCountries } from "@/hooks/resource";
 import ToastUtils from "@/utils/toastUtil";
 import AdminPageShell from "../components/AdminPageShell";
 import { ModernCard, ModernButton } from "@/shared/components/ui";
 import ModernInput from "@/shared/components/ui/ModernInput";
 import StatusPill from "@/shared/components/ui/StatusPill";
+import ProviderBadge from "@/shared/components/ui/ProviderBadge";
 import { designTokens } from "@/styles/designTokens";
 import logger from "@/utils/logger";
 import { statusOptions, statusToneMap, statusLabelMap, formatSegment } from "./regionEditUtils";
-import type { ServiceDefinition, RegionFormData } from "./regionEditTypes";
-import ServiceConfigCard from "./ServiceConfigCard";
+import type { RegionFormData } from "./regionEditTypes";
 import RegionHeroBanner from "./RegionHeroBanner";
 import VisibilityApprovalCard from "./VisibilityApprovalCard";
 import FastTrackConfigCard from "./FastTrackConfigCard";
+import { CLOUD_PROVIDERS } from "@/shared/domains/regions/types/serviceConfig.types";
+import { AZCredentialPanel } from "@/shared/domains/regions/components";
+import type { AvailabilityZone } from "@/shared/types/resource";
 
 const RegionEdit = () => {
   const { id: code } = useParams();
@@ -41,11 +50,18 @@ const RegionEdit = () => {
     visibility: "public",
   });
   const [errors, setErrors] = useState<Record<string, any>>({});
-  const [providerServices, setProviderServices] = useState<any>(null);
-  const [serviceConfigs, setServiceConfigs] = useState<Record<string, any>>({});
-  const [testingService, setTestingService] = useState<Record<string, any>>({});
-  const [connectedServices, setConnectedServices] = useState<Set<string>>(new Set()); // Set of verified service types
-  const [originalConfigs, setOriginalConfigs] = useState<Record<string, any>>({}); // To track changes
+
+  // ── Availability Zone state ──────────────────────────────────
+  const { data: availabilityZones, refetch: refetchAZs } = useFetchAvailabilityZones(code);
+  const createAZMutation = useCreateAvailabilityZone();
+  const deleteAZMutation = useDeleteAvailabilityZone();
+  const updateAZMutation = useUpdateAvailabilityZone();
+
+  const [showAddAZForm, setShowAddAZForm] = useState(false);
+  const [azFormData, setAzFormData] = useState({ code: "", name: "", provider: "", is_active: true });
+  const [azFormErrors, setAzFormErrors] = useState<Record<string, string>>({});
+  const [expandedAZ, setExpandedAZ] = useState<string | null>(null);
+  const [deletingAZ, setDeletingAZ] = useState<string | null>(null);
 
   const formId = "region-edit-form";
 
@@ -64,42 +80,6 @@ const RegionEdit = () => {
         is_active: (regionData.is_active !== undefined ? regionData.is_active : true) as boolean,
         visibility: (regionData.visibility || "public") as string,
       });
-
-      // Fetch services and credentials
-      if (regionData.provider) {
-        // 1. Get definitions
-        const servicesRes = await adminRegionApi.getProviderServices(regionData.provider as string);
-        const servicesDef = (servicesRes.data as { services?: unknown })?.services || {};
-        setProviderServices(servicesRes.data);
-
-        // 2. Get current status/config
-        const credsRes = await adminRegionApi.getCredentialStatus(regionData.code);
-        const currentCreds = (credsRes.data as { credentials?: unknown })?.credentials || {}; // Fix: access credentials nested object
-
-        const initialConfigs: Record<string, any> = {};
-        const verifiedSet = new Set<string>();
-
-        Object.keys(servicesDef).forEach((serviceType: any) => {
-          const existing = currentCreds[serviceType];
-          // Check if service has credentials configured
-          const isConfigured = existing?.configured === true;
-          // Check if it's verified (status field from backend)
-          const isVerified = existing?.status === "verified";
-
-          initialConfigs[serviceType] = {
-            enabled: isConfigured,
-            mode: isConfigured ? "automated" : "manual", // If has credentials, it's automated
-            credentials: {}, // Credentials are not returned for security, user needs to re-enter to change
-          };
-
-          if (isVerified) {
-            verifiedSet.add(serviceType);
-          }
-        });
-        setServiceConfigs(initialConfigs);
-        setOriginalConfigs(JSON.parse(JSON.stringify(initialConfigs))); // Deep copy for comparison
-        setConnectedServices(verifiedSet);
-      }
     } catch (error) {
       logger.error("Error fetching region:", error);
       ToastUtils.error("Failed to load region details");
@@ -141,74 +121,76 @@ const RegionEdit = () => {
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
-  const handleServiceToggle = (serviceType: string) => {
-    setServiceConfigs((prev) => ({
-      ...prev,
-      [serviceType]: {
-        ...prev[serviceType],
-        enabled: !prev[serviceType]?.enabled,
-      },
-    }));
-  };
 
-  const handleModeChange = (serviceType: string, mode: string) => {
-    setServiceConfigs((prev) => ({
-      ...prev,
-      [serviceType]: {
-        ...prev[serviceType],
-        mode,
-      },
-    }));
-  };
-
-  const handleCredentialChange = (serviceType: string, fieldName: string, value: string) => {
-    setServiceConfigs((prev) => ({
-      ...prev,
-      [serviceType]: {
-        ...prev[serviceType],
-        credentials: {
-          ...prev[serviceType]?.credentials,
-          [fieldName]: value,
-        },
-      },
-    }));
-    // Invalidate connection status on change if it was verified
-    if (connectedServices.has(serviceType)) {
-      setConnectedServices((prev) => {
-        const next = new Set(prev);
-        next.delete(serviceType);
-        return next;
-      });
+  // ── AZ handlers ──────────────────────────────────────────────
+  const handleAZFormChange = (event: any) => {
+    const { name, value } = event.target;
+    setAzFormData((prev) => ({ ...prev, [name]: value }));
+    if (azFormErrors[name]) {
+      setAzFormErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
-  const handleTestConnection = async (serviceType: string) => {
-    const config = serviceConfigs[serviceType];
-    if (!config || config.mode !== "automated") return;
+  const validateAZForm = () => {
+    const nextErrors: Record<string, string> = {};
+    if (!azFormData.code.trim()) nextErrors.code = "AZ code is required";
+    if (!azFormData.name.trim()) nextErrors.name = "AZ name is required";
+    if (!azFormData.provider) nextErrors.provider = "Provider is required";
+    setAzFormErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
 
-    setTestingService((prev) => ({ ...prev, [serviceType]: true }));
+  const handleCreateAZ = async () => {
+    if (!validateAZForm()) return;
     try {
-      // For existing regions, use storeServiceCredentials which verifies AND stores
-      // This ensures credentials persist after page refresh
-      const res = await adminRegionApi.storeServiceCredentials(
-        region.code,
-        serviceType,
-        config.credentials
-      );
-      if (res.success) {
-        ToastUtils.success(`${serviceType} verified and saved successfully`);
-        setConnectedServices((prev) => new Set(prev).add(serviceType));
-      }
-    } catch (error: any) {
-      logger.error(`Verification failed for ${serviceType}:`, error);
-      ToastUtils.error(error.message || "Verification failed");
-      setConnectedServices((prev) => {
-        const next = new Set(prev);
-        next.delete(serviceType);
-        return next;
+      await createAZMutation.mutateAsync({
+        regionCode: code as string,
+        data: {
+          code: azFormData.code.trim(),
+          name: azFormData.name.trim(),
+          provider: azFormData.provider,
+          is_active: azFormData.is_active,
+        },
       });
+      ToastUtils.success("Availability Zone created successfully");
+      setAzFormData({ code: "", name: "", provider: "", is_active: true });
+      setShowAddAZForm(false);
+      refetchAZs();
+    } catch (error: any) {
+      logger.error("Error creating AZ:", error);
+      ToastUtils.error(error.message || "Failed to create Availability Zone");
+    }
+  };
+
+  const handleDeleteAZ = async (azCode: string) => {
+    setDeletingAZ(azCode);
+    try {
+      await deleteAZMutation.mutateAsync({
+        regionCode: code as string,
+        azCode,
+      });
+      ToastUtils.success("Availability Zone deleted successfully");
+      refetchAZs();
+    } catch (error: any) {
+      logger.error("Error deleting AZ:", error);
+      ToastUtils.error(error.message || "Failed to delete Availability Zone");
     } finally {
-      setTestingService((prev) => ({ ...prev, [serviceType]: false }));
+      setDeletingAZ(null);
+    }
+  };
+
+  const handleToggleAZActive = async (az: AvailabilityZone) => {
+    try {
+      await updateAZMutation.mutateAsync({
+        regionCode: code as string,
+        azCode: az.code,
+        data: { is_active: !az.is_active },
+      });
+      ToastUtils.success(`${az.name || az.code} ${az.is_active ? "deactivated" : "activated"}`);
+      refetchAZs();
+    } catch (error: any) {
+      logger.error("Error toggling AZ:", error);
+      ToastUtils.error(error.message || "Failed to update Availability Zone");
     }
   };
 
@@ -234,60 +216,6 @@ const RegionEdit = () => {
           region.code,
           formData.visibility as "public" | "private"
         );
-      }
-
-      // Update Services
-      // Logic:
-      // 1. If service disabled -> delete credentials (disconnect)
-      // 2. If service enabled and changed -> store credentials
-      // 3. If service enabled and unchanged -> do nothing
-
-      for (const [serviceType, config] of Object.entries(serviceConfigs)) {
-        const original = originalConfigs[serviceType] || { enabled: false };
-
-        if (!config.enabled && original.enabled) {
-          // Service was disabled, remove credentials
-          await adminRegionApi.deleteServiceCredentials(region.code, serviceType);
-        } else if (config.enabled) {
-          // Service is enabled
-          // Check if needs update (credentials changed or mode changed or was/is new)
-          // Crude check: JSON stringify comparison or dirty flag.
-          // Simplest: Always update if enabled? Or just if verified?
-          // "Test Connection" marks it as connected.
-          // If Automated and Connected, we store.
-          // If Manual, we just store (mode change).
-
-          if (config.mode === "automated") {
-            if (Object.keys(config.credentials).length > 0) {
-              const isVerified = connectedServices.has(serviceType);
-              // Only store if we have credentials.
-              // If verification was skipped (user didn't test) we can try to verify?
-              // Or just store with verify=true (default storeServiceCredentials calls verifyAndStoreService)
-
-              // Optimize: If credentials haven't changed and already verified, skip?
-              // For now, let's just save.
-              await adminRegionApi.storeServiceCredentials(
-                region.code,
-                serviceType,
-                config.credentials,
-                isVerified // skip verification if already tested in UI
-              );
-            }
-          } else {
-            // Manual mode - no credentials to store, but maybe backend tracks "enabled" via presence of record?
-            // storeServiceCredentials handles mode? Backend MspCredentialService usually keys by service.
-            // If manual, we might store empty credentials or a flag.
-            // Current backend implementation of storeServiceCredentials expects credentials array.
-            // If manual, we probably don't need to call storeServiceCredentials?
-            // Wait, how do we "enable" a manual service?
-            // The backend `getCredentialStatus` returns list of services with credentials.
-            // If manual, maybe we just don't store credentials?
-            // But we need to record that it IS enabled.
-            // If the system implies "Enabled = Has Credentials", then Manual services might not be "installable" in this sense,
-            // OR we store a dummy record.
-            // let's assume for now we only strictly manage Automated credentials here.
-          }
-        }
       }
 
       ToastUtils.success("Region updated successfully");
@@ -396,6 +324,9 @@ const RegionEdit = () => {
     </AdminPageShell>
   );
 
+  // ── AZ count for hero banner ─────────────────────────────────
+  const azCount = Array.isArray(availabilityZones) ? availabilityZones.length : 0;
+
   if (loading) {
     return renderLoadingShell();
   }
@@ -418,7 +349,7 @@ const RegionEdit = () => {
         <RegionHeroBanner
           formData={formData}
           regionName={region.name}
-          regionProvider={region?.provider}
+          regionProvider={`${azCount} Availability Zone${azCount !== 1 ? "s" : ""}`}
           locationLabel={locationLabel}
         />
 
@@ -554,72 +485,211 @@ const RegionEdit = () => {
             fetchRegionDetail={fetchRegionDetail}
           />
 
+          {/* ── Availability Zones ──────────────────────────────────── */}
           <ModernCard
-            title={`Service Connections${region?.provider ? ` (${region.provider.charAt(0).toUpperCase() + region.provider.slice(1)})` : ""}`}
+            title={`Availability Zones (${azCount})`}
             className="space-y-4"
           >
-            <p className="text-sm text-gray-500">Configure services available in this region.</p>
+            <p className="text-sm text-gray-500">
+              Manage the availability zones within this region. Each AZ carries its own cloud provider and credentials.
+            </p>
 
-            {!region?.provider && (
-              <div className="p-4 rounded-lg bg-yellow-50 border border-yellow-200">
-                <p className="text-sm font-medium text-yellow-800">
-                  No cloud provider set for this region.
-                </p>
-                <p className="text-xs text-yellow-600 mt-1">
-                  Provider must be configured to manage service connections.
+            {/* AZ List */}
+            {Array.isArray(availabilityZones) && availabilityZones.length > 0 ? (
+              <div className="space-y-3">
+                {availabilityZones.map((az: AvailabilityZone) => (
+                  <div
+                    key={az.code}
+                    className="rounded-2xl border border-gray-200 bg-white overflow-hidden"
+                  >
+                    {/* AZ Row */}
+                    <div className="flex items-center justify-between gap-3 px-4 py-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <button
+                          type="button"
+                          onClick={() => setExpandedAZ(expandedAZ === az.code ? null : az.code)}
+                          className="text-gray-400 hover:text-gray-600 transition"
+                        >
+                          {expandedAZ === az.code ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        </button>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-gray-900 truncate">
+                              {az.name || az.code}
+                            </span>
+                            <span className="text-xs text-gray-400 font-mono">{az.code}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <ProviderBadge provider={az.provider} size="sm" />
+
+                        <StatusPill
+                          label={statusLabelMap[az.status] || formatSegment(az.status) || "Unknown"}
+                          tone={statusToneMap[az.status] || "info"}
+                        />
+
+                        {az.is_verified && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-green-50 border border-green-200 px-2 py-0.5 text-[11px] font-medium text-green-700">
+                            <ShieldCheck size={12} />
+                            Verified
+                          </span>
+                        )}
+
+                        {/* Active toggle */}
+                        <button
+                          type="button"
+                          onClick={() => handleToggleAZActive(az)}
+                          className={`relative inline-flex h-5 w-9 items-center rounded-full transition ${
+                            az.is_active ? "bg-blue-500" : "bg-gray-300"
+                          }`}
+                          title={az.is_active ? "Active - click to deactivate" : "Inactive - click to activate"}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                              az.is_active ? "translate-x-4" : "translate-x-0.5"
+                            }`}
+                          />
+                        </button>
+
+                        {/* Delete button */}
+                        <ModernButton
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteAZ(az.code)}
+                          isLoading={deletingAZ === az.code}
+                          isDisabled={deletingAZ === az.code}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 !px-2"
+                        >
+                          <Trash2 size={14} />
+                        </ModernButton>
+                      </div>
+                    </div>
+
+                    {/* Expanded details + credential management */}
+                    {expandedAZ === az.code && (
+                      <AZExpandedPanel
+                        az={az}
+                        regionCode={code as string}
+                        onUpdate={async (data) => {
+                          await updateAZMutation.mutateAsync({
+                            regionCode: code as string,
+                            azCode: az.code,
+                            data,
+                          });
+                          ToastUtils.success("AZ updated");
+                          refetchAZs();
+                        }}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/50 p-6 text-center">
+                <p className="text-sm text-gray-500">No availability zones configured yet.</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Add an availability zone to connect a cloud provider to this region.
                 </p>
               </div>
             )}
 
-            {region?.provider && !providerServices?.services && (
-              <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
-                <p className="text-sm font-medium text-gray-600">
-                  Loading service configurations...
-                </p>
-              </div>
-            )}
+            {/* Add AZ Form */}
+            {showAddAZForm ? (
+              <div className="rounded-2xl border border-blue-200 bg-blue-50/30 p-4 space-y-4">
+                <h4 className="text-sm font-semibold text-gray-900">Add Availability Zone</h4>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-700">Provider</label>
+                    <select
+                      name="provider"
+                      value={azFormData.provider}
+                      onChange={handleAZFormChange}
+                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                    >
+                      <option value="">Select provider...</option>
+                      {CLOUD_PROVIDERS.map((p) => (
+                        <option key={p.value} value={p.value}>
+                          {p.label}
+                        </option>
+                      ))}
+                    </select>
+                    {azFormErrors.provider && (
+                      <p className="mt-1 text-xs text-red-500">{azFormErrors.provider}</p>
+                    )}
+                  </div>
 
-            {providerServices?.services && (
-              <div className="space-y-4">
-                {Object.entries(providerServices.services as Record<string, ServiceDefinition>)
-                  .filter(([serviceType]) => {
-                    // Filter services to only those supported by the provider
-                    const providerServiceMap: Record<string, string[]> = {
-                      zadara: ["compute", "object_storage"],
-                      nobus: ["compute", "object_storage"],
-                    };
-                    const allowed = providerServiceMap[region?.provider?.toLowerCase()];
-                    if (allowed) {
-                      return allowed.includes(serviceType);
-                    }
-                    return true;
-                  })
-                  .map(([serviceType, serviceConfig]) => (
-                    <ServiceConfigCard
-                      key={serviceType}
-                      serviceType={serviceType}
-                      serviceConfig={serviceConfig}
-                      enabled={serviceConfigs[serviceType]?.enabled || false}
-                      onToggle={() => handleServiceToggle(serviceType)}
-                      fulfillmentMode={serviceConfigs[serviceType]?.mode || "manual"}
-                      onModeChange={(mode: string) => handleModeChange(serviceType, mode)}
-                      credentials={serviceConfigs[serviceType]?.credentials || {}}
-                      onCredentialChange={(field: string, value: string) =>
-                        handleCredentialChange(serviceType, field, value)
-                      }
-                      onTestConnection={() => handleTestConnection(serviceType)}
-                      testing={testingService[serviceType] || false}
-                      status={
-                        connectedServices.has(serviceType)
-                          ? "connected"
-                          : serviceConfigs[serviceType]?.enabled
-                            ? "not_connected"
-                            : "not_configured"
-                      }
-                      isExistingConnection={connectedServices.has(serviceType)}
+                  <ModernInput
+                    label="AZ Code"
+                    name="code"
+                    value={azFormData.code}
+                    onChange={handleAZFormChange}
+                    placeholder="e.g., lagos-az1"
+                    error={azFormErrors.code}
+                  />
+
+                  <ModernInput
+                    label="AZ Name"
+                    name="name"
+                    value={azFormData.name}
+                    onChange={handleAZFormChange}
+                    placeholder="e.g., Lagos AZ 1"
+                    error={azFormErrors.name}
+                  />
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={azFormData.is_active}
+                      onChange={(e) => setAzFormData((prev) => ({ ...prev, is_active: e.target.checked }))}
+                      className="rounded border-gray-300 text-blue-500 focus:ring-blue-500"
                     />
-                  ))}
+                    Active
+                  </label>
+                </div>
+
+                <div className="flex gap-2">
+                  <ModernButton
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    onClick={handleCreateAZ}
+                    isLoading={createAZMutation.isPending}
+                    isDisabled={createAZMutation.isPending}
+                    className="flex items-center gap-1.5"
+                  >
+                    <Plus size={14} />
+                    Create AZ
+                  </ModernButton>
+                  <ModernButton
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setShowAddAZForm(false);
+                      setAzFormData({ code: "", name: "", provider: "", is_active: true });
+                      setAzFormErrors({});
+                    }}
+                  >
+                    Cancel
+                  </ModernButton>
+                </div>
               </div>
+            ) : (
+              <ModernButton
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAddAZForm(true)}
+                className="flex items-center gap-1.5"
+              >
+                <Plus size={14} />
+                Add Availability Zone
+              </ModernButton>
             )}
           </ModernCard>
 
@@ -649,7 +719,7 @@ const RegionEdit = () => {
                   className="flex items-center gap-2"
                 >
                   <Save size={16} />
-                  {submitting ? "Saving…" : "Save Changes"}
+                  {submitting ? "Saving..." : "Save Changes"}
                 </ModernButton>
               </div>
             </div>
@@ -659,4 +729,105 @@ const RegionEdit = () => {
     </AdminPageShell>
   );
 };
+
+/** Inline expanded panel for editing an AZ's name, priority, and credentials */
+const AZExpandedPanel: React.FC<{
+  az: AvailabilityZone;
+  regionCode: string;
+  onUpdate: (data: Record<string, unknown>) => Promise<void>;
+}> = ({ az, regionCode, onUpdate }) => {
+  const [editName, setEditName] = useState(az.name || "");
+  const [editPriority, setEditPriority] = useState(String(az.priority ?? 100));
+  const [saving, setSaving] = useState(false);
+  const hasChanges = editName !== (az.name || "") || editPriority !== String(az.priority ?? 100);
+
+  const handleSaveDetails = async () => {
+    setSaving(true);
+    try {
+      await onUpdate({
+        name: editName.trim(),
+        priority: Number(editPriority) || 100,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="border-t border-gray-100 bg-gray-50/50 px-4 py-4 space-y-4">
+      {/* Editable fields */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div>
+          <label className="mb-1 block text-xs font-medium text-gray-500 uppercase tracking-wide">
+            AZ Name
+          </label>
+          <input
+            type="text"
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+            placeholder="e.g., Lagos Zadara AZ1"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-gray-500 uppercase tracking-wide">
+            Priority
+          </label>
+          <input
+            type="number"
+            value={editPriority}
+            onChange={(e) => setEditPriority(e.target.value)}
+            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+            min={1}
+            step={1}
+          />
+        </div>
+        <div className="flex flex-col justify-between">
+          <label className="mb-1 block text-xs font-medium text-gray-500 uppercase tracking-wide">
+            Provider
+          </label>
+          <p className="px-3 py-2 text-sm text-gray-600 capitalize bg-gray-100 rounded-xl">
+            {az.provider}
+          </p>
+        </div>
+      </div>
+
+      {hasChanges && (
+        <div className="flex items-center gap-2">
+          <ModernButton
+            type="button"
+            variant="primary"
+            size="sm"
+            onClick={handleSaveDetails}
+            isLoading={saving}
+            isDisabled={saving || !editName.trim()}
+          >
+            Save Details
+          </ModernButton>
+          <ModernButton
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setEditName(az.name || "");
+              setEditPriority(String(az.priority ?? 100));
+            }}
+          >
+            Reset
+          </ModernButton>
+        </div>
+      )}
+
+      <div className="text-xs text-gray-400">
+        Created: {az.created_at ? new Date(az.created_at).toLocaleDateString() : "N/A"}
+      </div>
+
+      {/* Service Credentials Panel */}
+      <div className="border-t border-gray-200 pt-4">
+        <AZCredentialPanel regionCode={regionCode} az={az} />
+      </div>
+    </div>
+  );
+};
+
 export default RegionEdit;

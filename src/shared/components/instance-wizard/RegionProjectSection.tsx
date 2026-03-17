@@ -25,6 +25,8 @@ interface RegionProjectSectionProps {
   handleProjectModeChange: (value: string) => void;
   handleProjectSelection: (value: string) => void;
   projectModeOptions: Option[];
+  azSelectionMode?: "auto" | "user_selectable" | "disabled";
+  availabilityZoneOptions?: Option[];
 }
 
 const RegionProjectSection: React.FC<RegionProjectSectionProps> = ({
@@ -50,6 +52,8 @@ const RegionProjectSection: React.FC<RegionProjectSectionProps> = ({
   handleProjectModeChange,
   handleProjectSelection,
   projectModeOptions,
+  azSelectionMode,
+  availabilityZoneOptions,
 }) => {
   return (
     <>
@@ -62,6 +66,8 @@ const RegionProjectSection: React.FC<RegionProjectSectionProps> = ({
             updateConfigWithFocus({
               region: e.target.value,
               region_label: e.target.value ? selectedLabel : "",
+              availability_zone: "",
+              availability_zone_label: "",
             });
           }}
           placeholder=""
@@ -69,6 +75,29 @@ const RegionProjectSection: React.FC<RegionProjectSectionProps> = ({
           helper="Region code used for pricing and provisioning."
           disabled={isLoadingResources}
         />
+        {azSelectionMode === "user_selectable" && availabilityZoneOptions && availabilityZoneOptions.length > 0 && (
+          <ModernSelect
+            label="Availability Zone"
+            value={cfg.availability_zone || ""}
+            onChange={(e) => {
+              const selectedLabel = e.target.selectedOptions?.[0]?.text || "";
+              updateConfigWithFocus({
+                availability_zone: e.target.value,
+                availability_zone_label: e.target.value ? selectedLabel : "",
+              });
+            }}
+            options={[{ value: "", label: "Auto-assign" }, ...availabilityZoneOptions]}
+            helper="Select a specific availability zone or let the platform auto-assign."
+            disabled={isLoadingResources}
+          />
+        )}
+        {azSelectionMode === "auto" && (
+          <div className="flex items-end">
+            <p className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+              Availability zone will be automatically assigned based on capacity and priority.
+            </p>
+          </div>
+        )}
         <ModernSelect
           label="Project mode"
           value={effectiveProjectMode}

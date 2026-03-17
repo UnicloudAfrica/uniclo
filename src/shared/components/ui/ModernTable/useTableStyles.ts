@@ -1,5 +1,6 @@
 import { useMemo, type CSSProperties } from "react";
 import { designTokens } from "@/styles/designTokens";
+import { useResponsive } from "@/hooks/useResponsive";
 import { getFontSize, getColor } from "./utils";
 
 export interface TableStyleMap {
@@ -34,6 +35,8 @@ export function useTableStyles({
   isInView,
   prefersReducedMotion,
 }: UseTableStylesOptions): TableStyleMap {
+  const { isMobile, isTablet } = useResponsive();
+
   return useMemo(
     () =>
       ({
@@ -49,13 +52,13 @@ export function useTableStyles({
           transition: prefersReducedMotion ? "none" : "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
         },
         header: {
-          padding: "20px 24px",
+          padding: isMobile ? "12px 16px" : isTablet ? "16px 20px" : "20px 24px",
           borderBottom: `1px solid ${designTokens.colors.neutral[200]}`,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          flexWrap: "wrap",
-          gap: "16px",
+          flexWrap: "wrap" as const,
+          gap: isMobile ? "12px" : "16px",
         },
         title: {
           fontSize: getFontSize("lg"),
@@ -64,9 +67,10 @@ export function useTableStyles({
           margin: 0,
         },
         searchContainer: {
-          position: "relative",
+          position: "relative" as const,
           flex: 1,
-          maxWidth: "300px",
+          maxWidth: isMobile ? "100%" : "300px",
+          minWidth: isMobile ? "100%" : undefined,
         },
         searchInput: {
           width: "100%",
@@ -84,46 +88,48 @@ export function useTableStyles({
         },
         table: {
           width: "100%",
-          borderCollapse: "collapse",
+          borderCollapse: "collapse" as const,
         },
         thead: {
           backgroundColor: getColor("neutral", 50),
         },
         th: {
-          padding: "12px 16px",
-          textAlign: "left",
+          padding: isMobile ? "8px 12px" : isTablet ? "10px 14px" : "12px 16px",
+          textAlign: "left" as const,
           fontSize: getFontSize("xs"),
           fontWeight: designTokens.typography.fontWeight.medium,
           color: getColor("neutral", 600),
-          textTransform: "uppercase",
+          textTransform: "uppercase" as const,
           letterSpacing: "0.05em",
           borderBottom: `1px solid ${getColor("neutral", 200)}`,
           cursor: sortable ? "pointer" : "default",
           transition: prefersReducedMotion ? "none" : "all 0.2s ease",
         },
         td: {
-          padding: "16px",
+          padding: isMobile ? "10px 12px" : isTablet ? "12px 14px" : "16px",
           fontSize: getFontSize("sm"),
           color: getColor("neutral", 900),
           borderBottom: `1px solid ${getColor("neutral", 100)}`,
           transition: prefersReducedMotion ? "none" : "all 0.2s ease",
         },
         emptyState: {
-          padding: "48px 24px",
-          textAlign: "center",
+          padding: isMobile ? "32px 16px" : "48px 24px",
+          textAlign: "center" as const,
           color: getColor("neutral", 500),
           fontSize: getFontSize("sm"),
         },
         pagination: {
-          padding: "16px 24px",
+          padding: isMobile ? "12px 16px" : "16px 24px",
           display: "flex",
+          flexDirection: (isMobile ? "column" : "row") as CSSProperties["flexDirection"],
           justifyContent: "space-between",
-          alignItems: "center",
+          alignItems: isMobile ? "center" : "center",
+          gap: isMobile ? "12px" : "0",
           borderTop: `1px solid ${getColor("neutral", 200)}`,
           backgroundColor: getColor("neutral", 50),
         },
         loadingOverlay: {
-          position: "absolute",
+          position: "absolute" as const,
           inset: 0,
           backgroundColor: "rgb(var(--theme-neutral-50) / 0.8)",
           display: "flex",
@@ -132,6 +138,6 @@ export function useTableStyles({
           zIndex: 10,
         },
       }) satisfies TableStyleMap,
-    [searchFocused, sortable, enableAnimations, tableLoaded, isInView, prefersReducedMotion]
+    [searchFocused, sortable, enableAnimations, tableLoaded, isInView, prefersReducedMotion, isMobile, isTablet]
   );
 }

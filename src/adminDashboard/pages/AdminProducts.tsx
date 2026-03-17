@@ -706,6 +706,23 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
       },
     },
     {
+      header: "Family Code",
+      key: "family_code",
+      align: "center",
+      render: (rowData: Record<string, unknown>) => {
+        const row = rowData as ProductRow;
+        const familyCode = row.family_code as string | null | undefined;
+        if (!familyCode) {
+          return <span className="text-xs text-slate-400">Not set</span>;
+        }
+        return (
+          <span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-600">
+            {familyCode}
+          </span>
+        );
+      },
+    },
+    {
       header: "Status",
       key: "status",
       align: "center",

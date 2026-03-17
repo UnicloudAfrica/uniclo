@@ -34,7 +34,9 @@ const ModernTable = <T extends TableRowBase>({
   onSort,
 
   filterSlot,
+  headerActions,
   enableAnimations = true,
+  responsive = true,
   className = "",
   // Controlled pagination
   page,
@@ -232,7 +234,7 @@ const ModernTable = <T extends TableRowBase>({
           position: "relative",
           minHeight: "200px",
         }}
-        className={className}
+        className={`${responsive ? "modern-table-responsive" : ""} ${className}`.trim()}
       >
         <div style={tableStyles.loadingOverlay}>
           <div
@@ -246,7 +248,7 @@ const ModernTable = <T extends TableRowBase>({
 
   // ── Render ──────────────────────────────────────────────────────────
   return (
-    <div ref={tableRef} style={tableStyles.container} className={className}>
+    <div ref={tableRef} style={tableStyles.container} className={`${responsive ? "modern-table-responsive" : ""} ${className}`.trim()}>
       <TableToolbar
         title={title}
         searchable={searchable}
@@ -258,6 +260,7 @@ const ModernTable = <T extends TableRowBase>({
         onSearchBlur={() => setSearchFocused(false)}
         filterable={filterable}
         filterSlot={filterSlot}
+        headerActions={headerActions}
         isFilterOpen={isFilterOpen}
         onFilterToggle={() => setIsFilterOpen(!isFilterOpen)}
         exportable={exportable}

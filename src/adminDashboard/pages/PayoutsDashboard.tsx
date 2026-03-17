@@ -62,8 +62,8 @@ const usePayoutSummary = () => {
   return useQuery({
     queryKey: ["payouts", "summary"],
     queryFn: async () => {
-      const response = await adminApi.get<{ data: PayoutSummary }>("/payouts/summary");
-      return response.data.data;
+      const response = await adminApi.get<Record<string, unknown>>("/payouts/summary");
+      return (response.data ?? response) as PayoutSummary;
     },
   });
 };

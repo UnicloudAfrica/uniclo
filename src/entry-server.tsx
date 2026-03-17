@@ -3,7 +3,6 @@ import { StaticRouter } from "react-router-dom/server";
 import { HelmetProvider } from "@dr.pogodin/react-helmet";
 import App from "./App";
 import QueryProvider from "./utils/queryProvider";
-import StaticMarketingProvider from "./contexts/StaticMarketingProvider";
 
 type HelmetContext = {
   helmet?: {
@@ -22,11 +21,9 @@ export const render = (url: string) => {
   const html = renderToString(
     <HelmetProvider context={helmetContext as any}>
       <QueryProvider>
-        <StaticMarketingProvider>
-          <StaticRouter location={url}>
-            <App />
-          </StaticRouter>
-        </StaticMarketingProvider>
+        <StaticRouter location={url}>
+          <App />
+        </StaticRouter>
       </QueryProvider>
     </HelmetProvider>
   );

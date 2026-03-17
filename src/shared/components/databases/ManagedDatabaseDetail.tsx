@@ -23,6 +23,7 @@ import {
   HardDrive,
   Activity,
   ArrowUpCircle,
+  ShieldCheck,
 } from "lucide-react";
 import EngineIcon, { getEngineLabel } from "./EngineIcon";
 import DatabaseStatusBadge from "./DatabaseStatusBadge";
@@ -40,6 +41,7 @@ import {
   useUpgradeDatabaseEngine,
 } from "@/shared/hooks/resources/managedDatabaseHooks";
 import type { ManagedDatabase, ManagedDatabaseBackup } from "@/types/managedDatabase";
+import ResourceProtectionTab from "@/shared/components/integrations/ResourceProtectionTab";
 
 interface ManagedDatabaseDetailProps {
   identifier: string;
@@ -48,7 +50,7 @@ interface ManagedDatabaseDetailProps {
   context?: "admin" | "tenant" | "client";
 }
 
-type Tab = "overview" | "connection" | "backups" | "metrics" | "firewall" | "settings";
+type Tab = "overview" | "connection" | "backups" | "metrics" | "firewall" | "protection" | "settings";
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: "overview", label: "Overview", icon: <DatabaseIcon size={16} /> },
@@ -56,6 +58,7 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: "backups", label: "Backups", icon: <HardDrive size={16} /> },
   { id: "metrics", label: "Metrics", icon: <Activity size={16} /> },
   { id: "firewall", label: "Firewall", icon: <Shield size={16} /> },
+  { id: "protection", label: "Protection", icon: <ShieldCheck size={16} /> },
   { id: "settings", label: "Settings", icon: <Settings size={16} /> },
 ];
 
@@ -139,6 +142,13 @@ const ManagedDatabaseDetail: React.FC<ManagedDatabaseDetailProps> = ({
       {activeTab === "backups" && <BackupsTab db={db} identifier={identifier} />}
       {activeTab === "metrics" && <MetricsTab db={db} identifier={identifier} />}
       {activeTab === "firewall" && <FirewallTab db={db} identifier={identifier} />}
+      {activeTab === "protection" && (
+        <ResourceProtectionTab
+          resourceType="managed-databases"
+          resourceId={identifier}
+          resourceName={db.name}
+        />
+      )}
       {activeTab === "settings" && (
         <SettingsTab db={db} identifier={identifier} backPath={resolvedBackPath} />
       )}

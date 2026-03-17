@@ -153,10 +153,17 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
           const regionInfo = regionLookup[value];
           const isObjectStorageType = currentEntry.productable_type === OBJECT_STORAGE_TYPE;
 
+          // Provider now lives on AZ, not region. Derive from availability_zones or primary AZ.
+          const derivedProvider =
+            regionInfo?.provider ??
+            regionInfo?.availability_zones?.[0]?.provider ??
+            regionInfo?.primary_az?.provider ??
+            "";
+
           nextEntry = {
             ...nextEntry,
             region: value,
-            provider: regionInfo?.provider ?? "",
+            provider: derivedProvider,
             productable_id: isObjectStorageType
               ? String(Math.max(1, Number(currentEntry.objectStorageQuota) || 1))
               : "",

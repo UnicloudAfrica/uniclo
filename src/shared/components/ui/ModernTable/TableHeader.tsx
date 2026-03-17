@@ -1,5 +1,6 @@
-import type { ChangeEvent } from "react";
+import { useMemo, type ChangeEvent } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
+import { useResponsive } from "@/hooks/useResponsive";
 import type { Column, SortConfig, TableRowBase } from "./types";
 import type { TableStyleMap } from "./useTableStyles";
 
@@ -30,6 +31,13 @@ function TableHeader<T extends TableRowBase>({
   onSelectAll,
   styles,
 }: TableHeaderProps<T>) {
+  const { isMobile } = useResponsive();
+
+  const visibleColumns = useMemo(
+    () => (isMobile ? columns.filter((c) => !c.hideOnMobile) : columns),
+    [columns, isMobile]
+  );
+
   return (
     <thead style={styles.thead}>
       <tr>
@@ -47,7 +55,7 @@ function TableHeader<T extends TableRowBase>({
             />
           </th>
         )}
-        {columns.map((column) => (
+        {visibleColumns.map((column) => (
           <th
             key={column.key}
             style={{

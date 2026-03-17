@@ -22,10 +22,28 @@ const resolvePreventRedirectFlag = (body: unknown): boolean => {
   return false;
 };
 
+/**
+ * Detect if a 403 is a business-logic error (not an auth failure).
+ * Business-logic responses have { success: false, message: "..." } with a
+ * meaningful message — these should display the error, not redirect to login.
+ */
+const isBusinessLogicError = (body: unknown): boolean => {
+  if (!isRecord(body)) return false;
+  if (body.success === false && typeof body.message === "string" && body.message.length > 0) {
+    return true;
+  }
+  return false;
+};
+
 const shouldPreventRedirect = (response: Response, body: unknown) => {
   const header = response?.headers?.get?.("X-Prevent-Login-Redirect") || "";
   const bodyFlag = resolvePreventRedirectFlag(body);
-  return header.toLowerCase() === "true" || bodyFlag;
+  if (header.toLowerCase() === "true" || bodyFlag) return true;
+
+  // 403 with a structured business error should show the message, not redirect
+  if (response?.status === 403 && isBusinessLogicError(body)) return true;
+
+  return false;
 };
 
 export const handleAuthRedirect = (

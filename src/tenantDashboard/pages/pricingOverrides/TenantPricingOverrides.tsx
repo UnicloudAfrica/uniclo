@@ -35,6 +35,10 @@ import type {
 import { formatCurrency, extractRowsFromPayload } from "./pricingOverridesTypes";
 import ImportOverridesModal from "./ImportOverridesModal";
 import PriceOverrideModal from "./PriceOverrideModal";
+import ApplyToRegionsModal from "@/shared/components/ApplyToRegionsModal";
+import type { ApplyToRegionsItem } from "@/shared/components/ApplyToRegionsModal";
+import { useTenantApplyPriceToRegions } from "@/hooks/shared/useApplyPriceToRegions";
+import type { BulkAction } from "@/shared/components/ui/ModernTable/types";
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -119,6 +123,10 @@ const TenantPricingOverrides = () => {
   /* Import modal state */
   const [importOpen, setImportOpen] = useState(false);
 
+  /* Apply to regions modal state */
+  const [isApplyToRegionsOpen, setApplyToRegionsOpen] = useState(false);
+  const [applyToRegionsItems, setApplyToRegionsItems] = useState<ApplyToRegionsItem[]>([]);
+
   const tenant = useTenantAuthStore((state) => state?.tenant || null);
   const tenantId = useTenantAuthStore((state) => {
     const t = state?.tenant;
@@ -195,6 +203,8 @@ const TenantPricingOverrides = () => {
   const { mutateAsync: importOverrides, isPending: isImporting } =
     useImportTenantPricingOverrides();
   const { mutateAsync: exportTemplate, isPending: isExporting } = useExportTenantPricingTemplate();
+  const { mutateAsync: applyToRegions, isPending: isApplyingToRegions } =
+    useTenantApplyPriceToRegions();
 
   const isSaving = isSavingOverride || isUpdatingOverride;
 
@@ -228,7 +238,15 @@ const TenantPricingOverrides = () => {
 
       if (!matchingOverrides.length) return null;
 
-      const regionMatch = matchingOverrides.find((override) => override.region === selectedRegion);
+      /* AZ-scoped overrides take highest priority */
+      const azMatch = matchingOverrides.find(
+        (override) => override.region === selectedRegion && override.availability_zone
+      );
+      if (azMatch) return { row: azMatch, scope: "availability_zone" };
+
+      const regionMatch = matchingOverrides.find(
+        (override) => override.region === selectedRegion && !override.availability_zone
+      );
       if (regionMatch) return { row: regionMatch, scope: "region" };
 
       if (countryCode) {
@@ -349,6 +367,36 @@ const TenantPricingOverrides = () => {
     refetchOverrides();
   }, [refetchCatalog, refetchOverrides]);
 
+  /* ---- Bulk actions ---- */
+  const bulkActions: BulkAction<PricingCatalogRow>[] = useMemo(
+    () => [
+      {
+        label: "Apply to Regions",
+        icon: <Globe className="h-4 w-4" />,
+        onClick: (_selectedIds: string[], selectedRows: PricingCatalogRow[]) => {
+          const items: ApplyToRegionsItem[] = selectedRows
+            .filter((row) => row?.product?.productable_type && row?.product?.productable_id != null)
+            .map((row) => {
+              const info = findOverrideForProduct(row.product);
+              const overridePrice = info?.row?.price_usd;
+              const adminPrice = row.pricing?.admin?.price_usd;
+              const effectivePrice = overridePrice ?? adminPrice ?? 0;
+              return {
+                productable_type: row.product!.productable_type!,
+                productable_id: row.product!.productable_id!,
+                product_name:
+                  row.product!.name || row.product!.productable_name || "Unnamed product",
+                price_usd: Number(effectivePrice),
+              };
+            });
+          setApplyToRegionsItems(items);
+          setApplyToRegionsOpen(true);
+        },
+      },
+    ],
+    [findOverrideForProduct]
+  );
+
   /* ---- Table columns ---- */
   const columns = useMemo<Column<PricingCatalogRow>[]>(
     () => [
@@ -407,11 +455,16 @@ const TenantPricingOverrides = () => {
               </div>
             );
           }
+          const scopeLabel = override.availability_zone
+            ? `AZ: ${override.availability_zone}`
+            : override.region
+              ? "Region"
+              : "Country";
           return (
             <div className="text-sm text-slate-700">
               {formatCurrency(override.price_usd, "USD")}
               <div className="text-[10px] text-slate-400 uppercase tracking-wide">
-                {override.region ? "Region" : "Country"}
+                {scopeLabel}
               </div>
               {isBelowAdmin && (
                 <div className="text-[10px] font-medium text-rose-500">Below admin minimum</div>
@@ -548,7 +601,11 @@ const TenantPricingOverrides = () => {
         header: "Scope",
         render: (_value: unknown, row: TenantPricingOverride) => (
           <div className="text-xs text-slate-600">
-            {row.region ? `Region: ${row.region}` : `Country: ${row.country_code}`}
+            {row.availability_zone
+              ? `AZ: ${row.availability_zone} (${row.region})`
+              : row.region
+                ? `Region: ${row.region}`
+                : `Country: ${row.country_code}`}
           </div>
         ),
       },
@@ -653,6 +710,8 @@ const TenantPricingOverrides = () => {
               filterable={false}
               exportable={false}
               paginated={false}
+              selectable
+              bulkActions={bulkActions}
               emptyMessage={
                 <div className="py-16 text-center text-slate-500">
                   <Tag className="mx-auto mb-3 h-6 w-6 text-slate-400" />
@@ -691,6 +750,7 @@ const TenantPricingOverrides = () => {
         overrideInfo={overrideModalInfo}
         activeRegion={activeRegion}
         selectedRegion={selectedRegion}
+        regions={regions}
         isSaving={isSaving}
         onUpsert={upsertOverride}
         onUpdate={updateOverride}
@@ -706,6 +766,17 @@ const TenantPricingOverrides = () => {
         onImport={importOverrides}
         isImporting={isImporting}
         onImportComplete={handleRefreshAll}
+      />
+
+      <ApplyToRegionsModal
+        isOpen={isApplyToRegionsOpen}
+        onClose={() => setApplyToRegionsOpen(false)}
+        items={applyToRegionsItems}
+        provider={activeRegion?.provider ?? ""}
+        sourceRegion={selectedRegion}
+        regions={regions}
+        onApply={applyToRegions}
+        isApplying={isApplyingToRegions}
       />
     </TenantPageShell>
   );

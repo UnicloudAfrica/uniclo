@@ -25,6 +25,7 @@ export interface RegionInfoFormProps {
   countries: Country[];
   providers?: ProviderOption[];
   showProviderSelection?: boolean;
+  showAzSelectionMode?: boolean;
 }
 
 const RegionInfoForm: React.FC<RegionInfoFormProps> = ({
@@ -33,6 +34,7 @@ const RegionInfoForm: React.FC<RegionInfoFormProps> = ({
   countries,
   providers = CLOUD_PROVIDERS,
   showProviderSelection = true,
+  showAzSelectionMode = false,
 }) => {
   return (
     <div className="space-y-4">
@@ -119,6 +121,39 @@ const RegionInfoForm: React.FC<RegionInfoFormProps> = ({
               </label>
             ))}
           </div>
+        </div>
+      )}
+
+      {showAzSelectionMode && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Availability Zone Mode
+          </label>
+          <div className="relative">
+            <select
+              value={regionData.az_selection_mode}
+              onChange={(e) =>
+                onChange(
+                  "az_selection_mode" as keyof RegionFormData,
+                  e.target.value as RegionFormData["az_selection_mode"]
+                )
+              }
+              className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="disabled">Disabled (Single zone)</option>
+              <option value="auto">Auto (Platform assigns AZ)</option>
+              <option value="user_selectable">User Selectable (Customer chooses AZ)</option>
+            </select>
+            <ChevronRight className="absolute right-3 top-2.5 h-4 w-4 rotate-90 text-gray-400 pointer-events-none" />
+          </div>
+          <p className="mt-2 text-xs text-gray-500">
+            {regionData.az_selection_mode === "disabled" &&
+              "Region operates as a single zone — no availability zone selection."}
+            {regionData.az_selection_mode === "auto" &&
+              "Platform automatically assigns availability zones for load balancing."}
+            {regionData.az_selection_mode === "user_selectable" &&
+              "Customers can choose their preferred availability zone during provisioning."}
+          </p>
         </div>
       )}
     </div>

@@ -10,6 +10,7 @@ export interface Column<T> {
   render?: BivariantCallback<[unknown, T, number, number, number], ReactNode>;
   sortable?: boolean;
   align?: "left" | "center" | "right";
+  hideOnMobile?: boolean;
 }
 
 export interface Action<T> {
@@ -46,6 +47,7 @@ export interface ModernTableProps<T> {
   selectable?: boolean;
   onSelectionChange?: (selectedIds: string[]) => void;
   filterSlot?: ReactNode;
+  headerActions?: ReactNode;
   enableAnimations?: boolean;
   responsive?: boolean;
   className?: string;

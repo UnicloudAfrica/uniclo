@@ -9,6 +9,11 @@ export const getCurrencySymbol = (currencyCode: string): string => {
       return "₦";
     case "AED":
       return "د.إ";
+    case "GBP":
+      return "£";
+    case "EUR":
+      return "€";
+    case "USD":
     default:
       return "$";
   }

@@ -31,7 +31,10 @@ import AdminLeadDetails from "../adminDashboard/pages/adminLeadDetails";
 import AdminRegion from "../adminDashboard/pages/adminRegion";
 import AdminPricing from "../adminDashboard/pages/adminPricing";
 import AdminProducts from "../adminDashboard/pages/AdminProducts";
+import AdminProductFamilies from "../adminDashboard/pages/AdminProductFamilies";
 import AdminProductCreate from "../adminDashboard/pages/AdminProductCreate";
+import AdminPricingCreate from "../adminDashboard/pages/AdminPricingCreate";
+import AdminPricingEdit from "../adminDashboard/pages/AdminPricingEdit";
 import AdminTemplates from "../adminDashboard/pages/AdminTemplates";
 import CreateInvoice from "../adminDashboard/pages/CreateInvoice";
 import AdminPricingCalculator from "../adminDashboard/pages/AdminPricingCalculator";
@@ -51,6 +54,7 @@ import RegionCreate from "../adminDashboard/pages/RegionCreate";
 import RegionDetail from "../adminDashboard/pages/RegionDetail";
 import RegionEdit from "../adminDashboard/pages/RegionEdit";
 import AdminOnboardingReview from "../adminDashboard/pages/AdminOnboardingReview";
+import AdminProviderDiscovery from "../adminDashboard/pages/AdminProviderDiscovery";
 import AdminSubscriptionPlans from "../adminDashboard/pages/AdminSubscriptionPlans";
 import WalletDashboard from "../adminDashboard/pages/WalletDashboard";
 import SettlementsDashboard from "../adminDashboard/pages/SettlementsDashboard";
@@ -61,6 +65,11 @@ import AdminTicketDetail from "../adminDashboard/pages/AdminTicketDetail";
 import AdminManagedDatabases from "../adminDashboard/pages/AdminManagedDatabases";
 import AdminDatabaseCreate from "../adminDashboard/pages/AdminDatabaseCreate";
 import AdminDatabaseDetail from "../adminDashboard/pages/AdminDatabaseDetail";
+import AdminProtection from "../adminDashboard/pages/AdminProtection";
+import AdminMigrations from "../adminDashboard/pages/AdminMigrations";
+import AdminMigrationWizard from "../adminDashboard/pages/AdminMigrationWizard";
+import AdminDestinations from "../adminDashboard/pages/AdminDestinations";
+import AdminPocTrials from "../adminDashboard/pages/AdminPocTrials";
 
 // Infrastructure Pages
 import {
@@ -119,6 +128,7 @@ const AdminRoutes = (): React.JSX.Element => {
         <Route path="/admin-dashboard/payment/:transactionId" element={<AdminPaymentDetails />} />
         <Route path="/admin-dashboard/products" element={<AdminProducts />} />
         <Route path="/admin-dashboard/products/add" element={<AdminProductCreate />} />
+        <Route path="/admin-dashboard/product-families" element={<AdminProductFamilies />} />
         <Route path="/admin-dashboard/templates" element={<AdminTemplates />} />
         <Route
           path="/admin-dashboard/colocation"
@@ -149,6 +159,8 @@ const AdminRoutes = (): React.JSX.Element => {
         <Route path="/admin-dashboard/create-instance" element={<AdminCreateInstance />} />
         <Route path="/admin-dashboard/key-pairs" element={<AdminKeyPairs />} />
         <Route path="/admin-dashboard/pricing" element={<AdminPricing />} />
+        <Route path="/admin-dashboard/pricing/add" element={<AdminPricingCreate />} />
+        <Route path="/admin-dashboard/pricing/edit" element={<AdminPricingEdit />} />
 
         <Route path="/admin-dashboard/pricing-calculator" element={<AdminPricingCalculator />} />
         <Route path="/admin-dashboard/create-invoice" element={<CreateInvoice />} />
@@ -160,6 +172,12 @@ const AdminRoutes = (): React.JSX.Element => {
         <Route path="/admin-dashboard/databases" element={<AdminManagedDatabases />} />
         <Route path="/admin-dashboard/databases/create" element={<AdminDatabaseCreate />} />
         <Route path="/admin-dashboard/databases/:identifier" element={<AdminDatabaseDetail />} />
+
+        <Route path="/admin-dashboard/protection" element={<AdminProtection />} />
+
+        <Route path="/admin-dashboard/migrations" element={<AdminMigrations />} />
+        <Route path="/admin-dashboard/migrations/new" element={<AdminMigrationWizard />} />
+        <Route path="/admin-dashboard/destinations" element={<AdminDestinations />} />
 
         <Route element={<ObjectStorageRouteProvider />}>
           <Route path="/admin-dashboard/object-storage" element={<AdminObjectStorage />} />
@@ -181,6 +199,7 @@ const AdminRoutes = (): React.JSX.Element => {
         <Route path="/admin-dashboard/wallet" element={<WalletDashboard />} />
         <Route path="/admin-dashboard/settlements" element={<SettlementsDashboard />} />
         <Route path="/admin-dashboard/payouts" element={<PayoutsDashboard />} />
+        <Route path="/admin-dashboard/poc-trials" element={<AdminPocTrials />} />
         <Route path="/admin-dashboard/analytics" element={<AnalyticsDashboard />} />
         <Route path="/admin-dashboard/tickets" element={<TicketsDashboard />} />
         <Route path="/admin-dashboard/tickets/:id" element={<AdminTicketDetail />} />
@@ -224,6 +243,12 @@ const AdminRoutes = (): React.JSX.Element => {
         <Route path="/admin-dashboard/infrastructure/snapshots" element={<AdminSnapshots />} />
         <Route path="/admin-dashboard/infrastructure/images" element={<AdminImages />} />
         <Route path="/admin-dashboard/infrastructure/autoscaling" element={<AdminAutoScaling />} />
+
+        {/* Provider Discovery */}
+        <Route
+          path="/admin-dashboard/provider-discovery"
+          element={<AdminProviderDiscovery />}
+        />
       </Route>
     </>
   );

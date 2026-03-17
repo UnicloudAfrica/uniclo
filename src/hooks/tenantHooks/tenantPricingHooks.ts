@@ -42,6 +42,7 @@ export interface TenantPricingCreatePayload {
   price_usd: number;
   region?: string;
   country_code?: string;
+  availability_zone?: string;
 }
 
 export interface TenantPricingUpdatePayload {

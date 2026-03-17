@@ -26,9 +26,9 @@ const RegionHeroBanner = ({
           </div>
           <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
             <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
-              <p className="text-xs font-medium uppercase tracking-wide text-white/70">Provider</p>
-              <p className="mt-2 text-lg font-semibold text-white capitalize">
-                {regionProvider || "—not set"}
+              <p className="text-xs font-medium uppercase tracking-wide text-white/70">Zones</p>
+              <p className="mt-2 text-lg font-semibold text-white">
+                {regionProvider || "—none"}
               </p>
             </div>
             <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">

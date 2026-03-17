@@ -1,0 +1,10 @@
+export { default as IntegrationStatusBadge } from "./IntegrationStatusBadge";
+export { default as IntegrationOperationsTable } from "./IntegrationOperationsTable";
+export { default as BackupConfigModal } from "./BackupConfigModal";
+export { default as ReplicationConfigModal } from "./ReplicationConfigModal";
+export { default as ResourceProtectionTab } from "./ResourceProtectionTab";
+export { default as ProtectionOverview } from "./ProtectionOverview";
+export { default as DestinationConfigFields } from "./DestinationConfigFields";
+export { default as CreateDestinationModal } from "./CreateDestinationModal";
+export { default as DestinationsList } from "./DestinationsList";
+export { default as DrDashboard } from "./DrDashboard";

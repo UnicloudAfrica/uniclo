@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Search, Filter, Download } from "lucide-react";
 import { designTokens } from "@/styles/designTokens";
+import { useResponsive } from "@/hooks/useResponsive";
 import ModernButton from "../ModernButton";
 import type { BulkAction, TableRowBase } from "./types";
 import type { TableStyleMap } from "./useTableStyles";
@@ -16,6 +17,7 @@ interface TableToolbarProps<T extends TableRowBase> {
   onSearchBlur: () => void;
   filterable: boolean;
   filterSlot: ReactNode | undefined;
+  headerActions: ReactNode | undefined;
   isFilterOpen: boolean;
   onFilterToggle: () => void;
   exportable: boolean;
@@ -38,6 +40,7 @@ function TableToolbar<T extends TableRowBase>({
   onSearchBlur,
   filterable,
   filterSlot,
+  headerActions,
   isFilterOpen: _isFilterOpen,
   onFilterToggle,
   exportable,
@@ -48,25 +51,36 @@ function TableToolbar<T extends TableRowBase>({
   data,
   styles,
 }: TableToolbarProps<T>) {
+  const { isMobile } = useResponsive();
+
   const showToolbar =
     title || searchable || filterable || exportable || (selectable && selectedIds.size > 0);
 
   if (!showToolbar) return null;
 
   return (
-    <div style={styles.header}>
+    <div
+      style={{
+        ...styles.header,
+        flexDirection: isMobile ? "column" : "row",
+        alignItems: isMobile ? "stretch" : "center",
+      }}
+      className="table-toolbar"
+    >
       <div
         style={{
           display: "flex",
-          alignItems: "center",
-          gap: "16px",
+          alignItems: isMobile ? "stretch" : "center",
+          flexDirection: isMobile ? "column" : "row",
+          gap: isMobile ? "12px" : "16px",
           flex: 1,
         }}
+        className="table-toolbar-left"
       >
         {title && <h3 style={styles.title}>{title}</h3>}
 
         {searchable && (
-          <div style={styles.searchContainer}>
+          <div style={styles.searchContainer} className="table-toolbar-search">
             <Search
               size={18}
               style={{
@@ -90,7 +104,16 @@ function TableToolbar<T extends TableRowBase>({
         )}
       </div>
 
-      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: "8px",
+          alignItems: "center",
+          flexWrap: "wrap" as const,
+          justifyContent: isMobile ? "flex-start" : "flex-end",
+        }}
+        className="table-toolbar-right"
+      >
         {selectable && selectedIds.size > 0 && bulkActions.length > 0 && (
           <div className="flex gap-2">
             {bulkActions.map((action, idx) => (
@@ -111,6 +134,8 @@ function TableToolbar<T extends TableRowBase>({
             ))}
           </div>
         )}
+
+        {headerActions && <div className="flex items-center gap-2">{headerActions}</div>}
 
         {filterSlot && <div className="flex items-center">{filterSlot}</div>}
 

@@ -17,6 +17,7 @@ import {
   Users2,
   ClipboardList,
   Wallet,
+  FlaskConical,
 } from "lucide-react";
 import { useFetchTenantById } from "@/hooks/adminHooks/tenantHooks";
 import PartnerClients from "../components/partnersComponent/PartnerClients";
@@ -24,6 +25,7 @@ import AdminPageShell from "../components/AdminPageShell";
 import OnboardingStatusBoard from "../components/onboarding/OnboardingStatusBoard";
 import TenantBillingTab from "./tenantComps/TenantBillingTab";
 import TenantNetworkPolicyTab from "./tenantComps/TenantNetworkPolicyTab";
+import TenantPocTrialTab from "../components/tenantComponents/TenantPocTrialTab";
 import { useTenantBroadcasting } from "@/hooks/useTenantBroadcasting";
 import logger from "@/utils/logger";
 
@@ -215,6 +217,13 @@ export default function AdminPartnerDetails() {
       description: "Elastic IP enforcement and preset safeguards",
       icon: Cloud,
       component: <TenantNetworkPolicyTab tenantId={tenantId!} />,
+    },
+    {
+      label: "POC Trials",
+      value: "poc-trials",
+      description: "Manage proof-of-concept trial periods",
+      icon: FlaskConical,
+      component: <TenantPocTrialTab tenantId={tenantId!} />,
     },
   ];
 

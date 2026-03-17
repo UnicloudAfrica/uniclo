@@ -29,6 +29,7 @@ import {
   Layers,
   ChevronRight,
   Lock,
+  ShieldCheck,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -50,6 +51,7 @@ import {
 } from "../ui";
 import { useInstanceDetails } from "../../hooks/useInstanceDetails";
 import { useInstanceBroadcasting } from "@/hooks/useInstanceBroadcasting";
+import ResourceProtectionTab from "@/shared/components/integrations/ResourceProtectionTab";
 import ToastUtils from "@/utils/toastUtil";
 
 // --- Types ---
@@ -408,6 +410,12 @@ const UnifiedInstanceDetails: React.FC<{ identifier: string }> = ({ identifier }
               label="History"
             />
             <NavButton
+              active={activeTab === "protection"}
+              onClick={() => setActiveTab("protection")}
+              icon={ShieldCheck}
+              label="Protection"
+            />
+            <NavButton
               active={activeTab === "settings"}
               onClick={() => setActiveTab("settings")}
               icon={Settings}
@@ -717,6 +725,16 @@ const UnifiedInstanceDetails: React.FC<{ identifier: string }> = ({ identifier }
                     },
                   ]}
                   data={instance?.transactions || []}
+                />
+              </motion.div>
+            )}
+
+            {activeTab === "protection" && (
+              <motion.div key="protection" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <ResourceProtectionTab
+                  resourceType="instances"
+                  resourceId={identifier}
+                  resourceName={instance?.name}
                 />
               </motion.div>
             )}

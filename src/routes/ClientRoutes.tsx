@@ -41,6 +41,9 @@ import ClientManagedDatabases from "../clientDashboard/pages/ClientManagedDataba
 import ClientDatabaseCreate from "../clientDashboard/pages/ClientDatabaseCreate";
 import ClientDatabaseDetail from "../clientDashboard/pages/ClientDatabaseDetail";
 import ClientTeam from "../clientDashboard/pages/ClientTeam";
+import ClientProtection from "../clientDashboard/pages/ClientProtection";
+import ClientMigrations from "../clientDashboard/pages/ClientMigrations";
+import ClientMigrationWizard from "../clientDashboard/pages/ClientMigrationWizard";
 
 import type { JSX } from "react";
 
@@ -73,6 +76,11 @@ const ClientRoutes = (): JSX.Element => (
     <Route path="/client-dashboard/databases" element={<ClientManagedDatabases />} />
     <Route path="/client-dashboard/databases/create" element={<ClientDatabaseCreate />} />
     <Route path="/client-dashboard/databases/:identifier" element={<ClientDatabaseDetail />} />
+
+    <Route path="/client-dashboard/protection" element={<ClientProtection />} />
+
+    <Route path="/client-dashboard/migrations" element={<ClientMigrations />} />
+    <Route path="/client-dashboard/migrations/new" element={<ClientMigrationWizard />} />
 
     <Route path="/client-dashboard/launch" element={<ClientLaunch />} />
     <Route element={<ObjectStorageRouteProvider />}>

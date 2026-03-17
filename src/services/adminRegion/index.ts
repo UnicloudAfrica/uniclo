@@ -53,6 +53,10 @@ export {
   verifyServiceCredentials,
   deleteServiceCredentials,
   verifyProviderServiceCredentials,
+  getAZCredentialStatus,
+  storeAZServiceCredentials,
+  verifyAZServiceCredentials,
+  deleteAZServiceCredentials,
 } from "./credentials";
 
 // ---- Backward-compatible default export ----
@@ -99,6 +103,12 @@ const adminRegionApi = {
   verifyServiceCredentials: credentials.verifyServiceCredentials,
   deleteServiceCredentials: credentials.deleteServiceCredentials,
   verifyProviderServiceCredentials: credentials.verifyProviderServiceCredentials,
+
+  // AZ-scoped credentials
+  getAZCredentialStatus: credentials.getAZCredentialStatus,
+  storeAZServiceCredentials: credentials.storeAZServiceCredentials,
+  verifyAZServiceCredentials: credentials.verifyAZServiceCredentials,
+  deleteAZServiceCredentials: credentials.deleteAZServiceCredentials,
 };
 
 export default adminRegionApi;

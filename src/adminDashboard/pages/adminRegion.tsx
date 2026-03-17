@@ -31,6 +31,8 @@ interface RegionRecord {
   city?: string;
   status?: string;
   is_active?: boolean;
+  az_selection_mode?: "auto" | "user_selectable" | "disabled";
+  availability_zones_count?: number;
 }
 
 const AdminRegion = () => {
@@ -46,9 +48,6 @@ const AdminRegion = () => {
   const uniqueCountries = new Set(
     regionList.map((region: RegionRecord) => region.country_code).filter(Boolean)
   );
-  const uniqueProviders = new Set(
-    regionList.map((region: RegionRecord) => region.provider).filter(Boolean)
-  );
   const uniqueCities = new Set(
     regionList.map((region: RegionRecord) => region.city).filter(Boolean)
   );
@@ -58,7 +57,6 @@ const AdminRegion = () => {
     totalRegions: regionList.length,
     activeRegions: activeRegionsCount,
     uniqueCountries: uniqueCountries.size,
-    uniqueProviders: uniqueProviders.size,
     uniqueCities: uniqueCities.size,
   };
   const openDeleteModal = (item: RegionRecord) => {
@@ -88,24 +86,6 @@ const AdminRegion = () => {
       ),
     },
     {
-      key: "provider",
-      header: "Provider",
-      render: (value: unknown) => (
-        <div className="flex items-center gap-2">
-          <Server size={16} style={{ color: designTokens.colors.success[500] }} />
-          <span
-            className="px-2 py-1 rounded-full text-xs font-medium"
-            style={{
-              backgroundColor: designTokens.colors.success[50],
-              color: designTokens.colors.success[700],
-            }}
-          >
-            {String(value || "—")}
-          </span>
-        </div>
-      ),
-    },
-    {
       key: "country_code",
       header: "Country",
       render: (value: unknown) => (
@@ -124,6 +104,49 @@ const AdminRegion = () => {
           <span>{String(value || "—")}</span>
         </div>
       ),
+    },
+    {
+      key: "az_selection_mode",
+      header: "AZ Mode",
+      render: (value: unknown, row: RegionRecord) => {
+        const mode = String(value || "disabled");
+        const count = row.availability_zones_count ?? 0;
+        const modeLabels: Record<string, string> = {
+          auto: "Auto",
+          user_selectable: "User Select",
+          disabled: "Disabled",
+        };
+        return (
+          <div className="flex items-center gap-1.5">
+            <span
+              className="px-2 py-0.5 rounded-full text-xs font-medium"
+              style={{
+                backgroundColor:
+                  mode === "disabled"
+                    ? designTokens.colors.neutral[100]
+                    : designTokens.colors.primary[50],
+                color:
+                  mode === "disabled"
+                    ? designTokens.colors.neutral[600]
+                    : designTokens.colors.primary[700],
+              }}
+            >
+              {modeLabels[mode] ?? mode}
+            </span>
+            {count > 0 && (
+              <span
+                className="px-1.5 py-0.5 rounded-full text-xs font-medium"
+                style={{
+                  backgroundColor: designTokens.colors.success[50],
+                  color: designTokens.colors.success[700],
+                }}
+              >
+                {count} AZ{count !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: "status",
@@ -163,6 +186,31 @@ const AdminRegion = () => {
           {value ? "Active" : "Inactive"}
         </span>
       ),
+    },
+    {
+      key: "provider",
+      header: "Provider",
+      render: (value: unknown) => {
+        const provider = value ? String(value) : null;
+        return (
+          <div className="flex items-center gap-2">
+            <Server size={16} style={{ color: designTokens.colors.neutral[400] }} />
+            <span
+              className="px-2 py-1 rounded-full text-xs font-medium"
+              style={{
+                backgroundColor: provider
+                  ? designTokens.colors.neutral[100]
+                  : designTokens.colors.neutral[50],
+                color: provider
+                  ? designTokens.colors.neutral[600]
+                  : designTokens.colors.neutral[400],
+              }}
+            >
+              {provider || "Via AZs"}
+            </span>
+          </div>
+        );
+      },
     },
   ];
 
@@ -248,7 +296,7 @@ const AdminRegion = () => {
 
         <ModernCard>
           <ModernTable
-            title={`Infrastructure Regions · Providers: ${regionStats.uniqueProviders}`}
+            title="Infrastructure Regions"
             data={regionList}
             columns={columns}
             actions={actions}

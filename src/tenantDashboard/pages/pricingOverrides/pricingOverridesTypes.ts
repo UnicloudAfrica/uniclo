@@ -47,7 +47,7 @@ export interface PricingCatalogRow {
   [key: string]: unknown;
 }
 
-export type OverrideScope = "region" | "country";
+export type OverrideScope = "region" | "country" | "availability_zone";
 
 export interface ModalRowState {
   item: PricingCatalogRow;

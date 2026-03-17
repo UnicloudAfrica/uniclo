@@ -113,8 +113,6 @@ export function getProviderShortLabel(provider?: string | null): string {
  *
  * Replaces the repeated ternary logic across admin pages.
  */
-export function getRegionOptionLabel(region: { name?: string; provider?: string | null }): string {
-  if (!region.provider) return region.name || "Unknown region";
-  const providerLabel = getProviderShortLabel(region.provider);
-  return `${providerLabel} — ${region.name || "Unknown region"}`;
+export function getRegionOptionLabel(region: { name?: string; label?: string; provider?: string | null }): string {
+  return region.label || region.name || "Unknown region";
 }

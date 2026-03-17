@@ -256,7 +256,7 @@ const AdminCreateInstance = () => {
   return (
     <AdminPageShell
       title="Create Cube-Instance"
-      description="Provision Zadara-backed cube-instances for a tenant or user."
+      description="Create and provision cloud compute instances for your business."
       actions={
         <div className="flex items-center gap-3">
           <ModernButton

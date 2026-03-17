@@ -149,6 +149,39 @@ export {
   managedDatabaseKeys,
 } from "./managedDatabaseHooks";
 
+// Integrations (Protection Services)
+export {
+  useFetchIntegrationOperations,
+  useFetchIntegrationOperationById,
+  integrationOperationKeys,
+} from "./integrationHooks";
+
+// External Endpoints (Migration-as-a-Service)
+export {
+  useFetchExternalEndpoints,
+  useFetchExternalEndpoint,
+  useCreateExternalEndpoint,
+  useUpdateExternalEndpoint,
+  useDeleteExternalEndpoint,
+  useTestEndpointConnection,
+  useScanEndpointSize,
+  externalEndpointKeys,
+  externalEndpointExtendedKeys,
+} from "./externalEndpointHooks";
+
+// External Migrations (Migration-as-a-Service)
+export {
+  useFetchExternalMigrations,
+  useFetchExternalMigration,
+  useEstimateMigrationCost,
+  useInitiateExternalMigration,
+  useConfirmExternalMigration,
+  useCancelExternalMigration,
+  usePollMigrationProgress,
+  externalMigrationKeys,
+  externalMigrationExtendedKeys,
+} from "./externalMigrationHooks";
+
 // Re-export factory and types for custom resource hooks
 export { createResourceHooks, createQueryKeys } from "../createResourceHooks";
 export type { ResourceHooks } from "../createResourceHooks";

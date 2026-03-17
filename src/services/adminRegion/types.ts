@@ -65,11 +65,12 @@ export interface RegionCreatePayload {
   code: string;
   country_code: string | null;
   city: string | null;
-  provider: string;
+  provider?: string | null;
   is_active: boolean;
   ownership_type: string;
   visibility: string;
   fast_track_mode: string;
+  az_selection_mode?: "auto" | "user_selectable" | "disabled";
 }
 
 export interface RegionUpdatePayload {

@@ -80,6 +80,7 @@ const AdminCreateInstance = () => {
     removeAdditionalVolume,
     handleCreateOrder,
     handlePaymentCompleted,
+    setSelectedPaymentOption,
     apiBaseUrl,
   } = logic;
 
@@ -392,6 +393,7 @@ const AdminCreateInstance = () => {
                 selectedUserId={String(selectedUserId)}
                 clientOptions={clientOptions}
                 onPaymentComplete={handlePaymentCompleted}
+                onPaymentOptionChange={setSelectedPaymentOption}
                 apiBaseUrl={apiBaseUrl}
                 paymentTransactionLabel={paymentTransactionLabel}
               />

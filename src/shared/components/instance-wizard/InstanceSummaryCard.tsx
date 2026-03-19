@@ -102,6 +102,8 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
   const payableTotal =
     gatewayTotal > 0 ? gatewayTotal : estimatedTotalResolved + (gatewayFees || 0);
   const difference = estimatedTotalResolved > 0 ? payableTotal - estimatedTotalResolved : 0;
+  const hasGatewayVariance =
+    Math.abs(difference) > 0.01 && Math.abs(difference - gatewayFees) > 0.01;
   const showPricingBreakdown = estimatedTotalResolved > 0 || gatewayFees !== 0 || payableTotal > 0;
   const displayCurrency =
     summaryDisplayCurrency ||
@@ -418,7 +420,7 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
                   </span>
                 </div>
               )}
-              {difference < -0.01 && (
+              {difference < -0.01 && hasGatewayVariance && (
                 <div className="flex items-center justify-between">
                   <span>Gateway adjustment</span>
                   <span className="font-medium text-emerald-700">
@@ -433,13 +435,13 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
                 </span>
               </div>
             </div>
-            {difference > 0.01 && (
+            {difference > 0.01 && hasGatewayVariance && (
               <p className="text-[11px] text-gray-500">
                 Gateway total is higher than the estimate by {displayCurrency}{" "}
                 {formatCurrencyValue(difference)}.
               </p>
             )}
-            {difference < -0.01 && (
+            {difference < -0.01 && hasGatewayVariance && (
               <p className="text-[11px] text-gray-500">
                 Gateway total is lower than the estimate by {displayCurrency}{" "}
                 {formatCurrencyValue(Math.abs(difference))}.

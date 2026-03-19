@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2, Plus, Trash2, Upload } from "lucide-react";
+import { useQueries } from "@tanstack/react-query";
 
 import Papa from "papaparse";
 import { read as readWorkbook, utils as xlsxUtils } from "xlsx";
@@ -24,10 +25,19 @@ import {
   mapRowToEntry,
 } from "@/utils/productImportUtils";
 import logger from "@/utils/logger";
+import silentApi from "../../index/admin/silent";
 
 interface RegionOption {
   code: string;
   name: string;
+  [key: string]: unknown;
+}
+
+interface AZOption {
+  id: number;
+  code: string;
+  name: string;
+  provider: string;
   [key: string]: unknown;
 }
 
@@ -53,6 +63,7 @@ const AdminProductCreate = () => {
     }, {});
   }, [regions]);
 
+  // Collect unique region codes for AZ fetching
   const {
     entries,
     setEntries,
@@ -63,6 +74,39 @@ const AdminProductCreate = () => {
     handleProductSelect,
     validateEntries,
   } = useProductForm(regionLookup);
+
+  const usedRegionCodes = useMemo(
+    () => [...new Set(entries.map((e: ProductEntry) => e.region).filter(Boolean))],
+    [entries]
+  );
+
+  const azQueryResults = useQueries({
+    queries: usedRegionCodes.map((code) => ({
+      queryKey: ["availability-zones", code],
+      queryFn: async () => {
+        const res = await silentApi<{ data?: AZOption[] }>(
+          "GET",
+          `/regions/${code}/availability-zones`
+        );
+        const azList = (res as { data?: AZOption[] })?.data ?? [];
+        if (!Array.isArray(azList)) throw new Error("Failed to fetch availability zones");
+        return { code, data: azList as AZOption[] };
+      },
+      enabled: !!code,
+      staleTime: 1000 * 60 * 5,
+      refetchOnWindowFocus: false,
+    })),
+  });
+
+  const azByRegion = useMemo(() => {
+    const map: Record<string, AZOption[]> = {};
+    azQueryResults.forEach((result) => {
+      if (result.data) {
+        map[result.data.code] = result.data.data;
+      }
+    });
+    return map;
+  }, [azQueryResults]);
 
   const isSubmitting = isCreating || isAuthLoading || isImporting;
 
@@ -80,6 +124,7 @@ const AdminProductCreate = () => {
         productable_id: Number(entry.productable_id),
         provider: entry.provider,
         region: entry.region,
+        availability_zone: entry.availability_zone || undefined,
         price: Number(entry.price),
       })),
     };
@@ -232,6 +277,38 @@ const AdminProductCreate = () => {
             </p>
           </div>
         ),
+      },
+      {
+        key: "availability_zone",
+        header: "AZ",
+        render: (_: unknown, entry: ProductEntry, index: number) => {
+          const azs = azByRegion[entry.region] || [];
+          return (
+            <div>
+              <select
+                value={entry.availability_zone}
+                onChange={(e) => {
+                  const selectedAz = azs.find((az: AZOption) => az.code === e.target.value);
+                  if (selectedAz) {
+                    handleEntryFieldChange(index, "provider", selectedAz.provider);
+                  }
+                  handleEntryFieldChange(index, "availability_zone", e.target.value);
+                }}
+                className="w-full input-field border-gray-300"
+                disabled={isSubmitting || !entry.region}
+              >
+                <option value="">
+                  {!entry.region ? "Select region first" : "All AZs"}
+                </option>
+                {azs.map((az) => (
+                  <option key={az.code} value={az.code}>
+                    {az.name} ({az.provider})
+                  </option>
+                ))}
+              </select>
+            </div>
+          );
+        },
       },
       {
         key: "type",
@@ -458,7 +535,7 @@ const AdminProductCreate = () => {
 
             <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-gray-500">
-                Region automatically determines the provider. Select a type to load available
+                Region determines the provider. Select an AZ to filter by provider, then select a type to load available
                 products.
               </p>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">

@@ -3,6 +3,7 @@ import { Activity } from "lucide-react";
 import { ModernButton, ModernCard } from "../../ui";
 import ProjectUnifiedView, { ProjectUnifiedViewProps } from "./ProjectUnifiedView";
 import GettingStartedChecklist from "./GettingStartedChecklist";
+import { isFeatureSupported } from "@/utils/featureGating";
 
 interface RequiredActionPayload {
   method?: string;
@@ -35,9 +36,22 @@ const ProjectDetailsOverview: React.FC<ProjectDetailsOverviewProps> = ({
   onNavigateToTab,
   children,
 }) => {
-  const actionItems = requiredActions.filter(
-    (item) => item?.action && !item.completed && !item.complete
-  );
+  const provider = unifiedViewProps.project?.provider;
+
+  const ACTION_FEATURE_MAP: Record<string, string> = {
+    vpc_enabled: "vpcs",
+    user_auth: "user_authentication",
+    authenticate_users: "user_authentication",
+    edge_network: "edge_network",
+  };
+
+  const actionItems = requiredActions
+    .filter((item) => item?.action && !item.completed && !item.complete)
+    .filter((item) => {
+      const featureKey = ACTION_FEATURE_MAP[item.key ?? ""];
+      if (!featureKey) return true;
+      return isFeatureSupported(provider, featureKey);
+    });
 
   // Derive checklist data from props already flowing through the overview
   const rc = unifiedViewProps.resourceCounts ?? {};

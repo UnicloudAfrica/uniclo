@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   HardDrive,
@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { ModernButton, ModernCard, ModernInput, SelectableInput } from "../../ui";
 import { useFetchProductPricing } from "@/hooks/resource";
+import { useFetchAvailabilityZones } from "@/hooks/adminHooks/regionHooks";
 import { BillingRegion, PricingRequest, ProductPricing } from "../types";
 
 const formatCurrency = (amount: number | null | undefined, currency: string = "USD") => {
@@ -32,6 +33,7 @@ const formatCurrency = (amount: number | null | undefined, currency: string = "U
 
 const createInitialSearchState = () => ({
   region: "",
+  az: "",
   compute: "",
   os: "",
   volume: "",
@@ -97,6 +99,8 @@ interface ResourceSelectionSectionProps {
   data: PricingRequest;
   regions: BillingRegion[];
   isRegionsFetching: boolean;
+  availabilityZoneOptions: { id: string; name: string }[];
+  isAzFetching: boolean;
   itemErrors: Record<string, string | null>;
   searchTerms: any;
   setSearchTerms: React.Dispatch<React.SetStateAction<any>>;
@@ -124,6 +128,8 @@ const ResourceSelectionSection: React.FC<ResourceSelectionSectionProps> = ({
   data,
   regions,
   isRegionsFetching,
+  availabilityZoneOptions,
+  isAzFetching,
   itemErrors,
   searchTerms,
   setSearchTerms,
@@ -164,6 +170,29 @@ const ResourceSelectionSection: React.FC<ResourceSelectionSectionProps> = ({
 
     <div className="space-y-2">
       <div className="flex items-center justify-between">
+        <label className="text-sm font-medium text-slate-700">
+          Availability Zone
+        </label>
+        {isAzFetching && (
+          <span className="flex items-center gap-1 text-xs text-slate-500">
+            <Loader2 className="h-3 w-3 animate-spin" /> Loading
+          </span>
+        )}
+      </div>
+      <SelectableInput
+        options={availabilityZoneOptions}
+        value={(data as any)["availability_zone"] || ""}
+        searchValue={searchTerms.az || ""}
+        onSearchChange={(v) => setSearchTerms((prev: any) => ({ ...prev, az: v }))}
+        onSelect={handleSelectableChange("availability_zone" as keyof PricingRequest)}
+        placeholder={!data["region"] ? "Select a region first" : "Select availability zone"}
+        disabled={!data["region"]}
+        isLoading={isAzFetching}
+      />
+    </div>
+
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
         <label htmlFor={`compute-${index}`} className="text-sm font-medium text-slate-700">
           Compute instance<span className="text-red-500">*</span>
         </label>
@@ -178,7 +207,7 @@ const ResourceSelectionSection: React.FC<ResourceSelectionSectionProps> = ({
       </div>
       <SelectableInput
         options={
-          computerInstances?.map(({ product, pricing }: any) => ({
+          computerInstances?.filter((i: any) => i?.product)?.map(({ product, pricing }: any) => ({
             id: Number(product.productable_id),
             name: `${product.name} • ${formatCurrency(pricing?.effective?.price_local, pricing?.effective?.currency) || "N/A"}`,
           })) || []
@@ -211,7 +240,7 @@ const ResourceSelectionSection: React.FC<ResourceSelectionSectionProps> = ({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <SelectableInput
           options={
-            osImages?.map(({ product, pricing }: any) => ({
+            osImages?.filter((i: any) => i?.product)?.map(({ product, pricing }: any) => ({
               id: Number(product.productable_id),
               name: `${product.name} • ${formatCurrency(pricing?.effective?.price_local, pricing?.effective?.currency) || "N/A"}`,
             })) || []
@@ -287,7 +316,7 @@ const StorageVolumesSection: React.FC<StorageVolumesSectionProps> = ({
       <div className="space-y-2">
         {data["volumes"].map((vol, idx) => {
           const volProduct = ebsVolumes?.find(
-            (v: any) => String(v.product.productable_id) === String(vol.volume_type_id)
+            (v: any) => v?.product && String(v.product.productable_id) === String(vol.volume_type_id)
           );
           return (
             <div
@@ -317,7 +346,7 @@ const StorageVolumesSection: React.FC<StorageVolumesSectionProps> = ({
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_120px_auto]">
       <SelectableInput
         options={
-          ebsVolumes?.map(({ product, pricing }: any) => ({
+          ebsVolumes?.filter((i: any) => i?.product)?.map(({ product, pricing }: any) => ({
             id: Number(product.productable_id),
             name: `${product.name} • ${formatCurrency(Number(pricing?.effective?.price_local), pricing?.effective?.currency)}/GB`,
           })) || []
@@ -401,7 +430,7 @@ const NetworkingOptionsSection: React.FC<NetworkingOptionsSectionProps> = ({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <SelectableInput
               options={
-                bandwidths?.map(({ product }: any) => ({
+                bandwidths?.filter((i: any) => i?.product)?.map(({ product }: any) => ({
                   id: Number(product.productable_id),
                   name: product.name,
                 })) || []
@@ -420,7 +449,7 @@ const NetworkingOptionsSection: React.FC<NetworkingOptionsSectionProps> = ({
             />
             <SelectableInput
               options={
-                floatingIps?.map(({ product }: any) => ({
+                floatingIps?.filter((i: any) => i?.product)?.map(({ product }: any) => ({
                   id: Number(product.productable_id),
                   name: product.name,
                 })) || []
@@ -440,7 +469,7 @@ const NetworkingOptionsSection: React.FC<NetworkingOptionsSectionProps> = ({
             <div className="sm:col-span-2">
               <SelectableInput
                 options={
-                  crossConnects?.map(({ product }: any) => ({
+                  crossConnects?.filter((i: any) => i?.product)?.map(({ product }: any) => ({
                     id: Number(product.productable_id),
                     name: product.name,
                   })) || []
@@ -493,44 +522,67 @@ const PricingWorkloadCard: React.FC<PricingWorkloadCardProps> = ({
   const [isNetworkingOpen, setIsNetworkingOpen] = useState(false);
   const [itemErrors, setItemErrors] = useState(errors);
 
+  // Fetch availability zones for the selected region
+  const { data: availabilityZones = [], isFetching: isAzFetching } = useFetchAvailabilityZones(
+    data["region"] || null
+  );
+
+  const availabilityZoneOptions = useMemo(() => {
+    if (!Array.isArray(availabilityZones)) return [];
+    return availabilityZones
+      .filter((az: any) => az.is_active !== false)
+      .map((az: any) => ({
+        id: az.code,
+        name: az.name || az.code,
+      }));
+  }, [availabilityZones]);
+
   useEffect(() => {
     setItemErrors(errors);
   }, [errors]);
 
+  const selectedAz = (data as any)["availability_zone"] || "";
+  const hasAz = !!selectedAz;
+  const canFetchProducts = !!data["region"] && hasAz;
+
   const { data: computerInstancesRaw, isFetching: isComputerInstancesFetching } =
     useFetchProductPricing(data["region"], "compute_instance", {
-      enabled: !!data["region"],
+      enabled: canFetchProducts,
       countryCode,
+      availabilityZone: selectedAz,
     });
 
   const { data: osImagesRaw, isFetching: isOsImagesFetching } = useFetchProductPricing(
     data["region"],
     "os_image",
-    { enabled: !!data["region"], countryCode }
+    { enabled: canFetchProducts, countryCode, availabilityZone: selectedAz }
   );
 
   const { data: ebsVolumesRaw, isFetching: isEbsVolumesFetching } = useFetchProductPricing(
     data["region"],
     "volume_type",
-    { enabled: !!data["region"], countryCode }
+    { enabled: canFetchProducts, countryCode, availabilityZone: selectedAz }
   );
 
   const { data: bandwidthsRaw } = useFetchProductPricing(data["region"], "bandwidth", {
-    enabled: !!data["region"],
+    enabled: canFetchProducts,
     countryCode,
+    availabilityZone: selectedAz,
   });
 
   const { data: floatingIpsRaw } = useFetchProductPricing(data["region"], "ip", {
-    enabled: !!data["region"],
+    enabled: canFetchProducts,
     countryCode,
+    availabilityZone: selectedAz,
   });
 
   const { data: crossConnectsRaw, isFetching: isCrossConnectsFetching } = useFetchProductPricing(
     data["region"],
     "cross_connect",
     {
-      enabled: !!data["region"],
+      enabled: canFetchProducts,
       countryCode,
+      availabilityZone: selectedAz,
     }
   );
 
@@ -542,7 +594,7 @@ const PricingWorkloadCard: React.FC<PricingWorkloadCardProps> = ({
   const crossConnects = asProductPricingList(crossConnectsRaw);
 
   const findSelectedItem = (collection: ProductPricing[], id: number | string | null | undefined) =>
-    collection?.find(({ product }) => String(product.productable_id) === String(id));
+    collection?.find((item) => item?.product && String(item.product.productable_id) === String(id));
 
   const selectedCompute = findSelectedItem(computerInstances, data["compute_instance_id"]);
   const selectedOs = findSelectedItem(osImages, data["os_image_id"]);
@@ -586,6 +638,7 @@ const PricingWorkloadCard: React.FC<PricingWorkloadCardProps> = ({
           ...data,
           region: value || "",
           region_name: name,
+          availability_zone: "",
           compute_instance_id: 0,
           compute_instance_name: "",
           os_image_id: 0,
@@ -597,11 +650,41 @@ const PricingWorkloadCard: React.FC<PricingWorkloadCardProps> = ({
           floating_ip_id: 0,
           floating_ip_count: 0,
           cross_connect_id: 0,
-        });
+        } as any);
         setSearchTerms({
           ...createInitialSearchState(),
           region: name,
         });
+        return;
+      }
+
+      // When AZ changes, reset dependent product selections since products are AZ-specific
+      if (field === ("availability_zone" as any)) {
+        onChange({
+          ...data,
+          availability_zone: value || "",
+          compute_instance_id: 0,
+          compute_instance_name: "",
+          os_image_id: 0,
+          os_image_name: "",
+          volume_type_id: 0,
+          volumes: [],
+          bandwidth_id: 0,
+          bandwidth_count: 0,
+          floating_ip_id: 0,
+          floating_ip_count: 0,
+          cross_connect_id: 0,
+        } as any);
+        setSearchTerms((prev) => ({
+          ...prev,
+          az: name,
+          compute: "",
+          os: "",
+          volume: "",
+          bandwidth: "",
+          floatingIp: "",
+          crossConnect: "",
+        }));
         return;
       }
 
@@ -657,7 +740,7 @@ const PricingWorkloadCard: React.FC<PricingWorkloadCardProps> = ({
     if (!validateVolumeInput()) return;
 
     const found = ebsVolumes?.find(
-      (item: any) => String(item.product.productable_id) === String(data["volume_type_id"])
+      (item: any) => item?.product && String(item.product.productable_id) === String(data["volume_type_id"])
     );
     const volName = found?.product?.name || "Volume";
 
@@ -741,6 +824,8 @@ const PricingWorkloadCard: React.FC<PricingWorkloadCardProps> = ({
                 data={data}
                 regions={regions}
                 isRegionsFetching={isRegionsFetching}
+                availabilityZoneOptions={availabilityZoneOptions}
+                isAzFetching={isAzFetching}
                 itemErrors={itemErrors}
                 searchTerms={searchTerms}
                 setSearchTerms={setSearchTerms}

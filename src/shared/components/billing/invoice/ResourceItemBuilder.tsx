@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { ModernInput, ModernButton } from "../../ui";
+import { useFetchAvailabilityZones } from "@/hooks/adminHooks/regionHooks";
 import { BillingRegion, InvoiceFormData, ProductPricing, UpdateInvoiceFormData } from "../types";
 
 interface ResourceItemBuilderProps {
@@ -46,6 +47,21 @@ const ResourceItemBuilder: React.FC<ResourceItemBuilderProps> = ({
 }) => {
   const [showNetworking, setShowNetworking] = useState(false);
 
+  // Fetch availability zones for the selected region
+  const { data: availabilityZones = [], isFetching: isAzFetching } = useFetchAvailabilityZones(
+    formData.region || null
+  );
+
+  const azOptions = useMemo(() => {
+    if (!Array.isArray(availabilityZones)) return [];
+    return availabilityZones
+      .filter((az: any) => az.is_active !== false)
+      .map((az: any) => ({
+        code: az.code,
+        name: az.name || az.code,
+      }));
+  }, [availabilityZones]);
+
   const selectClass =
     "w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400";
 
@@ -78,6 +94,26 @@ const ResourceItemBuilder: React.FC<ResourceItemBuilderProps> = ({
             ))}
           </select>
           {errors.region && <p className="mt-1 text-xs text-red-600">{errors.region}</p>}
+        </div>
+
+        {/* Availability Zone */}
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Availability Zone
+          </label>
+          <select
+            value={(formData as any).availability_zone || ""}
+            onChange={(e) => updateFormData("availability_zone" as any, e.target.value)}
+            className={selectClass}
+            disabled={!formData.region || isAzFetching}
+          >
+            <option value="">{!formData.region ? "Select a region first" : "Select availability zone"}</option>
+            {azOptions.map((az) => (
+              <option key={az.code} value={az.code}>
+                {az.name} ({az.code})
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Compute Instance */}

@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useApiContext, ApiContext } from "./useApiContext";
 import ToastUtils from "../utils/toastUtil";
 import { Configuration, AdditionalVolume } from "../types/InstanceConfiguration";
@@ -6,6 +6,7 @@ import { useAsyncAction } from "../shared/hooks/useAsyncAction";
 import {
   evaluateConfigurationCompleteness,
   normalizePaymentOptions,
+  pickPreferredPaymentOption,
 } from "../utils/instanceCreationUtils";
 
 interface UseInstanceOrderCreationProps {
@@ -42,6 +43,73 @@ export const useInstanceOrderCreation = ({
   const [submissionResult, setSubmissionResult] = useState<any>(null);
   const [orderReceipt, setOrderReceipt] = useState<any>(null);
   const [selectedPaymentOption, setSelectedPaymentOption] = useState<any>(null);
+  const submittedFingerprintRef = useRef<string | null>(null);
+
+  const clearOrderState = useCallback(() => {
+    setSubmissionResult(null);
+    setOrderReceipt(null);
+    setSelectedPaymentOption(null);
+  }, []);
+
+  const orderStateFingerprint = useMemo(
+    () =>
+      JSON.stringify({
+        isFastTrack,
+        billingCountry,
+        contextType,
+        selectedTenantId,
+        selectedUserId,
+        configurations: configurations.map((cfg) => ({
+          id: cfg.id,
+          region: cfg.region,
+          availability_zone: cfg.availability_zone || "",
+          project_id: cfg.project_id,
+          project_mode: cfg.project_mode || "",
+          project_name: cfg.project_name || "",
+          network_preset: cfg.network_preset || "",
+          compute_instance_id: cfg.compute_instance_id,
+          os_image_id: cfg.os_image_id,
+          volume_type_id: cfg.volume_type_id,
+          storage_size_gb: Number(cfg.storage_size_gb || 0),
+          months: Number(cfg.months || 0),
+          instance_count: Number(cfg.instance_count || 0),
+          bandwidth_id: cfg.bandwidth_id || "",
+          floating_ip_count: Number(cfg.floating_ip_count || 0),
+          network_id: cfg.network_id || "",
+          subnet_id: cfg.subnet_id || "",
+          keypair_name: cfg.keypair_name || "",
+          assignment_scope: cfg.assignment_scope || "",
+          member_user_ids: Array.isArray(cfg.member_user_ids)
+            ? [...cfg.member_user_ids].map((id) => Number(id)).filter(Boolean).sort((a, b) => a - b)
+            : [],
+          security_group_ids: Array.isArray(cfg.security_group_ids)
+            ? [...cfg.security_group_ids].map((id) => String(id)).sort()
+            : [],
+          additional_volumes: (cfg.additional_volumes || []).map((vol) => ({
+            volume_type_id: vol.volume_type_id || "",
+            storage_size_gb: Number(vol.storage_size_gb || 0),
+          })),
+        })),
+      }),
+    [
+      isFastTrack,
+      billingCountry,
+      contextType,
+      selectedTenantId,
+      selectedUserId,
+      configurations,
+    ]
+  );
+
+  useEffect(() => {
+    if (
+      submittedFingerprintRef.current &&
+      submittedFingerprintRef.current !== orderStateFingerprint
+    ) {
+      submittedFingerprintRef.current = null;
+      clearOrderState();
+    }
+  }, [orderStateFingerprint, clearOrderState]);
 
   const apiCall = useCallback(
     async (method: string, endpoint: string, body?: any) => {
@@ -181,8 +249,8 @@ export const useInstanceOrderCreation = ({
   }, [configurations, isFastTrack, billingCountry, contextType, selectedTenantId, selectedUserId]);
 
   const handleCreateOrder = useCallback(async () => {
-    setSubmissionResult(null);
-    setOrderReceipt(null);
+    submittedFingerprintRef.current = null;
+    clearOrderState();
 
     await createOrderAction.run(
       async () => {
@@ -199,6 +267,9 @@ export const useInstanceOrderCreation = ({
 
         const normalizedGatewayOptions = normalizePaymentOptions(
           data?.payment?.payment_gateway_options || data?.payment?.options || data?.payment_options
+        );
+        const preferredPaymentOption = pickPreferredPaymentOption(
+          normalizedGatewayOptions as Array<Record<string, unknown>>
         );
         const pricingBreakdownPayload =
           data?.pricing_breakdown ||
@@ -234,7 +305,8 @@ export const useInstanceOrderCreation = ({
           payment: mergedResult?.payment || null,
           pricing_breakdown: mergedResult?.pricing_breakdown || null,
         });
-        setSelectedPaymentOption(normalizedGatewayOptions[0] || null);
+        setSelectedPaymentOption(preferredPaymentOption || null);
+        submittedFingerprintRef.current = orderStateFingerprint;
 
         const isPaymentRequired = mergedResult?.payment?.required;
         if (isPaymentRequired) {
@@ -263,10 +335,12 @@ export const useInstanceOrderCreation = ({
       }
     );
   }, [
-    buildPayload,
     apiCall,
+    buildPayload,
+    clearOrderState,
     configurations,
     createOrderAction,
+    orderStateFingerprint,
     paymentStepIndex,
     reviewStepIndex,
     setActiveStep,

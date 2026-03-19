@@ -8,3 +8,5 @@ export { default as EndpointStep } from "./EndpointStep";
 export { default as MigrationConfigStep } from "./MigrationConfigStep";
 export { default as CostEstimateStep } from "./CostEstimateStep";
 export { default as MigrationProgressStep } from "./MigrationProgressStep";
+export { default as PreflightResultsCard } from "./PreflightResultsCard";
+export { default as KernelComparisonCard } from "./KernelComparisonCard";

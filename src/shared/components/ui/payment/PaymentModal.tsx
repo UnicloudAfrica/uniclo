@@ -720,30 +720,31 @@ const PaymentModal = ({
         activeOptionForAmounts?.tax ??
         0
     );
+    const fallbackEstimatedTotal = toNumber(
+      pricingSummary.grandTotal ??
+        propAmount ??
+        activeOptionForAmounts?.charge_breakdown?.base_amount ??
+        activeOptionForAmounts?.subtotal ??
+        transaction?.amount ??
+        0
+    );
     const resolvedGatewayFees = toNumber(
-      pricingSummary.gatewayFees ??
-        activeOptionForAmounts?.charge_breakdown?.total_fees ??
+      activeOptionForAmounts?.charge_breakdown?.total_fees ??
         activeOptionForAmounts?.fees ??
+        pricingSummary.gatewayFees ??
         transaction?.third_party_fee ??
         transaction?.transaction_fee ??
         0
     );
-    const resolvedGrandTotal = toNumber(
-      pricingSummary.grandTotal ??
-        propAmount ??
-        activeOptionForAmounts?.charge_breakdown?.grand_total ??
-        activeOptionForAmounts?.total ??
-        transaction?.amount ??
-        0
-    );
     const estimatedTotal = resolvedSubtotal + resolvedTax;
-    const estimatedTotalResolved = estimatedTotal > 0 ? estimatedTotal : resolvedGrandTotal;
+    const estimatedTotalResolved = estimatedTotal > 0 ? estimatedTotal : fallbackEstimatedTotal;
     const gatewayTotal = toNumber(
       activeOptionForAmounts?.charge_breakdown?.grand_total ?? activeOptionForAmounts?.total ?? 0
     );
     const payableTotal =
       gatewayTotal > 0 ? gatewayTotal : estimatedTotalResolved + (resolvedGatewayFees || 0);
     const adjustment = estimatedTotalResolved > 0 ? payableTotal - estimatedTotalResolved : 0;
+    const resolvedGrandTotal = gatewayTotal > 0 ? gatewayTotal : estimatedTotalResolved;
     const displayCurrency =
       pricingSummary.currency ||
       propCurrency ||
@@ -778,7 +779,9 @@ const PaymentModal = ({
   ]);
   const displayPayableTotal =
     amountDetails.payableTotal > 0 ? amountDetails.payableTotal : amountDetails.resolvedGrandTotal;
-  const hasAdjustment = Math.abs(amountDetails.adjustment) > 0.01;
+  const hasAdjustment =
+    Math.abs(amountDetails.adjustment) > 0.01 &&
+    Math.abs(amountDetails.adjustment - amountDetails.resolvedGatewayFees) > 0.01;
 
   const paystackAmount = useMemo(() => {
     const total = Number(displayPayableTotal ?? 0);

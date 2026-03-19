@@ -22,6 +22,7 @@ import {
   Users,
 } from "lucide-react";
 import { ModernButton } from "../../ui";
+import { isFeatureSupported } from "@/utils/featureGating";
 
 interface ChecklistStep {
   id: string;
@@ -71,133 +72,122 @@ const GettingStartedChecklist: React.FC<GettingStartedChecklistProps> = ({
   onNavigateToTab,
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
-  const isNobus = provider?.toLowerCase() === "nobus";
+  const supportsVpc = isFeatureSupported(provider, "vpcs");
+  const supportsInternet = isFeatureSupported(provider, "internet_gateways");
+  const supportsDns = isFeatureSupported(provider, "dns");
+  const supportsAutoScaling = isFeatureSupported(provider, "autoscaling");
 
-  // Zadara steps — VPC-based infrastructure setup (7 steps, first 4 required)
-  const zadaraSteps: ChecklistStep[] = useMemo(
-    () => [
-      {
+  // Build steps conditionally based on provider capabilities
+  const steps: ChecklistStep[] = useMemo(() => {
+    const result: ChecklistStep[] = [];
+
+    if (supportsVpc) {
+      result.push({
         id: "networking",
         label: "Set up networking",
         description: "Create a VPC and subnet to host your servers",
         icon: Network,
         targetTab: "networking",
         isComplete: vpcCount > 0 && subnetCount > 0,
-      },
-      {
-        id: "security",
-        label: "Configure security",
-        description: "Set up security groups to control inbound/outbound traffic",
-        icon: Shield,
-        targetTab: "networking",
-        isComplete: securityGroupCount > 0,
-      },
-      {
+      });
+    }
+
+    result.push({
+      id: "security",
+      label: "Configure security",
+      description: "Set up security groups to control inbound/outbound traffic",
+      icon: Shield,
+      targetTab: supportsVpc ? "networking" : "compute",
+      isComplete: securityGroupCount > 0,
+    });
+
+    if (supportsInternet) {
+      result.push({
         id: "internet",
         label: "Enable internet access",
         description: "Connect your network to the internet via a gateway",
         icon: Globe,
         targetTab: "networking",
         isComplete: internetEnabled,
-      },
-      {
-        id: "compute",
-        label: "Launch your first server",
-        description: "Create a virtual machine (instance) to run your applications",
-        icon: Server,
-        targetTab: "compute",
-        isComplete: instanceCount > 0,
-      },
-      {
-        id: "dns",
-        label: "Set up DNS (optional)",
-        description: "Map a domain name to your server\u2019s IP address",
-        icon: Globe,
-        targetTab: "dns",
-        isComplete: dnsZoneCount > 0,
-      },
-      {
-        id: "autoscaling",
-        label: "Configure auto-scaling (optional)",
-        description: "Automatically add or remove servers based on demand",
-        icon: Layers,
-        targetTab: "autoscaling",
-        isComplete: asgCount > 0,
-      },
-      {
-        id: "team",
-        label: "Invite your team (optional)",
-        description: "Add collaborators so they can manage resources too",
-        icon: Users,
-        targetTab: "team",
-        isComplete: teamMemberCount > 1,
-      },
-    ],
-    [
-      vpcCount,
-      subnetCount,
-      securityGroupCount,
-      internetEnabled,
-      instanceCount,
-      dnsZoneCount,
-      asgCount,
-      teamMemberCount,
-    ]
-  );
+      });
+    }
 
-  // Nobus steps — simpler model without VPCs/IGWs (5 steps, first 3 required)
-  const nobusSteps: ChecklistStep[] = useMemo(
-    () => [
-      {
-        id: "security",
-        label: "Configure security",
-        description: "Set up security groups to control inbound and outbound traffic",
-        icon: Shield,
-        targetTab: "compute",
-        isComplete: securityGroupCount > 0,
-      },
-      {
-        id: "compute",
-        label: "Launch your first server",
-        description: "Create a virtual machine (instance) to run your applications",
-        icon: Server,
-        targetTab: "compute",
-        isComplete: instanceCount > 0,
-      },
-      {
+    result.push({
+      id: "compute",
+      label: "Launch your first server",
+      description: "Create a virtual machine (instance) to run your applications",
+      icon: Server,
+      targetTab: "compute",
+      isComplete: instanceCount > 0,
+    });
+
+    if (!supportsVpc) {
+      // Show floating IP step for providers without VPC support
+      result.push({
         id: "public_access",
         label: "Assign public access",
         description: "Create a floating IP so your server is reachable from the internet",
         icon: Globe,
         targetTab: "compute",
         isComplete: floatingIpCount > 0,
-      },
-      {
-        id: "storage",
-        label: "Set up object storage (optional)",
-        description: "Store files, backups, and media in cloud object storage",
-        icon: Database,
-        targetTab: "storage",
-        isComplete: false,
-      },
-      {
-        id: "team",
-        label: "Invite your team (optional)",
-        description: "Add collaborators so they can manage resources too",
-        icon: Users,
-        targetTab: "team",
-        isComplete: teamMemberCount > 1,
-      },
-    ],
-    [securityGroupCount, instanceCount, floatingIpCount, teamMemberCount]
-  );
+      });
+    }
 
-  const steps = isNobus ? nobusSteps : zadaraSteps;
-  const totalRequired = isNobus ? 3 : 4; // Number of non-optional steps
+    if (supportsDns) {
+      result.push({
+        id: "dns",
+        label: "Set up DNS (optional)",
+        description: "Map a domain name to your server\u2019s IP address",
+        icon: Globe,
+        targetTab: "dns",
+        isComplete: dnsZoneCount > 0,
+      });
+    }
+
+    if (supportsAutoScaling) {
+      result.push({
+        id: "autoscaling",
+        label: "Configure auto-scaling (optional)",
+        description: "Automatically add or remove servers based on demand",
+        icon: Layers,
+        targetTab: "autoscaling",
+        isComplete: asgCount > 0,
+      });
+    }
+
+    result.push({
+      id: "team",
+      label: "Invite your team (optional)",
+      description: "Add collaborators so they can manage resources too",
+      icon: Users,
+      targetTab: "team",
+      isComplete: teamMemberCount > 1,
+    });
+
+    return result;
+  }, [
+    supportsVpc,
+    supportsInternet,
+    supportsDns,
+    supportsAutoScaling,
+    vpcCount,
+    subnetCount,
+    securityGroupCount,
+    internetEnabled,
+    instanceCount,
+    floatingIpCount,
+    dnsZoneCount,
+    asgCount,
+    teamMemberCount,
+  ]);
+
+  // Count required (non-optional) steps: all steps before the first optional one
+  const totalRequired = steps.findIndex((s) => s.label.includes("(optional)"));
+  const effectiveTotalRequired = totalRequired === -1 ? steps.length : totalRequired;
 
   const completedCount = steps.filter((s) => s.isComplete).length;
-  const requiredComplete = steps.slice(0, totalRequired).filter((s) => s.isComplete).length;
-  const allRequiredDone = requiredComplete >= totalRequired;
+  const requiredComplete = steps.slice(0, effectiveTotalRequired).filter((s) => s.isComplete).length;
+  const allRequiredDone = requiredComplete >= effectiveTotalRequired;
   const allDone = completedCount === steps.length;
   const progressPercent = Math.round((completedCount / steps.length) * 100);
 
@@ -270,7 +260,7 @@ const GettingStartedChecklist: React.FC<GettingStartedChecklistProps> = ({
         <div className="px-3 pb-3 md:px-4 md:pb-4 space-y-2">
           {steps.map((step, idx) => {
             const StepIcon = step.icon;
-            const isOptional = idx >= totalRequired;
+            const isOptional = idx >= effectiveTotalRequired;
 
             return (
               <div

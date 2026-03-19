@@ -204,14 +204,15 @@ export const createApiClient = ({
         }
 
         // Try auth redirect first — it will return false for business-logic 403s
-        const handled = handleAuthRedirect(response, res, redirectPath);
+        const suppressAuthRedirect = !showToasts;
+        const handled = suppressAuthRedirect ? false : handleAuthRedirect(response, res, redirectPath);
         if (handled) {
           authState?.clearSession?.();
           throw new Error("Unauthorized");
         }
 
         // Only clear session on 401 (expired token), not on business-logic 403s
-        if (response.status === 401) {
+        if (response.status === 401 && !suppressAuthRedirect) {
           authState?.clearSession?.();
         }
 
@@ -325,14 +326,15 @@ export const createMultipartApiClient = ({
         }
 
         // Try auth redirect first — it will return false for business-logic 403s
-        const handled = handleAuthRedirect(response, res, redirectPath);
+        const suppressAuthRedirect = !showToasts;
+        const handled = suppressAuthRedirect ? false : handleAuthRedirect(response, res, redirectPath);
         if (handled) {
           authState?.clearSession?.();
           throw new Error("Unauthorized");
         }
 
         // Only clear session on 401 (expired token), not on business-logic 403s
-        if (response.status === 401) {
+        if (response.status === 401 && !suppressAuthRedirect) {
           authState?.clearSession?.();
         }
 

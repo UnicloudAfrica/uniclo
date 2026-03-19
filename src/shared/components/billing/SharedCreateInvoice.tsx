@@ -106,18 +106,23 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
   };
   const { mutate: createMultiQuotes, isPending: isSubmissionPending } = useCreateMultiQuotes();
 
+  const invoiceAz = formData.availability_zone || "";
+  const canFetchInvoiceProducts = !!formData.region && !!invoiceAz;
+
   const { data: computerInstances, isFetching: isComputerInstancesFetching } =
     useFetchProductPricing(formData.region, "compute_instance", {
-      enabled: !!formData.region,
+      enabled: canFetchInvoiceProducts,
       countryCode: countryCode,
+      availabilityZone: invoiceAz,
     }) as { data: ProductPricing[] | undefined; isFetching: boolean };
 
   const { data: osImages, isFetching: isOsImagesFetching } = useFetchProductPricing(
     formData.region,
     "os_image",
     {
-      enabled: !!formData.region,
+      enabled: canFetchInvoiceProducts,
       countryCode: countryCode,
+      availabilityZone: invoiceAz,
     }
   ) as { data: ProductPricing[] | undefined; isFetching: boolean };
 
@@ -125,8 +130,9 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
     formData.region,
     "volume_type",
     {
-      enabled: !!formData.region,
+      enabled: canFetchInvoiceProducts,
       countryCode: countryCode,
+      availabilityZone: invoiceAz,
     }
   ) as { data: ProductPricing[] | undefined; isFetching: boolean };
 
@@ -134,8 +140,9 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
     formData.region,
     "bandwidth",
     {
-      enabled: !!formData.region,
+      enabled: canFetchInvoiceProducts,
       countryCode: countryCode,
+      availabilityZone: invoiceAz,
     }
   ) as { data: ProductPricing[] | undefined; isFetching: boolean };
 
@@ -143,8 +150,9 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
     formData.region,
     "ip",
     {
-      enabled: !!formData.region,
+      enabled: canFetchInvoiceProducts,
       countryCode: countryCode,
+      availabilityZone: invoiceAz,
     }
   ) as { data: ProductPricing[] | undefined; isFetching: boolean };
 
@@ -152,8 +160,9 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
     formData.region,
     "cross_connect",
     {
-      enabled: !!formData.region,
+      enabled: canFetchInvoiceProducts,
       countryCode: countryCode,
+      availabilityZone: invoiceAz,
     }
   ) as { data: ProductPricing[] | undefined; isFetching: boolean };
 

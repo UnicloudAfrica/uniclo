@@ -7,6 +7,7 @@ export interface UseObjectStorageFormStateReturn {
   removeProfile: (profileId: string) => void;
   updateProfile: (profileId: string, updates: Partial<ServiceProfile>) => void;
   handleRegionChange: (profileId: string, region: string) => void;
+  handleAvailabilityZoneChange: (profileId: string, az: string) => void;
   handleTierChange: (profileId: string, tierKey: string) => void;
   handleMonthsChange: (profileId: string, months: string) => void;
   handleStorageGbChange: (profileId: string, storageGb: string) => void;
@@ -47,7 +48,14 @@ export const useObjectStorageFormState = (): UseObjectStorageFormStateReturn => 
 
   const handleRegionChange = useCallback(
     (profileId: string, region: string) => {
-      updateProfile(profileId, { region, tierKey: "" }); // Reset tier when region changes
+      updateProfile(profileId, { region, tierKey: "", availability_zone: "" }); // Reset tier and AZ when region changes
+    },
+    [updateProfile]
+  );
+
+  const handleAvailabilityZoneChange = useCallback(
+    (profileId: string, az: string) => {
+      updateProfile(profileId, { availability_zone: az });
     },
     [updateProfile]
   );
@@ -97,6 +105,7 @@ export const useObjectStorageFormState = (): UseObjectStorageFormStateReturn => 
     removeProfile,
     updateProfile,
     handleRegionChange,
+    handleAvailabilityZoneChange,
     handleTierChange,
     handleMonthsChange,
     handleStorageGbChange,

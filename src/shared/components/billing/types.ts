@@ -42,6 +42,7 @@ export interface PricingRequestDisplay {
 
 export interface PricingRequest {
   region: string;
+  availability_zone?: string;
   compute_instance_id: number | null;
   os_image_id: number | null;
   months: number;
@@ -133,6 +134,7 @@ export interface InvoiceFormData {
 
   // Item staging fields (Step 2 form)
   region: string;
+  availability_zone?: string;
   compute_instance_id: number | null;
   os_image_id: number | null;
   months: number;

@@ -78,16 +78,38 @@ const extractRegionCode = (region: any) => {
   return region.code || region.region || region.slug || region.id || region.identifier || "";
 };
 
+const resolveEffectivePrice = (item: any) => {
+  const effective = item?.pricing?.effective || {};
+  const candidates = [
+    effective.price_local,
+    effective.price_usd,
+    effective.amount,
+    item?.price_local,
+    item?.price_usd,
+    item?.amount,
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate === null || candidate === undefined || candidate === "") {
+      continue;
+    }
+
+    const numeric = Number(candidate);
+    if (Number.isFinite(numeric) && numeric >= 0) {
+      return numeric;
+    }
+  }
+
+  return null;
+};
+
 const hasEffectivePricing = (item: any) => {
-  const raw = item?.pricing?.effective?.price_usd;
-  if (raw === null || raw === undefined) return false;
-  const priceUsd = Number(raw);
-  return Number.isFinite(priceUsd) && priceUsd >= 0;
+  return resolveEffectivePrice(item) !== null;
 };
 
 const formatPriceSuffix = (item: any) => {
   const effective = item?.pricing?.effective || {};
-  const amount = effective.price_local ?? effective.price_usd;
+  const amount = resolveEffectivePrice(item);
   const currency = effective.currency || "USD";
   const numeric = Number(amount);
   if (!Number.isFinite(numeric)) return "";
@@ -172,6 +194,18 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
       }));
   }, [selectedRegionData]);
 
+  // Derive provider from the selected availability zone
+  const selectedAzProvider = useMemo(() => {
+    const azCode = cfg.availability_zone;
+    if (!azCode || !selectedRegionData) return "";
+    const azs = (selectedRegionData as any)?.availability_zones;
+    if (!Array.isArray(azs)) return "";
+    const match = azs.find(
+      (az: any) => String(az.code || az.id || "") === String(azCode)
+    );
+    return match?.provider || "";
+  }, [cfg.availability_zone, selectedRegionData]);
+
   // 1. Fetch Projects (Region-Aware) - uses hook override if provided
   const projectsHook = useProjectsHook || useFetchProjects;
   const { data: projectsResp } = skipProjectFetch
@@ -228,12 +262,14 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
     }, []);
   }, [projectsResp?.data, baseProjectOptions, selectedRegion]);
 
-  // 2. Fetch Pricing
+  // 2. Fetch Pricing (filtered by provider when an AZ is selected)
   const sharedPricingOptions = {
     enabled: Boolean(selectedRegion),
     keepPreviousData: true,
     countryCode: billingCountry || "US",
     tenantId: pricingTenantId || "",
+    provider: selectedAzProvider || "",
+    availabilityZone: cfg.availability_zone || "",
   };
   const { data: computeInstancesByRegion } = useFetchProductPricing(
     selectedRegion,
@@ -442,6 +478,24 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
     prevRegionRef.current = selectedRegion;
   }, [selectedRegion, cfg.id, updateConfiguration]);
 
+  const selectedAz = cfg.availability_zone || "";
+  const prevAzRef = useRef(selectedAz);
+  useEffect(() => {
+    if (prevAzRef.current && prevAzRef.current !== selectedAz) {
+      // Reset pricing-dependent selections when AZ changes (provider may differ)
+      updateConfiguration(cfg.id, {
+        compute_instance_id: "",
+        compute_label: "",
+        os_image_id: "",
+        os_image_label: "",
+        volume_type_id: "",
+        volume_type_label: "",
+        additional_volumes: [],
+      });
+    }
+    prevAzRef.current = selectedAz;
+  }, [selectedAz, cfg.id, updateConfiguration]);
+
   const prevProjectRef = useRef(projectIdentifier);
   useEffect(() => {
     if (prevProjectRef.current && prevProjectRef.current !== projectIdentifier) {
@@ -474,12 +528,12 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
     ...(onAddConfiguration ? { onAddConfiguration } : {}),
     ...(onBackToWorkflow ? { onBackToWorkflow } : {}),
     ...(onSubmitConfigurations ? { onSubmitConfigurations } : {}),
-    ...(isSubmitting !== undefined ? { isSubmitting } : {}),
-    ...(submitErrorMessage !== undefined ? { submitErrorMessage } : {}),
+    ...(isSubmitting === undefined ? {} : { isSubmitting }),
+    ...(submitErrorMessage === undefined ? {} : { submitErrorMessage }),
     ...(onSaveTemplate ? { onSaveTemplate } : {}),
     ...(showTemplateSelector ? { onTemplateSelect: handleTemplateSelect } : {}),
-    ...(membershipTenantId !== undefined ? { membershipTenantId } : {}),
-    ...(membershipUserId !== undefined ? { membershipUserId } : {}),
+    ...(membershipTenantId === undefined ? {} : { membershipTenantId }),
+    ...(membershipUserId === undefined ? {} : { membershipUserId }),
     ...(useProjectMembershipSuggestionsHook ? { useProjectMembershipSuggestionsHook } : {}),
   };
 

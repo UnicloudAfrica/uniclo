@@ -18,6 +18,7 @@ export interface ObjectStorageServiceStepProps {
   onAddProfile: () => void;
   onRemoveProfile: (id: string) => void;
   onRegionChange: (id: string, region: string) => void;
+  onAvailabilityZoneChange?: (id: string, az: string) => void;
   onTierChange: (id: string, tierKey: string) => void;
   onMonthsChange: (id: string, months: string) => void;
   onStorageGbChange: (id: string, storageGb: string) => void;
@@ -36,6 +37,7 @@ export const ObjectStorageServiceStep: React.FC<ObjectStorageServiceStepProps> =
   onAddProfile,
   onRemoveProfile,
   onRegionChange,
+  onAvailabilityZoneChange,
   onTierChange,
   onMonthsChange,
   onStorageGbChange,
@@ -65,6 +67,11 @@ export const ObjectStorageServiceStep: React.FC<ObjectStorageServiceStepProps> =
             showPriceOverride={showPriceOverride && dashboardContext === "admin"}
             onRemove={() => onRemoveProfile(profile.id)}
             onRegionChange={(region) => onRegionChange(profile.id, region)}
+            onAvailabilityZoneChange={
+              onAvailabilityZoneChange
+                ? (az) => onAvailabilityZoneChange(profile.id, az)
+                : undefined
+            }
             onTierChange={(tierKey) => onTierChange(profile.id, tierKey)}
             onMonthsChange={(months) => onMonthsChange(profile.id, months)}
             onStorageGbChange={(storageGb) => onStorageGbChange(profile.id, storageGb)}

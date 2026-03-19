@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { Package, X } from "lucide-react";
 import { Option } from "@/hooks/objectStorageUtils";
 import { ResolvedProfile } from "@/hooks/useObjectStoragePricing";
+import { useFetchAvailabilityZones } from "@/hooks/adminHooks/regionHooks";
 import { ModernInput, ModernSelect } from "../ui";
 
 export interface ObjectStorageProfileCardProps {
@@ -14,6 +15,7 @@ export interface ObjectStorageProfileCardProps {
   showPriceOverride?: boolean; // Only show for admin context
   onRemove: () => void;
   onRegionChange: (region: string) => void;
+  onAvailabilityZoneChange?: (az: string) => void;
   onTierChange: (tierKey: string) => void;
   onMonthsChange: (months: string) => void;
   onStorageGbChange: (storageGb: string) => void;
@@ -31,12 +33,28 @@ export const ObjectStorageProfileCard: React.FC<ObjectStorageProfileCardProps> =
   showPriceOverride = false,
   onRemove,
   onRegionChange,
+  onAvailabilityZoneChange,
   onTierChange,
   onMonthsChange,
   onStorageGbChange,
   onNameChange,
   onUnitPriceChange,
 }) => {
+  // Fetch availability zones for the selected region
+  const { data: availabilityZones = [], isFetching: isAzFetching } = useFetchAvailabilityZones(
+    profile.region || null
+  );
+
+  const azOptions = useMemo(() => {
+    if (!Array.isArray(availabilityZones)) return [];
+    return availabilityZones
+      .filter((az: any) => az.is_active !== false)
+      .map((az: any) => ({
+        value: az.code,
+        label: az.name || az.code,
+      }));
+  }, [availabilityZones]);
+
   const formatCurrency = (amount: number, currency: string) => {
     try {
       return new Intl.NumberFormat(undefined, {
@@ -109,6 +127,16 @@ export const ObjectStorageProfileCard: React.FC<ObjectStorageProfileCardProps> =
           options={regionOptions}
           placeholder="Select a region"
           error={errors ? errors["region"] : undefined}
+        />
+
+        <ModernSelect
+          label="Availability Zone"
+          value={(profile as any).availability_zone || ""}
+          onChange={(event) => onAvailabilityZoneChange?.(event.target.value)}
+          options={azOptions}
+          placeholder={!profile.region ? "Select a region first" : isAzFetching ? "Loading..." : "Select availability zone"}
+          disabled={!profile.region || isAzFetching}
+          helper={!profile.region ? "Select a region first." : ""}
         />
 
         <ModernSelect

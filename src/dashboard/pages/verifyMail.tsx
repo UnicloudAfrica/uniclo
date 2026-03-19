@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import logo from "./assets/logo.png";
 import VerificationCodeInput from "@/utils/VerificationCodeInput";
@@ -51,6 +51,7 @@ interface AuthVerifyResponse {
 
 export default function VerifyMail() {
   const [code, setCode] = useState(Array(6).fill("")); // Six-digit OTP input
+  const isSubmittingRef = useRef(false);
   const tenantAuth = useTenantAuthStore.getState();
   const clientAuth = useClientAuthStore.getState();
   const adminAuth = useAdminAuthStore.getState();
@@ -129,6 +130,7 @@ export default function VerifyMail() {
   const handleSubmit = (enteredCode = code.join("")) => {
     // No e.preventDefault needed since we're not relying on form events directly
     if (!validateForm()) return;
+    if (isSubmittingRef.current || isVerifyPending) return;
 
     const email = userEmail;
     const resolvedCode = typeof enteredCode === "string" ? enteredCode : code.join("");
@@ -140,6 +142,8 @@ export default function VerifyMail() {
     } else {
       userData.otp = resolvedCode;
     }
+
+    isSubmittingRef.current = true;
 
     verifyEmail(userData, {
       onSuccess: (res) => {
@@ -212,6 +216,9 @@ export default function VerifyMail() {
         if (/2fa|two[-\s]?factor|authenticator/i.test(message)) {
           setTwoFactorRequired?.(true);
         }
+      },
+      onSettled: () => {
+        isSubmittingRef.current = false;
       },
     });
   };

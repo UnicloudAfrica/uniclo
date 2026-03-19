@@ -186,6 +186,27 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
             shouldLoadOptions = true;
             loadOptionsArgs = { region: value, type: currentEntry.productable_type };
           }
+        } else if (field === "availability_zone") {
+          nextEntry = {
+            ...nextEntry,
+            availability_zone: value,
+            productable_id: "",
+            productSearch: "",
+            options: [],
+            errors: {
+              ...nextEntry.errors,
+              productable_id: null,
+            },
+          };
+
+          if (
+            currentEntry.region &&
+            currentEntry.productable_type &&
+            currentEntry.productable_type !== OBJECT_STORAGE_TYPE
+          ) {
+            shouldLoadOptions = true;
+            loadOptionsArgs = { region: currentEntry.region, type: currentEntry.productable_type };
+          }
         } else if (field === "productable_id") {
           const selectedOption = currentEntry.options.find(
             (option: any) => String(option.id) === String(value)

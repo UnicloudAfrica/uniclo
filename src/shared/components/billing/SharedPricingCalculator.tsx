@@ -40,7 +40,7 @@ const SharedPricingCalculator: React.FC<SharedPricingCalculatorProps> = ({
   });
 
   // Customer Context State
-  const [contextType, setContextType] = useState<"none" | "tenant" | "user">("none");
+  const [contextType, setContextType] = useState<"none" | "tenant" | "user" | "unassigned">("none");
   const [selectedTenantId, setSelectedTenantId] = useState("");
   const [selectedUserId, setSelectedUserId] = useState("");
 
@@ -98,11 +98,9 @@ const SharedPricingCalculator: React.FC<SharedPricingCalculatorProps> = ({
       ...prev,
       country_code: countryCode,
       currency_code: currencyCode,
-      pricing_requests: [], // Reset workloads on country change as prices differ
-      object_storage_items: [],
+      // Keep workloads — just clear cached pricing so they re-fetch with new country
     }));
     setPricingResult(null);
-    setActiveStep(1);
   };
 
   const onAddStorageItem = (item: ObjectStorageRequest) => {

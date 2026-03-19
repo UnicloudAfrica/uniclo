@@ -111,6 +111,49 @@ export const normalizePaymentOptions = (options: unknown): unknown[] => {
 };
 
 /**
+ * Picks the default payment option using the same preference order as the payment UI.
+ * Card options are preferred, then bank transfer, then the first available gateway.
+ */
+export const pickPreferredPaymentOption = <
+  T extends {
+    payment_type?: unknown;
+    name?: unknown;
+  },
+>(
+  options: T[] | null | undefined
+): T | null => {
+  if (!Array.isArray(options) || options.length === 0) {
+    return null;
+  }
+
+  const findMatch = (predicate: (option: T) => boolean) => options.find(predicate) ?? null;
+
+  const cardOption = findMatch((option) => {
+    const type = String(option.payment_type || "").toLowerCase();
+    const name = String(option.name || "").toLowerCase();
+    return type.includes("card") || (!type && name.includes("card"));
+  });
+  if (cardOption) {
+    return cardOption;
+  }
+
+  const bankTransferOption = findMatch((option) => {
+    const type = String(option.payment_type || "").toLowerCase();
+    const name = String(option.name || "").toLowerCase();
+    return (
+      type.includes("bank") ||
+      type.includes("transfer") ||
+      (!type && (name.includes("bank") || name.includes("transfer")))
+    );
+  });
+  if (bankTransferOption) {
+    return bankTransferOption;
+  }
+
+  return options[0] ?? null;
+};
+
+/**
  * Formats a number as currency with 2 decimal places
  */
 export const formatCurrencyValue = (amount: unknown) => {

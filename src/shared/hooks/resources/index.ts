@@ -182,6 +182,13 @@ export {
   externalMigrationExtendedKeys,
 } from "./externalMigrationHooks";
 
+// Kernel Compatibility
+export {
+  useKernelCompatibilityCheck,
+  useKernelCompatibilityMatrix,
+  useMigrationPreflight,
+} from "./integrationHooks";
+
 // Re-export factory and types for custom resource hooks
 export { createResourceHooks, createQueryKeys } from "../createResourceHooks";
 export type { ResourceHooks } from "../createResourceHooks";

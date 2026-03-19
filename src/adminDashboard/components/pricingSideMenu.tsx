@@ -34,7 +34,7 @@ const PricingSideMenu = ({ activeTab, onTabChange, items = [], className = "" }:
   return (
     <aside
       className={[
-        "w-full max-w-full rounded-3xl border border-[--theme-border-color] bg-[--theme-card-bg] p-4 shadow-sm backdrop-blur lg:sticky lg:top-24 lg:max-h-[calc(100vh-8rem)] lg:w-72 lg:overflow-auto",
+        "w-full max-w-full rounded-3xl border border-[--theme-border-color] bg-[--theme-card-bg] p-4 shadow-sm backdrop-blur lg:sticky lg:top-24 lg:max-h-[calc(100vh-8rem)] lg:w-56 lg:min-w-[14rem] lg:shrink-0 lg:overflow-auto",
         className,
       ]
         .filter(Boolean)
@@ -72,10 +72,10 @@ const PricingSideMenu = ({ activeTab, onTabChange, items = [], className = "" }:
                 >
                   {Icon && <Icon className="h-4 w-4" />}
                 </span>
-                <div className="flex flex-col">
-                  <span className="text-sm font-semibold tracking-tight">{item.name}</span>
+                <div className="flex min-w-0 flex-col">
+                  <span className="text-sm font-semibold leading-tight tracking-tight">{item.name}</span>
                   {item.caption && (
-                    <span className="text-[11px] text-[--theme-muted-color]">{item.caption}</span>
+                    <span className="text-[11px] leading-tight text-[--theme-muted-color]">{item.caption}</span>
                   )}
                 </div>
               </div>

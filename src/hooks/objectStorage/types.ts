@@ -130,6 +130,7 @@ export interface ObjectStorageLogicReturn {
   removeProfile: (id: string) => void;
   updateProfile: (id: string, updates: Partial<ServiceProfile>) => void;
   handleRegionChange: (id: string, region: string) => void;
+  handleAvailabilityZoneChange: (id: string, az: string) => void;
   handleTierChange: (id: string, tierKey: string) => void;
   handleMonthsChange: (id: string, months: string) => void;
   handleStorageGbChange: (id: string, storageGb: string) => void;

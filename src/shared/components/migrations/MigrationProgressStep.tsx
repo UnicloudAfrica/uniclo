@@ -11,8 +11,11 @@ import {
   ArrowRight,
   Clock,
 } from "lucide-react";
-import { usePollMigrationProgress } from "@/shared/hooks/resources";
+import { usePollMigrationProgress, useMigrationPreflight } from "@/shared/hooks/resources";
 import { ModernButton } from "../ui";
+import PreflightResultsCard from "./PreflightResultsCard";
+import KernelComparisonCard from "./KernelComparisonCard";
+import type { PreflightResults, KernelCompatibilityResult } from "@/types/kernelCompatibility";
 
 interface MigrationProgressStepProps {
   migrationId: string | undefined;
@@ -26,6 +29,10 @@ const MigrationProgressStep: React.FC<MigrationProgressStepProps> = ({
   onDone,
 }) => {
   const { data: progress } = usePollMigrationProgress(migrationId);
+  const { data: preflightData } = useMigrationPreflight(migrationId);
+
+  const preflightResults = preflightData?.preflight_results as PreflightResults | undefined;
+  const kernelCompat = preflightResults?.kernel_compatibility?.details as KernelCompatibilityResult | undefined;
 
   const status = progress?.status ?? "pending";
   const percent = progress?.progress_percent ?? 0;
@@ -38,7 +45,7 @@ const MigrationProgressStep: React.FC<MigrationProgressStepProps> = ({
     status === "pending";
 
   return (
-    <div className="mx-auto max-w-lg space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       {/* Status Icon */}
       <div className="flex flex-col items-center text-center">
         {isComplete && (
@@ -136,6 +143,16 @@ const MigrationProgressStep: React.FC<MigrationProgressStepProps> = ({
             {progress.error_message}
           </p>
         </div>
+      )}
+
+      {/* Kernel Comparison */}
+      {kernelCompat && (
+        <KernelComparisonCard result={kernelCompat} />
+      )}
+
+      {/* Preflight Results */}
+      {preflightResults && (
+        <PreflightResultsCard results={preflightResults} />
       )}
 
       {/* Done Button */}

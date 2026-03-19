@@ -19,7 +19,7 @@ type CustomerContextType = "unassigned" | "tenant" | "user";
 
 export const useCustomerContext = (options: any = {}) => {
   const { enabled = true } = options;
-  const [contextType, setContextType] = useState<CustomerContextType>("tenant");
+  const [contextType, setContextType] = useState<CustomerContextType>("unassigned");
   const [selectedTenantId, setSelectedTenantId] = useState("");
   const [selectedUserId, setSelectedUserId] = useState("");
 

@@ -1,5 +1,6 @@
 import React from "react";
 import { CheckCircle, Circle, ArrowRight, RefreshCw, XCircle } from "lucide-react";
+import { isFeatureSupported } from "@/utils/featureGating";
 
 interface SetupStep {
   id: string;
@@ -15,13 +16,24 @@ interface SetupProgressCardProps {
   progressPercent?: number;
   onCompleteSetup?: () => void;
   isLoading?: boolean;
+  provider?: string;
 }
+
+const STEP_FEATURE_MAP: Record<string, string> = {
+  assign_edge_network: "edge_network",
+  detect_vpc: "vpcs",
+  create_vpc: "vpcs",
+  detect_subnets: "subnets",
+  create_subnets: "subnets",
+  create_internet_gateway: "internet_gateways",
+};
 
 const SetupProgressCard: React.FC<SetupProgressCardProps> = ({
   steps = [],
   progressPercent,
   onCompleteSetup,
   isLoading = false,
+  provider,
 }) => {
   const [expandedSteps, setExpandedSteps] = React.useState<Record<string, boolean>>({});
 
@@ -29,15 +41,21 @@ const SetupProgressCard: React.FC<SetupProgressCardProps> = ({
     setExpandedSteps((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const completedCount = steps.filter((s) => s.status === "completed").length;
-  const allComplete = steps.length > 0 && completedCount === steps.length;
+  const filteredSteps = steps.filter((s) => {
+    const featureKey = STEP_FEATURE_MAP[s.id];
+    if (!featureKey) return true;
+    return isFeatureSupported(provider, featureKey);
+  });
+
+  const completedCount = filteredSteps.filter((s) => s.status === "completed").length;
+  const allComplete = filteredSteps.length > 0 && completedCount === filteredSteps.length;
   // Use 100% when all steps complete, otherwise prefer prop, then calculate
   const calculatedPercent = allComplete
     ? 100
-    : (progressPercent ?? Math.round((completedCount / (steps.length || 1)) * 100));
+    : (progressPercent ?? Math.round((completedCount / (filteredSteps.length || 1)) * 100));
 
   // Filter for active/recent logs for the "terminal" view
-  const latestLogs = steps
+  const latestLogs = filteredSteps
     .filter((s) => s.status !== "not_started")
     .sort((a, b) => {
       if (!a.updated_at) return 1;
@@ -47,7 +65,7 @@ const SetupProgressCard: React.FC<SetupProgressCardProps> = ({
     .slice(0, 3);
 
   // Detect if this is a cleanup operation to change colors
-  const isCleanup = steps.some(
+  const isCleanup = filteredSteps.some(
     (s) =>
       s.label?.toLowerCase().includes("cleanup") ||
       s.label?.toLowerCase().includes("removing") ||
@@ -91,7 +109,7 @@ const SetupProgressCard: React.FC<SetupProgressCardProps> = ({
 
       {/* Steps Checklist */}
       <div className="p-4 space-y-3 md:p-6 md:space-y-4 flex-grow overflow-y-auto max-h-[300px] md:max-h-[500px]">
-        {steps.map((step) => {
+        {filteredSteps.map((step) => {
           const hasContext = step.context && Object.keys(step.context).length > 0;
           const isExpanded = expandedSteps[step.id];
 

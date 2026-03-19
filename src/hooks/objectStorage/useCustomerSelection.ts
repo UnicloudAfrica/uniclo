@@ -40,7 +40,7 @@ export const useCustomerSelection = (
   const adminContext = useCustomerContext({ enabled: isAdminContext });
 
   const defaultContextType =
-    context === "tenant" ? "tenant" : context === "client" ? "user" : "tenant";
+    context === "tenant" ? "tenant" : context === "client" ? "user" : "unassigned";
 
   const [localContextType, setLocalContextType] = useState(defaultContextType);
   const [localTenantId, setLocalTenantId] = useState(configTenantId || "");

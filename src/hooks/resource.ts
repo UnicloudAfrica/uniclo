@@ -131,7 +131,9 @@ const fetchProductCharges = async (
   productable_type: string,
   countryCode: string = "",
   tenantId: string | number = "",
-  perPage: string | number = ""
+  perPage: string | number = "",
+  provider: string = "",
+  availabilityZone: string = ""
 ): Promise<ProductCharge[]> => {
   const params = new URLSearchParams();
   params.append("region", region || "");
@@ -149,6 +151,12 @@ const fetchProductCharges = async (
     if (Number.isFinite(pageSize) && pageSize > 0) {
       params.append("per_page", String(Math.min(100, pageSize)));
     }
+  }
+  if (provider) {
+    params.append("provider", provider);
+  }
+  if (availabilityZone) {
+    params.append("availability_zone", availabilityZone);
   }
   const res: ApiResponse<any> = await silentApi("GET", `/product-pricing?${params.toString()}`);
   return res.data;
@@ -412,7 +420,14 @@ export const useFetchProductPricing = (
   productable_type: string,
   options: any = {}
 ) => {
-  const { countryCode = "", tenantId = "", perPage = "", ...queryOptions } = options;
+  const {
+    countryCode = "",
+    tenantId = "",
+    perPage = "",
+    provider = "",
+    availabilityZone = "",
+    ...queryOptions
+  } = options;
   const pageSize = Number(perPage);
   const resolvedPerPage = Number.isFinite(pageSize) && pageSize > 0 ? Math.min(100, pageSize) : "";
 
@@ -424,6 +439,8 @@ export const useFetchProductPricing = (
       countryCode ? (countryCode as string).toUpperCase() : "",
       tenantId || "",
       resolvedPerPage || "",
+      provider || "",
+      availabilityZone || "",
     ],
     queryFn: () =>
       fetchProductCharges(
@@ -431,7 +448,9 @@ export const useFetchProductPricing = (
         productable_type,
         countryCode as string,
         tenantId as string | number,
-        resolvedPerPage
+        resolvedPerPage,
+        provider as string,
+        availabilityZone as string
       ),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,

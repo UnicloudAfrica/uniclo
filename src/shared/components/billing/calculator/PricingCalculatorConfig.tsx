@@ -16,6 +16,7 @@ import {
 } from "../../../../shared/utils/countryUtils";
 import { ModernButton, ModernCard, ModernInput, SelectableInput } from "../../ui";
 import { useFetchCountries, useFetchProductPricing } from "@/hooks/resource";
+import { useFetchAvailabilityZones } from "@/hooks/adminHooks/regionHooks";
 import { useSharedFetchRegions } from "@/hooks/sharedCalculatorHooks";
 import { useFormattedRegions, type RegionLike } from "@/utils/regionUtils";
 import { getCurrencySymbol } from "@/utils/resource";
@@ -119,6 +120,7 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
   const [storageErrors, setStorageErrors] = useState<Record<string, string>>({});
   const [searchTerms, setSearchTerms] = useState({
     region: "",
+    az: "",
     tier: "",
   });
 
@@ -128,8 +130,27 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
     (Array.isArray(rawRegions) ? rawRegions : []) as RegionLike[]
   );
 
+  // Fetch availability zones for the storage item's selected region
+  const { data: storageAzData = [], isFetching: isStorageAzFetching } = useFetchAvailabilityZones(
+    String(storageItem.region ?? "") || null
+  );
+
+  const storageAzOptions = useMemo(() => {
+    if (!Array.isArray(storageAzData)) return [];
+    return storageAzData
+      .filter((az: any) => az.is_active !== false)
+      .map((az: any) => ({
+        id: az.code,
+        name: az.name || az.code,
+      }));
+  }, [storageAzData]);
+
   const countryOptions = useMemo(
     () => formatCountryOptions(Array.isArray(countries) ? countries : []),
+    [countries]
+  );
+  const countryList = useMemo(
+    () => (Array.isArray(countries) ? (countries as CountryRecord[]) : []),
     [countries]
   );
 
@@ -150,27 +171,34 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
 
   const resolveCurrencyForCountry = useMemo(() => {
     return (code: string) => {
-      if (!code || !Array.isArray(countries)) {
-        return calculatorData.currency_code || "USD";
+      if (!code) {
+        return (calculatorData.currency_code || "USD").toUpperCase();
       }
 
-      const country = (countries as CountryRecord[]).find((c) => c.code === code);
+      const upperCode = code.toUpperCase();
+      const country = countryList.find(
+        (countryEntry) => (countryEntry.iso2 || countryEntry.code || "").toUpperCase() === upperCode
+      );
 
-      if (!country) {
-        return calculatorData.currency_code || "USD";
+      if (country) {
+        return (
+          country.currency_code ||
+          country.currency ||
+          country.currencyCode ||
+          country.currency_symbol ||
+          country.currencySymbol ||
+          calculatorData.currency_code ||
+          "USD"
+        ).toUpperCase();
       }
 
-      return (
-        country.currency_code ||
-        country.currency ||
-        country.currencyCode ||
-        country.currency_symbol ||
-        country.currencySymbol ||
-        calculatorData.currency_code ||
-        "USD"
-      ).toUpperCase();
+      const fallbackMatch = countryOptions.find(
+        (option) => String(option.value || "").toUpperCase() === upperCode
+      );
+
+      return String(fallbackMatch?.currency || calculatorData.currency_code || "USD").toUpperCase();
     };
-  }, [countries, calculatorData.currency_code]);
+  }, [calculatorData.currency_code, countryList, countryOptions]);
 
   const selectedCurrency = useMemo(
     () => resolveCurrencyForCountry(selectedCountryCode),
@@ -275,7 +303,14 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
   const handleStorageRegionSelect = (option: any) => {
     const value = option ? option.id : "";
     updateStorageItem("region", value);
-    setSearchTerms((prev) => ({ ...prev, region: option ? option.name : "" }));
+    setStorageItem((prev) => ({ ...prev, availability_zone: "" }));
+    setSearchTerms((prev) => ({ ...prev, region: option ? option.name : "", az: "" }));
+  };
+
+  const handleStorageAzSelect = (option: any) => {
+    const value = option ? option.id : "";
+    setStorageItem((prev) => ({ ...prev, availability_zone: value }));
+    setSearchTerms((prev) => ({ ...prev, az: option ? option.name : "" }));
   };
 
   const handleStorageTierSelect = (option: any) => {
@@ -325,7 +360,7 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
     onAddStorageItem?.(formattedTier);
     setStorageItem({ region: "", tier_id: 0, quantity: 1, months: 1 });
     setStorageErrors({});
-    setSearchTerms({ region: "", tier: "" });
+    setSearchTerms({ region: "", az: "", tier: "" });
   };
 
   const storageItems = calculatorData.object_storage_items || [];
@@ -472,7 +507,7 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
                 ) : (
                   <select
                     value={selectedCountryCode}
-                    onSelect={(c: any) => handleCountrySelect(c?.id)}
+                    onChange={(event) => handleCountrySelect(event.target.value)}
                     className="input-field w-full"
                     disabled={isCountriesFetching}
                   >
@@ -575,6 +610,22 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
                   isLoading={isRegionsFetching}
                   disabled={isRegionsFetching}
                   hasError={Boolean(storageErrors.region)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">
+                  Availability Zone
+                </label>
+                <SelectableInput
+                  options={storageAzOptions}
+                  value={(storageItem as any).availability_zone ?? ""}
+                  searchValue={searchTerms.az}
+                  onSearchChange={(value) => setSearchTerms((prev) => ({ ...prev, az: value }))}
+                  onSelect={handleStorageAzSelect}
+                  placeholder={!storageItem.region ? "Select a region first" : "Select availability zone"}
+                  disabled={!storageItem.region}
+                  isLoading={isStorageAzFetching}
                 />
               </div>
 

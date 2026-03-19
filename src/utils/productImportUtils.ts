@@ -40,6 +40,7 @@ export interface ProductEntry {
   productSearch: string;
   provider: string;
   region: string;
+  availability_zone: string;
   price: string;
   objectStorageQuota: string;
   objectStoragePricePerGb: string;
@@ -56,6 +57,7 @@ export const createEmptyEntry = (): ProductEntry => ({
   productSearch: "",
   provider: "",
   region: "",
+  availability_zone: "",
   price: "",
   objectStorageQuota: "1",
   objectStoragePricePerGb: DEFAULT_OBJECT_STORAGE_PRICE_PER_GB.toString(),

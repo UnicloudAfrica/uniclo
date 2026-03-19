@@ -10,6 +10,11 @@ import {
   useExportProductPricingTemplate,
 } from "@/hooks/adminHooks/adminProductPricingHooks";
 import {
+  useFetchAnyCloudFlowPricing,
+  useUpdateAnyCloudFlowPrice,
+} from "@/hooks/adminHooks/adminAnyCloudFlowPricingHooks";
+import TieredPricingModal from "./productPricingComps/TieredPricingModal";
+import {
   Loader2,
   DollarSign,
   TrendingUp,
@@ -26,6 +31,8 @@ import {
   Cpu,
   Cable,
   Building2,
+  Shield,
+  Layers,
 } from "lucide-react";
 import EditProductPricingModal from "./productPricingComps/editProductPricing";
 import DeleteProductPricingModal from "./productPricingComps/deleteProductPricing";
@@ -73,7 +80,7 @@ const computeStats = (rows: any) => {
 const PRICING_TAB_CONFIG = [
   {
     id: "bandwidth",
-    name: "Bandwidth Pricing",
+    name: "Bandwidth",
     caption: "Network throughput",
     productType: "bandwidth",
     heroTitle: "Bandwidth pricing",
@@ -108,7 +115,7 @@ const PRICING_TAB_CONFIG = [
   },
   {
     id: "os-images",
-    name: "OS Images Pricing",
+    name: "OS Images",
     caption: "Golden templates",
     productType: "os_image",
     heroTitle: "Operating system pricing",
@@ -142,7 +149,7 @@ const PRICING_TAB_CONFIG = [
   },
   {
     id: "volumes",
-    name: "Volumes Pricing",
+    name: "Volumes",
     caption: "Performance tiers",
     productType: "volume_type",
     heroTitle: "Volume pricing",
@@ -175,7 +182,7 @@ const PRICING_TAB_CONFIG = [
   },
   {
     id: "object-storage",
-    name: "Silo Storage Pricing",
+    name: "Silo Storage",
     caption: "S3-compatible",
     productType: "object_storage_configuration",
     heroTitle: "Object storage pricing",
@@ -210,7 +217,7 @@ const PRICING_TAB_CONFIG = [
   },
   {
     id: "compute",
-    name: "Compute Pricing",
+    name: "Compute",
     caption: "Instance classes",
     productType: "compute_instance",
     heroTitle: "Compute pricing",
@@ -244,7 +251,7 @@ const PRICING_TAB_CONFIG = [
   },
   {
     id: "floating-ips",
-    name: "Floating IPs Pricing",
+    name: "Floating IPs",
     caption: "Public connectivity",
     productType: "ip",
     heroTitle: "Floating IP pricing",
@@ -277,7 +284,7 @@ const PRICING_TAB_CONFIG = [
   },
   {
     id: "cross-connects",
-    name: "Cross Connects Pricing",
+    name: "Cross Connects",
     caption: "Partner links",
     productType: "cross_connect",
     heroTitle: "Cross connect pricing",
@@ -342,6 +349,41 @@ const PRICING_TAB_CONFIG = [
     emptyDescription: "Add database plan pricing to enable managed database provisioning.",
   },
   {
+    id: "anycloudflow",
+    name: "AnyCloudFlow",
+    caption: "Platform services",
+    productType: "integration_product",
+    heroTitle: "AnyCloudFlow service pricing",
+    heroDescription:
+      "Manage backup, disaster recovery, replication, and migration service rates. These are global platform services — not region-specific.",
+    tableTitle: "Service pricing",
+    tableDescription: "Review and adjust platform service pricing — these apply globally, not per region.",
+    icon: Shield,
+    isGlobal: true,
+    metrics: (stats: any) => [
+      {
+        label: "Services",
+        value: stats.total,
+        description: "Active platform services",
+        icon: <Shield className="h-5 w-5" />,
+      },
+      {
+        label: "Average price",
+        value: formatCurrencyValue(stats.average),
+        description: "Across all services",
+        icon: <DollarSign className="h-5 w-5" />,
+      },
+      {
+        label: "Highest price",
+        value: formatCurrencyValue(stats.highest),
+        description: "Most expensive service",
+        icon: <TrendingUp className="h-5 w-5" />,
+      },
+    ],
+    emptyTitle: "No AnyCloudFlow pricing",
+    emptyDescription: "Run the AnyCloudFlow seeder to populate platform service pricing.",
+  },
+  {
     id: "colocation",
     name: "Rack & power",
     caption: "Colocation markup",
@@ -392,6 +434,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
 
   const activeConfig = TAB_MAP[activeTab] ?? TAB_MAP[DEFAULT_TAB_ID] ?? PRICING_TAB_CONFIG[0];
   const isColocationTab = Boolean(activeConfig?.isColocation);
+  const isGlobalTab = Boolean(activeConfig?.isGlobal);
 
   const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
   const { isFetching: isAZsFetching, data: azData } = useFetchAvailabilityZones(
@@ -408,15 +451,27 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
       page,
       perPage,
       search,
-      productType: isColocationTab ? "" : activeConfig?.productType,
+      productType: isColocationTab || isGlobalTab ? "" : activeConfig?.productType,
       availabilityZone: selectedAZ,
       displayCurrency,
     },
     {
-      enabled: !isRegionsFetching && !isColocationTab,
+      enabled: !isRegionsFetching && !isColocationTab && !isGlobalTab,
       keepPreviousData: true,
     }
   );
+
+  const {
+    isFetching: isAcfFetching,
+    data: acfData,
+    error: acfError,
+  } = useFetchAnyCloudFlowPricing({
+    enabled: isGlobalTab,
+  });
+  const { mutate: updateAcfPrice, isPending: isAcfUpdating } = useUpdateAnyCloudFlowPrice();
+  const [editingAcfService, setEditingAcfService] = useState<any>(null);
+  const [acfEditPrice, setAcfEditPrice] = useState("");
+  const [tieredPricingService, setTieredPricingService] = useState<any>(null);
   const { mutate: exportTemplate, isPending: isExporting } = useExportProductPricingTemplate();
   const regionsList = useMemo(() => (Array.isArray(regions) ? regions : []), [regions]);
   const pricingPayload: any = pricingData;
@@ -461,23 +516,31 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
 
   const pricingRows = useMemo<any[]>(() => {
     if (isColocationTab) return [];
+    if (isGlobalTab) {
+      const rows = acfData?.data ?? [];
+      return rows.map((item: any) => ({
+        ...item,
+        product_name: item.name || "Unnamed service",
+      }));
+    }
     const rows = pricingPayload?.data ?? [];
     return rows.map((item: any) => ({
       ...item,
       product_name: item.product_name || item.name || "Unnamed product",
     }));
-  }, [pricingPayload, isColocationTab]);
+  }, [pricingPayload, acfData, isColocationTab, isGlobalTab]);
 
   const filteredRows = useMemo<any[]>(() => {
     if (isColocationTab) return [];
+    if (isGlobalTab) return pricingRows;
     if (!activeConfig?.productType) return pricingRows;
     return pricingRows.filter((row: any) =>
       matchesProductType(row.productable_type, activeConfig.productType)
     );
-  }, [pricingRows, activeConfig, isColocationTab]);
+  }, [pricingRows, activeConfig, isColocationTab, isGlobalTab]);
 
-  const meta = !isColocationTab ? (pricingPayload?.meta ?? null) : null;
-  const total = !isColocationTab ? filteredRows.length : 0;
+  const meta = (!isColocationTab && !isGlobalTab) ? (pricingPayload?.meta ?? null) : null;
+  const total = (!isColocationTab) ? filteredRows.length : 0;
 
   const pricingStats = useMemo(() => {
     if (isColocationTab) {
@@ -564,8 +627,168 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
     []
   );
 
+  const handleAcfSave = (service: any) => {
+    const newPrice = parseFloat(acfEditPrice);
+    if (isNaN(newPrice) || newPrice < 0) {
+      ToastUtils.error("Please enter a valid price.");
+      return;
+    }
+    updateAcfPrice(
+      { id: service.id, price_usd: newPrice },
+      {
+        onSuccess: () => {
+          ToastUtils.success(`Price updated for ${service.name}.`);
+          setEditingAcfService(null);
+          setAcfEditPrice("");
+        },
+        onError: () => {
+          ToastUtils.error("Failed to update price.");
+        },
+      }
+    );
+  };
+
   const columns = useMemo<any[]>(() => {
     if (isColocationTab) return [];
+
+    if (isGlobalTab) {
+      return [
+        {
+          header: "Service",
+          key: "name",
+          render: (row: any) => (
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-500">
+                <Shield className="h-4 w-4" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-slate-900">{row.name}</p>
+                <p className="text-xs text-slate-500">{row.description}</p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          header: "Billing Model",
+          key: "billing_model",
+          align: "center",
+          render: (row: any) => (
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+              {(row.billing_model || "").replace(/_/g, " ")}
+            </span>
+          ),
+        },
+        {
+          header: "Unit",
+          key: "unit_label",
+          align: "center",
+          render: (row: any) => (
+            <span className="text-xs text-slate-500">{row.unit_label || "—"}</span>
+          ),
+        },
+        {
+          header: "Base Price (USD)",
+          key: "price_usd",
+          align: "right",
+          render: (row: any) => {
+            if (editingAcfService?.id === row.id) {
+              return (
+                <div className="flex items-center justify-end gap-2">
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={acfEditPrice}
+                    onChange={(e) => setAcfEditPrice(e.target.value)}
+                    className="w-28 rounded-lg border border-primary-300 px-3 py-1.5 text-right text-sm focus:outline-none focus:ring-2 focus:ring-primary-200"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleAcfSave(row)}
+                    disabled={isAcfUpdating}
+                    className="rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-primary-600 disabled:opacity-50"
+                  >
+                    {isAcfUpdating ? "..." : "Save"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingAcfService(null);
+                      setAcfEditPrice("");
+                    }}
+                    className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              );
+            }
+            return (
+              <span className="font-semibold text-slate-900">
+                {formatCurrencyValue(row.price_usd)}
+              </span>
+            );
+          },
+        },
+        {
+          header: "Tiers",
+          key: "pricing_tiers",
+          align: "center",
+          render: (row: any) => {
+            const tierCount = row.pricing_tiers?.length ?? 0;
+            return tierCount > 0 ? (
+              <button
+                type="button"
+                onClick={() => setTieredPricingService(row)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 transition hover:bg-amber-100"
+              >
+                <Layers className="h-3 w-3" />
+                {tierCount} tier{tierCount !== 1 ? "s" : ""}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setTieredPricingService(row)}
+                className="text-xs text-slate-400 transition hover:text-primary-500"
+              >
+                + Add tiers
+              </button>
+            );
+          },
+        },
+        {
+          header: "Tenants",
+          key: "tenant_override_count",
+          align: "center",
+          render: (row: any) => (
+            <span className="text-xs text-slate-500">
+              {row.tenant_override_count ?? 0} override{(row.tenant_override_count ?? 0) !== 1 ? "s" : ""}
+            </span>
+          ),
+        },
+        {
+          header: "",
+          key: "actions",
+          align: "right",
+          render: (row: any) => (
+            <button
+              type="button"
+              onClick={() => {
+                setEditingAcfService(row);
+                setAcfEditPrice(String(row.price_usd ?? ""));
+              }}
+              className="inline-flex items-center justify-center rounded-full border border-slate-200 p-2 text-slate-500 transition hover:border-primary-200 hover:text-primary-600"
+              title="Edit pricing"
+              aria-label="Edit pricing"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+          ),
+        },
+      ];
+    }
+
     return [
       {
         header: "Product",
@@ -662,9 +885,9 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
         ),
       },
     ];
-  }, [isColocationTab]);
+  }, [isColocationTab, isGlobalTab, editingAcfService, acfEditPrice, isAcfUpdating]);
 
-  const actionButtons = !isColocationTab ? (
+  const actionButtons = isGlobalTab ? null : !isColocationTab ? (
     <div className="flex flex-wrap gap-2">
       <ModernButton
         onClick={handleExport}
@@ -780,13 +1003,20 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
     </div>
   );
 
+  const regionSelector_ = isGlobalTab ? (
+    <div className="flex items-center gap-2 rounded-lg bg-purple-50 px-4 py-3">
+      <Globe className="h-4 w-4 text-purple-500" />
+      <span className="text-sm font-medium text-purple-700">Global — not region-specific</span>
+    </div>
+  ) : regionSelector;
+
   const content = !isColocationTab ? (
     <ResourceDataExplorer
       title={activeConfig.tableTitle}
       description={activeConfig.tableDescription}
       columns={columns}
       rows={filteredRows}
-      loading={isRegionsFetching || isPricingFetching}
+      loading={isGlobalTab ? isAcfFetching : (isRegionsFetching || isPricingFetching)}
       page={meta?.current_page ?? page}
       perPage={meta?.per_page ?? perPage}
       total={total}
@@ -844,7 +1074,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
           accent="midnight"
           rightSlot={
             <div className="flex flex-col items-end gap-3">
-              {regionSelector}
+              {regionSelector_}
               {actionButtons}
             </div>
           }
@@ -853,9 +1083,9 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
         <div className="flex flex-col gap-6 lg:flex-row">
           <PricingSideMenu activeTab={activeTab} onTabChange={handleTabChange} items={menuItems} />
           <ModernCard className="flex-1 border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur">
-            {error && !isColocationTab ? (
+            {(isGlobalTab ? acfError : error) && !isColocationTab ? (
               <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-6 text-sm text-red-600">
-                Failed to load pricing catalogue: {error.message}
+                Failed to load pricing catalogue: {(isGlobalTab ? acfError : error)?.message}
               </div>
             ) : (
               content
@@ -877,6 +1107,11 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
         isOpen={isDeletePricingOpen}
         onClose={closeDeletePricing}
         pricing={selectedPricing}
+      />
+      <TieredPricingModal
+        isOpen={!!tieredPricingService}
+        onClose={() => setTieredPricingService(null)}
+        service={tieredPricingService}
       />
     </>
   );

@@ -6,6 +6,7 @@ export interface PricingTabDefinition {
   caption: string;
   productType: string;
   icon: LucideIcon;
+  isGlobal?: boolean;
 }
 
 export interface TenantRegion {

@@ -88,6 +88,26 @@ const parseJsonSafely = async (response: Response): Promise<unknown> => {
   throw new Error("Received unsupported response format from server.");
 };
 
+const isNotificationAuthFailure = (response: Response): boolean => {
+  if (response.status !== 401 && response.status !== 403) return false;
+
+  const url = response.url || "";
+  if (!url) return false;
+
+  try {
+    const pathname = new URL(url).pathname;
+    return (
+      pathname.endsWith("/settings/notifications") ||
+      pathname.endsWith("/settings/notifications/unread-count")
+    );
+  } catch {
+    return (
+      url.includes("/settings/notifications") ||
+      url.includes("/settings/notifications/unread-count")
+    );
+  }
+};
+
 const handleAuthError = (
   response: Response,
   body: unknown,
@@ -198,7 +218,8 @@ const request = async <T = unknown>(
     }
 
     // Handle auth errors (2FA, 401, 403)
-    const handled = handleAuthError(response, res, role);
+    const suppressAuthRedirect = silent || isNotificationAuthFailure(response);
+    const handled = suppressAuthRedirect ? false : handleAuthError(response, res, role);
     if (handled) {
       throw new Error(
         toMessage(resRecord["error"]) ||

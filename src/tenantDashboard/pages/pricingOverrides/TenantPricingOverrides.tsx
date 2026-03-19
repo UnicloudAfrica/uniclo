@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Cpu, Database, Globe, HardDrive, Cable, Wifi, Tag, Upload, Download } from "lucide-react";
+import { Cpu, Database, Globe, HardDrive, Cable, Wifi, Tag, Upload, Download, Shield, Pencil, Layers } from "lucide-react";
 import TenantPageShell from "../../../dashboard/components/TenantPageShell";
 import PricingSideMenu from "../../../adminDashboard/components/pricingSideMenu";
 import {
@@ -21,6 +21,9 @@ import {
   useUpsertTenantPricingOverride,
   useUpdateTenantPricingOverride,
 } from "@/hooks/tenantHooks/tenantPricingHooks";
+import {
+  useFetchAnyCloudFlowPricing,
+} from "@/hooks/adminHooks/adminAnyCloudFlowPricingHooks";
 import { matchesProductType, normalizeProductType } from "@/utils/productTypeUtils";
 import { resolveCountryCodeFromEntity } from "@/shared/utils/countryUtils";
 import ToastUtils from "@/utils/toastUtil";
@@ -101,6 +104,14 @@ const PRICING_TABS: PricingTabDefinition[] = [
     productType: "managed_database_plan",
     icon: Database,
   },
+  {
+    id: "anycloudflow",
+    name: "AnyCloudFlow",
+    caption: "Platform services",
+    productType: "integration_product",
+    icon: Shield,
+    isGlobal: true,
+  },
 ];
 
 const DEFAULT_TAB_ID = PRICING_TABS[0]?.id || "";
@@ -141,6 +152,7 @@ const TenantPricingOverrides = () => {
       ({} as (typeof PRICING_TABS)[0]),
     [activeTab]
   );
+  const isGlobalTab = Boolean(activeConfig?.isGlobal);
 
   /* ---- Regions ---- */
   const { data: regionsPayload, isFetching: isRegionsFetching } = useFetchTenantRegions();
@@ -169,10 +181,19 @@ const TenantPricingOverrides = () => {
     isFetching: isCatalogFetching,
     refetch: refetchCatalog,
   } = useFetchProductPricing(selectedRegion, activeConfig?.productType || "", {
-    enabled: Boolean(selectedRegion),
+    enabled: Boolean(selectedRegion) && !isGlobalTab,
     tenantId: tenantId || "",
     countryCode: effectiveCountryCode,
   });
+
+  /* ---- AnyCloudFlow (global services) ---- */
+  const {
+    data: acfPayload,
+    isFetching: isAcfFetching,
+    refetch: refetchAcf,
+  } = useFetchAnyCloudFlowPricing({ enabled: isGlobalTab });
+  const [editingAcfId, setEditingAcfId] = useState<number | null>(null);
+  const [acfEditPrice, setAcfEditPrice] = useState("");
 
   /* ---- Overrides ---- */
   const {
@@ -181,11 +202,11 @@ const TenantPricingOverrides = () => {
     refetch: refetchOverrides,
   } = useFetchTenantPricingOverrides(
     {
-      productableType: activeConfig?.productType || "",
-      provider: activeRegion?.provider || "",
+      productableType: isGlobalTab ? "integration_product" : (activeConfig?.productType || ""),
+      provider: isGlobalTab ? "platform" : (activeRegion?.provider || ""),
       perPage: 200,
     },
-    { enabled: Boolean(activeRegion?.provider) }
+    { enabled: isGlobalTab || Boolean(activeRegion?.provider) }
   );
 
   const overrides = useMemo<TenantPricingOverride[]>(
@@ -209,10 +230,15 @@ const TenantPricingOverrides = () => {
   const isSaving = isSavingOverride || isUpdatingOverride;
 
   /* ---- Derived data ---- */
-  const catalogRows = useMemo<PricingCatalogRow[]>(
-    () => extractRowsFromPayload<PricingCatalogRow>(catalogPayload),
-    [catalogPayload]
-  );
+  const catalogRows = useMemo<PricingCatalogRow[]>(() => {
+    if (isGlobalTab) return [];
+    return extractRowsFromPayload<PricingCatalogRow>(catalogPayload);
+  }, [catalogPayload, isGlobalTab]);
+
+  const acfServices = useMemo(() => {
+    if (!isGlobalTab) return [];
+    return acfPayload?.data ?? [];
+  }, [acfPayload, isGlobalTab]);
 
   const findOverrideForProduct = useCallback(
     (product: PricingCatalogProduct | null | undefined): OverrideLookup | null => {
@@ -365,7 +391,8 @@ const TenantPricingOverrides = () => {
   const handleRefreshAll = useCallback(() => {
     refetchCatalog();
     refetchOverrides();
-  }, [refetchCatalog, refetchOverrides]);
+    if (isGlobalTab) refetchAcf();
+  }, [refetchCatalog, refetchOverrides, isGlobalTab, refetchAcf]);
 
   /* ---- Bulk actions ---- */
   const bulkActions: BulkAction<PricingCatalogRow>[] = useMemo(
@@ -553,7 +580,9 @@ const TenantPricingOverrides = () => {
     [findOverrideForProduct, handleResetOverride, openOverrideModal, isDeletingOverride]
   );
 
-  const isLoading = isCatalogFetching || isOverridesFetching || isRegionsFetching;
+  const isLoading = isGlobalTab
+    ? isAcfFetching || isOverridesFetching
+    : isCatalogFetching || isOverridesFetching || isRegionsFetching;
 
   /* ---- Stale overrides ---- */
   const catalogProductKeys = useMemo<Set<string>>(() => {
@@ -634,6 +663,146 @@ const TenantPricingOverrides = () => {
     [isDeletingOverride, handleDeleteOverrideById]
   );
 
+  /* ---- AnyCloudFlow columns ---- */
+  const acfColumns = useMemo<Column<any>[]>(
+    () => [
+      {
+        key: "service",
+        header: "Service",
+        render: (_value: unknown, row: any) => (
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-500">
+              <Shield className="h-4 w-4" />
+            </span>
+            <div>
+              <div className="text-sm font-semibold text-slate-900">{row.name}</div>
+              <div className="text-xs text-slate-500">{row.description}</div>
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: "billing_model",
+        header: "Billing",
+        render: (_value: unknown, row: any) => (
+          <div className="text-xs text-slate-600">
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 font-medium">
+              {(row.billing_model || "").replace(/_/g, " ")}
+            </span>
+            <div className="mt-1 text-slate-400">{row.unit_label || ""}</div>
+          </div>
+        ),
+      },
+      {
+        key: "admin_price",
+        header: "Admin Default",
+        render: (_value: unknown, row: any) => (
+          <div className="text-sm text-slate-700">
+            {row.price_usd != null ? formatCurrency(row.price_usd, "USD") : "Not set"}
+          </div>
+        ),
+      },
+      {
+        key: "tiers",
+        header: "Volume Tiers",
+        render: (_value: unknown, row: any) => {
+          const tiers = row.pricing_tiers;
+          if (!tiers?.length) {
+            return <span className="text-xs text-slate-400">—</span>;
+          }
+          return (
+            <div className="space-y-0.5">
+              {tiers.map((tier: any, i: number) => (
+                <div key={i} className="flex items-center gap-2 text-xs text-slate-600">
+                  <Layers className="h-3 w-3 text-amber-500" />
+                  <span className="font-medium">{tier.label || `${tier.min_units}–${tier.max_units ?? '∞'}`}</span>
+                  <span className="text-slate-400">→</span>
+                  <span>{formatCurrency(tier.price_usd, "USD")}</span>
+                </div>
+              ))}
+            </div>
+          );
+        },
+      },
+      {
+        key: "tenant_price",
+        header: "Your Price",
+        render: (_value: unknown, row: any) => {
+          const override = overrides.find(
+            (o) =>
+              o.productable_id != null &&
+              Number(o.productable_id) === Number(row.id) &&
+              matchesProductType(o.productable_type || "", "integration_product")
+          );
+          if (!override) {
+            return <span className="text-xs text-slate-400">Using admin default</span>;
+          }
+          return (
+            <div className="text-sm font-semibold text-slate-900">
+              {formatCurrency(override.price_usd, "USD")}
+            </div>
+          );
+        },
+      },
+      {
+        key: "actions",
+        header: "Actions",
+        render: (_value: unknown, row: any) => {
+          const override = overrides.find(
+            (o) =>
+              o.productable_id != null &&
+              Number(o.productable_id) === Number(row.id) &&
+              matchesProductType(o.productable_type || "", "integration_product")
+          );
+          if (row.price_usd == null) {
+            return <span className="text-xs text-slate-400">No admin price set</span>;
+          }
+          return (
+            <div className="flex items-center gap-2">
+              <ModernButton
+                variant={override ? "outline" : "primary"}
+                size="sm"
+                onClick={() => {
+                  const catalogRow: PricingCatalogRow = {
+                    id: row.id,
+                    product: {
+                      id: row.id,
+                      name: row.name,
+                      productable_type: "integration_product",
+                      productable_id: row.id,
+                    },
+                    pricing: {
+                      admin: { price_usd: row.price_usd, scope: "global" },
+                    },
+                  };
+                  const info: OverrideLookup | null = override
+                    ? { row: override, scope: "country" }
+                    : null;
+                  setOverrideModalRow(catalogRow);
+                  setOverrideModalInfo(info);
+                  setOverrideModalOpen(true);
+                }}
+              >
+                {override ? "Edit" : "Set"}
+              </ModernButton>
+              {override && (
+                <ModernButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => void handleDeleteOverrideById(override.id)}
+                  isDisabled={isDeletingOverride}
+                >
+                  Reset
+                </ModernButton>
+              )}
+            </div>
+          );
+        },
+      },
+    ],
+    [overrides, isDeletingOverride, handleDeleteOverrideById]
+  );
+
   /* ---- Render ---- */
   return (
     <TenantPageShell
@@ -641,26 +810,30 @@ const TenantPricingOverrides = () => {
       description="Adjust admin pricing to set your own tenant rates. Admin defaults must be set first."
       actions={
         <div className="flex items-center gap-2">
-          <ModernButton
-            variant="outline"
-            size="sm"
-            onClick={() => navigate("/dashboard/pricing-overrides/edit-list")}
-          >
-            Edit Price Settings
-          </ModernButton>
-          <ModernButton
-            variant="outline"
-            size="sm"
-            onClick={handleExportCsv}
-            isDisabled={!selectedRegion || isExporting}
-          >
-            <Download size={14} />
-            {isExporting ? "Exporting..." : "Download Template"}
-          </ModernButton>
-          <ModernButton variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-            <Upload size={14} />
-            Import CSV
-          </ModernButton>
+          {!isGlobalTab && (
+            <>
+              <ModernButton
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/dashboard/pricing-overrides/edit-list")}
+              >
+                Edit Price Settings
+              </ModernButton>
+              <ModernButton
+                variant="outline"
+                size="sm"
+                onClick={handleExportCsv}
+                isDisabled={!selectedRegion || isExporting}
+              >
+                <Download size={14} />
+                {isExporting ? "Exporting..." : "Download Template"}
+              </ModernButton>
+              <ModernButton variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+                <Upload size={14} />
+                Import CSV
+              </ModernButton>
+            </>
+          )}
           <ModernButton variant="outline" size="sm" onClick={handleRefreshAll}>
             Refresh
           </ModernButton>
@@ -674,54 +847,82 @@ const TenantPricingOverrides = () => {
           <div className="rounded-3xl border border-slate-200/70 bg-white p-6 shadow-sm">
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div className="flex-1 space-y-2">
-                <h2 className="text-xl font-semibold text-slate-900">Pricing catalogue</h2>
+                <h2 className="text-xl font-semibold text-slate-900">
+                  {isGlobalTab ? "AnyCloudFlow services" : "Pricing catalogue"}
+                </h2>
                 <p className="text-sm text-slate-500">
-                  Adjust admin defaults per region. Price settings apply to your tenants and client
-                  users.
+                  {isGlobalTab
+                    ? "Set your own rates for backup, DR, replication, and migration services. These apply globally — not per region."
+                    : "Adjust admin defaults per region. Price settings apply to your tenants and client users."}
                 </p>
               </div>
-              <div className="grid w-full gap-3 md:w-auto md:grid-cols-2">
-                <ModernSelect
-                  label="Region"
-                  value={selectedRegion}
-                  onChange={(event) => setSelectedRegion(event.target.value)}
-                  options={regions.map((region) => ({
-                    value: region.code,
-                    label: `${region.name} (${region.code})`,
-                  }))}
-                  disabled={!regions.length}
-                />
-                <ModernInput
-                  label="Search"
-                  placeholder="Search products"
-                  value={searchValue}
-                  onChange={(event) => setSearchValue(event.target.value)}
-                />
-              </div>
+              {isGlobalTab ? (
+                <div className="flex items-center gap-2 rounded-lg bg-purple-50 px-4 py-3">
+                  <Globe className="h-4 w-4 text-purple-500" />
+                  <span className="text-sm font-medium text-purple-700">Global — not region-specific</span>
+                </div>
+              ) : (
+                <div className="grid w-full gap-3 md:w-auto md:grid-cols-2">
+                  <ModernSelect
+                    label="Region"
+                    value={selectedRegion}
+                    onChange={(event) => setSelectedRegion(event.target.value)}
+                    options={regions.map((region) => ({
+                      value: region.code,
+                      label: `${region.name} (${region.code})`,
+                    }))}
+                    disabled={!regions.length}
+                  />
+                  <ModernInput
+                    label="Search"
+                    placeholder="Search products"
+                    value={searchValue}
+                    onChange={(event) => setSearchValue(event.target.value)}
+                  />
+                </div>
+              )}
             </div>
           </div>
 
           <div className="rounded-3xl border border-slate-200/70 bg-white p-4 shadow-sm">
-            <ModernTable<PricingCatalogRow>
-              data={filteredRows}
-              columns={columns}
-              loading={isLoading}
-              searchable={false}
-              filterable={false}
-              exportable={false}
-              paginated={false}
-              selectable
-              bulkActions={bulkActions}
-              emptyMessage={
-                <div className="py-16 text-center text-slate-500">
-                  <Tag className="mx-auto mb-3 h-6 w-6 text-slate-400" />
-                  No products found for this region and category.
-                </div>
-              }
-            />
+            {isGlobalTab ? (
+              <ModernTable<any>
+                data={acfServices}
+                columns={acfColumns}
+                loading={isLoading}
+                searchable={false}
+                filterable={false}
+                exportable={false}
+                paginated={false}
+                emptyMessage={
+                  <div className="py-16 text-center text-slate-500">
+                    <Shield className="mx-auto mb-3 h-6 w-6 text-slate-400" />
+                    No AnyCloudFlow services available. Contact your platform admin.
+                  </div>
+                }
+              />
+            ) : (
+              <ModernTable<PricingCatalogRow>
+                data={filteredRows}
+                columns={columns}
+                loading={isLoading}
+                searchable={false}
+                filterable={false}
+                exportable={false}
+                paginated={false}
+                selectable
+                bulkActions={bulkActions}
+                emptyMessage={
+                  <div className="py-16 text-center text-slate-500">
+                    <Tag className="mx-auto mb-3 h-6 w-6 text-slate-400" />
+                    No products found for this region and category.
+                  </div>
+                }
+              />
+            )}
           </div>
 
-          {staleOverrides.length > 0 && (
+          {!isGlobalTab && staleOverrides.length > 0 && (
             <div className="rounded-3xl border border-amber-200/70 bg-amber-50/40 p-4 shadow-sm">
               <div className="mb-3 flex items-center gap-2 text-amber-700">
                 <Tag className="h-4 w-4" />

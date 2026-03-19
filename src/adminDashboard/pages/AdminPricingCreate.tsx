@@ -102,9 +102,13 @@ const AdminPricingCreate = () => {
     queries: usedRegionCodes.map((code) => ({
       queryKey: ["availability-zones", code],
       queryFn: async () => {
-        const res = await silentApi("GET", `/regions/${code}/availability-zones`);
-        if (!res?.data) throw new Error("Failed to fetch availability zones");
-        return { code, data: res.data as AZOption[] };
+        const res = await silentApi<{ data?: AZOption[] }>(
+          "GET",
+          `/regions/${code}/availability-zones`
+        );
+        const azList = (res as any)?.data ?? [];
+        if (!Array.isArray(azList)) throw new Error("Failed to fetch availability zones");
+        return { code, data: azList as AZOption[] };
       },
       enabled: !!code,
       staleTime: 1000 * 60 * 5,
@@ -355,7 +359,7 @@ const AdminPricingCreate = () => {
                       : "All AZs"}
                 </option>
                 {azs.map((az) => (
-                  <option key={az.id ?? az.code} value={String(az.id ?? az.code)}>
+                  <option key={az.code || az.id} value={az.code || String(az.id)}>
                     {az.name || az.code} ({az.provider})
                   </option>
                 ))}
@@ -396,8 +400,11 @@ const AdminPricingCreate = () => {
         key: "product",
         header: "Product",
         render: (_: unknown, entry: PricingEntry, index: number) => {
+          const entryProvider = deriveProvider(entry.region, entry.availability_zone);
           const filteredProducts = allProducts.filter(
-            (p) => p.productable_type === entry.category
+            (p) =>
+              p.productable_type === entry.category &&
+              (!entryProvider || (p as any).provider === entryProvider)
           );
           const isDisabled =
             isSubmitting || isProductsFetching || !entry.category;

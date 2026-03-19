@@ -1,12 +1,7 @@
 import React from "react";
 import { CheckCircle } from "lucide-react";
 import { PaymentModal } from "../ui";
-
-type PaymentGatewayOption = {
-  id?: string | number;
-  name?: string;
-  [key: string]: unknown;
-};
+import type { PaymentGatewayOption } from "../ui/payment/types";
 
 type PaymentSummary = {
   required?: boolean;
@@ -46,6 +41,7 @@ interface PaymentStepProps {
   selectedUserId: string;
   clientOptions: ClientOption[];
   onPaymentComplete: (payload?: unknown) => void;
+  onPaymentOptionChange?: (option: PaymentGatewayOption | null) => void;
   apiBaseUrl: string;
   paymentTransactionLabel: string;
 }
@@ -63,6 +59,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
   selectedUserId,
   clientOptions,
   onPaymentComplete,
+  onPaymentOptionChange,
   apiBaseUrl,
   paymentTransactionLabel,
 }) => {
@@ -100,6 +97,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
             submissionResult?.payment?.options ||
             []
           }
+          onPaymentOptionChange={onPaymentOptionChange}
           onPaymentComplete={onPaymentComplete}
           apiBaseUrl={apiBaseUrl}
         />

@@ -241,6 +241,7 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
           edgeNetworkConnected={edgeNetworkConnected}
           edgeNetworkName={edgeNetworkName}
           isSyncing={isSyncing}
+          provider={project.provider}
         />
       </div>
 
@@ -252,6 +253,7 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
             progressPercent={setupProgressPercent}
             onCompleteSetup={onCompleteSetup}
             isLoading={isProvisioning}
+            provider={project.provider}
           />
         </div>
 

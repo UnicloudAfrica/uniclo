@@ -16,10 +16,25 @@ import {
   formatSubnetLabel,
   normalizeCountryCandidate,
   COUNTRY_FALLBACK,
+  pickPreferredPaymentOption,
 } from "../utils/instanceCreationUtils";
 import { useFetchCountries } from "./resource";
 import { useApiContext } from "./useApiContext";
 import { buildProvisioningSteps } from "../shared/components/instance-wizard/provisioningSteps";
+
+const asPricingBreakdownEntries = (value: unknown): Record<string, any>[] => {
+  if (Array.isArray(value)) {
+    return value.filter(
+      (entry): entry is Record<string, any> => Boolean(entry && typeof entry === "object")
+    );
+  }
+
+  if (value && typeof value === "object") {
+    return [value as Record<string, any>];
+  }
+
+  return [];
+};
 
 export const useAdminCreateInstanceLogic = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -66,6 +81,8 @@ export const useAdminCreateInstanceLogic = () => {
     isSubmitting,
     submissionResult,
     orderReceipt,
+    selectedPaymentOption,
+    setSelectedPaymentOption,
     submissionErrorMessage,
     handleCreateOrder,
     handlePaymentCompleted,
@@ -301,70 +318,80 @@ export const useAdminCreateInstanceLogic = () => {
     submissionResult?.payment?.payment_gateway_options ||
     orderReceipt?.payment?.payment_gateway_options ||
     [];
-  const selectedPaymentOption = null; // Removed from state in previous refactor
-  const effectivePaymentOption = selectedPaymentOption || paymentOptionsList[0] || null;
-
-  const paymentBreakdown =
-    submissionResult?.payment?.breakdown ||
-    orderReceipt?.payment?.breakdown ||
-    effectivePaymentOption?.charge_breakdown ||
-    effectivePaymentOption?.breakdown ||
-    effectivePaymentOption ||
-    {};
+  const preferredPaymentOption = pickPreferredPaymentOption(
+    paymentOptionsList as Array<Record<string, unknown>>
+  );
+  const effectivePaymentOption =
+    selectedPaymentOption || preferredPaymentOption || null;
+  const rawPricingBreakdown =
+    submissionResult?.pricing_breakdown ||
+    submissionResult?.transaction?.metadata?.pricing_breakdown ||
+    orderReceipt?.pricing_breakdown ||
+    orderReceipt?.transaction?.metadata?.pricing_breakdown ||
+    null;
 
   const backendPricingData = useMemo(() => {
-    if (submissionResult?.pricing_data) return submissionResult.pricing_data;
-    if (orderReceipt?.pricing_data) return orderReceipt.pricing_data;
-    return null; // Fallback
-  }, [submissionResult, orderReceipt]);
+    const entries = asPricingBreakdownEntries(rawPricingBreakdown);
+    if (!entries.length) {
+      return null;
+    }
 
-  const summaryCurrency = "USD"; // Default or derived
-  // ... Copy complex pricing logic (summaryGrandTotalValue, etc) ...
-  // For brevity, I will simplify or copy exactly if I can.
-  // Given the complexity, I'll calculate totals here.
+    return entries.reduce(
+      (acc, entry) => {
+        const lines = Array.isArray(entry.lines) ? entry.lines : [];
+        acc.lines.push(...lines);
+        acc.pre_discount_subtotal += toNumber(entry.pre_discount_subtotal);
+        acc.discount += toNumber(entry.discount);
+        acc.subtotal += toNumber(entry.subtotal);
+        acc.tax += toNumber(entry.tax);
+        acc.total += toNumber(entry.total);
+        acc.colocation_amount += toNumber(entry.colocation_amount);
+        acc.currency = acc.currency || entry.currency || "";
+        return acc;
+      },
+      {
+        lines: [] as Record<string, any>[],
+        pre_discount_subtotal: 0,
+        discount: 0,
+        subtotal: 0,
+        tax: 0,
+        total: 0,
+        colocation_amount: 0,
+        currency: "",
+      }
+    );
+  }, [rawPricingBreakdown]);
 
-  let summaryGrandTotalValue = toNumber(
-    paymentBreakdown?.total ??
-      paymentBreakdown?.grand_total ??
-      paymentBreakdown?.amount_due ??
-      effectivePaymentOption?.total ??
-      0
-  );
-  let summarySubtotalValue = toNumber(
-    paymentBreakdown?.subtotal ??
-      paymentBreakdown?.base_amount ??
-      effectivePaymentOption?.subtotal ??
-      0
-  );
-  let summaryTaxValue = toNumber(
-    paymentBreakdown?.tax ?? paymentBreakdown?.taxes ?? effectivePaymentOption?.tax ?? 0
-  );
+  const gatewayBreakdown = effectivePaymentOption?.charge_breakdown || {};
   const summaryGatewayFeesValue = toNumber(
-    paymentBreakdown?.gateway_fees ?? effectivePaymentOption?.gateway_fees ?? 0
+    gatewayBreakdown?.total_fees ??
+      effectivePaymentOption?.total_fees ??
+      effectivePaymentOption?.fees ??
+      submissionResult?.transaction?.third_party_fee ??
+      orderReceipt?.transaction?.third_party_fee ??
+      submissionResult?.transaction?.transaction_fee ??
+      orderReceipt?.transaction?.transaction_fee ??
+      0
   );
-
-  // Override with backendPricingData if available
-  if (backendPricingData) {
-    if (backendPricingData.subtotal > 0) summarySubtotalValue = backendPricingData.subtotal;
-    if (backendPricingData.tax >= 0) summaryTaxValue = backendPricingData.tax;
-    if (backendPricingData.total > 0) summaryGrandTotalValue = backendPricingData.total;
-  }
-
-  // Auto-calculate if missing
-  if (summarySubtotalValue === 0 && summaryGrandTotalValue > 0) {
-    const recalculated = summaryGrandTotalValue - summaryTaxValue - summaryGatewayFeesValue;
-    summarySubtotalValue = recalculated > 0 ? recalculated : summaryGrandTotalValue;
-  }
-  const computedGrandTotal = summarySubtotalValue + summaryTaxValue + summaryGatewayFeesValue;
-  if (computedGrandTotal > 0 && summaryGrandTotalValue === 0) {
-    summaryGrandTotalValue = computedGrandTotal;
-  }
-
+  const fallbackGrandTotal = toNumber(
+    submissionResult?.transaction?.amount ??
+      orderReceipt?.order?.total ??
+      orderReceipt?.transaction?.amount ??
+      0
+  );
+  const summaryGrandTotalValue = backendPricingData?.total || fallbackGrandTotal;
+  const summarySubtotalValue =
+    backendPricingData?.subtotal ||
+    (summaryGrandTotalValue > 0
+      ? Math.max(summaryGrandTotalValue - summaryGatewayFeesValue, 0)
+      : 0);
+  const summaryTaxValue = backendPricingData?.tax || 0;
   const summaryDisplayCurrency =
     backendPricingData?.currency ||
-    paymentBreakdown?.currency ||
+    submissionResult?.transaction?.currency ||
+    orderReceipt?.transaction?.currency ||
     effectivePaymentOption?.currency ||
-    summaryCurrency;
+    (billingCountry === "NG" ? "NGN" : "USD");
 
   const summaryPlanLabel = useMemo(() => {
     if (!configurationSummaries.length) return "Instance profile";
@@ -459,6 +486,7 @@ export const useAdminCreateInstanceLogic = () => {
     // Action Handlers
     handleCreateOrder,
     handlePaymentCompleted,
+    setSelectedPaymentOption,
 
     // Misc
     apiBaseUrl,

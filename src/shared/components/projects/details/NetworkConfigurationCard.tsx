@@ -10,6 +10,7 @@ import {
   Server,
   Wifi,
 } from "lucide-react";
+import { isFeatureSupported } from "@/utils/featureGating";
 
 interface IGWDetails {
   id?: string;
@@ -51,13 +52,14 @@ const NetworkConfigurationCard: React.FC<NetworkConfigurationCardProps> = ({
   floatingIpCount = 0,
   onViewCompute,
 }) => {
-  const isNobus = provider?.toLowerCase() === "nobus";
+  const supportsVpc = isFeatureSupported(provider, "vpcs");
+  const supportsInternetGateway = isFeatureSupported(provider, "internet_gateways");
 
   /* ------------------------------------------------------------------ */
   /* Nobus Layout — "Security & Access"                                  */
   /* Shows Instances / Security Groups / Floating IPs instead of VPC/IGW */
   /* ------------------------------------------------------------------ */
-  if (isNobus) {
+  if (!supportsVpc) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6 shadow-sm h-full">
         {/* Header */}

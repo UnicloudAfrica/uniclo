@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import logo from "./assets/logo.png";
 
@@ -27,6 +27,7 @@ interface VerifyErrors {
 
 export default function VerifyAdminMail() {
   const [code, setCode] = useState<string[]>(new Array(6).fill("")); // Six-digit OTP input
+  const isSubmittingRef = useRef(false);
   const {
     userEmail,
     clearUserEmail,
@@ -110,6 +111,7 @@ export default function VerifyAdminMail() {
       typeof otpValue === "string" && otpValue.trim().length ? otpValue : code.join("");
 
     if (!validateForm()) return;
+    if (isSubmittingRef.current || isVerifyPending) return;
 
     const email = userEmail;
     const userData: any = {
@@ -123,6 +125,8 @@ export default function VerifyAdminMail() {
       userData.two_factor_code = resolvedOtp;
       userData.code = resolvedOtp;
     }
+
+    isSubmittingRef.current = true;
 
     verifyEmail(userData, {
       onSuccess: (res: any) => {
@@ -187,6 +191,9 @@ export default function VerifyAdminMail() {
         if (/2fa|two[-\\s]?factor|authenticator/i.test(message)) {
           setTwoFactorRequired(true);
         }
+      },
+      onSettled: () => {
+        isSubmittingRef.current = false;
       },
     });
   };

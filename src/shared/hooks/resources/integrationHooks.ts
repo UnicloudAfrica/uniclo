@@ -1152,4 +1152,73 @@ export const useConfigureTrafficControl = () => {
   });
 };
 
+// ─── Kernel Compatibility ────────────────────────────────────────
+
+/** Mutation: check kernel compatibility between two endpoints. */
+export const useKernelCompatibilityCheck = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+
+  return useMutation<
+    AnyRecord,
+    Error,
+    { source_endpoint_id: string; target_endpoint_id: string }
+  >({
+    mutationFn: async (payload) => {
+      const uri = `${entry.urlPrefix}/integrations/kernel-compatibility/check`;
+      const envelope = asEnvelope(
+        await entry.silentApi.post<AnyRecord>(uri, payload),
+      );
+      if (!envelope.success) {
+        throw new Error(
+          (envelope.message as string) || "Kernel compatibility check failed",
+        );
+      }
+      return (envelope.data ?? {}) as AnyRecord;
+    },
+  });
+};
+
+/** Query: get the kernel compatibility matrix (paginated). */
+export const useKernelCompatibilityMatrix = (
+  params?: { page?: number; per_page?: number },
+  options: QueryOptions = {},
+) => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+
+  return useQuery<AnyRecord, Error>({
+    queryKey: ["kernelCompatibility", "matrix", context, params],
+    queryFn: async () => {
+      const qs = new URLSearchParams();
+      if (params?.page) { qs.set("page", String(params.page)); }
+      if (params?.per_page) { qs.set("per_page", String(params.per_page)); }
+      const uri = `${entry.urlPrefix}/integrations/kernel-compatibility/matrix${qs.toString() ? `?${qs}` : ""}`;
+      const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
+      return (envelope.data ?? {}) as AnyRecord;
+    },
+    ...options,
+  });
+};
+
+/** Query: get preflight results for a migration. */
+export const useMigrationPreflight = (
+  migrationId: string | undefined,
+  options: QueryOptions = {},
+) => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+
+  return useQuery<AnyRecord, Error>({
+    queryKey: ["externalMigrations", "preflight", context, migrationId],
+    queryFn: async () => {
+      const uri = `${entry.urlPrefix}/integrations/external-migrations/${migrationId}/preflight`;
+      const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
+      return (envelope.data ?? {}) as AnyRecord;
+    },
+    enabled: !!migrationId,
+    ...options,
+  });
+};
+
 export default integrationOperationHooks;

@@ -6,6 +6,7 @@ export interface ServiceProfile {
   id: string;
   name: string;
   region: string;
+  availability_zone?: string;
   tierKey: string;
   storageGb: string;
   months: string;

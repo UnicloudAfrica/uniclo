@@ -1,5 +1,6 @@
 import React from "react";
 import { Users, RefreshCw, Wifi, WifiOff } from "lucide-react";
+import { isFeatureSupported } from "@/utils/featureGating";
 
 interface AdvancedQuickActionsCardProps {
   onManageMembers: () => void;
@@ -7,6 +8,7 @@ interface AdvancedQuickActionsCardProps {
   edgeNetworkConnected: boolean;
   edgeNetworkName?: string;
   isSyncing?: boolean;
+  provider?: string;
 }
 
 const AdvancedQuickActionsCard: React.FC<AdvancedQuickActionsCardProps> = ({
@@ -15,6 +17,7 @@ const AdvancedQuickActionsCard: React.FC<AdvancedQuickActionsCardProps> = ({
   edgeNetworkConnected = false,
   edgeNetworkName,
   isSyncing = false,
+  provider,
 }) => {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6 shadow-sm h-full">
@@ -44,33 +47,35 @@ const AdvancedQuickActionsCard: React.FC<AdvancedQuickActionsCardProps> = ({
       </div>
 
       {/* Edge Network Status */}
-      <div className="mt-4 pt-4 border-t border-gray-100">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {edgeNetworkConnected ? (
-              <Wifi className="w-4 h-4 text-green-500" />
-            ) : (
-              <WifiOff className="w-4 h-4 text-gray-400" />
-            )}
-            <span className="text-sm text-gray-600">Edge Network</span>
+      {isFeatureSupported(provider, "edge_network") && (
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {edgeNetworkConnected ? (
+                <Wifi className="w-4 h-4 text-green-500" />
+              ) : (
+                <WifiOff className="w-4 h-4 text-gray-400" />
+              )}
+              <span className="text-sm text-gray-600">Edge Network</span>
+            </div>
+            <span
+              className={`text-xs font-medium px-2 py-1 rounded-full ${
+                edgeNetworkConnected ? "bg-green-100 text-green-700" : "bg-amber-50 text-amber-700"
+              }`}
+            >
+              {edgeNetworkConnected ? "Connected" : "Not Connected"}
+            </span>
           </div>
-          <span
-            className={`text-xs font-medium px-2 py-1 rounded-full ${
-              edgeNetworkConnected ? "bg-green-100 text-green-700" : "bg-amber-50 text-amber-700"
-            }`}
-          >
-            {edgeNetworkConnected ? "Connected" : "Not Connected"}
-          </span>
+          {edgeNetworkConnected && edgeNetworkName && (
+            <p className="text-xs text-gray-500 mt-1 ml-6">{edgeNetworkName}</p>
+          )}
+          {!edgeNetworkConnected && (
+            <p className="text-xs text-amber-600 mt-1.5 ml-6">
+              Assign via &quot;Manage edge config&quot; for public IP access
+            </p>
+          )}
         </div>
-        {edgeNetworkConnected && edgeNetworkName && (
-          <p className="text-xs text-gray-500 mt-1 ml-6">{edgeNetworkName}</p>
-        )}
-        {!edgeNetworkConnected && (
-          <p className="text-xs text-amber-600 mt-1.5 ml-6">
-            Assign via &quot;Manage edge config&quot; for public IP access
-          </p>
-        )}
-      </div>
+      )}
     </div>
   );
 };

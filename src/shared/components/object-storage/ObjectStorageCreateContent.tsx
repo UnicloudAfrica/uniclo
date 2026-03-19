@@ -72,6 +72,7 @@ export const ObjectStorageCreateContent: React.FC<ObjectStorageCreateContentProp
     addProfile,
     removeProfile,
     handleRegionChange,
+    handleAvailabilityZoneChange,
     handleTierChange,
     handleMonthsChange,
     handleStorageGbChange,
@@ -329,6 +330,7 @@ export const ObjectStorageCreateContent: React.FC<ObjectStorageCreateContentProp
             onAddProfile={addProfile}
             onRemoveProfile={removeProfile}
             onRegionChange={handleRegionChange}
+            onAvailabilityZoneChange={handleAvailabilityZoneChange}
             onTierChange={handleTierChange}
             onMonthsChange={handleMonthsChange}
             onStorageGbChange={handleStorageGbChange}

@@ -7,18 +7,100 @@ import { useFetchSecurityGroups as _useFetchSG } from "@/shared/hooks/resources/
 import { useFetchKeyPairs } from "@/shared/hooks/keyPairsHooks";
 import { useFetchSubnets as _useFetchSN } from "@/shared/hooks/resources/subnetHooks";
 
+
+interface RegionResource {
+  id?: string | number;
+  code?: string;
+  region?: string;
+  slug?: string;
+  identifier?: string;
+  az_selection_mode?: "auto" | "user_selectable" | "disabled";
+  availability_zones?: AvailabilityZoneResource[];
+}
+
+interface AvailabilityZoneResource {
+  id?: string | number;
+  code?: string;
+  name?: string;
+  status?: string;
+  provider?: string;
+}
+
+interface PricingEffect {
+  price_local?: number | string | null;
+  price_usd?: number | string | null;
+  amount?: number | string | null;
+  currency?: string;
+}
+
+interface PricingResource {
+  productable_id?: string | number;
+  id?: string | number;
+  product_id?: string | number;
+  name?: string;
+  price_local?: number | string | null;
+  price_usd?: number | string | null;
+  amount?: number | string | null;
+  vcpus?: number | string;
+  memory_mb?: number | string;
+  memoryGb?: number | string;
+  memory_gb?: number | string;
+  config?: { vcpus?: number | string; memory_mb?: number | string; };
+  configuration?: { vcpus?: number | string; };
+  product?: PricingResource;
+  pricing?: { effective?: PricingEffect };
+}
+
+interface ProjectResource {
+  id?: string | number;
+  identifier?: string;
+  project_id?: string | number;
+  code?: string;
+  name?: string;
+  slug?: string;
+  region?: string | RegionResource;
+  region_code?: string;
+  value?: string | number;
+  label?: string;
+  raw?: unknown;
+}
+
+interface NetworkResource {
+  id?: string | number;
+  network_id?: string | number;
+  uuid?: string;
+  identifier?: string;
+  name?: string;
+  display_name?: string;
+  network_name?: string;
+  label?: string;
+}
+
+interface SubnetResource {
+  id?: string | number;
+  subnet_id?: string | number;
+  identifier?: string;
+  name?: string;
+  cidr?: string;
+}
+
+interface KeyPairResource {
+  id?: string | number;
+  name?: string;
+}
+
 // Local positional-arg wrappers for dynamic hook fallbacks
-const useFetchSecurityGroups = (projectId: any, region: any, opts: any = {}) =>
+const useFetchSecurityGroups = (projectId: string, region: string, opts: Record<string, unknown> = {}) =>
   _useFetchSG({ projectId, region }, opts);
-const useFetchSubnets = (projectId: any, region: any, opts: any = {}) =>
+const useFetchSubnets = (projectId: string, region: string, opts: Record<string, unknown> = {}) =>
   _useFetchSN({ projectId, region }, opts);
 import { useFetchNetworks } from "@/hooks/adminHooks/networkHooks";
 import ToastUtils from "@/utils/toastUtil";
 import { buildConfigurationFromTemplate } from "@/utils/instanceCreationUtils";
 
 // Type for custom fetch hook that returns { data, isFetching, ... }
-type FetchHookResult = { data: any; isFetching?: boolean; isLoading?: boolean };
-type FetchHookFn = (...args: any[]) => FetchHookResult;
+type FetchHookResult = { data: unknown; isFetching?: boolean; isLoading?: boolean };
+type FetchHookFn = (...args: unknown[]) => FetchHookResult;
 
 interface Props {
   cfg: Configuration;
@@ -69,16 +151,16 @@ interface Props {
   membershipTenantId?: string;
   membershipUserId?: string;
   lockAssignmentScope?: boolean;
-  regions?: any[];
+  regions?: RegionResource[];
 }
 
-const extractRegionCode = (region: any) => {
+const extractRegionCode = (region: RegionResource | string | null | undefined) => {
   if (!region) return "";
   if (typeof region === "string") return region;
   return region.code || region.region || region.slug || region.id || region.identifier || "";
 };
 
-const resolveEffectivePrice = (item: any) => {
+const resolveEffectivePrice = (item: PricingResource | null | undefined) => {
   const effective = item?.pricing?.effective || {};
   const candidates = [
     effective.price_local,
@@ -103,11 +185,11 @@ const resolveEffectivePrice = (item: any) => {
   return null;
 };
 
-const hasEffectivePricing = (item: any) => {
+const hasEffectivePricing = (item: PricingResource | null | undefined) => {
   return resolveEffectivePrice(item) !== null;
 };
 
-const formatPriceSuffix = (item: any) => {
+const formatPriceSuffix = (item: PricingResource | null | undefined) => {
   const effective = item?.pricing?.effective || {};
   const amount = resolveEffectivePrice(item);
   const currency = effective.currency || "USD";
@@ -168,14 +250,14 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
   const selectedRegionData = useMemo(() => {
     if (!selectedRegion || !Array.isArray(regions)) return null;
     return regions.find(
-      (r: any) =>
+      (r: RegionResource) =>
         String(r?.code || r?.region || r?.slug || r?.id || "") === String(selectedRegion)
     ) || null;
   }, [regions, selectedRegion]);
 
   const azSelectionMode = useMemo(() => {
     if (!selectedRegionData) return undefined;
-    return (selectedRegionData as any)?.az_selection_mode as
+    return (selectedRegionData as RegionResource)?.az_selection_mode as
       | "auto"
       | "user_selectable"
       | "disabled"
@@ -184,11 +266,11 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
 
   const availabilityZoneOptions = useMemo(() => {
     if (!selectedRegionData) return [];
-    const azs = (selectedRegionData as any)?.availability_zones;
+    const azs = (selectedRegionData as RegionResource)?.availability_zones;
     if (!Array.isArray(azs)) return [];
     return azs
-      .filter((az: any) => az?.status === "active" || !az?.status)
-      .map((az: any) => ({
+      .filter((az: AvailabilityZoneResource) => az?.status === "active" || !az?.status)
+      .map((az: AvailabilityZoneResource) => ({
         value: String(az.code || az.id || ""),
         label: `${az.name || az.code || ""}${az.provider ? ` (${az.provider})` : ""}`,
       }));
@@ -198,13 +280,27 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
   const selectedAzProvider = useMemo(() => {
     const azCode = cfg.availability_zone;
     if (!azCode || !selectedRegionData) return "";
-    const azs = (selectedRegionData as any)?.availability_zones;
+    const azs = (selectedRegionData as RegionResource)?.availability_zones;
     if (!Array.isArray(azs)) return "";
     const match = azs.find(
-      (az: any) => String(az.code || az.id || "") === String(azCode)
+      (az: AvailabilityZoneResource) => String(az.code || az.id || "") === String(azCode)
     );
     return match?.provider || "";
   }, [cfg.availability_zone, selectedRegionData]);
+
+  // Check if the region has multiple providers (requires AZ selection for pricing)
+  const regionHasMultipleProviders = useMemo(() => {
+    if (!selectedRegionData) return false;
+    const azs = (selectedRegionData as RegionResource)?.availability_zones;
+    if (!Array.isArray(azs)) return false;
+    const providers = new Set(
+      azs
+        .filter((az: AvailabilityZoneResource) => az?.status === "active" || !az?.status)
+        .map((az: AvailabilityZoneResource) => az?.provider)
+        .filter(Boolean)
+    );
+    return providers.size > 1;
+  }, [selectedRegionData]);
 
   // 1. Fetch Projects (Region-Aware) - uses hook override if provided
   const projectsHook = useProjectsHook || useFetchProjects;
@@ -228,7 +324,7 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
 
     // Re-implementing logic
     const seen = new Set();
-    return combined.reduce((acc: Option[], project: any) => {
+    return combined.reduce((acc: Option[], project: ProjectResource) => {
       const candidate =
         project?.value && project?.label
           ? ({ ...project, raw: project.raw ?? project } as Option)
@@ -263,8 +359,12 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
   }, [projectsResp?.data, baseProjectOptions, selectedRegion]);
 
   // 2. Fetch Pricing (filtered by provider when an AZ is selected)
+  // When a region has multiple providers, require AZ selection before fetching pricing
+  // to ensure only the correct provider's products are shown.
+  const pricingEnabled = Boolean(selectedRegion) &&
+    (!regionHasMultipleProviders || Boolean(cfg.availability_zone));
   const sharedPricingOptions = {
-    enabled: Boolean(selectedRegion),
+    enabled: pricingEnabled,
     keepPreviousData: true,
     countryCode: billingCountry || "US",
     tenantId: pricingTenantId || "",
@@ -299,7 +399,7 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
       : [];
     if (rows.length) {
       return rows
-        .map((item: any, idx: number): Option | null => {
+        .map((item: PricingResource, idx: number): Option | null => {
           const product = item?.product || item; // Items from pricing API usually have .product
           const value = product?.productable_id || product?.id || item?.product_id || item?.id;
           if (!value) return null;
@@ -330,7 +430,7 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
       : [];
     if (rows.length) {
       return rows
-        .map((item: any, idx: number): Option | null => {
+        .map((item: PricingResource, idx: number): Option | null => {
           const product = item?.product || item;
           const value = product?.productable_id || product?.id || item?.product_id || item?.id;
           if (!value) return null;
@@ -351,7 +451,7 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
       : [];
     if (rows.length) {
       return rows
-        .map((item: any, idx: number): Option | null => {
+        .map((item: PricingResource, idx: number): Option | null => {
           const product = item?.product || item;
           const value = product?.productable_id || product?.id || item?.product_id || item?.id;
           if (!value) return null;
@@ -372,7 +472,7 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
       : [];
     if (rows.length) {
       return rows
-        .map((item: any, idx: number): Option | null => {
+        .map((item: PricingResource, idx: number): Option | null => {
           const product = item?.product || item;
           const value = product?.productable_id || product?.id || item?.product_id || item?.id;
           if (!value) return null;
@@ -417,12 +517,12 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
   // 5. Transform Network Options
   const networkOptions = useMemo(() => {
     const list = Array.isArray(networksResponse)
-      ? (networksResponse as Record<string, unknown>[])
-      : Array.isArray((networksResponse as Record<string, unknown>)?.data)
-        ? (networksResponse as Record<string, { data?: unknown }>).data
+      ? (networksResponse as NetworkResource[])
+      : Array.isArray((networksResponse as { data?: NetworkResource[] })?.data)
+        ? (networksResponse as { data?: NetworkResource[] }).data || []
         : [];
     return list
-      .map((network: any): Option | null => {
+      .map((network: NetworkResource): Option | null => {
         const value =
           network?.id || network?.network_id || network?.uuid || network?.identifier || "";
         if (!value) return null;
@@ -438,7 +538,7 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
   }, [networksResponse]);
 
   const subnetOptions = useMemo(() => {
-    return (Array.isArray(subnets) ? subnets : []).map((subnet: any) => ({
+    return (Array.isArray(subnets) ? subnets : []).map((subnet: SubnetResource) => ({
       value: String(subnet.id || subnet.subnet_id || subnet.identifier || ""),
       label: subnet.name || subnet.cidr || `Subnet ${subnet.id || ""}`,
     }));
@@ -446,7 +546,7 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
 
   const keyPairOptions = useMemo(() => {
     return (Array.isArray(keyPairs) ? keyPairs : [])
-      .map((kp: any): Option | null => {
+      .map((kp: KeyPairResource): Option | null => {
         const value = kp.name || kp.id;
         if (!value) return null;
         return { value: String(value), label: String(kp.name || kp.id) };
@@ -515,7 +615,7 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
   const isProjectScoped = Boolean(projectIdentifier && selectedRegion);
 
   const handleTemplateSelect = useCallback(
-    (template: any) => {
+    (template: Configuration & { name?: string }) => {
       if (!resetConfigurationWithPatch) return;
       const patch = buildConfigurationFromTemplate(template);
       resetConfigurationWithPatch(cfg.id, patch);

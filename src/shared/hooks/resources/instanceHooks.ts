@@ -57,13 +57,19 @@ export const {
 export const instanceExtendedKeys = {
   ...createQueryKeys("instances"),
   management: (context: string, identifier: Identifier) =>
-    ["instance-management", context, identifier] as const,
+    ["cube-instance", context, identifier] as const,
   lifecycle: (context: string, identifier: Identifier) =>
     ["instance-lifecycle", context, identifier] as const,
   usageStats: (context: string, identifier: Identifier, period: string) =>
     ["instance-usage", context, identifier, period] as const,
   logs: (context: string, identifier: Identifier, params: AnyRecord) =>
     ["instance-logs", context, identifier, params] as const,
+  events: (context: string, identifier: Identifier, params: AnyRecord) =>
+    ["instance-events", context, identifier, params] as const,
+  metrics: (context: string, identifier: Identifier, params: AnyRecord) =>
+    ["instance-metrics", context, identifier, params] as const,
+  alarms: (context: string, identifier: Identifier, params: AnyRecord) =>
+    ["instance-alarms", context, identifier, params] as const,
   purchased: (context: string, params: AnyRecord) =>
     ["instances-purchased", context, params] as const,
   transactionStatus: (transactionId: Identifier) => ["transactionStatus", transactionId] as const,
@@ -254,7 +260,7 @@ export const useFetchInstanceManagementDetails = (
   return useQuery({
     queryKey: instanceExtendedKeys.management(context, identifier as Identifier),
     queryFn: async () => {
-      const uri = `${entry.urlPrefix}/instance-management/${identifier}`;
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
       if (!envelope.data?.instance) {
         throw new Error(`Failed to fetch instance management details for ${identifier}`);
@@ -295,7 +301,7 @@ export const useInstanceManagementAction = () => {
       if (!identifier || !action) {
         throw new Error("Instance identifier and action are required.");
       }
-      const uri = `${entry.urlPrefix}/instance-management/${identifier}/actions`;
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/actions`;
       const envelope = asEnvelope(
         await entry.toastApi.post<AnyRecord>(uri, {
           action,
@@ -335,7 +341,7 @@ export const useRefreshInstanceStatus = () => {
       if (!identifier) {
         throw new Error("Instance identifier is required to refresh status.");
       }
-      const uri = `${entry.urlPrefix}/instance-management/${identifier}/refresh-status`;
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/refresh-status`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       if (!envelope.success) {
         throw new Error(envelope.message || "Failed to refresh instance status");
@@ -460,9 +466,335 @@ export const useUpdateInstanceMetadata = () => {
   });
 };
 
+// ─── Provider Data Hooks (events, metrics, alarms) ──────────────
+
+/** Fetch instance events from provider */
+export const useInstanceEvents = (
+  identifier: Identifier | null | undefined,
+  params: { limit?: number; start_timestamp?: number; end_timestamp?: number } = {},
+  options: QueryOptions = {}
+) => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const { enabled = true, ...rest } = options;
+
+  return useQuery({
+    queryKey: instanceExtendedKeys.events(context, identifier as Identifier, params),
+    queryFn: async () => {
+      const qs = buildQueryString(params);
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/events${qs ? `?${qs}` : ""}`;
+      const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
+      return envelope.data ?? { events: [], total: 0 };
+    },
+    enabled: Boolean(identifier) && enabled,
+    staleTime: 1000 * 60 * 2,
+    refetchOnWindowFocus: false,
+    ...rest,
+  });
+};
+
+/** Fetch instance metrics from provider (time-series) */
+export const useInstanceMetrics = (
+  identifier: Identifier | null | undefined,
+  params: {
+    metric?: string;
+    start_timestamp?: number;
+    end_timestamp?: number;
+    statistic?: string;
+    interval?: number;
+  } = {},
+  options: QueryOptions = {}
+) => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const { enabled = true, ...rest } = options;
+
+  return useQuery({
+    queryKey: instanceExtendedKeys.metrics(context, identifier as Identifier, params),
+    queryFn: async () => {
+      const qs = buildQueryString(params);
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/metrics${qs ? `?${qs}` : ""}`;
+      const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
+      return envelope.data ?? { metric: params.metric ?? "cpu", data: [] };
+    },
+    enabled: Boolean(identifier) && enabled,
+    staleTime: 1000 * 60,
+    refetchOnWindowFocus: false,
+    ...rest,
+  });
+};
+
+/** Fetch instance alarms from provider */
+export const useInstanceAlarms = (
+  identifier: Identifier | null | undefined,
+  params: { severity?: string; status?: string } = {},
+  options: QueryOptions = {}
+) => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const { enabled = true, ...rest } = options;
+
+  return useQuery({
+    queryKey: instanceExtendedKeys.alarms(context, identifier as Identifier, params),
+    queryFn: async () => {
+      const qs = buildQueryString(params);
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/alarms${qs ? `?${qs}` : ""}`;
+      const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
+      return envelope.data ?? { alarms: [], total: 0 };
+    },
+    enabled: Boolean(identifier) && enabled,
+    staleTime: 1000 * 60 * 2,
+    refetchOnWindowFocus: false,
+    ...rest,
+  });
+};
+
+// ─── Protection Hooks (backup groups, snapshots, restore groups) ─
+
+/** Fetch backup groups */
+export const useInstanceBackupGroups = (
+  identifier: Identifier | null | undefined,
+  options: QueryOptions = {}
+) => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const { enabled = true, ...rest } = options;
+
+  return useQuery({
+    queryKey: ["instance-backup-groups", context, identifier],
+    queryFn: async () => {
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/backup-groups`;
+      const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
+      return envelope.data ?? { backup_groups: [], total: 0 };
+    },
+    enabled: Boolean(identifier) && enabled,
+    staleTime: 1000 * 60 * 2,
+    refetchOnWindowFocus: false,
+    ...rest,
+  });
+};
+
+/** Create backup group */
+export const useCreateBackupGroup = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      identifier,
+      params,
+    }: {
+      identifier: Identifier;
+      params: AnyRecord;
+    }) => {
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/backup-groups`;
+      const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri, params));
+      return envelope.data ?? envelope;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["instance-backup-groups"] });
+    },
+  });
+};
+
+/** Delete backup group */
+export const useDeleteBackupGroup = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      identifier,
+      groupId,
+    }: {
+      identifier: Identifier;
+      groupId: string;
+    }) => {
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/backup-groups/${groupId}`;
+      const envelope = asEnvelope(await entry.toastApi.delete<AnyRecord>(uri));
+      return envelope.data ?? envelope;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["instance-backup-groups"] });
+    },
+  });
+};
+
+/** Fetch protection snapshots */
+export const useInstanceSnapshots = (
+  identifier: Identifier | null | undefined,
+  params: { group_id?: string } = {},
+  options: QueryOptions = {}
+) => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const { enabled = true, ...rest } = options;
+
+  return useQuery({
+    queryKey: ["instance-snapshots", context, identifier, params],
+    queryFn: async () => {
+      const qs = buildQueryString(params);
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/snapshots${qs ? `?${qs}` : ""}`;
+      const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
+      return envelope.data ?? { snapshots: [], total: 0 };
+    },
+    enabled: Boolean(identifier) && enabled,
+    staleTime: 1000 * 60 * 2,
+    refetchOnWindowFocus: false,
+    ...rest,
+  });
+};
+
+/** Trigger a snapshot */
+export const useTriggerSnapshot = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      identifier,
+      groupId,
+    }: {
+      identifier: Identifier;
+      groupId: string;
+    }) => {
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/snapshots`;
+      const envelope = asEnvelope(
+        await entry.toastApi.post<AnyRecord>(uri, { group_id: groupId })
+      );
+      return envelope.data ?? envelope;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["instance-snapshots"] });
+    },
+  });
+};
+
+/** Delete snapshot */
+export const useDeleteSnapshot = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      identifier,
+      snapshotId,
+    }: {
+      identifier: Identifier;
+      snapshotId: string;
+    }) => {
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/snapshots/${snapshotId}`;
+      const envelope = asEnvelope(await entry.toastApi.delete<AnyRecord>(uri));
+      return envelope.data ?? envelope;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["instance-snapshots"] });
+    },
+  });
+};
+
+/** Fetch restore groups */
+export const useInstanceRestoreGroups = (
+  identifier: Identifier | null | undefined,
+  options: QueryOptions = {}
+) => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const { enabled = true, ...rest } = options;
+
+  return useQuery({
+    queryKey: ["instance-restore-groups", context, identifier],
+    queryFn: async () => {
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/restore-groups`;
+      const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
+      return envelope.data ?? { restore_groups: [], total: 0 };
+    },
+    enabled: Boolean(identifier) && enabled,
+    staleTime: 1000 * 60 * 2,
+    refetchOnWindowFocus: false,
+    ...rest,
+  });
+};
+
+/** Create restore group */
+export const useCreateRestoreGroup = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      identifier,
+      params,
+    }: {
+      identifier: Identifier;
+      params: AnyRecord;
+    }) => {
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/restore-groups`;
+      const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri, params));
+      return envelope.data ?? envelope;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["instance-restore-groups"] });
+    },
+  });
+};
+
+/** Delete restore group */
+export const useDeleteRestoreGroup = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      identifier,
+      groupId,
+    }: {
+      identifier: Identifier;
+      groupId: string;
+    }) => {
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/restore-groups/${groupId}`;
+      const envelope = asEnvelope(await entry.toastApi.delete<AnyRecord>(uri));
+      return envelope.data ?? envelope;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["instance-restore-groups"] });
+    },
+  });
+};
+
+/** Close an alarm */
+export const useCloseAlarm = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      identifier,
+      alarmId,
+    }: {
+      identifier: Identifier;
+      alarmId: string;
+    }) => {
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/alarms/${alarmId}/close`;
+      const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
+      return envelope.data ?? envelope;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["instance-alarms"] });
+    },
+  });
+};
+
 // ─── Client-Only Hooks ───────────────────────────────────────────
 
-/** Get instance details (via instance-management) — client */
+/** Get instance details (via cube-instance) — client */
 export const useGetInstanceDetails = (
   identifier: Identifier | null | undefined,
   options: QueryOptions = {}
@@ -474,7 +806,7 @@ export const useGetInstanceDetails = (
   return useQuery({
     queryKey: instanceExtendedKeys.management(context, identifier as Identifier),
     queryFn: async () => {
-      const uri = `${entry.urlPrefix}/instance-management/${identifier}`;
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}`;
       const envelope = asEnvelope(await entry.toastApi.get<AnyRecord>(uri));
       if (!envelope.success) {
         throw new Error(envelope.message || "Failed to get instance details");
@@ -504,7 +836,7 @@ export const useExecuteInstanceAction = () => {
       action: string;
       params?: AnyRecord;
     }) => {
-      const uri = `${entry.urlPrefix}/instance-management/${identifier}/actions`;
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/actions`;
       const envelope = asEnvelope(
         await entry.toastApi.post<AnyRecord>(uri, {
           action,

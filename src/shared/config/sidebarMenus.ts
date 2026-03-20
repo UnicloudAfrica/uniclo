@@ -65,9 +65,9 @@ const INFRA_MENU_ITEMS: Array<{
     requiredPermission: "projects.view",
   },
   {
-    label: "Instances",
+    label: "Cube Instances",
     icon: Server,
-    path: "/instances",
+    path: "/cube-instances",
     roles: ["admin", "tenant", "client"],
     requiredPermission: "instances.view",
   },

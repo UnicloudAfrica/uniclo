@@ -126,8 +126,8 @@ const TenantRoutes = (): JSX.Element => (
         <Route path="/dashboard/projects" element={<Project />} />
         <Route path="/dashboard/projects/create" element={<DashboardProjectCreate />} />
         <Route path="/dashboard/projects/details" element={<ProjectDetails />} />
-        <Route path="/dashboard/instances" element={<DashboardInstances />} />
-        <Route path="/dashboard/instances/details" element={<InstanceDetails />} />
+        <Route path="/dashboard/cube-instances" element={<DashboardInstances />} />
+        <Route path="/dashboard/cube-instances/details" element={<InstanceDetails />} />
         <Route path="/dashboard/create-instance" element={<TenantProvisioningWizard />} />
         <Route path="/dashboard/templates" element={<TenantTemplates />} />
 

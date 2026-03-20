@@ -285,7 +285,7 @@ const AdminCreateInstance = () => {
               pricingSummary={successPricingSummary}
               keypairDownloads={keypairDownloads}
               instances={successInstances}
-              instancesPageUrl="/admin-dashboard/instances"
+              instancesPageUrl="/admin-dashboard/cube-instances"
               onCreateAnother={() => globalThis.window.location.reload()}
               resourceLabel="Cube-Instance"
             />
@@ -316,6 +316,7 @@ const AdminCreateInstance = () => {
                 onBack={() => setActiveStep(resolvedReviewBackIndex)}
                 onEditConfiguration={() => setActiveStep(resolvedServicesStepIndex)}
                 onConfirm={() => setActiveStep(resolvedSuccessStepIndex)}
+                isSubmitting={isSubmitting}
                 resourceLabel="Cube-Instance"
               />
             </div>

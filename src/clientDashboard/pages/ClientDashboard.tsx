@@ -182,7 +182,7 @@ const QUICK_ACTIONS: QuickAction[] = [
   {
     title: "Launch Compute",
     description: "Deploy a new virtual machine or container workload.",
-    to: "/client-dashboard/instances/provision",
+    to: "/client-dashboard/cube-instances/provision",
     Icon: Rocket,
   },
   {
@@ -518,7 +518,7 @@ const ClientDashboard: React.FC = () => {
                 </div>
                 <div className="flex flex-wrap gap-3">
                   <Link
-                    to="/client-dashboard/instances/provision"
+                    to="/client-dashboard/cube-instances/provision"
                     className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-semibold text-[--theme-heading-color] transition hover:-translate-y-0.5 hover:shadow-lg"
                   >
                     Launch instance

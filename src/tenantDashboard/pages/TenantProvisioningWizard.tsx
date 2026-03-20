@@ -323,7 +323,7 @@ const TenantProvisioningWizard: React.FC = () => {
               pricingSummary={pricingSummary}
               keypairDownloads={keypairDownloads}
               instances={successInstances}
-              instancesPageUrl="/dashboard/instances"
+              instancesPageUrl="/dashboard/cube-instances"
               onCreateAnother={() => globalThis.window.location.reload()}
               resourceLabel="Cube-Instance"
             />
@@ -353,6 +353,7 @@ const TenantProvisioningWizard: React.FC = () => {
               onBack={() => setActiveStep(isFastTrack ? servicesStepIndex : paymentStepIndex)}
               onEditConfiguration={() => setActiveStep(servicesStepIndex)}
               onConfirm={() => setActiveStep(successStepIndex)}
+              isSubmitting={isSubmitting}
               resourceLabel="Cube-Instance"
             />
           ) : null

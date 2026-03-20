@@ -21,6 +21,17 @@ export type {
  * Shared order confirmation/success step for provisioning wizards.
  * Displays order ID, configuration summaries, and navigation actions.
  */
+/** Strip provider names (e.g. "zadara", "nobus") from region codes for display. */
+const sanitizeRegionLabel = (raw: string): string => {
+  if (!raw || raw === "\u2014") return raw;
+  // Remove known provider tokens and clean up separators
+  return raw
+    .replace(/\b(zadara|nobus)\b[-_]?/gi, "")
+    .replace(/^[-_]+|[-_]+$/g, "")
+    .replace(/[-_]{2,}/g, "-")
+    .trim() || raw;
+};
+
 const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
   orderId,
   transactionId,
@@ -89,7 +100,7 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
           <div className="space-y-2 text-sm">
             {configurationSummaries.map((cfg) => {
               const displayName = cfg.name || cfg.title || resourceLabel;
-              const displayRegion = cfg.region || cfg.regionLabel || "\u2014";
+              const displayRegion = sanitizeRegionLabel(cfg.region || cfg.regionLabel || "\u2014");
               const countValue = Number(cfg.count ?? 1);
               const monthsValue = Number(cfg.months ?? 1);
               const countLabel = Number.isFinite(countValue) ? countValue : cfg.count || 1;

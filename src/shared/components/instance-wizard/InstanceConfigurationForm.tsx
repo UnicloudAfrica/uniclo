@@ -432,6 +432,24 @@ const InstanceConfigurationForm: React.FC<Props> = ({
       ToastUtils.error("Key pair name is required.");
       return;
     }
+    // Check for duplicate keypair name
+    const nameExists = resolvedKeyPairOptions.some(
+      (kp) => kp.label?.toLowerCase() === trimmedName.toLowerCase()
+    );
+    if (nameExists) {
+      ToastUtils.error(`A key pair named "${trimmedName}" already exists in this project.`);
+      return;
+    }
+    // Validate SSH public key format if provided
+    const trimmedPubKey = keypairPublicKey.trim();
+    if (trimmedPubKey) {
+      const validPrefixes = ["ssh-rsa ", "ssh-ed25519 ", "ecdsa-sha2-", "ssh-dss "];
+      const isValidFormat = validPrefixes.some((prefix) => trimmedPubKey.startsWith(prefix));
+      if (!isValidFormat) {
+        ToastUtils.error("Invalid SSH public key format. Must start with ssh-rsa, ssh-ed25519, or ecdsa-sha2-.");
+        return;
+      }
+    }
     setIsCreatingKeypair(true);
     try {
       const payload: Record<string, unknown> = {
@@ -439,7 +457,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
         project_id: cfg.project_id,
         region: selectedRegion,
       };
-      if (keypairPublicKey.trim()) payload.public_key = keypairPublicKey.trim();
+      if (trimmedPubKey) payload.public_key = trimmedPubKey;
       const response = await apiClient("POST", keyPairEndpoint, payload);
       const data = (response as Record<string, unknown>)?.data || response;
       const resolvedName = (data as Record<string, unknown>)?.name || trimmedName;
@@ -463,6 +481,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
     keyPairEndpoint,
     keypairNameInput,
     keypairPublicKey,
+    resolvedKeyPairOptions,
     selectedRegion,
     updateConfiguration,
   ]);

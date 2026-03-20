@@ -61,9 +61,18 @@ const toMessage = (value: unknown): string => {
   return "";
 };
 
+const inferRoleFromPath = (): AuthRole | undefined => {
+  if (typeof window === "undefined") return undefined;
+  const path = window.location.pathname;
+  if (path.startsWith("/admin-dashboard")) return "admin";
+  if (path.startsWith("/dashboard")) return "tenant";
+  if (path.startsWith("/client-dashboard")) return "client";
+  return undefined;
+};
+
 const resolveBaseUrl = (override?: string): string => {
   if (override) return override;
-  const role = useAuthStore.getState().session?.role;
+  const role = useAuthStore.getState().session?.role ?? inferRoleFromPath();
   return role ? ROLE_BASE_URLS[role] : config.baseURL;
 };
 

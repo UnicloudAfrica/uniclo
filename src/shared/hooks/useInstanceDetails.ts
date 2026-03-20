@@ -22,8 +22,8 @@ export const useInstanceDetails = (identifier: string) => {
   const fetchDetails = async () => {
     const uri =
       hierarchy === "admin"
-        ? `/instance-management/${identifier}`
-        : `/admin/instance-management/${identifier}`;
+        ? `/cube-instance/${identifier}`
+        : `/admin/cube-instance/${identifier}`;
 
     const api = hierarchy === "admin" ? adminSilentApi : tenantSilentApi;
     const res = await api("GET", uri);
@@ -47,8 +47,8 @@ export const useInstanceDetails = (identifier: string) => {
   }) => {
     const uri =
       hierarchy === "admin"
-        ? `/instance-management/${identifier}/actions`
-        : `/admin/instance-management/${identifier}/actions`;
+        ? `/cube-instance/${identifier}/actions`
+        : `/admin/cube-instance/${identifier}/actions`;
 
     const apiCall = hierarchy === "admin" ? adminApi : tenantApi;
     const res = await apiCall("POST", uri, { action, params });
@@ -66,8 +66,8 @@ export const useInstanceDetails = (identifier: string) => {
   const refreshStatus = async () => {
     const uri =
       hierarchy === "admin"
-        ? `/instance-management/${identifier}/refresh-status`
-        : `/admin/instance-management/${identifier}/refresh-status`;
+        ? `/cube-instance/${identifier}/refresh-status`
+        : `/admin/cube-instance/${identifier}/refresh-status`;
 
     const apiCall = hierarchy === "admin" ? adminApi : tenantApi;
     return await apiCall("POST", uri);

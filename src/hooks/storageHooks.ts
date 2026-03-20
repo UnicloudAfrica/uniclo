@@ -172,7 +172,7 @@ export const useCreateInstanceSnapshot = () => {
       description?: string;
     }) => {
       const { data } = await axios.post(
-        `${apiBaseUrl}${prefix}/instance-management/${instanceId}/actions`,
+        `${apiBaseUrl}${prefix}/cube-instance/${instanceId}/actions`,
         {
           action: "snapshot",
           params: { name, description },
@@ -211,7 +211,7 @@ export const useCreateInstanceImage = () => {
       metadata?: unknown;
     }) => {
       const { data } = await axios.post(
-        `${apiBaseUrl}${prefix}/instance-management/${instanceId}/actions`,
+        `${apiBaseUrl}${prefix}/cube-instance/${instanceId}/actions`,
         {
           action: "create-image",
           params: { name, metadata },

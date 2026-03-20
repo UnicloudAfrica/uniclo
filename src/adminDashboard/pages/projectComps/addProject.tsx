@@ -6,7 +6,7 @@ import ToastUtils from "@/utils/toastUtil";
 import { useFetchTenants } from "@/hooks/adminHooks/tenantHooks";
 import { useFetchClients } from "@/hooks/adminHooks/clientHooks";
 import { DropdownSelect } from "./dropdownSelect"; // Ensure this path is correct
-import { useFetchRegions } from "@/hooks/adminHooks/regionHooks";
+import { useFetchAvailabilityZones, useFetchRegions } from "@/hooks/adminHooks/regionHooks";
 import NetworkPresetSelector, {
   DEFAULT_PRESETS,
   type NetworkPreset,
@@ -23,6 +23,7 @@ type CreateProjectFormData = {
   description: string;
   type: ProjectType;
   provider: string;
+  availability_zone: string;
   tenant_id: string;
   client_id: string;
   region: string;
@@ -78,6 +79,16 @@ type RegionOption = {
   is_verified?: boolean;
 };
 
+type AvailabilityZoneOption = {
+  id?: string | number;
+  code?: string;
+  name?: string | null;
+  provider?: string;
+  is_active?: boolean;
+  is_verified?: boolean;
+  priority?: number;
+};
+
 type ScopeOption = {
   value: AssignmentScope;
   label: string;
@@ -88,6 +99,8 @@ type ProjectCreatePayload = {
   name: string;
   description: string;
   type: ProjectType;
+  provider: string | null;
+  availability_zone: string | null;
   tenant_id: string | null;
   client_id: string | null;
   user_id: string | null;
@@ -107,6 +120,7 @@ const INITIAL_FORM_STATE: CreateProjectFormData = {
   description: "",
   type: "vpc",
   provider: "",
+  availability_zone: "",
   tenant_id: "",
   client_id: "",
   region: "",
@@ -130,6 +144,8 @@ const CreateProjectModal = ({ onClose, mode = "modal" }: CreateProjectModalProps
   const [submitAttempts, setSubmitAttempts] = useState(0);
   const [progressMessage, setProgressMessage] = useState("");
   const { isFetching: isRegionsFetching, data: regionsData } = useFetchRegions();
+  const { data: availabilityZonesData = [], isFetching: isAvailabilityZonesFetching } =
+    useFetchAvailabilityZones(formData.region || null);
   const { data: tenantsData, isFetching: isTenantsFetching } = useFetchTenants();
   const { data: clientsData, isFetching: isClientsFetching } = useFetchClients();
   const { data: networkPresets = DEFAULT_PRESETS } = useNetworkPresets();
@@ -141,11 +157,33 @@ const CreateProjectModal = ({ onClose, mode = "modal" }: CreateProjectModalProps
       (r) => r.name && r.name !== r.code && r.is_active !== false
     );
   }, [regionsData]);
+  const availabilityZoneOptions = useMemo<AvailabilityZoneOption[]>(() => {
+    if (!Array.isArray(availabilityZonesData)) return [];
+    return [...(availabilityZonesData as AvailabilityZoneOption[])]
+      .filter((zone) => zone.code && zone.is_active !== false)
+      .sort((left, right) => {
+        const verifiedSort = Number(right.is_verified ?? false) - Number(left.is_verified ?? false);
+        if (verifiedSort !== 0) return verifiedSort;
+        return Number(right.priority ?? 0) - Number(left.priority ?? 0);
+      });
+  }, [availabilityZonesData]);
+  const selectedAvailabilityZone = useMemo(() => {
+    if (!formData.availability_zone) return null;
+    return (
+      availabilityZoneOptions.find((zone) => zone.code === formData.availability_zone) ?? null
+    );
+  }, [availabilityZoneOptions, formData.availability_zone]);
   const selectedRegionProvider = useMemo(() => {
+    if (selectedAvailabilityZone?.provider) {
+      return selectedAvailabilityZone.provider;
+    }
+    if (formData.provider) {
+      return formData.provider;
+    }
     if (!formData.region || !regionList.length) return "";
     const match = regionList.find((r) => r.code === formData.region);
     return (match as any)?.provider || "";
-  }, [formData.region, regionList]);
+  }, [formData.provider, formData.region, regionList, selectedAvailabilityZone]);
 
   const { data: cloudPoliciesData = [] } = useCloudPolicies(
     {
@@ -221,6 +259,57 @@ const CreateProjectModal = ({ onClose, mode = "modal" }: CreateProjectModalProps
     () => (Array.isArray(suggestedMembersData) ? (suggestedMembersData as MemberOption[]) : []),
     [suggestedMembersData]
   );
+
+  useEffect(() => {
+    if (!formData.region) {
+      return;
+    }
+
+    if (availabilityZoneOptions.length === 0) {
+      setFormData((prev) => {
+        if (!prev.availability_zone && !prev.provider) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+          availability_zone: "",
+          provider: "",
+        };
+      });
+      return;
+    }
+
+    setFormData((prev) => {
+      const currentZone = availabilityZoneOptions.find((zone) => zone.code === prev.availability_zone);
+
+      if (currentZone) {
+        const resolvedProvider = currentZone.provider || "";
+        if (prev.provider === resolvedProvider) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+          provider: resolvedProvider,
+        };
+      }
+
+      const preferredZone =
+        availabilityZoneOptions.find((zone) => zone.provider === "zadara") ??
+        availabilityZoneOptions[0];
+
+      if (!preferredZone?.code) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        availability_zone: preferredZone.code,
+        provider: preferredZone.provider || "",
+      };
+    });
+  }, [availabilityZoneOptions, formData.region]);
 
   useEffect(() => {
     if (!shouldFetchMembers) {
@@ -392,6 +481,9 @@ const CreateProjectModal = ({ onClose, mode = "modal" }: CreateProjectModalProps
     if (!formData.region) {
       newErrors["region"] = "Default Region is required";
     }
+    if (formData.region && availabilityZoneOptions.length > 0 && !formData.availability_zone) {
+      newErrors["availability_zone"] = "Availability zone is required";
+    }
     if (formData.assignment_scope === "tenant" && !formData.tenant_id) {
       newErrors["tenant_id"] = "Select a tenant when assigning the project to a tenant.";
     }
@@ -422,6 +514,24 @@ const CreateProjectModal = ({ onClose, mode = "modal" }: CreateProjectModalProps
         };
       }
 
+      if (field === "region") {
+        next = {
+          ...next,
+          region: value as string,
+          availability_zone: "",
+          provider: "",
+        };
+      }
+
+      if (field === "availability_zone") {
+        const selectedZone = availabilityZoneOptions.find((zone) => zone.code === value);
+        next = {
+          ...next,
+          availability_zone: value as string,
+          provider: selectedZone?.provider || "",
+        };
+      }
+
       if (field === "tenant_id" || field === "client_id" || field === "assignment_scope") {
         membersFetchKeyRef.current = null;
       }
@@ -439,6 +549,8 @@ const CreateProjectModal = ({ onClose, mode = "modal" }: CreateProjectModalProps
       ...(field === "assignment_scope"
         ? { tenant_id: undefined, client_id: undefined, member_user_ids: undefined }
         : {}),
+      ...(field === "region" ? { availability_zone: undefined, provider: undefined } : {}),
+      ...(field === "availability_zone" ? { provider: undefined } : {}),
       ...(field === "tenant_id" || field === "client_id" ? { member_user_ids: undefined } : {}),
     }));
   };
@@ -508,6 +620,8 @@ const CreateProjectModal = ({ onClose, mode = "modal" }: CreateProjectModalProps
       name: projectName,
       description: formData.description,
       type: formData.type,
+      provider: formData.provider || null,
+      availability_zone: formData.availability_zone || null,
       tenant_id: formData.assignment_scope === "internal" ? null : formData.tenant_id || null,
       client_id: formData.client_id || null,
       user_id: formData.client_id || null,
@@ -758,6 +872,45 @@ const CreateProjectModal = ({ onClose, mode = "modal" }: CreateProjectModalProps
           ))}
         </select>
         {errors.region && <p className="text-red-500 text-xs mt-1">{errors.region}</p>}
+      </div>
+
+      <div>
+        <label htmlFor="availability_zone" className="block text-sm font-medium text-gray-700 mb-2">
+          Availability Zone
+          {availabilityZoneOptions.length > 0 && <span className="text-red-500">*</span>}
+        </label>
+        <select
+          id="availability_zone"
+          value={formData.availability_zone}
+          onChange={(e) => updateFormData("availability_zone", e.target.value)}
+          className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${errors.availability_zone ? "border-red-500" : "border-gray-300"}`}
+          disabled={!formData.region || isAvailabilityZonesFetching || availabilityZoneOptions.length === 0}
+        >
+          <option value="" disabled>
+            {!formData.region
+              ? "Select a region first"
+              : isAvailabilityZonesFetching
+                ? "Loading availability zones..."
+                : availabilityZoneOptions.length > 0
+                  ? "Select an availability zone"
+                  : "No active availability zones"}
+          </option>
+          {availabilityZoneOptions.map((zone, index) => (
+            <option key={zone.code ?? zone.id ?? index} value={zone.code ?? ""}>
+              {zone.name || zone.code || "Unnamed zone"}
+              {zone.provider ? ` (${zone.provider.toUpperCase()})` : ""}
+            </option>
+          ))}
+        </select>
+        {formData.provider && (
+          <p className="text-xs text-gray-500 mt-1">
+            Provider: <span className="font-medium uppercase">{formData.provider}</span>. Zadara
+            zones are preferred automatically when available.
+          </p>
+        )}
+        {errors.availability_zone && (
+          <p className="text-red-500 text-xs mt-1">{errors.availability_zone}</p>
+        )}
       </div>
 
       <div>

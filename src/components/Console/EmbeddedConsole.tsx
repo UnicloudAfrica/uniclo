@@ -84,7 +84,7 @@ const EmbeddedConsole = ({
         const typeParam = type ? `?type=${encodeURIComponent(type)}` : "";
         const path =
           context === "admin"
-            ? `/instance-management/${encodedId}/console`
+            ? `/cube-instance/${encodedId}/console`
             : context === "tenant"
               ? `/admin/instance-consoles/${encodedId}`
               : `/business/instance-consoles/${encodedId}`;

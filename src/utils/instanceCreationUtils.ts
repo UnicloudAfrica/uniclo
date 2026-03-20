@@ -79,6 +79,14 @@ export const evaluateConfigurationCompleteness = (cfg: Configuration) => {
   if (!hasValue(cfg.os_image_id)) missing.push("OS image");
   if (!hasValue(cfg.volume_type_id)) missing.push("Boot volume type");
   if (!Number(cfg.storage_size_gb)) missing.push("Boot volume size");
+  // Validate AZ belongs to selected region (if both are set)
+  if (hasValue(cfg.availability_zone) && hasValue(cfg.region)) {
+    const az = String(cfg.availability_zone).toLowerCase();
+    const region = String(cfg.region).toLowerCase();
+    if (!az.startsWith(region)) {
+      missing.push("Availability zone (does not match region)");
+    }
+  }
   return { isComplete: missing.length === 0, missing };
 };
 

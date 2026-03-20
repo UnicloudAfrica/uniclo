@@ -312,7 +312,7 @@ const ClientProjectDetails: React.FC = () => {
     isEnablingInternet,
     onAddInstance: () =>
       navigate(
-        `/client-dashboard/instances/provision?project=${encodeURIComponent(
+        `/client-dashboard/cube-instances/provision?project=${encodeURIComponent(
           project?.identifier || projectId || ""
         )}`
       ),
@@ -330,7 +330,7 @@ const ClientProjectDetails: React.FC = () => {
       keyPairHooks: clientKeyPairHooks,
       onProvisionInstance: () =>
         navigate(
-          `/client-dashboard/instances/provision?project=${encodeURIComponent(
+          `/client-dashboard/cube-instances/provision?project=${encodeURIComponent(
             project?.identifier || projectId || ""
           )}`
         ),

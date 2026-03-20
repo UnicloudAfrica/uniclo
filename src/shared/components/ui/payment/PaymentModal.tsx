@@ -62,18 +62,18 @@ const PaymentModal = ({
     if (context === "admin") {
       return {
         storage: "/admin-dashboard/object-storage",
-        instances: "/admin-dashboard/instances",
+        instances: "/admin-dashboard/cube-instances",
       };
     }
     if (context === "tenant") {
       return {
         storage: "/dashboard/object-storage",
-        instances: "/dashboard/instances",
+        instances: "/dashboard/cube-instances",
       };
     }
     return {
       storage: "/client-dashboard/object-storage",
-      instances: "/client-dashboard/instances",
+      instances: "/client-dashboard/cube-instances",
     };
   }, [context]);
 

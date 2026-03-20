@@ -166,8 +166,8 @@ const AdminRoutes = (): React.JSX.Element => {
         <Route path="/admin-dashboard/create-invoice" element={<CreateInvoice />} />
 
         <Route path="/admin-dashboard/account" element={<EnhancedProfileSettings />} />
-        <Route path="/admin-dashboard/instances" element={<AdminInstances />} />
-        <Route path="/admin-dashboard/instances/details" element={<AdminInstancesDetails />} />
+        <Route path="/admin-dashboard/cube-instances" element={<AdminInstances />} />
+        <Route path="/admin-dashboard/cube-instances/details" element={<AdminInstancesDetails />} />
 
         <Route path="/admin-dashboard/databases" element={<AdminManagedDatabases />} />
         <Route path="/admin-dashboard/databases/create" element={<AdminDatabaseCreate />} />

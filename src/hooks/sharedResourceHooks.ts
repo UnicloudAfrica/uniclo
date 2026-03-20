@@ -192,7 +192,7 @@ const fetchAdminInstanceConsoleById = async (
   };
 
   const response = await fetch(
-    `${config.adminURL}/instance-management/${encodeURIComponent(id)}/console${typeParam}`,
+    `${config.adminURL}/cube-instance/${encodeURIComponent(id)}/console${typeParam}`,
     {
       method: "GET",
       headers,

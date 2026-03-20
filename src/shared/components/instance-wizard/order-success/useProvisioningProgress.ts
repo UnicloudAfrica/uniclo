@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useApiContext } from "@/hooks/useApiContext";
 import { useInstanceBroadcasting } from "@/hooks/useInstanceBroadcasting";
 import ToastUtils from "@/utils/toastUtil";
@@ -131,6 +131,10 @@ export function useProvisioningProgress(instances: unknown) {
     [apiRoot, authHeaders, instanceRefs]
   );
 
+  // Keep a ref to instanceProgress so the polling interval can read it without re-triggering the effect
+  const instanceProgressRef = useRef(instanceProgress);
+  instanceProgressRef.current = instanceProgress;
+
   // Polling fallback: fetch progress from API every 3 seconds
   useEffect(() => {
     if (!isAuthenticated || instanceRefs.length === 0) return;
@@ -140,11 +144,12 @@ export function useProvisioningProgress(instances: unknown) {
 
     // Poll every 3 seconds while instances are provisioning
     const interval = setInterval(() => {
-      const allDone = Object.values(instanceProgress).every((steps) => {
+      const currentProgress = instanceProgressRef.current;
+      const allDone = Object.values(currentProgress).every((steps) => {
         if (!Array.isArray(steps) || steps.length === 0) return false;
         return steps.every((s) => s.status === "completed" || s.status === "failed");
       });
-      if (allDone && Object.keys(instanceProgress).length > 0) {
+      if (allDone && Object.keys(currentProgress).length > 0) {
         clearInterval(interval);
         return;
       }
@@ -152,7 +157,7 @@ export function useProvisioningProgress(instances: unknown) {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [fetchProgress, isAuthenticated, instanceProgress, instanceRefs.length]);
+  }, [fetchProgress, isAuthenticated, instanceRefs.length]);
 
   // Resolve lookup IDs from keys
   const resolveLookupIds = useCallback(
@@ -183,7 +188,7 @@ export function useProvisioningProgress(instances: unknown) {
         const results = await Promise.allSettled(
           lookupIds.map(async (lookupId) => {
             const response = await fetch(
-              `${apiRoot}/instance-management/${lookupId}/refresh-status`,
+              `${apiRoot}/cube-instance/${lookupId}/refresh-status`,
               {
                 method: "POST",
                 headers: authHeaders,

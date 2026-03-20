@@ -11,14 +11,14 @@ const ClientInstanceCreate: React.FC = () => {
 
   const handleQuickDeploy = (template: InstanceTemplate) => {
     // Navigate to provisioning wizard with template pre-fill
-    navigate("/client-dashboard/instances/provision", {
+    navigate("/client-dashboard/cube-instances/provision", {
       state: { template },
     });
   };
 
   const handleCustomize = (template: InstanceTemplate) => {
     // Navigate to provisioning wizard with template for customization
-    navigate("/client-dashboard/instances/provision", {
+    navigate("/client-dashboard/cube-instances/provision", {
       state: { template, customize: true },
     });
   };
@@ -50,7 +50,7 @@ const ClientInstanceCreate: React.FC = () => {
                 Build your instance from scratch with full control over all settings
               </p>
               <button
-                onClick={() => navigate("/client-dashboard/instances/provision")}
+                onClick={() => navigate("/client-dashboard/cube-instances/provision")}
                 className="px-4 py-2 bg-white border border-slate-300 hover:border-primary-500 hover:text-primary-600 text-slate-700 rounded-lg font-medium transition-colors"
               >
                 Build Custom Instance

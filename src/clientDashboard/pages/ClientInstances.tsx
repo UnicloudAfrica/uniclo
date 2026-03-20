@@ -8,10 +8,10 @@ const ClientInstances: React.FC = () => {
     <>
       <ClientActiveTab />
       <ClientPageShell
-        title="Instance Management"
+        title="Cube Instances"
         description="Manage and monitor your cloud instances."
         contentClassName="space-y-6 lg:space-y-8"
-        breadcrumbs={[{ label: "Home", href: "/client-dashboard" }, { label: "Instances" }]}
+        breadcrumbs={[{ label: "Home", href: "/client-dashboard" }, { label: "Cube Instances" }]}
       >
         <SharedInstanceList context="client" />
       </ClientPageShell>

@@ -23,9 +23,11 @@ const KeypairDownloadModal: React.FC<KeypairDownloadModalProps> = ({ keypairDown
   const [downloadedKeys, setDownloadedKeys] = useState<string[]>([]);
   const [emailingKeys, setEmailingKeys] = useState<string[]>([]);
 
+  // Delay modal open so user can see the success page first
   useEffect(() => {
     if (sanitizedDownloads.length > 0) {
-      setShowKeypairModal(true);
+      const timer = setTimeout(() => setShowKeypairModal(true), 1500);
+      return () => clearTimeout(timer);
     }
   }, [sanitizedDownloads.length]);
 

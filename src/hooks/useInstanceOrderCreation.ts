@@ -112,8 +112,11 @@ export const useInstanceOrderCreation = ({
   }, [orderStateFingerprint, clearOrderState]);
 
   const apiCall = useCallback(
-    async (method: string, endpoint: string, body?: any) => {
-      const headers = authHeaders;
+    async (method: string, endpoint: string, body?: any, idempotencyKey?: string) => {
+      const headers: Record<string, string> = { ...authHeaders };
+      if (idempotencyKey) {
+        headers["Idempotency-Key"] = idempotencyKey;
+      }
 
       const response = await fetch(`${apiBaseUrl}${apiPrefix}${endpoint}`, {
         method,
@@ -162,7 +165,7 @@ export const useInstanceOrderCreation = ({
       // const instanceDescription = (cfg.description || "").trim() || null; // Unused in payload
       const networkId = isNewProject ? undefined : cfg.network_id || undefined;
       const subnetId = isNewProject ? undefined : cfg.subnet_id || undefined;
-      // const tags = (cfg.tags || "").split(",").map((t: string) => t.trim()).filter(Boolean); // Unused in payload
+      const tags = (cfg.tags || "").split(",").map((t: string) => t.trim()).filter(Boolean);
 
       const sanitizedSgIds = (
         Array.isArray(cfg.security_group_ids)
@@ -198,6 +201,7 @@ export const useInstanceOrderCreation = ({
             : cfg.network_preset || "standard"
           : undefined,
         region: cfg.region || undefined,
+        availability_zone: cfg.availability_zone || undefined,
         compute_instance_id: cfg.compute_instance_id,
         os_image_id: cfg.os_image_id,
         months: parsedMonths,
@@ -226,6 +230,7 @@ export const useInstanceOrderCreation = ({
         ...(isNewProject && sanitizedMemberIds.length
           ? { member_user_ids: sanitizedMemberIds }
           : {}),
+        ...(tags.length > 0 ? { tags } : {}),
       };
     });
 
@@ -261,8 +266,9 @@ export const useInstanceOrderCreation = ({
           throw new Error(`Complete Configuration #${incompleteIndex + 1} before pricing.`);
         }
         const payload = buildPayload();
+        const idempotencyKey = crypto.randomUUID();
 
-        const res = await apiCall("POST", "/instances/create", payload);
+        const res = await apiCall("POST", "/instances/create", payload, idempotencyKey);
         const data = res?.data || res;
 
         const normalizedGatewayOptions = normalizePaymentOptions(

@@ -67,10 +67,10 @@ const ClientRoutes = (): JSX.Element => (
     <Route path="/client-dashboard/projects" element={<ClientProject />} />
     <Route path="/client-dashboard/projects/create" element={<ClientProjectCreate />} />
     <Route path="/client-dashboard/projects/details" element={<ClientProjectDetails />} />
-    <Route path="/client-dashboard/instances" element={<ClientInstances />} />
-    <Route path="/client-dashboard/instances/details" element={<InstanceDetails />} />
-    <Route path="/client-dashboard/instances/create" element={<ClientInstanceCreate />} />
-    <Route path="/client-dashboard/instances/provision" element={<ClientProvisioningWizard />} />
+    <Route path="/client-dashboard/cube-instances" element={<ClientInstances />} />
+    <Route path="/client-dashboard/cube-instances/details" element={<InstanceDetails />} />
+    <Route path="/client-dashboard/cube-instances/create" element={<ClientInstanceCreate />} />
+    <Route path="/client-dashboard/cube-instances/provision" element={<ClientProvisioningWizard />} />
     <Route path="/client-dashboard/templates" element={<ClientTemplates />} />
 
     <Route path="/client-dashboard/databases" element={<ClientManagedDatabases />} />

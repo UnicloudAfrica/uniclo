@@ -5,7 +5,7 @@ import SharedInstanceList from "@/shared/components/instances/SharedInstanceList
 const Instances: React.FC = () => {
   return (
     <TenantPageShell
-      title="Instances"
+      title="Cube Instances"
       description="Manage and monitor your compute instances"
       contentClassName="space-y-6 lg:space-y-8"
     >

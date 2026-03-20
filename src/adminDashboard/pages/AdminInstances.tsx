@@ -4,7 +4,7 @@ import SharedInstanceList from "@/shared/components/instances/SharedInstanceList
 export default function AdminInstances() {
   return (
     <AdminPageShell
-      title="Instance Management"
+      title="Cube Instances"
       description="Manage and monitor your cloud instances"
       contentClassName="space-y-6 lg:space-y-8"
     >

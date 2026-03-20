@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import api from "../../index/admin/api";
-import lapapi from "../../index/admin/lapapi";
+import config from "../../config";
+import { api as unifiedApi } from "../../lib/api";
 import logger from "@/utils/logger";
 
 // **POST**: Create a new account
@@ -8,14 +9,14 @@ const createAdminAccount = async (userData: any) => {
   return await api("POST", "/users", userData);
 };
 
-// **POST** login
+// **POST** login — always hits api/v1 (shared auth route, not admin-scoped)
 const loginAdminAccount = async (userData: any) => {
-  return await lapapi("POST", "/business/auth/login", userData);
+  return await unifiedApi.post("/business/auth/login", userData, { baseUrl: config.baseURL });
 };
 
-// **POST** verify email
+// **POST** verify email — always hits api/v1
 const verifyEmail = async (userData: any) => {
-  return await lapapi("POST", "/business/auth/verify-email", userData);
+  return await unifiedApi.post("/business/auth/verify-email", userData, { baseUrl: config.baseURL });
 };
 
 // Hook to create a new account

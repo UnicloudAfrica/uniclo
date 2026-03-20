@@ -306,7 +306,7 @@ const ClientProvisioningWizard: React.FC = () => {
               pricingSummary={pricingSummary}
               keypairDownloads={keypairDownloads}
               instances={successInstances}
-              instancesPageUrl="/client-dashboard/instances"
+              instancesPageUrl="/client-dashboard/cube-instances"
               onCreateAnother={() => setActiveStep(0)}
               resourceLabel="Cube-Instance"
             />
@@ -336,6 +336,7 @@ const ClientProvisioningWizard: React.FC = () => {
               onBack={() => setActiveStep(paymentStepIndex)}
               onEditConfiguration={() => setActiveStep(servicesStepIndex)}
               onConfirm={() => setActiveStep(successStepIndex)}
+              isSubmitting={isSubmitting}
               resourceLabel="Cube-Instance"
             />
           ) : null

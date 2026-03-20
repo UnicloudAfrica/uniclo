@@ -77,9 +77,9 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
         const instanceName = encodeURIComponent(
           instance.name || `Instance-${identifier.slice(-8)}`
         );
-        navigate(`${basePath}/instances/details?id=${encodedId}&name=${instanceName}`);
+        navigate(`${basePath}/cube-instances/details?id=${encodedId}&name=${instanceName}`);
       } else {
-        navigate(`${basePath}/instances/details?identifier=${encodeURIComponent(identifier)}`);
+        navigate(`${basePath}/cube-instances/details?identifier=${encodeURIComponent(identifier)}`);
       }
     },
     [context, basePath, navigate]
@@ -306,7 +306,7 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
               size="sm"
               onClick={() =>
                 context === "client"
-                  ? (globalThis.window.location.href = `${basePath}/instances/provision`)
+                  ? (globalThis.window.location.href = `${basePath}/cube-instances/provision`)
                   : navigate(`${basePath}/create-instance`)
               }
               leftIcon={<Plus className="w-4 h-4" />}

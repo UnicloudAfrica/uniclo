@@ -17,7 +17,7 @@ const LaunchSideMenu: React.FC = () => {
     {
       id: "instances",
       name: "Instances",
-      path: "/client-dashboard/instances",
+      path: "/client-dashboard/cube-instances",
     },
   ];
 

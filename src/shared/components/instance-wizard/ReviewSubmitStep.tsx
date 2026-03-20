@@ -35,6 +35,7 @@ interface ReviewSubmitStepProps {
   onEditConfiguration: () => void;
   onConfirm?: () => void;
   confirmLabel?: string;
+  isSubmitting?: boolean;
   fastTrackSummary?: { fastTrackCount: number; paidCount: number };
   resourceLabel?: string;
 }
@@ -62,6 +63,7 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({
   onEditConfiguration: _onEditConfiguration,
   onConfirm,
   confirmLabel,
+  isSubmitting = false,
   fastTrackSummary,
   resourceLabel = "Instance",
 }) => {
@@ -120,8 +122,8 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({
           <ModernButton variant="outline" onClick={onBack} leftIcon={<ArrowLeft size={18} />}>
             Back
           </ModernButton>
-          <ModernButton onClick={handleConfirm}>
-            {confirmLabel || "Confirm & Provision"}
+          <ModernButton onClick={handleConfirm} isDisabled={isSubmitting}>
+            {isSubmitting ? "Submitting..." : (confirmLabel || "Confirm & Provision")}
           </ModernButton>
         </div>
       </div>

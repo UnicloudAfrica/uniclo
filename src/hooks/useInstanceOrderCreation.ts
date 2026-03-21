@@ -144,6 +144,7 @@ export const useInstanceOrderCreation = ({
         ? cfg.member_user_ids.map((id) => Number(id)).filter(Boolean)
         : [];
       const requiredFields = [
+        { key: "name", label: `Instance name (config ${index + 1})` },
         { key: "region", label: `Region (config ${index + 1})` },
         { key: "compute_instance_id", label: `Instance type (config ${index + 1})` },
         { key: "os_image_id", label: `OS image (config ${index + 1})` },

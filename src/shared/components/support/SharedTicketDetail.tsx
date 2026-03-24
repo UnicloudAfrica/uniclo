@@ -236,11 +236,6 @@ export const SharedTicketDetail: React.FC<SharedTicketDetailProps> = ({
   }, [allMessages.length, hasScrolledInitially, scrollToBottomWithRetry]);
 
   useEffect(() => {
-    if (!hasScrolledInitially) return;
-    handleScroll();
-  }, [hasScrolledInitially, allMessages.length, handleScroll]);
-
-  useEffect(() => {
     return () => {
       if (lastReadUpdateTimeoutRef.current) {
         clearTimeout(lastReadUpdateTimeoutRef.current);
@@ -343,6 +338,11 @@ export const SharedTicketDetail: React.FC<SharedTicketDetailProps> = ({
     loadMoreMessages,
     queueLastReadUpdate,
   ]);
+
+  useEffect(() => {
+    if (!hasScrolledInitially) return;
+    handleScroll();
+  }, [hasScrolledInitially, allMessages.length, handleScroll]);
 
   const lastReadIndex = lastReadMessageId
     ? allMessages.findIndex((msg) => msg.id === lastReadMessageId)

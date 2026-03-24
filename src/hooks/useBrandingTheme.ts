@@ -760,37 +760,56 @@ export const applyBrandingToCss = (
   const onSecondary = resolveOnColor(primaryRgb);
 
   const root = document.documentElement;
-  root.style.setProperty("--theme-color", accent);
-  root.style.setProperty("--secondary-color", primary);
-  root.style.setProperty("--theme-color-rgb", rgbToChannels(accentRgb));
-  root.style.setProperty("--secondary-color-rgb", rgbToChannels(primaryRgb));
-  root.style.setProperty("--theme-color-10", hexToRgba(accent, 0.08));
-  root.style.setProperty("--theme-color-20", hexToRgba(accent, 0.18));
-  root.style.setProperty("--secondary-color-10", hexToRgba(primary, 0.08));
-  root.style.setProperty("--secondary-color-20", hexToRgba(primary, 0.18));
-  root.style.setProperty("--theme-hero-start", accent);
+
+  // Always use the more vivid/saturated color as --theme-color (buttons, links, active states)
+  const accentSat = Math.max(accentRgb.r, accentRgb.g, accentRgb.b) - Math.min(accentRgb.r, accentRgb.g, accentRgb.b);
+  const primarySat = Math.max(primaryRgb.r, primaryRgb.g, primaryRgb.b) - Math.min(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+  const vividIsAccent = accentSat >= primarySat;
+  const vividColor = vividIsAccent ? accent : primary;
+  const vividRgb = vividIsAccent ? accentRgb : primaryRgb;
+  const subtleColor = vividIsAccent ? primary : accent;
+  const subtleRgb = vividIsAccent ? primaryRgb : accentRgb;
+
+  root.style.setProperty("--theme-color", vividColor);
+  root.style.setProperty("--secondary-color", subtleColor);
+  root.style.setProperty("--theme-color-rgb", rgbToChannels(vividRgb));
+  root.style.setProperty("--secondary-color-rgb", rgbToChannels(subtleRgb));
+  root.style.setProperty("--theme-color-10", hexToRgba(vividColor, 0.08));
+  root.style.setProperty("--theme-color-20", hexToRgba(vividColor, 0.18));
+  root.style.setProperty("--secondary-color-10", hexToRgba(subtleColor, 0.08));
+  root.style.setProperty("--secondary-color-20", hexToRgba(subtleColor, 0.18));
+
+  // Hero gradient: vivid color is dominant start
+  const darkSlate = { r: 15, g: 23, b: 42 }; // #0f172a (slate-900)
+  const heroStartRgb = vividRgb;
+  const heroEndRgb = subtleRgb;
+  root.style.setProperty("--theme-hero-start", rgbToCss(mixRgb(heroStartRgb, darkSlate, 0.15)));
   root.style.setProperty(
     "--theme-hero-end",
-    isDistinct ? primary : rgbToCss(mixRgb(accentRgb, { r: 0, g: 0, b: 0 }, 0.38))
+    isDistinct
+      ? rgbToCss(mixRgb(heroEndRgb, darkSlate, 0.45))
+      : rgbToCss(mixRgb(heroStartRgb, darkSlate, 0.5))
   );
-  root.style.setProperty("--theme-border-color", palette.border ?? hexToRgba(primary, 0.2));
+  const onVivid = resolveOnColor(vividRgb);
+  const onSubtle = resolveOnColor(subtleRgb);
+  root.style.setProperty("--theme-border-color", palette.border ?? hexToRgba(subtleColor, 0.2));
   root.style.setProperty("--theme-card-bg", surfaceColor);
   root.style.setProperty("--theme-surface-alt", surfaceAltColor);
   root.style.setProperty("--theme-heading-color", headingColor);
   root.style.setProperty("--theme-text-color", textColor);
   root.style.setProperty("--theme-muted-color", mutedColor);
-  root.style.setProperty("--theme-tag-bg", palette.tag_bg ?? hexToRgba(accent, 0.16));
+  root.style.setProperty("--theme-tag-bg", palette.tag_bg ?? hexToRgba(vividColor, 0.16));
   root.style.setProperty(
     "--theme-tag-text",
-    normalizeTextColor(palette.tag_text, accent, palette.tag_bg ?? hexToRgba(accent, 0.16), 3)
+    normalizeTextColor(palette.tag_text, vividColor, palette.tag_bg ?? hexToRgba(vividColor, 0.16), 3)
   );
-  root.style.setProperty("--theme-on-color", onAccent);
-  root.style.setProperty("--theme-on-secondary", onSecondary);
-  root.style.setProperty("--theme-focus-ring", hexToRgba(accent, 0.34));
-  root.style.setProperty("--theme-button-primary-bg", accent);
-  root.style.setProperty("--theme-button-primary-text", onAccent);
-  root.style.setProperty("--theme-button-secondary-bg", primary);
-  root.style.setProperty("--theme-button-secondary-text", onSecondary);
+  root.style.setProperty("--theme-on-color", onVivid);
+  root.style.setProperty("--theme-on-secondary", onSubtle);
+  root.style.setProperty("--theme-focus-ring", hexToRgba(vividColor, 0.34));
+  root.style.setProperty("--theme-button-primary-bg", vividColor);
+  root.style.setProperty("--theme-button-primary-text", onVivid);
+  root.style.setProperty("--theme-button-secondary-bg", subtleColor);
+  root.style.setProperty("--theme-button-secondary-text", onSubtle);
   root.style.setProperty("--theme-input-bg", inputBgColor);
   root.style.setProperty(
     "--theme-input-border",
@@ -817,28 +836,28 @@ export const applyBrandingToCss = (
   root.style.setProperty("--theme-color-200", "229 231 235");
   root.style.setProperty(
     "--theme-color-300",
-    rgbToChannels(mixRgb(accentRgb, { r: 255, g: 255, b: 255 }, 0.56))
+    rgbToChannels(mixRgb(vividRgb, { r: 255, g: 255, b: 255 }, 0.56))
   );
   root.style.setProperty(
     "--theme-color-400",
-    rgbToChannels(mixRgb(accentRgb, { r: 255, g: 255, b: 255 }, 0.32))
+    rgbToChannels(mixRgb(vividRgb, { r: 255, g: 255, b: 255 }, 0.32))
   );
-  root.style.setProperty("--theme-color-500", rgbToChannels(accentRgb));
+  root.style.setProperty("--theme-color-500", rgbToChannels(vividRgb));
   root.style.setProperty(
     "--theme-color-600",
-    rgbToChannels(mixRgb(accentRgb, { r: 0, g: 0, b: 0 }, 0.18))
+    rgbToChannels(mixRgb(vividRgb, { r: 0, g: 0, b: 0 }, 0.18))
   );
   root.style.setProperty(
     "--theme-color-700",
-    rgbToChannels(mixRgb(accentRgb, { r: 0, g: 0, b: 0 }, 0.32))
+    rgbToChannels(mixRgb(vividRgb, { r: 0, g: 0, b: 0 }, 0.32))
   );
   root.style.setProperty(
     "--theme-color-800",
-    rgbToChannels(mixRgb(accentRgb, { r: 0, g: 0, b: 0 }, 0.46))
+    rgbToChannels(mixRgb(vividRgb, { r: 0, g: 0, b: 0 }, 0.46))
   );
   root.style.setProperty(
     "--theme-color-900",
-    rgbToChannels(mixRgb(accentRgb, { r: 0, g: 0, b: 0 }, 0.6))
+    rgbToChannels(mixRgb(vividRgb, { r: 0, g: 0, b: 0 }, 0.6))
   );
 
   const successHex = resolvePaletteColor(

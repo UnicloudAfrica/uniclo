@@ -265,12 +265,12 @@ export const useFetchCitiesById = (id: string | number, options: any = {}) => {
 // Hook to fetch Profile
 export const useFetchProfile = (options: any = {}) => {
   const queryClient = useQueryClient();
-  const profileQueryState = queryClient.getQueryState(["profile"]);
+  const profileQueryState = queryClient.getQueryState(["tenant-profile"]);
 
   const shouldEnable = !profileQueryState || profileQueryState.status !== "error";
 
   return useQuery({
-    queryKey: ["profile"],
+    queryKey: ["tenant-profile"],
     queryFn: fetchProfile,
     staleTime: 1000 * 60 * 5,
     retry: false,

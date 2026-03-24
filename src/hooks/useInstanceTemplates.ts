@@ -121,6 +121,8 @@ export const useInstanceTemplates = () => {
         : clientSilentApi;
   }, [context]);
 
+  // Tenant routes are nested under /admin prefix
+  const basePath = context === "tenant" ? "/admin/instance-templates" : "/instance-templates";
   const queryKey = ["instance-templates", context];
 
   // 1. LIST Templates
@@ -132,7 +134,7 @@ export const useInstanceTemplates = () => {
   } = useQuery({
     queryKey,
     queryFn: async () => {
-      const response = await api<ApiResponse>("GET", "/instance-templates");
+      const response = await api<ApiResponse>("GET", basePath);
       // API utility returns the JSON body directly
       const items = response.data || response || [];
       return items as InstanceTemplate[];
@@ -145,7 +147,7 @@ export const useInstanceTemplates = () => {
     mutationFn: async (payload: CreateTemplatePayload) => {
       const response = await api<ApiResponse>(
         "POST",
-        "/instance-templates",
+        basePath,
         payload as unknown as Record<string, unknown>
       );
       return response.data || response;
@@ -164,7 +166,7 @@ export const useInstanceTemplates = () => {
   // 3. DELETE Template
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await api<ApiResponse>("DELETE", `/instance-templates/${id}`);
+      await api<ApiResponse>("DELETE", `${basePath}/${id}`);
       return id;
     },
     onSuccess: () => {
@@ -179,7 +181,7 @@ export const useInstanceTemplates = () => {
   // 4. UPDATE Template
   const updateMutation = useMutation({
     mutationFn: async ({ id, payload }: UpdateTemplatePayload) => {
-      const response = await api<ApiResponse>("PUT", `/instance-templates/${id}`, payload);
+      const response = await api<ApiResponse>("PUT", `${basePath}/${id}`, payload);
       return response.data || response;
     },
     onSuccess: () => {

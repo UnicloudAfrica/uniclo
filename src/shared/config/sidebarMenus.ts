@@ -81,7 +81,7 @@ const INFRA_MENU_ITEMS: Array<{
   {
     label: "Key Pairs",
     icon: KeyRound,
-    path: "/key-pairs",
+    path: "/infrastructure/key-pairs",
     roles: ["admin", "tenant", "client"],
     requiredPermission: "instances.view",
   },

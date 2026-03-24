@@ -48,6 +48,9 @@ interface ProductOption {
   id: number | string;
   name: string;
   productable_type: string;
+  provider?: string;
+  region?: string;
+  availability_zone?: string;
   [key: string]: unknown;
 }
 
@@ -134,6 +137,16 @@ const AdminPricingCreate = () => {
     return map;
   }, [azQueryResults, usedRegionCodes]);
 
+  const getAzsForRegion = useCallback(
+    (regionCode: string): AZOption[] => azByRegion[regionCode] || [],
+    [azByRegion]
+  );
+
+  const regionRequiresAzSelection = useCallback(
+    (regionCode: string): boolean => getAzsForRegion(regionCode).length > 1,
+    [getAzsForRegion]
+  );
+
   // Fetch all products
   const { isFetching: isProductsFetching, data: productsData } =
     useFetchProducts();
@@ -147,14 +160,15 @@ const AdminPricingCreate = () => {
 
   const deriveProvider = useCallback(
     (regionCode: string, azCode: string): string => {
-      const azs = azByRegion[regionCode] || [];
+      const azs = getAzsForRegion(regionCode);
       if (azCode) {
         const az = azs.find((a) => String(a.id) === azCode || a.code === azCode);
         return az?.provider || "";
       }
-      return azs.length > 0 ? azs[0].provider : "";
+      const uniqueProviders = [...new Set(azs.map((az) => az.provider).filter(Boolean))];
+      return uniqueProviders.length === 1 ? uniqueProviders[0] : "";
     },
-    [azByRegion]
+    [getAzsForRegion]
   );
 
   const handleFieldChange = useCallback(
@@ -170,6 +184,7 @@ const AdminPricingCreate = () => {
         if (field === "region") {
           entry.availability_zone = "";
           entry.provider = "";
+          entry.product_id = "";
         }
 
         // When AZ changes, update provider
@@ -178,6 +193,7 @@ const AdminPricingCreate = () => {
           const azCode =
             field === "availability_zone" ? value : entry.availability_zone;
           entry.provider = deriveProvider(regionCode, azCode);
+          entry.product_id = "";
         }
 
         // When category changes, reset product
@@ -215,6 +231,14 @@ const AdminPricingCreate = () => {
           errors.region = "Region is required";
           isValid = false;
         }
+        if (regionRequiresAzSelection(entry.region) && !entry.availability_zone) {
+          errors.availability_zone = "Availability zone is required";
+          isValid = false;
+        }
+        if (!deriveProvider(entry.region, entry.availability_zone) && getAzsForRegion(entry.region).length > 0) {
+          errors.availability_zone = "Select a valid availability zone";
+          isValid = false;
+        }
         if (!entry.category) {
           errors.category = "Category is required";
           isValid = false;
@@ -231,7 +255,7 @@ const AdminPricingCreate = () => {
       })
     );
     return isValid;
-  }, []);
+  }, [deriveProvider, getAzsForRegion, regionRequiresAzSelection]);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -339,8 +363,9 @@ const AdminPricingCreate = () => {
         key: "availability_zone",
         header: "Availability Zone",
         render: (_: unknown, entry: PricingEntry, index: number) => {
-          const azs = azByRegion[entry.region] || [];
+          const azs = getAzsForRegion(entry.region);
           const isAzFetching = azFetchingByRegion[entry.region] || false;
+          const requiresAz = regionRequiresAzSelection(entry.region);
           return (
             <div>
               <select
@@ -356,7 +381,9 @@ const AdminPricingCreate = () => {
                     ? "Select region first"
                     : isAzFetching
                       ? "Loading..."
-                      : "All AZs"}
+                      : requiresAz
+                        ? "Select AZ"
+                        : "All AZs"}
                 </option>
                 {azs.map((az) => (
                   <option key={az.code || az.id} value={az.code || String(az.id)}>
@@ -364,6 +391,11 @@ const AdminPricingCreate = () => {
                   </option>
                 ))}
               </select>
+              {entry.errors["availability_zone"] && (
+                <p className="text-red-500 text-xs mt-1">
+                  {entry.errors["availability_zone"]}
+                </p>
+              )}
             </div>
           );
         },
@@ -401,18 +433,35 @@ const AdminPricingCreate = () => {
         header: "Product",
         render: (_: unknown, entry: PricingEntry, index: number) => {
           const entryProvider = deriveProvider(entry.region, entry.availability_zone);
+          const requiresAz = regionRequiresAzSelection(entry.region);
           const filteredProducts = allProducts.filter(
-            (p) =>
-              p.productable_type === entry.category &&
-              (!entryProvider || (p as any).provider === entryProvider)
+            (p) => {
+              const matchesType = p.productable_type === entry.category;
+              const matchesRegion = !p.region || p.region === entry.region;
+              const matchesProvider = !entryProvider || !p.provider || p.provider === entryProvider;
+              const matchesAz =
+                !entry.availability_zone ||
+                !p.availability_zone ||
+                p.availability_zone === entry.availability_zone;
+
+              return matchesType && matchesRegion && matchesProvider && matchesAz;
+            }
           );
           const isDisabled =
-            isSubmitting || isProductsFetching || !entry.category;
-          const placeholder = !entry.category
-            ? "Select category first"
-            : isProductsFetching
-              ? "Loading..."
-              : "Select product";
+            isSubmitting ||
+            isProductsFetching ||
+            !entry.region ||
+            !entry.category ||
+            (requiresAz && !entry.availability_zone);
+          const placeholder = !entry.region
+            ? "Select region first"
+            : !entry.category
+              ? "Select category first"
+              : requiresAz && !entry.availability_zone
+                ? "Select AZ first"
+                : isProductsFetching
+                  ? "Loading..."
+                  : "Select product";
 
           return (
             <div>
@@ -504,10 +553,11 @@ const AdminPricingCreate = () => {
       isRegionsFetching,
       isProductsFetching,
       regions,
-      azByRegion,
       azFetchingByRegion,
       allProducts,
+      getAzsForRegion,
       handleFieldChange,
+      regionRequiresAzSelection,
       removeEntry,
       deriveProvider,
     ]
@@ -556,8 +606,8 @@ const AdminPricingCreate = () => {
 
             <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-gray-500">
-                Select a region to auto-detect the provider. Choose a category
-                to filter available products.
+                Select a region, then choose the availability zone that owns the
+                provider before pricing products for that row.
               </p>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
                 <ModernButton

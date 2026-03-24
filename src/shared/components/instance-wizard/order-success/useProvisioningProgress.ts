@@ -304,17 +304,33 @@ export function useProvisioningProgress(instances: unknown) {
     [instancePipelineSkeleton, instanceProgress]
   );
 
-  // Filter pipeline steps
+  // Filter pipeline steps — remove inapplicable steps based on instance config.
+  // The backend already excludes these from provisioning_progress, so we also
+  // strip them from the UI skeleton to keep the percentage accurate.
   const filterPipelineSteps = useCallback(
     (
       steps: PipelineStep[],
       requirements: { requiresElasticIp: boolean; requiresDataVolumes: boolean }
     ) => {
       return steps.filter((step) => {
+        // Skip EIP step if not requested
         if (step.id === "allocate_elastic_ip" && !requirements.requiresElasticIp) {
           return false;
         }
+        // Skip data volumes step if none requested
         if (step.id === "attach_data_volumes" && !requirements.requiresDataVolumes) {
+          return false;
+        }
+        // Skip post_provision if neither EIP nor data volumes apply
+        if (
+          step.id === "post_provision" &&
+          !requirements.requiresElasticIp &&
+          !requirements.requiresDataVolumes
+        ) {
+          return false;
+        }
+        // Skip sync_user_access if it was never started (backend excludes when config disables it)
+        if (step.id === "sync_user_access" && step.status === "not_started") {
           return false;
         }
         return true;

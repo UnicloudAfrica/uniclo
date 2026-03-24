@@ -1,134 +1,92 @@
-import React from "react";
-import { useSearchParams } from "react-router-dom";
-import { Shield } from "lucide-react";
+import React, { useState } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import ClientPageShell from "../components/ClientPageShell";
-import ModernCard from "@/shared/components/ui/ModernCard";
-import { useSecurityGroupRules } from "@/shared/hooks/vpcInfraHooks";
-
-interface SecurityRule {
-  protocol?: string;
-  port_range_min?: number;
-  port_range_max?: number;
-  cidr?: string;
-}
+import SecurityGroupRulesView from "@/shared/components/infrastructure/SecurityGroupRulesView";
+import ModifySecurityGroupModal from "@/shared/components/infrastructure/modals/ModifySecurityGroupModal";
+import {
+  useSecurityGroups,
+  useSecurityGroupRules,
+  useUpdateSecurityGroup,
+  useAddSecurityGroupRule,
+  useRemoveSecurityGroupRule,
+} from "@/shared/hooks/vpcInfraHooks";
+import type { SecurityGroupRule } from "@/shared/components/infrastructure/types";
 
 const ClientSecurityGroupRules: React.FC = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const projectId = searchParams.get("project") || "";
   const region = searchParams.get("region") || "";
-  const sgId = searchParams.get("sg") || "";
-  const sgName = searchParams.get("name") || "Security Group";
+  const securityGroupId = searchParams.get("sg") || "";
+  const securityGroupName = searchParams.get("name") || "Security Group";
+  const securityGroupDescription = searchParams.get("desc") || "";
 
-  const { data: rules, isLoading } = useSecurityGroupRules(projectId, sgId, region);
+  const [showModify, setShowModify] = useState(false);
 
-  const ingressRules = rules?.ingress_rules || [];
-  const egressRules = rules?.egress_rules || [];
+  const { data: allSecurityGroups = [] } = useSecurityGroups(projectId, region);
+  const { data: rulesData } = useSecurityGroupRules(projectId, securityGroupId, region);
+  const { mutate: updateSg } = useUpdateSecurityGroup();
+  const { mutateAsync: addRule } = useAddSecurityGroupRule();
+  const { mutateAsync: removeRule } = useRemoveSecurityGroupRule();
+
+  const currentSg = allSecurityGroups.find((sg) => sg.id === securityGroupId) || {
+    id: securityGroupId,
+    name: securityGroupName,
+    description: securityGroupDescription,
+  };
+
+  const ingressRules: SecurityGroupRule[] = rulesData?.ingress_rules || [];
+  const egressRules: SecurityGroupRule[] = rulesData?.egress_rules || [];
 
   return (
     <ClientPageShell
-      title={
-        <span className="flex items-center gap-2">
-          <Shield className="w-5 h-5 text-purple-600" />
-          {sgName} - Rules
-        </span>
-      }
-      description={`View rules for security group ${sgId}`}
+      title="Security Group Rules"
+      description={`${securityGroupName} (${securityGroupId})`}
     >
-      {isLoading ? (
-        <div className="py-12 text-center">
-          <div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto" />
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {/* Inbound Rules */}
-          <div>
-            <h3 className="text-sm font-semibold text-gray-700 uppercase mb-3 flex items-center gap-2">
-              <span className="w-2 h-2 bg-green-500 rounded-full" />
-              Inbound Rules ({ingressRules.length})
-            </h3>
-            {ingressRules.length === 0 ? (
-              <ModernCard className="p-6 text-center text-gray-500">No inbound rules</ModernCard>
-            ) : (
-              <ModernCard className="overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">
-                        Protocol
-                      </th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">
-                        Port Range
-                      </th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">
-                        Source
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {ingressRules.map((rule: SecurityRule, i: number) => (
-                      <tr key={i} className="hover:bg-gray-50">
-                        <td className="py-3 px-4 font-mono text-sm">
-                          {rule.protocol?.toUpperCase()}
-                        </td>
-                        <td className="py-3 px-4 text-sm">
-                          {rule.port_range_min === rule.port_range_max
-                            ? rule.port_range_min
-                            : `${rule.port_range_min} - ${rule.port_range_max}`}
-                        </td>
-                        <td className="py-3 px-4 font-mono text-sm">{rule.cidr}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </ModernCard>
-            )}
-          </div>
+      <SecurityGroupRulesView
+        projectId={projectId}
+        region={region}
+        securityGroupId={securityGroupId}
+        securityGroupName={securityGroupName}
+        securityGroupDescription={securityGroupDescription}
+        onBack={() => navigate(-1)}
+        onModify={() => setShowModify(true)}
+        availableSecurityGroups={allSecurityGroups}
+      />
 
-          {/* Outbound Rules */}
-          <div>
-            <h3 className="text-sm font-semibold text-gray-700 uppercase mb-3 flex items-center gap-2">
-              <span className="w-2 h-2 bg-blue-500 rounded-full" />
-              Outbound Rules ({egressRules.length})
-            </h3>
-            {egressRules.length === 0 ? (
-              <ModernCard className="p-6 text-center text-gray-500">No outbound rules</ModernCard>
-            ) : (
-              <ModernCard className="overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">
-                        Protocol
-                      </th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">
-                        Port Range
-                      </th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">
-                        Destination
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {egressRules.map((rule: SecurityRule, i: number) => (
-                      <tr key={i} className="hover:bg-gray-50">
-                        <td className="py-3 px-4 font-mono text-sm">
-                          {rule.protocol?.toUpperCase()}
-                        </td>
-                        <td className="py-3 px-4 text-sm">
-                          {rule.port_range_min === rule.port_range_max
-                            ? rule.port_range_min
-                            : `${rule.port_range_min} - ${rule.port_range_max}`}
-                        </td>
-                        <td className="py-3 px-4 font-mono text-sm">{rule.cidr}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </ModernCard>
-            )}
-          </div>
-        </div>
-      )}
+      <ModifySecurityGroupModal
+        isOpen={showModify}
+        onClose={() => setShowModify(false)}
+        securityGroup={currentSg}
+        ingressRules={ingressRules}
+        egressRules={egressRules}
+        availableSecurityGroups={allSecurityGroups}
+        onUpdateSg={(name, description) => {
+          updateSg({
+            projectId,
+            region,
+            securityGroupId,
+            payload: { name, description },
+          });
+        }}
+        onAddRule={async (payload) => {
+          await addRule({ projectId, region, securityGroupId, payload });
+        }}
+        onRemoveRule={async (rule, direction) => {
+          await removeRule({
+            projectId,
+            region,
+            securityGroupId,
+            payload: {
+              direction,
+              protocol: String(rule.ip_protocol),
+              port_range_min: rule.from_port,
+              port_range_max: rule.to_port,
+              cidr: rule.ip_ranges?.[0]?.cidr_ip,
+            },
+          });
+        }}
+      />
     </ClientPageShell>
   );
 };

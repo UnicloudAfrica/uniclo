@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import EngineIcon, { getEngineLabel } from "./EngineIcon";
 import DatabaseStatusBadge from "./DatabaseStatusBadge";
+import DatabaseProvisioningPipeline from "./DatabaseProvisioningPipeline";
 import {
   useFetchManagedDatabaseById,
   useFetchDatabaseCredentials,
@@ -115,6 +116,14 @@ const ManagedDatabaseDetail: React.FC<ManagedDatabaseDetailProps> = ({
         </div>
         <DatabaseStatusBadge status={db.status} />
       </div>
+
+      {/* Provisioning Pipeline — shown when database is still provisioning */}
+      {(db.status === "provisioning" || db.status === "payment_pending") && (
+        <DatabaseProvisioningPipeline
+          databaseIdentifier={identifier}
+          initialProgress={db.provisioning_progress ?? undefined}
+        />
+      )}
 
       {/* Tabs */}
       <div className="border-b border-gray-200 dark:border-gray-700">

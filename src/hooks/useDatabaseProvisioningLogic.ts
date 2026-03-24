@@ -13,12 +13,16 @@ import {
   useFetchAvailablePlans,
 } from "@/shared/hooks/resources/managedDatabaseHooks";
 import { useFetchProjects } from "@/shared/hooks/resources";
-import { useFetchRegions } from "@/shared/hooks/resources/regionHooks";
+import { useFetchRegions, useFetchAvailabilityZones } from "@/shared/hooks/resources/regionHooks";
+import { useApiContext } from "@/hooks/useApiContext";
+import useAuthStore from "@/stores/authStore";
 import { normalizePaymentOptions } from "@/utils/instanceCreationUtils";
+import { sanitizeProviderLabel } from "@/utils/sanitizeProviderLabel";
 import ToastUtils from "@/utils/toastUtil";
 import type {
   DatabaseEngine,
   PlanSize,
+  CustomerContext,
   DatabaseFormState,
   DatabaseQuoteResponse,
   DatabaseOrderResponse,
@@ -131,6 +135,23 @@ function assignReplicaRegions(
 // ─── Hook ──────────────────────────────────────────────────────────
 
 export const useDatabaseProvisioningLogic = () => {
+  // API context and user profile
+  const { context } = useApiContext();
+  const user = useAuthStore((s) => s.user);
+
+  // Derive billing country from user profile
+  const profileCountry = useMemo(() => {
+    if (!user) return "";
+    return (user.country_iso as string) || (user.country as string) || "";
+  }, [user]);
+
+  // Derive default customer context based on role
+  const defaultCustomerContext: CustomerContext = useMemo(() => {
+    if (context === "client") return "user";
+    if (context === "tenant") return "tenant";
+    return "tenant"; // admin defaults to tenant
+  }, [context]);
+
   // Steps
   const steps = useMemo(() => [...DATABASE_WIZARD_STEPS], []);
   const [activeStep, setActiveStep] = useState(0);
@@ -141,23 +162,41 @@ export const useDatabaseProvisioningLogic = () => {
     engineVersion: "",
     planSize: "",
     region: "",
+    availabilityZone: "",
     name: "",
     projectId: null,
     deploymentType: "dedicated",
     replicaCount: 1,
+    replicaAzs: [],
     replicaRegions: [],
     backupEnabled: true,
     drEnabled: false,
     firewallCidrs: ["0.0.0.0/0"],
     months: 1,
     fastTrack: false,
+    billingCountry: "",
+    customerContext: "tenant",
+    assignedTenantId: null,
+    assignedClientId: null,
   });
+
+  // Initialize billing country and customer context from profile once loaded
+  useEffect(() => {
+    setForm((prev) => ({
+      ...prev,
+      billingCountry: prev.billingCountry || profileCountry,
+      customerContext: prev.customerContext === "tenant" ? defaultCustomerContext : prev.customerContext,
+    }));
+  }, [profileCountry, defaultCustomerContext]);
 
   // Data fetching
   const { data: enginesData } = useFetchAvailableEngines();
   const { data: plansData } = useFetchAvailablePlans(form.engine || undefined);
   const { data: projectsData } = useFetchProjects();
   const { data: regionsData } = useFetchRegions();
+
+  // Fetch AZs using the shared hook when a region is selected
+  const { data: fetchedAzsData } = useFetchAvailabilityZones(form.region || undefined);
 
   // Mutations
   const quoteMutation = useDatabaseQuote();
@@ -215,68 +254,116 @@ export const useDatabaseProvisioningLogic = () => {
     }));
   }, [projectsData]);
 
-  // Regions list
-  const regions = useMemo(() => {
+  // Regions list (with raw data for AZ extraction)
+  const regionsRaw = useMemo(() => {
     if (!regionsData) return [];
-    const list = Array.isArray(regionsData) ? regionsData : [];
-    return list
+    return Array.isArray(regionsData) ? regionsData : [];
+  }, [regionsData]);
+
+  const regions = useMemo(() => {
+    return regionsRaw
       .map((r: Record<string, unknown>) => ({
         value: (r.region as string) || (r.code as string) || "",
         label: (r.label as string) || (r.name as string) || (r.region as string) || "",
       }))
       .filter((r) => r.value);
-  }, [regionsData]);
+  }, [regionsRaw]);
+
+  // Availability zones for the selected region — prefers fetched AZ data, falls back to region-embedded data
+  const availabilityZones = useMemo(() => {
+    if (!form.region) return [];
+
+    // Prefer data from the dedicated AZ endpoint
+    if (fetchedAzsData && Array.isArray(fetchedAzsData) && fetchedAzsData.length > 0) {
+      return fetchedAzsData.map((az: Record<string, unknown>) => ({
+        value: (az.code as string) || (az.zone_name as string) || "",
+        label: sanitizeProviderLabel((az.name as string) || (az.code as string) || (az.zone_name as string) || ""),
+      })).filter((az: { value: string }) => az.value);
+    }
+
+    // Fallback: extract from region data
+    const regionData = regionsRaw.find(
+      (r: Record<string, unknown>) =>
+        (r.region as string) === form.region || (r.code as string) === form.region
+    );
+    if (!regionData) return [];
+    const azs = (regionData as Record<string, unknown>).availability_zones;
+    if (!Array.isArray(azs)) return [];
+    return azs.map((az: Record<string, unknown>) => ({
+      value: (az.code as string) || "",
+      label: sanitizeProviderLabel((az.name as string) || (az.code as string) || ""),
+    })).filter((az: { value: string }) => az.value);
+  }, [form.region, regionsRaw, fetchedAzsData]);
+
+  // Auto-select first AZ when AZs become available and none is selected
+  useEffect(() => {
+    if (availabilityZones.length > 0 && !form.availabilityZone) {
+      setForm((prev) => ({
+        ...prev,
+        availabilityZone: availabilityZones[0].value,
+      }));
+    }
+  }, [availabilityZones, form.availabilityZone]);
 
   // ─── Replica Logic ────────────────────────────────────────────────
 
-  /** Max additional replicas the user can select. */
+  // AZs available for replicas (excludes the primary AZ)
+  const replicaAvailableAzs = useMemo(() => {
+    if (!form.availabilityZone) return availabilityZones;
+    return availabilityZones.filter((az) => az.value !== form.availabilityZone);
+  }, [availabilityZones, form.availabilityZone]);
+
+  /** Max additional replicas the user can select (limited by engine and available AZs). */
   const maxReplicaCount = useMemo(() => {
-    if (!form.engine || !form.region || regions.length <= 1) return 0;
+    if (!form.engine || !form.region || !form.availabilityZone) return 0;
     const engineMeta = engines[form.engine as DatabaseEngine];
-    // maxReplicas is total nodes; subtract 1 for the primary
     const maxByEngine = (engineMeta?.maxReplicas ?? 5) - 1;
-    const maxByRegions = regions.length - 1;
-    return Math.max(0, Math.min(maxByEngine, maxByRegions));
-  }, [form.engine, form.region, engines, regions]);
+    const maxByAzs = replicaAvailableAzs.length;
+    return Math.max(0, Math.min(maxByEngine, maxByAzs));
+  }, [form.engine, form.region, form.availabilityZone, engines, replicaAvailableAzs]);
 
   /**
-   * Set the number of additional read replicas.
-   * Automatically assigns replica regions from the remaining available regions.
+   * Toggle an AZ for read replica placement.
+   * Each selected AZ gets one replica.
    */
-  const setReplicaCount = useCallback(
-    (additionalReplicas: number) => {
-      const clamped = Math.max(0, Math.min(additionalReplicas, maxReplicaCount));
-      const replicaRegions = assignReplicaRegions(clamped, form.region, regions);
-      setForm((prev) => ({
-        ...prev,
-        replicaCount: clamped + 1, // total nodes = primary + replicas
-        replicaRegions,
-      }));
+  const toggleReplicaAz = useCallback(
+    (azCode: string) => {
+      setForm((prev) => {
+        const current = prev.replicaAzs;
+        const isSelected = current.includes(azCode);
+        let newAzs: string[];
+        if (isSelected) {
+          newAzs = current.filter((az) => az !== azCode);
+        } else {
+          if (current.length >= maxReplicaCount) return prev;
+          newAzs = [...current, azCode];
+        }
+        return {
+          ...prev,
+          replicaAzs: newAzs,
+          replicaCount: newAzs.length + 1, // total = primary + replicas
+          replicaRegions: newAzs, // backward compat
+        };
+      });
     },
-    [maxReplicaCount, form.region, regions],
+    [maxReplicaCount],
   );
 
-  // Reassign replica regions when primary region changes
+  // Reset replica AZs when primary AZ changes
   useEffect(() => {
-    const additionalReplicas = form.replicaCount - 1;
-    if (additionalReplicas <= 0 || !form.region || regions.length <= 1) {
-      return;
-    }
-    // Check if current assignment is still valid (no overlap with new primary)
-    const stillValid =
-      form.replicaRegions.length === additionalReplicas &&
-      form.replicaRegions.every((r) => r !== form.region && regions.some((reg) => reg.value === r));
-    if (stillValid) return;
-
-    const available = regions.filter((r) => r.value !== form.region);
-    const newCount = Math.min(additionalReplicas, available.length);
-    const assigned = assignReplicaRegions(newCount, form.region, regions);
-    setForm((prev) => ({
-      ...prev,
-      replicaCount: newCount + 1,
-      replicaRegions: assigned,
-    }));
-  }, [form.region, regions]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!form.availabilityZone) return;
+    // Remove any replica AZs that conflict with the new primary
+    setForm((prev) => {
+      const filtered = prev.replicaAzs.filter((az) => az !== form.availabilityZone);
+      if (filtered.length === prev.replicaAzs.length) return prev;
+      return {
+        ...prev,
+        replicaAzs: filtered,
+        replicaCount: filtered.length + 1,
+        replicaRegions: filtered,
+      };
+    });
+  }, [form.availabilityZone]);
 
   // ─── Form Helpers ────────────────────────────────────────────────
 
@@ -291,6 +378,7 @@ export const useDatabaseProvisioningLogic = () => {
         engine,
         engineVersion: meta.defaultVersion,
         replicaCount: 1,
+        replicaAzs: [],
         replicaRegions: [],
       });
     },
@@ -352,17 +440,22 @@ export const useDatabaseProvisioningLogic = () => {
           engine_version: form.engineVersion,
           plan_size: form.planSize,
           region: form.region,
+          availability_zone: form.availabilityZone,
           deployment_type: form.deploymentType,
           replica_count: form.replicaCount,
-          replica_regions: form.replicaRegions,
+          replica_azs: form.replicaAzs,
           backup_enabled: form.backupEnabled,
           firewall_cidrs: form.firewallCidrs.filter(Boolean),
           months: form.months,
           fast_track: form.fastTrack,
+          country_iso: form.billingCountry || undefined,
+          customer_context: form.customerContext,
         };
 
         if (form.name.trim()) payload.name = form.name.trim();
         if (form.projectId) payload.project_id = form.projectId;
+        if (form.assignedTenantId) payload.tenant_id = form.assignedTenantId;
+        if (form.assignedClientId) payload.client_id = form.assignedClientId;
 
         const response = await orderMutation.mutateAsync(payload);
         const data = response?.data ?? (response as unknown as DatabaseOrderResponse["data"]);
@@ -493,15 +586,21 @@ export const useDatabaseProvisioningLogic = () => {
     selectEngine,
     selectedEngineMeta,
 
+    // Context
+    context,
+    profileCountry,
+
     // Data
     engines,
     projects,
     regions,
+    availabilityZones,
     plansData,
 
     // Replicas
     maxReplicaCount,
-    setReplicaCount,
+    replicaAvailableAzs,
+    toggleReplicaAz,
 
     // Validation
     isEngineStepValid,

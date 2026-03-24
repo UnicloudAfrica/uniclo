@@ -21,16 +21,7 @@ export type {
  * Shared order confirmation/success step for provisioning wizards.
  * Displays order ID, configuration summaries, and navigation actions.
  */
-/** Strip provider names (e.g. "zadara", "nobus") from region codes for display. */
-const sanitizeRegionLabel = (raw: string): string => {
-  if (!raw || raw === "\u2014") return raw;
-  // Remove known provider tokens and clean up separators
-  return raw
-    .replace(/\b(zadara|nobus)\b[-_]?/gi, "")
-    .replace(/^[-_]+|[-_]+$/g, "")
-    .replace(/[-_]{2,}/g, "-")
-    .trim() || raw;
-};
+import { sanitizeProviderLabel as sanitizeRegionLabel } from "@/utils/sanitizeProviderLabel";
 
 const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
   orderId,
@@ -109,7 +100,7 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
               return (
                 <div key={cfg.id} className="flex justify-between items-center">
                   <span className="text-gray-600">
-                    {displayName} \u00d7 {countLabel} ({monthsLabel} months)
+                    {displayName} &times; {countLabel} ({monthsLabel} months)
                   </span>
                   <div className="flex items-center gap-2">
                     <span className="text-gray-800 font-medium">{displayRegion}</span>

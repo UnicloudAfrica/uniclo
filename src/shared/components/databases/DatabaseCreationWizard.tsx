@@ -27,6 +27,7 @@ import {
   getRegionLabel,
 } from "@/hooks/useDatabaseProvisioningLogic";
 import type { DatabaseEngine, PlanSize } from "@/types/managedDatabase";
+import { sanitizeProviderLabel } from "@/utils/sanitizeProviderLabel";
 
 interface DatabaseCreationWizardProps {
   context: "admin" | "tenant" | "client";
@@ -119,9 +120,13 @@ const ConfigureStep: React.FC<{
   selectedEngineMeta: ReturnType<typeof useDatabaseProvisioningLogic>["selectedEngineMeta"];
   projects: { value: number; label: string }[];
   regions: { value: string; label: string }[];
+  availabilityZones: { value: string; label: string }[];
   maxReplicaCount: number;
-  setReplicaCount: (count: number) => void;
-}> = ({ form, updateForm, selectedEngineMeta, projects, regions, maxReplicaCount, setReplicaCount }) => (
+  replicaAvailableAzs: { value: string; label: string }[];
+  toggleReplicaAz: (azCode: string) => void;
+  context: "admin" | "tenant" | "client";
+  profileCountry: string;
+}> = ({ form, updateForm, selectedEngineMeta, projects, regions, availabilityZones, maxReplicaCount, replicaAvailableAzs, toggleReplicaAz, context, profileCountry }) => (
   <div className="space-y-6">
     {/* Name */}
     <div>
@@ -188,7 +193,7 @@ const ConfigureStep: React.FC<{
       </label>
       <select
         value={form.region}
-        onChange={(e) => updateForm({ region: e.target.value })}
+        onChange={(e) => updateForm({ region: e.target.value, availabilityZone: "" })}
         className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
       >
         <option value="">Select region...</option>
@@ -200,44 +205,72 @@ const ConfigureStep: React.FC<{
       </select>
     </div>
 
-    {/* Read Replicas */}
-    {form.region && maxReplicaCount > 0 && (
+    {/* Availability Zone */}
+    {form.region && availabilityZones.length > 0 && (
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Availability Zone
+        </label>
+        <select
+          value={form.availabilityZone}
+          onChange={(e) => updateForm({ availabilityZone: e.target.value })}
+          className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+        >
+          <option value="">Auto-select (recommended)</option>
+          {availabilityZones.map((az) => (
+            <option key={az.value} value={az.value}>
+              {az.label}
+            </option>
+          ))}
+        </select>
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          {availabilityZones.length} availability zone{availabilityZones.length !== 1 ? "s" : ""} available in this region.
+        </p>
+      </div>
+    )}
+
+    {/* Read Replicas — select AZs to place replicas in */}
+    {form.region && form.availabilityZone && replicaAvailableAzs.length > 0 && (
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Read Replicas
         </label>
-        <div className="flex flex-wrap gap-2">
-          {Array.from({ length: maxReplicaCount + 1 }, (_, i) => i).map((count) => {
-            const isSelected = form.replicaCount - 1 === count;
+        <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
+          Select availability zones to place read replicas. Each selected AZ gets one replica for high availability.
+        </p>
+        <div className="space-y-2">
+          {replicaAvailableAzs.map((az) => {
+            const isSelected = form.replicaAzs.includes(az.value);
+            const isDisabled = !isSelected && form.replicaAzs.length >= maxReplicaCount;
             return (
               <button
-                key={count}
-                onClick={() => setReplicaCount(count)}
-                className={`rounded-lg border-2 px-4 py-2 text-sm font-medium transition-all ${
+                key={az.value}
+                onClick={() => toggleReplicaAz(az.value)}
+                disabled={isDisabled}
+                className={`w-full flex items-center gap-3 rounded-lg border-2 px-4 py-3 text-left text-sm transition-all ${
                   isSelected
-                    ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300"
-                    : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300"
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
+                    : isDisabled
+                      ? "border-gray-100 dark:border-gray-800 opacity-50 cursor-not-allowed"
+                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                 }`}
               >
-                {count}
+                <div className={`h-4 w-4 rounded border-2 flex items-center justify-center ${
+                  isSelected ? "border-blue-500 bg-blue-500" : "border-gray-300 dark:border-gray-600"
+                }`}>
+                  {isSelected && <span className="text-white text-xs">✓</span>}
+                </div>
+                <div>
+                  <div className="font-medium text-gray-900 dark:text-gray-100">{az.label}</div>
+                </div>
               </button>
             );
           })}
         </div>
-        <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-          Replicas are automatically distributed across available regions for high availability.
-        </p>
-        {form.replicaCount > 1 && form.replicaRegions.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {form.replicaRegions.map((regionCode) => (
-              <span
-                key={regionCode}
-                className="inline-flex items-center gap-1 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-300"
-              >
-                {getRegionLabel(regions, regionCode)}
-              </span>
-            ))}
-          </div>
+        {form.replicaAzs.length > 0 && (
+          <p className="mt-2 text-xs text-blue-600 dark:text-blue-400">
+            {form.replicaAzs.length} read replica{form.replicaAzs.length !== 1 ? "s" : ""} will be created ({form.replicaCount} total nodes including primary)
+          </p>
         )}
       </div>
     )}
@@ -307,6 +340,90 @@ const ConfigureStep: React.FC<{
         />
       </button>
     </div>
+
+    {/* DR Toggle — Disabled / Coming Soon */}
+    <div className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-700 p-3 opacity-60">
+      <div className="flex items-center gap-2">
+        <Shield size={16} className="text-gray-400" />
+        <div>
+          <div className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            Disaster Recovery
+            <span className="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              Coming soon
+            </span>
+          </div>
+          <div className="text-xs text-gray-500">Cross-region DR replication for business continuity</div>
+        </div>
+      </div>
+      <button
+        disabled
+        className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-300 dark:bg-gray-600 cursor-not-allowed"
+      >
+        <span className="inline-block h-4 w-4 rounded-full bg-white translate-x-1" />
+      </button>
+    </div>
+
+    {/* ── Workflow & Assignment ── */}
+
+    {/* Customer Context Selector */}
+    {context !== "client" && (
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Customer Context
+        </label>
+        <div className="flex gap-3">
+          {(context === "admin"
+            ? (["tenant", "user", "unassigned"] as const)
+            : (["tenant", "user"] as const)
+          ).map((ctx) => {
+            const labels: Record<string, string> = { tenant: "Tenant", user: context === "tenant" ? "Client" : "User", unassigned: "Unassigned" };
+            return (
+              <label
+                key={ctx}
+                className={`flex items-center gap-2 rounded-lg border-2 px-4 py-2.5 text-sm cursor-pointer transition-all ${
+                  form.customerContext === ctx
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
+                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="customerContext"
+                  value={ctx}
+                  checked={form.customerContext === ctx}
+                  onChange={() => updateForm({ customerContext: ctx, assignedTenantId: null, assignedClientId: null })}
+                  className="sr-only"
+                />
+                <span className="font-medium text-gray-900 dark:text-gray-100">{labels[ctx]}</span>
+              </label>
+            );
+          })}
+        </div>
+      </div>
+    )}
+
+    {/* Billing Country */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        Billing Country
+      </label>
+      {context === "admin" ? (
+        <input
+          type="text"
+          value={form.billingCountry}
+          onChange={(e) => updateForm({ billingCountry: e.target.value })}
+          placeholder="e.g. US, NG, GB"
+          className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+        />
+      ) : (
+        <div className="flex items-center gap-2">
+          <span className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
+            {form.billingCountry || profileCountry || "Not set"}
+          </span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">(Default from profile)</span>
+        </div>
+      )}
+    </div>
   </div>
 );
 
@@ -361,10 +478,13 @@ const ReviewContent: React.FC<{
           />
         )}
         <SummaryRow label="Region" value={getRegionLabel(regions, form.region) || "—"} />
+        {form.availabilityZone && (
+          <SummaryRow label="Availability Zone" value={sanitizeProviderLabel(form.availabilityZone)} />
+        )}
         {form.replicaCount > 1 && (
           <SummaryRow
             label="Read Replicas"
-            value={`${form.replicaCount - 1} — ${form.replicaRegions.map((r) => getRegionLabel(regions, r)).join(", ")}`}
+            value={`${form.replicaCount - 1} — ${form.replicaAzs.map(sanitizeProviderLabel).join(", ")}`}
           />
         )}
         <SummaryRow
@@ -570,7 +690,7 @@ const WizardSidebar: React.FC<{
         {form.replicaCount > 1 && (
           <div className="text-gray-600 dark:text-gray-400">
             Replicas: {form.replicaCount - 1} ×{" "}
-            {form.replicaRegions.map((r) => getRegionLabel(regions, r)).join(", ")}
+            {form.replicaAzs.map(sanitizeProviderLabel).join(", ")}
           </div>
         )}
       </div>
@@ -642,7 +762,6 @@ const SummaryRow: React.FC<{
 // ─── Main Wizard ─────────────────────────────────────────────────────
 
 const DatabaseCreationWizard: React.FC<DatabaseCreationWizardProps> = ({
-  context: _context,
   listPath = "databases",
 }) => {
   const navigate = useNavigate();
@@ -688,8 +807,12 @@ const DatabaseCreationWizard: React.FC<DatabaseCreationWizardProps> = ({
               selectedEngineMeta={logic.selectedEngineMeta}
               projects={logic.projects}
               regions={logic.regions}
+              availabilityZones={logic.availabilityZones}
               maxReplicaCount={logic.maxReplicaCount}
-              setReplicaCount={logic.setReplicaCount}
+              replicaAvailableAzs={logic.replicaAvailableAzs}
+              toggleReplicaAz={logic.toggleReplicaAz}
+              context={logic.context}
+              profileCountry={logic.profileCountry}
             />
             <div className="flex items-center justify-between">
               <button

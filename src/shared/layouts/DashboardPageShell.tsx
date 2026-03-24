@@ -14,6 +14,11 @@ interface Breadcrumb {
   href?: string;
 }
 
+/** Map intermediate breadcrumb segments to the correct destination when no index route exists. */
+const breadcrumbRedirects: Record<string, string> = {
+  "/dashboard/infrastructure": "/dashboard/projects",
+};
+
 const buildBreadcrumbs = (pathname: string = "", homeHref: string = "/"): Breadcrumb[] => {
   const segments = pathname.split("/").filter(Boolean);
   if (!segments.length) {
@@ -22,8 +27,11 @@ const buildBreadcrumbs = (pathname: string = "", homeHref: string = "/"): Breadc
 
   const crumbs: Breadcrumb[] = segments.map((segment, index) => {
     const label = toTitleCase(segment);
-    const href =
-      index === segments.length - 1 ? undefined : `/${segments.slice(0, index + 1).join("/")}`;
+    if (index === segments.length - 1) {
+      return { label };
+    }
+    const naturalHref = `/${segments.slice(0, index + 1).join("/")}`;
+    const href = breadcrumbRedirects[naturalHref] ?? naturalHref;
     return { label, href };
   });
 

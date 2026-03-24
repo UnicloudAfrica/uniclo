@@ -159,7 +159,8 @@ const TemplateManager: React.FC = () => {
     return clientSilentApi;
   }, [context]);
 
-  const { resources, isLoadingResources } = useInstanceResources({ apiFn });
+  const resourceEndpoint = context === "tenant" ? "/admin/instances/resources" : "/instances/resources";
+  const { resources, isLoadingResources } = useInstanceResources({ apiFn, endpoint: resourceEndpoint });
   const {
     templates,
     isLoading,

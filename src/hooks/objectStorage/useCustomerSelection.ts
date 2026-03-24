@@ -1,8 +1,13 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Option, resolveCountryCodeFromEntity } from "../objectStorageUtils";
+import { COUNTRY_FALLBACK, matchCountryFromOptions } from "../../shared/utils/countryUtils";
 import { useCustomerContext } from "../adminHooks/useCustomerContext";
+import { useFetchClientById } from "../adminHooks/clientHooks";
+import { useFetchTenantById } from "../adminHooks/tenantHooks";
 import { useFetchClientProfile } from "../clientHooks/resources";
-import { useFetchTenantBusinessSettings } from "../settingsHooks";
+import { useFetchTenantBillingSettings, useFetchTenantBusinessSettings } from "../settingsHooks";
+import { useFetchProfile } from "../resource";
+import useTenantAuthStore from "../../stores/tenantAuthStore";
 import type { ObjectStorageContext } from "./types";
 import { isRecord, resolveOptionValue, resolveString } from "./utils";
 
@@ -34,6 +39,8 @@ export const useCustomerSelection = (
 ): UseCustomerSelectionReturn => {
   const { context, configTenantId, configUserId, countryOptions, setFormData, setIsCountryLocked } =
     options;
+  const appliedCountryRef = useRef("");
+  const appliedSelectionKeyRef = useRef("");
 
   // Customer Context - admin uses shared hook, tenant/client use local state
   const isAdminContext = context === "admin";
@@ -93,6 +100,25 @@ export const useCustomerSelection = (
   const { data: tenantSettings } = useFetchTenantBusinessSettings({
     enabled: context === "tenant",
   });
+  const { data: tenantBillingSettings } = useFetchTenantBillingSettings({
+    enabled: context === "tenant",
+  });
+  // Fresh profile from API (has country field)
+  const { data: tenantProfile } = useFetchProfile({
+    enabled: context === "tenant",
+  });
+  const { data: selectedTenantDetails } = useFetchTenantById(selectedTenantId, {
+    enabled: isAdminContext && !!selectedTenantId,
+  });
+  const { data: selectedClientDetails } = useFetchClientById(selectedUserId, {
+    enabled: isAdminContext && !!selectedUserId,
+  });
+  // Tenant/user objects from auth store for country resolution
+  const selfTenant = useTenantAuthStore((state: { tenant?: unknown; profile?: unknown }) => {
+    return state?.tenant || state?.profile;
+  });
+  const authProfile = useTenantAuthStore((state: { profile?: unknown }) => state?.profile);
+  const authUser = useTenantAuthStore((state: { user?: unknown }) => state?.user);
 
   // Tenant/Client Options
   const tenantOptions = useMemo(() => {
@@ -169,63 +195,144 @@ export const useCustomerSelection = (
     return "Internal order";
   }, [contextType, selectedTenantId, selectedUserId, tenantOptions, clientOptions]);
 
-  // Country auto-lock based on tenant/user selection
-  useEffect(() => {
-    if (context !== "admin" && context !== "tenant" && context !== "client") {
-      return;
+  const selectedTenantEntry = useMemo(
+    () => tenantOptions.find((tenant) => String(tenant.value) === String(selectedTenantId)),
+    [selectedTenantId, tenantOptions]
+  );
+
+  const selectedClientEntry = useMemo(
+    () => clientOptions.find((client) => String(client.value) === String(selectedUserId)),
+    [selectedUserId, clientOptions]
+  );
+
+  const resolvedCountryOptions = countryOptions.length > 0 ? countryOptions : COUNTRY_FALLBACK;
+
+  const resolvedBillingCountry = useMemo(() => {
+    const resolveFromSources = (...sources: unknown[]) => {
+      for (const source of sources) {
+        const code = resolveCountryCodeFromEntity(source, resolvedCountryOptions);
+        if (code) {
+          return code;
+        }
+      }
+      return "";
+    };
+
+    if (context === "tenant") {
+      const tenantCountry = resolveFromSources(
+        selfTenant,
+        authProfile,
+        tenantProfile,
+        authUser
+      );
+
+      if (tenantCountry) {
+        return tenantCountry;
+      }
+
+      const tenantSettingsCountry = resolveFromSources(
+        tenantBillingSettings,
+        tenantSettings
+      );
+
+      if (tenantSettingsCountry) {
+        return tenantSettingsCountry;
+      }
+
+      if (authUser) {
+        const raw = authUser as Record<string, unknown>;
+        return matchCountryFromOptions(
+          raw.country || raw.country_code || raw.countryCode,
+          resolvedCountryOptions
+        );
+      }
+
+      return "";
+    }
+
+    if (context === "client") {
+      return resolveFromSources(clientProfile, authUser);
     }
 
     if (contextType === "tenant" && selectedTenantId) {
-      const tenantEntry = tenantOptions.find((t) => t.value === String(selectedTenantId));
-      const tenantCountry = resolveCountryCodeFromEntity(tenantEntry?.raw, countryOptions);
-      if (tenantCountry) {
-        setIsCountryLocked(true);
-        setFormData((prev) => ({ ...prev, countryCode: tenantCountry }));
-      } else {
-        setIsCountryLocked(false);
-      }
-    } else if (contextType === "user" && selectedUserId) {
-      const clientEntry = clientOptions.find((c) => c.value === String(selectedUserId));
-      const clientCountry = resolveCountryCodeFromEntity(clientEntry?.raw, countryOptions);
-      if (clientCountry) {
-        setIsCountryLocked(true);
-        setFormData((prev) => ({ ...prev, countryCode: clientCountry }));
-      } else {
-        setIsCountryLocked(false);
-      }
-      const tenantCountry = resolveCountryCodeFromEntity(tenantSettings, countryOptions);
-      if (tenantCountry) {
-        setIsCountryLocked(true);
-        setFormData((prev) => ({ ...prev, countryCode: tenantCountry }));
-      } else {
-        setIsCountryLocked(false);
-      }
-      return;
-    } else if (context === "client") {
-      const clientCountry = resolveCountryCodeFromEntity(clientProfile, countryOptions);
-      if (clientCountry) {
-        setIsCountryLocked(true);
-        setFormData((prev) => ({ ...prev, countryCode: clientCountry }));
-      } else {
-        setIsCountryLocked(false);
-      }
-      return;
-    } else {
-      setIsCountryLocked(false);
+      return resolveFromSources(selectedTenantDetails, selectedTenantEntry?.raw);
     }
+
+    if (contextType === "user" && selectedUserId) {
+      return resolveFromSources(
+        selectedClientDetails,
+        selectedClientEntry?.raw,
+        selectedTenantDetails,
+        selectedTenantEntry?.raw
+      );
+    }
+
+    return "";
   }, [
+    authUser,
+    clientProfile,
     context,
     contextType,
+    resolvedCountryOptions,
+    selectedClientDetails,
+    selectedClientEntry,
+    selectedTenantDetails,
+    selectedTenantEntry,
     selectedTenantId,
     selectedUserId,
-    tenantOptions,
-    clientOptions,
-    countryOptions,
-    clientProfile,
+    selfTenant,
+    authProfile,
+    tenantBillingSettings,
+    tenantProfile,
     tenantSettings,
-    setFormData,
-    setIsCountryLocked,
   ]);
+
+  const selectionKey = useMemo(() => {
+    if (context === "tenant") {
+      return `tenant:self:${configTenantId || "current"}`;
+    }
+    if (context === "client") {
+      return `client:self:${configUserId || "current"}`;
+    }
+    return `${contextType}:${selectedTenantId || "none"}:${selectedUserId || "none"}`;
+  }, [configTenantId, configUserId, context, contextType, selectedTenantId, selectedUserId]);
+
+  useEffect(() => {
+    setIsCountryLocked(context !== "admin" && !!resolvedBillingCountry);
+  }, [context, resolvedBillingCountry, setIsCountryLocked]);
+
+  useEffect(() => {
+    if (resolvedBillingCountry) {
+      return;
+    }
+
+    appliedSelectionKeyRef.current = selectionKey;
+    appliedCountryRef.current = "";
+  }, [resolvedBillingCountry, selectionKey]);
+
+  useEffect(() => {
+    if (!resolvedBillingCountry) {
+      return;
+    }
+
+    setFormData((prev) => {
+      const currentCountry = String(prev.countryCode || "").trim().toUpperCase();
+      const hasSelectionChanged = appliedSelectionKeyRef.current !== selectionKey;
+      const shouldApplyDefault =
+        hasSelectionChanged ||
+        !currentCountry ||
+        currentCountry === appliedCountryRef.current;
+
+      appliedSelectionKeyRef.current = selectionKey;
+      appliedCountryRef.current = resolvedBillingCountry;
+
+      if (!shouldApplyDefault || currentCountry === resolvedBillingCountry) {
+        return prev;
+      }
+
+      return { ...prev, countryCode: resolvedBillingCountry };
+    });
+  }, [resolvedBillingCountry, selectionKey, setFormData]);
 
   return {
     contextType,

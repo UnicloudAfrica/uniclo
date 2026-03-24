@@ -391,8 +391,8 @@ body {
   overflow: hidden;
   background: linear-gradient(
     135deg,
-    var(--theme-hero-start, var(--theme-color, #288dd1)) 0%,
-    var(--theme-hero-end, var(--secondary-color, #3fe0c8)) 100%
+    var(--theme-hero-start, color-mix(in srgb, var(--theme-color, #288dd1) 85%, #0f172a)) 0%,
+    var(--theme-hero-end, color-mix(in srgb, var(--theme-color, #288dd1) 55%, #1e293b)) 100%
   );
   color: #fff;
 }
@@ -401,7 +401,7 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.18), transparent 55%);
+  background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.12), transparent 60%);
   opacity: 0.75;
   pointer-events: none;
 }

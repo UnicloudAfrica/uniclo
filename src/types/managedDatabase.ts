@@ -239,22 +239,35 @@ export interface DatabaseOrderResponse {
 
 // ─── Form State ────────────────────────────────────────────────
 
+export type CustomerContext = "tenant" | "user" | "unassigned";
+
 export interface DatabaseFormState {
   engine: DatabaseEngine | "";
   engineVersion: string;
   planSize: PlanSize | "";
   region: string;
+  availabilityZone: string;
   name: string;
   projectId: string | number | null;
   deploymentType: DeploymentType;
   replicaCount: number;
-  /** Region codes auto-assigned for each read replica */
+  /** AZ codes selected for each read replica */
+  replicaAzs: string[];
+  /** @deprecated Use replicaAzs */
   replicaRegions: string[];
   backupEnabled: boolean;
   drEnabled: boolean;
   firewallCidrs: string[];
   months: number;
   fastTrack: boolean;
+  /** Billing country ISO code, defaulted from user profile */
+  billingCountry: string;
+  /** Customer context for order assignment */
+  customerContext: CustomerContext;
+  /** Selected tenant ID (admin only) */
+  assignedTenantId: string | number | null;
+  /** Selected client ID (admin/tenant only) */
+  assignedClientId: string | number | null;
 }
 
 export const DEFAULT_DATABASE_FORM: DatabaseFormState = {
@@ -262,14 +275,20 @@ export const DEFAULT_DATABASE_FORM: DatabaseFormState = {
   engineVersion: "",
   planSize: "",
   region: "",
+  availabilityZone: "",
   name: "",
   projectId: null,
   deploymentType: "dedicated",
   replicaCount: 1,
+  replicaAzs: [],
   replicaRegions: [],
   backupEnabled: true,
   drEnabled: false,
   firewallCidrs: ["0.0.0.0/0"],
   months: 1,
   fastTrack: false,
+  billingCountry: "",
+  customerContext: "tenant",
+  assignedTenantId: null,
+  assignedClientId: null,
 };

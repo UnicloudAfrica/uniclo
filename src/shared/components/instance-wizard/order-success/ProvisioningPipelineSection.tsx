@@ -9,6 +9,8 @@ interface ProvisioningPipelineSectionProps {
   configurationPipelines: ConfigurationPipeline[];
   isRetryingHealthCheck: boolean;
   onRetryHealthCheck: (keys: string[]) => void;
+  isRetryingProvisioning?: boolean;
+  onRetryProvisioning?: (keys: string[]) => void;
 }
 
 const ProvisioningPipelineSection: React.FC<ProvisioningPipelineSectionProps> = ({
@@ -16,6 +18,8 @@ const ProvisioningPipelineSection: React.FC<ProvisioningPipelineSectionProps> = 
   configurationPipelines,
   isRetryingHealthCheck,
   onRetryHealthCheck,
+  isRetryingProvisioning,
+  onRetryProvisioning,
 }) => {
   return (
     <div className="border-t border-gray-100 pt-4 mt-6">
@@ -91,7 +95,7 @@ const ProvisioningPipelineSection: React.FC<ProvisioningPipelineSectionProps> = 
                   <SetupProgressCard steps={group.steps} isLoading={false} />
                   {group.steps.some(
                     (step) =>
-                      (step.id === "wait_for_active" || step.id === "instance_ready") &&
+                      (step.id === "wait_for_active") &&
                       step.status === "failed"
                   ) && (
                     <ModernButton
@@ -102,6 +106,24 @@ const ProvisioningPipelineSection: React.FC<ProvisioningPipelineSectionProps> = 
                       {isRetryingHealthCheck ? "Retrying..." : "Retry Health Check"}
                     </ModernButton>
                   )}
+                  {group.steps.some(
+                    (step) =>
+                      (step.id === "allocate_elastic_ip" ||
+                        step.id === "attach_data_volumes" ||
+                        step.id === "post_provision") &&
+                      step.status === "failed"
+                  ) &&
+                    onRetryProvisioning && (
+                      <ModernButton
+                        variant="outline"
+                        onClick={() => onRetryProvisioning(group.instanceIds)}
+                        disabled={isRetryingProvisioning}
+                      >
+                        {isRetryingProvisioning
+                          ? "Retrying failed steps..."
+                          : "Retry Failed Steps"}
+                      </ModernButton>
+                    )}
                 </div>
               ))}
             </div>

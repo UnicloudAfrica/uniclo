@@ -161,7 +161,7 @@ const resetUserSettings = async ({ userId, resetData = {} }: ResetUserSettingsPa
 // ================================
 
 const fetchTenantBusinessSettings = async () => {
-  const res = await requestSettings(silentApi, "GET", "/business/settings/tenant/business");
+  const res = await requestSettings(silentApi, "GET", "/settings/tenant/business");
   return requireData(res, "Failed to fetch tenant business settings");
 };
 
@@ -169,14 +169,14 @@ const updateTenantBusinessSettings = async (settingsData: SettingsPayload) => {
   const res = await requestSettings(
     api as unknown as SettingsApiClient,
     "PUT",
-    "/business/settings/tenant/business",
+    "/settings/tenant/business",
     settingsData
   );
   return requireData(res, "Failed to update tenant business settings");
 };
 
 const fetchTenantBillingSettings = async () => {
-  const res = await requestSettings(silentApi, "GET", "/business/settings/tenant/billing");
+  const res = await requestSettings(silentApi, "GET", "/settings/tenant/billing");
   return requireData(res, "Failed to fetch tenant billing settings");
 };
 
@@ -184,7 +184,7 @@ const updateTenantBillingSettings = async (settingsData: SettingsPayload) => {
   const res = await requestSettings(
     api as unknown as SettingsApiClient,
     "PUT",
-    "/business/settings/tenant/billing",
+    "/settings/tenant/billing",
     settingsData
   );
   return requireData(res, "Failed to update tenant billing settings");

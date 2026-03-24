@@ -3,11 +3,10 @@ import { useNavigate } from "react-router-dom";
 import ClientActiveTab from "../components/clientActiveTab";
 import ClientPageShell from "../components/ClientPageShell";
 import { ModernButton } from "@/shared/components/ui";
-import CreateProjectModal from "./projectComps/addProject";
+import CreateProjectForm from "@/shared/components/projects/CreateProjectForm";
 
 const ClientProjectCreate: React.FC = () => {
   const navigate = useNavigate();
-
   const goBack = () => navigate("/client-dashboard/projects");
 
   return (
@@ -28,7 +27,7 @@ const ClientProjectCreate: React.FC = () => {
         }
         contentClassName="ui-page-stack"
       >
-        <CreateProjectModal mode="page" onClose={goBack} />
+        <CreateProjectForm mode="page" onClose={goBack} />
       </ClientPageShell>
     </>
   );

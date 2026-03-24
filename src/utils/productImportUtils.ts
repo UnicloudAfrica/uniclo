@@ -12,6 +12,7 @@ export const productTypes = [
   { value: "ip", label: "Floating IP" },
   { value: OBJECT_STORAGE_TYPE, label: "Silo Storage" },
   { value: "volume_type", label: "Volume Type" },
+  { value: "managed_database_plan", label: "Managed Database" },
 ];
 
 export const typeToEndpoint: Record<string, string | null> = {
@@ -22,6 +23,7 @@ export const typeToEndpoint: Record<string, string | null> = {
   ip: "/product-floating-ip",
   [OBJECT_STORAGE_TYPE]: null,
   volume_type: "/product-volume-type",
+  managed_database_plan: "/managed-databases/plans",
 };
 
 export const generateEntryId = (): string =>
@@ -90,6 +92,10 @@ const normalizeType = (raw: unknown): string => {
     object_storage: OBJECT_STORAGE_TYPE,
     "volume type": "volume_type",
     volume: "volume_type",
+    "managed database": "managed_database_plan",
+    "managed database plan": "managed_database_plan",
+    managed_database: "managed_database_plan",
+    database_plan: "managed_database_plan",
   };
 
   if (aliases[value]) {
@@ -114,6 +120,15 @@ export const mapRowToEntry = (
   );
   const region = coerceTrimmedString(
     (row["region"] as string) ?? (row["region_code"] as string) ?? (row["Region"] as string)
+  );
+  const availabilityZone = coerceTrimmedString(
+    (row["availability_zone"] as string) ??
+      (row["availabilityZone"] as string) ??
+      (row["Availability Zone"] as string) ??
+      (row["AZ"] as string)
+  );
+  const provider = coerceTrimmedString(
+    (row["provider"] as string) ?? (row["Provider"] as string)
   );
   const rawType =
     row["productable_type"] ?? row["type"] ?? row["ProductType"] ?? row["Product Type"];
@@ -160,7 +175,8 @@ export const mapRowToEntry = (
         productableIdNumber,
         priceNumber,
         region,
-        provider: regionInfo.provider ?? "",
+        provider,
+        availabilityZone,
       }),
     };
   }
@@ -189,8 +205,9 @@ export const mapRowToEntry = (
     productable_type: productableType,
     productable_id: String(productableIdNumber),
     productSearch: "",
-    provider: regionInfo.provider ?? "",
+    provider,
     region,
+    availability_zone: availabilityZone,
     price: priceNumber.toString(),
   };
   return { entry };
@@ -203,8 +220,9 @@ const mapRowToStorageEntry = (params: {
   priceNumber: number;
   region: string;
   provider: string;
+  availabilityZone: string;
 }): ProductEntry => {
-  const { name, productableType, productableIdNumber, priceNumber, region, provider } = params;
+  const { name, productableType, productableIdNumber, priceNumber, region, provider, availabilityZone } = params;
   const quota =
     Number.isFinite(productableIdNumber) && productableIdNumber > 0
       ? Math.floor(productableIdNumber)
@@ -226,6 +244,7 @@ const mapRowToStorageEntry = (params: {
     productSearch: "",
     provider,
     region,
+    availability_zone: availabilityZone,
     price: resolvedPrice.toFixed(4),
     objectStorageQuota: String(quota),
     objectStoragePricePerGb: pricePerGb.toString(),

@@ -86,6 +86,7 @@ export const resolveCountryCodeFromEntity = (
   const tenant = asRecord(record["tenant"]);
   const settings = asRecord(record["settings"]);
   const business = asRecord(record["business"]);
+  const businessMeta = asRecord(record["business_meta"]);
   const businessProfile = asRecord(record["business_profile"]);
   const businessSettings = asRecord(record["business_settings"]);
   const candidates = [
@@ -129,6 +130,11 @@ export const resolveCountryCodeFromEntity = (
     // Business (common in tenant settings)
     business["country_code"],
     business["country"],
+    // Business Meta
+    businessMeta["country_code"],
+    businessMeta["countryCode"],
+    businessMeta["country"],
+    businessMeta["country_name"],
     // Business Profile (Client)
     businessProfile["country_code"],
     businessProfile["country"],

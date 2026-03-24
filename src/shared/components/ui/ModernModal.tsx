@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { designTokens } from "@/styles/designTokens";
 import type { ButtonSize, ButtonVariant } from "./types";
@@ -97,8 +98,8 @@ const ModernModal: React.FC<ModernModalProps> = ({
   const backdropStyles: React.CSSProperties = {
     position: "fixed",
     inset: 0,
-    backgroundColor: designTokens.colors.surface.overlay,
-    backdropFilter: "blur(6px)",
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
+    backdropFilter: "blur(12px)",
     display: "flex",
     alignItems: size === "full" ? "stretch" : "center",
     justifyContent: "center",
@@ -196,7 +197,7 @@ const ModernModal: React.FC<ModernModalProps> = ({
     return null;
   }
 
-  return (
+  return createPortal(
     <div style={backdropStyles} onClick={handleBackdropClick} className={backdropClassName}>
       <div
         style={{ ...modalStyles, position: "relative" }}
@@ -279,7 +280,8 @@ const ModernModal: React.FC<ModernModalProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

@@ -5,8 +5,6 @@ import {
   Search,
   Link2,
   AlertTriangle,
-  ChevronDown,
-  ChevronRight,
   Download,
   History,
   Users,
@@ -160,8 +158,8 @@ const matchingStatusTone = (status?: string): "success" | "warning" | "danger" |
 const AdminProviderDiscovery: React.FC = () => {
   // Shared state
   const [activeTab, setActiveTab] = useState<TabId>("projects");
-  const [selectedProvider, setSelectedProvider] = useState("zadara");
   const [selectedRegion, setSelectedRegion] = useState("");
+  const [selectedAZ, setSelectedAZ] = useState("");
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
 
   // Project-specific
@@ -186,6 +184,28 @@ const AdminProviderDiscovery: React.FC = () => {
   // Data hooks
   const { data: regionsRaw } = useFetchRegions();
   const regions = useMemo(() => (Array.isArray(regionsRaw) ? regionsRaw : []) as Region[], [regionsRaw]);
+
+  // Derived: AZs for the selected region
+  const availableAZs = useMemo(() => {
+    if (!selectedRegion) return [];
+    const region = regions.find((r) => (r.code || String(r.id)) === selectedRegion);
+    return region?.availability_zones ?? [];
+  }, [regions, selectedRegion]);
+
+  // Derived: provider from the selected AZ, or from the region's first AZ
+  const selectedProvider = useMemo(() => {
+    if (selectedAZ) {
+      const az = availableAZs.find((a) => a.code === selectedAZ);
+      return az?.provider || "";
+    }
+    // If no AZ selected, resolve from region
+    if (!selectedRegion) return "";
+    const region = regions.find((r) => (r.code || String(r.id)) === selectedRegion);
+    if (region?.provider) return region.provider;
+    // Use first AZ's provider as fallback
+    const firstAz = availableAZs[0];
+    return firstAz?.provider || "";
+  }, [availableAZs, selectedAZ, selectedRegion, regions]);
 
   const projectFilters = useMemo(
     () => ({
@@ -585,46 +605,55 @@ const AdminProviderDiscovery: React.FC = () => {
   const renderRegionSelector = () => (
     <div className="flex flex-wrap items-end gap-3">
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1">Provider</label>
-        <select
-          value={selectedProvider}
-          onChange={(e) => {
-            setSelectedProvider(e.target.value);
-            setSelectedRegion("");
-            setSelectedProjectIds([]);
-            setDriftReport(null);
-          }}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-        >
-          <option value="zadara">Zadara</option>
-          <option value="nobus">Nobus</option>
-        </select>
-      </div>
-      <div>
         <label className="block text-xs font-medium text-gray-600 mb-1">Region</label>
         <select
           value={selectedRegion}
           onChange={(e) => {
             setSelectedRegion(e.target.value);
+            setSelectedAZ("");
             setSelectedProjectIds([]);
             setDriftReport(null);
           }}
           className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-w-[200px]"
         >
           <option value="">Select region...</option>
-          {regions
-            .filter((r) => !selectedProvider || r.provider === selectedProvider)
-            .map((r) => (
-              <option key={r.code || String(r.id)} value={r.code || ""}>
-                {r.name || r.code || String(r.id)}
-              </option>
-            ))}
+          {regions.map((r) => (
+            <option key={r.code || String(r.id)} value={r.code || ""}>
+              {r.name || r.code || String(r.id)}
+            </option>
+          ))}
         </select>
       </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-600 mb-1">Availability Zone</label>
+        <select
+          value={selectedAZ}
+          onChange={(e) => {
+            setSelectedAZ(e.target.value);
+            setSelectedProjectIds([]);
+            setDriftReport(null);
+          }}
+          disabled={!selectedRegion || availableAZs.length === 0}
+          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-w-[220px] disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <option value="">Select availability zone...</option>
+          {availableAZs.map((az) => (
+            <option key={az.code} value={az.code}>
+              {az.name || az.code}
+            </option>
+          ))}
+        </select>
+      </div>
+      {selectedProvider && (
+        <div className="flex items-center gap-1.5 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
+          <Info className="w-4 h-4 shrink-0" />
+          <span>Provider: <span className="font-medium capitalize">{selectedProvider}</span></span>
+        </div>
+      )}
       {!selectedRegion && (
         <div className="flex items-center gap-1.5 text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200">
           <Info className="w-4 h-4 shrink-0" />
-          <span>Select a region to discover resources</span>
+          <span>Select a region and availability zone to discover resources</span>
         </div>
       )}
     </div>
@@ -765,7 +794,7 @@ const AdminProviderDiscovery: React.FC = () => {
         emptyMessage={
           selectedRegion
             ? "No projects discovered. Click \"Discover Projects\" to fetch from the provider."
-            : "Select a region to discover projects."
+            : "Select a region and availability zone to discover projects."
         }
       />
     </div>
@@ -777,7 +806,7 @@ const AdminProviderDiscovery: React.FC = () => {
     <div className="space-y-4">
       {renderRegionSelector()}
 
-      {selectedRegion && (
+      {selectedRegion && selectedProvider && (
         <div className="flex items-center gap-2">
           <ModernButton
             variant="primary"
@@ -815,7 +844,7 @@ const AdminProviderDiscovery: React.FC = () => {
         emptyMessage={
           selectedRegion
             ? "No users discovered. Click \"Discover Users\" to fetch from the provider."
-            : "Select a region to discover users."
+            : "Select a region and availability zone to discover users."
         }
       />
 

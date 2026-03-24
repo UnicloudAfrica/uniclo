@@ -272,7 +272,7 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
       .filter((az: AvailabilityZoneResource) => az?.status === "active" || !az?.status)
       .map((az: AvailabilityZoneResource) => ({
         value: String(az.code || az.id || ""),
-        label: `${az.name || az.code || ""}${az.provider ? ` (${az.provider})` : ""}`,
+        label: az.name || az.code || "",
       }));
   }, [selectedRegionData]);
 

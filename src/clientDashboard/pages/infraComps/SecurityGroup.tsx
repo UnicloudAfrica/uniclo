@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import SecurityGroupsContainer from "@/shared/components/infrastructure/containers/SecurityGroupsContainer";
 import {
   useSecurityGroups,
@@ -35,6 +36,8 @@ const SecurityGroup = ({
   projectId?: string;
   region?: string;
 }) => {
+  const navigate = useNavigate();
+
   return (
     <SecurityGroupsContainer
       hierarchy="client"
@@ -46,7 +49,11 @@ const SecurityGroup = ({
         useDelete: useDeleteSecurityGroup as never,
         useVpcs: useVpcsAdapter as never,
       }}
-      onNavigateToRules={() => {}}
+      onNavigateToRules={(sg) =>
+        navigate(
+          `/client-dashboard/infrastructure/security-group-rules?project=${projectId}&region=${region}&sg=${sg.id}&name=${encodeURIComponent(sg.name || "Security Group")}`
+        )
+      }
       wrapper={({
         headerActions,
         children,

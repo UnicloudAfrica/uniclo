@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { Shield } from "lucide-react";
+import { Shield, Pencil } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
 import { ResourceEmptyState } from "../ui/ResourceEmptyState";
 import type { SecurityGroup } from "./types";
@@ -10,6 +10,7 @@ interface SecurityGroupsTableProps {
   emptyMessage?: string | undefined;
   emptyAction?: ReactNode;
   onViewRules?: ((sg: SecurityGroup) => void) | undefined;
+  onModify?: ((sg: SecurityGroup) => void) | undefined;
   onDelete?: ((sg: SecurityGroup) => void) | undefined;
   deleteLabel?: string | undefined;
   showActions?: boolean | undefined;
@@ -21,6 +22,7 @@ const SecurityGroupsTable: React.FC<SecurityGroupsTableProps> = ({
   emptyMessage = "No security groups found",
   emptyAction,
   onViewRules,
+  onModify,
   onDelete,
   deleteLabel = "Delete",
   showActions = false,
@@ -72,8 +74,22 @@ const SecurityGroupsTable: React.FC<SecurityGroupsTableProps> = ({
           {securityGroups.map((sg) => (
             <tr key={sg.id} className="hover:bg-gray-50">
               <td className="py-3 px-4">
-                <div className="font-medium text-gray-900">{sg.name || "Unnamed"}</div>
-                <div className="text-xs text-gray-500 font-mono">{sg.id}</div>
+                {onViewRules ? (
+                  <button
+                    onClick={() => onViewRules(sg)}
+                    className="text-left"
+                  >
+                    <div className="font-medium text-blue-600 hover:text-blue-800 hover:underline">
+                      {sg.name || "Unnamed"}
+                    </div>
+                    <div className="text-xs text-gray-500 font-mono">{sg.id}</div>
+                  </button>
+                ) : (
+                  <>
+                    <div className="font-medium text-gray-900">{sg.name || "Unnamed"}</div>
+                    <div className="text-xs text-gray-500 font-mono">{sg.id}</div>
+                  </>
+                )}
               </td>
               <td className="py-3 px-4 text-sm text-gray-600">{sg.description || "-"}</td>
               <td className="py-3 px-4">
@@ -94,6 +110,15 @@ const SecurityGroupsTable: React.FC<SecurityGroupsTableProps> = ({
                       className="text-xs text-blue-600 hover:text-blue-800"
                     >
                       View Rules
+                    </button>
+                  )}
+                  {onModify && (
+                    <button
+                      onClick={() => onModify(sg)}
+                      className="inline-flex items-center gap-1 text-xs text-amber-600 hover:text-amber-800"
+                    >
+                      <Pencil className="h-3 w-3" />
+                      Modify
                     </button>
                   )}
                   {onDelete && (

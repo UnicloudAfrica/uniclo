@@ -794,7 +794,6 @@ const AdminInstancesDetails = () => {
     setPendingAction("refresh");
     try {
       await refreshStatusMutation(instanceIdentifier);
-      ToastUtils.success("Instance status refresh requested");
       await Promise.all([refetchManagement(), refetchLifecycle()]);
     } catch (error) {
       ToastUtils.error(getErrorMessage(error, "Failed to refresh instance status."));

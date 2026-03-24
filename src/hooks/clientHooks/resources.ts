@@ -27,12 +27,12 @@ export const useFetchClientProfile = (
   options: Omit<UseQueryOptions<unknown, Error>, "queryKey" | "queryFn"> = {}
 ) => {
   const queryClient = useQueryClient();
-  const profileQueryState = queryClient.getQueryState(["profile"]);
+  const profileQueryState = queryClient.getQueryState(["client-profile"]);
 
   const shouldEnable = !profileQueryState || profileQueryState.status !== "error";
 
   return useQuery({
-    queryKey: ["profile"],
+    queryKey: ["client-profile"],
     queryFn: fetchProfile,
     staleTime: 1000 * 60 * 5,
     retry: false,

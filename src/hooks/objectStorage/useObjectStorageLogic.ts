@@ -32,7 +32,8 @@ export const useObjectStorageLogic = (
     stepNav;
 
   // ---- Form Data State ----
-  const [formData, setFormData] = useState({ countryCode: "US" });
+  // Default to empty — the useCustomerSelection hook will resolve from profile/tenant
+  const [formData, setFormData] = useState({ countryCode: "" });
   const [isCountryLocked, setIsCountryLocked] = useState(false);
 
   // ---- Service Profiles ----

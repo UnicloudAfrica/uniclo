@@ -215,7 +215,7 @@ const CreateTicketModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[1001] flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl max-h-[90vh] overflow-y-auto">
         <div className="border-b border-gray-200 p-5">
           <h3 className="text-lg font-semibold text-gray-900">New Support Ticket</h3>
@@ -298,13 +298,20 @@ const CreateTicketModal = ({
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Category</label>
-              <input
+              <select
                 value={formState.category}
                 onChange={(event) => updateField("category", event.target.value)}
                 className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                placeholder="Billing, Technical, etc."
                 disabled={isLoading}
-              />
+              >
+                <option value="">Select category...</option>
+                <option value="Technical">Technical</option>
+                <option value="Billing">Billing</option>
+                <option value="Account">Account</option>
+                <option value="Network">Network</option>
+                <option value="Security">Security</option>
+                <option value="General">General</option>
+              </select>
             </div>
           </div>
           {adminFields && (

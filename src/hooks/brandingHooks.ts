@@ -48,7 +48,7 @@ export const useFetchBranding = (options: Record<string, unknown> = {}) => {
   return useQuery<BrandingPayload | BrandingResponse>({
     queryKey: ["tenantBranding"],
     queryFn: async () => {
-      const res = await silentApi<BrandingResponse>("GET", "/tenant/v1/admin/branding");
+      const res = await silentApi<BrandingResponse>("GET", "/admin/branding");
       const data = res as Record<string, any>;
       return data?.data?.branding || data?.branding || res;
     },
@@ -67,12 +67,13 @@ export const useUpdateBranding = () => {
 
       appendPayloadToFormData(formData, data);
 
-      const res = await api<BrandingResponse>("PUT", "/tenant/v1/admin/branding", formData);
+      const res = await api<BrandingResponse>("PUT", "/admin/branding", formData);
       return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tenantBranding"] });
       queryClient.invalidateQueries({ queryKey: ["brandingPreview"] });
+      queryClient.invalidateQueries({ queryKey: ["branding-theme"] });
     },
   });
 };
@@ -81,7 +82,7 @@ export const useUpdateBranding = () => {
 export const usePreviewBranding = () => {
   return useMutation({
     mutationFn: async (payload: Record<string, unknown>) => {
-      const res = await api<BrandingResponse>("POST", "/tenant/v1/admin/branding/preview", payload);
+      const res = await api<BrandingResponse>("POST", "/admin/branding/preview", payload);
       const data = res as Record<string, any>;
       return (
         data?.data?.branding || data?.data?.data?.branding || data?.data?.resolved || data?.data
@@ -95,7 +96,7 @@ export const useVerifyDomain = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (domain: string) => {
-      const res = await api<{ data: unknown }>("POST", "/tenant/v1/admin/branding/verify-domain", {
+      const res = await api<{ data: unknown }>("POST", "/admin/branding/verify-domain", {
         domain,
       });
       return res.data;
@@ -111,7 +112,7 @@ export const useResetBranding = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const res = await api<BrandingResponse>("DELETE", "/tenant/v1/admin/branding/reset");
+      const res = await api<BrandingResponse>("DELETE", "/admin/branding/reset");
       return res.data;
     },
     onSuccess: () => {

@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import TenantPageShell from "../components/TenantPageShell";
 import { ModernButton } from "@/shared/components/ui";
-import CreateProjectModal from "../components/addProject";
+import CreateProjectForm from "@/shared/components/projects/CreateProjectForm";
 
 const DashboardProjectCreate: React.FC = () => {
   const navigate = useNavigate();
@@ -19,7 +19,7 @@ const DashboardProjectCreate: React.FC = () => {
       }
       contentClassName="ui-page-stack"
     >
-      <CreateProjectModal mode="page" onClose={goBack} />
+      <CreateProjectForm mode="page" onClose={goBack} />
     </TenantPageShell>
   );
 };

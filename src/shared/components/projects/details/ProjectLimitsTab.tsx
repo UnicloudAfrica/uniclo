@@ -69,7 +69,7 @@ const resourceConfig: {
 ];
 
 export default function ProjectLimitsTab({ projectIdentifier }: ProjectLimitsTabProps) {
-  const { apiBaseUrl, authHeaders } = useApiContext();
+  const { apiBaseUrl, authHeaders, context } = useApiContext();
   const [limits, setLimits] = useState<LimitsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +79,8 @@ export default function ProjectLimitsTab({ projectIdentifier }: ProjectLimitsTab
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${apiBaseUrl}/projects/${projectIdentifier}/resource-limits`, {
+      const prefix = context === "tenant" ? "/admin" : "";
+      const res = await fetch(`${apiBaseUrl}${prefix}/projects/${projectIdentifier}/resource-limits`, {
         credentials: "include",
         headers: { Accept: "application/json", ...authHeaders },
       });

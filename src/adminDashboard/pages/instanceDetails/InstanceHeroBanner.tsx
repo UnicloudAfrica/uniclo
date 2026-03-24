@@ -17,6 +17,7 @@ import {
   ChevronDown,
   ZapOff,
   Move,
+  Globe,
 } from "lucide-react";
 import StatusPill from "@/shared/components/ui/StatusPill";
 
@@ -85,6 +86,7 @@ const MORE_ACTIONS = [
   { key: "resume", label: "Resume", icon: Play },
   { key: "migrate", label: "Live Migration", icon: Move },
   { key: "snapshot", label: "Snapshot", icon: Camera },
+  { key: "attach_elastic_ip", label: "Attach Elastic IP", icon: Globe },
   { key: "sync_provisioning", label: "Sync Provisioning", icon: RefreshCw },
   { key: "retry_provisioning", label: "Retry Provisioning", icon: RotateCw },
   { key: "destroy", label: "Destroy", icon: Trash2 },
@@ -147,6 +149,10 @@ const InstanceHeroBanner: React.FC<InstanceHeaderProps> = ({
   const isActionAvailable = (key: string) => {
     if (key === "console") return true;
     if (key === "refresh") return true;
+    // Platform-level actions always available (don't depend on provider)
+    if (key === "attach_elastic_ip" || key === "sync_provisioning" || key === "retry_provisioning") {
+      return !isDisabledByStatus(key);
+    }
     if (!supportsInstanceActions) return false;
     if (isDisabledByStatus(key)) return false;
     return !!availableActions[key];

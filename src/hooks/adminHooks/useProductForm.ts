@@ -11,8 +11,36 @@ import silentApi from "../../index/admin/silent";
 import ToastUtils from "@/utils/toastUtil";
 import logger from "@/utils/logger";
 
-export const useProductForm = (regionLookup: Record<string, any>) => {
+export const useProductForm = (_regionLookup: Record<string, any>) => {
   const [entries, setEntries] = useState<ProductEntry[]>([createEmptyEntry()]);
+
+  const matchesScopedRecord = useCallback(
+    (
+      record: Record<string, any>,
+      regionCode: string,
+      provider = "",
+      availabilityZone = ""
+    ): boolean => {
+      const recordRegion = String(record.region ?? "").trim();
+      const recordProvider = String(record.provider ?? "").trim();
+      const recordAz = String(record.availability_zone ?? "").trim();
+
+      if (recordRegion && regionCode && recordRegion !== regionCode) {
+        return false;
+      }
+
+      if (provider && recordProvider && recordProvider !== provider) {
+        return false;
+      }
+
+      if (availabilityZone && recordAz && recordAz !== availabilityZone) {
+        return false;
+      }
+
+      return true;
+    },
+    []
+  );
 
   const updateEntry = useCallback(
     (index: number, updater: Partial<ProductEntry> | ((prev: ProductEntry) => ProductEntry)) => {
@@ -39,7 +67,13 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
   }, []);
 
   const loadProductOptions = useCallback(
-    async (index: number, regionCode: string, type: string) => {
+    async (
+      index: number,
+      regionCode: string,
+      type: string,
+      provider = "",
+      availabilityZone = ""
+    ) => {
       const endpoint = typeToEndpoint[type];
       if (!endpoint || !regionCode || !type) return;
 
@@ -55,14 +89,24 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
         const params = new URLSearchParams();
         params.append("country", "USD");
         params.append("region", regionCode);
+        if (provider) {
+          params.append("provider", provider);
+        }
+        if (availabilityZone) {
+          params.append("availability_zone", availabilityZone);
+        }
 
         const response = await silentApi("GET", `${endpoint}?${params.toString()}`);
 
-        const records = Array.isArray(response?.data)
+        const rawRecords = Array.isArray(response?.data)
           ? response.data
           : Array.isArray(response?.message)
             ? response.message
             : [];
+
+        const records = rawRecords.filter((record: Record<string, any>) =>
+          matchesScopedRecord(record, regionCode, provider, availabilityZone)
+        );
 
         const mappedOptions = records.map((record: any, optionIndex: number) => {
           const rawId =
@@ -97,7 +141,7 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
         ToastUtils.error("Failed to load product options.");
       }
     },
-    [updateEntry]
+    [matchesScopedRecord, updateEntry]
   );
 
   const handleEntryFieldChange = useCallback(
@@ -114,7 +158,7 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
 
         let nextEntry = { ...currentEntry };
         let shouldLoadOptions = false;
-        let loadOptionsArgs = { region: "", type: "" };
+        let loadOptionsArgs = { region: "", type: "", provider: "", availabilityZone: "" };
 
         if (field === "productable_type") {
           const isObjectStorageType = value === OBJECT_STORAGE_TYPE;
@@ -147,23 +191,21 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
 
           if (currentEntry.region && value && value !== OBJECT_STORAGE_TYPE) {
             shouldLoadOptions = true;
-            loadOptionsArgs = { region: currentEntry.region, type: value };
+            loadOptionsArgs = {
+              region: currentEntry.region,
+              type: value,
+              provider: currentEntry.provider || "",
+              availabilityZone: currentEntry.availability_zone || "",
+            };
           }
         } else if (field === "region") {
-          const regionInfo = regionLookup[value];
           const isObjectStorageType = currentEntry.productable_type === OBJECT_STORAGE_TYPE;
-
-          // Provider now lives on AZ, not region. Derive from availability_zones or primary AZ.
-          const derivedProvider =
-            regionInfo?.provider ??
-            regionInfo?.availability_zones?.[0]?.provider ??
-            regionInfo?.primary_az?.provider ??
-            "";
 
           nextEntry = {
             ...nextEntry,
             region: value,
-            provider: derivedProvider,
+            provider: "",
+            availability_zone: "",
             productable_id: isObjectStorageType
               ? String(Math.max(1, Number(currentEntry.objectStorageQuota) || 1))
               : "",
@@ -175,6 +217,7 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
             errors: {
               ...nextEntry.errors,
               region: null,
+              availability_zone: null,
               productable_id: null,
             },
           };
@@ -184,7 +227,12 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
             currentEntry.productable_type !== OBJECT_STORAGE_TYPE
           ) {
             shouldLoadOptions = true;
-            loadOptionsArgs = { region: value, type: currentEntry.productable_type };
+            loadOptionsArgs = {
+              region: value,
+              type: currentEntry.productable_type,
+              provider: "",
+              availabilityZone: "",
+            };
           }
         } else if (field === "availability_zone") {
           nextEntry = {
@@ -195,6 +243,7 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
             options: [],
             errors: {
               ...nextEntry.errors,
+              availability_zone: null,
               productable_id: null,
             },
           };
@@ -205,7 +254,12 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
             currentEntry.productable_type !== OBJECT_STORAGE_TYPE
           ) {
             shouldLoadOptions = true;
-            loadOptionsArgs = { region: currentEntry.region, type: currentEntry.productable_type };
+            loadOptionsArgs = {
+              region: currentEntry.region,
+              type: currentEntry.productable_type,
+              provider: currentEntry.provider || "",
+              availabilityZone: value || "",
+            };
           }
         } else if (field === "productable_id") {
           const selectedOption = currentEntry.options.find(
@@ -286,14 +340,20 @@ export const useProductForm = (regionLookup: Record<string, any>) => {
 
           // Workaround: setTimeout to break out of the render cycle?
           setTimeout(() => {
-            loadProductOptions(index, loadOptionsArgs.region, loadOptionsArgs.type);
+            loadProductOptions(
+              index,
+              loadOptionsArgs.region,
+              loadOptionsArgs.type,
+              loadOptionsArgs.provider,
+              loadOptionsArgs.availabilityZone
+            );
           }, 0);
         }
 
         return nextEntries;
       });
     },
-    [loadProductOptions, regionLookup]
+    [loadProductOptions]
   );
 
   const handleProductSearchChange = useCallback(

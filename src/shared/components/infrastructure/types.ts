@@ -35,6 +35,27 @@ export interface NetworkAcl {
   local_id?: string | number;
 }
 
+export interface SecurityGroupRuleGroup {
+  group_id: string;
+  group_name?: string;
+  vpc_id?: string;
+  user_id?: string;
+  description?: string;
+}
+
+export interface SecurityGroupRule {
+  ip_protocol: string | number;
+  from_port?: number;
+  to_port?: number;
+  ip_ranges?: Array<{ cidr_ip: string; description?: string }>;
+  ipv6_ranges?: Array<{ cidr_ipv6: string; description?: string }>;
+  groups?: SecurityGroupRuleGroup[];
+  ethertype?: "IPv4" | "IPv6";
+  description?: string;
+  remote_group_id?: string;
+  direction?: "ingress" | "egress";
+}
+
 export interface SecurityGroup {
   id: string;
   name?: string;
@@ -42,6 +63,14 @@ export interface SecurityGroup {
   vpc_id?: string;
   inbound_rules_count?: number;
   outbound_rules_count?: number;
+  rules?: {
+    ingress?: SecurityGroupRule[];
+    egress?: SecurityGroupRule[];
+  };
+  ip_permissions_ingress?: SecurityGroupRule[];
+  ip_permissions_egress?: SecurityGroupRule[];
+  project_id?: string;
+  tenant_id?: string;
   provider_resource_id?: string;
   local_id?: string | number;
 }

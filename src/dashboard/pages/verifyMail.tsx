@@ -176,7 +176,7 @@ export default function VerifyMail() {
         const sessionPayload = {
           user: userData,
           role: resolvedRole,
-          tenant: userData?.tenant ?? null,
+          tenant: userData?.tenant ?? response?.tenant ?? null,
           domain: domainInfo,
           availableTenants,
           userEmail: userData?.email ?? email,

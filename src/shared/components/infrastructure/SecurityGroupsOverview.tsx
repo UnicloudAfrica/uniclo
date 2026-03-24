@@ -11,6 +11,7 @@ interface SecurityGroupsOverviewProps {
   isLoading?: boolean | undefined;
   emptyMessage?: string | undefined;
   onViewRules?: ((sg: SecurityGroup) => void) | undefined;
+  onModify?: ((sg: SecurityGroup) => void) | undefined;
   onDelete?: ((sg: SecurityGroup) => void) | undefined;
   onCreate?: (() => void) | undefined;
   showActions?: boolean | undefined;
@@ -23,16 +24,18 @@ const SecurityGroupsOverview: React.FC<SecurityGroupsOverviewProps> = ({
   isLoading = false,
   emptyMessage,
   onViewRules,
+  onModify,
   onDelete,
   onCreate,
   showActions,
   permissions,
 }) => {
   // Determine actions visibility based on permissions or legacy showActions prop
-  const shouldShowActions = showActions ?? Boolean(onViewRules || onDelete);
+  const shouldShowActions = showActions ?? Boolean(onViewRules || onDelete || onModify);
 
   // If permissions are provided, gate handlers based on them
   const effectiveOnViewRules = permissions?.canViewRules === false ? undefined : onViewRules;
+  const effectiveOnModify = permissions?.canViewRules === false ? undefined : onModify;
   const effectiveOnDelete = permissions?.canDelete === false ? undefined : onDelete;
 
   return (
@@ -62,6 +65,7 @@ const SecurityGroupsOverview: React.FC<SecurityGroupsOverviewProps> = ({
           ) : undefined
         }
         onViewRules={effectiveOnViewRules}
+        onModify={effectiveOnModify}
         onDelete={effectiveOnDelete}
         showActions={shouldShowActions}
       />

@@ -27,54 +27,73 @@ import {
 // COLOR PICKER COMPONENT
 // ═══════════════════════════════════════════════════════════════════
 
+const COLOR_PRESETS = [
+  // Blues
+  "#0ea5e9", "#3b82f6", "#6366f1", "#1e40af", "#0284c7",
+  // Greens
+  "#22c55e", "#10b981", "#059669", "#16a34a",
+  // Warm
+  "#f59e0b", "#f97316", "#ef4444", "#e11d48",
+  // Neutrals
+  "#f0f9ff", "#f8fafc", "#f1f5f9", "#e2e8f0", "#1e293b", "#0f172a",
+];
+
 const ColorPickerField: React.FC<{
   label: string;
   value: string;
   onChange: (color: string) => void;
 }> = ({ label, value, onChange }) => {
-  const [showPicker, setShowPicker] = useState(false);
-  const presets = [
-    "var(--theme-color)",
-    "rgb(var(--theme-success-500))",
-    "rgb(var(--theme-warning-500))",
-    "rgb(var(--theme-danger-500))",
-    "rgb(var(--theme-color-500))",
-    "rgb(var(--theme-danger-500))",
-    "rgb(var(--secondary-color-rgb))",
-    "rgb(var(--theme-warning-500))",
-  ];
+  const [showPresets, setShowPresets] = useState(false);
+  const colorInputRef = React.useRef<HTMLInputElement>(null);
 
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium text-gray-700">{label}</label>
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => setShowPicker(!showPicker)}
-          className="w-12 h-12 rounded-xl border-2 border-gray-200 hover:border-gray-300 transition-colors shadow-sm"
-          style={{ backgroundColor: value }}
-        />
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        {/* Native color picker - clicking opens the full gradient/hue/opacity picker */}
+        <div className="relative flex-shrink-0">
+          <button
+            onClick={() => colorInputRef.current?.click()}
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-gray-200 hover:border-gray-300 transition-colors shadow-sm cursor-pointer"
+            style={{ backgroundColor: value }}
+          />
+          <input
+            ref={colorInputRef}
+            type="color"
+            value={value.startsWith("#") ? value : "#0ea5e9"}
+            onChange={(e) => onChange(e.target.value)}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          />
+        </div>
         <input
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="var(--theme-color)"
-          className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500"
+          placeholder="#0ea5e9"
+          className="min-w-0 flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500"
         />
+        <button
+          onClick={() => setShowPresets(!showPresets)}
+          className="flex-shrink-0 px-3 py-2 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          Presets
+        </button>
       </div>
 
-      {showPicker && (
-        <div className="flex flex-wrap gap-2 p-3 bg-gray-50 rounded-lg">
-          {presets.map((color: string) => (
+      {showPresets && (
+        <div className="flex flex-wrap gap-1.5 sm:gap-2 p-3 bg-gray-50 rounded-lg">
+          {COLOR_PRESETS.map((color: string) => (
             <button
               key={color}
               onClick={() => {
                 onChange(color);
-                setShowPicker(false);
+                setShowPresets(false);
               }}
-              className={`w-8 h-8 rounded-lg border-2 transition-transform hover:scale-110 ${
+              title={color}
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border-2 transition-transform hover:scale-110 ${
                 value === color
                   ? "border-gray-800 ring-2 ring-offset-2 ring-blue-500"
-                  : "border-transparent"
+                  : "border-gray-200"
               }`}
               style={{ backgroundColor: color }}
             />
@@ -299,11 +318,11 @@ export const BrandingSettingsSections = ({
 
       {/* Color Preview */}
       {palette && (
-        <div className="mt-4 flex gap-1">
+        <div className="mt-4 flex flex-wrap gap-1 sm:flex-nowrap">
           {Object.entries(palette).map(([shade, color]) => (
             <div
               key={shade}
-              className="flex-1 h-8 first:rounded-l-lg last:rounded-r-lg"
+              className="h-8 w-8 sm:w-auto sm:flex-1 rounded-lg sm:rounded-none sm:first:rounded-l-lg sm:last:rounded-r-lg"
               style={{ backgroundColor: color as string }}
               title={`${shade}: ${color}`}
             />
@@ -408,9 +427,9 @@ const useTenantBrandingSettingsState = () => {
   const { mutate: resetBranding, isPending: isResetting } = useResetBranding();
 
   const [formData, setFormData] = useState({
-    primary_color: "var(--theme-color)",
-    secondary_color: "rgb(var(--theme-success-500))",
-    surface_alt: "var(--theme-surface-alt)",
+    primary_color: "#0ea5e9",
+    secondary_color: "#22c55e",
+    surface_alt: "#f0f9ff",
     company_name: "",
     email: "",
     support_email: "",
@@ -422,13 +441,15 @@ const useTenantBrandingSettingsState = () => {
   const [files, setFiles] = useState<Record<string, File>>({});
 
   useEffect(() => {
-    const data = brandingData as Record<string, any> | undefined;
+    const raw = brandingData as Record<string, any> | undefined;
+    // Handle both shapes: direct { settings: ... } or wrapped { data: { settings: ... } }
+    const data = raw?.settings ? raw : raw?.data;
     if (data?.settings) {
       const { branding, business } = data.settings;
       setFormData({
-        primary_color: branding?.primary_color || "var(--theme-color)",
-        secondary_color: branding?.secondary_color || "rgb(var(--theme-success-500))",
-        surface_alt: branding?.surface_alt || "var(--theme-surface-alt)",
+        primary_color: branding?.primary_color || "#0ea5e9",
+        secondary_color: branding?.secondary_color || "#22c55e",
+        surface_alt: branding?.surface_alt || "#f0f9ff",
         company_name: business?.company_name || "",
         email: business?.email || "",
         support_email: business?.support_email || "",

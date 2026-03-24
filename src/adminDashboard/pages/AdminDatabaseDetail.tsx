@@ -14,7 +14,7 @@ export default function AdminDatabaseDetail() {
       <ManagedDatabaseDetail
         identifier={identifier || ""}
         context="admin"
-        listPath="/admin/databases"
+        listPath="/admin-dashboard/databases"
       />
     </AdminPageShell>
   );

@@ -898,14 +898,12 @@ const CreateProjectModal = ({ onClose, mode = "modal" }: CreateProjectModalProps
           {availabilityZoneOptions.map((zone, index) => (
             <option key={zone.code ?? zone.id ?? index} value={zone.code ?? ""}>
               {zone.name || zone.code || "Unnamed zone"}
-              {zone.provider ? ` (${zone.provider.toUpperCase()})` : ""}
             </option>
           ))}
         </select>
         {formData.provider && (
           <p className="text-xs text-gray-500 mt-1">
-            Provider: <span className="font-medium uppercase">{formData.provider}</span>. Zadara
-            zones are preferred automatically when available.
+            Selected zone will determine the infrastructure provider.
           </p>
         )}
         {errors.availability_zone && (

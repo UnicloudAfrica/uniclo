@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2, Plus, Trash2, Upload } from "lucide-react";
 import { useQueries } from "@tanstack/react-query";
@@ -108,6 +108,34 @@ const AdminProductCreate = () => {
     return map;
   }, [azQueryResults]);
 
+  const getAzsForRegion = useCallback(
+    (regionCode: string): AZOption[] => azByRegion[regionCode] || [],
+    [azByRegion]
+  );
+
+  const regionRequiresAzSelection = useCallback(
+    (regionCode: string): boolean => getAzsForRegion(regionCode).length > 1,
+    [getAzsForRegion]
+  );
+
+  const resolveProviderForEntry = useCallback(
+    (entry: Pick<ProductEntry, "region" | "availability_zone" | "provider">): string => {
+      const azs = getAzsForRegion(entry.region);
+
+      if (entry.availability_zone) {
+        return azs.find((az) => az.code === entry.availability_zone)?.provider || entry.provider || "";
+      }
+
+      const uniqueProviders = [...new Set(azs.map((az) => az.provider).filter(Boolean))];
+      if (uniqueProviders.length === 1) {
+        return uniqueProviders[0];
+      }
+
+      return entry.provider || "";
+    },
+    [getAzsForRegion]
+  );
+
   const isSubmitting = isCreating || isAuthLoading || isImporting;
 
   const handleSubmit = (event: React.FormEvent) => {
@@ -117,8 +145,39 @@ const AdminProductCreate = () => {
       return;
     }
 
+    let hasScopeErrors = false;
+    const scopedEntries = entries.map((entry: ProductEntry) => {
+      const resolvedProvider = resolveProviderForEntry(entry);
+      const requiresAz = regionRequiresAzSelection(entry.region);
+      const availabilityZoneError =
+        requiresAz && !entry.availability_zone
+          ? "Availability zone is required for this region."
+          : !resolvedProvider && getAzsForRegion(entry.region).length > 0
+            ? "Provider could not be resolved. Select an availability zone."
+            : null;
+
+      if (availabilityZoneError) {
+        hasScopeErrors = true;
+      }
+
+      return {
+        ...entry,
+        provider: resolvedProvider,
+        errors: {
+          ...entry.errors,
+          availability_zone: availabilityZoneError,
+        },
+      };
+    });
+
+    if (hasScopeErrors) {
+      setEntries(scopedEntries);
+      ToastUtils.error("Select a valid availability zone before saving products.");
+      return;
+    }
+
     const payload = {
-      products: entries.map((entry: ProductEntry) => ({
+      products: scopedEntries.map((entry: ProductEntry) => ({
         name: entry.name.trim(),
         productable_type: entry.productable_type,
         productable_id: Number(entry.productable_id),
@@ -254,51 +313,62 @@ const AdminProductCreate = () => {
       {
         key: "region",
         header: "Region",
-        render: (_: unknown, entry: ProductEntry, index: number) => (
-          <div>
-            <select
-              value={entry.region}
-              onChange={(e) => handleEntryFieldChange(index, "region", e.target.value)}
-              className={`w-full input-field ${entry.errors["region"] ? "border-red-500" : "border-gray-300"}`}
-              disabled={isSubmitting || isRegionsFetching}
-            >
-              <option value="">{isRegionsFetching ? "Loading..." : "Select region"}</option>
-              {regions.map((region) => (
-                <option key={region.code} value={region.code}>
-                  {region.name}
-                </option>
-              ))}
-            </select>
-            {entry.errors["region"] && (
-              <p className="text-red-500 text-xs mt-1">{entry.errors["region"]}</p>
-            )}
-            <p className="text-xs text-gray-400 mt-1">
-              Provider: {entry.provider || "Auto-detected"}
-            </p>
-          </div>
-        ),
+        render: (_: unknown, entry: ProductEntry, index: number) => {
+          const azs = getAzsForRegion(entry.region);
+          const resolvedProvider = resolveProviderForEntry(entry);
+          const providerHint = resolvedProvider
+            ? `Provider: ${resolvedProvider}`
+            : azs.length > 0
+              ? "Provider comes from the selected AZ."
+              : "Provider resolves after region selection.";
+
+          return (
+            <div>
+              <select
+                value={entry.region}
+                onChange={(e) => handleEntryFieldChange(index, "region", e.target.value)}
+                className={`w-full input-field ${entry.errors["region"] ? "border-red-500" : "border-gray-300"}`}
+                disabled={isSubmitting || isRegionsFetching}
+              >
+                <option value="">{isRegionsFetching ? "Loading..." : "Select region"}</option>
+                {regions.map((region) => (
+                  <option key={region.code} value={region.code}>
+                    {region.name}
+                  </option>
+                ))}
+              </select>
+              {entry.errors["region"] && (
+                <p className="text-red-500 text-xs mt-1">{entry.errors["region"]}</p>
+              )}
+              <p className="text-xs text-gray-400 mt-1">{providerHint}</p>
+            </div>
+          );
+        },
       },
       {
         key: "availability_zone",
         header: "AZ",
         render: (_: unknown, entry: ProductEntry, index: number) => {
-          const azs = azByRegion[entry.region] || [];
+          const azs = getAzsForRegion(entry.region);
+          const requiresAz = regionRequiresAzSelection(entry.region);
           return (
             <div>
               <select
                 value={entry.availability_zone}
                 onChange={(e) => {
                   const selectedAz = azs.find((az: AZOption) => az.code === e.target.value);
-                  if (selectedAz) {
-                    handleEntryFieldChange(index, "provider", selectedAz.provider);
-                  }
+                  handleEntryFieldChange(
+                    index,
+                    "provider",
+                    selectedAz?.provider || resolveProviderForEntry({ ...entry, availability_zone: "" })
+                  );
                   handleEntryFieldChange(index, "availability_zone", e.target.value);
                 }}
                 className="w-full input-field border-gray-300"
                 disabled={isSubmitting || !entry.region}
               >
                 <option value="">
-                  {!entry.region ? "Select region first" : "All AZs"}
+                  {!entry.region ? "Select region first" : requiresAz ? "Select AZ" : "All AZs"}
                 </option>
                 {azs.map((az) => (
                   <option key={az.code} value={az.code}>
@@ -306,6 +376,9 @@ const AdminProductCreate = () => {
                   </option>
                 ))}
               </select>
+              {entry.errors["availability_zone"] && (
+                <p className="text-red-500 text-xs mt-1">{entry.errors["availability_zone"]}</p>
+              )}
             </div>
           );
         },
@@ -339,15 +412,19 @@ const AdminProductCreate = () => {
         header: "Product",
         render: (_: unknown, entry: ProductEntry, index: number) => {
           const isObjectStorageRow = entry.productable_type === OBJECT_STORAGE_TYPE;
+          const requiresAz = regionRequiresAzSelection(entry.region);
           const isProductDisabled =
             isObjectStorageRow ||
             isSubmitting ||
             entry.loadingOptions ||
             !entry.region ||
-            !entry.productable_type;
+            !entry.productable_type ||
+            (requiresAz && !entry.availability_zone);
           const productPlaceholder =
             !entry.region || !entry.productable_type
               ? "Select region & type first"
+              : requiresAz && !entry.availability_zone
+                ? "Select AZ first"
               : entry.loadingOptions
                 ? "Loading products..."
                 : "Search product";
@@ -485,10 +562,13 @@ const AdminProductCreate = () => {
       isSubmitting,
       isRegionsFetching,
       regions,
+      getAzsForRegion,
       handleEntryFieldChange,
       handleProductSearchChange,
       handleProductSelect,
+      regionRequiresAzSelection,
       removeEntry,
+      resolveProviderForEntry,
     ]
   );
 
@@ -501,7 +581,7 @@ const AdminProductCreate = () => {
       <AdminActiveTab />
       <AdminPageShell
         title="Add Products"
-        description="Capture multiple products in one submission. Region determines the provider automatically and product options update based on the selected type."
+        description="Capture multiple products in one submission. Availability zone determines the provider and product options update based on the selected type."
         actions={
           <ModernButton
             type="button"
@@ -535,8 +615,8 @@ const AdminProductCreate = () => {
 
             <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-gray-500">
-                Region determines the provider. Select an AZ to filter by provider, then select a type to load available
-                products.
+                Select a region, then pick an availability zone to resolve the provider before
+                loading products for pricing.
               </p>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
                 <ModernButton

@@ -134,6 +134,63 @@ export const useDeleteSecurityGroup = () => {
   });
 };
 
+export const useUpdateSecurityGroup = () => {
+  const queryClient = useQueryClient();
+  const { apiBaseUrl, context, authHeaders } = useApiContext();
+
+  return useMutation<
+    any,
+    Error,
+    {
+      projectId: string;
+      region?: string;
+      securityGroupId: string;
+      payload: { name?: string; description?: string };
+    }
+  >({
+    mutationFn: async ({ projectId, region, securityGroupId, payload }) => {
+      if (context === "admin") {
+        const { data } = await axios.patch(
+          buildUrl(
+            apiBaseUrl,
+            context,
+            `/projects/${projectId}/security-groups/${securityGroupId}`
+          ),
+          payload,
+          { headers: authHeaders, withCredentials: true }
+        );
+        return data;
+      }
+
+      const resolvedRegion = resolveRegion(region, context);
+      const cached = queryClient.getQueryData<SecurityGroup[]>([
+        "security-groups",
+        context,
+        projectId,
+        resolvedRegion,
+      ]);
+      const localId = resolveLocalId(cached as ResourceLike[] | undefined, securityGroupId);
+
+      const { data } = await axios.patch(
+        buildUrl(apiBaseUrl, context, `/security-groups/${localId}`),
+        { project_id: projectId, region: resolvedRegion, ...payload },
+        { headers: authHeaders, withCredentials: true }
+      );
+      return data;
+    },
+    onSuccess: (_: void, { projectId, region }: { projectId: string; region?: string }) => {
+      const resolvedRegion = region || "";
+      ToastUtils.success("Security group updated successfully");
+      queryClient.invalidateQueries({
+        queryKey: ["security-groups", context, projectId, resolvedRegion],
+      });
+    },
+    onError: (error: unknown) => {
+      ToastUtils.error(getErrorMessage(error, "Failed to update security group"));
+    },
+  });
+};
+
 // ==================== Security Group Rules ====================
 
 export const useSecurityGroupRules = (

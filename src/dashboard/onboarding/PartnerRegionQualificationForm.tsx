@@ -431,14 +431,14 @@ const PartnerRegionQualificationForm = ({
               label="Region code"
               value={payload.region.code}
               onChange={(event) => updateValue("region.code", event.target.value)}
-              placeholder="e.g. lagos-2"
+              placeholder="e.g. nigeria-1"
               required
             />
             <Field
               label="Display name"
               value={payload.region.name}
               onChange={(event) => updateValue("region.name", event.target.value)}
-              placeholder="e.g. Lagos 2"
+              placeholder="e.g. Nigeria"
             />
             <Field
               label="Country ISO"

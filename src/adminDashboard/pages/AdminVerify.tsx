@@ -151,6 +151,7 @@ export default function VerifyAdminMail() {
           role: userRole ?? undefined,
           tenant: res?.data?.tenant ?? null,
           domain: domainInfo,
+          token: res?.access_token ?? res?.data?.access_token ?? res?.token ?? res?.data?.token ?? null,
           availableTenants,
           userEmail: res?.data?.email ?? email,
           cloudRoles: res?.data?.cloud_roles ?? res?.data?.cloudRoles ?? undefined,

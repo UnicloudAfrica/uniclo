@@ -4,8 +4,8 @@ import ManagedDatabaseList from "@/shared/components/databases/ManagedDatabaseLi
 export default function AdminManagedDatabases() {
   return (
     <AdminPageShell
-      title="Managed Databases"
-      description="Manage all tenant database clusters"
+      title="Lattice Databases"
+      description="Manage all tenant Lattice database clusters"
       contentClassName="space-y-6"
     >
       <ManagedDatabaseList

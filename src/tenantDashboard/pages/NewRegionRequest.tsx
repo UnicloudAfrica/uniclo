@@ -121,7 +121,7 @@ const NewRegionRequest = () => {
               name="code"
               value={formData.code}
               onChange={handleChange}
-              placeholder="e.g., uca-lagos-002"
+              placeholder="e.g., nigeria-1"
               className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                 errors.code ? "border-red-500" : "border-gray-300"
               }`}
@@ -142,7 +142,7 @@ const NewRegionRequest = () => {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="e.g., Lagos Region 1"
+              placeholder="e.g., Nigeria"
               className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                 errors.name ? "border-red-500" : "border-gray-300"
               }`}

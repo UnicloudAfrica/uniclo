@@ -433,4 +433,127 @@ export const useUpdateDatabaseFirewall = () => {
   });
 };
 
+// ─── DR (Disaster Recovery) ──────────────────────────────────────
+
+export const useFetchDrEligibility = (identifier: string, options?: { enabled?: boolean }) => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+
+  return useQuery<{
+    eligible: boolean;
+    reason: string | null;
+    available_azs: Array<{ code: string; name: string; provider: string; status: string }>;
+    estimated_monthly_cost?: number;
+  }>({
+    queryKey: ["database-dr-eligibility", context, identifier],
+    queryFn: async () => {
+      const uri = `${entry.urlPrefix}/managed-databases/${identifier}/dr/eligibility`;
+      const envelope = asEnvelope<{
+        eligible: boolean;
+        reason: string | null;
+        available_azs: Array<{ code: string; name: string; provider: string; status: string }>;
+        estimated_monthly_cost?: number;
+      }>(await entry.silentApi.get<AnyRecord>(uri));
+      return envelope.data!;
+    },
+    enabled: options?.enabled !== false && !!identifier,
+    staleTime: 1000 * 60 * 2,
+  });
+};
+
+export const useFetchDrStatus = (identifier: string, options?: { enabled?: boolean }) => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+
+  return useQuery<{
+    dr_enabled: boolean;
+    is_replica: boolean;
+    replication_config: Record<string, unknown> | null;
+    standby: {
+      id: number;
+      identifier: string;
+      name: string;
+      status: string;
+      availability_zone: string;
+      private_ip: string | null;
+      created_at: string;
+    } | null;
+  }>({
+    queryKey: ["database-dr-status", context, identifier],
+    queryFn: async () => {
+      const uri = `${entry.urlPrefix}/managed-databases/${identifier}/dr/status`;
+      const envelope = asEnvelope<{
+        dr_enabled: boolean;
+        is_replica: boolean;
+        replication_config: Record<string, unknown> | null;
+        standby: {
+          id: number;
+          identifier: string;
+          name: string;
+          status: string;
+          availability_zone: string;
+          private_ip: string | null;
+          created_at: string;
+        } | null;
+      }>(await entry.silentApi.get<AnyRecord>(uri));
+      return envelope.data!;
+    },
+    enabled: options?.enabled !== false && !!identifier,
+    refetchInterval: 15000,
+  });
+};
+
+export const useEnableDr = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: { identifier: string; targetAz: string }) => {
+      const uri = `${entry.urlPrefix}/managed-databases/${params.identifier}/dr/enable`;
+      return entry.toastApi.post<AnyRecord>(uri, { target_az: params.targetAz });
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["database-dr-eligibility", context, variables.identifier] });
+      queryClient.invalidateQueries({ queryKey: ["database-dr-status", context, variables.identifier] });
+      queryClient.invalidateQueries({ queryKey: ["managed-database", context, variables.identifier] });
+    },
+  });
+};
+
+export const useDrFailover = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: { identifier: string }) => {
+      const uri = `${entry.urlPrefix}/managed-databases/${params.identifier}/dr/failover`;
+      return entry.toastApi.post<AnyRecord>(uri, {});
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["database-dr-status", context, variables.identifier] });
+      queryClient.invalidateQueries({ queryKey: ["managed-database", context, variables.identifier] });
+    },
+  });
+};
+
+export const useDisableDr = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: { identifier: string }) => {
+      const uri = `${entry.urlPrefix}/managed-databases/${params.identifier}/dr/disable`;
+      return entry.toastApi.post<AnyRecord>(uri, {});
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["database-dr-eligibility", context, variables.identifier] });
+      queryClient.invalidateQueries({ queryKey: ["database-dr-status", context, variables.identifier] });
+      queryClient.invalidateQueries({ queryKey: ["managed-database", context, variables.identifier] });
+    },
+  });
+};
+
 export default managedDatabaseHooks;

@@ -1,5 +1,5 @@
 import React from "react";
-import { CreditCard, Gauge, AlertCircle, CheckCircle2, MapPin } from "lucide-react";
+import { CreditCard, Gauge, AlertCircle, CheckCircle2, MapPin, Calendar } from "lucide-react";
 import { ModernCard } from "../ui";
 import { ModernButton } from "../ui";
 import { ModernSelect } from "../ui";
@@ -27,6 +27,8 @@ interface WorkflowSelectionStepProps {
   userPool: unknown;
   isUsersFetching: boolean;
   countryOptions: Option[];
+  fastTrackEndsAt?: string;
+  onFastTrackEndsAtChange?: (date: string) => void;
   onModeChange: (mode: string) => void;
   onContextTypeChange: (type: string) => void;
   onTenantChange: (id: string) => void;
@@ -56,6 +58,8 @@ const WorkflowSelectionStep: React.FC<WorkflowSelectionStepProps> = ({
   userPool,
   isUsersFetching,
   countryOptions,
+  fastTrackEndsAt = "",
+  onFastTrackEndsAtChange,
   onModeChange,
   onContextTypeChange,
   onTenantChange,
@@ -200,8 +204,41 @@ const WorkflowSelectionStep: React.FC<WorkflowSelectionStepProps> = ({
                 )}
               </div>
               <p className="text-xs text-green-600 mt-2">
-                Instances in these regions will be provisioned immediately without payment.
+                Resources in these regions will be provisioned immediately without payment.
               </p>
+            </div>
+          )}
+
+          {mode === "fast-track" && onFastTrackEndsAtChange && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Calendar className="h-5 w-5 text-amber-600" />
+                <p className="text-sm font-medium text-amber-800">End of Fast-Track</p>
+              </div>
+              <p className="text-xs text-amber-700 mb-3">
+                After this date, the resource will require payment to continue. A renewal
+                transaction will be created automatically and the user can pay to keep the service running.
+              </p>
+              <input
+                type="date"
+                value={fastTrackEndsAt}
+                onChange={(e) => onFastTrackEndsAtChange(e.target.value)}
+                min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
+                className="w-full rounded-lg border border-amber-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+              />
+              {fastTrackEndsAt && (
+                <p className="mt-2 text-xs text-amber-700">
+                  Billing starts on{" "}
+                  <span className="font-semibold">
+                    {new Date(fastTrackEndsAt).toLocaleDateString("en-US", {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </span>
+                </p>
+              )}
             </div>
           )}
 

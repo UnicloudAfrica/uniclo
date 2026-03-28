@@ -4,11 +4,11 @@ import DatabaseCreationWizard from "@/shared/components/databases/DatabaseCreati
 export default function AdminDatabaseCreate() {
   return (
     <AdminPageShell
-      title="Create Database"
-      description="Deploy a new managed database cluster"
+      title="Create Lattice Database"
+      description="Deploy a new Lattice managed database cluster"
       contentClassName="space-y-6"
     >
-      <DatabaseCreationWizard context="admin" listPath="/admin/databases" />
+      <DatabaseCreationWizard context="admin" listPath="/admin-dashboard/databases" />
     </AdminPageShell>
   );
 }

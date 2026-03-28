@@ -4,8 +4,8 @@ import ManagedDatabaseList from "@/shared/components/databases/ManagedDatabaseLi
 
 const TenantManagedDatabases: React.FC = () => (
   <TenantPageShell
-    title="Managed Databases"
-    description="Deploy and manage fully managed database clusters"
+    title="Lattice Databases"
+    description="Deploy and manage fully managed Lattice database clusters"
     contentClassName="space-y-6"
   >
     <ManagedDatabaseList

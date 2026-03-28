@@ -41,6 +41,14 @@ import {
   FolderOutput,
   FlaskConical,
   GitMerge,
+  ShieldAlert,
+  CloudOff,
+  Network,
+  Route,
+  Lock,
+  Scale,
+  Radar,
+  Bot,
 } from "lucide-react";
 
 type InfraRole = "admin" | "tenant" | "client";
@@ -93,11 +101,27 @@ const INFRA_MENU_ITEMS: Array<{
     requiredPermission: "storage.view",
   },
   {
-    label: "Managed Databases",
+    label: "Lattice Databases",
     icon: Database,
     path: "/databases",
     roles: ["admin", "tenant", "client"],
     requiredPermission: "storage.view",
+  },
+];
+
+const DR_MENU_ITEMS: Array<{
+  label: string;
+  icon: LucideIcon;
+  path: string;
+  roles: InfraRole[];
+  requiredPermission?: string;
+}> = [
+  {
+    label: "Serverless DR",
+    icon: CloudOff,
+    path: "/serverless-dr",
+    roles: ["admin", "tenant", "client"],
+    requiredPermission: "instances.view",
   },
   {
     label: "Protection Services",
@@ -121,6 +145,90 @@ const INFRA_MENU_ITEMS: Array<{
     requiredPermission: "backups.manage",
   },
 ];
+
+const NETWORKING_MENU_ITEMS: Array<{
+  label: string;
+  icon: LucideIcon;
+  path: string;
+  roles: InfraRole[];
+  requiredPermission?: string;
+}> = [
+  {
+    label: "VPCs",
+    icon: Network,
+    path: "/infrastructure/vpcs",
+    roles: ["admin", "tenant", "client"],
+    requiredPermission: "instances.view",
+  },
+  {
+    label: "Subnets",
+    icon: Route,
+    path: "/infrastructure/subnets",
+    roles: ["admin", "tenant", "client"],
+    requiredPermission: "instances.view",
+  },
+  {
+    label: "Security Groups",
+    icon: Lock,
+    path: "/infrastructure/security-groups",
+    roles: ["admin", "tenant", "client"],
+    requiredPermission: "instances.view",
+  },
+  {
+    label: "Load Balancers",
+    icon: Scale,
+    path: "/infrastructure/load-balancers",
+    roles: ["admin", "tenant"],
+    requiredPermission: "instances.view",
+  },
+  {
+    label: "DNS Zones",
+    icon: Globe,
+    path: "/infrastructure/dns",
+    roles: ["admin", "tenant"],
+    requiredPermission: "instances.view",
+  },
+];
+
+const buildDrMenuGroup = (basePath: string, role: InfraRole): MenuEntry => {
+  const normalizedBase = basePath.replace(/\/+$/, "");
+  const toPath = (suffix: string) =>
+    `${normalizedBase}${suffix.startsWith("/") ? suffix : `/${suffix}`}`;
+  const children = DR_MENU_ITEMS.filter((item) => item.roles.includes(role)).map((item) => ({
+    name: item.label,
+    icon: item.icon,
+    isLucide: true,
+    requiredPermission: item.requiredPermission,
+    path: toPath(item.path),
+  }));
+
+  return {
+    name: "Disaster Recovery",
+    icon: ShieldAlert,
+    isLucide: true,
+    children,
+  };
+};
+
+const buildNetworkingMenuGroup = (basePath: string, role: InfraRole): MenuEntry => {
+  const normalizedBase = basePath.replace(/\/+$/, "");
+  const toPath = (suffix: string) =>
+    `${normalizedBase}${suffix.startsWith("/") ? suffix : `/${suffix}`}`;
+  const children = NETWORKING_MENU_ITEMS.filter((item) => item.roles.includes(role)).map((item) => ({
+    name: item.label,
+    icon: item.icon,
+    isLucide: true,
+    requiredPermission: item.requiredPermission,
+    path: toPath(item.path),
+  }));
+
+  return {
+    name: "Networking",
+    icon: Network,
+    isLucide: true,
+    children,
+  };
+};
 
 const buildInfrastructureMenuGroup = (basePath: string, role: InfraRole): MenuEntry => {
   const normalizedBase = basePath.replace(/\/+$/, "");
@@ -187,6 +295,19 @@ export const adminMenuItems: MenuEntry[] = [
   },
   {
     ...buildInfrastructureMenuGroup("/admin-dashboard", "admin"),
+  },
+  {
+    ...buildNetworkingMenuGroup("/admin-dashboard", "admin"),
+  },
+  {
+    ...buildDrMenuGroup("/admin-dashboard", "admin"),
+  },
+  {
+    name: "Infrastructure Agent",
+    icon: Bot,
+    isLucide: true,
+    requiredPermission: "instances.view",
+    path: "/admin-dashboard/agent",
   },
   {
     name: "Provider Discovery",
@@ -384,6 +505,19 @@ export const tenantMenuItems: MenuEntry[] = [
     ...buildInfrastructureMenuGroup("/dashboard", "tenant"),
   },
   {
+    ...buildNetworkingMenuGroup("/dashboard", "tenant"),
+  },
+  {
+    ...buildDrMenuGroup("/dashboard", "tenant"),
+  },
+  {
+    name: "Infrastructure Agent",
+    icon: Bot,
+    isLucide: true,
+    requiredPermission: "instances.view",
+    path: "/dashboard/agent",
+  },
+  {
     name: "Regional",
     icon: MapPin,
     isLucide: true,
@@ -509,6 +643,19 @@ export const buildClientMenuItems = (_hasProjects: boolean): MenuEntry[] => {
       path: "/client-dashboard",
     },
     infrastructureGroup,
+    {
+      ...buildNetworkingMenuGroup("/client-dashboard", "client"),
+    },
+    {
+      ...buildDrMenuGroup("/client-dashboard", "client"),
+    },
+    {
+      name: "Infrastructure Agent",
+      icon: Bot,
+      isLucide: true,
+      requiredPermission: "instances.view",
+      path: "/client-dashboard/agent",
+    },
     {
       name: "Pricing Calculator",
       icon: Calculator,

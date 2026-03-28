@@ -69,6 +69,8 @@ import AdminProtection from "../adminDashboard/pages/AdminProtection";
 import AdminMigrations from "../adminDashboard/pages/AdminMigrations";
 import AdminMigrationWizard from "../adminDashboard/pages/AdminMigrationWizard";
 import AdminDestinations from "../adminDashboard/pages/AdminDestinations";
+import AdminServerlessDr from "../adminDashboard/pages/AdminServerlessDr";
+import AdminAgent from "../adminDashboard/pages/AdminAgent";
 import AdminPocTrials from "../adminDashboard/pages/AdminPocTrials";
 
 // Infrastructure Pages
@@ -178,6 +180,8 @@ const AdminRoutes = (): React.JSX.Element => {
         <Route path="/admin-dashboard/migrations" element={<AdminMigrations />} />
         <Route path="/admin-dashboard/migrations/new" element={<AdminMigrationWizard />} />
         <Route path="/admin-dashboard/destinations" element={<AdminDestinations />} />
+        <Route path="/admin-dashboard/serverless-dr" element={<AdminServerlessDr />} />
+        <Route path="/admin-dashboard/agent" element={<AdminAgent />} />
 
         <Route element={<ObjectStorageRouteProvider />}>
           <Route path="/admin-dashboard/object-storage" element={<AdminObjectStorage />} />

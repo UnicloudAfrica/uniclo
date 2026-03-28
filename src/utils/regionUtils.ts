@@ -2,14 +2,11 @@
  * Region Display Utilities
  *
  * Utility functions to handle region display formatting across the application.
- * These functions ensure consistent region name display by hiding provider-specific
- * information (like "Zadara") from non-admin users while preserving it for admins.
+ * Region/AZ names from the API no longer contain provider prefixes (e.g. "Lagos AZ1"
+ * instead of "Zadara Lagos AZ1"), so formatting is now a lightweight pass-through
+ * with a safety-net strip for any legacy data that still carries a provider name.
  */
 
-/**
- * Determines if the current user is an admin based on session state
- * @returns {boolean} True if user is admin, false otherwise
- */
 import useAdminAuthStore from "../stores/adminAuthStore";
 
 export interface RegionLike {
@@ -33,8 +30,13 @@ export const isAdminUser = (): boolean => {
 };
 
 /**
- * Formats a region name for display based on user role
- * @param {string} regionName - The original region name (e.g., "Zadara Lagos 1")
+ * Formats a region or AZ name for display.
+ *
+ * With the new naming convention, names no longer contain provider prefixes
+ * (e.g. "Lagos AZ1", "Nigeria"). A lightweight safety-net regex still strips
+ * any legacy provider names that might slip through from older data.
+ *
+ * @param {string} regionName - The region or AZ name (e.g., "Lagos AZ1", "Nigeria")
  * @param {boolean} isAdmin - Whether the current user is an admin (optional, will auto-detect)
  * @returns {string} Formatted region name
  */
@@ -44,25 +46,15 @@ export const formatRegionName = (regionName: string, isAdmin: boolean | null = n
   // Auto-detect admin status if not provided
   const userIsAdmin = isAdmin !== null ? isAdmin : isAdminUser();
 
-  // If user is admin, show full region name
+  // Admins see the full name as-is
   if (userIsAdmin) {
     return regionName;
   }
 
-  // For non-admin users, remove provider name prefix but keep core region identifiers
-  // This strips "Zadara", "Nobus", or any future provider name from the display
-  let displayName = regionName;
+  // Safety-net: strip any legacy provider names that may still exist in older data
+  const displayName = regionName.replace(/\b(zadara|nobus)\s*/gi, "").trim();
 
-  // Remove known provider names (case insensitive) but preserve the rest
-  // This keeps region identifiers like "Lagos 1", "West Africa AZ1", etc.
-  displayName = displayName.replace(/\b(zadara|nobus)\s+/gi, "").trim();
-
-  // If the result is empty or too short, try again without word boundary
-  if (displayName.length < 2) {
-    displayName = regionName.replace(/\b(zadara|nobus)\s*/gi, "").trim();
-  }
-
-  return displayName || regionName; // Fallback to original if processing fails
+  return displayName || regionName;
 };
 
 /**

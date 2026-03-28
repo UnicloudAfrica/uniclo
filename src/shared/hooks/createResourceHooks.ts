@@ -108,7 +108,12 @@ export function createResourceHooks<T = AnyRecord>(config: ResourceHookConfig) {
             return res as never;
           }
           if (dataKey && res && typeof res === "object" && dataKey in res) {
-            return (res[dataKey] as T[]) ?? [];
+            const extracted = res[dataKey];
+            // Handle Laravel pagination: { data: [...], current_page, total, ... }
+            if (extracted && typeof extracted === "object" && !Array.isArray(extracted) && "data" in extracted && Array.isArray((extracted as AnyRecord).data)) {
+              return (extracted as AnyRecord).data as T[];
+            }
+            return (extracted as T[]) ?? [];
           }
           return (Array.isArray(res) ? res : []) as T[];
         } catch (err) {

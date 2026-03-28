@@ -4,8 +4,8 @@ import DatabaseCreationWizard from "@/shared/components/databases/DatabaseCreati
 
 const TenantDatabaseCreate: React.FC = () => (
   <TenantPageShell
-    title="Create Database"
-    description="Deploy a new managed database cluster"
+    title="Create Lattice Database"
+    description="Deploy a new Lattice managed database cluster"
     contentClassName="space-y-6"
   >
     <DatabaseCreationWizard context="tenant" listPath="/dashboard/databases" />

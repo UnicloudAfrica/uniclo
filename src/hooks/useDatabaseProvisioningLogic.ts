@@ -13,10 +13,18 @@ import {
   useFetchAvailablePlans,
 } from "@/shared/hooks/resources/managedDatabaseHooks";
 import { useFetchProjects } from "@/shared/hooks/resources";
+import { useProjectMembershipSuggestions } from "@/shared/hooks/resources/projectHooks";
 import { useFetchRegions, useFetchAvailabilityZones } from "@/shared/hooks/resources/regionHooks";
+import { useFetchCountries } from "@/hooks/resource";
+import { useCustomerContext } from "@/hooks/adminHooks/useCustomerContext";
 import { useApiContext } from "@/hooks/useApiContext";
 import useAuthStore from "@/stores/authStore";
-import { normalizePaymentOptions } from "@/utils/instanceCreationUtils";
+import {
+  normalizePaymentOptions,
+  normalizeCountryCandidate,
+  COUNTRY_FALLBACK,
+} from "@/utils/instanceCreationUtils";
+import { resolveCountryCodeFromEntity } from "@/hooks/objectStorageUtils";
 import { sanitizeProviderLabel } from "@/utils/sanitizeProviderLabel";
 import ToastUtils from "@/utils/toastUtil";
 import type {
@@ -56,8 +64,8 @@ export const ENGINE_METADATA: Record<
   mongodb: {
     label: "MongoDB",
     description: "Document database for flexible schemas and horizontal scaling",
-    versions: ["7.0", "6.0", "5.0"],
-    defaultVersion: "7.0",
+    versions: ["8.0", "7.0"],
+    defaultVersion: "8.0",
     supportsReplication: true,
     supportsSharding: true,
     minReplicas: 1,
@@ -66,8 +74,8 @@ export const ENGINE_METADATA: Record<
   postgresql: {
     label: "PostgreSQL",
     description: "Advanced relational database with full ACID compliance",
-    versions: ["16", "15", "14"],
-    defaultVersion: "16",
+    versions: ["18", "17", "16", "15", "14"],
+    defaultVersion: "17",
     supportsReplication: true,
     supportsSharding: false,
     minReplicas: 1,
@@ -76,8 +84,18 @@ export const ENGINE_METADATA: Record<
   mysql: {
     label: "MySQL",
     description: "Popular relational database for web applications",
-    versions: ["8.0", "5.7"],
-    defaultVersion: "8.0",
+    versions: ["9.6", "8.4", "8.0"],
+    defaultVersion: "8.4",
+    supportsReplication: true,
+    supportsSharding: false,
+    minReplicas: 1,
+    maxReplicas: 5,
+  },
+  mariadb: {
+    label: "MariaDB",
+    description: "MySQL-compatible database with enhanced performance and features",
+    versions: ["11.4", "10.11", "10.6"],
+    defaultVersion: "11.4",
     supportsReplication: true,
     supportsSharding: false,
     minReplicas: 1,
@@ -86,8 +104,8 @@ export const ENGINE_METADATA: Record<
   redis: {
     label: "Redis",
     description: "In-memory data store for caching and real-time analytics",
-    versions: ["7.2", "7.0", "6.2"],
-    defaultVersion: "7.2",
+    versions: ["8.6", "7.4", "7.2"],
+    defaultVersion: "8.6",
     supportsReplication: true,
     supportsSharding: true,
     minReplicas: 1,
@@ -152,6 +170,36 @@ export const useDatabaseProvisioningLogic = () => {
     return "tenant"; // admin defaults to tenant
   }, [context]);
 
+  // ─── Countries ─────────────────────────────────────────────────────
+  const { data: rawCountries = [], isFetching: isCountriesLoading } = useFetchCountries();
+
+  const countryOptions = useMemo(() => {
+    const apiCountries = Array.isArray(rawCountries) ? rawCountries : [];
+    if (apiCountries.length > 0) {
+      const mapped = apiCountries
+        .map((item: any) => {
+          const code = normalizeCountryCandidate(
+            item?.iso2 || item?.code || item?.country_code || item?.iso_code || item?.iso || ""
+          );
+          if (!code) return null;
+          const name = item?.name || item?.country_name || item?.label || code;
+          return { value: code, label: `${name} (${code})` };
+        })
+        .filter(Boolean) as { value: string; label: string }[];
+
+      const hasUS = mapped.some((o) => String(o.value).toUpperCase() === "US");
+      return hasUS
+        ? mapped
+        : [{ value: "US", label: "United States (US)" }, ...mapped];
+    }
+    return [...COUNTRY_FALLBACK] as { value: string; label: string }[];
+  }, [rawCountries]);
+
+  const isCountryLocked = context === "tenant" || context === "client";
+
+  // ─── Customer Context (admin only) ────────────────────────────────
+  const customerCtx = useCustomerContext({ enabled: context === "admin" });
+
   // Steps
   const steps = useMemo(() => [...DATABASE_WIZARD_STEPS], []);
   const [activeStep, setActiveStep] = useState(0);
@@ -178,16 +226,116 @@ export const useDatabaseProvisioningLogic = () => {
     customerContext: "tenant",
     assignedTenantId: null,
     assignedClientId: null,
+    dbName: "",
+    dbUser: "",
+    dbPassword: "",
+    useDefaultCredentials: true,
+    networkMode: "public",
+    connectionPooling: true,
+    tlsEnabled: true,
+    dedicatedProxy: false,
+    vpnGateway: false,
+    memberUserIds: [],
+    assignmentScope: context === "admin" ? "internal" : context === "tenant" ? "tenant" : "client",
   });
 
   // Initialize billing country and customer context from profile once loaded
   useEffect(() => {
+    setForm((prev) => {
+      const resolvedCountry =
+        prev.billingCountry ||
+        resolveCountryCodeFromEntity(user, countryOptions as never) ||
+        profileCountry;
+      return {
+        ...prev,
+        billingCountry: resolvedCountry,
+        customerContext:
+          prev.customerContext === "tenant" ? defaultCustomerContext : prev.customerContext,
+      };
+    });
+  }, [profileCountry, defaultCustomerContext, user, countryOptions]);
+
+  // ─── Project Membership (mirrors addProject.tsx flow) ──────────────
+  // Derive assignment scope from customer context
+  const assignmentScope = useMemo(() => {
+    if (context !== "admin") return context === "tenant" ? "tenant" : "client";
+    if (customerCtx.contextType === "tenant") return "tenant" as const;
+    if (customerCtx.contextType === "user") return "client" as const;
+    return "internal" as const;
+  }, [context, customerCtx.contextType]);
+
+  // Sync assignmentScope into form
+  useEffect(() => {
+    setForm((prev) => (prev.assignmentScope !== assignmentScope ? { ...prev, assignmentScope } : prev));
+  }, [assignmentScope]);
+
+  // Membership suggestions query
+  const membershipSuggestionsParams = useMemo(() => ({
+    scope: assignmentScope,
+    ...(assignmentScope === "tenant" && customerCtx.selectedTenantId
+      ? { tenant_id: String(customerCtx.selectedTenantId) }
+      : {}),
+    ...(assignmentScope === "client" && customerCtx.selectedUserId
+      ? { client_id: String(customerCtx.selectedUserId) }
+      : {}),
+  }), [assignmentScope, customerCtx.selectedTenantId, customerCtx.selectedUserId]);
+
+  const shouldFetchMembers = assignmentScope === "internal"
+    || (assignmentScope === "tenant" && !!customerCtx.selectedTenantId)
+    || (assignmentScope === "client" && !!customerCtx.selectedUserId);
+
+  const { data: suggestedMembersData, isFetching: isMembersFetching } =
+    useProjectMembershipSuggestions(membershipSuggestionsParams, {
+      enabled: shouldFetchMembers,
+    });
+
+  const suggestedMembers = useMemo(() => {
+    const raw = (suggestedMembersData as any)?.members ?? (suggestedMembersData as any)?.data ?? suggestedMembersData;
+    return Array.isArray(raw) ? raw : [];
+  }, [suggestedMembersData]);
+
+  // Auto-select all suggested members when they load
+  const [memberSignature, setMemberSignature] = useState<string>("");
+  useEffect(() => {
+    const sig = suggestedMembers.map((m: any) => m.id).sort().join(",");
+    if (sig && sig !== memberSignature) {
+      setMemberSignature(sig);
+      setForm((prev) => ({
+        ...prev,
+        memberUserIds: suggestedMembers.map((m: any) => Number(m.id)),
+      }));
+    }
+  }, [suggestedMembers, memberSignature]);
+
+  const selectedMemberIds = useMemo(() => new Set(form.memberUserIds), [form.memberUserIds]);
+
+  const selectedMembers = useMemo(
+    () => suggestedMembers.filter((m: any) => selectedMemberIds.has(Number(m.id))),
+    [suggestedMembers, selectedMemberIds]
+  );
+
+  const toggleMember = useCallback((member: any) => {
+    const id = Number(member.id);
     setForm((prev) => ({
       ...prev,
-      billingCountry: prev.billingCountry || profileCountry,
-      customerContext: prev.customerContext === "tenant" ? defaultCustomerContext : prev.customerContext,
+      memberUserIds: prev.memberUserIds.includes(id)
+        ? prev.memberUserIds.filter((mid) => mid !== id)
+        : [...prev.memberUserIds, id],
     }));
-  }, [profileCountry, defaultCustomerContext]);
+  }, []);
+
+  const restoreDefaultMembers = useCallback(() => {
+    setForm((prev) => ({
+      ...prev,
+      memberUserIds: suggestedMembers.map((m: any) => Number(m.id)),
+    }));
+  }, [suggestedMembers]);
+
+  const showRestoreMembers = useMemo(() => {
+    const defaultIds = suggestedMembers.map((m: any) => Number(m.id)).sort().join(",");
+    const currentIds = [...form.memberUserIds].sort().join(",");
+    return defaultIds !== currentIds;
+  }, [suggestedMembers, form.memberUserIds]);
 
   // Data fetching
   const { data: enginesData } = useFetchAvailableEngines();
@@ -275,10 +423,10 @@ export const useDatabaseProvisioningLogic = () => {
 
     // Prefer data from the dedicated AZ endpoint
     if (fetchedAzsData && Array.isArray(fetchedAzsData) && fetchedAzsData.length > 0) {
-      return fetchedAzsData.map((az: Record<string, unknown>) => ({
-        value: (az.code as string) || (az.zone_name as string) || "",
-        label: sanitizeProviderLabel((az.name as string) || (az.code as string) || (az.zone_name as string) || ""),
-      })).filter((az: { value: string }) => az.value);
+      return fetchedAzsData.map((az) => ({
+        value: az.code || "",
+        label: sanitizeProviderLabel(az.name || az.code || ""),
+      })).filter((az) => az.value);
     }
 
     // Fallback: extract from region data
@@ -307,7 +455,8 @@ export const useDatabaseProvisioningLogic = () => {
 
   // ─── Replica Logic ────────────────────────────────────────────────
 
-  // AZs available for replicas (excludes the primary AZ)
+  // AZs available for replicas: all AZs in the region except the primary
+  // (Provider filtering is no longer needed — AZ codes no longer embed provider names.)
   const replicaAvailableAzs = useMemo(() => {
     if (!form.availabilityZone) return availabilityZones;
     return availabilityZones.filter((az) => az.value !== form.availabilityZone);
@@ -448,8 +597,14 @@ export const useDatabaseProvisioningLogic = () => {
           firewall_cidrs: form.firewallCidrs.filter(Boolean),
           months: form.months,
           fast_track: form.fastTrack,
+          fast_track_ends_at: form.fastTrack && form.fastTrackEndsAt ? form.fastTrackEndsAt : undefined,
           country_iso: form.billingCountry || undefined,
           customer_context: form.customerContext,
+          network_mode: form.networkMode,
+          connection_pooling: form.connectionPooling,
+          tls_enabled: form.tlsEnabled,
+          dedicated_proxy: form.dedicatedProxy,
+          vpn_gateway: form.vpnGateway,
         };
 
         if (form.name.trim()) payload.name = form.name.trim();
@@ -589,6 +744,34 @@ export const useDatabaseProvisioningLogic = () => {
     // Context
     context,
     profileCountry,
+
+    // Countries
+    countryOptions,
+    isCountriesLoading,
+    isCountryLocked,
+
+    // Customer context (admin)
+    tenants: customerCtx.tenants,
+    isTenantsFetching: customerCtx.isTenantsFetching,
+    userPool: customerCtx.userPool,
+    isUsersFetching: customerCtx.isUsersFetching,
+    customerContextType: customerCtx.contextType,
+    setCustomerContextType: customerCtx.setContextType,
+    selectedTenantId: customerCtx.selectedTenantId,
+    setSelectedTenantId: customerCtx.setSelectedTenantId,
+    selectedUserId: customerCtx.selectedUserId,
+    setSelectedUserId: customerCtx.setSelectedUserId,
+
+    // Project Membership
+    assignmentScope,
+    shouldFetchMembers,
+    isMembersFetching,
+    selectedMembers,
+    selectedMemberIds,
+    suggestedMembers,
+    showRestoreMembers,
+    toggleMember,
+    restoreDefaultMembers,
 
     // Data
     engines,

@@ -21,6 +21,8 @@ import {
 import { useFetchCountries } from "./resource";
 import { useApiContext } from "./useApiContext";
 import { buildProvisioningSteps } from "../shared/components/instance-wizard/provisioningSteps";
+import useAuthStore from "../stores/authStore";
+import { resolveCountryCodeFromEntity } from "./objectStorageUtils";
 
 const asPricingBreakdownEntries = (value: unknown): Record<string, any>[] => {
   if (Array.isArray(value)) {
@@ -41,6 +43,7 @@ export const useAdminCreateInstanceLogic = () => {
   const initialMode = searchParams.get("mode") === "fast-track" ? "fast-track" : "standard";
   const [mode, setMode] = useState(initialMode);
   const [activeStep, setActiveStep] = useState(0);
+  const profile = useAuthStore((state) => state.user);
 
   const {
     contextType,
@@ -55,7 +58,7 @@ export const useAdminCreateInstanceLogic = () => {
     isUsersFetching,
   } = useCustomerContext();
 
-  const [billingCountry, setBillingCountry] = useState("US");
+  const [billingCountry, setBillingCountry] = useState("");
   const [isCountryLocked, setIsCountryLocked] = useState(false);
   const { resources, isLoadingResources } = useInstanceResources();
   const {
@@ -91,7 +94,7 @@ export const useAdminCreateInstanceLogic = () => {
     contextType,
     selectedTenantId,
     selectedUserId,
-    billingCountry: billingCountry || "US",
+    billingCountry,
     isFastTrack,
     setActiveStep,
   });
@@ -205,6 +208,15 @@ export const useAdminCreateInstanceLogic = () => {
 
     return [...COUNTRY_FALLBACK];
   }, [countryOptions]);
+
+  // Auto-set billing country from user profile
+  useEffect(() => {
+    if (billingCountry) return; // Already set
+    const code = resolveCountryCodeFromEntity(profile, countryOptionsFormatted as never);
+    if (code) {
+      setBillingCountry(code);
+    }
+  }, [profile, countryOptionsFormatted, billingCountry]);
 
   const configurationSummaries = useMemo(() => {
     const instanceTypes = resources.instance_types || [];

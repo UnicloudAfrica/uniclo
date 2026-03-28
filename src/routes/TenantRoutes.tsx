@@ -60,6 +60,8 @@ import TenantProtection from "../dashboard/pages/TenantProtection";
 import TenantMigrations from "../dashboard/pages/TenantMigrations";
 import TenantMigrationWizard from "../dashboard/pages/TenantMigrationWizard";
 import TenantDestinations from "../dashboard/pages/TenantDestinations";
+import TenantServerlessDr from "../dashboard/pages/TenantServerlessDr";
+import TenantAgent from "../dashboard/pages/TenantAgent";
 import {
   TenantKeyPairs,
   TenantNetworkInterfaces,
@@ -140,6 +142,8 @@ const TenantRoutes = (): JSX.Element => (
         <Route path="/dashboard/migrations" element={<TenantMigrations />} />
         <Route path="/dashboard/migrations/new" element={<TenantMigrationWizard />} />
         <Route path="/dashboard/destinations" element={<TenantDestinations />} />
+        <Route path="/dashboard/serverless-dr" element={<TenantServerlessDr />} />
+        <Route path="/dashboard/agent" element={<TenantAgent />} />
 
         <Route element={<ObjectStorageRouteProvider />}>
           <Route path="/dashboard/object-storage" element={<DashboardObjectStorage />} />

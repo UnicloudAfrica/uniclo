@@ -129,6 +129,8 @@ export interface LoginResponse {
   role?: AuthRole;
   tenant?: Tenant;
   domain?: string;
+  token?: string;
+  access_token?: string;
   abilities?: string[];
   cloudRoles?: string[];
   cloudAbilities?: string[];
@@ -143,6 +145,7 @@ interface SessionUpdate {
   role: AuthRole;
   tenant: Tenant | null;
   domain: string | null;
+  token: string | null;
   isAuthenticated: boolean;
   twoFactorRequired: boolean;
   abilities: string[];
@@ -180,6 +183,27 @@ export const inferTenantContext = (): TenantContext => {
 };
 
 const INITIAL_CONTEXT = inferTenantContext();
+
+const resolveAccessToken = (payload: Record<string, unknown> | null | undefined): string | null => {
+  if (!payload) return null;
+
+  const directToken = payload.token;
+  if (typeof directToken === "string" && directToken.trim() !== "") {
+    return directToken;
+  }
+
+  const accessToken = payload.access_token;
+  if (typeof accessToken === "string" && accessToken.trim() !== "") {
+    return accessToken;
+  }
+
+  const data = payload.data;
+  if (data && typeof data === "object") {
+    return resolveAccessToken(data as Record<string, unknown>);
+  }
+
+  return null;
+};
 
 const createInitialState = () => ({
   user: null as User | null,
@@ -229,6 +253,7 @@ const useAuthStore = create<UnifiedAuthState>()(
         login: (response: LoginResponse) => {
           const context = inferTenantContext();
           const role = (response.role as AuthRole) || "client";
+          const token = resolveAccessToken(response as unknown as Record<string, unknown>);
 
           const abilitiesArr = Array.isArray(response.abilities) ? response.abilities : [];
           const cloudRolesArr = Array.isArray(response.cloudRoles) ? response.cloudRoles : [];
@@ -243,7 +268,7 @@ const useAuthStore = create<UnifiedAuthState>()(
             isAuthenticated: true,
             twoFactorRequired: false,
             role,
-            token: null,
+            token,
             abilities: abilitiesArr,
             cloudRoles: cloudRolesArr,
             cloudAbilities: cloudAbilitiesArr,
@@ -307,6 +332,7 @@ const useAuthStore = create<UnifiedAuthState>()(
               role: newRole as AuthRole,
               user: partial.user !== undefined ? partial.user : state.user,
               userEmail: partial.userEmail !== undefined ? partial.userEmail : state.userEmail,
+              token: partial.token !== undefined ? partial.token : state.token,
               isAuthenticated:
                 partial.isAuthenticated !== undefined
                   ? partial.isAuthenticated
@@ -456,17 +482,19 @@ const useAuthStore = create<UnifiedAuthState>()(
         },
 
         /** @deprecated No-op — auth is cookie-based */
-        setToken: () => {
-          // Intentional no-op. Auth uses HttpOnly cookies, not client-side tokens.
-        },
+        setToken: (token: string | null) => set({ token }),
 
         // ── Computed helpers ──
         getAuthHeaders: () => {
-          const { currentTenant, session } = get();
+          const { currentTenant, session, token } = get();
           const headers: Record<string, string> = {
             "Content-Type": "application/json",
             Accept: "application/json",
           };
+
+          if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+          }
 
           // Include tenant slug for non-central domains
           const isCentral = session?.isCentralDomain ?? true;

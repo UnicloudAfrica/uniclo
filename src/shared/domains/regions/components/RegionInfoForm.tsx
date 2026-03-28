@@ -53,7 +53,7 @@ const RegionInfoForm: React.FC<RegionInfoFormProps> = ({
           name="code"
           value={regionData.code}
           onChange={(e) => onChange("code", e.target.value)}
-          placeholder="e.g., uca-lagos-002"
+          placeholder="e.g., nigeria-1"
           required
           helper="Unique identifier for this region"
         />

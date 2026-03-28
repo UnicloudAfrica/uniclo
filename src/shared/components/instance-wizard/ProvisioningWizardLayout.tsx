@@ -42,8 +42,18 @@ const ProvisioningWizardLayout: React.FC<ProvisioningWizardLayoutProps> = ({
 
     return (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">{mainContent}</div>
-        {sidebarContent && <div className="lg:col-span-1">{sidebarContent}</div>}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+            {mainContent}
+          </div>
+        </div>
+        {sidebarContent && (
+          <div className="lg:col-span-1">
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 sticky top-6">
+              {sidebarContent}
+            </div>
+          </div>
+        )}
       </div>
     );
   };

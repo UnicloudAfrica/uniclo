@@ -9,7 +9,7 @@ const TenantDatabaseDetail: React.FC = () => {
   return (
     <TenantPageShell
       title="Database Details"
-      description="View and manage your managed database"
+      description="View and manage your Lattice database"
       contentClassName="space-y-6"
     >
       <ManagedDatabaseDetail

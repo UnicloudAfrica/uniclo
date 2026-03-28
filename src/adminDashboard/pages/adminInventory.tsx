@@ -193,7 +193,7 @@ export default function AdminInventory() {
       },
       {
         id: "managed-databases",
-        name: "Managed Databases",
+        name: "Lattice Databases",
         Component: ManagedDatabaseInventory,
         icon: Cylinder,
         caption: "Dedicated VMs",

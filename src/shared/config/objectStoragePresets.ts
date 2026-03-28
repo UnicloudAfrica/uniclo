@@ -48,7 +48,7 @@ export const objectStoragePresets: Record<"admin" | "tenant" | "client", ObjectS
     hero: {
       badge: "Storage Ops",
       heading: "Approve, fast-track, and monitor tenant capacity",
-      copy: "Keep Zadara accounts in sync, trigger payments, and react to provisioning issues before they impact customers.",
+      copy: "Keep storage accounts in sync, trigger payments, and react to provisioning issues before they impact customers.",
       gradientClassName:
         "from-[var(--theme-heading-color)] via-[rgb(var(--theme-color-700))] to-[rgb(var(--theme-color-500))]",
     },
@@ -87,7 +87,7 @@ export const objectStoragePresets: Record<"admin" | "tenant" | "client", ObjectS
     emptyState: {
       title: "No Silo Storage accounts yet",
       description:
-        "Create a plan or fast-track a tenant to provision their first Zadara Silo Storage account.",
+        "Create a plan or fast-track a tenant to provision their first Silo Storage account.",
       actions: [
         { id: "standard", label: "Process Silo Payment", variant: "primary" },
         { id: "fastTrack", label: "Fast-track tenant", variant: "secondary" },
@@ -137,11 +137,11 @@ export const objectStoragePresets: Record<"admin" | "tenant" | "client", ObjectS
   client: {
     title: "Silo Storage",
     description:
-      "Purchase Zadara-backed storage, review Silo usage, and refresh provisioning status.",
+      "Purchase cloud-backed storage, review Silo usage, and refresh provisioning status.",
     hero: {
       badge: "Client Storage",
       heading: "Purchase, track, and scale your Silo Storage capacity",
-      copy: "Keep Zadara orders aligned with tenant demand and jump into account details without leaving the console.",
+      copy: "Keep storage orders aligned with tenant demand and jump into account details without leaving the console.",
       gradientClassName:
         "from-[var(--theme-heading-color)] via-[rgb(var(--theme-color-700))] to-[rgb(var(--theme-color-500))]",
     },
@@ -166,7 +166,7 @@ export const objectStoragePresets: Record<"admin" | "tenant" | "client", ObjectS
     },
     emptyState: {
       title: "No Silo Storage accounts yet",
-      description: "Kick off a plan purchase to provision your first Zadara Silo Storage account.",
+      description: "Kick off a plan purchase to provision your first Silo Storage account.",
       actions: [
         { id: "standard", label: "Purchase Silo Storage", variant: "primary" },
         { id: "refresh", label: "Refresh status", variant: "secondary" },

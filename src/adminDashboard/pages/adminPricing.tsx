@@ -317,13 +317,13 @@ const PRICING_TAB_CONFIG = [
   },
   {
     id: "managed-databases",
-    name: "Managed Databases",
+    name: "Lattice Databases",
     caption: "Dedicated VMs",
     productType: "managed_database_plan",
-    heroTitle: "Managed database pricing",
-    heroDescription: "Set pricing for managed database plans across engines and regions.",
-    tableTitle: "Managed database pricing",
-    tableDescription: "Review database plan pricing for MongoDB, PostgreSQL, MySQL, and Redis.",
+    heroTitle: "Lattice database pricing",
+    heroDescription: "Set pricing for Lattice database plans across engines and regions.",
+    tableTitle: "Lattice database pricing",
+    tableDescription: "Review Lattice database plan pricing for MongoDB, PostgreSQL, MySQL, MariaDB, and Redis.",
     icon: Database,
     metrics: (stats: any, currency?: string) => [
       {
@@ -345,8 +345,8 @@ const PRICING_TAB_CONFIG = [
         icon: <TrendingUp className="h-5 w-5" />,
       },
     ],
-    emptyTitle: "No managed database pricing",
-    emptyDescription: "Add database plan pricing to enable managed database provisioning.",
+    emptyTitle: "No Lattice database pricing",
+    emptyDescription: "Add database plan pricing to enable Lattice database provisioning.",
   },
   {
     id: "anycloudflow",

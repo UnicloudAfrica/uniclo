@@ -8,7 +8,7 @@ export default function AdminDatabaseDetail() {
   return (
     <AdminPageShell
       title="Database Details"
-      description="View and manage a managed database"
+      description="View and manage a Lattice database"
       contentClassName="space-y-6"
     >
       <ManagedDatabaseDetail

@@ -1,36 +1,38 @@
 import { useMutation, UseMutationResult } from "@tanstack/react-query";
 import { api } from "../lib/api";
+import config from "../config";
 import logger from "../utils/logger";
 
 type AuthPayload = Record<string, unknown>;
 
 // ── Auth API calls ────────────────────────────────────────────────────
-// All auth endpoints use the unified API client.
-// Pre-login calls (register, login, verify, etc.) resolve to config.baseURL
-// because no session/role is set yet. Post-login calls (2FA) use the
-// role-based URL automatically.
+// All pre-login auth endpoints explicitly pin to config.baseURL so a
+// stale session role (e.g. "admin") doesn't route them to the wrong
+// base URL. Post-login calls (2FA) use the role-based URL automatically.
+
+const AUTH_OPTS = { baseUrl: config.baseURL } as const;
 
 // **POST**: Create a new account
 const createAccount = async (userData: AuthPayload) => {
-  return await api.post("/business/auth/register", userData);
+  return await api.post("/business/auth/register", userData, AUTH_OPTS);
 };
 // **POST** login
 const loginAccount = async (userData: AuthPayload) => {
-  return await api.post("/business/auth/login", userData);
+  return await api.post("/business/auth/login", userData, AUTH_OPTS);
 };
 // **POST** verify email
 const verifyEmail = async (userData: AuthPayload) => {
-  return await api.post("/business/auth/verify-email", userData);
+  return await api.post("/business/auth/verify-email", userData, AUTH_OPTS);
 };
 // **POST** forgot password
 const forgotPassword = async (userData: AuthPayload) => {
-  return await api.post("/business/auth/forgot-password", userData);
+  return await api.post("/business/auth/forgot-password", userData, AUTH_OPTS);
 };
 const resetPassword = async (userData: AuthPayload) => {
-  return await api.post("/business/auth/reset-password-otp", userData);
+  return await api.post("/business/auth/reset-password-otp", userData, AUTH_OPTS);
 };
 const resendOTP = async (userData: AuthPayload) => {
-  return await api.post("/business/auth/send-email", userData);
+  return await api.post("/business/auth/send-email", userData, AUTH_OPTS);
 };
 
 const setupTwoFactor = async () => {

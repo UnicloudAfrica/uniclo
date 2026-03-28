@@ -4,7 +4,7 @@
 
 // ─── Engine & Plan Config ──────────────────────────────────────
 
-export type DatabaseEngine = "mongodb" | "postgresql" | "mysql" | "redis";
+export type DatabaseEngine = "mongodb" | "postgresql" | "mysql" | "mariadb" | "redis";
 export type PlanSize = "micro" | "small" | "medium" | "large" | "xlarge";
 export type DeploymentType = "dedicated";
 
@@ -107,7 +107,7 @@ export interface ManagedDatabase {
 export interface ProvisioningStep {
   id: string;
   label: string;
-  status: "pending" | "completed" | "failed";
+  status: "pending" | "processing" | "in_progress" | "completed" | "failed" | "warning";
   context?: Record<string, unknown>;
 }
 
@@ -268,6 +268,30 @@ export interface DatabaseFormState {
   assignedTenantId: string | number | null;
   /** Selected client ID (admin/tenant only) */
   assignedClientId: string | number | null;
+  /** Custom database name (empty = use system default "defaultdb") */
+  dbName: string;
+  /** Custom database username (empty = use system default "dbadmin") */
+  dbUser: string;
+  /** Custom database password (empty = auto-generated) */
+  dbPassword: string;
+  /** Whether to use system-generated defaults for credentials */
+  useDefaultCredentials: boolean;
+  /** Network access mode: public (Elastic IP) or private (VPC-only) */
+  networkMode: "public" | "private";
+  /** Built-in connection pooling on the same VM (free) */
+  connectionPooling: boolean;
+  /** TLS encryption for connections (free, enabled by default) */
+  tlsEnabled: boolean;
+  /** Dedicated proxy VM in front of the database (paid add-on) */
+  dedicatedProxy: boolean;
+  /** WireGuard VPN gateway for private encrypted access (paid add-on) */
+  vpnGateway: boolean;
+  /** End of fast-track date — after this date, user must pay to continue */
+  fastTrackEndsAt: string;
+  /** Member user IDs selected for the internal project */
+  memberUserIds: number[];
+  /** Assignment scope: internal (admins), tenant, or client */
+  assignmentScope: "internal" | "tenant" | "client";
 }
 
 export const DEFAULT_DATABASE_FORM: DatabaseFormState = {
@@ -291,4 +315,16 @@ export const DEFAULT_DATABASE_FORM: DatabaseFormState = {
   customerContext: "tenant",
   assignedTenantId: null,
   assignedClientId: null,
+  dbName: "",
+  dbUser: "",
+  dbPassword: "",
+  useDefaultCredentials: true,
+  networkMode: "public",
+  connectionPooling: true,
+  tlsEnabled: true,
+  dedicatedProxy: false,
+  vpnGateway: false,
+  fastTrackEndsAt: "",
+  memberUserIds: [],
+  assignmentScope: "internal",
 };

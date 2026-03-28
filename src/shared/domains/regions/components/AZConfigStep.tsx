@@ -115,7 +115,7 @@ const AZConfigStep: React.FC<AZConfigStepProps> = ({
                 name={`az-code-${index}`}
                 value={az.code}
                 onChange={(e) => handleFieldChange(index, "code", e.target.value)}
-                placeholder="e.g., lagos-zadara-1"
+                placeholder="e.g., lagos-az1"
                 required
               />
 
@@ -125,7 +125,7 @@ const AZConfigStep: React.FC<AZConfigStepProps> = ({
                 name={`az-name-${index}`}
                 value={az.name}
                 onChange={(e) => handleFieldChange(index, "name", e.target.value)}
-                placeholder="e.g., Lagos Zadara Primary"
+                placeholder="e.g., Lagos AZ1"
               />
             </div>
           </div>

@@ -120,10 +120,14 @@ const AZCredentialPanel: React.FC<AZCredentialPanelProps> = ({ regionCode, az })
             for (const status of statusList) {
               const sType = status.service_type || status.serviceType;
               if (sType) {
+                const persistedCredentials =
+                  status.credentials && typeof status.credentials === "object"
+                    ? status.credentials
+                    : {};
                 configs[sType] = {
                   enabled: true,
                   mode: status.status === "verified" || status.status === "connected" ? "automated" : "manual",
-                  credentials: {}, // Don't pre-fill credentials for security
+                  credentials: persistedCredentials,
                 };
                 if (status.status === "verified" || status.status === "connected") {
                   connected.add(sType);

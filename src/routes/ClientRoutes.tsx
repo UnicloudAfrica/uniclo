@@ -42,6 +42,8 @@ import ClientDatabaseCreate from "../clientDashboard/pages/ClientDatabaseCreate"
 import ClientDatabaseDetail from "../clientDashboard/pages/ClientDatabaseDetail";
 import ClientTeam from "../clientDashboard/pages/ClientTeam";
 import ClientProtection from "../clientDashboard/pages/ClientProtection";
+import ClientServerlessDr from "../clientDashboard/pages/ClientServerlessDr";
+import ClientAgent from "../clientDashboard/pages/ClientAgent";
 import ClientMigrations from "../clientDashboard/pages/ClientMigrations";
 import ClientMigrationWizard from "../clientDashboard/pages/ClientMigrationWizard";
 
@@ -78,6 +80,8 @@ const ClientRoutes = (): JSX.Element => (
     <Route path="/client-dashboard/databases/:identifier" element={<ClientDatabaseDetail />} />
 
     <Route path="/client-dashboard/protection" element={<ClientProtection />} />
+    <Route path="/client-dashboard/serverless-dr" element={<ClientServerlessDr />} />
+    <Route path="/client-dashboard/agent" element={<ClientAgent />} />
 
     <Route path="/client-dashboard/migrations" element={<ClientMigrations />} />
     <Route path="/client-dashboard/migrations/new" element={<ClientMigrationWizard />} />

@@ -617,8 +617,8 @@ export default function AdminProjectDetails() {
       >
         <div className="px-6 pt-4">
           <CredentialHealthAlert
-            provider={project?.["provider"] || "zadara"}
-            regionCode={project?.["region"] || "lagos-1"}
+            provider={project?.["provider"]}
+            regionCode={project?.["region"]}
           />
         </div>
         <ProjectDetailsShell

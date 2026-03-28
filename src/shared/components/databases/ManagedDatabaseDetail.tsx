@@ -7,7 +7,9 @@ import React, { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
+  CalendarDays,
   Copy,
+  Cpu,
   Check,
   Eye,
   EyeOff,
@@ -24,6 +26,14 @@ import {
   Activity,
   ArrowUpCircle,
   ShieldCheck,
+  RefreshCw,
+  AlertTriangle,
+  CheckCircle2,
+  Globe2,
+  MapPin,
+  Server,
+  Zap,
+  Code,
 } from "lucide-react";
 import EngineIcon, { getEngineLabel } from "./EngineIcon";
 import DatabaseStatusBadge from "./DatabaseStatusBadge";
@@ -40,6 +50,11 @@ import {
   useFetchDatabaseMetrics,
   useFetchAvailableUpgrades,
   useUpgradeDatabaseEngine,
+  useFetchDrEligibility,
+  useFetchDrStatus,
+  useEnableDr,
+  useDrFailover,
+  useDisableDr,
 } from "@/shared/hooks/resources/managedDatabaseHooks";
 import type { ManagedDatabase, ManagedDatabaseBackup } from "@/types/managedDatabase";
 import ResourceProtectionTab from "@/shared/components/integrations/ResourceProtectionTab";
@@ -51,7 +66,7 @@ interface ManagedDatabaseDetailProps {
   context?: "admin" | "tenant" | "client";
 }
 
-type Tab = "overview" | "connection" | "backups" | "metrics" | "firewall" | "protection" | "settings";
+type Tab = "overview" | "connection" | "backups" | "metrics" | "firewall" | "dr" | "protection" | "integration" | "settings";
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: "overview", label: "Overview", icon: <DatabaseIcon size={16} /> },
@@ -59,9 +74,51 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: "backups", label: "Backups", icon: <HardDrive size={16} /> },
   { id: "metrics", label: "Metrics", icon: <Activity size={16} /> },
   { id: "firewall", label: "Firewall", icon: <Shield size={16} /> },
+  { id: "dr", label: "Disaster Recovery", icon: <RefreshCw size={16} /> },
   { id: "protection", label: "Protection", icon: <ShieldCheck size={16} /> },
+  { id: "integration", label: "Quick Start", icon: <Code size={16} /> },
   { id: "settings", label: "Settings", icon: <Settings size={16} /> },
 ];
+
+const ACTIVE_PROGRESS_STATUSES = new Set(["pending", "processing", "in_progress", "queued", "running"]);
+const COMPLETED_PROGRESS_STATUSES = new Set(["completed"]);
+
+const asMetadata = (value: ManagedDatabase["metadata"]): Record<string, unknown> =>
+  value && typeof value === "object" ? value : {};
+
+const asString = (value: unknown): string | null =>
+  typeof value === "string" && value.trim() !== "" ? value : null;
+
+const formatMoney = (value: number | string | undefined): string => {
+  const numeric = Number(value ?? 0);
+  if (!Number.isFinite(numeric) || numeric <= 0) {
+    return "—";
+  }
+
+  return `$${numeric.toFixed(2)}`;
+};
+
+const formatDateLabel = (value: string | undefined): string => {
+  if (!value) return "—";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+
+  return date.toLocaleDateString();
+};
+
+const getProgressOverview = (steps: ManagedDatabase["provisioning_progress"]) => {
+  const list = Array.isArray(steps) ? steps : [];
+
+  return {
+    total: list.length,
+    completed: list.filter((step) => COMPLETED_PROGRESS_STATUSES.has(step.status)).length,
+    current:
+      list.find((step) => ACTIVE_PROGRESS_STATUSES.has(step.status)) ??
+      list[list.length - 1] ??
+      null,
+  };
+};
 
 const ManagedDatabaseDetail: React.FC<ManagedDatabaseDetailProps> = ({
   identifier,
@@ -75,11 +132,14 @@ const ManagedDatabaseDetail: React.FC<ManagedDatabaseDetailProps> = ({
 
   const { data: dbData, isLoading } = useFetchManagedDatabaseById(identifier);
 
-  const db = useMemo(() => {
+  const db = useMemo<ManagedDatabase | null>(() => {
     if (!dbData) return null;
-    // Handle both direct data and envelope
-    return (dbData as any)?.data ?? dbData;
-  }, [dbData]) as ManagedDatabase | null;
+    if (typeof dbData === "object" && dbData !== null && "data" in dbData) {
+      return (dbData as { data?: ManagedDatabase }).data ?? null;
+    }
+
+    return dbData as ManagedDatabase;
+  }, [dbData]);
 
   if (isLoading) {
     return (
@@ -93,29 +153,153 @@ const ManagedDatabaseDetail: React.FC<ManagedDatabaseDetailProps> = ({
     return <div className="py-20 text-center text-gray-500">Database not found.</div>;
   }
 
+  const metadata = asMetadata(db.metadata);
+  const publicIp = asString(metadata.public_ip);
+  const endpointHost = db.dns_record_name || publicIp || db.private_ip || "Pending endpoint";
+  const progress = getProgressOverview(db.provisioning_progress);
+  const progressPercent =
+    progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : db.status === "active" ? 100 : 0;
+  const tlsEnabled = metadata.tls_enabled === true;
+  const networkMode = asString(metadata.network_mode) || "managed";
+  const currentStepLabel =
+    db.status === "provisioning" && progress.current ? progress.current.label : db.status.replace("_", " ");
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate(resolvedBackPath)}
-          className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <EngineIcon engine={db.engine} size={24} />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{db.name}</h1>
-              <p className="text-sm text-gray-500">
-                {db.identifier} · {getEngineLabel(db.engine)} v{db.engine_version}
-              </p>
+      <section className="db-surface-hero rounded-[32px] p-6">
+        <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+          <div className="space-y-5">
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => navigate(resolvedBackPath)}
+                className="db-secondary-button inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition"
+              >
+                <ArrowLeft size={18} />
+                Back to Databases
+              </button>
+              <span className="db-brand-pill inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em]">
+                <DatabaseIcon size={14} />
+                Managed Database
+              </span>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <EngineIcon engine={db.engine} size={24} className="mt-1" />
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h1 className="text-3xl font-semibold tracking-tight text-[var(--theme-heading-color)] sm:text-4xl">
+                    {db.name}
+                  </h1>
+                  <DatabaseStatusBadge status={db.status} className="shadow-sm" />
+                </div>
+                <p className="mt-2 text-sm text-[var(--theme-muted-color)]">
+                  {db.identifier} · {getEngineLabel(db.engine)} v{db.engine_version}
+                </p>
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <span className="db-muted-pill rounded-full px-3 py-1 text-xs font-medium">
+                    {db.plan_size.toUpperCase()} shape
+                  </span>
+                  <span className="db-muted-pill rounded-full px-3 py-1 text-xs font-medium">
+                    {db.deployment_type}
+                  </span>
+                  <span className="db-muted-pill rounded-full px-3 py-1 text-xs font-medium">
+                    {db.region}
+                  </span>
+                  {db.dr_region && (
+                    <span className="rounded-full border border-purple-200 bg-purple-50 px-3 py-1 text-xs font-medium text-purple-700 dark:border-purple-900 dark:bg-purple-950/40 dark:text-purple-300">
+                      DR in {db.dr_region}
+                    </span>
+                  )}
+                  {tlsEnabled && (
+                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
+                      TLS enabled
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
+              <HeroStatCard
+                label="Access Endpoint"
+                value={endpointHost}
+                hint={db.status === "active" ? "Ready for client traffic" : currentStepLabel}
+                icon={<Globe2 size={18} />}
+              />
+              <HeroStatCard
+                label="Compute Shape"
+                value={`${db.vcpu_count} vCPU · ${Math.round(db.memory_mb / 1024)} GB`}
+                hint={`${db.storage_gb} GB attached storage`}
+                icon={<Cpu size={18} />}
+              />
+              <HeroStatCard
+                label="Topology"
+                value={`${db.replica_count} replica${db.replica_count === 1 ? "" : "s"}`}
+                hint={`${networkMode} network mode`}
+                icon={<Server size={18} />}
+              />
+              <HeroStatCard
+                label="Monthly Run Rate"
+                value={formatMoney(db.monthly_cost)}
+                hint={`Created ${formatDateLabel(db.created_at)}`}
+                icon={<CalendarDays size={18} />}
+              />
             </div>
           </div>
+
+          <div className="db-signal-panel rounded-[28px] p-5 shadow-[0_18px_50px_-34px_rgb(var(--theme-color-rgb)_/_0.28)]">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                  Runtime Signal
+                </div>
+                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">
+                  {db.status === "active" ? "Connection-ready surface" : "Provisioning orchestra"}
+                </h2>
+              </div>
+              <span className="rounded-full bg-slate-950 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white dark:bg-white dark:text-slate-950">
+                {progressPercent}%
+              </span>
+            </div>
+
+            <div className="mt-5 h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  db.status === "error"
+                    ? "bg-red-500"
+                    : db.status === "active"
+                      ? "bg-emerald-500"
+                      : "bg-[linear-gradient(90deg,#0f172a_0%,#0ea5e9_50%,#22c55e_100%)]"
+                }`}
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+
+            <div className="mt-5 space-y-3">
+              <RuntimeSignalRow label="Current phase" value={currentStepLabel} />
+              <RuntimeSignalRow label="Hostname" value={db.dns_record_name || "Pending"} />
+              <RuntimeSignalRow label="Private IP" value={db.private_ip || "Pending"} />
+              <RuntimeSignalRow label="Public IP" value={publicIp || "Managed automatically"} />
+            </div>
+
+            {progress.current && (
+              <div className="mt-5 rounded-[22px] border border-slate-200/80 bg-slate-50/80 px-4 py-4 dark:border-slate-800 dark:bg-slate-900/80">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Latest step signal
+                </div>
+                <p className="mt-2 text-sm font-medium text-slate-950 dark:text-white">
+                  {progress.current.label}
+                </p>
+                {typeof progress.current.context?.elapsed_seconds === "number" && (
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    {progress.current.context.elapsed_seconds}s tracked on this flow so far
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-        <DatabaseStatusBadge status={db.status} />
-      </div>
+      </section>
 
       {/* Provisioning Pipeline — shown when database is still provisioning */}
       {(db.status === "provisioning" || db.status === "payment_pending") && (
@@ -126,16 +310,16 @@ const ManagedDatabaseDetail: React.FC<ManagedDatabaseDetailProps> = ({
       )}
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 dark:border-gray-700">
-        <nav className="flex gap-6">
+      <div className="db-surface-card rounded-[28px] p-2">
+        <nav className="flex flex-wrap gap-2">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 border-b-2 px-1 py-3 text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition-all ${
                 activeTab === tab.id
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                  ? "bg-slate-950 text-white shadow-sm dark:bg-white dark:text-slate-950"
+                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-200"
               }`}
             >
               {tab.icon}
@@ -151,6 +335,8 @@ const ManagedDatabaseDetail: React.FC<ManagedDatabaseDetailProps> = ({
       {activeTab === "backups" && <BackupsTab db={db} identifier={identifier} />}
       {activeTab === "metrics" && <MetricsTab db={db} identifier={identifier} />}
       {activeTab === "firewall" && <FirewallTab db={db} identifier={identifier} />}
+      {activeTab === "dr" && <DrTab db={db} identifier={identifier} />}
+      {activeTab === "integration" && <IntegrationTab db={db} />}
       {activeTab === "protection" && (
         <ResourceProtectionTab
           resourceType="managed-databases"
@@ -167,77 +353,162 @@ const ManagedDatabaseDetail: React.FC<ManagedDatabaseDetailProps> = ({
 
 // ─── Overview Tab ────────────────────────────────────────────────
 
-const OverviewTab: React.FC<{ db: ManagedDatabase }> = ({ db }) => (
-  <div className="grid gap-6 md:grid-cols-2">
-    <div className="rounded-lg border border-gray-200 p-6 dark:border-gray-700">
-      <h3 className="mb-4 text-lg font-semibold">Configuration</h3>
-      <dl className="space-y-3">
-        <InfoRow label="Engine" value={`${getEngineLabel(db.engine)} v${db.engine_version}`} />
-        <InfoRow label="Plan" value={db.plan_size?.toUpperCase()} />
-        <InfoRow label="vCPUs" value={String(db.vcpu_count)} />
-        <InfoRow label="Memory" value={`${Math.round(db.memory_mb / 1024)} GB`} />
-        <InfoRow label="Storage" value={`${db.storage_gb} GB`} />
-        <InfoRow label="Replicas" value={String(db.replica_count)} />
-        <InfoRow label="Deployment" value={db.deployment_type} />
-      </dl>
-    </div>
+const OverviewTab: React.FC<{ db: ManagedDatabase }> = ({ db }) => {
+  const metadata = asMetadata(db.metadata);
+  const publicIp = asString(metadata.public_ip);
+  const tlsEnabled = metadata.tls_enabled === true;
+  const progress = getProgressOverview(db.provisioning_progress);
+  const progressPercent =
+    progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : db.status === "active" ? 100 : 0;
 
-    <div className="rounded-lg border border-gray-200 p-6 dark:border-gray-700">
-      <h3 className="mb-4 text-lg font-semibold">Details</h3>
-      <dl className="space-y-3">
-        <InfoRow label="Provider" value={db.provider?.toUpperCase()} />
-        <InfoRow label="Region" value={db.region} />
-        <InfoRow
-          label="Monthly Cost"
-          value={db.monthly_cost > 0 ? `$${Number(db.monthly_cost).toFixed(2)}` : "—"}
-        />
-        <InfoRow label="Created" value={new Date(db.created_at).toLocaleDateString()} />
-        <InfoRow label="Project" value={db.project?.name ?? "—"} />
-        {db.dns_record_name && <InfoRow label="Hostname" value={db.dns_record_name} copyable />}
-        {db.private_ip && <InfoRow label="Private IP" value={db.private_ip} copyable />}
-        {db.dr_region && <InfoRow label="DR Region" value={db.dr_region} />}
-      </dl>
-    </div>
-
-    {/* VM Infrastructure (collapsible) */}
-    {(db.vm_instance_id || db.vm_volume_id) && (
-      <div className="rounded-lg border border-gray-200 p-6 md:col-span-2 dark:border-gray-700">
-        <h3 className="mb-4 text-lg font-semibold">Infrastructure</h3>
-        <dl className="grid gap-3 sm:grid-cols-2">
-          {db.vm_instance_id && <InfoRow label="Instance ID" value={db.vm_instance_id} copyable />}
-          {db.vm_volume_id && <InfoRow label="Volume ID" value={db.vm_volume_id} copyable />}
-          {db.vm_security_group_id && (
-            <InfoRow label="Security Group" value={db.vm_security_group_id} copyable />
-          )}
-        </dl>
-      </div>
-    )}
-
-    {/* Provisioning Progress */}
-    {db.provisioning_progress && db.provisioning_progress.length > 0 && (
-      <div className="rounded-lg border border-gray-200 p-6 md:col-span-2 dark:border-gray-700">
-        <h3 className="mb-4 text-lg font-semibold">Provisioning Progress</h3>
-        <div className="space-y-2">
-          {db.provisioning_progress.map((step) => (
-            <div key={step.id} className="flex items-center gap-3">
-              <span
-                className={`h-2 w-2 rounded-full ${
-                  step.status === "completed"
-                    ? "bg-green-500"
-                    : step.status === "failed"
-                      ? "bg-red-500"
-                      : "bg-yellow-500"
-                }`}
-              />
-              <span className="text-sm">{step.label}</span>
-              <span className="text-xs capitalize text-gray-500">{step.status}</span>
-            </div>
-          ))}
+  return (
+    <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
+          <HeroStatCard
+            label="Primary Host"
+            value={db.dns_record_name || "Pending"}
+            hint={db.status === "active" ? "Published and routable" : "Awaiting final routing"}
+            icon={<Globe2 size={18} />}
+          />
+          <HeroStatCard
+            label="Private Address"
+            value={db.private_ip || "Pending"}
+            hint="Provider-internal service path"
+            icon={<Server size={18} />}
+          />
+          <HeroStatCard
+            label="Progress"
+            value={`${progressPercent}%`}
+            hint={`${progress.completed}/${progress.total || 0} tracked steps complete`}
+            icon={<Activity size={18} />}
+          />
+          <HeroStatCard
+            label="Spend"
+            value={formatMoney(db.monthly_cost)}
+            hint="Current monthly run rate"
+            icon={<CalendarDays size={18} />}
+          />
         </div>
+
+        <div className="grid gap-6 2xl:grid-cols-2">
+          <SurfaceCard
+            title="Configuration Matrix"
+            subtitle="Core runtime shape and engine footprint."
+          >
+            <dl className="grid gap-3">
+              <InfoRow label="Engine" value={`${getEngineLabel(db.engine)} v${db.engine_version}`} />
+              <InfoRow label="Plan" value={db.plan_size?.toUpperCase()} />
+              <InfoRow label="vCPUs" value={String(db.vcpu_count)} />
+              <InfoRow label="Memory" value={`${Math.round(db.memory_mb / 1024)} GB`} />
+              <InfoRow label="Storage" value={`${db.storage_gb} GB`} />
+              <InfoRow label="Replicas" value={String(db.replica_count)} />
+              <InfoRow label="Deployment" value={db.deployment_type} />
+            </dl>
+          </SurfaceCard>
+
+          <SurfaceCard
+            title="Access Surface"
+            subtitle="What clients and operators will use to reach the service."
+          >
+            <dl className="grid gap-3">
+              <InfoRow label="Hostname" value={db.dns_record_name ?? "Pending"} copyable={Boolean(db.dns_record_name)} />
+              <InfoRow label="Private IP" value={db.private_ip ?? "Pending"} copyable={Boolean(db.private_ip)} />
+              <InfoRow label="Public IP" value={publicIp ?? "Managed automatically"} copyable={Boolean(publicIp)} />
+              <InfoRow label="TLS" value={tlsEnabled ? "Enabled" : "Disabled"} />
+              <InfoRow
+                label="Firewall Rules"
+                value={`${db.firewall_cidrs?.length ?? 0} CIDR entries`}
+              />
+            </dl>
+          </SurfaceCard>
+        </div>
+
+        {db.provisioning_progress && db.provisioning_progress.length > 0 && (
+          <SurfaceCard
+            title="Operational Timeline"
+            subtitle="The exact provisioning steps recorded for this database."
+          >
+            <div className="grid gap-3 sm:grid-cols-2">
+              {db.provisioning_progress.map((step, index) => (
+                <div
+                  key={step.id}
+                  className={`rounded-[22px] border p-4 ${
+                    step.status === "completed"
+                      ? "border-emerald-200 bg-emerald-50/70 dark:border-emerald-900 dark:bg-emerald-950/20"
+                      : step.status === "failed"
+                        ? "border-red-200 bg-red-50/70 dark:border-red-900 dark:bg-red-950/20"
+                        : "border-slate-200 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-900/70"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      Step {index + 1}
+                    </span>
+                    <DatabaseStatusBadge status={step.status} />
+                  </div>
+                  <p className="mt-3 text-sm font-semibold text-slate-950 dark:text-white">
+                    {step.label}
+                  </p>
+                  {typeof step.context?.elapsed_seconds === "number" && (
+                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                      {step.context.elapsed_seconds}s elapsed in provider telemetry
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </SurfaceCard>
+        )}
       </div>
-    )}
-  </div>
-);
+
+      <div className="space-y-6">
+        <SurfaceCard
+          title="Platform Context"
+          subtitle="Tracking identifiers and placement metadata."
+        >
+          <dl className="grid gap-3">
+            <InfoRow label="Region" value={db.region} />
+            <InfoRow label="Project" value={db.project?.name ?? "—"} />
+            <InfoRow label="Created" value={formatDateLabel(db.created_at)} />
+            <InfoRow label="Resource ID" value={db.provider_resource_id ?? "Pending"} copyable={Boolean(db.provider_resource_id)} />
+            {db.vm_instance_id && <InfoRow label="Instance ID" value={db.vm_instance_id} copyable />}
+            {db.vm_volume_id && <InfoRow label="Volume ID" value={db.vm_volume_id} copyable />}
+            {db.vm_security_group_id && (
+              <InfoRow label="Security Group" value={db.vm_security_group_id} copyable />
+            )}
+          </dl>
+        </SurfaceCard>
+
+        <SurfaceCard
+          title="Resilience Posture"
+          subtitle="Signals that describe continuity, protection, and operational intent."
+        >
+          <div className="space-y-3">
+            <PostureRow
+              icon={<ShieldCheck size={16} />}
+              title="Traffic guardrails"
+              description={`${db.firewall_cidrs?.length ?? 0} firewall rules protecting the service surface.`}
+              tone={db.firewall_cidrs?.length ? "good" : "neutral"}
+            />
+            <PostureRow
+              icon={<RefreshCw size={16} />}
+              title="Disaster recovery"
+              description={db.dr_region ? `Standby strategy configured in ${db.dr_region}.` : "No DR standby attached yet."}
+              tone={db.dr_region ? "good" : "neutral"}
+            />
+            <PostureRow
+              icon={<Link size={16} />}
+              title="Connection posture"
+              description={db.status === "active" ? "Connection details are available for handoff." : "Connection details unlock once provisioning finishes."}
+              tone={db.status === "active" ? "good" : "neutral"}
+            />
+          </div>
+        </SurfaceCard>
+      </div>
+    </div>
+  );
+};
 
 // ─── Connection Tab ──────────────────────────────────────────────
 
@@ -258,60 +529,102 @@ const ConnectionTab: React.FC<{ db: ManagedDatabase; identifier: string }> = ({
 
   if (db.status !== "active") {
     return (
-      <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-6 dark:border-yellow-800 dark:bg-yellow-900/20">
-        <p className="text-yellow-800 dark:text-yellow-400">
-          Connection details are available once the database is active.
+      <div className="rounded-[28px] border border-amber-200 bg-amber-50/90 p-6 shadow-sm dark:border-amber-900 dark:bg-amber-950/20">
+        <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+          Connection details appear here as soon as the service becomes active.
         </p>
       </div>
     );
   }
 
+  const metadata = asMetadata(db.metadata);
+  const publicIp = asString(metadata.public_ip);
+  const tlsEnabled = metadata.tls_enabled === true;
+
   return (
-    <div className="space-y-6">
-      {db.connection_string && (
-        <div className="rounded-lg border border-gray-200 p-6 dark:border-gray-700">
-          <h3 className="mb-3 text-lg font-semibold">Connection String</h3>
-          <CopyableField value={db.connection_string} />
-        </div>
-      )}
-
-      <div className="rounded-lg border border-gray-200 p-6 dark:border-gray-700">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Credentials</h3>
-          {!showCredentials ? (
-            <button
-              onClick={handleReveal}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
-            >
-              <Eye size={16} />
-              Reveal Credentials
-            </button>
-          ) : (
-            <button
-              onClick={() => setShowCredentials(false)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300"
-            >
-              <EyeOff size={16} />
-              Hide
-            </button>
-          )}
-        </div>
-
-        {showCredentials && credentialsData?.credentials ? (
-          <dl className="space-y-3">
-            <InfoRow label="Host" value={credentialsData.credentials.host} copyable />
-            <InfoRow label="Port" value={String(credentialsData.credentials.port)} copyable />
-            <InfoRow label="Username" value={credentialsData.credentials.username} copyable />
-            <InfoRow label="Password" value={credentialsData.credentials.password} copyable />
-            <InfoRow label="Database" value={credentialsData.credentials.database} copyable />
-          </dl>
-        ) : showCredentials ? (
-          <p className="text-sm text-gray-500">Loading credentials...</p>
-        ) : (
-          <p className="text-sm text-gray-500">
-            Click &quot;Reveal Credentials&quot; to view connection details.
-          </p>
+    <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+      <div className="space-y-6">
+        {db.connection_string && (
+          <SurfaceCard
+            title="Connection String"
+            subtitle="Use this when your client accepts a direct URI."
+          >
+            <CopyableField value={db.connection_string} />
+          </SurfaceCard>
         )}
+
+        <SurfaceCard
+          title="Credentials"
+          subtitle="Reveal only when you need to hand the service to an operator or application team."
+          action={
+            !showCredentials ? (
+              <button
+                onClick={handleReveal}
+                className="db-primary-button inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition"
+              >
+                <Eye size={16} />
+                Reveal Credentials
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowCredentials(false)}
+                className="db-secondary-button inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition"
+              >
+                <EyeOff size={16} />
+                Hide
+              </button>
+            )
+          }
+        >
+          {showCredentials && credentialsData?.credentials ? (
+            <dl className="grid gap-3 sm:grid-cols-2">
+              <InfoRow label="Host" value={credentialsData.credentials.host} copyable />
+              <InfoRow label="Port" value={String(credentialsData.credentials.port)} copyable />
+              <InfoRow label="Username" value={credentialsData.credentials.username} copyable />
+              <InfoRow label="Password" value={credentialsData.credentials.password} copyable />
+              <InfoRow label="Database" value={credentialsData.credentials.database} copyable />
+            </dl>
+          ) : showCredentials ? (
+            <p className="text-sm text-slate-500">Loading credentials...</p>
+          ) : (
+            <p className="text-sm text-slate-500">
+              Click &quot;Reveal Credentials&quot; to view connection details.
+            </p>
+          )}
+        </SurfaceCard>
+      </div>
+
+      <div className="space-y-6">
+        <SurfaceCard
+          title="Connection Posture"
+          subtitle="What the runtime currently exposes to clients."
+        >
+          <dl className="grid gap-3">
+            <InfoRow label="Hostname" value={db.dns_record_name ?? "Pending"} copyable={Boolean(db.dns_record_name)} />
+            <InfoRow label="Private IP" value={db.private_ip ?? "Pending"} copyable={Boolean(db.private_ip)} />
+            <InfoRow label="Public IP" value={publicIp ?? "Managed automatically"} copyable={Boolean(publicIp)} />
+            <InfoRow label="TLS" value={tlsEnabled ? "Enabled" : "Disabled"} />
+            <InfoRow label="Firewall Rules" value={`${db.firewall_cidrs?.length ?? 0} CIDRs`} />
+          </dl>
+        </SurfaceCard>
+
+        <SurfaceCard
+          title="Operator Notes"
+          subtitle="Quick pointers for GUI clients and handoff."
+        >
+          <div className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
+            <p>
+              Use the published hostname where possible so DNS can absorb future address changes without
+              reconfiguring clients.
+            </p>
+            <p>
+              If TLS is disabled, configure your client explicitly instead of letting it guess.
+            </p>
+            <p>
+              Credentials are fetched on demand and stay hidden until revealed in this view.
+            </p>
+          </div>
+        </SurfaceCard>
       </div>
     </div>
   );
@@ -417,14 +730,32 @@ const MetricsTab: React.FC<{ db: ManagedDatabase; identifier: string }> = ({ db,
     );
   }
 
-  const connections = metrics?.connections?.latest as
-    | { active?: number; idle?: number; max?: number }
+  const rawConnections = metrics?.connections?.latest as
+    | { active?: number; idle?: number; total?: number; max_connections?: number; max?: number }
     | undefined;
-  const diskUsage = metrics?.disk_usage?.latest as
-    | { database_size?: string; percentage_used?: number }
+  const connections = rawConnections
+    ? {
+        active: rawConnections.active ?? 0,
+        idle: rawConnections.idle ?? 0,
+        total: rawConnections.total ?? 0,
+        max: rawConnections.max ?? rawConnections.max_connections ?? 200,
+      }
+    : undefined;
+
+  const rawDisk = metrics?.disk_usage?.latest as
+    | { database?: { database_size_pretty?: string; database_size_bytes?: number }; database_size?: string; percentage_used?: number; top_tables?: unknown[] }
     | undefined;
+  const diskUsage = rawDisk
+    ? {
+        database_size: rawDisk.database?.database_size_pretty ?? rawDisk.database_size ?? "—",
+        database_size_bytes: rawDisk.database?.database_size_bytes ?? 0,
+        percentage_used: rawDisk.percentage_used ?? (db.storage_gb ? Math.round(((rawDisk.database?.database_size_bytes ?? 0) / (db.storage_gb * 1024 * 1024 * 1024)) * 100) : undefined),
+        top_tables: rawDisk.top_tables ?? [],
+      }
+    : undefined;
+
   const slowQueries = metrics?.slow_queries?.latest as
-    | { count?: number; threshold_ms?: number }
+    | { count?: number; threshold_ms?: number; slow_queries?: unknown[] }
     | undefined;
 
   return (
@@ -442,21 +773,47 @@ const MetricsTab: React.FC<{ db: ManagedDatabase; identifier: string }> = ({ db,
             <dl className="space-y-3">
               <div className="flex items-center justify-between">
                 <dt className="text-sm text-gray-500 dark:text-gray-400">Active</dt>
-                <dd className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  {connections.active ?? "—"}
+                <dd className="text-lg font-semibold text-green-600 dark:text-green-400">
+                  {connections.active}
                 </dd>
               </div>
               <div className="flex items-center justify-between">
                 <dt className="text-sm text-gray-500 dark:text-gray-400">Idle</dt>
                 <dd className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  {connections.idle ?? "—"}
+                  {connections.idle}
                 </dd>
               </div>
               <div className="flex items-center justify-between">
-                <dt className="text-sm text-gray-500 dark:text-gray-400">Max</dt>
+                <dt className="text-sm text-gray-500 dark:text-gray-400">Total</dt>
                 <dd className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  {connections.max ?? "—"}
+                  {connections.total}
                 </dd>
+              </div>
+              <div className="flex items-center justify-between">
+                <dt className="text-sm text-gray-500 dark:text-gray-400">Max Allowed</dt>
+                <dd className="text-sm text-gray-600 dark:text-gray-300">
+                  {connections.max}
+                </dd>
+              </div>
+              <div>
+                <div className="mb-1 flex items-center justify-between text-sm">
+                  <span className="text-gray-500 dark:text-gray-400">Utilization</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
+                    {connections.max > 0 ? Math.round((connections.total / connections.max) * 100) : 0}%
+                  </span>
+                </div>
+                <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-700">
+                  <div
+                    className={`h-2 rounded-full transition-all ${
+                      connections.max > 0 && (connections.total / connections.max) > 0.9
+                        ? "bg-red-500"
+                        : connections.max > 0 && (connections.total / connections.max) > 0.7
+                          ? "bg-yellow-500"
+                          : "bg-green-500"
+                    }`}
+                    style={{ width: `${connections.max > 0 ? Math.min(Math.round((connections.total / connections.max) * 100), 100) : 0}%` }}
+                  />
+                </div>
               </div>
             </dl>
           ) : (
@@ -671,6 +1028,539 @@ const FirewallTab: React.FC<{ db: ManagedDatabase; identifier: string }> = ({ db
   );
 };
 
+// ─── Disaster Recovery Tab ───────────────────────────────────────
+
+const DrTab: React.FC<{ db: ManagedDatabase; identifier: string }> = ({ db, identifier }) => {
+  const { data: eligibility, isLoading: eligibilityLoading } = useFetchDrEligibility(identifier, {
+    enabled: db.status === "active" && !db.dr_region,
+  });
+  const { data: drStatus, isLoading: statusLoading } = useFetchDrStatus(identifier, {
+    enabled: !!db.dr_region || !!db.dr_primary_id,
+  });
+  const enableDrMutation = useEnableDr();
+  const failoverMutation = useDrFailover();
+  const disableDrMutation = useDisableDr();
+  const [selectedAz, setSelectedAz] = useState("");
+
+  // This is a DR replica — show replica info
+  if (db.dr_primary_id) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-6 dark:border-blue-800 dark:bg-blue-900/20">
+          <RefreshCw className="mt-0.5 h-5 w-5 text-blue-600 shrink-0" />
+          <div>
+            <p className="font-medium text-blue-800 dark:text-blue-300">DR Standby Replica</p>
+            <p className="mt-1 text-sm text-blue-700 dark:text-blue-400">
+              This database is a disaster recovery standby. It receives continuous replication from the
+              primary and will be promoted automatically if the primary fails.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // DR is already enabled — show status
+  if (db.dr_region || drStatus?.dr_enabled) {
+    const standby = drStatus?.standby;
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-6 dark:border-green-800 dark:bg-green-900/20">
+          <CheckCircle2 className="mt-0.5 h-5 w-5 text-green-600 shrink-0" />
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <p className="font-medium text-green-800 dark:text-green-300">DR Enabled</p>
+              <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-800 dark:text-green-300">
+                Active
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-green-700 dark:text-green-400">
+              A standby replica is maintaining continuous replication for disaster recovery.
+            </p>
+          </div>
+        </div>
+
+        {/* Standby Details */}
+        {standby && (
+          <div className="rounded-lg border border-gray-200 p-6 dark:border-gray-700">
+            <h3 className="mb-4 text-lg font-semibold">Standby Replica</h3>
+            <dl className="space-y-3">
+              <InfoRow label="Name" value={standby.name} />
+              <InfoRow label="Status" value={standby.status} />
+              <InfoRow label="Availability Zone" value={standby.availability_zone} />
+              {standby.private_ip && <InfoRow label="Private IP" value={standby.private_ip} copyable />}
+              <InfoRow label="Created" value={new Date(standby.created_at).toLocaleDateString()} />
+            </dl>
+          </div>
+        )}
+
+        {statusLoading && !standby && (
+          <p className="text-sm text-gray-500">Loading DR status...</p>
+        )}
+
+        {/* Actions */}
+        <div className="flex gap-3">
+          <button
+            onClick={() => {
+              if (confirm("Initiate failover? The standby will become the new primary. This action cannot be automatically reversed.")) {
+                failoverMutation.mutate({ identifier });
+              }
+            }}
+            disabled={failoverMutation.isPending || !standby || standby.status !== "active"}
+            className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+          >
+            <Zap size={16} />
+            {failoverMutation.isPending ? "Failing over..." : "Manual Failover"}
+          </button>
+
+          <button
+            onClick={() => {
+              if (confirm("Disable DR? The standby replica will be deleted. This cannot be undone.")) {
+                disableDrMutation.mutate({ identifier });
+              }
+            }}
+            disabled={disableDrMutation.isPending}
+            className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-800 hover:bg-red-100 disabled:opacity-50"
+          >
+            <Trash2 size={16} />
+            {disableDrMutation.isPending ? "Disabling..." : "Disable DR"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // DR not enabled — show eligibility + enable form
+  if (db.status !== "active") {
+    return (
+      <div className="flex items-start gap-3 rounded-lg border border-yellow-200 bg-yellow-50 p-6 dark:border-yellow-800 dark:bg-yellow-900/20">
+        <AlertTriangle className="mt-0.5 h-5 w-5 text-yellow-600 shrink-0" />
+        <div>
+          <p className="font-medium text-yellow-800 dark:text-yellow-300">Not Available</p>
+          <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-400">
+            Disaster Recovery can only be enabled on active databases.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (eligibilityLoading) {
+    return <p className="text-sm text-gray-500">Checking DR eligibility...</p>;
+  }
+
+  if (!eligibility?.eligible) {
+    return (
+      <div className="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-6 dark:border-gray-700 dark:bg-gray-800">
+        <AlertTriangle className="mt-0.5 h-5 w-5 text-gray-500 shrink-0" />
+        <div>
+          <p className="font-medium text-gray-800 dark:text-gray-200">DR Not Available</p>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            {eligibility?.reason || "No same-provider availability zones available for DR standby."}
+          </p>
+          <p className="mt-2 text-xs text-gray-500">
+            DR requires at least two availability zones on the same provider in this region.
+            Deploy in a multi-AZ region to enable disaster recovery.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Eligible — show enable form
+  return (
+    <div className="space-y-6">
+      <div className="rounded-lg border border-gray-200 p-6 dark:border-gray-700">
+        <div className="flex items-center gap-2 mb-4">
+          <RefreshCw size={20} className="text-blue-600" />
+          <h3 className="text-lg font-semibold">Enable Disaster Recovery</h3>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+          A standby replica will run in a separate availability zone with continuous replication.
+          If the primary fails, the standby promotes automatically and DNS switches over.
+        </p>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Target Availability Zone
+            </label>
+            <div className="space-y-2">
+              {eligibility.available_azs.map((az) => (
+                <button
+                  key={az.code}
+                  onClick={() => setSelectedAz(az.code)}
+                  className={`w-full flex items-center gap-3 rounded-lg border-2 px-4 py-3 text-left text-sm transition-all ${
+                    selectedAz === az.code
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
+                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <MapPin size={16} className={selectedAz === az.code ? "text-blue-600" : "text-gray-400"} />
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-gray-100">{az.name}</div>
+                    <div className="text-xs text-gray-500">{az.code}</div>
+                  </div>
+                  <span className={`ml-auto rounded-full px-2 py-0.5 text-xs ${
+                    az.status === "healthy"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-yellow-100 text-yellow-700"
+                  }`}>
+                    {az.status}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {eligibility.estimated_monthly_cost != null && (
+            <div className="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3 dark:bg-gray-800">
+              <span className="text-sm text-gray-600 dark:text-gray-400">Estimated monthly cost</span>
+              <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                +${Number(eligibility.estimated_monthly_cost).toFixed(2)}/mo
+              </span>
+            </div>
+          )}
+
+          <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 dark:bg-amber-900/20 dark:border-amber-800">
+            <div className="flex items-start gap-2">
+              <AlertTriangle size={16} className="mt-0.5 text-amber-600 shrink-0" />
+              <div className="text-xs text-amber-700 dark:text-amber-400">
+                <p className="font-medium">Important</p>
+                <ul className="mt-1 list-disc list-inside space-y-1">
+                  <li>Replication is asynchronous — up to ~60 seconds of data loss on failover (RPO)</li>
+                  <li>Failover takes approximately 2-5 minutes (RTO)</li>
+                  <li>The standby is read-only and cannot serve application traffic until promoted</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              if (selectedAz && confirm("Enable DR? A standby replica will be provisioned in the selected AZ.")) {
+                enableDrMutation.mutate({ identifier, targetAz: selectedAz });
+              }
+            }}
+            disabled={!selectedAz || enableDrMutation.isPending}
+            className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            {enableDrMutation.isPending ? "Enabling DR..." : "Enable Disaster Recovery"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Integration / Quick Start Tab ──────────────────────────────
+
+const IntegrationTab: React.FC<{ db: ManagedDatabase }> = ({ db }) => {
+  const [copiedSnippet, setCopiedSnippet] = useState<string | null>(null);
+  const [activeLanguage, setActiveLanguage] = useState("laravel");
+  const { data: credentialsData } = useFetchDatabaseCredentials(db.identifier, {
+    enabled: db.status === "active",
+  });
+
+  const creds = credentialsData?.credentials as
+    | { host?: string; port?: number; username?: string; password?: string; database?: string }
+    | undefined;
+  const metadata = asMetadata(db.metadata);
+  const host = creds?.host || db.dns_record_name || asString(metadata.public_ip) || "your-db-host";
+  const port = creds?.port || 5432;
+  const user = creds?.username || "dbadmin";
+  const pass = creds?.password || "your-password";
+  const dbName = creds?.database || "defaultdb";
+  const engineLower = db.engine?.toLowerCase() ?? "postgresql";
+
+  const copySnippet = (key: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedSnippet(key);
+    setTimeout(() => setCopiedSnippet(null), 2000);
+  };
+
+  const pgPort = engineLower === "mysql" || engineLower === "mariadb" ? 3306 : engineLower === "mongodb" ? 27017 : engineLower === "redis" ? 6379 : port;
+  const pgDriver = engineLower === "mysql" || engineLower === "mariadb" ? "mysql" : engineLower === "mongodb" ? "mongodb" : engineLower === "redis" ? "redis" : "pgsql";
+  const dsnScheme = engineLower === "mysql" || engineLower === "mariadb" ? "mysql" : engineLower === "mongodb" ? "mongodb" : engineLower === "redis" ? "redis" : "postgresql";
+
+  const snippets: Record<string, { label: string; icon: string; code: string }> = {
+    laravel: {
+      label: "Laravel / PHP",
+      icon: "🐘",
+      code: `# .env file
+DB_CONNECTION=${pgDriver}
+DB_HOST=${host}
+DB_PORT=${pgPort}
+DB_DATABASE=${dbName}
+DB_USERNAME=${user}
+DB_PASSWORD=${pass}`,
+    },
+    nodejs: {
+      label: "Node.js",
+      icon: "🟢",
+      code: engineLower === "postgresql"
+        ? `// npm install pg
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  host: '${host}',
+  port: ${pgPort},
+  database: '${dbName}',
+  user: '${user}',
+  password: '${pass}',
+  ssl: false,
+});
+
+const result = await pool.query('SELECT NOW()');
+console.log(result.rows[0]);`
+        : engineLower === "mysql" || engineLower === "mariadb"
+        ? `// npm install mysql2
+const mysql = require('mysql2/promise');
+
+const connection = await mysql.createConnection({
+  host: '${host}',
+  port: ${pgPort},
+  database: '${dbName}',
+  user: '${user}',
+  password: '${pass}',
+});
+
+const [rows] = await connection.execute('SELECT NOW()');
+console.log(rows);`
+        : engineLower === "mongodb"
+        ? `// npm install mongodb
+const { MongoClient } = require('mongodb');
+
+const client = new MongoClient('mongodb://${user}:${pass}@${host}:${pgPort}/${dbName}');
+await client.connect();
+
+const db = client.db('${dbName}');
+console.log(await db.command({ ping: 1 }));`
+        : `// npm install ioredis
+const Redis = require('ioredis');
+
+const redis = new Redis({
+  host: '${host}',
+  port: ${pgPort},
+  password: '${pass}',
+});
+
+await redis.set('key', 'value');
+console.log(await redis.get('key'));`,
+    },
+    python: {
+      label: "Python",
+      icon: "🐍",
+      code: engineLower === "postgresql"
+        ? `# pip install psycopg2-binary
+import psycopg2
+
+conn = psycopg2.connect(
+    host="${host}",
+    port=${pgPort},
+    dbname="${dbName}",
+    user="${user}",
+    password="${pass}"
+)
+
+cur = conn.cursor()
+cur.execute("SELECT version()")
+print(cur.fetchone())`
+        : engineLower === "mysql" || engineLower === "mariadb"
+        ? `# pip install mysql-connector-python
+import mysql.connector
+
+conn = mysql.connector.connect(
+    host="${host}",
+    port=${pgPort},
+    database="${dbName}",
+    user="${user}",
+    password="${pass}"
+)
+
+cursor = conn.cursor()
+cursor.execute("SELECT VERSION()")
+print(cursor.fetchone())`
+        : `# pip install pymongo / redis
+# Connection string:
+# ${dsnScheme}://${user}:${pass}@${host}:${pgPort}/${dbName}`,
+    },
+    go: {
+      label: "Go",
+      icon: "🔵",
+      code: engineLower === "postgresql"
+        ? `// go get github.com/lib/pq
+import (
+    "database/sql"
+    _ "github.com/lib/pq"
+)
+
+connStr := "host=${host} port=${pgPort} user=${user} password=${pass} dbname=${dbName} sslmode=disable"
+db, err := sql.Open("postgres", connStr)`
+        : `// Connection string:
+// ${dsnScheme}://${user}:${pass}@${host}:${pgPort}/${dbName}`,
+    },
+    connectionstring: {
+      label: "Connection String",
+      icon: "🔗",
+      code: `${dsnScheme}://${user}:${pass}@${host}:${pgPort}/${dbName}`,
+    },
+    cli: {
+      label: "CLI",
+      icon: "⌨️",
+      code: engineLower === "postgresql"
+        ? `# Connect via psql
+psql "postgresql://${user}:${pass}@${host}:${pgPort}/${dbName}"
+
+# Or with flags
+PGPASSWORD='${pass}' psql -h ${host} -p ${pgPort} -U ${user} -d ${dbName}`
+        : engineLower === "mysql" || engineLower === "mariadb"
+        ? `# Connect via mysql client
+mysql -h ${host} -P ${pgPort} -u ${user} -p${pass} ${dbName}`
+        : engineLower === "mongodb"
+        ? `# Connect via mongosh
+mongosh "mongodb://${user}:${pass}@${host}:${pgPort}/${dbName}"`
+        : `# Connect via redis-cli
+redis-cli -h ${host} -p ${pgPort} -a ${pass}`,
+    },
+    dbeaver: {
+      label: "DBeaver / pgAdmin",
+      icon: "🗄️",
+      code: `Host:     ${host}
+Port:     ${pgPort}
+Database: ${dbName}
+Username: ${user}
+Password: ${pass}
+
+SSL Mode: Disable (or Prefer for TLS-enabled instances)`,
+    },
+  };
+
+  if (db.status !== "active") {
+    return (
+      <div className="rounded-[28px] border border-amber-200 bg-amber-50/90 p-6 shadow-sm dark:border-amber-900 dark:bg-amber-950/20">
+        <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+          Integration snippets are available once the database is active.
+        </p>
+      </div>
+    );
+  }
+
+  const languages = Object.entries(snippets);
+
+  return (
+    <div className="space-y-6">
+      <SurfaceCard
+        title="Quick Start Integration"
+        subtitle="Copy ready-to-use connection snippets for your application framework."
+      >
+        {/* Language Tabs */}
+        <div className="mb-4 flex flex-wrap gap-2">
+          {languages.map(([key, { label, icon }]) => (
+            <button
+              key={key}
+              onClick={() => setActiveLanguage(key)}
+              className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium transition ${
+                activeLanguage === key
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              }`}
+            >
+              <span>{icon}</span>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Code Block */}
+        {snippets[activeLanguage] && (
+          <div className="relative">
+            <pre className="overflow-x-auto rounded-2xl bg-slate-950 p-5 text-sm leading-relaxed text-slate-200 dark:bg-black">
+              <code>{snippets[activeLanguage].code}</code>
+            </pre>
+            <button
+              onClick={() => copySnippet(activeLanguage, snippets[activeLanguage].code)}
+              className="absolute right-3 top-3 rounded-lg bg-slate-800 p-2 text-slate-400 transition hover:bg-slate-700 hover:text-white"
+              title="Copy to clipboard"
+            >
+              {copiedSnippet === activeLanguage ? (
+                <Check size={16} className="text-green-400" />
+              ) : (
+                <Copy size={16} />
+              )}
+            </button>
+          </div>
+        )}
+      </SurfaceCard>
+
+      <SurfaceCard
+        title="Environment Variables"
+        subtitle="Standard environment variables for containerized deployments."
+      >
+        <div className="relative">
+          <pre className="overflow-x-auto rounded-2xl bg-slate-950 p-5 text-sm leading-relaxed text-slate-200 dark:bg-black">
+            <code>{`DATABASE_URL="${dsnScheme}://${user}:${pass}@${host}:${pgPort}/${dbName}"
+DB_HOST="${host}"
+DB_PORT="${pgPort}"
+DB_NAME="${dbName}"
+DB_USER="${user}"
+DB_PASSWORD="${pass}"`}</code>
+          </pre>
+          <button
+            onClick={() =>
+              copySnippet(
+                "env",
+                `DATABASE_URL="${dsnScheme}://${user}:${pass}@${host}:${pgPort}/${dbName}"\nDB_HOST="${host}"\nDB_PORT="${pgPort}"\nDB_NAME="${dbName}"\nDB_USER="${user}"\nDB_PASSWORD="${pass}"`
+              )
+            }
+            className="absolute right-3 top-3 rounded-lg bg-slate-800 p-2 text-slate-400 transition hover:bg-slate-700 hover:text-white"
+            title="Copy to clipboard"
+          >
+            {copiedSnippet === "env" ? (
+              <Check size={16} className="text-green-400" />
+            ) : (
+              <Copy size={16} />
+            )}
+          </button>
+        </div>
+      </SurfaceCard>
+
+      <SurfaceCard
+        title="Docker Compose"
+        subtitle="Add your database to a Docker Compose stack."
+      >
+        <div className="relative">
+          <pre className="overflow-x-auto rounded-2xl bg-slate-950 p-5 text-sm leading-relaxed text-slate-200 dark:bg-black">
+            <code>{`# docker-compose.yml — connect your app to the managed database
+services:
+  app:
+    environment:
+      DATABASE_URL: "${dsnScheme}://${user}:${pass}@${host}:${pgPort}/${dbName}"
+    # No need for a local db service — your managed database is remote`}</code>
+          </pre>
+          <button
+            onClick={() =>
+              copySnippet(
+                "docker",
+                `services:\n  app:\n    environment:\n      DATABASE_URL: "${dsnScheme}://${user}:${pass}@${host}:${pgPort}/${dbName}"`
+              )
+            }
+            className="absolute right-3 top-3 rounded-lg bg-slate-800 p-2 text-slate-400 transition hover:bg-slate-700 hover:text-white"
+            title="Copy to clipboard"
+          >
+            {copiedSnippet === "docker" ? (
+              <Check size={16} className="text-green-400" />
+            ) : (
+              <Copy size={16} />
+            )}
+          </button>
+        </div>
+      </SurfaceCard>
+    </div>
+  );
+};
+
 // ─── Settings Tab ────────────────────────────────────────────────
 
 const SettingsTab: React.FC<{
@@ -736,6 +1626,82 @@ const SettingsTab: React.FC<{
 
 // ─── Utility Components ──────────────────────────────────────────
 
+const HeroStatCard: React.FC<{
+  label: string;
+  value: string;
+  hint: string;
+  icon: React.ReactNode;
+}> = ({ label, value, hint, icon }) => (
+  <div className="db-surface-inset rounded-[24px] p-4 shadow-sm">
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--theme-muted-color)]">
+        {label}
+      </span>
+      <div className="rounded-2xl bg-[var(--theme-color-10)] p-2 text-[var(--theme-color)]">
+        {icon}
+      </div>
+    </div>
+    <div className="mt-3 break-words text-base font-semibold text-[var(--theme-heading-color)]">{value}</div>
+    <p className="mt-2 text-xs text-[var(--theme-muted-color)]">{hint}</p>
+  </div>
+);
+
+const RuntimeSignalRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div className="db-surface-soft flex flex-col gap-2 rounded-2xl px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+    <span className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--theme-muted-color)]">{label}</span>
+    <span className="w-full break-all text-left text-sm font-medium text-[var(--theme-heading-color)] sm:max-w-[65%] sm:text-right">
+      {value}
+    </span>
+  </div>
+);
+
+const SurfaceCard: React.FC<{
+  title: string;
+  subtitle: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}> = ({ title, subtitle, action, children }) => (
+  <div className="db-surface-card rounded-[30px] p-6">
+    <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <h3 className="text-lg font-semibold text-[var(--theme-heading-color)]">{title}</h3>
+        <p className="mt-1 text-sm text-[var(--theme-muted-color)]">{subtitle}</p>
+      </div>
+      {action}
+    </div>
+    {children}
+  </div>
+);
+
+const PostureRow: React.FC<{
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  tone: "good" | "neutral";
+}> = ({ icon, title, description, tone }) => (
+  <div
+    className={`flex items-start gap-3 rounded-[22px] border px-4 py-4 ${
+      tone === "good"
+        ? "border-emerald-200 bg-emerald-50/70 dark:border-emerald-900 dark:bg-emerald-950/20"
+        : "db-surface-soft"
+    }`}
+  >
+    <div
+      className={`mt-0.5 rounded-2xl p-2 ${
+        tone === "good"
+          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
+          : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+      }`}
+    >
+      {icon}
+    </div>
+    <div>
+      <p className="text-sm font-semibold text-slate-950 dark:text-white">{title}</p>
+      <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{description}</p>
+    </div>
+  </div>
+);
+
 const InfoRow: React.FC<{
   label: string;
   value: string | undefined;
@@ -752,12 +1718,17 @@ const InfoRow: React.FC<{
   }, [value]);
 
   return (
-    <div className="flex items-center justify-between">
-      <dt className="text-sm text-gray-500 dark:text-gray-400">{label}</dt>
-      <dd className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-        {value ?? "—"}
+  <div className="db-surface-soft flex flex-col gap-2 rounded-[20px] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+      <dt className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--theme-muted-color)]">
+        {label}
+      </dt>
+      <dd className="flex w-full min-w-0 items-start gap-2 text-left text-sm font-medium text-[var(--theme-heading-color)] sm:ml-auto sm:w-auto sm:max-w-[68%] sm:items-center sm:justify-end sm:text-right">
+        <span className="min-w-0 break-all">{value ?? "—"}</span>
         {copyable && value && (
-          <button onClick={handleCopy} className="text-gray-400 hover:text-gray-600">
+          <button
+            onClick={handleCopy}
+            className="shrink-0 rounded-lg p-1 text-slate-400 transition hover:bg-white hover:text-slate-700 dark:hover:bg-slate-950 dark:hover:text-slate-200"
+          >
             {copied ? <Check size={14} /> : <Copy size={14} />}
           </button>
         )}
@@ -770,8 +1741,8 @@ const CopyableField: React.FC<{ value: string }> = ({ value }) => {
   const [copied, setCopied] = useState(false);
 
   return (
-    <div className="flex items-center gap-2">
-      <code className="flex-1 rounded-lg bg-gray-100 px-3 py-2 text-sm dark:bg-gray-800">
+    <div className="db-surface-soft flex flex-col gap-2 rounded-[24px] p-3 sm:flex-row sm:items-center">
+      <code className="db-surface-inset flex-1 overflow-x-auto break-all rounded-2xl px-3 py-3 text-sm text-[var(--theme-heading-color)]">
         {value}
       </code>
       <button
@@ -780,7 +1751,7 @@ const CopyableField: React.FC<{ value: string }> = ({ value }) => {
           setCopied(true);
           setTimeout(() => setCopied(false), 2000);
         }}
-        className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
+        className="self-end rounded-xl p-2 text-slate-400 transition hover:bg-white hover:text-slate-700 dark:hover:bg-slate-950 dark:hover:text-slate-200 sm:self-auto"
       >
         {copied ? <Check size={16} /> : <Copy size={16} />}
       </button>

@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, HelpCircle, Settings, LogOut, ChevronDown } from "lucide-react";
+import { Menu, HelpCircle, Settings, LogOut, ChevronDown, Sun, Moon } from "lucide-react";
 import { designTokens } from "@/styles/designTokens";
 import NotificationCenter from "../NotificationCenter";
+import { useTheme } from "@/shared/hooks/useTheme";
 
 const logoCache = new Map<string, string>();
 
@@ -65,6 +66,7 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
   const location = useLocation();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  const { toggleTheme, isDark } = useTheme();
 
   // Path mapping for page titles
   const pathMaps: Record<string, Record<string, string>> = {
@@ -199,8 +201,8 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
       <div
         className="w-full fixed top-0 left-0 h-[74px] px-6 md:px-8 py-3 z-[999] border-b bg-white hidden md:flex justify-between items-center font-Outfit"
         style={{
-          borderColor: designTokens.colors.neutral[200],
-          boxShadow: designTokens.shadows.xs,
+          borderColor: "var(--theme-border-color)",
+          boxShadow: "var(--shadow-xs)",
         }}
       >
         {/* Left Section - Logo */}
@@ -221,11 +223,35 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
 
         {/* Right Section */}
         <div className="flex items-center gap-2">
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="theme-toggle-btn p-2 rounded-lg transition-all duration-300"
+            title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            style={{
+              backgroundColor: isDark ? "rgba(56, 163, 235, 0.12)" : "transparent",
+            }}
+            onMouseEnter={(e) => {
+              if (!isDark) e.currentTarget.style.backgroundColor = "var(--theme-color-10)";
+            }}
+            onMouseLeave={(e) => {
+              if (!isDark) e.currentTarget.style.backgroundColor = "transparent";
+              else e.currentTarget.style.backgroundColor = "rgba(56, 163, 235, 0.12)";
+            }}
+          >
+            {isDark ? (
+              <Sun size={20} className="transition-transform duration-300" style={{ color: "#fbbf24" }} />
+            ) : (
+              <Moon size={20} style={{ color: "var(--theme-muted-color)" }} className="transition-transform duration-300" />
+            )}
+          </button>
+
           {/* Help Button */}
           {showHelp && helpPath && (
             <Link
               to={helpPath}
               className="p-2 rounded-lg transition-colors duration-200 hover:bg-gray-100"
+              style={{ color: "var(--theme-muted-color)" }}
             >
               <HelpCircle size={20} />
             </Link>
@@ -262,10 +288,10 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
                   </>
                 ) : (
                   <>
-                    <div className="text-sm font-semibold text-gray-900">
+                    <div className="text-sm font-semibold" style={{ color: "var(--theme-heading-color)" }}>
                       {userProfile?.email || "No email"}
                     </div>
-                    <div className="text-xs text-gray-600">
+                    <div className="text-xs" style={{ color: "var(--theme-muted-color)" }}>
                       {userProfile?.firstName || userProfile?.lastName
                         ? `${userProfile.firstName || ""} ${userProfile.lastName || ""} `.trim()
                         : "No name"}
@@ -275,10 +301,8 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
               </div>
               <ChevronDown
                 size={16}
-                className="text-gray-500 transition-transform duration-200"
-                style={{
-                  transform: isProfileOpen ? "rotate(180deg)" : "rotate(0deg)",
-                }}
+                style={{ color: "var(--theme-muted-color)" }}
+                className="transition-transform duration-200"
               />
             </button>
 
@@ -286,7 +310,7 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
               <div
                 className="absolute top-full right-0 mt-2 w-64 bg-white border shadow-lg z-[1000] overflow-hidden"
                 style={{
-                  borderColor: designTokens.colors.neutral[200],
+                  borderColor: "var(--theme-border-color)",
                   borderRadius: designTokens.borderRadius.xl,
                   boxShadow: designTokens.shadows.lg,
                 }}
@@ -296,13 +320,14 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
                     <Link
                       to={profilePath}
                       className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 transition-colors duration-200"
+                      style={{ color: "var(--theme-heading-color)" }}
                       onClick={() => setIsProfileOpen(false)}
                     >
                       <Settings size={18} />
                       Account Settings
                     </Link>
 
-                    <hr style={{ borderColor: designTokens.colors.neutral[200] }} />
+                    <hr style={{ borderColor: "var(--theme-border-color)" }} />
                   </>
                 )}
 
@@ -332,8 +357,8 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
       <div
         className="w-full fixed top-0 left-0 h-[74px] px-6 py-3 z-[999] border-b bg-white flex md:hidden justify-between items-center font-Outfit"
         style={{
-          borderColor: designTokens.colors.neutral[200],
-          boxShadow: designTokens.shadows.xs,
+          borderColor: "var(--theme-border-color)",
+          boxShadow: "var(--shadow-xs)",
         }}
       >
         <div className="flex items-center gap-3">
@@ -341,14 +366,31 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
           <button
             onClick={onMobileMenuToggle}
             className="p-2 rounded-lg transition-colors duration-200 hover:bg-gray-100"
+            style={{ color: "var(--theme-muted-color)" }}
           >
             <Menu size={20} />
           </button>
-          <h1 className="font-semibold text-base text-gray-900">{activePageName}</h1>
+          <h1 className="font-semibold text-base" style={{ color: "var(--theme-heading-color)" }}>{activePageName}</h1>
         </div>
 
         {/* Mobile Actions */}
-        <div className="flex items-center gap-2">{showNotifications && <NotificationCenter />}</div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg transition-all duration-300"
+            title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            style={{
+              backgroundColor: isDark ? "rgba(56, 163, 235, 0.12)" : "transparent",
+            }}
+          >
+            {isDark ? (
+              <Sun size={18} style={{ color: "#fbbf24" }} />
+            ) : (
+              <Moon size={18} style={{ color: "var(--theme-muted-color)" }} />
+            )}
+          </button>
+          {showNotifications && <NotificationCenter />}
+        </div>
       </div>
     </>
   );

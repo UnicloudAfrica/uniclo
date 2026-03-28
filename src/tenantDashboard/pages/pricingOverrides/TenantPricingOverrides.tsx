@@ -99,7 +99,7 @@ const PRICING_TABS: PricingTabDefinition[] = [
   },
   {
     id: "managed-databases",
-    name: "Managed Databases",
+    name: "Lattice Databases",
     caption: "Dedicated VMs",
     productType: "managed_database_plan",
     icon: Database,

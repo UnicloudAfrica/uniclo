@@ -197,8 +197,8 @@ const ManagedDatabaseInventory = ({
 
   return (
     <ResourceDataExplorer
-      title="Managed database plans"
-      description="Database plan inventory available for provisioning in this region."
+      title="Lattice database plans"
+      description="Lattice database plan inventory available for provisioning in this region."
       columns={columns}
       rows={paginatedPlans as Record<string, unknown>[]}
       loading={isFetching}

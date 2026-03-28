@@ -12,7 +12,7 @@ export const productTypes = [
   { value: "ip", label: "Floating IP" },
   { value: OBJECT_STORAGE_TYPE, label: "Silo Storage" },
   { value: "volume_type", label: "Volume Type" },
-  { value: "managed_database_plan", label: "Managed Database" },
+  { value: "managed_database_plan", label: "Lattice Database" },
 ];
 
 export const typeToEndpoint: Record<string, string | null> = {

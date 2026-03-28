@@ -139,7 +139,7 @@ const AdminPageShell: React.FC<AdminPageShellProps> = ({
       <ContentTag
         className={sectionClasses}
         style={{
-          backgroundColor: contentBackground ?? designTokens.colors["neutral"]?.[50],
+          backgroundColor: contentBackground ?? "var(--theme-surface-alt)",
           ...contentStyle,
         }}
       >

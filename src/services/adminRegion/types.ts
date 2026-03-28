@@ -44,6 +44,7 @@ export interface CredentialStatus {
   status: "valid" | "invalid" | "expired" | "not_provided";
   last_verified_at?: string;
   error?: string;
+  credentials?: Record<string, string>;
 }
 
 export interface ObjectStorageConfig {

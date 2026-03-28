@@ -361,7 +361,7 @@ const RegionEdit = () => {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder="e.g., Lagos Region 1"
+                placeholder="e.g., Nigeria"
                 required
                 error={errors.name}
               />
@@ -766,7 +766,7 @@ const AZExpandedPanel: React.FC<{
             value={editName}
             onChange={(e) => setEditName(e.target.value)}
             className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
-            placeholder="e.g., Lagos Zadara AZ1"
+            placeholder="e.g., Lagos AZ1"
           />
         </div>
         <div>

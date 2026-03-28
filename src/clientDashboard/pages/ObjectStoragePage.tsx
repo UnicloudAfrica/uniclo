@@ -44,7 +44,7 @@ const ClientObjectStoragePage: React.FC = () => {
       <ClientActiveTab />
       <ClientPageShell
         title="Silo Storage"
-        description="Purchase Zadara-backed storage, review Silo usage, and refresh provisioning status."
+        description="Purchase cloud-backed storage, review Silo usage, and refresh provisioning status."
         breadcrumbs={[{ label: "Home", href: "/client-dashboard" }, { label: "Silo Storage" }]}
       >
         <ObjectStorageDashboardContent

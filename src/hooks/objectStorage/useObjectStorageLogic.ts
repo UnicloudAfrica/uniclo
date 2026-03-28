@@ -254,7 +254,7 @@ export const useObjectStorageLogic = (
   );
 
   const resetForm = useCallback(() => {
-    setFormData({ countryCode: "US" });
+    setFormData({ countryCode: "" });
     resetProfiles();
     setActiveStep(0);
     orderManagement.resetOrderState();

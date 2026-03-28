@@ -97,7 +97,7 @@ export interface PocTrialFilters {
 
 export const PRODUCT_TYPES = [
   { value: "instance", label: "Instance" },
-  { value: "managed_database", label: "Managed Database" },
+  { value: "managed_database", label: "Lattice Database" },
   { value: "object_storage", label: "Object Storage" },
   { value: "volume", label: "Volume" },
   { value: "load_balancer", label: "Load Balancer" },

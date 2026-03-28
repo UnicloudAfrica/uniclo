@@ -36,17 +36,19 @@ const SubheaderBlock: React.FC<SubheaderBlockProps> = ({
 
   return (
     <header
-      className={["bg-white border-b border-gray-200 px-6 md:px-8 py-6 space-y-4", className]
+      className={["bg-white border-b px-6 md:px-8 py-6 space-y-4", className]
         .filter(Boolean)
         .join(" ")
         .trim()}
+      style={{ borderColor: "var(--theme-border-color)" }}
     >
       {(onOpenMobileMenu || items.length > 0) && (
         <div className="flex items-center gap-4">
           {onOpenMobileMenu && (
             <button
               onClick={onOpenMobileMenu}
-              className="md:hidden -ml-2 p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
+              className="md:hidden -ml-2 p-2 hover:bg-gray-100 rounded-lg"
+              style={{ color: "var(--theme-muted-color)" }}
             >
               <Menu className="w-6 h-6" />
             </button>
@@ -65,10 +67,16 @@ const SubheaderBlock: React.FC<SubheaderBlockProps> = ({
                 </div>
               )}
               <div>
-                {title && <h1 className="text-2xl font-bold text-gray-900">{title}</h1>}
+                {title && (
+                  <h1 className="text-2xl font-bold" style={{ color: "var(--theme-heading-color)" }}>
+                    {title}
+                  </h1>
+                )}
                 {description &&
                   (typeof description === "string" ? (
-                    <p className="mt-1 text-sm text-gray-500">{description}</p>
+                    <p className="mt-1 text-sm" style={{ color: "var(--theme-muted-color)" }}>
+                      {description}
+                    </p>
                   ) : (
                     <div className="mt-1">{description}</div>
                   ))}

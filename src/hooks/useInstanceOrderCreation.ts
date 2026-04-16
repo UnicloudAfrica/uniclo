@@ -9,6 +9,25 @@ import {
   pickPreferredPaymentOption,
 } from "../utils/instanceCreationUtils";
 
+interface DrSpecConfig {
+  mode: "match" | "custom";
+  drTargetAz?: string;
+  drTargetAzLabel?: string;
+  computeInstanceId?: string;
+  computeLabel?: string;
+  pricePerVm?: number;
+  /** Computed DR monthly cost from ProtectionPlanStep */
+  drMonthlyCost?: number;
+  drVmCount?: number;
+  drVmFullPrice?: number;
+}
+
+interface ProtectionPlanConfig {
+  plan: string; // "none" | "backup_only" | "dr_standby" | "dr_replication"
+  redundancyPattern?: string; // "n_plus_1" | "one_plus_1" | "one_plus_n"
+  drSpec?: DrSpecConfig;
+}
+
 interface UseInstanceOrderCreationProps {
   configurations: Configuration[];
   isFastTrack: boolean;
@@ -17,6 +36,7 @@ interface UseInstanceOrderCreationProps {
   selectedTenantId: string;
   selectedUserId: string;
   setActiveStep: (step: number) => void;
+  protectionPlan?: ProtectionPlanConfig;
 }
 
 const getContextPrefix = (context: ApiContext) => {
@@ -33,6 +53,7 @@ export const useInstanceOrderCreation = ({
   selectedTenantId,
   selectedUserId,
   setActiveStep,
+  protectionPlan,
 }: UseInstanceOrderCreationProps) => {
   const paymentStepIndex = isFastTrack ? null : 2;
   const reviewStepIndex = isFastTrack ? 2 : 3;
@@ -125,13 +146,26 @@ export const useInstanceOrderCreation = ({
         body: body ? JSON.stringify(body) : undefined,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || `Request failed with status ${response.status}`);
+      let data: any;
+      try {
+        data = await response.json();
+      } catch {
+        if (!response.ok) {
+          throw new Error(`Server error (${response.status}). Please try again.`);
+        }
+        throw new Error("Unexpected server response. Please try again.");
       }
 
-      return data; // Usually backend returns { data: ... } or direct object
+      if (!response.ok) {
+        const message =
+          data?.message ||
+          data?.error ||
+          (data?.errors ? Object.values(data.errors).flat().join(", ") : null) ||
+          `Request failed with status ${response.status}`;
+        throw new Error(message);
+      }
+
+      return data;
     },
     [apiBaseUrl, apiPrefix, authHeaders]
   );
@@ -251,10 +285,38 @@ export const useInstanceOrderCreation = ({
       }
     }
 
+    // Attach protection plan & DR config if DR is selected
+    if (protectionPlan && protectionPlan.plan !== "none") {
+      const isDr = protectionPlan.plan === "dr_standby" || protectionPlan.plan === "dr_replication";
+      payload.protection_plan = {
+        plan: protectionPlan.plan,
+        ...(isDr && protectionPlan.redundancyPattern
+          ? { redundancy_pattern: protectionPlan.redundancyPattern }
+          : {}),
+        ...(isDr && protectionPlan.drSpec
+          ? {
+              dr_mode: protectionPlan.drSpec.mode,
+              dr_target_az: protectionPlan.drSpec.drTargetAz || undefined,
+              dr_compute_instance_id:
+                protectionPlan.drSpec.mode === "custom"
+                  ? protectionPlan.drSpec.computeInstanceId || undefined
+                  : undefined,
+              // DR pricing — computed by ProtectionPlanStep, included so backend adds to order total
+              dr_monthly_cost: protectionPlan.drSpec.drMonthlyCost || 0,
+              dr_vm_count: protectionPlan.drSpec.drVmCount || 0,
+              dr_vm_full_price: protectionPlan.drSpec.drVmFullPrice || 0,
+            }
+          : {}),
+      };
+    }
+
     return payload;
-  }, [configurations, isFastTrack, billingCountry, contextType, selectedTenantId, selectedUserId]);
+  }, [configurations, isFastTrack, billingCountry, contextType, selectedTenantId, selectedUserId, protectionPlan]);
 
   const handleCreateOrder = useCallback(async () => {
+    // Guard against double-submit (rapid clicks before pending state propagates)
+    if (createOrderAction.isPending) return;
+
     submittedFingerprintRef.current = null;
     clearOrderState();
 

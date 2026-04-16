@@ -21,6 +21,7 @@ const createConfiguration = (): Configuration => ({
   months: 12,
   compute_instance_id: "",
   compute_label: "",
+  family_code: "",
   os_image_id: "",
   os_image_label: "",
   volume_type_id: "",

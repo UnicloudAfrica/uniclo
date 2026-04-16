@@ -227,17 +227,22 @@ const RegionApprovals = () => {
     {
       icon: <Eye size={16} />,
       label: "",
-      onClick: (item: RegionApprovalRow) =>
-        (globalThis.window.location.href = `/admin-dashboard/region-approvals/${item.id}`),
+      onClick: (item: RegionApprovalRow) => {
+        const path = `/admin-dashboard/region-approvals/${encodeURIComponent(String(item.id))}`;
+        if (path.startsWith('/')) globalThis.window.location.href = path;
+      },
     },
     {
       icon: <Edit size={16} />,
       label: "",
       onClick: (item: RegionApprovalRow) => {
+        const safeId = encodeURIComponent(String(item.id));
         if (item.approval_status === "pending") {
-          globalThis.window.location.href = `/admin-dashboard/region-approvals/${item.id}/edit?action=approve`;
+          const path = `/admin-dashboard/region-approvals/${safeId}/edit?action=approve`;
+          if (path.startsWith('/')) globalThis.window.location.href = path;
         } else {
-          globalThis.window.location.href = `/admin-dashboard/region-approvals/${item.id}/edit?action=update_fee`;
+          const path = `/admin-dashboard/region-approvals/${safeId}/edit?action=update_fee`;
+          if (path.startsWith('/')) globalThis.window.location.href = path;
         }
       },
     },

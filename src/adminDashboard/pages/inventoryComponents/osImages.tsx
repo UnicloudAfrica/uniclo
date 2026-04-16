@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { HardDrive, ShieldCheck, AlertTriangle, Pencil, Trash2, Plus } from "lucide-react";
+import { HardDrive, ShieldCheck, AlertTriangle, Pencil, Trash2, Plus, Globe, MessageSquare } from "lucide-react";
 import { useFetchOsImages } from "@/hooks/adminHooks/os-imageHooks";
+import { useFetchRegions } from "@/hooks/adminHooks/regionHooks";
 import ResourceDataExplorer from "../../components/ResourceDataExplorer";
 import AddOSImageModal from "./osSubs/addOs";
 import DeleteOS from "./osSubs/deleteOS";
 import EditOS from "./osSubs/editOs";
+import ImageSyncPanel from "./osSubs/ImageSyncPanel";
+import ImageDiscoveryPanel from "./osSubs/ImageDiscoveryPanel";
+import ImageRequestsDashboard from "./osSubs/ImageRequestsDashboard";
 import { ModernButton } from "@/shared/components/ui";
 
 const toTitleCase = (value = "") =>
@@ -131,6 +135,12 @@ const OSImages = ({
   const [isEditOSImageModalOpen, setIsEditOSImageModalOpen] = useState(false);
   const [isDeleteOSImageModalOpen, setIsDeleteOSImageModalOpen] = useState(false);
   const [selectedOSImage, setSelectedOSImage] = useState<Record<string, unknown> | null>(null);
+  const [activeSubTab, setActiveSubTab] = useState<"catalog" | "discovery" | "requests">("catalog");
+  const { data: regionsData } = useFetchRegions();
+  const allRegionCodes = useMemo(
+    () => (Array.isArray(regionsData) ? regionsData.map((r: any) => r.code as string) : []),
+    [regionsData]
+  );
 
   useEffect(() => {
     setPage(1);
@@ -328,27 +338,69 @@ const OSImages = ({
 
   return (
     <>
-      <ResourceDataExplorer
-        title="Operating system templates"
-        description="Curate and maintain the golden images available to provisioning flows across your regions."
-        columns={columns as never}
-        rows={rows as Record<string, unknown>[]}
-        loading={isFetching}
-        page={(meta?.current_page as number) ?? page}
-        perPage={(meta?.per_page as number) ?? perPage}
-        total={(total as number) ?? 0}
-        meta={meta as Record<string, unknown>}
-        onPageChange={setPage}
-        onPerPageChange={(next: number) => {
-          setPerPage(next);
-          setPage(1);
-        }}
-        searchValue={search}
-        onSearch={handleSearch}
-        toolbarSlot={primaryAction}
-        emptyState={emptyState}
-        highlight
-      />
+      {selectedRegion && (
+        <div className="mb-4">
+          <ImageSyncPanel region={selectedRegion} provider={selectedProvider} />
+        </div>
+      )}
+
+      {/* Sub-tabs: Catalog / Discovery / Requests */}
+      <div className="mb-4 flex gap-1 rounded-xl bg-slate-100/80 p-1">
+        {([
+          { id: "catalog" as const, label: "Catalog", icon: HardDrive },
+          { id: "discovery" as const, label: "Discovery", icon: Globe },
+          { id: "requests" as const, label: "Requests", icon: MessageSquare },
+        ]).map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveSubTab(tab.id)}
+            className={[
+              "flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition",
+              activeSubTab === tab.id
+                ? "bg-white text-slate-800 shadow-sm"
+                : "text-slate-500 hover:text-slate-700",
+            ].join(" ")}
+          >
+            <tab.icon className="h-3.5 w-3.5" />
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {activeSubTab === "catalog" && (
+        <>
+          <ResourceDataExplorer
+            title="Operating system templates"
+            description="Curate and maintain the golden images available to provisioning flows across your regions."
+            columns={columns as never}
+            rows={rows as Record<string, unknown>[]}
+            loading={isFetching}
+            page={(meta?.current_page as number) ?? page}
+            perPage={(meta?.per_page as number) ?? perPage}
+            total={(total as number) ?? 0}
+            meta={meta as Record<string, unknown>}
+            onPageChange={setPage}
+            onPerPageChange={(next: number) => {
+              setPerPage(next);
+              setPage(1);
+            }}
+            searchValue={search}
+            onSearch={handleSearch}
+            toolbarSlot={primaryAction}
+            emptyState={emptyState}
+            highlight
+          />
+        </>
+      )}
+
+      {activeSubTab === "discovery" && (
+        <ImageDiscoveryPanel regions={allRegionCodes} />
+      )}
+
+      {activeSubTab === "requests" && (
+        <ImageRequestsDashboard />
+      )}
 
       <AddOSImageModal
         isOpen={isAddOSImageModalOpen}

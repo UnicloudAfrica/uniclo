@@ -147,6 +147,11 @@ export {
   useDeleteManagedDatabase,
   useSyncManagedDatabases,
   managedDatabaseKeys,
+  useFetchDatabaseOperations,
+  useFetchDatabaseOperation,
+  useRotateDatabaseCredentials,
+  useRetryDatabaseOperation,
+  useReconcileDatabaseOperation,
 } from "./managedDatabaseHooks";
 
 // Integrations (Protection Services)
@@ -184,9 +189,79 @@ export {
 
 // Kernel Compatibility
 export {
+  useReplicationPairs,
+  useActiveActiveReadiness,
+  useCertifyActiveActive,
   useKernelCompatibilityCheck,
   useKernelCompatibilityMatrix,
   useMigrationPreflight,
+  useUpdateReplicationSettings,
+  useExportSlaReport,
+} from "./integrationHooks";
+
+// DR Drill Scheduling
+export {
+  useConfigureDrillSchedule,
+  useDisableDrillSchedule,
+} from "./integrationHooks";
+
+// PITR (Point-in-Time Recovery)
+export {
+  usePitrRange,
+  useRestorePitr,
+} from "./integrationHooks";
+export type { PitrRange } from "./integrationHooks";
+
+// Ransomware Detection
+export {
+  useRansomwareDashboard,
+  useRansomwareScans,
+  useAcknowledgeRansomware,
+  useRecoverFromRansomware,
+} from "./integrationHooks";
+export type { RansomwareDashboardData, RansomwareScan } from "./integrationHooks";
+
+// Hypervisor Management
+export {
+  useDetectHypervisor,
+  useHypervisorVMs,
+  useHypervisorVM,
+  useHypervisorVMAction,
+  useEnableHypervisorCBT,
+  useHypervisorCBTStatus,
+  useMigrateHypervisorVM,
+  useHypervisorMigrationProgress,
+} from "./integrationHooks";
+export type {
+  HypervisorDetection,
+  HypervisorVM,
+  HypervisorMigrationProgress,
+} from "./integrationHooks";
+
+// Batch Migrations
+export {
+  useBatchMigrations,
+  useCreateBatchMigration,
+  useStartBatchMigration,
+  useBatchMigration,
+  usePauseBatchMigration,
+  useResumeBatchMigration,
+  useCancelBatchMigration,
+  useRevalidateBatchMigration,
+} from "./integrationHooks";
+
+// Database Replication Groups
+export {
+  useDatabaseReplicationGroups,
+  useCreateDatabaseReplicationGroup,
+  useDatabaseReplicationGroup,
+  useDeleteDatabaseReplicationGroup,
+  useAddReplicationTarget,
+  usePauseDatabaseReplication,
+  useResumeDatabaseReplication,
+  useSyncDatabaseReplication,
+  useTestDatabaseConnection,
+  usePreflightDatabaseReplication,
 } from "./integrationHooks";
 
 // Re-export factory and types for custom resource hooks

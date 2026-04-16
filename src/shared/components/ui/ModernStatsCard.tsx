@@ -318,8 +318,8 @@ const ModernStatsCard = ({
   const iconContainerStyles: CSSProperties = {
     padding: "8px",
     borderRadius: designTokens.borderRadius.lg,
-    backgroundColor: colors[color].bg,
-    border: `1px solid ${colors[color].border}`,
+    backgroundColor: (colors[color as keyof typeof colors] ?? colors.info).bg,
+    border: `1px solid ${(colors[color as keyof typeof colors] ?? colors.info).border}`,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -449,7 +449,7 @@ const ModernStatsCard = ({
             {isValidElement(icon)
               ? cloneElement(icon, {
                   size: sizes[size as keyof typeof sizes].iconSize,
-                  color: colors[color].icon,
+                  color: (colors[color as keyof typeof colors] ?? colors.info).icon,
                 })
               : icon}
           </div>

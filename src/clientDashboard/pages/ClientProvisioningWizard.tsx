@@ -1,10 +1,12 @@
-import React, { useCallback, useMemo, useEffect } from "react";
+import React, { useCallback, useMemo, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import ConfigurationListStep from "@/shared/components/instance-wizard/ConfigurationListStep";
 import PaymentStep from "@/shared/components/instance-wizard/PaymentStep";
 import InstanceSummaryCard from "@/shared/components/instance-wizard/InstanceSummaryCard";
 import ReviewSubmitStep from "@/shared/components/instance-wizard/ReviewSubmitStep";
 import OrderSuccessStep from "@/shared/components/instance-wizard/OrderSuccessStep";
+import ProtectionPlanStep from "@/shared/components/instance-wizard/ProtectionPlanStep";
+import type { ProtectionPlan, RedundancyPattern } from "@/shared/components/instance-wizard/ProtectionPlanStep";
 import {
   ProvisioningWizardLayout,
   WorkflowSelectionStep,
@@ -49,6 +51,8 @@ import {
 // ═══════════════════════════════════════════════════════════════════
 
 const ClientProvisioningWizard: React.FC = () => {
+  const [selectedProtectionPlan, setSelectedProtectionPlan] = useState<ProtectionPlan>("backup_only");
+  const [selectedRedundancy, setSelectedRedundancy] = useState<RedundancyPattern>("n_plus_1");
   const navigate = useNavigate();
   const location = useLocation();
   const logic = useClientProvisioningLogic();
@@ -236,6 +240,10 @@ const ClientProvisioningWizard: React.FC = () => {
     () => steps.findIndex((step) => step.id === "services"),
     [steps]
   );
+  const protectionStepIndex = useMemo(
+    () => steps.findIndex((step) => step.id === "protection"),
+    [steps]
+  );
   const paymentStepIndex = useMemo(() => steps.findIndex((step) => step.id === "payment"), [steps]);
   const successStepIndex = useMemo(() => steps.findIndex((step) => step.id === "success"), [steps]);
   const selectedProjectId = configurations[0]?.project_id;
@@ -333,7 +341,7 @@ const ClientProvisioningWizard: React.FC = () => {
               summaryDisplayCurrency={summaryDisplayCurrency}
               taxLabelSuffix={taxLabelSuffix}
               backendPricingData={backendPricingData}
-              onBack={() => setActiveStep(paymentStepIndex)}
+              onBack={() => setActiveStep(paymentStepIndex >= 0 ? paymentStepIndex : (protectionStepIndex >= 0 ? protectionStepIndex : servicesStepIndex))}
               onEditConfiguration={() => setActiveStep(servicesStepIndex)}
               onConfirm={() => setActiveStep(successStepIndex)}
               isSubmitting={isSubmitting}
@@ -411,6 +419,24 @@ const ClientProvisioningWizard: React.FC = () => {
               />
             )}
 
+            {currentStep?.id === "protection" && (
+              <ProtectionPlanStep
+                selectedPlan={selectedProtectionPlan}
+                onPlanChange={setSelectedProtectionPlan}
+                onBack={() => setActiveStep(servicesStepIndex)}
+                onContinue={() => setActiveStep(paymentStepIndex >= 0 ? paymentStepIndex : activeStep + 1)}
+                instanceCount={configurations.reduce((sum, c: Record<string, unknown>) => sum + (Number(c.instance_count) || 1), 0)}
+                storageGb={configurations.reduce((sum, c: Record<string, unknown>) => sum + (Number(c.storage_size_gb) || 50), 0) / Math.max(configurations.length, 1)}
+                computePricePerVm={(() => { const n = configurations.reduce((s, c: Record<string, unknown>) => s + (Number(c.instance_count) || 1), 0); return n > 0 ? summarySubtotalValue / n : 0; })()}
+                currency={summaryDisplayCurrency || "NGN"}
+                selectedRedundancy={selectedRedundancy}
+                onRedundancyChange={setSelectedRedundancy}
+                resourceLabel="Cube-Instance"
+                configurations={configurations as { compute_label?: string; os_image_label?: string; storage_size_gb?: number | string; compute_instance_id?: string; region?: string }[]}
+                billingCountry={billingCountry}
+              />
+            )}
+
             {currentStep?.id === "payment" && (
               <PaymentStep
                 submissionResult={submissionResult}
@@ -449,6 +475,8 @@ const ClientProvisioningWizard: React.FC = () => {
             summaryGatewayFeesValue={summaryGatewayFeesValue}
             summaryGrandTotalValue={summaryGrandTotalValue}
             summaryDisplayCurrency={summaryDisplayCurrency}
+            protectionPlan={selectedProtectionPlan}
+            redundancyPattern={selectedRedundancy}
           />
         }
       />

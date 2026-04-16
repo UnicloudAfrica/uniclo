@@ -17,6 +17,8 @@ export default defineConfig({
       '@/types': path.resolve(__dirname, './src/types'),
       '@/services': path.resolve(__dirname, './src/services'),
       '@/config': path.resolve(__dirname, './src/config'),
+      '@/docs': path.resolve(__dirname, './src/docs'),
+      '@/lib': path.resolve(__dirname, './src/lib'),
     },
   },
   server: {
@@ -25,7 +27,7 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    sourcemap: false,
   },
   optimizeDeps: {
     esbuildOptions: {

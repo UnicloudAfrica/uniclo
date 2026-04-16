@@ -38,7 +38,25 @@ const asPricingBreakdownEntries = (value: unknown): Record<string, any>[] => {
   return [];
 };
 
-export const useAdminCreateInstanceLogic = () => {
+interface AdminCreateInstanceLogicOptions {
+  protectionPlan?: {
+    plan: string;
+    redundancyPattern?: string;
+    drSpec?: {
+      mode: "match" | "custom";
+      drTargetAz?: string;
+      drTargetAzLabel?: string;
+      computeInstanceId?: string;
+      computeLabel?: string;
+      pricePerVm?: number;
+      drMonthlyCost?: number;
+      drVmCount?: number;
+      drVmFullPrice?: number;
+    };
+  };
+}
+
+export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOptions) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialMode = searchParams.get("mode") === "fast-track" ? "fast-track" : "standard";
   const [mode, setMode] = useState(initialMode);
@@ -97,6 +115,7 @@ export const useAdminCreateInstanceLogic = () => {
     billingCountry,
     isFastTrack,
     setActiveStep,
+    protectionPlan: options?.protectionPlan,
   });
 
   const isPaymentSuccessful = useMemo(() => {

@@ -47,6 +47,7 @@ interface PricingResource {
   memory_gb?: number | string;
   config?: { vcpus?: number | string; memory_mb?: number | string; };
   configuration?: { vcpus?: number | string; };
+  family_code?: string;
   product?: PricingResource;
   pricing?: { effective?: PricingEffect };
 }
@@ -370,6 +371,7 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
     tenantId: pricingTenantId || "",
     provider: selectedAzProvider || "",
     availabilityZone: cfg.availability_zone || "",
+    withProduct: true,
   };
   const { data: computeInstancesByRegion } = useFetchProductPricing(
     selectedRegion,
@@ -417,7 +419,8 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
           if (memoryGb) labelParts.push(`${memoryGb} GB RAM`);
           const priceSuffix = formatPriceSuffix(item);
           if (priceSuffix) labelParts.push(priceSuffix);
-          return { value: String(value), label: labelParts.join(" • ") };
+          const familyCode = product?.family_code || item?.family_code || "";
+          return { value: String(value), label: labelParts.join(" • "), raw: { family_code: familyCode } };
         })
         .filter((item: Option | null): item is Option => Boolean(item));
     }

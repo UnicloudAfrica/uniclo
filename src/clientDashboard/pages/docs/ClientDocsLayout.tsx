@@ -1,14 +1,24 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
-import ClientDocsSidebar from "./ClientDocsSidebar";
+import ClientPageShell from "../../components/ClientPageShell";
+import ConfigDocsSidebar from "@/docs/renderer/ConfigDocsSidebar";
+import { clientDocSections } from "@/docs/config/clientDocs";
 
 const ClientDocsLayout: React.FC = () => (
-  <div className="flex min-h-[calc(100vh-64px)]">
-    <ClientDocsSidebar />
-    <div className="flex-1 overflow-y-auto p-6 md:p-8" style={{ backgroundColor: "var(--theme-surface-alt, #f9fafb)" }}>
-      <Outlet />
+  <ClientPageShell title="Documentation" disableContentPadding>
+    <div className="flex">
+      <div className="sticky top-0 self-start h-[calc(100vh-140px)] overflow-y-auto">
+        <ConfigDocsSidebar
+          sections={clientDocSections}
+          baseHref="/client-dashboard/docs"
+          label="Client Docs"
+        />
+      </div>
+      <div className="flex-1 p-6 md:p-8 min-h-[60vh]">
+        <Outlet />
+      </div>
     </div>
-  </div>
+  </ClientPageShell>
 );
 
 export default ClientDocsLayout;

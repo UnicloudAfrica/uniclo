@@ -30,6 +30,8 @@ import {
   ChevronRight,
   Lock,
   ShieldCheck,
+  ExternalLink,
+  BarChart3,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -52,6 +54,7 @@ import {
 import { useInstanceDetails } from "../../hooks/useInstanceDetails";
 import { useInstanceBroadcasting } from "@/hooks/useInstanceBroadcasting";
 import ResourceProtectionTab from "@/shared/components/integrations/ResourceProtectionTab";
+import InstanceResizeModal from "@/shared/components/instances/InstanceResizeModal";
 import ToastUtils from "@/utils/toastUtil";
 
 // --- Types ---
@@ -234,11 +237,17 @@ const UnifiedInstanceDetails: React.FC<{ identifier: string }> = ({ identifier }
 
   const [activeTab, setActiveTab] = useState("overview");
   const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const [showResizeModal, setShowResizeModal] = useState(false);
 
   const instance = details?.instance;
   const status = instance?.status || "unknown";
 
   const handleAction = async (actionKey: string) => {
+    if (actionKey === "resize") {
+      setShowResizeModal(true);
+      return;
+    }
+
     const actionConfig = ACTION_LIBRARY[actionKey];
     if (!actionConfig) return;
 
@@ -592,6 +601,35 @@ const UnifiedInstanceDetails: React.FC<{ identifier: string }> = ({ identifier }
                   dataKey="cpu"
                   color="rgb(var(--theme-success-500))"
                 />
+                {/* CuberWatch External Links */}
+                <div className="col-span-full">
+                  <div className="rounded-xl border border-gray-200 bg-white p-4">
+                    <h4 className="mb-3 text-sm font-semibold text-gray-700">Advanced Monitoring</h4>
+                    <div className="flex flex-wrap gap-3">
+                      <a
+                        href={`${(import.meta as any).env?.VITE_CUBERWATCH_URL || "https://app.cuberwatch.com"}/hosts/${instance?.id || ""}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 rounded-lg border border-teal-300 bg-teal-50 px-4 py-2 text-sm font-medium text-teal-700 transition-colors hover:bg-teal-100"
+                      >
+                        <Activity className="h-4 w-4" />
+                        Open Full Dashboard
+                        <ExternalLink className="h-3 w-3 text-teal-400" />
+                      </a>
+                      <a
+                        href={`${(import.meta as any).env?.VITE_CUBERWATCH_URL || "https://app.cuberwatch.com"}/grafana/d/host-detail?var-instance=${instance?.ip_address || ""}:9100`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-100"
+                      >
+                        <BarChart3 className="h-4 w-4" />
+                        View in Grafana
+                        <ExternalLink className="h-3 w-3 text-amber-400" />
+                      </a>
+                    </div>
+                    <p className="mt-2 text-[11px] text-gray-400">Powered by CuberWatch. Detailed metrics, custom dashboards, and alerting.</p>
+                  </div>
+                </div>
               </motion.div>
             )}
 
@@ -807,6 +845,15 @@ const UnifiedInstanceDetails: React.FC<{ identifier: string }> = ({ identifier }
           </AnimatePresence>
         </div>
       </div>
+
+      <InstanceResizeModal
+        isOpen={showResizeModal}
+        onClose={() => setShowResizeModal(false)}
+        instanceId={Number(instance?.id) || 0}
+        instanceName={instance?.name || identifier}
+        currentStatus={status}
+        onSuccess={() => refetch()}
+      />
     </div>
   );
 };

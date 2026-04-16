@@ -30,26 +30,29 @@ const CreateSubnetModal: React.FC<CreateSubnetModalProps> = ({
   const [subnetName, setSubnetName] = useState("");
   const [cidrBlock, setCidrBlock] = useState("");
   const [vpcId, setVpcId] = useState("");
+  const [attempted, setAttempted] = useState(false);
 
   const handleSubmit = () => {
-    if (!subnetName || !cidrBlock || !vpcId) return;
-    onCreate(subnetName, cidrBlock, vpcId);
+    setAttempted(true);
+    if (!subnetName.trim() || !cidrBlock.trim() || !vpcId) return;
+    onCreate(subnetName.trim(), cidrBlock.trim(), vpcId);
   };
 
   const handleClose = () => {
     setSubnetName("");
     setCidrBlock("");
     setVpcId("");
+    setAttempted(false);
     onClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="create-subnet-title">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-          <h2 className="text-lg font-bold text-gray-900">Create New Subnet</h2>
+          <h2 id="create-subnet-title" className="text-lg font-bold text-gray-900">Create New Subnet</h2>
           <button onClick={handleClose} className="text-gray-400 hover:text-gray-600">
             <Plus className="w-5 h-5 rotate-45" />
           </button>
@@ -64,8 +67,11 @@ const CreateSubnetModal: React.FC<CreateSubnetModalProps> = ({
               value={subnetName}
               onChange={(e) => setSubnetName(e.target.value)}
               placeholder="e.g. production-public-1"
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none ${attempted && !subnetName.trim() ? "border-red-400" : "border-gray-200"}`}
             />
+            {attempted && !subnetName.trim() && (
+              <p className="mt-1 text-xs text-red-500">Subnet name is required.</p>
+            )}
           </div>
           <div>
             <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">
@@ -75,7 +81,7 @@ const CreateSubnetModal: React.FC<CreateSubnetModalProps> = ({
               required
               value={vpcId}
               onChange={(e) => setVpcId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none ${attempted && !vpcId ? "border-red-400" : "border-gray-200"}`}
             >
               <option value="">Select a VPC</option>
               {vpcs.map((vpc) => (
@@ -84,6 +90,9 @@ const CreateSubnetModal: React.FC<CreateSubnetModalProps> = ({
                 </option>
               ))}
             </select>
+            {attempted && !vpcId && (
+              <p className="mt-1 text-xs text-red-500">Please select a VPC.</p>
+            )}
           </div>
           <div>
             <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">
@@ -95,8 +104,11 @@ const CreateSubnetModal: React.FC<CreateSubnetModalProps> = ({
               value={cidrBlock}
               onChange={(e) => setCidrBlock(e.target.value)}
               placeholder="10.0.1.0/24"
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none font-mono"
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none font-mono ${attempted && !cidrBlock.trim() ? "border-red-400" : "border-gray-200"}`}
             />
+            {attempted && !cidrBlock.trim() && (
+              <p className="mt-1 text-xs text-red-500">CIDR block is required.</p>
+            )}
             <p className="mt-1 text-[10px] text-gray-400">
               Must be a subset of the VPC's CIDR range.
             </p>

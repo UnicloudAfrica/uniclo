@@ -1,9 +1,11 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import ConfigurationListStep from "@/shared/components/instance-wizard/ConfigurationListStep";
 import PaymentStep from "@/shared/components/instance-wizard/PaymentStep";
 import InstanceSummaryCard from "@/shared/components/instance-wizard/InstanceSummaryCard";
 import ReviewSubmitStep from "@/shared/components/instance-wizard/ReviewSubmitStep";
 import OrderSuccessStep from "@/shared/components/instance-wizard/OrderSuccessStep";
+import ProtectionPlanStep from "@/shared/components/instance-wizard/ProtectionPlanStep";
+import type { ProtectionPlan, RedundancyPattern } from "@/shared/components/instance-wizard/ProtectionPlanStep";
 import { useTenantProvisioningLogic } from "@/hooks/useTenantProvisioningLogic";
 import { useFetchTenantProjects, useTenantProjectStatus } from "@/hooks/tenantHooks/projectHooks";
 import { useFetchSecurityGroups } from "@/shared/hooks/resources/securityGroupHooks";
@@ -48,6 +50,8 @@ import {
 // ═══════════════════════════════════════════════════════════════════
 
 const TenantProvisioningWizard: React.FC = () => {
+  const [selectedProtectionPlan, setSelectedProtectionPlan] = useState<ProtectionPlan>("backup_only");
+  const [selectedRedundancy, setSelectedRedundancy] = useState<RedundancyPattern>("n_plus_1");
   const logic = useTenantProvisioningLogic();
 
   const {
@@ -160,6 +164,10 @@ const TenantProvisioningWizard: React.FC = () => {
   const currentStep = steps[activeStep];
   const servicesStepIndex = useMemo(
     () => steps.findIndex((step) => step.id === "services"),
+    [steps]
+  );
+  const protectionStepIndex = useMemo(
+    () => steps.findIndex((step) => step.id === "protection"),
     [steps]
   );
   const paymentStepIndex = useMemo(() => steps.findIndex((step) => step.id === "payment"), [steps]);
@@ -350,7 +358,7 @@ const TenantProvisioningWizard: React.FC = () => {
               summaryDisplayCurrency={summaryDisplayCurrency}
               taxLabelSuffix={taxLabelSuffix}
               backendPricingData={backendPricingData}
-              onBack={() => setActiveStep(isFastTrack ? servicesStepIndex : paymentStepIndex)}
+              onBack={() => setActiveStep(isFastTrack ? (protectionStepIndex >= 0 ? protectionStepIndex : servicesStepIndex) : paymentStepIndex)}
               onEditConfiguration={() => setActiveStep(servicesStepIndex)}
               onConfirm={() => setActiveStep(successStepIndex)}
               isSubmitting={isSubmitting}
@@ -406,7 +414,7 @@ const TenantProvisioningWizard: React.FC = () => {
                 onRemoveVolume={removeAdditionalVolume}
                 onUpdateVolume={updateAdditionalVolume}
                 onBack={() => setActiveStep(0)}
-                onSubmit={handleCreateOrder}
+                onSubmit={() => setActiveStep(protectionStepIndex >= 0 ? protectionStepIndex : servicesStepIndex + 1)}
                 submitErrorMessage={submissionErrorMessage}
                 useProjectsHook={useFetchTenantProjects as (...args: unknown[]) => unknown}
                 useSecurityGroupsHook={
@@ -425,6 +433,24 @@ const TenantProvisioningWizard: React.FC = () => {
                 lockAssignmentScope
                 membershipTenantId={selectedTenantId}
                 membershipUserId={selectedUserId}
+              />
+            )}
+
+            {currentStep?.id === "protection" && (
+              <ProtectionPlanStep
+                selectedPlan={selectedProtectionPlan}
+                onPlanChange={setSelectedProtectionPlan}
+                onBack={() => setActiveStep(servicesStepIndex)}
+                onContinue={handleCreateOrder}
+                instanceCount={configurations.reduce((sum, c: Record<string, unknown>) => sum + (Number(c.instance_count) || 1), 0)}
+                storageGb={configurations.reduce((sum, c: Record<string, unknown>) => sum + (Number(c.storage_size_gb) || 50), 0) / Math.max(configurations.length, 1)}
+                computePricePerVm={(() => { const n = configurations.reduce((s, c: Record<string, unknown>) => s + (Number(c.instance_count) || 1), 0); return n > 0 ? summarySubtotalValue / n : 0; })()}
+                currency={summaryDisplayCurrency || "NGN"}
+                selectedRedundancy={selectedRedundancy}
+                onRedundancyChange={setSelectedRedundancy}
+                resourceLabel="Cube-Instance"
+                configurations={configurations as { compute_label?: string; os_image_label?: string; storage_size_gb?: number | string; compute_instance_id?: string; region?: string }[]}
+                billingCountry={billingCountry}
               />
             )}
 
@@ -468,6 +494,8 @@ const TenantProvisioningWizard: React.FC = () => {
               summaryGatewayFeesValue={summaryGatewayFeesValue}
               summaryGrandTotalValue={summaryGrandTotalValue}
               summaryDisplayCurrency={summaryDisplayCurrency}
+              protectionPlan={selectedProtectionPlan}
+              redundancyPattern={selectedRedundancy}
             />
 
             {hasFastTrackAccess && configurations.length > 0 && (

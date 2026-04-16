@@ -142,6 +142,7 @@ const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
   }, [currentPrefix, fetchObjects, bucketName]);
 
   const navigateToFolder = (prefix: string) => {
+    if (prefix.includes('..')) return;
     setCurrentPrefix(prefix);
   };
 

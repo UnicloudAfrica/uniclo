@@ -133,7 +133,8 @@ const fetchProductCharges = async (
   tenantId: string | number = "",
   perPage: string | number = "",
   provider: string = "",
-  availabilityZone: string = ""
+  availabilityZone: string = "",
+  withProduct: boolean = false
 ): Promise<ProductCharge[]> => {
   const params = new URLSearchParams();
   params.append("region", region || "");
@@ -157,6 +158,9 @@ const fetchProductCharges = async (
   }
   if (availabilityZone) {
     params.append("availability_zone", availabilityZone);
+  }
+  if (withProduct) {
+    params.append("with_product", "1");
   }
   const res: ApiResponse<any> = await silentApi("GET", `/product-pricing?${params.toString()}`);
   return res.data;
@@ -426,6 +430,7 @@ export const useFetchProductPricing = (
     perPage = "",
     provider = "",
     availabilityZone = "",
+    withProduct = false,
     ...queryOptions
   } = options;
   const pageSize = Number(perPage);
@@ -441,6 +446,7 @@ export const useFetchProductPricing = (
       resolvedPerPage || "",
       provider || "",
       availabilityZone || "",
+      withProduct ? "with_product" : "",
     ],
     queryFn: () =>
       fetchProductCharges(
@@ -450,7 +456,8 @@ export const useFetchProductPricing = (
         tenantId as string | number,
         resolvedPerPage,
         provider as string,
-        availabilityZone as string
+        availabilityZone as string,
+        withProduct as boolean
       ),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,

@@ -8,7 +8,7 @@
  * Responsive: full-width on mobile, centered modal on desktop.
  */
 import React, { useState } from "react";
-import { X, RefreshCw, ArrowRightLeft, ArrowLeftRight, Info, MapPin, AlertTriangle, Server } from "lucide-react";
+import { X, RefreshCw, ArrowRightLeft, ArrowLeftRight, Info, MapPin, AlertTriangle, Server, Webhook } from "lucide-react";
 import { ModernButton } from "../ui";
 import { useFetchRegions } from "@/shared/hooks/resources/regionHooks";
 import { formatRegionName } from "@/utils/regionUtils";
@@ -36,7 +36,21 @@ interface ReplicationConfig {
   target_region?: string;
   mode?: string;
   workload_profile?: string;
+  webhook_url?: string;
+  webhook_events?: string[];
 }
+
+const REPLICATION_WEBHOOK_EVENTS = [
+  { value: "replication.sync_completed", label: "Sync Completed" },
+  { value: "replication.sync_failed", label: "Sync Failed" },
+  { value: "replication.rpo_breach", label: "RPO Breach" },
+  { value: "replication.failover_completed", label: "Failover Completed" },
+  { value: "replication.failback_completed", label: "Failback Completed" },
+  { value: "replication.degraded", label: "Degraded" },
+  { value: "replication.restored", label: "Restored" },
+  { value: "replication.conflict_detected", label: "Conflict Detected" },
+  { value: "replication.quorum_lost", label: "Quorum Lost" },
+];
 
 const ReplicationConfigModal: React.FC<ReplicationConfigModalProps> = ({
   isOpen,
@@ -53,6 +67,8 @@ const ReplicationConfigModal: React.FC<ReplicationConfigModalProps> = ({
   const [targetRegion, setTargetRegion] = useState("");
   const [mode, setMode] = useState<ReplicationMode>(ReplicationMode.ActivePassive);
   const [workloadProfile, setWorkloadProfile] = useState<WorkloadProfile>(WorkloadProfile.StatelessApp);
+  const [webhookUrl, setWebhookUrl] = useState("");
+  const [webhookEvents, setWebhookEvents] = useState<string[]>([]);
 
   const { data: regions = [], isLoading: loadingRegions } = useFetchRegions(
     undefined,
@@ -93,6 +109,13 @@ const ReplicationConfigModal: React.FC<ReplicationConfigModalProps> = ({
 
     if (targetRegion) {
       config.target_region = targetRegion;
+    }
+
+    if (webhookUrl) {
+      config.webhook_url = webhookUrl;
+    }
+    if (webhookEvents.length > 0) {
+      config.webhook_events = webhookEvents;
     }
 
     onSubmit(config);
@@ -300,6 +323,56 @@ const ReplicationConfigModal: React.FC<ReplicationConfigModalProps> = ({
             </select>
             <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
               Maximum acceptable data loss window in the event of a disaster.
+            </p>
+          </div>
+
+          {/* Webhook Notifications */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <div className="flex items-center gap-1.5">
+                <Webhook size={14} />
+                Webhook Notifications
+              </div>
+            </label>
+            <input
+              type="url"
+              value={webhookUrl}
+              onChange={(e) => setWebhookUrl(e.target.value)}
+              placeholder="https://your-app.com/webhooks/replication"
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 font-mono text-sm text-gray-900 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+            />
+            <div className="mt-3">
+              <span className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                Subscribe to events
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {REPLICATION_WEBHOOK_EVENTS.map((evt) => {
+                  const selected = webhookEvents.includes(evt.value);
+                  return (
+                    <button
+                      key={evt.value}
+                      type="button"
+                      onClick={() =>
+                        setWebhookEvents((prev) =>
+                          selected
+                            ? prev.filter((e) => e !== evt.value)
+                            : [...prev, evt.value],
+                        )
+                      }
+                      className={`rounded-full border px-3 py-1 text-xs font-medium transition-all ${
+                        selected
+                          ? "border-purple-500 bg-purple-50 text-purple-700 ring-1 ring-purple-500 dark:border-purple-400 dark:bg-purple-900/20 dark:text-purple-300"
+                          : "border-gray-200 text-gray-600 hover:border-gray-300 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-600"
+                      }`}
+                    >
+                      {evt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+              Optional. Get per-policy webhook notifications for replication events.
             </p>
           </div>
 

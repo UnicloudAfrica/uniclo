@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import useAdminAuthStore from "@/stores/adminAuthStore";
-import useTenantAuthStore from "@/stores/tenantAuthStore";
-import useClientAuthStore from "@/stores/clientAuthStore";
+import useAuthStore from "@/stores/authStore";
 import { toNumber } from "@/utils/instanceCreationUtils";
 import logger from "@/utils/logger";
 
@@ -26,6 +24,7 @@ import {
   resolveCardIdentifier,
 } from "./paymentUtils";
 import SavedCardSection from "./SavedCardSection";
+import WalletPaymentSection from "./WalletPaymentSection";
 import OrderItemsSection from "./OrderItemsSection";
 import PaymentActions from "./PaymentActions";
 import PaymentMethodSelector from "./PaymentMethodSelector";
@@ -55,6 +54,8 @@ const PaymentModal = ({
   paymentOptions: propPaymentOptions,
   publicKey: propPublicKey,
   pricingSummary: propPricingSummary,
+  enableWalletPayment = false,
+  walletBalance: propWalletBalance,
 }: PaymentModalProps) => {
   // Auto-detect context from URL
   const context = useMemo(() => detectApiContext(), []);
@@ -77,31 +78,10 @@ const PaymentModal = ({
     };
   }, [context]);
 
-  const adminIsAuthenticated = useAdminAuthStore((state) => state.isAuthenticated);
-  const adminGetAuthHeaders = useAdminAuthStore((state) => state.getAuthHeaders);
-  const adminUser = useAdminAuthStore((state) => state.user);
-  const adminUserEmail = useAdminAuthStore((state) => state.userEmail);
-
-  const tenantIsAuthenticated = useTenantAuthStore((state) => state.isAuthenticated);
-  const tenantGetAuthHeaders = useTenantAuthStore((state) => state.getAuthHeaders);
-  const tenantUser = useTenantAuthStore((state) => state.user);
-
-  const clientIsAuthenticated = useClientAuthStore((state) => state.isAuthenticated);
-  const clientGetAuthHeaders = useClientAuthStore((state) => state.getAuthHeaders);
-  const clientUser = useClientAuthStore((state) => state.user);
-
-  const isAuthenticated =
-    context === "admin"
-      ? Boolean(adminIsAuthenticated)
-      : context === "tenant"
-        ? Boolean(tenantIsAuthenticated)
-        : Boolean(clientIsAuthenticated);
-  const getAuthHeaders =
-    context === "admin"
-      ? adminGetAuthHeaders
-      : context === "tenant"
-        ? tenantGetAuthHeaders
-        : clientGetAuthHeaders;
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const getAuthHeaders = useAuthStore((state) => state.getAuthHeaders);
+  const user = useAuthStore((state) => state.user);
+  const userEmail = useAuthStore((state) => state.userEmail);
   const authHeaders = useMemo(
     () =>
       typeof getAuthHeaders === "function"
@@ -116,12 +96,7 @@ const PaymentModal = ({
   const apiBaseUrl = propApiBaseUrl || getApiBaseUrlForContext(context);
   const apiPrefix = getApiPrefixForContext(context);
   const apiRoot = `${apiBaseUrl}${apiPrefix}`;
-  const contextEmail =
-    context === "admin"
-      ? adminUser?.email || adminUserEmail || ""
-      : context === "tenant"
-        ? tenantUser?.email || ""
-        : clientUser?.email || "";
+  const contextEmail = user?.email || userEmail || "";
 
   const isInline = mode === "inline";
   const [paymentStatus, setPaymentStatus] = useState<
@@ -143,6 +118,11 @@ const PaymentModal = ({
   const [confirmedAccounts, setConfirmedAccounts] = useState<PaymentAccount[]>([]);
   const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const confirmAttemptsRef = useRef(0);
+
+  // Wallet payment state
+  const [walletBalance, setWalletBalance] = useState<number | null>(propWalletBalance ?? null);
+  const [isLoadingWalletBalance, setIsLoadingWalletBalance] = useState(false);
+  const [isWalletProcessing, setIsWalletProcessing] = useState(false);
 
   const transactionContext = transactionData?.data;
   const transaction = transactionContext?.transaction;
@@ -212,6 +192,9 @@ const PaymentModal = ({
 
   const availablePaymentModes = useMemo<PaymentModeOption[]>(() => {
     const modes: PaymentModeOption[] = [];
+    if (enableWalletPayment) {
+      modes.unshift({ id: "wallet", label: "Pay with Wallet" });
+    }
     if (cardPaymentOptions.length > 0) {
       modes.push({ id: "card", label: "Card Payment" });
     }
@@ -222,7 +205,7 @@ const PaymentModal = ({
       modes.push({ id: "saved_card", label: "Saved Cards" });
     }
     return modes;
-  }, [cardPaymentOptions, bankTransferOptions, savedCards]);
+  }, [enableWalletPayment, cardPaymentOptions, bankTransferOptions, savedCards]);
 
   const isPaystackCardOption =
     paymentMode === "card" &&
@@ -393,6 +376,69 @@ const PaymentModal = ({
       logger.error("Unable to fetch saved cards", error);
     }
   }, [apiRoot, authHeaders, isAuthenticated]);
+
+  // Fetch wallet balance when wallet payment is enabled
+  useEffect(() => {
+    if (!enableWalletPayment || !isAuthenticated || propWalletBalance !== undefined) return;
+    const fetchWalletBalance = async () => {
+      setIsLoadingWalletBalance(true);
+      try {
+        // Wallet endpoint only exists in client context (/api/v1/business/wallet).
+        // Always use the client base URL regardless of which dashboard we're in.
+        const walletBaseUrl = getApiBaseUrlForContext("client");
+        const walletUrl = `${walletBaseUrl}/business/wallet`;
+        const response = await fetch(walletUrl, {
+          method: "GET",
+          headers: authHeaders,
+          credentials: "include",
+        });
+        const payload = (await response.json().catch(() => ({}))) as ApiResponse;
+        if (response.ok && payload.data) {
+          const data = payload.data as Record<string, unknown>;
+          setWalletBalance(Number(data.balance ?? data.available_balance ?? 0));
+        }
+      } catch (error) {
+        logger.error("Unable to fetch wallet balance", error);
+      } finally {
+        setIsLoadingWalletBalance(false);
+      }
+    };
+    fetchWalletBalance();
+  }, [enableWalletPayment, isAuthenticated, apiRoot, authHeaders, propWalletBalance]);
+
+  // Sync prop wallet balance
+  useEffect(() => {
+    if (propWalletBalance !== undefined) {
+      setWalletBalance(propWalletBalance);
+    }
+  }, [propWalletBalance]);
+
+  const handleWalletPayment = useCallback(async () => {
+    if (!statusLookupIdentifier) return;
+    setIsWalletProcessing(true);
+    try {
+      const confirmUrl = `${apiRoot}/transactions/${statusLookupIdentifier}`;
+      const response = await fetch(confirmUrl, {
+        method: "PUT",
+        headers: authHeaders,
+        credentials: "include",
+        body: JSON.stringify({ payment_gateway: "Wallet" }),
+      });
+      const payload = (await response.json().catch(() => ({}))) as ApiResponse;
+      if (response.ok && (payload.success !== false)) {
+        setPaymentStatus("completed");
+        onPaymentComplete?.(payload);
+      } else {
+        logger.error("Wallet payment failed", payload);
+        setPaymentStatus("failed");
+      }
+    } catch (error) {
+      logger.error("Wallet payment error", error);
+      setPaymentStatus("failed");
+    } finally {
+      setIsWalletProcessing(false);
+    }
+  }, [apiRoot, authHeaders, statusLookupIdentifier, onPaymentComplete]);
 
   // Ensure saved card selection stays in sync with payload
   useEffect(() => {
@@ -862,6 +908,18 @@ const PaymentModal = ({
           selectedSavedCard={selectedSavedCard}
           onSelectCard={setSelectedSavedCard}
           onRemoveCard={handleRemoveCard}
+        />
+      )}
+
+      {paymentMode === "wallet" && (
+        <WalletPaymentSection
+          walletBalance={walletBalance}
+          isLoadingBalance={isLoadingWalletBalance}
+          payableAmount={displayPayableTotal}
+          currency={amountDetails.displayCurrency}
+          hasSufficientFunds={(walletBalance ?? 0) >= displayPayableTotal}
+          isProcessing={isWalletProcessing}
+          onPayWithWallet={handleWalletPayment}
         />
       )}
 

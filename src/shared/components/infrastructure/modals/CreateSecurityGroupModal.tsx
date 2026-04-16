@@ -30,26 +30,29 @@ const CreateSecurityGroupModal: React.FC<CreateSecurityGroupModalProps> = ({
   const [sgName, setSgName] = useState("");
   const [sgDesc, setSgDesc] = useState("");
   const [vpcId, setVpcId] = useState("");
+  const [attempted, setAttempted] = useState(false);
 
   const handleSubmit = () => {
-    if (!sgName || !vpcId) return;
-    onCreate(sgName, sgDesc, vpcId);
+    setAttempted(true);
+    if (!sgName.trim() || !vpcId) return;
+    onCreate(sgName.trim(), sgDesc, vpcId);
   };
 
   const handleClose = () => {
     setSgName("");
     setSgDesc("");
     setVpcId("");
+    setAttempted(false);
     onClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="create-sg-title">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-          <h2 className="text-lg font-bold text-gray-900">Create Security Group</h2>
+          <h2 id="create-sg-title" className="text-lg font-bold text-gray-900">Create Security Group</h2>
           <button onClick={handleClose} className="text-gray-400 hover:text-gray-600">
             <Plus className="w-5 h-5 rotate-45" />
           </button>
@@ -64,8 +67,11 @@ const CreateSecurityGroupModal: React.FC<CreateSecurityGroupModalProps> = ({
               value={sgName}
               onChange={(e) => setSgName(e.target.value)}
               placeholder="e.g. web-server-sg"
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none"
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none ${attempted && !sgName.trim() ? "border-red-400" : "border-gray-200"}`}
             />
+            {attempted && !sgName.trim() && (
+              <p className="mt-1 text-xs text-red-500">Security group name is required.</p>
+            )}
           </div>
           <div>
             <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">
@@ -75,7 +81,7 @@ const CreateSecurityGroupModal: React.FC<CreateSecurityGroupModalProps> = ({
               required
               value={vpcId}
               onChange={(e) => setVpcId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none"
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none ${attempted && !vpcId ? "border-red-400" : "border-gray-200"}`}
             >
               <option value="">Select a VPC</option>
               {vpcs.map((vpc) => (
@@ -84,6 +90,9 @@ const CreateSecurityGroupModal: React.FC<CreateSecurityGroupModalProps> = ({
                 </option>
               ))}
             </select>
+            {attempted && !vpcId && (
+              <p className="mt-1 text-xs text-red-500">Please select a VPC.</p>
+            )}
           </div>
           <div>
             <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">

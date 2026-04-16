@@ -32,6 +32,11 @@ interface ResourceHookConfig {
    * Defaults to true (most resources accept a payload for force-delete etc.).
    */
   deleteAcceptsPayload?: boolean;
+  /**
+   * HTTP method for update operations. Defaults to "patch".
+   * Set to "put" for resources whose backend routes use Route::put().
+   */
+  updateMethod?: "patch" | "put";
 }
 
 /** Parameters common to list/sync operations */
@@ -84,7 +89,7 @@ const buildListUrl = (urlPrefix: string, resourcePath: string, params?: ListPara
 // ─── Factory ───────────────────────────────────────────────────────
 
 export function createResourceHooks<T = AnyRecord>(config: ResourceHookConfig) {
-  const { resourcePath, queryKeyBase, dataKey = "data", deleteAcceptsPayload = true } = config;
+  const { resourcePath, queryKeyBase, dataKey = "data", deleteAcceptsPayload = true, updateMethod = "patch" } = config;
 
   const queryKeys = createQueryKeys(queryKeyBase);
 
@@ -182,7 +187,9 @@ export function createResourceHooks<T = AnyRecord>(config: ResourceHookConfig) {
     return useMutation<AnyRecord, Error, { id: string | number; data: AnyRecord }>({
       mutationFn: async ({ id, data }) => {
         const url = `${entry.urlPrefix}/${resourcePath}/${id}`;
-        return entry.toastApi.patch<AnyRecord>(url, data);
+        return updateMethod === "put"
+          ? entry.toastApi.put<AnyRecord>(url, data)
+          : entry.toastApi.patch<AnyRecord>(url, data);
       },
       onSuccess: (_res, { id }) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.all(context) });

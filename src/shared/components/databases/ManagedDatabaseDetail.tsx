@@ -34,6 +34,9 @@ import {
   Server,
   Zap,
   Code,
+  KeyRound,
+  Loader2,
+  Wand2,
 } from "lucide-react";
 import EngineIcon, { getEngineLabel } from "./EngineIcon";
 import DatabaseStatusBadge from "./DatabaseStatusBadge";
@@ -55,8 +58,17 @@ import {
   useEnableDr,
   useDrFailover,
   useDisableDr,
+  useFetchDatabaseOperations,
+  useRotateDatabaseCredentials,
+  useRetryDatabaseOperation,
+  useReconcileDatabaseOperation,
 } from "@/shared/hooks/resources/managedDatabaseHooks";
-import type { ManagedDatabase, ManagedDatabaseBackup } from "@/types/managedDatabase";
+import type {
+  ManagedDatabase,
+  ManagedDatabaseBackup,
+  ManagedDatabaseOperation,
+  ManagedDatabaseOperationProgressStep,
+} from "@/types/managedDatabase";
 import ResourceProtectionTab from "@/shared/components/integrations/ResourceProtectionTab";
 
 interface ManagedDatabaseDetailProps {
@@ -82,6 +94,7 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
 
 const ACTIVE_PROGRESS_STATUSES = new Set(["pending", "processing", "in_progress", "queued", "running"]);
 const COMPLETED_PROGRESS_STATUSES = new Set(["completed"]);
+const ACTIVE_OPERATION_STATUSES = new Set(["pending", "in_progress", "verifying"]);
 
 const asMetadata = (value: ManagedDatabase["metadata"]): Record<string, unknown> =>
   value && typeof value === "object" ? value : {};
@@ -107,6 +120,15 @@ const formatDateLabel = (value: string | undefined): string => {
   return date.toLocaleDateString();
 };
 
+const formatDateTimeLabel = (value: string | null | undefined): string => {
+  if (!value) return "—";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+
+  return date.toLocaleString();
+};
+
 const getProgressOverview = (steps: ManagedDatabase["provisioning_progress"]) => {
   const list = Array.isArray(steps) ? steps : [];
 
@@ -130,7 +152,9 @@ const ManagedDatabaseDetail: React.FC<ManagedDatabaseDetailProps> = ({
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>("overview");
 
-  const { data: dbData, isLoading } = useFetchManagedDatabaseById(identifier);
+  const { data: dbData, isLoading } = useFetchManagedDatabaseById(identifier, {
+    refetchInterval: 15000,
+  });
 
   const db = useMemo<ManagedDatabase | null>(() => {
     if (!dbData) return null;
@@ -683,7 +707,7 @@ const BackupsTab: React.FC<{ db: ManagedDatabase; identifier: string }> = ({ db,
                 </div>
                 <div className="mt-1 text-xs text-gray-500">
                   {backup.started_at ? new Date(backup.started_at).toLocaleString() : "—"}
-                  {backup.size_bytes ? ` · ${(backup.size_bytes / 1024 / 1024).toFixed(1)} MB` : ""}
+                  {backup.size_mb ? ` · ${backup.size_mb.toFixed(1)} MB` : ""}
                 </div>
               </div>
               {backup.status === "completed" && (
@@ -1571,18 +1595,63 @@ const SettingsTab: React.FC<{
   const navigate = useNavigate();
   const actionMutation = useDatabaseAction();
   const deleteMutation = useDeleteManagedDatabase();
+  const rotateMutation = useRotateDatabaseCredentials();
+  const retryMutation = useRetryDatabaseOperation();
+  const reconcileMutation = useReconcileDatabaseOperation();
+  const [rotationUsername, setRotationUsername] = useState("");
+  const [rotationPassword, setRotationPassword] = useState("");
+  const [generatePassword, setGeneratePassword] = useState(true);
+  const operationSeed = useMemo<ManagedDatabaseOperation[]>(
+    () => (Array.isArray(db.operations) ? db.operations : []),
+    [db.operations]
+  );
+  const [activeOperationKnown, setActiveOperationKnown] = useState(
+    operationSeed.some((operation) => ACTIVE_OPERATION_STATUSES.has(operation.status))
+  );
+  const { data: operationsData, isLoading: operationsLoading } = useFetchDatabaseOperations(
+    identifier,
+    {
+      refetchInterval: activeOperationKnown ? 10000 : 30000,
+    }
+  );
+
+  const operations = useMemo<ManagedDatabaseOperation[]>(() => {
+    if (Array.isArray(operationsData)) {
+      return operationsData;
+    }
+
+    return operationSeed;
+  }, [operationSeed, operationsData]);
+
+  const rotationBlockedReason =
+    db.status !== "active"
+      ? "Credential rotation is available only when the database is active."
+      : db.engine !== "postgresql"
+        ? `Credential rotation is not yet supported for ${getEngineLabel(db.engine)}.`
+        : null;
+
+  const canSubmitRotation =
+    !rotationBlockedReason &&
+    (generatePassword ||
+      rotationPassword.trim().length > 0 ||
+      rotationUsername.trim().length > 0);
+
+  React.useEffect(() => {
+    setActiveOperationKnown(operations.some((operation) => ACTIVE_OPERATION_STATUSES.has(operation.status)));
+  }, [operations]);
 
   return (
     <div className="space-y-6">
-      {/* Lifecycle Actions */}
-      <div className="rounded-lg border border-gray-200 p-6 dark:border-gray-700">
-        <h3 className="mb-4 text-lg font-semibold">Lifecycle</h3>
-        <div className="flex gap-3">
+      <SurfaceCard
+        title="Lifecycle"
+        subtitle="Pause or resume the service without leaving the control surface."
+      >
+        <div className="flex flex-wrap gap-3">
           {db.status === "active" && (
             <button
               onClick={() => actionMutation.mutate({ identifier, action: "pause" })}
               disabled={actionMutation.isPending}
-              className="inline-flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-2 text-sm font-medium text-yellow-800 hover:bg-yellow-100"
+              className="db-secondary-button inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition"
             >
               <Pause size={16} />
               Pause Database
@@ -1592,21 +1661,223 @@ const SettingsTab: React.FC<{
             <button
               onClick={() => actionMutation.mutate({ identifier, action: "resume" })}
               disabled={actionMutation.isPending}
-              className="inline-flex items-center gap-2 rounded-lg border border-green-300 bg-green-50 px-4 py-2 text-sm font-medium text-green-800 hover:bg-green-100"
+              className="db-primary-button inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition"
             >
               <Play size={16} />
               Resume Database
             </button>
           )}
+          {db.status !== "active" && db.status !== "paused" && (
+            <div className="db-surface-soft rounded-[22px] px-4 py-3 text-sm text-[var(--theme-muted-color)]">
+              Lifecycle actions unlock when the service is active or paused.
+            </div>
+          )}
         </div>
-      </div>
+      </SurfaceCard>
 
-      {/* Danger Zone */}
-      <div className="rounded-lg border border-red-200 p-6 dark:border-red-800">
-        <h3 className="mb-2 text-lg font-semibold text-red-600">Danger Zone</h3>
-        <p className="mb-4 text-sm text-gray-500">
-          Deleting a database is permanent and cannot be undone. All data will be lost.
-        </p>
+      <SurfaceCard
+        title="Credential Rotation"
+        subtitle="Queue a tracked credential-change operation and follow it through verification."
+        action={
+          <span className="db-brand-pill inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em]">
+            <KeyRound size={14} />
+            PostgreSQL runtime op
+          </span>
+        }
+      >
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(280px,0.8fr)]">
+          <div className="space-y-4">
+            {rotationBlockedReason ? (
+              <div className="rounded-[22px] border border-amber-200 bg-amber-50/80 px-4 py-4 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-300">
+                {rotationBlockedReason}
+              </div>
+            ) : (
+              <>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="space-y-2">
+                    <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--theme-muted-color)]">
+                      New Username
+                    </span>
+                    <input
+                      value={rotationUsername}
+                      onChange={(event) => setRotationUsername(event.target.value)}
+                      placeholder="Leave blank to keep the current login"
+                      className="db-surface-soft w-full rounded-2xl border border-transparent px-4 py-3 text-sm text-[var(--theme-heading-color)] outline-none transition focus:border-[var(--theme-color)]"
+                    />
+                  </label>
+
+                  <label className="space-y-2">
+                    <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--theme-muted-color)]">
+                      Password Mode
+                    </span>
+                    <div className="db-surface-soft flex items-center justify-between rounded-2xl px-4 py-3">
+                      <div>
+                        <div className="text-sm font-medium text-[var(--theme-heading-color)]">
+                          {generatePassword ? "Generate secure password" : "Provide password"}
+                        </div>
+                        <div className="text-xs text-[var(--theme-muted-color)]">
+                          Generated passwords are persisted only after runtime verification.
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setGeneratePassword((current) => {
+                            const next = !current;
+                            if (next) {
+                              setRotationPassword("");
+                            }
+                            return next;
+                          });
+                        }}
+                        className={`inline-flex h-7 w-12 items-center rounded-full p-1 transition ${
+                          generatePassword ? "bg-[var(--theme-color)]" : "bg-slate-300 dark:bg-slate-700"
+                        }`}
+                      >
+                        <span
+                          className={`h-5 w-5 rounded-full bg-white shadow-sm transition ${
+                            generatePassword ? "translate-x-5" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  </label>
+                </div>
+
+                {!generatePassword && (
+                  <label className="space-y-2">
+                    <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--theme-muted-color)]">
+                      New Password
+                    </span>
+                    <input
+                      type="password"
+                      value={rotationPassword}
+                      onChange={(event) => setRotationPassword(event.target.value)}
+                      placeholder="Minimum 12 characters"
+                      className="db-surface-soft w-full rounded-2xl border border-transparent px-4 py-3 text-sm text-[var(--theme-heading-color)] outline-none transition focus:border-[var(--theme-color)]"
+                    />
+                  </label>
+                )}
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    onClick={() =>
+                      rotateMutation.mutate(
+                        {
+                          identifier,
+                          username: rotationUsername.trim() || undefined,
+                          password: generatePassword ? undefined : rotationPassword,
+                          generatePassword,
+                        },
+                        {
+                          onSuccess: () => {
+                            setRotationUsername("");
+                            setRotationPassword("");
+                            setGeneratePassword(true);
+                            setActiveOperationKnown(true);
+                          },
+                        }
+                      )
+                    }
+                    disabled={!canSubmitRotation || rotateMutation.isPending}
+                    className="db-primary-button inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {rotateMutation.isPending ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <Wand2 size={16} />
+                    )}
+                    {rotateMutation.isPending ? "Queueing..." : "Rotate Credentials"}
+                  </button>
+                  <p className="text-sm text-[var(--theme-muted-color)]">
+                    The connection tab will show the verified credential set after the operation completes.
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <div className="db-surface-soft rounded-[24px] p-4">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--theme-muted-color)]">
+                Operation Flow
+              </div>
+              <div className="mt-3 space-y-3">
+                <OperationSummaryRow
+                  label="1. Request"
+                  value="Persist the pending secret before touching the runtime."
+                />
+                <OperationSummaryRow
+                  label="2. Apply"
+                  value="Update the live PostgreSQL login using the current working credentials."
+                />
+                <OperationSummaryRow
+                  label="3. Verify"
+                  value="Reconnect with the target credentials before local state is updated."
+                />
+                <OperationSummaryRow
+                  label="4. Reconcile"
+                  value="If the runtime changed but local persistence failed, the operation waits for reconciliation."
+                />
+              </div>
+            </div>
+
+            <div className="db-surface-soft rounded-[24px] p-4 text-sm text-[var(--theme-muted-color)]">
+              Retry is available only for failed runs. Reconcile is available only when the runtime
+              changed but the platform still needs to persist the verified credentials locally.
+            </div>
+          </div>
+        </div>
+      </SurfaceCard>
+
+      <SurfaceCard
+        title="Recent Operations"
+        subtitle="Tracked post-provision actions for this service."
+      >
+        {operationsLoading && operations.length === 0 ? (
+          <div className="db-surface-soft rounded-[22px] px-4 py-4 text-sm text-[var(--theme-muted-color)]">
+            Loading operation history...
+          </div>
+        ) : operations.length === 0 ? (
+          <div className="db-surface-soft rounded-[22px] px-4 py-4 text-sm text-[var(--theme-muted-color)]">
+            No post-provision operations have been recorded yet.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {operations.map((operation) => (
+              <OperationCard
+                key={operation.id}
+                operation={operation}
+                onRetry={() =>
+                  retryMutation.mutate({
+                    identifier,
+                    operationIdentifier: operation.identifier,
+                  })
+                }
+                onReconcile={() =>
+                  reconcileMutation.mutate({
+                    identifier,
+                    operationIdentifier: operation.identifier,
+                  })
+                }
+                retryPending={
+                  retryMutation.isPending &&
+                  retryMutation.variables?.operationIdentifier === operation.identifier
+                }
+                reconcilePending={
+                  reconcileMutation.isPending &&
+                  reconcileMutation.variables?.operationIdentifier === operation.identifier
+                }
+              />
+            ))}
+          </div>
+        )}
+      </SurfaceCard>
+
+      <SurfaceCard
+        title="Danger Zone"
+        subtitle="Deleting a database is permanent and removes the managed service and its data."
+      >
         <button
           onClick={() => {
             if (confirm(`Are you sure you want to delete "${db.name}"? This cannot be undone.`)) {
@@ -1614,17 +1885,163 @@ const SettingsTab: React.FC<{
             }
           }}
           disabled={deleteMutation.isPending}
-          className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-2xl bg-red-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-50"
         >
           <Trash2 size={16} />
           {deleteMutation.isPending ? "Deleting..." : "Delete Database"}
         </button>
-      </div>
+      </SurfaceCard>
     </div>
   );
 };
 
 // ─── Utility Components ──────────────────────────────────────────
+
+const OperationSummaryRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div className="flex items-start gap-3 rounded-[18px] bg-[var(--theme-color-05)] px-3 py-3">
+    <span className="min-w-[84px] text-xs font-semibold uppercase tracking-[0.18em] text-[var(--theme-color)]">
+      {label}
+    </span>
+    <p className="text-sm text-[var(--theme-heading-color)]">{value}</p>
+  </div>
+);
+
+const OperationCard: React.FC<{
+  operation: ManagedDatabaseOperation;
+  onRetry: () => void;
+  onReconcile: () => void;
+  retryPending: boolean;
+  reconcilePending: boolean;
+}> = ({ operation, onRetry, onReconcile, retryPending, reconcilePending }) => {
+  const progressSteps = Array.isArray(operation.progress) ? operation.progress : [];
+  const requestedMode =
+    typeof operation.payload?.requested_mode === "string" ? operation.payload.requested_mode : null;
+  const targetUsername =
+    typeof operation.payload?.username === "string" ? operation.payload.username : null;
+
+  return (
+    <div className="db-surface-soft rounded-[26px] p-5">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-3">
+            <h4 className="text-base font-semibold text-[var(--theme-heading-color)]">
+              Credential Rotation
+            </h4>
+            <OperationStatusBadge status={operation.status} />
+          </div>
+          <p className="text-sm text-[var(--theme-muted-color)]">
+            {operation.identifier}
+            {requestedMode ? ` · ${requestedMode.replace(/_/g, " ")}` : ""}
+            {targetUsername ? ` · target user ${targetUsername}` : ""}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {operation.status === "failed" && (
+            <button
+              onClick={onRetry}
+              disabled={retryPending}
+              className="db-secondary-button inline-flex items-center gap-2 rounded-2xl px-3 py-2 text-sm font-medium transition disabled:opacity-60"
+            >
+              {retryPending ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
+              Retry
+            </button>
+          )}
+          {operation.status === "needs_reconcile" && (
+            <button
+              onClick={onReconcile}
+              disabled={reconcilePending}
+              className="db-primary-button inline-flex items-center gap-2 rounded-2xl px-3 py-2 text-sm font-medium transition disabled:opacity-60"
+            >
+              {reconcilePending ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+              Reconcile
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+        <div
+          className={`h-full rounded-full transition-all ${
+            operation.status === "failed"
+              ? "bg-red-500"
+              : operation.status === "needs_reconcile"
+                ? "bg-amber-500"
+                : operation.status === "completed"
+                  ? "bg-emerald-500"
+                  : "bg-[var(--theme-color)]"
+          }`}
+          style={{ width: `${Math.min(Math.max(operation.progress_percent ?? 0, 4), 100)}%` }}
+        />
+      </div>
+
+      <div className="mt-4 grid gap-3 lg:grid-cols-2">
+        <InfoRow label="Progress" value={`${operation.progress_percent ?? 0}%`} />
+        <InfoRow label="Retries" value={String(operation.retry_count ?? 0)} />
+        <InfoRow label="Started" value={formatDateTimeLabel(operation.started_at)} />
+        <InfoRow label="Completed" value={formatDateTimeLabel(operation.completed_at)} />
+      </div>
+
+      {operation.error_message && (
+        <div className="mt-4 rounded-[20px] border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/20 dark:text-red-300">
+          {operation.error_message}
+        </div>
+      )}
+
+      {progressSteps.length > 0 && (
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {progressSteps.map((step) => (
+            <OperationProgressCard key={step.id} step={step} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const OperationProgressCard: React.FC<{ step: ManagedDatabaseOperationProgressStep }> = ({ step }) => (
+  <div className="rounded-[20px] border border-slate-200/80 bg-white/70 px-4 py-4 dark:border-slate-800 dark:bg-slate-950/60">
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--theme-muted-color)]">
+        {step.id.replace(/_/g, " ")}
+      </span>
+      <OperationStatusBadge status={step.status} compact />
+    </div>
+    <p className="mt-3 text-sm font-medium text-[var(--theme-heading-color)]">{step.label}</p>
+    <p className="mt-2 text-xs text-[var(--theme-muted-color)]">
+      {formatDateTimeLabel(step.updated_at ?? (typeof step.context?.last_checked_at === "string" ? step.context.last_checked_at : null))}
+    </p>
+  </div>
+);
+
+const OperationStatusBadge: React.FC<{
+  status: string;
+  compact?: boolean;
+}> = ({ status, compact = false }) => {
+  const normalized = status.replace(/_/g, " ");
+  const styles =
+    status === "completed"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-300"
+      : status === "failed"
+        ? "border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/20 dark:text-red-300"
+        : status === "needs_reconcile"
+          ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-300"
+          : "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300";
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full border py-1 text-xs font-semibold uppercase tracking-[0.14em] ${compact ? "px-2.5" : "px-3"} ${styles}`}
+    >
+      {ACTIVE_OPERATION_STATUSES.has(status) && (
+        <span className="relative flex h-2 w-2">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current opacity-75" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-current" />
+        </span>
+      )}
+      {normalized}
+    </span>
+  );
+};
 
 const HeroStatCard: React.FC<{
   label: string;

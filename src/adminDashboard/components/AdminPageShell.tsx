@@ -35,6 +35,13 @@ const friendlyPathMap: Record<string, string> = {
   edit: "Edit",
   "provider-discovery": "Provider Discovery",
   "product-families": "Product Families",
+  shield: "Shield",
+  domains: "Domains",
+  firewall: "Firewall",
+  attacks: "Attacks",
+  "attack-map": "Attack Map",
+  analytics: "Analytics",
+  ssl: "SSL",
 };
 
 const toTitleCase = (value = "") =>

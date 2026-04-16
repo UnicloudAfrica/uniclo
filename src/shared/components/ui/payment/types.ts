@@ -1,5 +1,5 @@
 export type ApiContext = "admin" | "tenant" | "client";
-export type PaymentModeId = "card" | "bank_transfer" | "saved_card";
+export type PaymentModeId = "card" | "bank_transfer" | "saved_card" | "wallet";
 
 export type PaymentGatewayDetails = {
   account_name?: string;
@@ -167,4 +167,8 @@ export interface PaymentModalProps {
   paymentOptions?: PaymentGatewayOption[] | null;
   publicKey?: string | undefined;
   pricingSummary?: PricingSummaryData | undefined;
+  /** Enable "Pay with Wallet" option. When true, wallet balance is fetched and shown. */
+  enableWalletPayment?: boolean | undefined;
+  /** Pre-fetched wallet balance. If not provided, the modal will fetch it. */
+  walletBalance?: number | undefined;
 }

@@ -292,25 +292,28 @@ export const useOrderManagement = (
           const tierRow = profile.tierRow || profile.tierData;
           const rawProductableId =
             tierRow?.productable_id ??
-            tierRow?.product_id ??
-            tierRow?.id ??
             tierRow?.product?.productable_id ??
-            tierRow?.product?.id ??
+            tierRow?.product_id ??
             profile.tierKey?.split("::")[1];
+          // Avoid using tierRow.id as productable_id — it may be the
+          // pricing record id rather than the object_storage_configuration id.
           const parsedProductableId = Number.parseInt(String(rawProductableId ?? ""), 10);
-          if (!Number.isFinite(parsedProductableId)) {
+          if (!Number.isFinite(parsedProductableId) || parsedProductableId <= 0) {
             throw new Error(
-              "Unable to resolve the selected Silo Storage tier. Please refresh pricing and try again."
+              `Unable to resolve the storage tier for line ${index + 1}. ` +
+              "Please re-select the tier and try again."
             );
           }
           const baseName = (profile.name || profile.tierName || "").trim();
           const name =
             baseName.length >= 3 ? baseName : `Silo Storage ${profile.region || "region"}`.trim();
 
+          const storageGb = Math.max(1, Math.floor(Number(profile.storageGb) || 0));
+
           return {
             region: profile.region,
             productable_id: parsedProductableId,
-            storage_gb: Number(profile.storageGb) || 0,
+            storage_gb: storageGb,
             quantity: Number(profile.quantity) || 1,
             months: Number(profile.months) || 1,
             name,
@@ -362,7 +365,9 @@ export const useOrderManagement = (
         }
       } catch (error) {
         logger.error("Order submission failed:", error);
-        return null;
+        // Re-throw so callers can show the actual server-side message
+        // (e.g. validation failures) instead of a generic toast.
+        throw error;
       } finally {
         setIsSubmitting(false);
       }

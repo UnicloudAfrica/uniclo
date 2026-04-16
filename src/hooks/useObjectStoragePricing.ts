@@ -280,6 +280,9 @@ export const useObjectStoragePricing = (
     });
   }, [lastOrderSummary, summaryTotals.currency]);
 
+  // Prefer backend pricing when available so the user sees the
+  // authoritative totals (including tax/discounts).  Mark the frontend
+  // estimate with a zero tax rate so the UI can flag it as "excl. tax".
   const displayedTotals = backendPricingTotals || summaryTotals;
 
   // Check for currency mismatch

@@ -20,6 +20,11 @@ export const buildProvisioningSteps = (mode: ProvisioningMode): ProvisioningStep
         desc: "Select region, size, image, storage, and networking.",
       },
       {
+        id: "protection",
+        title: "Protection Plan",
+        desc: "Choose backup, DR, or replication for your instances.",
+      },
+      {
         id: "review",
         title: "Review & provision",
         desc: "Confirm details and provision cube-instances.",
@@ -38,6 +43,11 @@ export const buildProvisioningSteps = (mode: ProvisioningMode): ProvisioningStep
       id: "services",
       title: "Cube-Instance setup",
       desc: "Select region, size, image, storage, and networking.",
+    },
+    {
+      id: "protection",
+      title: "Protection Plan",
+      desc: "Choose backup, DR, or replication for your instances.",
     },
     { id: "payment", title: "Payment", desc: "Generate payment options and share with finance." },
     {

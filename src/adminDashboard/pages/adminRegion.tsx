@@ -219,14 +219,18 @@ const AdminRegion = () => {
     {
       icon: <Eye size={16} />,
       label: "",
-      onClick: (item: RegionRecord) =>
-        (globalThis.window.location.href = `/admin-dashboard/regions/${item.code}`),
+      onClick: (item: RegionRecord) => {
+        const path = `/admin-dashboard/regions/${encodeURIComponent(item.code)}`;
+        if (path.startsWith('/')) globalThis.window.location.href = path;
+      },
     },
     {
       icon: <Edit size={16} />,
       label: "",
-      onClick: (item: RegionRecord) =>
-        (globalThis.window.location.href = `/admin-dashboard/regions/${item.code}/edit`),
+      onClick: (item: RegionRecord) => {
+        const path = `/admin-dashboard/regions/${encodeURIComponent(item.code)}/edit`;
+        if (path.startsWith('/')) globalThis.window.location.href = path;
+      },
     },
     {
       icon: <Trash2 size={16} />,

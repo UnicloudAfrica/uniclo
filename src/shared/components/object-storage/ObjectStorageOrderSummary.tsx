@@ -151,7 +151,7 @@ export const ObjectStorageOrderSummary: React.FC<ObjectStorageOrderSummaryProps>
           </span>
         </div>
 
-        {totals.tax > 0 && (
+        {totals.tax > 0 ? (
           <div className="flex items-center justify-between">
             <span className="text-gray-600">
               Tax {totals.taxRate > 0 ? `(${totals.taxRate}%)` : ""}
@@ -160,7 +160,12 @@ export const ObjectStorageOrderSummary: React.FC<ObjectStorageOrderSummaryProps>
               {formatCurrency(totals.tax, totals.currency)}
             </span>
           </div>
-        )}
+        ) : totals.subtotal > 0 && !transactionId ? (
+          <div className="flex items-center justify-between">
+            <span className="text-gray-600">Tax</span>
+            <span className="text-xs font-medium text-gray-500">Calculated at checkout</span>
+          </div>
+        ) : null}
 
         {gatewayFees > 0 && (
           <div className="flex items-center justify-between">

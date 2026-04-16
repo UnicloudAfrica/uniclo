@@ -48,69 +48,100 @@ export const DATABASE_WIZARD_STEPS = [
 
 // ─── Engine Metadata (client-side fallback) ────────────────────────
 
-export const ENGINE_METADATA: Record<
-  DatabaseEngine,
-  {
-    label: string;
-    description: string;
-    versions: string[];
-    defaultVersion: string;
-    supportsReplication: boolean;
-    supportsSharding: boolean;
-    minReplicas: number;
-    maxReplicas: number;
-  }
-> = {
-  mongodb: {
-    label: "MongoDB",
-    description: "Document database for flexible schemas and horizontal scaling",
-    versions: ["8.0", "7.0"],
-    defaultVersion: "8.0",
-    supportsReplication: true,
-    supportsSharding: true,
-    minReplicas: 1,
-    maxReplicas: 7,
-  },
-  postgresql: {
-    label: "PostgreSQL",
-    description: "Advanced relational database with full ACID compliance",
-    versions: ["18", "17", "16", "15", "14"],
-    defaultVersion: "17",
-    supportsReplication: true,
-    supportsSharding: false,
-    minReplicas: 1,
-    maxReplicas: 5,
-  },
-  mysql: {
-    label: "MySQL",
-    description: "Popular relational database for web applications",
-    versions: ["9.6", "8.4", "8.0"],
-    defaultVersion: "8.4",
-    supportsReplication: true,
-    supportsSharding: false,
-    minReplicas: 1,
-    maxReplicas: 5,
-  },
-  mariadb: {
-    label: "MariaDB",
-    description: "MySQL-compatible database with enhanced performance and features",
-    versions: ["11.4", "10.11", "10.6"],
-    defaultVersion: "11.4",
-    supportsReplication: true,
-    supportsSharding: false,
-    minReplicas: 1,
-    maxReplicas: 5,
-  },
-  redis: {
-    label: "Redis",
-    description: "In-memory data store for caching and real-time analytics",
-    versions: ["8.6", "7.4", "7.2"],
-    defaultVersion: "8.6",
-    supportsReplication: true,
-    supportsSharding: true,
-    minReplicas: 1,
-    maxReplicas: 5,
-  },
+/** Engine metadata shape used by the wizard. */
+export interface EngineMetaEntry {
+  label: string;
+  category: string;
+  license: string;
+  description: string;
+  versions: string[];
+  defaultVersion: string;
+  supportsReplication: boolean;
+  supportsSharding: boolean;
+  minReplicas: number;
+  maxReplicas: number;
+  requiresLicenseKey?: boolean;
+  iconUrl?: string | null;
+  port?: number;
+}
+
+/**
+ * Client-side engine fallback catalog. The wizard prefers server data from
+ * useFetchAvailableEngines() but falls back to this when offline or loading.
+ */
+export const ENGINE_METADATA: Record<string, EngineMetaEntry> = {
+  // ── Relational ──
+  postgresql: { label: "PostgreSQL", category: "relational", license: "open_source", description: "Advanced relational database with full ACID compliance", versions: ["18", "17", "16", "15", "14"], defaultVersion: "17", supportsReplication: true, supportsSharding: false, minReplicas: 1, maxReplicas: 5 },
+  mysql: { label: "MySQL", category: "relational", license: "open_source", description: "Popular relational database for web applications", versions: ["9.6", "8.4", "8.0"], defaultVersion: "8.4", supportsReplication: true, supportsSharding: false, minReplicas: 1, maxReplicas: 5 },
+  mariadb: { label: "MariaDB", category: "relational", license: "open_source", description: "MySQL-compatible database with enhanced performance", versions: ["11.7", "11.6", "11.4", "10.11", "10.6"], defaultVersion: "11.4", supportsReplication: true, supportsSharding: false, minReplicas: 1, maxReplicas: 5 },
+  cockroachdb: { label: "CockroachDB", category: "relational", license: "open_source", description: "Distributed SQL with automatic sharding and survivability", versions: ["24.3", "24.2", "24.1", "23.2", "23.1"], defaultVersion: "24.3", supportsReplication: true, supportsSharding: true, minReplicas: 1, maxReplicas: 5 },
+  tidb: { label: "TiDB", category: "relational", license: "open_source", description: "MySQL-compatible distributed database with horizontal scaling", versions: ["8.5", "8.4", "8.1", "7.5", "7.1"], defaultVersion: "8.5", supportsReplication: true, supportsSharding: true, minReplicas: 1, maxReplicas: 5 },
+  yugabytedb: { label: "YugabyteDB", category: "relational", license: "open_source", description: "PostgreSQL-compatible distributed database", versions: ["2.21", "2.20", "2.18"], defaultVersion: "2.21", supportsReplication: true, supportsSharding: true, minReplicas: 1, maxReplicas: 5 },
+
+  // ── Time-Series ──
+  timescaledb: { label: "TimescaleDB", category: "timeseries", license: "open_source", description: "PostgreSQL extension for time-series data at scale", versions: ["2.17", "2.16", "2.15"], defaultVersion: "2.17", supportsReplication: true, supportsSharding: false, minReplicas: 1, maxReplicas: 5 },
+  influxdb: { label: "InfluxDB", category: "timeseries", license: "open_source", description: "Purpose-built time-series database for metrics and events", versions: ["2.7", "2.6"], defaultVersion: "2.7", supportsReplication: false, supportsSharding: false, minReplicas: 0, maxReplicas: 0 },
+  questdb: { label: "QuestDB", category: "timeseries", license: "open_source", description: "High-performance time-series database with SQL support", versions: ["8.2", "8.1", "7.4"], defaultVersion: "8.2", supportsReplication: false, supportsSharding: false, minReplicas: 0, maxReplicas: 0 },
+  victoriametrics: { label: "VictoriaMetrics", category: "timeseries", license: "open_source", description: "Fast and scalable monitoring and time-series database", versions: ["1.108", "1.106", "1.104", "1.102", "1.100"], defaultVersion: "1.108", supportsReplication: false, supportsSharding: false, minReplicas: 0, maxReplicas: 0 },
+  prometheus: { label: "Prometheus", category: "timeseries", license: "open_source", description: "Monitoring system with built-in time-series database", versions: ["3.2", "3.1", "3.0", "2.55", "2.54"], defaultVersion: "3.2", supportsReplication: false, supportsSharding: false, minReplicas: 0, maxReplicas: 0 },
+
+  // ── Document ──
+  mongodb: { label: "MongoDB", category: "document", license: "open_source", description: "Document database for flexible schemas and horizontal scaling", versions: ["8.0", "7.0", "6.0"], defaultVersion: "8.0", supportsReplication: true, supportsSharding: true, minReplicas: 1, maxReplicas: 7 },
+  couchdb: { label: "CouchDB", category: "document", license: "open_source", description: "Document database with multi-master replication", versions: ["3.4", "3.3"], defaultVersion: "3.4", supportsReplication: true, supportsSharding: true, minReplicas: 1, maxReplicas: 5 },
+  couchbase: { label: "Couchbase", category: "document", license: "open_source", description: "Distributed document database with integrated caching", versions: ["7.6", "7.2"], defaultVersion: "7.6", supportsReplication: true, supportsSharding: true, minReplicas: 1, maxReplicas: 5 },
+  arangodb: { label: "ArangoDB", category: "document", license: "open_source", description: "Multi-model: documents, graphs, and key-value", versions: ["3.12", "3.11"], defaultVersion: "3.12", supportsReplication: true, supportsSharding: false, minReplicas: 1, maxReplicas: 5 },
+  surrealdb: { label: "SurrealDB", category: "document", license: "open_source", description: "Multi-model database with real-time queries", versions: ["2.2", "2.1", "2.0", "1.5"], defaultVersion: "2.2", supportsReplication: false, supportsSharding: false, minReplicas: 0, maxReplicas: 0 },
+  ferretdb: { label: "FerretDB", category: "document", license: "open_source", description: "MongoDB-compatible backed by PostgreSQL", versions: ["2.1", "2.0", "1.24", "1.23"], defaultVersion: "2.1", supportsReplication: false, supportsSharding: false, minReplicas: 0, maxReplicas: 0 },
+  rethinkdb: { label: "RethinkDB", category: "document", license: "open_source", description: "Real-time document database with push-based change feeds", versions: ["2.4"], defaultVersion: "2.4", supportsReplication: true, supportsSharding: true, minReplicas: 1, maxReplicas: 5 },
+
+  // ── Key-Value / Cache ──
+  redis: { label: "Redis", category: "key_value", license: "open_source", description: "In-memory data store for caching and real-time analytics", versions: ["7.4", "7.2", "7.0"], defaultVersion: "7.4", supportsReplication: true, supportsSharding: true, minReplicas: 1, maxReplicas: 5 },
+  valkey: { label: "Valkey", category: "key_value", license: "open_source", description: "Open-source Redis fork by the Linux Foundation", versions: ["8.1", "8.0", "7.2"], defaultVersion: "8.1", supportsReplication: true, supportsSharding: true, minReplicas: 1, maxReplicas: 5 },
+  dragonflydb: { label: "DragonflyDB", category: "key_value", license: "open_source", description: "Modern Redis-compatible in-memory store", versions: ["1.25", "1.24", "1.23", "1.22"], defaultVersion: "1.25", supportsReplication: true, supportsSharding: false, minReplicas: 1, maxReplicas: 5 },
+  keydb: { label: "KeyDB", category: "key_value", license: "open_source", description: "Multi-threaded Redis fork with active replication", versions: ["6.3", "6.2"], defaultVersion: "6.3", supportsReplication: true, supportsSharding: false, minReplicas: 1, maxReplicas: 5 },
+  memcached: { label: "Memcached", category: "key_value", license: "open_source", description: "High-performance distributed memory caching", versions: ["1.6"], defaultVersion: "1.6", supportsReplication: false, supportsSharding: false, minReplicas: 0, maxReplicas: 0 },
+
+  // ── Wide-Column ──
+  cassandra: { label: "Apache Cassandra", category: "wide_column", license: "open_source", description: "Distributed wide-column store for massive scalability", versions: ["5.0", "4.1", "4.0"], defaultVersion: "5.0", supportsReplication: true, supportsSharding: true, minReplicas: 1, maxReplicas: 7 },
+  scylladb: { label: "ScyllaDB", category: "wide_column", license: "open_source", description: "Cassandra-compatible with C++ performance", versions: ["6.2", "6.1", "5.4"], defaultVersion: "6.2", supportsReplication: true, supportsSharding: true, minReplicas: 1, maxReplicas: 7 },
+
+  // ── Search ──
+  elasticsearch: { label: "Elasticsearch", category: "search", license: "open_source", description: "Distributed search and analytics engine", versions: ["8.17", "8.16", "8.15", "7.17"], defaultVersion: "8.17", supportsReplication: true, supportsSharding: true, minReplicas: 1, maxReplicas: 5 },
+  opensearch: { label: "OpenSearch", category: "search", license: "open_source", description: "Community-driven search and analytics suite", versions: ["2.19", "2.18", "2.17", "2.16"], defaultVersion: "2.19", supportsReplication: true, supportsSharding: true, minReplicas: 1, maxReplicas: 5 },
+  meilisearch: { label: "Meilisearch", category: "search", license: "open_source", description: "Lightning-fast search with typo tolerance", versions: ["1.12", "1.11", "1.10"], defaultVersion: "1.12", supportsReplication: false, supportsSharding: false, minReplicas: 0, maxReplicas: 0 },
+
+  // ── Vector ──
+  milvus: { label: "Milvus", category: "vector", license: "open_source", description: "Vector database for AI similarity search at scale", versions: ["2.5", "2.4", "2.3"], defaultVersion: "2.5", supportsReplication: false, supportsSharding: false, minReplicas: 0, maxReplicas: 0 },
+  qdrant: { label: "Qdrant", category: "vector", license: "open_source", description: "High-performance vector search with filtering", versions: ["1.13", "1.12", "1.11", "1.10"], defaultVersion: "1.13", supportsReplication: true, supportsSharding: true, minReplicas: 1, maxReplicas: 5 },
+  weaviate: { label: "Weaviate", category: "vector", license: "open_source", description: "AI-native vector database with built-in ML", versions: ["1.28", "1.27", "1.26", "1.25"], defaultVersion: "1.28", supportsReplication: true, supportsSharding: true, minReplicas: 1, maxReplicas: 5 },
+  chromadb: { label: "ChromaDB", category: "vector", license: "open_source", description: "Open-source embedding database for AI apps", versions: ["1.0", "0.6", "0.5", "0.4"], defaultVersion: "1.0", supportsReplication: false, supportsSharding: false, minReplicas: 0, maxReplicas: 0 },
+
+  // ── Graph ──
+  neo4j: { label: "Neo4j", category: "graph", license: "open_source", description: "Native graph database with Cypher query language", versions: ["5.26", "5.25", "5.24", "4.4"], defaultVersion: "5.26", supportsReplication: false, supportsSharding: false, minReplicas: 0, maxReplicas: 0 },
+  dgraph: { label: "Dgraph", category: "graph", license: "open_source", description: "Distributed graph database with GraphQL support", versions: ["24.0", "23.1"], defaultVersion: "24.0", supportsReplication: true, supportsSharding: true, minReplicas: 1, maxReplicas: 5 },
+
+  // ── Messaging ──
+  kafka: { label: "Apache Kafka", category: "messaging", license: "open_source", description: "Distributed event streaming platform", versions: ["3.9", "3.8", "3.7"], defaultVersion: "3.9", supportsReplication: true, supportsSharding: true, minReplicas: 1, maxReplicas: 5 },
+  rabbitmq: { label: "RabbitMQ", category: "messaging", license: "open_source", description: "Feature-rich message broker with multiple protocols", versions: ["4.1", "4.0", "3.13"], defaultVersion: "4.1", supportsReplication: true, supportsSharding: false, minReplicas: 1, maxReplicas: 5 },
+  nats: { label: "NATS", category: "messaging", license: "open_source", description: "Cloud-native messaging with JetStream persistence", versions: ["2.10", "2.9"], defaultVersion: "2.10", supportsReplication: true, supportsSharding: false, minReplicas: 1, maxReplicas: 5 },
+
+  // ── Analytics / Infrastructure ──
+  clickhouse: { label: "ClickHouse", category: "analytics", license: "open_source", description: "Column-oriented OLAP database for real-time analytics", versions: ["25.1", "24.12", "24.11", "24.8"], defaultVersion: "25.1", supportsReplication: true, supportsSharding: true, minReplicas: 1, maxReplicas: 5 },
+  etcd: { label: "etcd", category: "infrastructure", license: "open_source", description: "Distributed KV store for service discovery and config", versions: ["3.5", "3.4"], defaultVersion: "3.5", supportsReplication: true, supportsSharding: false, minReplicas: 1, maxReplicas: 5 },
+  consul: { label: "Consul", category: "infrastructure", license: "open_source", description: "Service mesh and distributed KV with health checking", versions: ["1.20", "1.19", "1.18"], defaultVersion: "1.20", supportsReplication: true, supportsSharding: false, minReplicas: 1, maxReplicas: 5 },
+  minio: { label: "MinIO", category: "object_storage", license: "open_source", description: "S3-compatible high-performance object storage", versions: ["2026.3", "2026.2", "2026.1"], defaultVersion: "2026.3", supportsReplication: false, supportsSharding: false, minReplicas: 0, maxReplicas: 0 },
+  foundationdb: { label: "FoundationDB", category: "infrastructure", license: "open_source", description: "Distributed transactional key-value store", versions: ["7.3", "7.1"], defaultVersion: "7.3", supportsReplication: true, supportsSharding: true, minReplicas: 1, maxReplicas: 5 },
+
+  // ── Commercial Free Editions ──
+  mssql_express: { label: "SQL Server Express", category: "relational", license: "free_edition", description: "Free SQL Server (1 CPU, 1 GB RAM, 10 GB per database)", versions: ["2022", "2019"], defaultVersion: "2022", supportsReplication: false, supportsSharding: false, minReplicas: 0, maxReplicas: 0 },
+  mssql_developer: { label: "SQL Server Developer", category: "relational", license: "free_edition", description: "Full SQL Server for dev/test (not for production)", versions: ["2022", "2019"], defaultVersion: "2022", supportsReplication: true, supportsSharding: false, minReplicas: 1, maxReplicas: 5 },
+  oracle_xe: { label: "Oracle XE", category: "relational", license: "free_edition", description: "Free Oracle (2 CPUs, 2 GB RAM, 12 GB user data)", versions: ["21c", "18c"], defaultVersion: "21c", supportsReplication: false, supportsSharding: false, minReplicas: 0, maxReplicas: 0 },
+  db2_community: { label: "Db2 Community", category: "relational", license: "free_edition", description: "Free IBM Db2 for community and development", versions: ["11.5"], defaultVersion: "11.5", supportsReplication: false, supportsSharding: false, minReplicas: 0, maxReplicas: 0 },
+
+  // ── Licensed / BYOL ──
+  mssql_standard: { label: "SQL Server Standard", category: "relational", license: "commercial", description: "Licensed SQL Server Standard edition", versions: ["2022", "2019"], defaultVersion: "2022", supportsReplication: true, supportsSharding: false, minReplicas: 1, maxReplicas: 5, requiresLicenseKey: true },
+  mssql_enterprise: { label: "SQL Server Enterprise", category: "relational", license: "commercial", description: "Licensed SQL Server Enterprise with unlimited scale", versions: ["2022", "2019"], defaultVersion: "2022", supportsReplication: true, supportsSharding: false, minReplicas: 1, maxReplicas: 5, requiresLicenseKey: true },
+  oracle_enterprise: { label: "Oracle Enterprise", category: "relational", license: "commercial", description: "Licensed Oracle with Data Guard and RAC", versions: ["23ai", "21c", "19c"], defaultVersion: "23ai", supportsReplication: true, supportsSharding: true, minReplicas: 1, maxReplicas: 5, requiresLicenseKey: true },
 };
 
 export const PLAN_SPECS: Record<
@@ -235,8 +266,12 @@ export const useDatabaseProvisioningLogic = () => {
     tlsEnabled: true,
     dedicatedProxy: false,
     vpnGateway: false,
+    fastTrackEndsAt: "",
     memberUserIds: [],
     assignmentScope: context === "admin" ? "internal" : context === "tenant" ? "tenant" : "client",
+    licenseKey: "",
+    licenseMode: "",
+    cloudAccountId: null,
   });
 
   // Initialize billing country and customer context from profile once loaded
@@ -362,32 +397,48 @@ export const useDatabaseProvisioningLogic = () => {
   const _reviewStepIndex = useMemo(() => steps.findIndex((s) => s.id === "review"), [steps]);
   const successStepIndex = useMemo(() => steps.findIndex((s) => s.id === "success"), [steps]);
 
-  // Engine metadata (merge server data with fallback)
-  const engines = useMemo(() => {
+  // Engine metadata — server data is primary, local ENGINE_METADATA is fallback.
+  // This ensures new engines added on the backend appear without a frontend deploy.
+  const engines = useMemo((): Record<string, EngineMetaEntry> => {
     if (enginesData && typeof enginesData === "object") {
-      const serverEngines = enginesData as Record<string, unknown>;
-      // Merge server data over local fallback
-      return Object.keys(ENGINE_METADATA).reduce(
-        (acc, key) => {
-          const k = key as DatabaseEngine;
-          const serverEntry = serverEngines[k] as Record<string, unknown> | undefined;
-          acc[k] = {
-            ...ENGINE_METADATA[k],
-            ...(serverEntry
-              ? {
-                  label: (serverEntry.label as string) || ENGINE_METADATA[k].label,
-                  description:
-                    (serverEntry.description as string) || ENGINE_METADATA[k].description,
-                  versions: (serverEntry.versions as string[]) || ENGINE_METADATA[k].versions,
-                  defaultVersion:
-                    (serverEntry.default_version as string) || ENGINE_METADATA[k].defaultVersion,
-                }
-              : {}),
-          };
-          return acc;
-        },
-        {} as typeof ENGINE_METADATA
-      );
+      // Handle both keyed object and array formats from the API
+      let serverEngines: Record<string, Record<string, unknown>>;
+      if (Array.isArray(enginesData)) {
+        // StaqDB returns an array with `name` key — normalize to keyed object
+        serverEngines = {};
+        for (const entry of enginesData as Record<string, unknown>[]) {
+          const key = (entry.name as string) || (entry.engine as string);
+          if (key) serverEngines[key] = entry;
+        }
+      } else {
+        serverEngines = enginesData as Record<string, Record<string, unknown>>;
+      }
+
+      if (Object.keys(serverEngines).length === 0) return ENGINE_METADATA;
+
+      const merged: Record<string, EngineMetaEntry> = {};
+
+      // Include all engines from server — StaqDB is the single source of truth
+      for (const [key, serverEntry] of Object.entries(serverEngines)) {
+        const fallback = ENGINE_METADATA[key];
+        merged[key] = {
+          label: (serverEntry.label as string) || fallback?.label || key,
+          category: (serverEntry.category as string) || fallback?.category || "relational",
+          license: (serverEntry.license as string) || fallback?.license || "open_source",
+          description: (serverEntry.description as string) || fallback?.description || "",
+          versions: (serverEntry.versions as string[]) || fallback?.versions || [],
+          defaultVersion: (serverEntry.default_version as string) || fallback?.defaultVersion || "",
+          supportsReplication: (serverEntry.supports_replication as boolean) ?? fallback?.supportsReplication ?? false,
+          supportsSharding: (serverEntry.supports_sharding as boolean) ?? fallback?.supportsSharding ?? false,
+          minReplicas: (serverEntry.min_replicas as number) ?? fallback?.minReplicas ?? 0,
+          maxReplicas: (serverEntry.max_replicas as number) ?? fallback?.maxReplicas ?? 0,
+          requiresLicenseKey: (serverEntry.requires_license_key as boolean) ?? fallback?.requiresLicenseKey,
+          iconUrl: (serverEntry.icon_url as string) || null,
+          port: (serverEntry.port as number) || fallback?.port,
+        };
+      }
+
+      return merged;
     }
     return ENGINE_METADATA;
   }, [enginesData]);
@@ -522,13 +573,19 @@ export const useDatabaseProvisioningLogic = () => {
 
   const selectEngine = useCallback(
     (engine: DatabaseEngine) => {
-      const meta = engines[engine];
+      const meta = engines[engine as string];
+      if (!meta) return; // Engine not in catalog — noop
+
+      const defaultVersion = meta.defaultVersion || (meta.versions?.[0] ?? "");
+
       updateForm({
         engine,
-        engineVersion: meta.defaultVersion,
+        engineVersion: defaultVersion,
         replicaCount: 1,
         replicaAzs: [],
         replicaRegions: [],
+        licenseKey: "",
+        licenseMode: meta.requiresLicenseKey ? "byol" : "",
       });
     },
     [engines, updateForm]
@@ -537,7 +594,7 @@ export const useDatabaseProvisioningLogic = () => {
   // Currently selected engine metadata
   const selectedEngineMeta = useMemo(() => {
     if (!form.engine) return null;
-    return engines[form.engine as DatabaseEngine] ?? null;
+    return engines[form.engine as string] ?? null;
   }, [form.engine, engines]);
 
   // ─── Validation ──────────────────────────────────────────────────
@@ -548,8 +605,13 @@ export const useDatabaseProvisioningLogic = () => {
   );
 
   const isConfigureStepValid = useMemo(() => {
-    return Boolean(form.planSize && form.region);
-  }, [form.planSize, form.region]);
+    const baseValid = Boolean(form.planSize && form.region);
+    // Commercial engines require a license key (BYOL) or purchase mode
+    if (selectedEngineMeta?.requiresLicenseKey) {
+      return baseValid && form.licenseMode === "byol" && form.licenseKey.trim().length > 0;
+    }
+    return baseValid;
+  }, [form.planSize, form.region, form.licenseMode, form.licenseKey, selectedEngineMeta]);
 
   const canProceedToReview = isEngineStepValid && isConfigureStepValid;
 
@@ -611,6 +673,9 @@ export const useDatabaseProvisioningLogic = () => {
         if (form.projectId) payload.project_id = form.projectId;
         if (form.assignedTenantId) payload.tenant_id = form.assignedTenantId;
         if (form.assignedClientId) payload.client_id = form.assignedClientId;
+        if (form.licenseKey.trim()) payload.license_key = form.licenseKey.trim();
+        if (form.licenseMode) payload.license_mode = form.licenseMode;
+        if (form.cloudAccountId) payload.cloud_account_id = form.cloudAccountId;
 
         const response = await orderMutation.mutateAsync(payload);
         const data = response?.data ?? (response as unknown as DatabaseOrderResponse["data"]);

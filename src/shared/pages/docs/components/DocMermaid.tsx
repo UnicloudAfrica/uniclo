@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import DOMPurify from "dompurify";
 import mermaid from "mermaid";
 
 let mermaidInitialized = false;
@@ -46,7 +47,11 @@ const DocMermaid: React.FC<DocMermaidProps> = ({ chart, caption }) => {
         ref={containerRef}
         className="overflow-x-auto p-4 rounded-lg border flex justify-center"
         style={{ borderColor: "var(--theme-border-color, #e5e7eb)", backgroundColor: "#fff" }}
-        dangerouslySetInnerHTML={{ __html: svg }}
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(svg, {
+          USE_PROFILES: { svg: true },
+          FORBID_ATTR: ['onload', 'onerror', 'onclick', 'onmouseover'],
+          FORBID_TAGS: ['script'],
+        }) }}
       />
       {caption && (
         <figcaption className="mt-2 text-sm text-center" style={{ color: "var(--theme-muted-color, #6b7280)" }}>

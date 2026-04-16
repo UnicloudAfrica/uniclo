@@ -9,6 +9,9 @@ import {
   KeyRound,
   Folder,
   Shield,
+  ShieldCheck,
+  Layers,
+  Globe,
 } from "lucide-react";
 import { Configuration } from "@/types/InstanceConfiguration";
 import { ModernCard } from "../ui";
@@ -46,6 +49,8 @@ interface InstanceSummaryCardProps {
   summaryDisplayCurrency?: string;
   effectivePaymentOption?: any;
   backendPricingData?: any;
+  protectionPlan?: string;
+  redundancyPattern?: string;
 }
 
 const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
@@ -65,6 +70,8 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
   summaryDisplayCurrency = "",
   effectivePaymentOption,
   backendPricingData,
+  protectionPlan,
+  redundancyPattern,
 }) => {
   const { data: networkPresets = DEFAULT_PRESETS } = useNetworkPresets();
   const presetCatalog = useMemo(
@@ -377,6 +384,48 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-semibold text-gray-700">Total {resourceLabelPlural}</span>
                     <span className="font-bold text-gray-900">{totalInstances}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Protection Plan */}
+              {protectionPlan && protectionPlan !== "none" && (
+                <div className="pt-3 border-t border-gray-200 space-y-2">
+                  <h4 className="text-sm font-semibold text-gray-700">Protection</h4>
+                  <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-2.5 space-y-1.5">
+                    <div className="flex items-center gap-2 text-xs">
+                      <ShieldCheck className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                      <span className="font-semibold text-gray-800">
+                        {protectionPlan === "backup_only" && "Backup Only"}
+                        {protectionPlan === "dr_standby" && "AnyCloudFlow DR Standby"}
+                        {protectionPlan === "dr_replication" && "AnyCloudFlow DR Replication"}
+                      </span>
+                    </div>
+                    {redundancyPattern && (protectionPlan === "dr_standby" || protectionPlan === "dr_replication") && (
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                        {redundancyPattern === "n_plus_1" && <Layers className="h-3 w-3 shrink-0 text-gray-400" />}
+                        {redundancyPattern === "one_plus_1" && <Server className="h-3 w-3 shrink-0 text-gray-400" />}
+                        {redundancyPattern === "one_plus_n" && <Globe className="h-3 w-3 shrink-0 text-gray-400" />}
+                        <span>
+                          {redundancyPattern === "n_plus_1" && "N+1 Shared Standby"}
+                          {redundancyPattern === "one_plus_1" && "1+1 Dedicated Standby"}
+                          {redundancyPattern === "one_plus_n" && "1+N Multi-Region DR"}
+                        </span>
+                      </div>
+                    )}
+                    {(protectionPlan === "dr_standby" || protectionPlan === "dr_replication") && (
+                      <>
+                        <div className="flex items-center gap-2 text-[10px] text-blue-600">
+                          <span>DR VM = same specs as production, 80% off</span>
+                        </div>
+                        {configurations.length > 0 && configurations[0]?.compute_label && (
+                          <div className="flex items-center gap-2 text-[10px] text-gray-500 mt-1">
+                            <Cpu className="h-3 w-3 shrink-0" />
+                            <span>Spare: {configurations[0].compute_label}</span>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
               )}

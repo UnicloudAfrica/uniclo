@@ -15,6 +15,7 @@ type QueryOptions = Record<string, unknown>;
 export interface ProjectFilters {
   provider?: string;
   region?: string;
+  availability_zone?: string;
   only_unlinked?: boolean;
   include_infra?: boolean;
   search?: string;

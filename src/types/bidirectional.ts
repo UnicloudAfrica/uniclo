@@ -89,6 +89,24 @@ export interface BidirectionalStatus {
   };
 }
 
+export interface ReplicationPairSummary {
+  id: string;
+  identifier: string;
+  tenant_id: string;
+  resource_a_provider: string;
+  resource_a_region: string;
+  resource_b_provider: string;
+  resource_b_region: string;
+  mode: ReplicationMode;
+  workload_profile?: WorkloadProfile | null;
+  quorum_state: QuorumState;
+  witness_configured: boolean;
+  last_sync_at?: string | null;
+  degraded_at?: string | null;
+  degradation_reason?: string | null;
+  unresolved_conflict_count: number;
+}
+
 export interface QuorumStatus {
   state: QuorumState;
   witness_host?: string;
@@ -125,6 +143,46 @@ export interface ConfigureWitnessPayload {
 export interface ConfigureTrafficControlPayload {
   driver: "webhook" | "dns" | "cloudflare";
   config: Record<string, string>;
+}
+
+export type ActiveActiveAssessmentStatus =
+  | "ready"
+  | "certified"
+  | "warning"
+  | "blocked"
+  | "revoked";
+
+export type ActiveActiveCheckStatus = "pass" | "warn" | "fail";
+
+export interface ActiveActiveReadinessCheck {
+  key: string;
+  status: ActiveActiveCheckStatus;
+  message: string;
+}
+
+export interface ActiveActiveReadinessAssessment {
+  status: ActiveActiveAssessmentStatus;
+  score: number;
+  can_certify: boolean;
+  current_certification_valid: boolean;
+  previously_certified: boolean;
+  certified_at: string | null;
+  certification_scope: string | null;
+  revocation_reason?: string | null;
+  blocking_issues: string[];
+  warnings: string[];
+  checks: ActiveActiveReadinessCheck[];
+  local_pair?: {
+    id: string;
+    identifier: string;
+    mode?: ReplicationMode | string | null;
+    workload_profile?: WorkloadProfile | string | null;
+    quorum_state?: QuorumState | string | null;
+    witness_configured?: boolean;
+    degraded_at?: string | null;
+    degradation_reason?: string | null;
+    unresolved_conflict_count?: number;
+  };
 }
 
 // ─── Helper Labels ──────────────────────────────────────────────
@@ -167,4 +225,12 @@ export const CONFLICT_STATUS_LABELS: Record<ConflictStatus, string> = {
   [ConflictStatus.AutoResolved]: "Auto-Resolved",
   [ConflictStatus.ManuallyResolved]: "Manually Resolved",
   [ConflictStatus.Skipped]: "Skipped",
+};
+
+export const ACTIVE_ACTIVE_STATUS_LABELS: Record<ActiveActiveAssessmentStatus, string> = {
+  ready: "Ready",
+  certified: "Certified",
+  warning: "Warning",
+  blocked: "Blocked",
+  revoked: "Revoked",
 };

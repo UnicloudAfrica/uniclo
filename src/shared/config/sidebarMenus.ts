@@ -10,6 +10,7 @@ import {
   Database,
   DollarSign,
   FolderOpen,
+  Map,
   MapPin,
   Calculator,
   FileText,
@@ -42,6 +43,8 @@ import {
   FlaskConical,
   GitMerge,
   ShieldAlert,
+  Shield,
+  Cloud,
   CloudOff,
   Network,
   Route,
@@ -49,6 +52,11 @@ import {
   Scale,
   Radar,
   Bot,
+  BookOpen,
+  Code2,
+  Monitor,
+  Activity,
+  Flame,
 } from "lucide-react";
 
 type InfraRole = "admin" | "tenant" | "client";
@@ -107,6 +115,20 @@ const INFRA_MENU_ITEMS: Array<{
     roles: ["admin", "tenant", "client"],
     requiredPermission: "storage.view",
   },
+  {
+    label: "Cloud Accounts",
+    icon: Cloud,
+    path: "/cloud-accounts",
+    roles: ["admin", "tenant", "client"],
+    requiredPermission: "storage.view",
+  },
+  {
+    label: "Monitoring",
+    icon: Activity,
+    path: "/monitoring",
+    roles: ["admin", "tenant", "client"],
+    requiredPermission: "instances.view",
+  },
 ];
 
 const DR_MENU_ITEMS: Array<{
@@ -117,6 +139,13 @@ const DR_MENU_ITEMS: Array<{
   requiredPermission?: string;
 }> = [
   {
+    label: "Replication Policies",
+    icon: ShieldCheck,
+    path: "/protection",
+    roles: ["admin", "tenant", "client"],
+    requiredPermission: "instances.view",
+  },
+  {
     label: "Serverless DR",
     icon: CloudOff,
     path: "/serverless-dr",
@@ -124,9 +153,30 @@ const DR_MENU_ITEMS: Array<{
     requiredPermission: "instances.view",
   },
   {
-    label: "Protection Services",
-    icon: ShieldCheck,
-    path: "/protection",
+    label: "DR Drills",
+    icon: FlaskConical,
+    path: "/dr-drills",
+    roles: ["admin", "tenant", "client"],
+    requiredPermission: "instances.view",
+  },
+  {
+    label: "Hypervisor",
+    icon: Monitor,
+    path: "/hypervisor",
+    roles: ["admin", "tenant", "client"],
+    requiredPermission: "instances.view",
+  },
+  {
+    label: "Database Replication",
+    icon: Database,
+    path: "/database-replication",
+    roles: ["admin", "tenant", "client"],
+    requiredPermission: "instances.view",
+  },
+  {
+    label: "Ransomware",
+    icon: ShieldAlert,
+    path: "/ransomware",
     roles: ["admin", "tenant", "client"],
     requiredPermission: "instances.view",
   },
@@ -138,11 +188,24 @@ const DR_MENU_ITEMS: Array<{
     requiredPermission: "migrations.view",
   },
   {
+    label: "Batch Migrations",
+    icon: GitMerge,
+    path: "/batch-migrations",
+    roles: ["admin", "tenant", "client"],
+    requiredPermission: "migrations.view",
+  },
+  {
     label: "Destinations",
     icon: FolderOutput,
     path: "/destinations",
     roles: ["admin", "tenant"],
     requiredPermission: "backups.manage",
+  },
+  {
+    label: "Migration Calculator",
+    icon: Calculator,
+    path: "/anycloudflow/calculator",
+    roles: ["admin", "tenant", "client"],
   },
 ];
 
@@ -189,6 +252,71 @@ const NETWORKING_MENU_ITEMS: Array<{
     requiredPermission: "instances.view",
   },
 ];
+
+const SHIELD_MENU_ITEMS: Array<{
+  label: string;
+  icon: LucideIcon;
+  path: string;
+  roles: InfraRole[];
+  requiredPermission?: string;
+}> = [
+  {
+    label: "Domains",
+    icon: Globe,
+    path: "/shield/domains",
+    roles: ["admin", "tenant", "client"],
+  },
+  {
+    label: "Firewall",
+    icon: ShieldCheck,
+    path: "/shield/firewall",
+    roles: ["admin", "tenant", "client"],
+  },
+  {
+    label: "Attacks",
+    icon: Flame,
+    path: "/shield/attacks",
+    roles: ["admin", "tenant", "client"],
+  },
+  {
+    label: "Attack Map",
+    icon: Map,
+    path: "/shield/attack-map",
+    roles: ["admin", "tenant", "client"],
+  },
+  {
+    label: "Analytics",
+    icon: Activity,
+    path: "/shield/analytics",
+    roles: ["admin", "tenant", "client"],
+  },
+  {
+    label: "SSL",
+    icon: Lock,
+    path: "/shield/ssl",
+    roles: ["admin", "tenant", "client"],
+  },
+];
+
+const buildShieldMenuGroup = (basePath: string, role: InfraRole): MenuEntry => {
+  const normalizedBase = basePath.replace(/\/+$/, "");
+  const toPath = (suffix: string) =>
+    `${normalizedBase}${suffix.startsWith("/") ? suffix : `/${suffix}`}`;
+  const children = SHIELD_MENU_ITEMS.filter((item) => item.roles.includes(role)).map((item) => ({
+    name: item.label,
+    icon: item.icon,
+    isLucide: true,
+    requiredPermission: item.requiredPermission,
+    path: toPath(item.path),
+  }));
+
+  return {
+    name: "Shield",
+    icon: Shield,
+    isLucide: true,
+    children,
+  };
+};
 
 const buildDrMenuGroup = (basePath: string, role: InfraRole): MenuEntry => {
   const normalizedBase = basePath.replace(/\/+$/, "");
@@ -303,6 +431,9 @@ export const adminMenuItems: MenuEntry[] = [
     ...buildDrMenuGroup("/admin-dashboard", "admin"),
   },
   {
+    ...buildShieldMenuGroup("/admin-dashboard", "admin"),
+  },
+  {
     name: "Infrastructure Agent",
     icon: Bot,
     isLucide: true,
@@ -406,6 +537,13 @@ export const adminMenuItems: MenuEntry[] = [
         path: "/admin-dashboard/payouts",
       },
       {
+        name: "Payment Splits",
+        icon: ArrowLeftRight,
+        isLucide: true,
+        requiredPermission: "billing.manage",
+        path: "/admin-dashboard/payment-splits",
+      },
+      {
         name: "POC Trials",
         icon: FlaskConical,
         isLucide: true,
@@ -455,6 +593,23 @@ export const adminMenuItems: MenuEntry[] = [
         path: "/admin-dashboard/onboarding-settings",
       },
     ],
+  },
+  {
+    name: "Developer",
+    icon: Code2,
+    isLucide: true,
+    children: [
+      { name: "API Keys", path: "/admin-dashboard/developer/api-keys", icon: KeyRound, isLucide: true },
+      { name: "Webhooks", path: "/admin-dashboard/developer/webhooks", icon: GitMerge, isLucide: true },
+      { name: "Usage", path: "/admin-dashboard/developer/usage", icon: BarChart3, isLucide: true },
+      { name: "Bridge Clients", path: "/admin-dashboard/bridge-clients", icon: Network, isLucide: true },
+    ],
+  },
+  {
+    name: "Documentation",
+    icon: BookOpen,
+    isLucide: true,
+    path: "/admin-dashboard/docs",
   },
   {
     name: "Support Tickets",
@@ -509,6 +664,9 @@ export const tenantMenuItems: MenuEntry[] = [
   },
   {
     ...buildDrMenuGroup("/dashboard", "tenant"),
+  },
+  {
+    ...buildShieldMenuGroup("/dashboard", "tenant"),
   },
   {
     name: "Infrastructure Agent",
@@ -616,6 +774,22 @@ export const tenantMenuItems: MenuEntry[] = [
     path: "/dashboard/products",
   },
   {
+    name: "Developer",
+    icon: Code2,
+    isLucide: true,
+    children: [
+      { name: "API Keys", path: "/dashboard/developer/api-keys", icon: KeyRound, isLucide: true },
+      { name: "Webhooks", path: "/dashboard/developer/webhooks", icon: GitMerge, isLucide: true },
+      { name: "Usage", path: "/dashboard/developer/usage", icon: BarChart3, isLucide: true },
+    ],
+  },
+  {
+    name: "Documentation",
+    icon: BookOpen,
+    isLucide: true,
+    path: "/dashboard/docs",
+  },
+  {
     name: "Support",
     icon: HelpCircle,
     isLucide: true,
@@ -650,6 +824,9 @@ export const buildClientMenuItems = (_hasProjects: boolean): MenuEntry[] => {
       ...buildDrMenuGroup("/client-dashboard", "client"),
     },
     {
+      ...buildShieldMenuGroup("/client-dashboard", "client"),
+    },
+    {
       name: "Infrastructure Agent",
       icon: Bot,
       isLucide: true,
@@ -669,6 +846,22 @@ export const buildClientMenuItems = (_hasProjects: boolean): MenuEntry[] => {
       isLucide: true,
       requiredPermission: "billing.view",
       path: "/client-dashboard/orders-payments",
+    },
+    {
+      name: "Developer",
+      icon: Code2,
+      isLucide: true,
+      children: [
+        { name: "API Keys", path: "/client-dashboard/developer/api-keys", icon: KeyRound, isLucide: true },
+        { name: "Webhooks", path: "/client-dashboard/developer/webhooks", icon: GitMerge, isLucide: true },
+        { name: "Usage", path: "/client-dashboard/developer/usage", icon: BarChart3, isLucide: true },
+      ],
+    },
+    {
+      name: "Documentation",
+      icon: BookOpen,
+      isLucide: true,
+      path: "/client-dashboard/docs",
     },
     {
       name: "Support",

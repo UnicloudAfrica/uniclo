@@ -65,6 +65,7 @@ export const ObjectStoragePaymentStep: React.FC<ObjectStoragePaymentStepProps> =
             currency: totals.currency,
           }}
           className="border border-gray-200/80"
+          enableWalletPayment={true}
         />
       );
     }

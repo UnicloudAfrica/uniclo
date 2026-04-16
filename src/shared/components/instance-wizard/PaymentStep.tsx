@@ -100,6 +100,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
           onPaymentOptionChange={onPaymentOptionChange}
           onPaymentComplete={onPaymentComplete}
           apiBaseUrl={apiBaseUrl}
+          enableWalletPayment={true}
         />
       )}
       {isPaymentSuccessful && (

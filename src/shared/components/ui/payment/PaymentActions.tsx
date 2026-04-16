@@ -102,7 +102,7 @@ const PaymentActions = ({
                 publicKey={paystackPublicKey}
                 text={paymentStatus === "processing" ? "Processing\u2026" : "Pay with Card"}
                 className="w-full inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-70 bg-[var(--theme-color)] border border-[var(--theme-color)] min-h-[48px]"
-                disabled={!isPaystackReady}
+                disabled={!isPaystackReady || isConfirming}
                 onSuccess={async (response: Record<string, unknown>) => {
                   logger.info("[Paystack][Admin] PaystackButton success", response);
                   setPaymentStatus("processing");
@@ -147,7 +147,7 @@ const PaymentActions = ({
             selectedPaymentOption && (
               <button
                 onClick={handleBankTransferConfirmation}
-                disabled={isConfirming}
+                disabled={isConfirming || isPolling}
                 className="inline-flex items-center rounded-lg px-6 py-2 text-sm font-medium shadow-sm transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
                 style={{
                   backgroundColor: designTokens.colors.warning[600],
@@ -162,7 +162,7 @@ const PaymentActions = ({
           {paymentStatus === "pending" && paymentMode === "saved_card" && savedCards.length > 0 && (
             <button
               onClick={handleSavedCardPayment}
-              disabled={isConfirming || !selectedSavedCard}
+              disabled={isConfirming || isPolling || !selectedSavedCard}
               className="inline-flex items-center rounded-lg px-6 py-2 text-sm font-medium text-white shadow-sm transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
               style={{
                 backgroundColor: designTokens.colors.primary[700],

@@ -15,6 +15,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
+import TenantSettlementSettings from "@/shared/components/payment/TenantSettlementSettings";
 import {
   useTenantBillingConfig,
   useTenantBillingBalance,
@@ -454,6 +455,11 @@ const TenantBillingSettings: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Settlement Account Section */}
+      <div className="mt-8">
+        <TenantSettlementSettings />
+      </div>
     </TenantPageShell>
   );
 };

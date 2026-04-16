@@ -13,6 +13,11 @@ import {
   RotateCcw,
   XCircle,
   Globe2,
+  ShieldCheck,
+  RefreshCw,
+  Activity,
+  Zap,
+  ArrowUpDown,
 } from "lucide-react";
 import {
   AreaChart,
@@ -26,6 +31,17 @@ import {
 import AdminPageShell from "../../components/AdminPageShell";
 import { ModernButton, ModernCard } from "@/shared/components/ui";
 import ToastUtils from "@/utils/toastUtil";
+import {
+  useBackupStatus,
+  useReplicationStatus,
+  useEnableBackup,
+  useDisableBackup,
+  useTriggerBackup,
+  useEnableReplication,
+  useDisableReplication,
+  useFailover,
+} from "@/shared/hooks/resources/integrationHooks";
+import type { BackupStatus, ReplicationStatus } from "@/shared/hooks/resources/integrationHooks";
 import {
   useFetchInstanceManagementDetails,
   useInstanceManagementAction,
@@ -51,6 +67,7 @@ import {
   useAdminFetchInstanceConsoleById,
   useAdminFetchInstanceLifecycleById,
 } from "@/hooks/sharedResourceHooks";
+import InstanceResizeModal from "@/shared/components/instances/InstanceResizeModal";
 
 import type {
   ActionConfig,
@@ -155,6 +172,7 @@ const AdminInstancesDetails = () => {
   const [isConsoleLoading, setIsConsoleLoading] = useState(false);
   const [isAutoSyncing, setIsAutoSyncing] = useState(false);
   const [showAttachEipModal, setShowAttachEipModal] = useState(false);
+  const [showResizeModal, setShowResizeModal] = useState(false);
   const provisioningPollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const provisioningPollAttemptsRef = useRef(0);
   const provisioningPollTokenRef = useRef(0);
@@ -296,6 +314,25 @@ const AdminInstancesDetails = () => {
 
   const [showCreateBackupForm, setShowCreateBackupForm] = useState(false);
   const [backupFormName, setBackupFormName] = useState("");
+
+  // Integration protection hooks (AnyCloudFlow backup & replication)
+  const instanceDbId = (displayInstance?.id ?? managedInstance?.["id"]) as string | number | undefined;
+  const { data: acfBackupStatusRaw } = useBackupStatus(
+    "anycloudflow", "instance", instanceDbId,
+    { enabled: !!instanceDbId && activeTab === "protection" },
+  );
+  const { data: acfReplicationStatusRaw } = useReplicationStatus(
+    "anycloudflow", "instance", instanceDbId,
+    { enabled: !!instanceDbId && activeTab === "protection" },
+  );
+  const acfBackupStatus = acfBackupStatusRaw as BackupStatus | undefined;
+  const acfReplicationStatus = acfReplicationStatusRaw as ReplicationStatus | undefined;
+  const enableBackupMutation = useEnableBackup();
+  const disableBackupMutation = useDisableBackup();
+  const triggerBackupMutation = useTriggerBackup();
+  const enableReplicationMutation = useEnableReplication();
+  const disableReplicationMutation = useDisableReplication();
+  const failoverMutation = useFailover();
 
   const { mutateAsync: updateMetadataMutation, isPending: isMetadataUpdating } =
     useUpdateInstanceMetadata();
@@ -764,7 +801,11 @@ const AdminInstancesDetails = () => {
   // ---------------------------------------------------------------------------
 
   const handleGoBack = () => {
-    globalThis.window.location.href = "/admin-dashboard/cube-instances";
+    if (globalThis.history.length > 1) {
+      globalThis.history.back();
+    } else {
+      globalThis.window.location.href = "/admin-dashboard/cube-instances";
+    }
   };
 
   const handleCopyIdentifier = useCallback(() => {
@@ -804,6 +845,10 @@ const AdminInstancesDetails = () => {
 
   const handleInstanceAction = useCallback(
     async (actionKey: string) => {
+      if (actionKey === "resize") {
+        setShowResizeModal(true);
+        return;
+      }
       if (!supportsInstanceActions) {
         ToastUtils.info("Instance actions are not available for this provider.");
         return;
@@ -884,7 +929,11 @@ const AdminInstancesDetails = () => {
         (resultData?.["console_url"] as string | undefined) ||
         (result?.["console_url"] as string | undefined);
       if (!consoleUrl) throw new Error("Console URL unavailable.");
-      globalThis.open(consoleUrl, "_blank", "noopener,noreferrer");
+      const win = globalThis.open(consoleUrl, "_blank", "noopener,noreferrer");
+      if (!win) {
+        ToastUtils.error("Popup blocked by your browser. Please allow popups for this site.");
+        return;
+      }
     } catch (error) {
       ToastUtils.error(getErrorMessage(error, "Unable to open console for this instance."));
     } finally {
@@ -1486,7 +1535,7 @@ const AdminInstancesDetails = () => {
     );
   };
 
-  /** Protection tab — backup groups, snapshots, restore groups */
+  /** Protection tab — protection plan, backup groups, snapshots, restore groups */
   const renderProtectionTab = () => {
     const backupGroups = Array.isArray((backupGroupsRaw as GenericRecord)?.["backup_groups"])
       ? ((backupGroupsRaw as GenericRecord)["backup_groups"] as GenericRecord[])
@@ -1497,6 +1546,119 @@ const AdminInstancesDetails = () => {
     const restoreGroups = Array.isArray((restoreGroupsRaw as GenericRecord)?.["restore_groups"])
       ? ((restoreGroupsRaw as GenericRecord)["restore_groups"] as GenericRecord[])
       : [];
+
+    const backupEnabled = acfBackupStatus?.enabled ?? false;
+    const replicationEnabled = acfReplicationStatus?.enabled ?? false;
+    const replicationHealth = acfReplicationStatus?.health ?? "unknown";
+    const replicationLag = acfReplicationStatus?.lag_seconds;
+    const replicationTarget = acfReplicationStatus?.target_region;
+
+    const protectionLevel = replicationEnabled
+      ? "dr_replication"
+      : backupEnabled
+        ? "backup_only"
+        : "none";
+
+    const protectionLevelLabel: Record<string, string> = {
+      none: "No Protection",
+      backup_only: "Backup Only",
+      dr_replication: "DR Standby + AnyCloudFlow Replication",
+    };
+
+    const protectionLevelColor: Record<string, string> = {
+      none: "text-red-600 bg-red-50 border-red-200",
+      backup_only: "text-amber-600 bg-amber-50 border-amber-200",
+      dr_replication: "text-green-600 bg-green-50 border-green-200",
+    };
+
+    const handleEnableBackup = async () => {
+      if (!instanceDbId) return;
+      try {
+        await enableBackupMutation.mutateAsync({
+          integrationKey: "anycloudflow",
+          resourceType: "instance",
+          resourceId: instanceDbId,
+          config: { schedule: "daily", retention_days: 7 },
+        });
+        ToastUtils.success("Backup protection enabled");
+      } catch (e) {
+        ToastUtils.error(getErrorMessage(e, "Failed to enable backup"));
+      }
+    };
+
+    const handleDisableBackup = async () => {
+      if (!instanceDbId) return;
+      if (!globalThis.confirm("Disable backup protection? Existing snapshots will be retained.")) return;
+      try {
+        await disableBackupMutation.mutateAsync({
+          integrationKey: "anycloudflow",
+          resourceType: "instance",
+          resourceId: instanceDbId,
+        });
+        ToastUtils.success("Backup protection disabled");
+      } catch (e) {
+        ToastUtils.error(getErrorMessage(e, "Failed to disable backup"));
+      }
+    };
+
+    const handleTriggerManualBackup = async () => {
+      if (!instanceDbId) return;
+      try {
+        await triggerBackupMutation.mutateAsync({
+          integrationKey: "anycloudflow",
+          resourceType: "instance",
+          resourceId: instanceDbId,
+        });
+        ToastUtils.success("Manual backup triggered");
+      } catch (e) {
+        ToastUtils.error(getErrorMessage(e, "Failed to trigger backup"));
+      }
+    };
+
+    const handleEnableReplication = async () => {
+      if (!instanceDbId) return;
+      try {
+        await enableReplicationMutation.mutateAsync({
+          integrationKey: "anycloudflow",
+          resourceType: "instance",
+          resourceId: instanceDbId,
+          config: { mode: "continuous" },
+        });
+        ToastUtils.success("DR replication enabled");
+      } catch (e) {
+        ToastUtils.error(getErrorMessage(e, "Failed to enable replication"));
+      }
+    };
+
+    const handleDisableReplication = async () => {
+      if (!instanceDbId) return;
+      if (!globalThis.confirm("Disable DR replication? The standby VM will stop receiving updates.")) return;
+      try {
+        await disableReplicationMutation.mutateAsync({
+          integrationKey: "anycloudflow",
+          resourceType: "instance",
+          resourceId: instanceDbId,
+        });
+        ToastUtils.success("DR replication disabled");
+      } catch (e) {
+        ToastUtils.error(getErrorMessage(e, "Failed to disable replication"));
+      }
+    };
+
+    const handleFailover = async () => {
+      if (!instanceDbId) return;
+      if (!globalThis.confirm("Initiate failover? This will activate the standby VM and redirect traffic.")) return;
+      try {
+        await failoverMutation.mutateAsync({
+          integrationKey: "anycloudflow",
+          resourceType: "instance",
+          resourceId: instanceDbId,
+        });
+        ToastUtils.success("Failover initiated");
+      } catch (e) {
+        ToastUtils.error(getErrorMessage(e, "Failed to initiate failover"));
+      }
+    };
 
     const handleCreateBackup = async () => {
       if (!instanceIdentifier || !backupFormName.trim()) return;
@@ -1562,6 +1724,175 @@ const AdminInstancesDetails = () => {
 
     return (
       <div className="space-y-8">
+        {/* Protection Plan Status */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-blue-600" />
+            <h3 className="text-base font-semibold text-slate-900">Protection Plan</h3>
+          </div>
+
+          {/* Current plan badge */}
+          <div className={`flex items-center justify-between rounded-lg border p-4 ${protectionLevelColor[protectionLevel]}`}>
+            <div>
+              <p className="text-sm font-semibold">{protectionLevelLabel[protectionLevel]}</p>
+              <p className="mt-0.5 text-xs opacity-75">
+                {protectionLevel === "none" && "This instance has no active protection. Enable backup or DR to protect your data."}
+                {protectionLevel === "backup_only" && "Daily snapshots are active. Consider upgrading to DR for continuous replication."}
+                {protectionLevel === "dr_replication" && "Continuous block-level replication via AnyCloudFlow is active."}
+              </p>
+            </div>
+            {protectionLevel === "none" && (
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100">
+                <AlertTriangle className="h-4 w-4 text-red-500" />
+              </span>
+            )}
+            {protectionLevel === "backup_only" && (
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100">
+                <Shield className="h-4 w-4 text-amber-500" />
+              </span>
+            )}
+            {protectionLevel === "dr_replication" && (
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
+                <ShieldCheck className="h-4 w-4 text-green-500" />
+              </span>
+            )}
+          </div>
+
+          {/* Status cards grid */}
+          <div className="grid gap-3 sm:grid-cols-3">
+            {/* Backup status */}
+            <div className="rounded-lg border border-slate-200 p-3">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <Shield className="h-3.5 w-3.5" /> Backup
+              </div>
+              <div className="mt-2 flex items-center justify-between">
+                <span className={`text-sm font-semibold ${backupEnabled ? "text-green-600" : "text-slate-400"}`}>
+                  {backupEnabled ? "Enabled" : "Disabled"}
+                </span>
+                {backupEnabled ? (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={handleTriggerManualBackup}
+                      disabled={triggerBackupMutation.isPending}
+                      className="rounded p-1 text-slate-400 transition hover:bg-blue-50 hover:text-blue-600"
+                      title="Trigger Manual Backup"
+                    >
+                      <Camera className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={handleDisableBackup}
+                      disabled={disableBackupMutation.isPending}
+                      className="rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                      title="Disable Backup"
+                    >
+                      <XCircle className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleEnableBackup}
+                    disabled={enableBackupMutation.isPending}
+                    className="rounded-md bg-blue-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-blue-700"
+                  >
+                    Enable
+                  </button>
+                )}
+              </div>
+              {backupEnabled && acfBackupStatus?.next_backup_at && (
+                <p className="mt-1 text-[10px] text-slate-400">
+                  Next: {formatDateTime(acfBackupStatus.next_backup_at)}
+                </p>
+              )}
+              {backupEnabled && acfBackupStatus?.snapshots_count != null && (
+                <p className="mt-0.5 text-[10px] text-slate-400">
+                  {acfBackupStatus.snapshots_count} snapshot{acfBackupStatus.snapshots_count !== 1 ? "s" : ""}
+                </p>
+              )}
+            </div>
+
+            {/* DR Replication status */}
+            <div className="rounded-lg border border-slate-200 p-3">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <ArrowUpDown className="h-3.5 w-3.5" /> DR Replication
+              </div>
+              <div className="mt-2 flex items-center justify-between">
+                <span className={`text-sm font-semibold ${replicationEnabled ? "text-green-600" : "text-slate-400"}`}>
+                  {replicationEnabled ? "Active" : "Disabled"}
+                </span>
+                {replicationEnabled ? (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={handleFailover}
+                      disabled={failoverMutation.isPending}
+                      className="rounded-md bg-red-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-700"
+                      title="Initiate Failover"
+                    >
+                      <Zap className="mr-1 inline h-3 w-3" />Failover
+                    </button>
+                    <button
+                      onClick={handleDisableReplication}
+                      disabled={disableReplicationMutation.isPending}
+                      className="rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                      title="Disable Replication"
+                    >
+                      <XCircle className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleEnableReplication}
+                    disabled={enableReplicationMutation.isPending}
+                    className="rounded-md bg-blue-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-blue-700"
+                  >
+                    Enable
+                  </button>
+                )}
+              </div>
+              {replicationEnabled && (
+                <div className="mt-1 space-y-0.5">
+                  <div className="flex items-center gap-1.5">
+                    <Activity className={`h-3 w-3 ${replicationHealth === "healthy" ? "text-green-500" : replicationHealth === "degraded" ? "text-amber-500" : "text-red-500"}`} />
+                    <span className="text-[10px] text-slate-500 capitalize">{replicationHealth}</span>
+                  </div>
+                  {replicationLag != null && (
+                    <p className="text-[10px] text-slate-400">Lag: {replicationLag}s</p>
+                  )}
+                  {replicationTarget && (
+                    <p className="text-[10px] text-slate-400">Target: {replicationTarget}</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* AnyCloudFlow integration status */}
+            <div className="rounded-lg border border-slate-200 p-3">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <RefreshCw className="h-3.5 w-3.5" /> AnyCloudFlow
+              </div>
+              <div className="mt-2">
+                <span className={`text-sm font-semibold ${replicationEnabled || backupEnabled ? "text-green-600" : "text-slate-400"}`}>
+                  {replicationEnabled ? "Replicating" : backupEnabled ? "Backing up" : "Not in use"}
+                </span>
+              </div>
+              {replicationEnabled && (
+                <p className="mt-1 text-[10px] text-slate-400">
+                  Continuous block-level replication with automated failover
+                </p>
+              )}
+              {!replicationEnabled && backupEnabled && (
+                <p className="mt-1 text-[10px] text-slate-400">
+                  Scheduled snapshots with point-in-time restore
+                </p>
+              )}
+              {!replicationEnabled && !backupEnabled && (
+                <p className="mt-1 text-[10px] text-slate-400">
+                  Enable backup or DR to use AnyCloudFlow services
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Backup Groups */}
         <div>
           <div className="mb-4 flex items-center justify-between">
@@ -2063,6 +2394,19 @@ const AdminInstancesDetails = () => {
       <div className="border border-t-0 border-slate-200 bg-white p-6">
         {tabContent[activeTab]?.() ?? null}
       </div>
+
+      <InstanceResizeModal
+        isOpen={showResizeModal}
+        onClose={() => setShowResizeModal(false)}
+        instanceId={Number(displayInstance?.id) || 0}
+        instanceName={displayInstance?.name || instanceIdentifier}
+        currentStatus={String(displayInstance?.status || "unknown")}
+        isAdmin
+        onSuccess={() => {
+          refetchManagement();
+          refetchLifecycle();
+        }}
+      />
     </AdminPageShell>
   );
 };

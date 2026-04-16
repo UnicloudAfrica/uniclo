@@ -5,6 +5,7 @@ export { default as InstanceSummaryCard } from "./InstanceSummaryCard";
 export { default as OrderOverviewCard } from "./OrderOverviewCard";
 export { default as OrderSuccessStep } from "./OrderSuccessStep";
 export { default as PaymentStep } from "./PaymentStep";
+export { default as ProtectionPlanStep } from "./ProtectionPlanStep";
 export { default as ProvisioningWizardLayout } from "./ProvisioningWizardLayout";
 export { default as ReviewSubmitStep } from "./ReviewSubmitStep";
 export { default as StepIndicator } from "./StepIndicator";

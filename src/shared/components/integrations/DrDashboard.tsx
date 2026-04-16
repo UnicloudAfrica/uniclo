@@ -9,9 +9,40 @@ import { Shield, Activity, Clock, AlertTriangle, CheckCircle, XCircle, RefreshCw
 import ModernStatsCard from "../ui/ModernStatsCard";
 import IntegrationStatusBadge from "./IntegrationStatusBadge";
 import DegradationBanner from "./DegradationBanner";
-import { useDrDashboard, useDrTimeline, useBidirectionalStatus, type DrDashboardData, type DrTimelineEvent } from "../../hooks/resources/integrationHooks";
+import QuorumPanel from "./QuorumPanel";
+import TrafficControlPanel from "./TrafficControlPanel";
+import ConflictManager from "./ConflictManager";
+import ActiveActiveReadinessPanel from "./ActiveActiveReadinessPanel";
+import ChangeJournalPanel from "./ChangeJournalPanel";
+import HypervisorPanel from "./HypervisorPanel";
+import SyncPreviewPanel from "./SyncPreviewPanel";
+import SlaCompliancePanel from "./SlaCompliancePanel";
+import AuditLogPanel from "./AuditLogPanel";
+import VerificationPanel from "./VerificationPanel";
+import DrillSchedulePanel from "./DrillSchedulePanel";
+import MaintenanceWindowPanel from "./MaintenanceWindowPanel";
+import PitrPanel from "./PitrPanel";
+import RansomwarePanel from "./RansomwarePanel";
+import TransferSettingsPanel from "./TransferSettingsPanel";
+import {
+  useDrDashboard,
+  useDrTimeline,
+  useBidirectionalStatus,
+  useReplicationPairs,
+  type DrDashboardData,
+  type DrTimelineEvent,
+} from "../../hooks/resources/integrationHooks";
+import { useFetchExternalEndpoints } from "../../hooks/resources/externalEndpointHooks";
 import { designTokens } from "@/styles/designTokens";
 import { QuorumState, QUORUM_STATE_LABELS, QUORUM_STATE_COLORS, ReplicationMode } from "@/types/bidirectional";
+
+interface ExternalEndpointItem {
+  id: string;
+  identifier: string;
+  name: string;
+  host: string;
+  resource_type: string;
+}
 
 interface DrDashboardProps {
   className?: string;
@@ -21,7 +52,24 @@ interface DrDashboardProps {
 const DrDashboard: React.FC<DrDashboardProps> = ({ className = "", activePairId }) => {
   const { data: dashboard, isLoading: dashboardLoading } = useDrDashboard();
   const { data: timeline, isLoading: timelineLoading } = useDrTimeline({ limit: 10 });
-  const { data: biStatus } = useBidirectionalStatus(activePairId);
+  const { data: replicationPairs = [] } = useReplicationPairs({ bidirectional_only: true });
+  const { data: externalEndpoints = [] } = useFetchExternalEndpoints({ extra: { per_page: 100 } });
+  const [selectedPairId, setSelectedPairId] = React.useState<string | null>(activePairId ?? null);
+  const [selectedEndpointId, setSelectedEndpointId] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (activePairId) {
+      setSelectedPairId(activePairId);
+      return;
+    }
+
+    if (!selectedPairId && replicationPairs.length > 0) {
+      setSelectedPairId(replicationPairs[0].identifier);
+    }
+  }, [activePairId, selectedPairId, replicationPairs]);
+
+  const effectivePairId = activePairId ?? selectedPairId;
+  const { data: biStatus } = useBidirectionalStatus(effectivePairId);
 
   const repl = dashboard?.replication_summary ?? {
     total: 0,
@@ -90,18 +138,55 @@ const DrDashboard: React.FC<DrDashboardProps> = ({ className = "", activePairId 
         />
       </div>
 
-      {/* Bidirectional Status (if active pair) */}
-      {activePairId && biStatus?.local_pair && (
+      {/* Hypervisor Management */}
+      {(externalEndpoints as ExternalEndpointItem[]).length > 0 && (
+        <HypervisorPanel endpoints={externalEndpoints as ExternalEndpointItem[]} />
+      )}
+
+      {/* Bidirectional Orchestration */}
+      {replicationPairs.length > 0 && (
         <div>
-          {biStatus.local_pair.degraded_at && (
+          <div className="mb-4 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                  Replication Pair Orchestration
+                </h3>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Select a replication pair to manage bidirectional status, quorum, traffic control, conflicts, and enterprise active-active certification from UniCloud.
+                </p>
+              </div>
+              <div className="min-w-[280px]">
+                <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  Active Pair
+                </label>
+                <select
+                  value={effectivePairId ?? ""}
+                  onChange={(e) => setSelectedPairId(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                >
+                  {replicationPairs.map((pair) => (
+                    <option key={pair.identifier} value={pair.identifier}>
+                      {pair.identifier} • {pair.resource_a_provider}/{pair.resource_a_region} → {pair.resource_b_provider}/{pair.resource_b_region}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {effectivePairId && biStatus?.local_pair?.degraded_at && (
             <DegradationBanner
-              pairId={activePairId}
+              pairId={effectivePairId}
               quorumState={biStatus.local_pair.quorum_state}
               degradedAt={biStatus.local_pair.degraded_at}
               degradationReason={biStatus.local_pair.degradation_reason}
               className="mb-4"
             />
           )}
+
+          {effectivePairId && biStatus?.local_pair && (
+            <>
           <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
             <div className="mb-4 flex items-center gap-2">
               <ArrowLeftRight size={18} className="text-purple-500" />
@@ -145,8 +230,88 @@ const DrDashboard: React.FC<DrDashboardProps> = ({ className = "", activePairId 
               </div>
             </div>
           </div>
+
+              <div className="mt-4 grid gap-4 xl:grid-cols-2">
+                <ActiveActiveReadinessPanel pairId={effectivePairId} />
+                <QuorumPanel
+                  pairId={effectivePairId}
+                  witnessConfigured={biStatus.local_pair.witness_configured}
+                />
+              </div>
+
+              <div className="mt-4 grid gap-4 xl:grid-cols-2">
+                <TrafficControlPanel pairId={effectivePairId} />
+                <ConflictManager pairId={effectivePairId} />
+              </div>
+
+              {/* Transfer Tuning & Operations */}
+              <div className="mt-4 grid gap-4 xl:grid-cols-2">
+                <SyncPreviewPanel pairId={effectivePairId} />
+                <MaintenanceWindowPanel pairId={effectivePairId} />
+              </div>
+
+              <div className="mt-4 grid gap-4 xl:grid-cols-2">
+                <TransferSettingsPanel pairId={effectivePairId} />
+              </div>
+
+              <div className="mt-4 grid gap-4 xl:grid-cols-2">
+                <SlaCompliancePanel pairId={effectivePairId} />
+                <VerificationPanel pairId={effectivePairId} />
+              </div>
+
+              <div className="mt-4 grid gap-4 xl:grid-cols-2">
+                <DrillSchedulePanel drillId={effectivePairId} />
+                <PitrPanel pairId={effectivePairId} />
+              </div>
+
+              <div className="mt-4">
+                <AuditLogPanel pairId={effectivePairId} />
+              </div>
+            </>
+          )}
         </div>
       )}
+
+      {/* Change Journal (CDC) Management */}
+      {(externalEndpoints as ExternalEndpointItem[]).length > 0 && (
+        <div>
+          <div className="mb-4 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                  Change Journal (CDC)
+                </h3>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Enable file-level change tracking on endpoints to accelerate replication sync detection.
+                </p>
+              </div>
+              <div className="min-w-[280px]">
+                <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  Select Endpoint
+                </label>
+                <select
+                  value={selectedEndpointId ?? ""}
+                  onChange={(e) => setSelectedEndpointId(e.target.value || null)}
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                >
+                  <option value="">Choose an endpoint...</option>
+                  {(externalEndpoints as ExternalEndpointItem[]).map((ep) => (
+                    <option key={ep.identifier} value={ep.identifier}>
+                      {ep.name} ({ep.host}) — {ep.resource_type}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+          {selectedEndpointId && (
+            <ChangeJournalPanel endpointId={selectedEndpointId} />
+          )}
+        </div>
+      )}
+
+      {/* Ransomware Detection */}
+      <RansomwarePanel integrationKey="anycloudflow" />
 
       {/* Provider Health Cards */}
       {Object.keys(providerHealth).length > 0 && (

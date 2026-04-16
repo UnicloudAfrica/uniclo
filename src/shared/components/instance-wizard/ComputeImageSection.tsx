@@ -28,9 +28,15 @@ const ComputeImageSection: React.FC<ComputeImageSectionProps> = ({
         value={cfg.compute_instance_id}
         onChange={(e) => {
           const selectedLabel = e.target.selectedOptions?.[0]?.text || "";
+          const selectedValue = e.target.value;
+          const selectedOption = computeOptions.find((o) => String(o.value) === selectedValue);
+          const familyCode = selectedOption?.raw
+            ? (selectedOption.raw as { family_code?: string }).family_code || ""
+            : "";
           updateConfigWithFocus({
-            compute_instance_id: e.target.value,
-            compute_label: e.target.value ? selectedLabel : "",
+            compute_instance_id: selectedValue,
+            compute_label: selectedValue ? selectedLabel : "",
+            family_code: familyCode,
           });
         }}
         options={[

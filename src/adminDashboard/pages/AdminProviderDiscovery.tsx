@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import {
   CloudDownload,
   RefreshCw,
@@ -25,8 +25,12 @@ import {
   useFetchProviderDiscoveryRuns,
   useFetchProviderDiscoveryDrift,
 } from "@/hooks/adminHooks/providerDiscoveryHooks";
+import { useFetchTenants } from "@/hooks/adminHooks/tenantHooks";
+import { useFetchClients } from "@/hooks/adminHooks/clientHooks";
 import ToastUtils from "@/utils/toastUtil";
 import type { Region } from "@/shared/types/resource";
+import type { Tenant } from "@/shared/types/tenant";
+import type { Client } from "@/shared/types/client";
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -207,20 +211,92 @@ const AdminProviderDiscovery: React.FC = () => {
     return firstAz?.provider || "";
   }, [availableAZs, selectedAZ, selectedRegion, regions]);
 
+  // Project detail & linking state
+  const [viewingProject, setViewingProject] = useState<DiscoveredProject | null>(null);
+  const [linkingProject, setLinkingProject] = useState<DiscoveredProject | null>(null);
+  const [linkContext, setLinkContext] = useState<"admin" | "tenant" | "client">("admin");
+  const [linkTenantId, setLinkTenantId] = useState("");
+  const [linkUserId, setLinkUserId] = useState("");
+  const [tenantSearch, setTenantSearch] = useState("");
+  const [clientSearch, setClientSearch] = useState("");
+  const [tenantDropdownOpen, setTenantDropdownOpen] = useState(false);
+  const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
+  const tenantDropdownRef = useRef<HTMLDivElement>(null);
+  const clientDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (tenantDropdownOpen && tenantDropdownRef.current && !tenantDropdownRef.current.contains(e.target as Node)) {
+        setTenantDropdownOpen(false);
+      }
+      if (clientDropdownOpen && clientDropdownRef.current && !clientDropdownRef.current.contains(e.target as Node)) {
+        setClientDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [tenantDropdownOpen, clientDropdownOpen]);
+
+  // Tenant & client data for searchable selects
+  const { data: tenantsRaw } = useFetchTenants({ enabled: linkContext !== "admin" && !!linkingProject });
+  const tenants = useMemo(() => (Array.isArray(tenantsRaw) ? tenantsRaw : []) as Tenant[], [tenantsRaw]);
+
+  const { data: clientsRaw } = useFetchClients({ enabled: linkContext === "client" && !!linkingProject });
+  const allClients = useMemo(() => (Array.isArray(clientsRaw) ? clientsRaw : []) as Client[], [clientsRaw]);
+
+  // Filter tenants by search
+  const filteredTenants = useMemo(() => {
+    if (!tenantSearch.trim()) return tenants;
+    const q = tenantSearch.toLowerCase();
+    return tenants.filter((t) =>
+      (t.name || "").toLowerCase().includes(q) ||
+      (t.company_name || "").toLowerCase().includes(q) ||
+      (t.email || "").toLowerCase().includes(q) ||
+      String(t.id).includes(q)
+    );
+  }, [tenants, tenantSearch]);
+
+  // Filter clients by selected tenant and search
+  const filteredClients = useMemo(() => {
+    let pool = allClients;
+    if (linkTenantId) pool = pool.filter((c) => String(c.tenant_id) === linkTenantId);
+    if (!clientSearch.trim()) return pool;
+    const q = clientSearch.toLowerCase();
+    return pool.filter((c) =>
+      (c.name || "").toLowerCase().includes(q) ||
+      (c.email || "").toLowerCase().includes(q) ||
+      String(c.id).includes(q)
+    );
+  }, [allClients, linkTenantId, clientSearch]);
+
+  // Selected display labels
+  const selectedTenant = useMemo(
+    () => tenants.find((t) => String(t.id) === linkTenantId),
+    [tenants, linkTenantId]
+  );
+  const selectedClient = useMemo(
+    () => allClients.find((c) => String(c.id) === linkUserId),
+    [allClients, linkUserId]
+  );
+
+  const canDiscover = Boolean(selectedRegion && selectedAZ);
+
   const projectFilters = useMemo(
     () => ({
       provider: selectedProvider,
       region: selectedRegion,
+      availability_zone: selectedAZ || undefined,
       only_unlinked: showOnlyUnlinked || undefined,
     }),
-    [selectedProvider, selectedRegion, showOnlyUnlinked]
+    [selectedProvider, selectedRegion, selectedAZ, showOnlyUnlinked]
   );
 
   const {
     data: projectsRaw,
     isFetching: projectsLoading,
     refetch: refetchProjects,
-  } = useFetchProviderDiscoveryProjects(projectFilters);
+  } = useFetchProviderDiscoveryProjects(projectFilters, { enabled: canDiscover });
 
   const projects = useMemo(
     () => extractArray<DiscoveredProject>(projectsRaw, "projects"),
@@ -228,8 +304,8 @@ const AdminProviderDiscovery: React.FC = () => {
   );
 
   const userFilters = useMemo(
-    () => ({ provider: selectedProvider, region: selectedRegion }),
-    [selectedProvider, selectedRegion]
+    () => ({ provider: selectedProvider, region: selectedRegion, availability_zone: selectedAZ || undefined }),
+    [selectedProvider, selectedRegion, selectedAZ]
   );
 
   const {
@@ -269,7 +345,7 @@ const AdminProviderDiscovery: React.FC = () => {
   // ─── Actions ─────────────────────────────────────────────
 
   const handleImportSelected = useCallback(() => {
-    if (!selectedProjectIds.length || !selectedRegion) return;
+    if (!selectedProjectIds.length || !selectedAZ) return;
     const projectsToImport = selectedProjectIds.map((id) => {
       const project = projects.find((p) => p.id === id);
       return {
@@ -282,13 +358,14 @@ const AdminProviderDiscovery: React.FC = () => {
     setConfirmState({
       open: true,
       title: "Import Selected Projects",
-      message: `Import ${selectedProjectIds.length} project(s) from ${selectedProvider} / ${selectedRegion}? This will create local project records and link them to the provider.`,
+      message: `Import ${selectedProjectIds.length} project(s) from ${selectedAZ}? This will create local project records and link them to the cloud provider.`,
       variant: "warning",
       onConfirm: () => {
         importMutation.mutate(
           {
             provider: selectedProvider,
             region: selectedRegion,
+            availability_zone: selectedAZ,
             ensure_link: true,
             projects: projectsToImport,
           },
@@ -301,8 +378,11 @@ const AdminProviderDiscovery: React.FC = () => {
               setConfirmState((prev) => ({ ...prev, open: false }));
               refetchProjects();
             },
-            onError: () => {
-              ToastUtils.error("Failed to import projects");
+            onError: (error: unknown) => {
+              const err = error as Record<string, unknown>;
+              const responseData = (err?.response as Record<string, unknown>)?.data as Record<string, unknown> | undefined;
+              const message = (responseData?.message as string) || "Failed to import projects";
+              ToastUtils.error(message);
               setConfirmState((prev) => ({ ...prev, open: false }));
             },
           }
@@ -310,20 +390,83 @@ const AdminProviderDiscovery: React.FC = () => {
       },
       isLoading: importMutation.isPending,
     });
-  }, [selectedProjectIds, selectedRegion, selectedProvider, projects, importMutation, refetchProjects]);
+  }, [selectedProjectIds, selectedAZ, selectedRegion, selectedProvider, projects, importMutation, refetchProjects]);
+
+  const handleLinkProject = useCallback((project: DiscoveredProject) => {
+    setLinkingProject(project);
+    setLinkContext("admin");
+    setLinkTenantId("");
+    setLinkUserId("");
+    setTenantSearch("");
+    setClientSearch("");
+    setTenantDropdownOpen(false);
+    setClientDropdownOpen(false);
+  }, []);
+
+  const handleConfirmLinkProject = useCallback(() => {
+    if (!linkingProject || !selectedAZ) return;
+
+    const projectPayload: Record<string, unknown> = {
+      external_id: linkingProject.id,
+      name: linkingProject.name,
+      domain_id: linkingProject.domain_id,
+    };
+
+    if (linkContext === "tenant" && linkTenantId) {
+      projectPayload.tenant_id = Number(linkTenantId);
+    }
+    if (linkContext === "client" && linkUserId) {
+      projectPayload.user_id = Number(linkUserId);
+      if (linkTenantId) projectPayload.tenant_id = Number(linkTenantId);
+    }
+
+    importMutation.mutate(
+      {
+        provider: selectedProvider,
+        region: selectedRegion,
+        availability_zone: selectedAZ,
+        ensure_link: true,
+        customer_context: linkContext,
+        tenant_id: linkTenantId ? Number(linkTenantId) : undefined,
+        user_id: linkUserId ? Number(linkUserId) : undefined,
+        projects: [projectPayload],
+      },
+      {
+        onSuccess: (data: unknown) => {
+          const result = data as Record<string, unknown>;
+          const results = (result?.results as unknown[]) || [];
+          const first = results[0] as Record<string, unknown> | undefined;
+          ToastUtils.success(
+            first?.status === "linked"
+              ? `Project "${linkingProject.name}" linked successfully`
+              : `Project processed: ${first?.status || "done"}`
+          );
+          setLinkingProject(null);
+          refetchProjects();
+        },
+        onError: (error: unknown) => {
+          const err = error as Record<string, unknown>;
+          const responseData = (err?.response as Record<string, unknown>)?.data as Record<string, unknown> | undefined;
+          const message = (responseData?.message as string) || "Failed to link project";
+          ToastUtils.error(message);
+        },
+      }
+    );
+  }, [linkingProject, selectedAZ, selectedRegion, selectedProvider, linkContext, linkTenantId, linkUserId, importMutation, refetchProjects]);
 
   const handleSyncAll = useCallback(() => {
-    if (!selectedRegion) return;
+    if (!selectedAZ) return;
     setConfirmState({
       open: true,
       title: "Sync All Projects",
-      message: `This will discover and import all projects from ${selectedProvider} / ${selectedRegion} in the background. Infrastructure resources will also be synced. Continue?`,
+      message: `This will discover and import all projects from the selected availability zone in the background. Infrastructure resources will also be synced. Continue?`,
       variant: "warning",
       onConfirm: () => {
         syncMutation.mutate(
           {
             provider: selectedProvider,
             region: selectedRegion,
+            availability_zone: selectedAZ,
             queue: true,
             skip_infra: false,
           },
@@ -346,10 +489,10 @@ const AdminProviderDiscovery: React.FC = () => {
       },
       isLoading: syncMutation.isPending,
     });
-  }, [selectedRegion, selectedProvider, syncMutation, refetchRuns]);
+  }, [selectedAZ, selectedRegion, selectedProvider, syncMutation, refetchRuns]);
 
   const handleDetectDrift = useCallback(async () => {
-    if (!selectedRegion) return;
+    if (!selectedAZ) return;
     try {
       const result = await fetchDrift();
       const report = (result?.data as Record<string, unknown>)?.report ??
@@ -363,7 +506,7 @@ const AdminProviderDiscovery: React.FC = () => {
     } catch {
       ToastUtils.error("Failed to detect drift");
     }
-  }, [selectedRegion, fetchDrift]);
+  }, [selectedAZ, fetchDrift]);
 
   const handleLinkUser = useCallback(() => {
     if (!linkingUser || !localUserId || !selectedRegion) return;
@@ -394,29 +537,28 @@ const AdminProviderDiscovery: React.FC = () => {
     () => [
       {
         key: "name",
-        header: "Project Name",
+        header: "Project",
         sortable: true,
         render: (value: unknown, row: DiscoveredProject) => (
-          <div>
-            <span className="font-medium text-gray-900">{String(value || "Unnamed")}</span>
+          <div className="min-w-0">
+            <span className="font-medium text-gray-900 block truncate">{String(value || "Unnamed")}</span>
+            <span className="font-mono text-[10px] text-gray-400 block truncate max-w-[180px]" title={row.id}>
+              {row.id}
+            </span>
             {row.description && (
-              <p className="text-xs text-gray-500 mt-0.5 truncate max-w-xs">{row.description}</p>
+              <p className="text-xs text-gray-500 mt-0.5 truncate max-w-[200px]">{row.description}</p>
             )}
           </div>
         ),
       },
       {
-        key: "id",
-        header: "Project ID",
-        render: (value: unknown) => (
-          <span className="font-mono text-xs text-gray-500">{String(value || "—")}</span>
-        ),
-      },
-      {
         key: "domain_id",
         header: "Domain",
+        hideOnMobile: true,
         render: (value: unknown) => (
-          <span className="font-mono text-xs text-gray-500">{String(value || "—")}</span>
+          <span className="font-mono text-xs text-gray-500 block truncate max-w-[160px]" title={String(value || "")}>
+            {String(value || "—")}
+          </span>
         ),
       },
       {
@@ -436,12 +578,12 @@ const AdminProviderDiscovery: React.FC = () => {
       },
       {
         key: "linked_project",
-        header: "Linked Project",
+        header: "Linked",
         render: (_value: unknown, row: DiscoveredProject) => {
           if (!row.linked_project) {
             if (row.suggested_tenant) {
               return (
-                <span className="text-xs text-amber-600">
+                <span className="text-xs text-amber-600 block truncate max-w-[120px]">
                   Suggested: {row.suggested_tenant.name}
                 </span>
               );
@@ -449,14 +591,11 @@ const AdminProviderDiscovery: React.FC = () => {
             return <span className="text-xs text-gray-400">Not linked</span>;
           }
           return (
-            <div>
-              <span className="text-sm font-medium text-blue-600">
+            <div className="min-w-0">
+              <span className="text-sm font-medium text-blue-600 block truncate">
                 {row.linked_project.identifier}
               </span>
-              <p className="text-xs text-gray-500">{row.linked_project.name}</p>
-              {row.linked_project.tenant_name && (
-                <p className="text-xs text-gray-400">Tenant: {row.linked_project.tenant_name}</p>
-              )}
+              <p className="text-xs text-gray-500 truncate">{row.linked_project.name}</p>
             </div>
           );
         },
@@ -644,10 +783,16 @@ const AdminProviderDiscovery: React.FC = () => {
           ))}
         </select>
       </div>
-      {selectedProvider && (
-        <div className="flex items-center gap-1.5 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
+      {selectedAZ && (
+        <div className="flex items-center gap-1.5 text-sm text-green-600 bg-green-50 px-3 py-2 rounded-lg border border-green-200">
           <Info className="w-4 h-4 shrink-0" />
-          <span>Provider: <span className="font-medium capitalize">{selectedProvider}</span></span>
+          <span>Ready to discover</span>
+        </div>
+      )}
+      {selectedRegion && !selectedAZ && (
+        <div className="flex items-center gap-1.5 text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200">
+          <Info className="w-4 h-4 shrink-0" />
+          <span>Select an availability zone to discover resources</span>
         </div>
       )}
       {!selectedRegion && (
@@ -665,7 +810,7 @@ const AdminProviderDiscovery: React.FC = () => {
     <div className="space-y-4">
       {renderRegionSelector()}
 
-      {selectedRegion && (
+      {canDiscover && (
         <div className="flex flex-wrap items-center gap-2">
           <ModernButton
             variant="primary"
@@ -791,8 +936,9 @@ const AdminProviderDiscovery: React.FC = () => {
         selectable
         selectedIds={selectedProjectIds}
         onSelectionChange={setSelectedProjectIds}
+        onRowClick={(row: DiscoveredProject) => setViewingProject(row)}
         emptyMessage={
-          selectedRegion
+          canDiscover
             ? "No projects discovered. Click \"Discover Projects\" to fetch from the provider."
             : "Select a region and availability zone to discover projects."
         }
@@ -806,7 +952,7 @@ const AdminProviderDiscovery: React.FC = () => {
     <div className="space-y-4">
       {renderRegionSelector()}
 
-      {selectedRegion && selectedProvider && (
+      {canDiscover && (
         <div className="flex items-center gap-2">
           <ModernButton
             variant="primary"
@@ -842,8 +988,8 @@ const AdminProviderDiscovery: React.FC = () => {
           },
         ]}
         emptyMessage={
-          selectedRegion
-            ? "No users discovered. Click \"Discover Users\" to fetch from the provider."
+          canDiscover
+            ? "No users discovered. Click \"Discover Users\" to fetch from the cloud provider."
             : "Select a region and availability zone to discover users."
         }
       />
@@ -955,7 +1101,7 @@ const AdminProviderDiscovery: React.FC = () => {
 
   const headerActions = (
     <div className="flex items-center gap-2">
-      {selectedRegion && activeTab === "projects" && (
+      {canDiscover && activeTab === "projects" && (
         <ModernButton
           variant="primary"
           size="sm"
@@ -1034,6 +1180,358 @@ const AdminProviderDiscovery: React.FC = () => {
         {activeTab === "users" && renderUsersTab()}
         {activeTab === "runs" && renderRunsTab()}
       </div>
+
+      {/* Project Detail Drawer */}
+      {viewingProject && (
+        <div className="fixed inset-0 z-40 flex justify-end">
+          <div className="absolute inset-0 bg-black/20" onClick={() => setViewingProject(null)} />
+          <div className="relative w-full max-w-md bg-white shadow-xl overflow-y-auto animate-in slide-in-from-right">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between z-10">
+              <h3 className="text-base font-semibold text-gray-900">Project Details</h3>
+              <button
+                onClick={() => setViewingProject(null)}
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-gray-100"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              {/* Name & Status */}
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900">{viewingProject.name || "Unnamed"}</h4>
+                {viewingProject.description && (
+                  <p className="text-sm text-gray-500 mt-0.5">{viewingProject.description}</p>
+                )}
+                <div className="mt-2">
+                  <StatusPill
+                    status={viewingProject.matching_status || "unknown"}
+                    tone={matchingStatusTone(viewingProject.matching_status)}
+                    label={(viewingProject.matching_status || "unknown").replace(/_/g, " ")}
+                  />
+                </div>
+              </div>
+
+              {/* IDs */}
+              <div className="rounded-lg bg-gray-50 border border-gray-200 divide-y divide-gray-200">
+                <div className="px-3 py-2.5">
+                  <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">External ID</span>
+                  <p className="font-mono text-xs text-gray-700 mt-0.5 break-all select-all">{viewingProject.id}</p>
+                </div>
+                {viewingProject.domain_id && (
+                  <div className="px-3 py-2.5">
+                    <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">Domain ID</span>
+                    <p className="font-mono text-xs text-gray-700 mt-0.5 break-all select-all">{viewingProject.domain_id}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Matching Info */}
+              {viewingProject.matching_notes && viewingProject.matching_notes.length > 0 && (
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">Matching Notes</span>
+                  <ul className="mt-1 space-y-1">
+                    {viewingProject.matching_notes.map((note, i) => (
+                      <li key={i} className="text-xs text-gray-600 flex items-start gap-1.5">
+                        <Info className="w-3 h-3 text-gray-400 mt-0.5 shrink-0" />
+                        {note}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Linked Project */}
+              {viewingProject.linked_project && (
+                <div className="rounded-lg border border-green-200 bg-green-50 p-3">
+                  <span className="text-[10px] uppercase tracking-wider font-semibold text-green-600">Linked To</span>
+                  <p className="font-semibold text-green-800 mt-1">
+                    {viewingProject.linked_project.identifier}
+                  </p>
+                  <p className="text-xs text-green-700">{viewingProject.linked_project.name}</p>
+                  {viewingProject.linked_project.tenant_name && (
+                    <p className="text-xs text-green-600 mt-0.5">
+                      Tenant: {viewingProject.linked_project.tenant_name}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Suggested Tenant */}
+              {!viewingProject.linked_project && viewingProject.suggested_tenant && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                  <span className="text-[10px] uppercase tracking-wider font-semibold text-amber-600">Suggested Tenant</span>
+                  <p className="text-sm font-medium text-amber-800 mt-1">
+                    {viewingProject.suggested_tenant.name}
+                  </p>
+                  <p className="text-xs text-amber-600">ID: {viewingProject.suggested_tenant.id}</p>
+                </div>
+              )}
+
+              {/* Raw Data */}
+              {viewingProject.raw && Object.keys(viewingProject.raw).length > 0 && (
+                <details className="group">
+                  <summary className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 cursor-pointer hover:text-gray-600 select-none">
+                    Raw Provider Data
+                  </summary>
+                  <pre className="mt-2 text-[11px] text-gray-600 bg-gray-50 border border-gray-200 rounded-lg p-3 overflow-x-auto max-h-60 overflow-y-auto">
+                    {JSON.stringify(viewingProject.raw, null, 2)}
+                  </pre>
+                </details>
+              )}
+            </div>
+
+            {/* Footer Action */}
+            {viewingProject.matching_status !== "linked" && (
+              <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4">
+                <ModernButton
+                  variant="primary"
+                  size="md"
+                  className="w-full"
+                  onClick={() => {
+                    handleLinkProject(viewingProject);
+                    setViewingProject(null);
+                  }}
+                >
+                  <Link2 className="w-4 h-4" />
+                  Link This Project
+                </ModernButton>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Link Project Modal */}
+      {linkingProject && (
+        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-2 sm:p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">Link Project</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Link <strong>{linkingProject.name || linkingProject.id}</strong> to a customer context.
+              This will create a project in the database and pull all related resources.
+            </p>
+
+            <div className="space-y-4">
+              {/* Project Info */}
+              <div className="rounded-lg bg-gray-50 border border-gray-200 p-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                  <div className="min-w-0">
+                    <span className="text-xs text-gray-500">Project Name</span>
+                    <p className="font-medium text-gray-900 truncate">{linkingProject.name || "Unnamed"}</p>
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs text-gray-500">External ID</span>
+                    <p className="font-mono text-xs text-gray-600 truncate">{linkingProject.id}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Customer Context */}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
+                  Assign To
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["admin", "tenant", "client"] as const).map((ctx) => (
+                    <button
+                      key={ctx}
+                      type="button"
+                      onClick={() => {
+                        setLinkContext(ctx);
+                        if (ctx === "admin") { setLinkTenantId(""); setLinkUserId(""); }
+                        if (ctx === "tenant") { setLinkUserId(""); setClientSearch(""); }
+                        setTenantSearch("");
+                        setClientSearch("");
+                        setTenantDropdownOpen(false);
+                        setClientDropdownOpen(false);
+                      }}
+                      className={`rounded-lg border-2 px-3 py-2 sm:px-4 sm:py-2.5 text-sm font-medium capitalize transition-all ${
+                        linkContext === ctx
+                          ? "border-blue-500 bg-blue-50 text-blue-700"
+                          : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                      }`}
+                    >
+                      {ctx}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-1.5 text-xs text-gray-400">
+                  {linkContext === "admin" && "Project will be owned by the platform admin."}
+                  {linkContext === "tenant" && "Project will be assigned to a specific tenant (reseller)."}
+                  {linkContext === "client" && "Project will be assigned to a specific end-user under a tenant."}
+                </p>
+              </div>
+
+              {/* Tenant Selector (for tenant & client context) */}
+              {(linkContext === "tenant" || linkContext === "client") && (
+                <div className="relative" ref={tenantDropdownRef}>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Tenant</label>
+                  <button
+                    type="button"
+                    onClick={() => { setTenantDropdownOpen(!tenantDropdownOpen); setClientDropdownOpen(false); }}
+                    className="w-full flex items-center justify-between rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-left hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  >
+                    {selectedTenant ? (
+                      <span className="truncate">
+                        <span className="font-medium">{selectedTenant.name || selectedTenant.company_name}</span>
+                        <span className="text-gray-400 ml-1">#{selectedTenant.id}</span>
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">Search and select a tenant...</span>
+                    )}
+                    <Search className="w-4 h-4 text-gray-400 shrink-0 ml-2" />
+                  </button>
+
+                  {tenantDropdownOpen && (
+                    <div className="absolute z-10 mt-1 w-full bg-white rounded-lg border border-gray-200 shadow-lg">
+                      <div className="p-2 border-b border-gray-100">
+                        <input
+                          autoFocus
+                          type="text"
+                          value={tenantSearch}
+                          onChange={(e) => setTenantSearch(e.target.value)}
+                          placeholder="Search by name, email, or ID..."
+                          className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        />
+                      </div>
+                      <ul className="max-h-48 overflow-y-auto py-1">
+                        {filteredTenants.length === 0 ? (
+                          <li className="px-3 py-2 text-sm text-gray-400 text-center">No tenants found</li>
+                        ) : (
+                          filteredTenants.slice(0, 50).map((t) => (
+                            <li key={t.id}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setLinkTenantId(String(t.id));
+                                  setTenantSearch("");
+                                  setTenantDropdownOpen(false);
+                                  // Reset client when tenant changes
+                                  setLinkUserId("");
+                                  setClientSearch("");
+                                }}
+                                className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 transition-colors ${
+                                  String(t.id) === linkTenantId ? "bg-blue-50 text-blue-700" : "text-gray-700"
+                                }`}
+                              >
+                                <span className="font-medium">{t.name || t.company_name || "Unnamed"}</span>
+                                <span className="text-gray-400 text-xs ml-1.5">#{t.id}</span>
+                                {t.email && <span className="block text-xs text-gray-400 truncate">{t.email}</span>}
+                              </button>
+                            </li>
+                          ))
+                        )}
+                      </ul>
+                    </div>
+                  )}
+
+                  {linkingProject.suggested_tenant && !linkTenantId && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLinkTenantId(String(linkingProject.suggested_tenant!.id));
+                        setTenantDropdownOpen(false);
+                      }}
+                      className="mt-1.5 inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded-md"
+                    >
+                      <Info className="w-3 h-3" />
+                      Suggested: {linkingProject.suggested_tenant.name}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Client Selector (for client context) */}
+              {linkContext === "client" && (
+                <div className="relative" ref={clientDropdownRef}>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Client (User)</label>
+                  <button
+                    type="button"
+                    onClick={() => { setClientDropdownOpen(!clientDropdownOpen); setTenantDropdownOpen(false); }}
+                    disabled={!linkTenantId}
+                    className="w-full flex items-center justify-between rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-left hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {selectedClient ? (
+                      <span className="truncate">
+                        <span className="font-medium">{selectedClient.name || selectedClient.email}</span>
+                        <span className="text-gray-400 ml-1">#{selectedClient.id}</span>
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">
+                        {linkTenantId ? "Search and select a client..." : "Select a tenant first"}
+                      </span>
+                    )}
+                    <Search className="w-4 h-4 text-gray-400 shrink-0 ml-2" />
+                  </button>
+
+                  {clientDropdownOpen && linkTenantId && (
+                    <div className="absolute z-10 mt-1 w-full bg-white rounded-lg border border-gray-200 shadow-lg">
+                      <div className="p-2 border-b border-gray-100">
+                        <input
+                          autoFocus
+                          type="text"
+                          value={clientSearch}
+                          onChange={(e) => setClientSearch(e.target.value)}
+                          placeholder="Search by name, email, or ID..."
+                          className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        />
+                      </div>
+                      <ul className="max-h-48 overflow-y-auto py-1">
+                        {filteredClients.length === 0 ? (
+                          <li className="px-3 py-2 text-sm text-gray-400 text-center">
+                            {allClients.length === 0 ? "Loading clients..." : "No clients found for this tenant"}
+                          </li>
+                        ) : (
+                          filteredClients.slice(0, 50).map((c) => (
+                            <li key={c.id}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setLinkUserId(String(c.id));
+                                  setClientSearch("");
+                                  setClientDropdownOpen(false);
+                                }}
+                                className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 transition-colors ${
+                                  String(c.id) === linkUserId ? "bg-blue-50 text-blue-700" : "text-gray-700"
+                                }`}
+                              >
+                                <span className="font-medium">{c.name || c.full_name || "Unnamed"}</span>
+                                <span className="text-gray-400 text-xs ml-1.5">#{c.id}</span>
+                                {c.email && <span className="block text-xs text-gray-400 truncate">{c.email}</span>}
+                              </button>
+                            </li>
+                          ))
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 mt-5 border-t border-gray-100 pt-4">
+              <ModernButton variant="outline" size="sm" onClick={() => setLinkingProject(null)}>
+                Cancel
+              </ModernButton>
+              <ModernButton
+                variant="primary"
+                size="sm"
+                onClick={handleConfirmLinkProject}
+                disabled={
+                  importMutation.isPending ||
+                  (linkContext === "tenant" && !linkTenantId) ||
+                  (linkContext === "client" && (!linkTenantId || !linkUserId))
+                }
+              >
+                {importMutation.isPending ? "Linking..." : "Link & Import Resources"}
+              </ModernButton>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Confirm Dialog */}
       <ConfirmDialog

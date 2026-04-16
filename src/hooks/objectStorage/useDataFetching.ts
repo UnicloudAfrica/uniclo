@@ -72,6 +72,7 @@ export const useDataFetching = (options: UseDataFetchingOptions): UseDataFetchin
     {
       enabled: Boolean(primaryRegion),
       countryCode: effectiveCountryCode,
+      withProduct: true,
     }
   );
   const tierPricingPayload = useMemo(
@@ -177,6 +178,14 @@ export const useDataFetching = (options: UseDataFetchingOptions): UseDataFetchin
       const globalKey = makeTierKey(GLOBAL_TIER_KEY, composite);
       globalBucket.options.push({ value: globalKey, label });
       globalBucket.map.set(globalKey, composite);
+
+      // Also store the region-specific key in the global bucket so that
+      // fallback lookups succeed when the user selected a tier from a
+      // region-specific option list but the region bucket is no longer
+      // available (e.g. after a catalog rebuild).
+      if (key !== globalKey) {
+        globalBucket.map.set(key, composite);
+      }
     });
 
     return catalog;

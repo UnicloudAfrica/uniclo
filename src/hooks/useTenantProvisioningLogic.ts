@@ -464,13 +464,20 @@ export const useTenantProvisioningLogic = () => {
         if (isPaymentRequired) {
           if (paymentStepIndex >= 0) {
             setActiveStep(paymentStepIndex);
-          } else {
+          } else if (reviewStepIndex >= 0) {
             ToastUtils.error("Payment is required. Switch to standard mode to continue.");
             setActiveStep(reviewStepIndex);
+          } else {
+            ToastUtils.error("Payment is required. Switch to standard mode to continue.");
           }
         } else {
           setIsPaymentSuccessful(true);
-          setActiveStep(reviewStepIndex);
+          if (reviewStepIndex >= 0) {
+            setActiveStep(reviewStepIndex);
+          } else {
+            // Fallback: advance to the last meaningful step
+            setActiveStep(steps.length - 1);
+          }
         }
         return {
           isPaymentRequired: Boolean(isPaymentRequired),
@@ -500,13 +507,19 @@ export const useTenantProvisioningLogic = () => {
     selectedUserId,
     paymentStepIndex,
     reviewStepIndex,
+    steps.length,
   ]);
 
   const handlePaymentCompleted = useCallback(() => {
     setIsPaymentSuccessful(true);
-    setActiveStep(reviewStepIndex); // Move to review step
+    if (reviewStepIndex >= 0) {
+      setActiveStep(reviewStepIndex);
+    } else {
+      // Fallback: advance to the last meaningful step
+      setActiveStep(steps.length - 1);
+    }
     ToastUtils.success("Payment successful! Order confirmed.");
-  }, [reviewStepIndex]);
+  }, [reviewStepIndex, steps.length]);
 
   // ─────────────────────────────────────────────────────────────────
   // Pricing Calculations

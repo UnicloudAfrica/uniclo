@@ -215,7 +215,18 @@ export const ObjectStorageCreateContent: React.FC<ObjectStorageCreateContentProp
       return;
     }
 
-    const orderSummary = await createOrder();
+    let orderSummary;
+    try {
+      orderSummary = await createOrder();
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Unable to create the order. Please try again.";
+      ToastUtils.error(message);
+      return;
+    }
+
     if (!orderSummary) {
       ToastUtils.error("Unable to create the order. Please try again.");
       return;
@@ -247,7 +258,17 @@ export const ObjectStorageCreateContent: React.FC<ObjectStorageCreateContentProp
 
   const handleReviewSubmit = useCallback(async () => {
     if (isFastTrack) {
-      const orderSummary = await submitOrder(undefined, true);
+      let orderSummary;
+      try {
+        orderSummary = await submitOrder(undefined, true);
+      } catch (error) {
+        const message =
+          error instanceof Error && error.message
+            ? error.message
+            : "Unable to submit the fast-track order. Please try again.";
+        ToastUtils.error(message);
+        return;
+      }
       if (!orderSummary) {
         ToastUtils.error("Unable to submit the fast-track order. Please try again.");
         return;

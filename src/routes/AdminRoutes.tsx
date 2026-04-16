@@ -55,23 +55,55 @@ import RegionDetail from "../adminDashboard/pages/RegionDetail";
 import RegionEdit from "../adminDashboard/pages/RegionEdit";
 import AdminOnboardingReview from "../adminDashboard/pages/AdminOnboardingReview";
 import AdminProviderDiscovery from "../adminDashboard/pages/AdminProviderDiscovery";
+import AdminDocsLayout from "../adminDashboard/pages/docs/AdminDocsLayout";
+import AdminDocPage from "../adminDashboard/pages/docs/AdminDocPage";
+import DocEditor from "../docs/renderer/DocEditor";
 import AdminSubscriptionPlans from "../adminDashboard/pages/AdminSubscriptionPlans";
 import WalletDashboard from "../adminDashboard/pages/WalletDashboard";
 import SettlementsDashboard from "../adminDashboard/pages/SettlementsDashboard";
 import PayoutsDashboard from "../adminDashboard/pages/PayoutsDashboard";
 import AnalyticsDashboard from "../adminDashboard/pages/AnalyticsDashboard";
+import AdminDeveloperPortal from "../adminDashboard/pages/AdminDeveloperPortal";
+import AdminBridgeClients from "../adminDashboard/pages/AdminBridgeClients";
 import TicketsDashboard from "../adminDashboard/pages/TicketsDashboard";
 import AdminTicketDetail from "../adminDashboard/pages/AdminTicketDetail";
 import AdminManagedDatabases from "../adminDashboard/pages/AdminManagedDatabases";
+import AdminMonitoring from "../adminDashboard/pages/AdminMonitoring";
+import AdminPaymentSplits from "../adminDashboard/pages/AdminPaymentSplits";
+import AdminMigrationCalculator from "../adminDashboard/pages/AdminMigrationCalculator";
+import AdminAcfFastTrack from "../adminDashboard/pages/AdminAcfFastTrack";
+import AdminAcfDirectProvision from "../adminDashboard/pages/AdminAcfDirectProvision";
 import AdminDatabaseCreate from "../adminDashboard/pages/AdminDatabaseCreate";
 import AdminDatabaseDetail from "../adminDashboard/pages/AdminDatabaseDetail";
 import AdminProtection from "../adminDashboard/pages/AdminProtection";
 import AdminMigrations from "../adminDashboard/pages/AdminMigrations";
 import AdminMigrationWizard from "../adminDashboard/pages/AdminMigrationWizard";
+import AdminBatchMigrations from "../adminDashboard/pages/AdminBatchMigrations";
+import AdminBatchMigrationWizard from "../adminDashboard/pages/AdminBatchMigrationWizard";
+import AdminBatchMigrationDetail from "../adminDashboard/pages/AdminBatchMigrationDetail";
 import AdminDestinations from "../adminDashboard/pages/AdminDestinations";
 import AdminServerlessDr from "../adminDashboard/pages/AdminServerlessDr";
 import AdminAgent from "../adminDashboard/pages/AdminAgent";
 import AdminPocTrials from "../adminDashboard/pages/AdminPocTrials";
+import AdminDrDrills from "../adminDashboard/pages/AdminDrDrills";
+import AdminHypervisor from "../adminDashboard/pages/AdminHypervisor";
+import AdminDatabaseReplication from "../adminDashboard/pages/AdminDatabaseReplication";
+import AdminRansomware from "../adminDashboard/pages/AdminRansomware";
+import AdminShieldDomains from "../adminDashboard/pages/AdminShieldDomains";
+import AdminShieldDomainDetail from "../adminDashboard/pages/AdminShieldDomainDetail";
+import AdminShieldOverview from "../adminDashboard/pages/AdminShieldOverview";
+import AdminShieldAttackMap from "../adminDashboard/pages/AdminShieldAttackMap";
+import AdminShieldFirewall from "../adminDashboard/pages/AdminShieldFirewall";
+import AdminShieldAttacks from "../adminDashboard/pages/AdminShieldAttacks";
+import AdminShieldAnalytics from "../adminDashboard/pages/AdminShieldAnalytics";
+import AdminShieldSsl from "../adminDashboard/pages/AdminShieldSsl";
+import AdminCloudAccounts from "../adminDashboard/pages/AdminCloudAccounts";
+import AdminCloudAccountCreate from "../adminDashboard/pages/AdminCloudAccountCreate";
+import AdminCloudAccountDetail from "../adminDashboard/pages/AdminCloudAccountDetail";
+import IntegrationPartnerPayoutsDashboard from "../adminDashboard/pages/IntegrationPartnerPayoutsDashboard";
+import IntegrationPartnerLedgerDashboard from "../adminDashboard/pages/IntegrationPartnerLedgerDashboard";
+import AdminFlow from "../adminDashboard/pages/AdminFlow";
+import AdminFlowDashboard from "../adminDashboard/pages/AdminFlowDashboard";
 
 // Infrastructure Pages
 import {
@@ -171,15 +203,39 @@ const AdminRoutes = (): React.JSX.Element => {
         <Route path="/admin-dashboard/cube-instances" element={<AdminInstances />} />
         <Route path="/admin-dashboard/cube-instances/details" element={<AdminInstancesDetails />} />
 
+        <Route path="/admin-dashboard/monitoring" element={<AdminMonitoring />} />
         <Route path="/admin-dashboard/databases" element={<AdminManagedDatabases />} />
         <Route path="/admin-dashboard/databases/create" element={<AdminDatabaseCreate />} />
         <Route path="/admin-dashboard/databases/:identifier" element={<AdminDatabaseDetail />} />
 
+        <Route path="/admin-dashboard/cloud-accounts" element={<AdminCloudAccounts />} />
+        <Route path="/admin-dashboard/cloud-accounts/create" element={<AdminCloudAccountCreate />} />
+        <Route path="/admin-dashboard/cloud-accounts/:accountId" element={<AdminCloudAccountDetail />} />
+
         <Route path="/admin-dashboard/protection" element={<AdminProtection />} />
+        <Route path="/admin-dashboard/dr-drills" element={<AdminDrDrills />} />
+        <Route path="/admin-dashboard/hypervisor" element={<AdminHypervisor />} />
+        <Route path="/admin-dashboard/database-replication" element={<AdminDatabaseReplication />} />
+        <Route path="/admin-dashboard/ransomware" element={<AdminRansomware />} />
 
         <Route path="/admin-dashboard/migrations" element={<AdminMigrations />} />
         <Route path="/admin-dashboard/migrations/new" element={<AdminMigrationWizard />} />
+        <Route path="/admin-dashboard/batch-migrations" element={<AdminBatchMigrations />} />
+        <Route path="/admin-dashboard/batch-migrations/new" element={<AdminBatchMigrationWizard />} />
+        <Route path="/admin-dashboard/batch-migrations/:identifier" element={<AdminBatchMigrationDetail />} />
         <Route path="/admin-dashboard/destinations" element={<AdminDestinations />} />
+
+        <Route path="/admin-dashboard/shield/domains" element={<AdminShieldDomains />} />
+        <Route path="/admin-dashboard/shield/domains/:domainId" element={<AdminShieldDomainDetail />} />
+        <Route path="/admin-dashboard/shield/overview" element={<AdminShieldOverview />} />
+        <Route path="/admin-dashboard/shield/attack-map" element={<AdminShieldAttackMap />} />
+        <Route path="/admin-dashboard/shield/firewall" element={<AdminShieldFirewall />} />
+        <Route path="/admin-dashboard/anycloudflow/calculator" element={<AdminMigrationCalculator />} />
+        <Route path="/admin-dashboard/anycloudflow/fast-track" element={<AdminAcfFastTrack />} />
+        <Route path="/admin-dashboard/anycloudflow/direct-provision" element={<AdminAcfDirectProvision />} />
+        <Route path="/admin-dashboard/shield/attacks" element={<AdminShieldAttacks />} />
+        <Route path="/admin-dashboard/shield/analytics" element={<AdminShieldAnalytics />} />
+        <Route path="/admin-dashboard/shield/ssl" element={<AdminShieldSsl />} />
         <Route path="/admin-dashboard/serverless-dr" element={<AdminServerlessDr />} />
         <Route path="/admin-dashboard/agent" element={<AdminAgent />} />
 
@@ -201,10 +257,15 @@ const AdminRoutes = (): React.JSX.Element => {
         <Route path="/admin-dashboard/tax-configuration" element={<AdminTax />} />
         <Route path="/admin-dashboard/subscription-plans" element={<AdminSubscriptionPlans />} />
         <Route path="/admin-dashboard/wallet" element={<WalletDashboard />} />
+        <Route path="/admin-dashboard/payment-splits" element={<AdminPaymentSplits />} />
         <Route path="/admin-dashboard/settlements" element={<SettlementsDashboard />} />
         <Route path="/admin-dashboard/payouts" element={<PayoutsDashboard />} />
+        <Route path="/admin-dashboard/integration-partner-payouts" element={<IntegrationPartnerPayoutsDashboard />} />
+        <Route path="/admin-dashboard/integration-partner-payouts/ledger" element={<IntegrationPartnerLedgerDashboard />} />
         <Route path="/admin-dashboard/poc-trials" element={<AdminPocTrials />} />
         <Route path="/admin-dashboard/analytics" element={<AnalyticsDashboard />} />
+        <Route path="/admin-dashboard/developer/*" element={<AdminDeveloperPortal />} />
+        <Route path="/admin-dashboard/bridge-clients" element={<AdminBridgeClients />} />
         <Route path="/admin-dashboard/tickets" element={<TicketsDashboard />} />
         <Route path="/admin-dashboard/tickets/:id" element={<AdminTicketDetail />} />
 
@@ -248,11 +309,22 @@ const AdminRoutes = (): React.JSX.Element => {
         <Route path="/admin-dashboard/infrastructure/images" element={<AdminImages />} />
         <Route path="/admin-dashboard/infrastructure/autoscaling" element={<AdminAutoScaling />} />
 
+        {/* UniCloudFlow */}
+        <Route path="/admin-dashboard/flow" element={<AdminFlow />} />
+        <Route path="/admin-dashboard/flow-dashboard" element={<AdminFlowDashboard />} />
+
         {/* Provider Discovery */}
         <Route
           path="/admin-dashboard/provider-discovery"
           element={<AdminProviderDiscovery />}
         />
+
+        {/* Documentation */}
+        <Route path="/admin-dashboard/docs" element={<AdminDocsLayout />}>
+          <Route index element={<AdminDocPage />} />
+          <Route path="edit" element={<DocEditor />} />
+          <Route path=":slug" element={<AdminDocPage />} />
+        </Route>
       </Route>
     </>
   );

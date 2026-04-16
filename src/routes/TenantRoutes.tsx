@@ -15,6 +15,7 @@ import ProjectDetails from "../dashboard/pages/ProjectDetails";
 import TenantAccountSettings from "../dashboard/pages/AccountSettings";
 import DashboardTaxConfigurations from "../dashboard/pages/taxConfiguration";
 import Products from "../dashboard/pages/products";
+import TenantDeveloperPortal from "../tenantDashboard/pages/DeveloperPortal";
 import TenantPricingCalculator from "../tenantDashboard/pages/TenantPricingCalculator";
 import TenantPricingOverrides from "../tenantDashboard/pages/TenantPricingOverrides";
 import TenantPricingEditList from "../tenantDashboard/pages/TenantPricingEditList";
@@ -49,6 +50,12 @@ import RevenueDashboard from "../tenantDashboard/pages/RevenueDashboard";
 import TenantProvisioningWizard from "../tenantDashboard/pages/TenantProvisioningWizard";
 import TenantTemplates from "../tenantDashboard/pages/TenantTemplates";
 import TenantManagedDatabases from "../dashboard/pages/TenantManagedDatabases";
+import TenantCloudAccounts from "../dashboard/pages/TenantCloudAccounts";
+import TenantCloudAccountCreate from "../dashboard/pages/TenantCloudAccountCreate";
+import TenantCloudAccountDetail from "../dashboard/pages/TenantCloudAccountDetail";
+import TenantMonitoring from "../tenantDashboard/pages/TenantMonitoring";
+import TenantFlow from "../tenantDashboard/pages/TenantFlow";
+import TenantMigrationCalculator from "../tenantDashboard/pages/TenantMigrationCalculator";
 import TenantDatabaseCreate from "../dashboard/pages/TenantDatabaseCreate";
 import TenantDatabaseDetail from "../dashboard/pages/TenantDatabaseDetail";
 import TenantDiscountManager from "../tenantDashboard/pages/TenantDiscountManager";
@@ -59,9 +66,24 @@ import TenantPocTrials from "../tenantDashboard/pages/TenantPocTrials";
 import TenantProtection from "../dashboard/pages/TenantProtection";
 import TenantMigrations from "../dashboard/pages/TenantMigrations";
 import TenantMigrationWizard from "../dashboard/pages/TenantMigrationWizard";
+import TenantBatchMigrations from "../dashboard/pages/TenantBatchMigrations";
+import TenantBatchMigrationWizard from "../dashboard/pages/TenantBatchMigrationWizard";
+import TenantBatchMigrationDetail from "../dashboard/pages/TenantBatchMigrationDetail";
 import TenantDestinations from "../dashboard/pages/TenantDestinations";
 import TenantServerlessDr from "../dashboard/pages/TenantServerlessDr";
 import TenantAgent from "../dashboard/pages/TenantAgent";
+import TenantDrDrills from "../dashboard/pages/TenantDrDrills";
+import TenantHypervisor from "../dashboard/pages/TenantHypervisor";
+import TenantDatabaseReplication from "../dashboard/pages/TenantDatabaseReplication";
+import TenantRansomware from "../dashboard/pages/TenantRansomware";
+import TenantShieldDomains from "../dashboard/pages/TenantShieldDomains";
+import TenantShieldDomainDetail from "../dashboard/pages/TenantShieldDomainDetail";
+import TenantShieldOverview from "../dashboard/pages/TenantShieldOverview";
+import TenantShieldAttackMap from "../dashboard/pages/TenantShieldAttackMap";
+import TenantShieldFirewall from "../dashboard/pages/TenantShieldFirewall";
+import TenantShieldAttacks from "../dashboard/pages/TenantShieldAttacks";
+import TenantShieldAnalytics from "../dashboard/pages/TenantShieldAnalytics";
+import TenantShieldSsl from "../dashboard/pages/TenantShieldSsl";
 import {
   TenantKeyPairs,
   TenantNetworkInterfaces,
@@ -84,6 +106,9 @@ import {
   LaunchConfigurationWizard,
   AutoScalingGroupWizard,
 } from "../tenantDashboard/pages/infrastructure";
+
+import TenantDocsLayout from "../tenantDashboard/pages/docs/TenantDocsLayout";
+import TenantDocPage from "../tenantDashboard/pages/docs/TenantDocPage";
 
 import type { JSX } from "react";
 
@@ -133,16 +158,39 @@ const TenantRoutes = (): JSX.Element => (
         <Route path="/dashboard/create-instance" element={<TenantProvisioningWizard />} />
         <Route path="/dashboard/templates" element={<TenantTemplates />} />
 
+        <Route path="/dashboard/monitoring" element={<TenantMonitoring />} />
+        <Route path="/dashboard/flow" element={<TenantFlow />} />
         <Route path="/dashboard/databases" element={<TenantManagedDatabases />} />
         <Route path="/dashboard/databases/create" element={<TenantDatabaseCreate />} />
         <Route path="/dashboard/databases/:identifier" element={<TenantDatabaseDetail />} />
 
+        <Route path="/dashboard/cloud-accounts" element={<TenantCloudAccounts />} />
+        <Route path="/dashboard/cloud-accounts/create" element={<TenantCloudAccountCreate />} />
+        <Route path="/dashboard/cloud-accounts/:accountId" element={<TenantCloudAccountDetail />} />
+
+        <Route path="/dashboard/anycloudflow/calculator" element={<TenantMigrationCalculator />} />
         <Route path="/dashboard/protection" element={<TenantProtection />} />
+        <Route path="/dashboard/dr-drills" element={<TenantDrDrills />} />
+        <Route path="/dashboard/hypervisor" element={<TenantHypervisor />} />
+        <Route path="/dashboard/database-replication" element={<TenantDatabaseReplication />} />
+        <Route path="/dashboard/ransomware" element={<TenantRansomware />} />
 
         <Route path="/dashboard/migrations" element={<TenantMigrations />} />
         <Route path="/dashboard/migrations/new" element={<TenantMigrationWizard />} />
+        <Route path="/dashboard/batch-migrations" element={<TenantBatchMigrations />} />
+        <Route path="/dashboard/batch-migrations/new" element={<TenantBatchMigrationWizard />} />
+        <Route path="/dashboard/batch-migrations/:identifier" element={<TenantBatchMigrationDetail />} />
         <Route path="/dashboard/destinations" element={<TenantDestinations />} />
         <Route path="/dashboard/serverless-dr" element={<TenantServerlessDr />} />
+
+        <Route path="/dashboard/shield/domains" element={<TenantShieldDomains />} />
+        <Route path="/dashboard/shield/domains/:domainId" element={<TenantShieldDomainDetail />} />
+        <Route path="/dashboard/shield/overview" element={<TenantShieldOverview />} />
+        <Route path="/dashboard/shield/attack-map" element={<TenantShieldAttackMap />} />
+        <Route path="/dashboard/shield/firewall" element={<TenantShieldFirewall />} />
+        <Route path="/dashboard/shield/attacks" element={<TenantShieldAttacks />} />
+        <Route path="/dashboard/shield/analytics" element={<TenantShieldAnalytics />} />
+        <Route path="/dashboard/shield/ssl" element={<TenantShieldSsl />} />
         <Route path="/dashboard/agent" element={<TenantAgent />} />
 
         <Route element={<ObjectStorageRouteProvider />}>
@@ -232,6 +280,7 @@ const TenantRoutes = (): JSX.Element => (
 
         {/* Standalone */}
         <Route path="/dashboard/products" element={<Products />} />
+        <Route path="/dashboard/developer/*" element={<TenantDeveloperPortal />} />
         <Route path="/dashboard/support" element={<SupportTicket />} />
         <Route path="/dashboard/support/:id" element={<TenantTicketDetail />} />
         <Route path="/dashboard/account" element={<TenantAccountSettings />} />
@@ -246,6 +295,12 @@ const TenantRoutes = (): JSX.Element => (
           path="/dashboard/support-ticket"
           element={<Navigate to="/dashboard/support" replace />}
         />
+
+        {/* Documentation */}
+        <Route path="/dashboard/docs" element={<TenantDocsLayout />}>
+          <Route index element={<TenantDocPage />} />
+          <Route path=":slug" element={<TenantDocPage />} />
+        </Route>
       </Route>
     </Route>
   </>

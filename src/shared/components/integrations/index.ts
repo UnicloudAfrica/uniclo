@@ -8,3 +8,4 @@ export { default as DestinationConfigFields } from "./DestinationConfigFields";
 export { default as CreateDestinationModal } from "./CreateDestinationModal";
 export { default as DestinationsList } from "./DestinationsList";
 export { default as DrDashboard } from "./DrDashboard";
+export { default as ActiveActiveReadinessPanel } from "./ActiveActiveReadinessPanel";

@@ -5,6 +5,7 @@
  * Fully responsive: stacks on mobile, 3-column grid on desktop.
  */
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ShieldCheck,
   HardDrive,
@@ -13,6 +14,7 @@ import {
   Activity,
   CheckCircle2,
   AlertTriangle,
+  ExternalLink,
 } from "lucide-react";
 import { ModernCard, ModernStatsCard, ModernButton } from "../ui";
 import IntegrationStatusBadge from "./IntegrationStatusBadge";
@@ -31,10 +33,18 @@ interface ProtectionOverviewProps {
   integrationKey?: string;
 }
 
+const DASHBOARD_PREFIX: Record<string, string> = {
+  admin: "/admin-dashboard",
+  tenant: "/dashboard",
+  client: "/client-dashboard",
+};
+
 const ProtectionOverview: React.FC<ProtectionOverviewProps> = ({
-  context: _context,
+  context,
   integrationKey = "anycloudflow",
 }) => {
+  const navigate = useNavigate();
+  const dashPrefix = DASHBOARD_PREFIX[context] ?? "/dashboard";
   const { data: config, isLoading: loadingConfig } = useFetchIntegrationConfig(integrationKey);
   const { data: operations, isLoading: loadingOps } = useFetchIntegrationOperations();
   const enableIntegration = useEnableIntegration();
@@ -136,16 +146,23 @@ const ProtectionOverview: React.FC<ProtectionOverviewProps> = ({
 
       {/* No Destinations Warning */}
       {hasNoDestinations && (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-900/20">
+        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 dark:border-amber-800 dark:bg-amber-900/20">
           <AlertTriangle size={18} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
-          <div>
+          <div className="flex-1">
             <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
               No backup destinations configured
             </p>
             <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-300">
-              You need to create at least one backup destination before enabling backups on your
-              resources. Go to the <strong>Destinations</strong> page to configure storage targets.
+              A backup destination is where your backup data gets stored (e.g., an S3 bucket, NFS share, or
+              remote server). You need at least one before you can enable backups on your resources.
             </p>
+            <button
+              onClick={() => navigate(`${dashPrefix}/destinations`)}
+              className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-amber-700 active:scale-[0.98]"
+            >
+              <ExternalLink size={13} />
+              Go to Destinations
+            </button>
           </div>
         </div>
       )}

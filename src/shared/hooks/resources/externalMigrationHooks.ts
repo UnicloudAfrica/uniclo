@@ -66,9 +66,9 @@ export interface MigrationEstimate {
     estimated_cost_usd: number;
     breakdown: {
       base_fee: number;
-      per_gb_rate: number;
+      per_gb_rate: number; // Always 0 — flat per-VM pricing, no per-GB charges
       estimated_data_gb: number;
-      data_cost: number;
+      data_cost: number; // Always 0 — flat per-VM pricing
       migration_tier: string;
     };
   };

@@ -24,6 +24,7 @@ export interface Configuration {
   months: number | string;
   compute_instance_id: string;
   compute_label?: string;
+  family_code?: string;
   os_image_id: string;
   os_image_label?: string;
   volume_type_id: string;

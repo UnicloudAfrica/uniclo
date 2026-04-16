@@ -383,9 +383,11 @@ const useAuthStore = create<UnifiedAuthState>()(
         // ── Tenant switching (admin) ──
         switchTenant: (tenantSlug: string) => {
           if (typeof window === "undefined" || !tenantSlug) return false;
+          const safeSlug = tenantSlug.replace(/[^a-zA-Z0-9-]/g, '');
+          if (!safeSlug) return false;
           const protocol = globalThis.window.location.protocol;
           const port = globalThis.window.location.port ? `:${globalThis.window.location.port}` : "";
-          const targetHost = `${tenantSlug}.unicloudafrica.com`;
+          const targetHost = `${safeSlug}.unicloudafrica.com`;
           globalThis.window.location.href = `${protocol}//${targetHost}${port}`;
           return true;
         },
@@ -547,7 +549,6 @@ const useAuthStore = create<UnifiedAuthState>()(
           userEmail: state.userEmail,
           session: state.session,
           role: state.role,
-          token: state.token,
           isAuthenticated: state.isAuthenticated,
           twoFactorRequired: state.twoFactorRequired,
           cloudRoles: state.cloudRoles,

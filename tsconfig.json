@@ -42,6 +42,9 @@
             ],
             "@/config/*": [
                 "src/config/*"
+            ],
+            "@/docs/*": [
+                "src/docs/*"
             ]
         },
         "esModuleInterop": true,

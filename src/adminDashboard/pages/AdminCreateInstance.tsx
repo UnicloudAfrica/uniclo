@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
@@ -13,13 +13,28 @@ import ReviewSubmitStep from "@/shared/components/instance-wizard/ReviewSubmitSt
 import PaymentStep from "@/shared/components/instance-wizard/PaymentStep";
 import ConfigurationListStep from "@/shared/components/instance-wizard/ConfigurationListStep";
 import OrderSuccessStep from "@/shared/components/instance-wizard/OrderSuccessStep";
+import ProtectionPlanStep from "@/shared/components/instance-wizard/ProtectionPlanStep";
+import type { ProtectionPlan, RedundancyPattern } from "@/shared/components/instance-wizard/ProtectionPlanStep";
 import { ProvisioningWizardLayout } from "@/shared/components/instance-wizard";
 import { useAdminCreateInstanceLogic } from "@/hooks/useAdminCreateInstanceLogic";
 import { hasProjectNetworkFromStatus } from "@/utils/instanceCreationUtils";
+import type { DrCustomSpec } from "@/shared/components/instance-wizard/ProtectionPlanStep";
 
 const AdminCreateInstance = () => {
   const navigate = useNavigate();
-  const logic = useAdminCreateInstanceLogic();
+
+  // Protection plan state — lifted here so it's available to both the wizard step and the order hook
+  const [selectedProtectionPlan, setSelectedProtectionPlan] = useState<ProtectionPlan>("backup_only");
+  const [selectedRedundancy, setSelectedRedundancy] = useState<RedundancyPattern>("n_plus_1");
+  const [drSpec, setDrSpec] = useState<DrCustomSpec>({ mode: "match" });
+
+  const logic = useAdminCreateInstanceLogic({
+    protectionPlan: {
+      plan: selectedProtectionPlan,
+      redundancyPattern: selectedRedundancy,
+      drSpec,
+    },
+  });
 
   // Destructure all state and handlers from the logic hook
   const {
@@ -83,6 +98,12 @@ const AdminCreateInstance = () => {
     setSelectedPaymentOption,
     apiBaseUrl,
   } = logic;
+
+  // Protection state is declared above the logic hook
+
+  // Derive per-VM compute price from the subtotal
+  const totalInstanceCount = configurations.reduce((sum, c) => sum + (Number(c.instance_count) || 1), 0);
+  const computePricePerVm = totalInstanceCount > 0 ? summarySubtotalValue / totalInstanceCount : 0;
 
   const { createTemplate } = useInstanceTemplates();
 
@@ -172,10 +193,15 @@ const AdminCreateInstance = () => {
     () => hasProjectNetworkFromStatus(projectStatus, selectedProject),
     [projectStatus, selectedProject]
   );
+  const protectionStepIndex = useMemo(
+    () => steps.findIndex((step) => step.id === "protection"),
+    [steps]
+  );
   const isReviewStep = currentStepId === "review";
   const isSuccessStep = currentStepId === "success";
   const isWorkflowStep = currentStepId === "workflow";
   const isServicesStep = currentStepId === "services";
+  const isProtectionStep = currentStepId === "protection";
   const isPaymentStep = currentStepId === "payment";
 
   const orderId =
@@ -224,8 +250,9 @@ const AdminCreateInstance = () => {
   const resolvedServicesStepIndex = Math.max(servicesStepIndex, 1);
   const resolvedPaymentStepIndex = paymentStepIndex >= 0 ? paymentStepIndex : reviewStepIndex - 1;
   const resolvedSuccessStepIndex = successStepIndex >= 0 ? successStepIndex : steps.length - 1;
+  const resolvedProtectionStepIndex = protectionStepIndex >= 0 ? protectionStepIndex : resolvedServicesStepIndex + 1;
   const resolvedReviewBackIndex = isFastTrack
-    ? resolvedServicesStepIndex
+    ? resolvedProtectionStepIndex
     : resolvedPaymentStepIndex;
 
   const handleStepChange = useCallback(
@@ -366,7 +393,7 @@ const AdminCreateInstance = () => {
                 onRemoveVolume={removeAdditionalVolume}
                 onUpdateVolume={updateAdditionalVolume}
                 onBack={() => setActiveStep(resolvedWorkflowStepIndex)}
-                onSubmit={handleCreateOrder}
+                onSubmit={() => setActiveStep(resolvedProtectionStepIndex)}
                 submitErrorMessage={submissionErrorMessage}
                 onSaveTemplate={handleSaveTemplate}
                 formVariant="cube"
@@ -377,6 +404,26 @@ const AdminCreateInstance = () => {
                 pricingTenantId={
                   contextType === "tenant" || contextType === "user" ? selectedTenantId : ""
                 }
+              />
+            )}
+
+            {isProtectionStep && (
+              <ProtectionPlanStep
+                selectedPlan={selectedProtectionPlan}
+                onPlanChange={setSelectedProtectionPlan}
+                onBack={() => setActiveStep(resolvedServicesStepIndex)}
+                onContinue={handleCreateOrder}
+                instanceCount={totalInstanceCount}
+                storageGb={configurations.reduce((sum, c) => sum + (Number(c.storage_size_gb) || 50), 0) / Math.max(configurations.length, 1)}
+                computePricePerVm={computePricePerVm}
+                currency={summaryDisplayCurrency || "NGN"}
+                selectedRedundancy={selectedRedundancy}
+                onRedundancyChange={setSelectedRedundancy}
+                drSpec={drSpec}
+                onDrSpecChange={setDrSpec}
+                resourceLabel="Cube-Instance"
+                configurations={configurations}
+                billingCountry={billingCountry}
               />
             )}
 
@@ -422,6 +469,8 @@ const AdminCreateInstance = () => {
             summaryDisplayCurrency={summaryDisplayCurrency}
             effectivePaymentOption={effectivePaymentOption}
             backendPricingData={backendPricingData}
+            protectionPlan={selectedProtectionPlan}
+            redundancyPattern={selectedRedundancy}
           />
         }
       />

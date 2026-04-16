@@ -74,6 +74,7 @@ const endpointHooks = createResourceHooks<ExternalEndpoint>({
   resourcePath: "integrations/external-endpoints",
   queryKeyBase: "externalEndpoints",
   dataKey: "data",
+  updateMethod: "put",
 });
 
 export const {

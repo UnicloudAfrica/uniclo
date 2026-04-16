@@ -7,6 +7,10 @@
 import React from "react";
 
 const STATUS_STYLES: Record<string, { label: string; classes: string }> = {
+  draft: {
+    label: "Draft",
+    classes: "bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-400",
+  },
   pending: {
     label: "Pending",
     classes: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",

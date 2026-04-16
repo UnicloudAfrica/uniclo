@@ -10,6 +10,7 @@ import {
   Database,
   Server,
   Shield,
+  Cloud,
   ArrowLeft,
   ArrowRight,
   Loader2,
@@ -28,7 +29,8 @@ import {
   PLAN_SPECS,
   getRegionLabel,
 } from "@/hooks/useDatabaseProvisioningLogic";
-import type { DatabaseEngine, PlanSize } from "@/types/managedDatabase";
+import type { DatabaseEngine, PlanSize, CloudAccount } from "@/types/managedDatabase";
+import { useFetchCloudAccounts } from "@/shared/hooks/resources/managedDatabaseHooks";
 import { sanitizeProviderLabel } from "@/utils/sanitizeProviderLabel";
 
 interface DatabaseCreationWizardProps {
@@ -37,7 +39,22 @@ interface DatabaseCreationWizardProps {
 }
 
 const PLAN_SIZES: PlanSize[] = ["micro", "small", "medium", "large", "xlarge"];
-const ENGINE_LIST: DatabaseEngine[] = ["mongodb", "postgresql", "mysql", "mariadb", "redis"];
+
+/** Engine categories for the wizard grid display. */
+const ENGINE_CATEGORIES: { key: string; label: string; description: string }[] = [
+  { key: "relational", label: "Relational (SQL)", description: "ACID-compliant relational databases" },
+  { key: "document", label: "Document", description: "Flexible schema document stores" },
+  { key: "key_value", label: "Key-Value / Cache", description: "In-memory and cache stores" },
+  { key: "timeseries", label: "Time-Series", description: "Optimized for metrics and events" },
+  { key: "wide_column", label: "Wide-Column", description: "Distributed column stores" },
+  { key: "search", label: "Search", description: "Full-text search and analytics" },
+  { key: "vector", label: "Vector", description: "AI and similarity search" },
+  { key: "graph", label: "Graph", description: "Relationship-focused databases" },
+  { key: "messaging", label: "Messaging / Streaming", description: "Event streaming and message brokers" },
+  { key: "analytics", label: "Analytics", description: "OLAP and real-time analytics" },
+  { key: "infrastructure", label: "Infrastructure", description: "Service discovery and coordination" },
+  { key: "object_storage", label: "Object Storage", description: "S3-compatible storage" },
+];
 
 // ─── Engine Selection Step ───────────────────────────────────────────
 
@@ -244,14 +261,14 @@ const EngineStep: React.FC<{
         selectedMemberIds={selectedMemberIds}
         suggestedMembers={suggestedMembers}
         showRestoreMembers={showRestoreMembers}
-        onAssignmentScopeChange={(scope) => updateForm({ assignmentScope: scope })}
+        onAssignmentScopeChange={(scope) => updateForm({ assignmentScope: scope as "internal" | "tenant" | "client" })}
         onToggleMember={onToggleMember}
         onRestoreMembers={onRestoreMembers}
       />
     </div>
 
-    {/* ── Engine Selection ── */}
-    <div className="border-t border-gray-200 dark:border-gray-700 pt-6 space-y-4">
+    {/* ── Engine Selection (categorized) ── */}
+    <div className="border-t border-gray-200 dark:border-gray-700 pt-6 space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           Select Database Engine
@@ -260,67 +277,150 @@ const EngineStep: React.FC<{
           Choose the database engine that best fits your application needs.
         </p>
       </div>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {ENGINE_LIST.map((engine) => {
-          const meta = engines[engine];
-          const isSelected = selectedEngine === engine;
-          return (
-            <button
-              key={engine}
-              onClick={() => onSelect(engine)}
-              className={`relative flex items-start gap-4 rounded-xl border-2 p-4 text-left transition-all ${
-                isSelected
-                  ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30 ring-1 ring-blue-200"
-                  : "border-gray-200 dark:border-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-              }`}
-            >
-              <div className="shrink-0 mt-0.5">
-                <EngineIcon engine={engine} size={32} />
-              </div>
-              <div className="min-w-0">
-                <div className="font-semibold text-gray-900 dark:text-gray-100">{meta.label}</div>
-                <div className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                  {meta.description}
-                </div>
-                <div className="text-xs text-gray-400 mt-1">
-                  Versions: {meta.versions.join(", ")}
-                </div>
-              </div>
-              {isSelected && (
-                <CheckCircle2 className="absolute top-3 right-3 text-blue-500" size={20} />
-              )}
-            </button>
-          );
-        })}
-      </div>
+      {ENGINE_CATEGORIES.map((cat) => {
+        const categoryEngines = Object.entries(engines).filter(
+          ([, meta]) => meta.category === cat.key
+        );
+        if (categoryEngines.length === 0) return null;
+        const categoryAccentColors: Record<string, string> = {
+          relational: "border-l-blue-500",
+          document: "border-l-emerald-500",
+          key_value: "border-l-red-500",
+          timeseries: "border-l-amber-500",
+          wide_column: "border-l-violet-500",
+          search: "border-l-cyan-500",
+          vector: "border-l-fuchsia-500",
+          graph: "border-l-rose-500",
+          messaging: "border-l-orange-500",
+          analytics: "border-l-teal-500",
+          infrastructure: "border-l-slate-500",
+          object_storage: "border-l-lime-500",
+        };
+        return (
+          <div key={cat.key} className="space-y-3">
+            <div className={`border-l-[3px] pl-3 ${categoryAccentColors[cat.key] || "border-l-gray-400"}`}>
+              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{cat.label}</h4>
+              <p className="text-xs italic text-gray-400/80 dark:text-gray-500/80">{cat.description}</p>
+            </div>
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
+              {categoryEngines.map(([engine, meta]) => {
+                const isSelected = selectedEngine === engine;
+                return (
+                  <button
+                    key={engine}
+                    onClick={() => onSelect(engine as DatabaseEngine)}
+                    className={`group relative flex items-start gap-3 rounded-xl border-2 p-3 text-left transition-all duration-200 ${
+                      isSelected
+                        ? "border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50/50 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-md shadow-blue-500/10"
+                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 hover:bg-gradient-to-br hover:from-gray-50 hover:to-slate-50/50 dark:hover:from-gray-800/50 dark:hover:to-slate-800/30 hover:shadow-sm"
+                    }`}
+                  >
+                    {/* Pulse ring animation for selected card */}
+                    {isSelected && (
+                      <span className="pointer-events-none absolute inset-0 rounded-xl animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] border-2 border-blue-400/30" />
+                    )}
+                    <div className="shrink-0 mt-0.5 transition-transform duration-200 group-hover:scale-110">
+                      <EngineIcon engine={engine} iconUrl={meta.iconUrl} size={24} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">{meta.label}</span>
+                        {meta.license === "free_edition" && (
+                          <span className="inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">Free</span>
+                        )}
+                        {meta.license === "commercial" && (
+                          <span className="inline-flex items-center rounded-md bg-purple-50 px-1.5 py-0.5 text-[10px] font-medium text-purple-700 ring-1 ring-inset ring-purple-600/20">BYOL</span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-gray-500/90 dark:text-gray-400/90 mt-0.5 line-clamp-2 leading-relaxed">
+                        {meta.description}
+                      </div>
+                      <div className="text-[10px] text-gray-400 mt-1">
+                        {meta.versions.slice(0, 3).join(", ")}{meta.versions.length > 3 ? ` +${meta.versions.length - 3}` : ""}
+                      </div>
+                    </div>
+                    {isSelected && (
+                      <CheckCircle2 className="absolute top-2 right-2 text-blue-500" size={16} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
     </div>
   </div>
 );
 
 // ─── Version Selector ─────────────────────────────────────────────
 
+/** Known LTS versions per engine. */
+const LTS_VERSIONS: Record<string, string[]> = {
+  mariadb: ["11.4", "10.11", "10.6"],
+  postgresql: ["17", "16", "15", "14"],
+  mysql: ["8.4", "8.0"],
+  mongodb: ["8.0", "7.0"],
+  elasticsearch: ["7.17"],
+  neo4j: ["4.4"],
+  redis: ["7.4", "7.2", "7.0"],
+  rabbitmq: ["3.13"],
+  nodejs: ["22", "20", "18"],
+};
+
 const VersionSelector: React.FC<{
   versions: string[];
   selected: string;
   onChange: (v: string) => void;
-}> = ({ versions, selected, onChange }) => (
-  <div>
-    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-      Engine Version
-    </label>
-    <select
-      value={selected}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-    >
-      {versions.map((v) => (
-        <option key={v} value={v}>
-          {v}
-        </option>
-      ))}
-    </select>
-  </div>
-);
+  defaultVersion?: string;
+  engine?: string;
+}> = ({ versions, selected, onChange, defaultVersion, engine }) => {
+  const latestVersion = versions[0];
+  const engineLts = engine ? LTS_VERSIONS[engine] || [] : [];
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        Engine Version
+      </label>
+      <div className="flex flex-wrap gap-2">
+        {versions.map((v) => {
+          const isSelected = selected === v;
+          const isLatest = v === latestVersion;
+          const isDefault = v === defaultVersion;
+          const isLts = engineLts.includes(v);
+          return (
+            <button
+              key={v}
+              type="button"
+              onClick={() => onChange(v)}
+              className={`relative inline-flex items-center gap-1.5 rounded-lg border-2 px-3 py-2 text-sm font-medium transition-all duration-150 ${
+                isSelected
+                  ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 shadow-sm shadow-blue-500/10"
+                  : "border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+              }`}
+            >
+              {isLatest && (
+                <span className="inline-block h-2 w-2 rounded-full bg-green-500 shrink-0" title="Latest version" />
+              )}
+              <span>{v}</span>
+              {isDefault && (
+                <span className="ml-1 inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900/50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-300">
+                  Recommended
+                </span>
+              )}
+              {isLts && !isDefault && (
+                <span className="ml-1 inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+                  LTS
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 // ─── Feature Card (reusable toggle with friendly explanation) ────────
 
@@ -436,7 +536,8 @@ const ConfigureStep: React.FC<{
   maxReplicaCount: number;
   replicaAvailableAzs: { value: string; label: string }[];
   toggleReplicaAz: (azCode: string) => void;
-}> = ({ form, updateForm, selectedEngineMeta, projects, regions, availabilityZones, maxReplicaCount, replicaAvailableAzs, toggleReplicaAz }) => (
+  cloudAccounts?: { id: number; name: string; provider: string; provider_label: string; status: string }[];
+}> = ({ form, updateForm, selectedEngineMeta, projects, regions, availabilityZones, maxReplicaCount, replicaAvailableAzs, toggleReplicaAz, cloudAccounts }) => (
   <div className="space-y-6">
     {/* Name */}
     <div>
@@ -458,7 +559,86 @@ const ConfigureStep: React.FC<{
         versions={selectedEngineMeta.versions}
         selected={form.engineVersion}
         onChange={(v) => updateForm({ engineVersion: v })}
+        defaultVersion={selectedEngineMeta.defaultVersion}
+        engine={form.engine}
       />
+    )}
+
+    {/* License — shown for commercial BYOL engines */}
+    {selectedEngineMeta?.requiresLicenseKey && (
+      <div className="rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/20 p-4 space-y-4">
+        <div className="flex items-center gap-2">
+          <Shield size={16} className="text-purple-600" />
+          <span className="text-sm font-semibold text-purple-900 dark:text-purple-200">
+            Commercial License Required
+          </span>
+        </div>
+
+        {/* Explicit step-by-step explanation */}
+        <div className="rounded-md bg-white dark:bg-gray-800 border border-purple-100 dark:border-purple-900 p-3 space-y-2">
+          <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+            How licensing works:
+          </p>
+          <ol className="list-decimal list-inside text-xs text-gray-600 dark:text-gray-400 space-y-1">
+            <li>
+              <strong>{selectedEngineMeta.label}</strong> is commercial software — you need a valid license to use it.
+            </li>
+            <li>
+              If you <strong>already have a license key</strong>, choose &quot;I Have a License&quot; below and paste it in.
+            </li>
+            <li>
+              If you <strong>don&apos;t have one</strong>, you&apos;ll soon be able to buy a license directly through us (coming soon).
+            </li>
+            <li>
+              We store your key securely. It&apos;s passed to the database engine during setup — <strong>we never share it externally</strong>.
+            </li>
+          </ol>
+        </div>
+
+        {/* License mode selection */}
+        <div className="flex gap-3">
+          <button
+            onClick={() => updateForm({ licenseMode: "byol", licenseKey: form.licenseKey })}
+            className={`flex-1 rounded-lg border-2 px-3 py-2.5 text-sm font-medium transition-all ${
+              form.licenseMode === "byol"
+                ? "border-purple-500 bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-200"
+                : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-purple-300"
+            }`}
+          >
+            <div className="text-sm font-semibold">I Have a License</div>
+            <div className="text-[10px] mt-0.5 opacity-75">Enter your existing license key</div>
+          </button>
+          <button
+            disabled
+            className="flex-1 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 px-3 py-2.5 text-sm font-medium text-gray-400 dark:text-gray-500 cursor-not-allowed relative"
+          >
+            <div className="text-sm font-semibold">Buy a License</div>
+            <div className="text-[10px] mt-0.5 opacity-75">Purchase through our partners</div>
+            <span className="absolute -top-2 -right-2 rounded-full bg-amber-100 dark:bg-amber-900 px-1.5 py-0.5 text-[9px] font-bold text-amber-700 dark:text-amber-300 ring-1 ring-amber-300 dark:ring-amber-700">
+              COMING SOON
+            </span>
+          </button>
+        </div>
+
+        {/* License key input */}
+        {form.licenseMode === "byol" && (
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-purple-800 dark:text-purple-300">
+              License Key
+            </label>
+            <input
+              type="password"
+              value={form.licenseKey}
+              onChange={(e) => updateForm({ licenseKey: e.target.value })}
+              placeholder="Paste your license key here..."
+              className="w-full rounded-lg border border-purple-300 dark:border-purple-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:border-purple-500 focus:ring-1 focus:ring-purple-500 font-mono"
+            />
+            <p className="text-[10px] text-purple-600 dark:text-purple-400">
+              This is the product key or serial number you received when you purchased the software.
+            </p>
+          </div>
+        )}
+      </div>
     )}
 
     {/* Plan Size */}
@@ -580,6 +760,44 @@ const ConfigureStep: React.FC<{
         {form.replicaAzs.length > 0 && (
           <p className="mt-2 text-xs text-blue-600 dark:text-blue-400">
             {form.replicaAzs.length} read replica{form.replicaAzs.length !== 1 ? "s" : ""} will be created ({form.replicaCount} total nodes including primary)
+          </p>
+        )}
+      </div>
+    )}
+
+    {/* BYOC — Bring Your Own Cloud */}
+    {cloudAccounts && cloudAccounts.length > 0 && (
+      <div className="rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/20 p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Cloud size={16} className="text-emerald-600" />
+          <span className="text-sm font-semibold text-emerald-900 dark:text-emerald-200">
+            Deploy on Your Own Cloud (BYOC)
+          </span>
+          <span className="text-[10px] rounded-full bg-emerald-100 dark:bg-emerald-900 px-2 py-0.5 font-bold text-emerald-700 dark:text-emerald-300">
+            OPTIONAL
+          </span>
+        </div>
+        <p className="text-xs text-emerald-700 dark:text-emerald-400">
+          Choose one of your connected cloud accounts to deploy this database on your own infrastructure.
+          Leave empty to use our managed infrastructure.
+        </p>
+        <select
+          value={form.cloudAccountId ?? ""}
+          onChange={(e) => updateForm({ cloudAccountId: e.target.value ? Number(e.target.value) : null })}
+          className="w-full rounded-lg border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+        >
+          <option value="">Use managed infrastructure (default)</option>
+          {cloudAccounts
+            .filter((ca) => ca.status === "active")
+            .map((ca) => (
+              <option key={ca.id} value={ca.id}>
+                {ca.name} — {ca.provider_label}
+              </option>
+            ))}
+        </select>
+        {form.cloudAccountId && (
+          <p className="text-[10px] text-emerald-600 dark:text-emerald-400">
+            Your database will be provisioned using your cloud account credentials. Platform fee applies.
           </p>
         )}
       </div>
@@ -986,6 +1204,12 @@ const ReviewContent: React.FC<{
           <SummaryRow label="VPN Gateway" value="Enabled (Enterprise add-on)" />
         )}
         {form.name && <SummaryRow label="Name" value={form.name} />}
+        {form.licenseMode === "byol" && form.licenseKey && (
+          <SummaryRow label="License" value="BYOL — Key provided" />
+        )}
+        {form.cloudAccountId && (
+          <SummaryRow label="Cloud Account" value="BYOC — Customer infrastructure" />
+        )}
         <SummaryRow
           label="DB Credentials"
           value={
@@ -1270,6 +1494,8 @@ const DatabaseCreationWizard: React.FC<DatabaseCreationWizardProps> = ({
 }) => {
   const navigate = useNavigate();
   const logic = useDatabaseProvisioningLogic();
+  const { data: cloudAccountsRaw } = useFetchCloudAccounts();
+  const cloudAccounts = (Array.isArray(cloudAccountsRaw) ? cloudAccountsRaw : []) as CloudAccount[];
 
   // Fetch quote when entering review step
   useEffect(() => {
@@ -1351,6 +1577,7 @@ const DatabaseCreationWizard: React.FC<DatabaseCreationWizardProps> = ({
               maxReplicaCount={logic.maxReplicaCount}
               replicaAvailableAzs={logic.replicaAvailableAzs}
               toggleReplicaAz={logic.toggleReplicaAz}
+              cloudAccounts={cloudAccounts}
             />
             <div className="flex items-center justify-between">
               <button

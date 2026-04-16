@@ -1,8 +1,11 @@
-import React from "react";
-import { Trash2, Disc, HardDrive, Eye, EyeOff } from "lucide-react";
+import React, { useState } from "react";
+import { Trash2, Disc, HardDrive, Eye, EyeOff, Upload } from "lucide-react";
 import ModernTable from "../../ui/ModernTable";
 import StatusPill from "../../ui/StatusPill";
 import { ResourceEmptyState } from "../../ui/ResourceEmptyState";
+import ImportImageModal from "./ImportImageModal";
+import ImageRequestPanel from "./ImageRequestPanel";
+import ModernButton from "../../ui/ModernButton";
 
 export interface MachineImage {
   id: string;
@@ -19,9 +22,12 @@ interface ImageListProps {
   images: MachineImage[];
   isLoading: boolean;
   onDelete: (id: string) => void;
+  projectId?: string;
+  region?: string;
 }
 
-const ImageList: React.FC<ImageListProps> = ({ images, isLoading, onDelete }) => {
+const ImageList: React.FC<ImageListProps> = ({ images, isLoading, onDelete, projectId, region }) => {
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const columns = [
     {
       key: "name",
@@ -110,7 +116,36 @@ const ImageList: React.FC<ImageListProps> = ({ images, isLoading, onDelete }) =>
     );
   }
 
-  return <ModernTable columns={columns} data={images} loading={isLoading} />;
+  return (
+    <div>
+      {projectId && region && (
+        <div className="mb-4 flex justify-end">
+          <ModernButton
+            size="sm"
+            variant="secondary"
+            onClick={() => setIsImportModalOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Upload className="h-4 w-4" />
+            Import Image
+          </ModernButton>
+        </div>
+      )}
+
+      <ModernTable columns={columns} data={images} loading={isLoading} />
+
+      {region && <ImageRequestPanel region={region} />}
+
+      {projectId && region && (
+        <ImportImageModal
+          isOpen={isImportModalOpen}
+          onClose={() => setIsImportModalOpen(false)}
+          projectId={projectId}
+          region={region}
+        />
+      )}
+    </div>
+  );
 };
 
 export default ImageList;

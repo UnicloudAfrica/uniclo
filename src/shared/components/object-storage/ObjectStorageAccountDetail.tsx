@@ -13,6 +13,7 @@ import {
   CreditCard,
   Receipt,
   Trash2,
+  ShieldCheck,
 } from "lucide-react";
 import objectStorageApi from "@/services/objectStorageApi";
 import ObjectStorageSidebar from "./ObjectStorageSidebar";
@@ -20,6 +21,7 @@ import ObjectStorageFileBrowser from "./ObjectStorageFileBrowser";
 import ObjectStorageAnalytics from "./ObjectStorageAnalytics";
 import ObjectStorageSubscription from "./ObjectStorageSubscription";
 import ObjectStorageTransactions from "./ObjectStorageTransactions";
+import ObjectStorageProtection from "./ObjectStorageProtection";
 import ExtendStorageModal from "./ExtendStorageModal";
 import DeleteStorageAccountModal from "./DeleteStorageAccountModal";
 import ToastUtils from "@/utils/toastUtil";
@@ -105,7 +107,7 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
 
   // Active tab
   const [activeTab, setActiveTab] = useState<
-    "files" | "analytics" | "subscription" | "transactions"
+    "files" | "analytics" | "subscription" | "transactions" | "protection"
   >("files");
 
   // Selected bucket for file browser
@@ -367,6 +369,17 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
             <Receipt className="h-4 w-4" />
             Transactions
           </button>
+          <button
+            onClick={() => setActiveTab("protection")}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              activeTab === "protection"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            <ShieldCheck className="h-4 w-4" />
+            Protection
+          </button>
         </div>
 
         <button
@@ -427,6 +440,10 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
                 accountName={accountName}
                 onRenewSuccess={handleRefresh}
               />
+            </div>
+          ) : activeTab === "protection" ? (
+            <div className="p-6 overflow-y-auto h-full">
+              <ObjectStorageProtection accountId={accountId} accountName={accountName} />
             </div>
           ) : (
             <div className="p-6 overflow-y-auto h-full">

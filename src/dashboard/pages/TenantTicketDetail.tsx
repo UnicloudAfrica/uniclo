@@ -6,6 +6,7 @@ import { SharedTicketDetail } from "@/shared/components/support/SharedTicketDeta
 import tenantApi from "../../index/tenant/tenantApi";
 import silentTenantApi from "../../index/tenant/silentTenant";
 import { Thread, SlaStatus } from "@/shared/components/support/threadTypes";
+import ToastUtils from "@/utils/toastUtil";
 
 type ThreadDetailResponse = {
   data?: Thread;
@@ -44,12 +45,18 @@ const TenantTicketDetail: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tenant", "support", "detail", id] });
     },
+    onError: (error: Error) => {
+      ToastUtils.error(error.message || "Failed to send reply");
+    },
   });
 
   const resolveMutation = useMutation({
     mutationFn: () => tenantApi("PUT", `/admin/support/${id}`, { status: "resolved" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tenant", "support", "detail", id] });
+    },
+    onError: (error: Error) => {
+      ToastUtils.error(error.message || "Failed to resolve ticket");
     },
   });
 
@@ -58,6 +65,9 @@ const TenantTicketDetail: React.FC = () => {
       tenantApi("POST", `/admin/support/${id}/rate`, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tenant", "support", "detail", id] });
+    },
+    onError: (error: Error) => {
+      ToastUtils.error(error.message || "Failed to submit rating");
     },
   });
 

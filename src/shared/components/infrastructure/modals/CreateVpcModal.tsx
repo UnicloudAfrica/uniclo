@@ -22,26 +22,29 @@ const CreateVpcModal: React.FC<CreateVpcModalProps> = ({
   const [name, setName] = useState("");
   const [cidr, setCidr] = useState("10.0.0.0/16");
   const [isDefault, setIsDefault] = useState(false);
+  const [attempted, setAttempted] = useState(false);
 
   const handleSubmit = () => {
-    if (!name || !cidr) return;
-    onCreate(name, cidr, isDefault);
+    setAttempted(true);
+    if (!name.trim() || !cidr.trim()) return;
+    onCreate(name.trim(), cidr.trim(), isDefault);
   };
 
   const handleClose = () => {
     setName("");
     setCidr("10.0.0.0/16");
     setIsDefault(false);
+    setAttempted(false);
     onClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="create-vpc-title">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-          <h2 className="text-lg font-bold text-gray-900">Create New VPC</h2>
+          <h2 id="create-vpc-title" className="text-lg font-bold text-gray-900">Create New VPC</h2>
           <button onClick={handleClose} className="text-gray-400 hover:text-gray-600">
             <Plus className="w-5 h-5 rotate-45" />
           </button>
@@ -56,8 +59,11 @@ const CreateVpcModal: React.FC<CreateVpcModalProps> = ({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Production VPC"
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none ${attempted && !name.trim() ? "border-red-400" : "border-gray-200"}`}
             />
+            {attempted && !name.trim() && (
+              <p className="mt-1 text-xs text-red-500">VPC name is required.</p>
+            )}
           </div>
           <div>
             <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">
@@ -68,8 +74,11 @@ const CreateVpcModal: React.FC<CreateVpcModalProps> = ({
               value={cidr}
               onChange={(e) => setCidr(e.target.value)}
               placeholder="10.0.0.0/16"
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none font-mono"
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none font-mono ${attempted && !cidr.trim() ? "border-red-400" : "border-gray-200"}`}
             />
+            {attempted && !cidr.trim() && (
+              <p className="mt-1 text-xs text-red-500">CIDR block is required.</p>
+            )}
             <p className="mt-1 text-[10px] text-gray-400">
               Valid range: /16 to /28. Example: 10.0.0.0/16, 172.16.0.0/16
             </p>

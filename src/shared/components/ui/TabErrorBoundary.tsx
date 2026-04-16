@@ -34,7 +34,9 @@ class TabErrorBoundary extends Component<Props, State> {
               {this.props.tabName ? `Failed to load ${this.props.tabName}` : "Something went wrong"}
             </h3>
             <p className="text-sm text-gray-500 max-w-md mx-auto mb-4">
-              {this.state.error?.message || "An unexpected error occurred."}
+              {process.env.NODE_ENV === "production"
+                ? "An unexpected error occurred. Please try again."
+                : (this.state.error?.message || "An unexpected error occurred.")}
             </p>
             <button
               onClick={this.handleRetry}

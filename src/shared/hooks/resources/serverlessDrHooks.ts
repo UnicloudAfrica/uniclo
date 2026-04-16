@@ -39,6 +39,7 @@ const sdrHooks = createResourceHooks<ServerlessDrPolicy>({
   resourcePath: "integrations/serverless-dr",
   queryKeyBase: "serverlessDr",
   dataKey: "data",
+  updateMethod: "put",
 });
 
 export const {

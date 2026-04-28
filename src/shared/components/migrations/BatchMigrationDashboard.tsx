@@ -86,7 +86,7 @@ const BatchMigrationDashboard: React.FC<BatchMigrationDashboardProps> = ({
           title="Failed"
           value={failed}
           icon={<XCircle size={18} />}
-          color="danger"
+          color="error"
           size="sm"
         />
       </div>

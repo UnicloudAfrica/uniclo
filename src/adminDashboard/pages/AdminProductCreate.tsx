@@ -219,7 +219,7 @@ const AdminProductCreate = () => {
           Papa.parse(file, {
             header: true,
             skipEmptyLines: true,
-            complete: (results: Papa.ParseResult<Record<string, unknown>>) => resolve(results.data),
+            complete: (results: { data: Record<string, unknown>[] }) => resolve(results.data),
             error: (error: Error) => reject(error),
           });
         });
@@ -492,7 +492,7 @@ const AdminProductCreate = () => {
           return (
             <div>
               <SelectableInput
-                options={entry.options as unknown as Record<string, unknown>[]}
+                options={entry.options as unknown as import("@/shared/components/ui/SelectableInput").SelectableOption[]}
                 value={entry.productable_id}
                 searchValue={entry.productSearch}
                 onSearchChange={(val: string) => handleProductSearchChange(index, val)}
@@ -600,7 +600,7 @@ const AdminProductCreate = () => {
           <ModernCard>
             <ModernTable
               data={entries}
-              columns={columns as any}
+              columns={columns as unknown}
               className="hidden md:block"
               searchable={false}
               paginated={false}

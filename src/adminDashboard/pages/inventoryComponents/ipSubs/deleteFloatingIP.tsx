@@ -3,10 +3,10 @@ import { useDeleteFloatingIP } from "@/hooks/adminHooks/floatingIPHooks";
 import ToastUtils from "@/utils/toastUtil";
 import logger from "@/utils/logger";
 
-const DeleteFloatingIP = ({ isOpen, onClose, floatingIP }: any) => {
+const DeleteFloatingIP = ({ isOpen, onClose, floatingIP }: { isOpen: boolean; onClose: () => void; floatingIP: unknown }) => {
   const { mutate, isPending } = useDeleteFloatingIP();
 
-  const handleDeleteConfirm = (e: any) => {
+  const handleDeleteConfirm = (e: unknown) => {
     if (e) e.preventDefault();
 
     if (floatingIP?.id) {

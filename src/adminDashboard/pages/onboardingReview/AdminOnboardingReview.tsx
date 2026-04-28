@@ -128,7 +128,7 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
   const filteredClients = useMemo(() => {
     const items = Array.isArray(clients) ? clients : [];
     return items
-      .filter((client: Record<string, any>) => {
+      .filter((client: Record<string, unknown>) => {
         if (!client) return false;
         const entity = (client.entity || "").toLowerCase();
         const hasTenant = Boolean(client.tenant_id);
@@ -144,7 +144,7 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
             return true;
         }
       })
-      .map((client: Record<string, any>) => {
+      .map((client: Record<string, unknown>) => {
         const nameCandidate =
           client.company_name ||
           client.full_name ||
@@ -296,7 +296,7 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
     isLoading: isSubmissionLoading,
     isFetching: isSubmissionFetching,
     refetch: refetchSubmission,
-  } = useSubmissionHook(detailArgs as any, {
+  } = useSubmissionHook(detailArgs as unknown, {
     enabled: Boolean(detailArgs),
   });
 
@@ -573,7 +573,7 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <StatusPill label={personaConfig?.label ?? "Persona"} tone="info" />
-          {subjectSelected && <StatusPill label={subjectLabel as any} tone="neutral" />}
+          {subjectSelected && <StatusPill label={subjectLabel as unknown} tone="neutral" />}
         </div>
       }
     >

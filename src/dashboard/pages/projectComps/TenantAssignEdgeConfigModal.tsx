@@ -37,8 +37,8 @@ const TenantAssignEdgeConfigModal = ({
   const { data: rawCurrentConfig } = useFetchTenantProjectEdgeConfig(projectId, selectedRegion, {
     enabled: isOpen && !!selectedRegion,
   });
-  const currentConfig = rawCurrentConfig as Record<string, any> | null | undefined;
-  const metadata = (currentConfig?.metadata || {}) as Record<string, any>;
+  const currentConfig = rawCurrentConfig as Record<string, unknown> | null | undefined;
+  const metadata = (currentConfig?.metadata || {}) as Record<string, unknown>;
   const {
     data: edgeNetworks,
     isFetching: isFetchingNetworks,
@@ -89,7 +89,7 @@ const TenantAssignEdgeConfigModal = ({
     }
   };
 
-  const updateForm = (field: string, value: any) => setFormData((p) => ({ ...p, [field]: value }));
+  const updateForm = (field: string, value: unknown) => setFormData((p) => ({ ...p, [field]: value }));
 
   const handleAssign = () => {
     if (!projectId || !selectedRegion || !formData.edge_network_id || !formData.ip_pool_id) {
@@ -194,7 +194,7 @@ const TenantAssignEdgeConfigModal = ({
                 <option value="">
                   {isFetchingRegions ? "Loading regions..." : "Select a region"}
                 </option>
-                {((regions as any[] | undefined) || []).map((r: any) => (
+                {((regions as unknown[] | undefined) || []).map((r: unknown) => (
                   <option key={r.region} value={r.code || r.region}>
                     {r.name || r.label}
                   </option>
@@ -242,7 +242,7 @@ const TenantAssignEdgeConfigModal = ({
                     <option value="">
                       {isFetchingNetworks ? "Loading networks..." : "Select an edge network"}
                     </option>
-                    {(edgeNetworks || []).map((n: any) => (
+                    {(edgeNetworks || []).map((n: unknown) => (
                       <option
                         key={n.id || n.uuid || n.identifier}
                         value={n.id || n.uuid || n.identifier}
@@ -292,7 +292,7 @@ const TenantAssignEdgeConfigModal = ({
                     <option value="">
                       {isFetchingPools ? "Loading IP pools..." : "Select an IP pool"}
                     </option>
-                    {(ipPools || []).map((p: any) => (
+                    {(ipPools || []).map((p: unknown) => (
                       <option
                         key={p.edge_network_ip_pool_id || p.id || p.uuid}
                         value={p.edge_network_ip_pool_id || p.id || p.uuid}

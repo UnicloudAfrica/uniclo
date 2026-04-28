@@ -10,9 +10,11 @@ import {
   Settings,
   Shield,
   Users,
+  Workflow,
 } from "lucide-react";
 import ProjectDetailsLayout from "./ProjectDetailsLayout";
 import ProjectDetailsOverview from "./ProjectDetailsOverview";
+import ProjectArchitectureTab from "./ProjectArchitectureTab";
 import ProjectComputeTab from "./ProjectComputeTab";
 import { ResourceSplitLayout } from "./ResourceLayout";
 import type { ResourceNavItem } from "./ResourceLayout";
@@ -593,6 +595,13 @@ export const useProjectDetailsAdapter = (
           onNavigateToTab={setActiveTab}
         />
       ),
+    },
+    {
+      id: "architecture",
+      label: "Architecture",
+      icon: Workflow,
+      tooltip: "Visual map of every resource in this project and how they connect",
+      content: <ProjectArchitectureTab unifiedViewProps={unifiedViewProps} />,
     },
   ];
 

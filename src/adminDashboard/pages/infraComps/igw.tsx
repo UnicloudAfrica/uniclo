@@ -22,7 +22,7 @@ const useInternetGatewaysAdapter = (projectId: string, region?: string) => {
 const useVpcsAdapter = (projectId: string, region?: string) => {
   const q = useVpcs(projectId, region);
   return {
-    data: (q.data as Record<string, unknown>[]) || [],
+    data: (q.data as unknown as Record<string, unknown>[]) || [],
     isLoading: q.isLoading,
     refetch: q.refetch,
   };

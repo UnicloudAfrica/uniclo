@@ -49,7 +49,7 @@ export const useCreateNatGateway = () => {
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
   return useMutation<
-    any,
+    unknown,
     Error,
     {
       projectId: string;

@@ -66,7 +66,7 @@ const ProductForm = () => {
   const computeSteps = ["Solution Selection", "Compute", "Personal Info"];
 
   const validateStep = () => {
-    const newErrors: Record<string, any> = {};
+    const newErrors: Record<string, unknown> = {};
     if (currentStep === 0) {
       if (!formData.solution) newErrors.solution = "Solution is required";
     } else if (currentStep === 1 && formData.solution !== "Compute") {

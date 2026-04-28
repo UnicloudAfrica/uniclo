@@ -182,25 +182,27 @@ const InstanceConfigurationForm: React.FC<Props> = ({
   );
   const projectSelectValue = effectiveProjectMode === "existing" ? cfg.project_id || "" : "";
 
-  const resolveProjectRegion = (project: Record<string, unknown> | null | undefined) => {
+  const resolveProjectRegion = (project: Record<string, unknown> | null | undefined): string => {
     if (!project) return "";
-    return (
-      project?.region ||
-      project?.region_code ||
-      project?.regionCode ||
-      project?.region?.code ||
-      project?.region?.slug ||
+    const region = project.region as Record<string, unknown> | string | undefined;
+    if (typeof region === "string") return region;
+    return String(
+      project.region_code ||
+      project.regionCode ||
+      region?.code ||
+      region?.slug ||
       ""
     );
   };
 
-  const resolveProjectPreset = (project: Record<string, unknown> | null | undefined) => {
+  const resolveProjectPreset = (project: Record<string, unknown> | null | undefined): string => {
     if (!project) return "";
-    return (
-      project?.metadata?.network_preset ||
-      project?.metadata?.networkPreset ||
-      project?.network_preset ||
-      project?.networkPreset ||
+    const metadata = project.metadata as Record<string, unknown> | undefined;
+    return String(
+      metadata?.network_preset ||
+      metadata?.networkPreset ||
+      project.network_preset ||
+      project.networkPreset ||
       ""
     );
   };
@@ -209,7 +211,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
     if (!cfg.project_id) return null;
     return projectSelectOptions.find((option) => String(option.value) === String(cfg.project_id));
   }, [cfg.project_id, projectSelectOptions]);
-  const selectedProject = selectedProjectOption?.raw;
+  const selectedProject = selectedProjectOption?.raw as Record<string, unknown> | undefined;
   const selectedProjectPresetId = resolveProjectPreset(selectedProject);
   const selectedProjectPreset = presetDetails.find(
     (preset) => String(preset.value) === String(selectedProjectPresetId)
@@ -227,7 +229,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
     const selectedOption = projectSelectOptions.find(
       (option) => String(option.value) === String(value)
     );
-    const project = selectedOption?.raw;
+    const project = selectedOption?.raw as Record<string, unknown> | undefined;
     const projectRegion = resolveProjectRegion(project);
     const resolvedRegion = projectRegion || cfg.region;
     const resolvedRegionLabel = resolveOptionLabel(resolvedRegion, regionOptions);
@@ -525,9 +527,10 @@ const InstanceConfigurationForm: React.FC<Props> = ({
             if (
               selectionStart !== null &&
               selectionEnd !== null &&
-              typeof next.setSelectionRange === "function"
+              "setSelectionRange" in next &&
+              typeof (next as HTMLInputElement | HTMLTextAreaElement).setSelectionRange === "function"
             ) {
-              next.setSelectionRange(selectionStart, selectionEnd);
+              (next as HTMLInputElement | HTMLTextAreaElement).setSelectionRange(selectionStart, selectionEnd);
             }
           }
         }
@@ -1147,7 +1150,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                   (Array.isArray(securityGroups) && securityGroups.length > 0
                     ? securityGroups
                     : []
-                  ).map((sg: Record<string, any>) => {
+                  ).map((sg: Record<string, unknown>) => {
                     const id = sg.id || sg.identifier || sg.name;
                     if (!id) return null;
                     const label = sg.name || sg.label || `SG ${id}`;

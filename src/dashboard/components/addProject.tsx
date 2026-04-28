@@ -148,23 +148,25 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     onClose?.();
   };
 
-  const resolveProjectIdentifier = (payload: any): string | number | null => {
+  const resolveProjectIdentifier = (payload: unknown): string | number | null => {
     if (!payload || typeof payload !== "object") {
       return null;
     }
-    if (payload.identifier) return payload.identifier;
-    if (payload.project_identifier) return payload.project_identifier;
-    if (payload.projectId) return payload.projectId;
-    if (payload.id) return payload.id;
-    if (payload.project) return resolveProjectIdentifier(payload.project);
-    if (payload.data) return resolveProjectIdentifier(payload.data);
-    if (payload.message && typeof payload.message === "object") {
-      return resolveProjectIdentifier(payload.message);
+    const p = payload as Record<string, unknown>;
+    if (typeof p.identifier === "string" || typeof p.identifier === "number") return p.identifier;
+    if (typeof p.project_identifier === "string" || typeof p.project_identifier === "number")
+      return p.project_identifier;
+    if (typeof p.projectId === "string" || typeof p.projectId === "number") return p.projectId;
+    if (typeof p.id === "string" || typeof p.id === "number") return p.id;
+    if (p.project) return resolveProjectIdentifier(p.project);
+    if (p.data) return resolveProjectIdentifier(p.data);
+    if (p.message && typeof p.message === "object") {
+      return resolveProjectIdentifier(p.message);
     }
     return null;
   };
 
-  const redirectToProjectDetails = (projectPayload: any) => {
+  const redirectToProjectDetails = (projectPayload: unknown) => {
     const identifier = resolveProjectIdentifier(projectPayload);
     if (!identifier) {
       ToastUtils.warning(
@@ -370,7 +372,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
       errorToast: false,
       fallbackErrorMessage: "Failed to create project.",
       rethrow: false,
-      onSuccess: (project: any) => {
+      onSuccess: (project: unknown) => {
         redirectToProjectDetails(project);
       },
       onError: () => {},

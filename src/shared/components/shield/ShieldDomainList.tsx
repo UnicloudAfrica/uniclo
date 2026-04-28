@@ -51,7 +51,7 @@ const ShieldDomainList: React.FC<ShieldDomainListProps> = ({
 }) => {
   const navigate = useNavigate();
   const [showAddModal, setShowAddModal] = useState(false);
-  const { data: domains = [], isLoading, refetch } = useFetchShieldDomains();
+  const { data: domains = [], isLoading, isError, error, refetch } = useFetchShieldDomains();
   const deleteDomain = useDeleteShieldDomain();
 
   const domainList = useMemo(
@@ -104,7 +104,7 @@ const ShieldDomainList: React.FC<ShieldDomainListProps> = ({
         render: (_, row) => (
           <div className="flex items-center gap-1.5 text-sm capitalize">
             {PROTECTION_ICON_MAP[row.protection_mode] ?? <Shield size={14} />}
-            {row.protection_mode.replace("_", " ")}
+            {(row.protection_mode ?? "standard").replace("_", " ")}
           </div>
         ),
       },
@@ -157,6 +157,24 @@ const ShieldDomainList: React.FC<ShieldDomainListProps> = ({
     ],
     [handleRowClick, deleteDomain]
   );
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+        <Shield size={40} className="text-red-400" />
+        <p className="text-sm text-red-600">
+          {error?.message || "Failed to load domains."}
+        </p>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className="flex items-center gap-1.5 rounded-xl bg-[var(--theme-color)] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+        >
+          <RefreshCw size={14} /> Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

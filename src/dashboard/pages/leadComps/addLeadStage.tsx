@@ -22,7 +22,7 @@ const AddLeadStage = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
     description: "",
     assigned_to: "",
   });
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, unknown>>({});
 
   const { data: admins, isLoading: isAdminsLoading } = useFetchTenantAdmins();
   const { mutate, isPending } = useCreateCustomStage();
@@ -49,7 +49,7 @@ const AddLeadStage = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
   }, [isOpen]);
 
   const validateForm = () => {
-    const newErrors: Record<string, any> = {};
+    const newErrors: Record<string, unknown> = {};
     if (!formData.stage_name) {
       newErrors.stage_name = "Please select a stage name.";
     }
@@ -71,7 +71,7 @@ const AddLeadStage = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
       return;
     }
 
-    const stageData: Record<string, any> = {
+    const stageData: Record<string, unknown> = {
       lead_id: leadId,
       stage_name: formData.stage_name,
       description: formData.description,
@@ -170,7 +170,7 @@ const AddLeadStage = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
                 {isAdminsLoading ? (
                   <option disabled>Loading admins...</option>
                 ) : (
-                  (admins as Record<string, any>[])?.map((admin: Record<string, any>) => (
+                  (admins as Record<string, unknown>[])?.map((admin: Record<string, unknown>) => (
                     <option key={admin.id} value={admin.identifier || admin.id}>
                       {admin.first_name} {admin.last_name} ({admin.email})
                     </option>

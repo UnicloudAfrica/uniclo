@@ -2,11 +2,11 @@ import { X, Loader2 } from "lucide-react";
 
 import ToastUtils from "@/utils/toastUtil"; // Ensure ToastUtils is
 import { useDeleteEbsVolume } from "@/hooks/adminHooks/ebsHooks";
-const DeleteEBSModal = ({ isOpen, onClose, ebsVolume }: any) => {
+const DeleteEBSModal = ({ isOpen, onClose, ebsVolume }: { isOpen: boolean; onClose: () => void; ebsVolume: unknown }) => {
   // Use the useDeleteEbsVolume hook
   const { mutate, isPending } = useDeleteEbsVolume();
 
-  const handleDeleteConfirm = (e: any) => {
+  const handleDeleteConfirm = (e: unknown) => {
     if (e) e.preventDefault();
 
     if (ebsVolume?.identifier) {

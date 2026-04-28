@@ -16,7 +16,7 @@ import { apiRegistry } from "../api/apiRegistry";
 import type { ApiContext } from "@/hooks/useApiContext";
 import type { ResourceHooks } from "./createResourceHooks";
 
-type AnyRecord = Record<string, any>;
+type AnyRecord = Record<string, unknown>;
 
 /**
  * Creates backward-compatible wrappers for resource hooks.
@@ -29,7 +29,7 @@ export function createLegacyWrappers<T = AnyRecord>(hooks: ResourceHooks<T>) {
      *   OLD: (projectId?, region?, options?) => ...
      *   NEW: useFetchList({ projectId, region }, options)
      */
-    useFetchList: (projectId?: string, region?: string, options?: any) =>
+    useFetchList: (projectId?: string, region?: string, options?: unknown) =>
       hooks.useFetchList({ projectId, region }, options),
 
     /** Wraps useFetchById -- same signature, no changes needed */
@@ -52,7 +52,7 @@ export function createLegacyWrappers<T = AnyRecord>(hooks: ResourceHooks<T>) {
       const mutation = hooks.useSync();
       return {
         ...mutation,
-        mutate: (params: any, options?: any) => {
+        mutate: (params: unknown, options?: unknown) => {
           const mapped = {
             projectId: params?.projectId ?? params?.project_id,
             region: params?.region,
@@ -60,7 +60,7 @@ export function createLegacyWrappers<T = AnyRecord>(hooks: ResourceHooks<T>) {
           };
           return mutation.mutate(mapped, options);
         },
-        mutateAsync: async (params: any, options?: any) => {
+        mutateAsync: async (params: unknown, options?: unknown) => {
           const mapped = {
             projectId: params?.projectId ?? params?.project_id,
             region: params?.region,
@@ -87,7 +87,7 @@ export function createLegacyWrappers<T = AnyRecord>(hooks: ResourceHooks<T>) {
  *  3. Calls the silent API and returns the data array.
  */
 export function createSyncFunction(resourcePath: string, dataKey: string = "data") {
-  return async (params: { project_id?: string; region?: string; [key: string]: any }) => {
+  return async (params: { project_id?: string; region?: string; [key: string]: unknown }) => {
     // Determine context from current URL path (same logic as useApiContext but
     // usable outside of React components/hooks).
     const path = window.location.pathname;
@@ -112,10 +112,10 @@ export function createSyncFunction(resourcePath: string, dataKey: string = "data
     }
 
     const url = `${entry.urlPrefix}/${resourcePath}?${searchParams.toString()}`;
-    const res = await entry.silentApi.get<any>(url);
+    const res = await entry.silentApi.get<unknown>(url);
 
     if (dataKey && res && typeof res === "object" && dataKey in res) {
-      return (res as any)[dataKey] ?? [];
+      return (res as unknown)[dataKey] ?? [];
     }
     return Array.isArray(res) ? res : [];
   };

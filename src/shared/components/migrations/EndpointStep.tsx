@@ -39,7 +39,7 @@ const EndpointStep: React.FC<EndpointStepProps> = ({
   const [mode, setMode] = useState<"existing" | "new">("existing");
   const { data: endpoints } = useFetchExternalEndpoints();
   const createEndpoint = useCreateExternalEndpoint();
-  const testConnection = useTestEndpointConnection();
+  const _testConnection = useTestEndpointConnection();
 
   // New endpoint form state
   const [formData, setFormData] = useState({
@@ -237,7 +237,7 @@ const EndpointStep: React.FC<EndpointStepProps> = ({
               label="Provider"
               options={PROVIDER_OPTIONS}
               value={formData.provider}
-              onChange={(val) => handleFieldChange("provider", val)}
+              onChange={(e) => handleFieldChange("provider", e.target.value)}
             />
             <ModernInput
               label="Region"
@@ -266,7 +266,7 @@ const EndpointStep: React.FC<EndpointStepProps> = ({
                     { value: "windows", label: "Windows" },
                   ]}
                   value={formData.os_family}
-                  onChange={(val) => handleFieldChange("os_family", val)}
+                  onChange={(e) => handleFieldChange("os_family", e.target.value)}
                 />
               </div>
               <div>
@@ -299,7 +299,7 @@ const EndpointStep: React.FC<EndpointStepProps> = ({
                   { value: "mariadb", label: "MariaDB" },
                 ]}
                 value={formData.engine}
-                onChange={(val) => handleFieldChange("engine", val)}
+                onChange={(e) => handleFieldChange("engine", e.target.value)}
               />
               <div className="grid gap-3 sm:grid-cols-3">
                 <ModernInput

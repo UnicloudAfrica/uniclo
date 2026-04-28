@@ -23,7 +23,9 @@ import IconBadge from "../../components/IconBadge";
 const parseQuota = (product: Record<string, unknown>) => {
   if (!product) return null;
 
-  const quotaFromMeta = product.object_storage?.quota_gb ?? product.productable?.quota_gb;
+  const objectStorageMeta = product.object_storage as { quota_gb?: unknown } | undefined;
+  const productableMeta = product.productable as { quota_gb?: unknown } | undefined;
+  const quotaFromMeta = objectStorageMeta?.quota_gb ?? productableMeta?.quota_gb;
   if (quotaFromMeta !== undefined && quotaFromMeta !== null) {
     const numeric = Number(quotaFromMeta);
     if (!Number.isNaN(numeric) && numeric > 0) {
@@ -31,14 +33,16 @@ const parseQuota = (product: Record<string, unknown>) => {
     }
   }
 
-  if (product?.provider_resource_id) {
-    const suffixMatch = product.provider_resource_id.match(/-(\d+)-gib$/i);
+  const providerResourceId = product?.provider_resource_id;
+  if (typeof providerResourceId === "string") {
+    const suffixMatch = providerResourceId.match(/-(\d+)-gib$/i);
     if (suffixMatch) {
       return Number(suffixMatch[1]);
     }
   }
 
-  const match = (product?.name || "").match(/(\d+)\s*gi?b/i);
+  const name = typeof product?.name === "string" ? product.name : "";
+  const match = name.match(/(\d+)\s*gi?b/i);
   if (match) {
     return Number(match[1]);
   }
@@ -58,7 +62,7 @@ const makeKey = (region: unknown, product: Record<string, unknown>) => {
   const fallback = product?.productable_id ?? 0;
   const fallbackNumeric = Number(fallback) || 0;
   const resolved = quota ?? fallbackNumeric;
-  return `${(region || "").toLowerCase()}::${resolved}`;
+  return `${(typeof region === "string" ? region : "").toLowerCase()}::${resolved}`;
 };
 
 const ObjectStorageInventory = ({
@@ -111,8 +115,8 @@ const ObjectStorageInventory = ({
   const pricingMeta = (pricingPayload as { meta?: unknown })?.meta;
 
   const pricingMap = useMemo(() => {
-    return pricingRows.reduce((acc: Record<string, unknown>, item: Record<string, unknown>) => {
-      const productMeta = item.product || {};
+    return pricingRows.reduce((acc: Record<string, Record<string, unknown>>, item: Record<string, unknown>) => {
+      const productMeta = (item.product as Record<string, unknown> | undefined) || {};
       const region = productMeta.region || item.region;
       const key = makeKey(region, {
         ...productMeta,
@@ -137,7 +141,7 @@ const ObjectStorageInventory = ({
   useEffect(() => {
     if (!productList.length) return;
     const productKeys = new Set(
-      productList.map((product: any) => makeKey(product.region, product))
+      productList.map((product: Record<string, unknown>) => makeKey(product.region, product))
     );
     setRemovedKeys((prev) => {
       if (!prev.some((key) => !productKeys.has(key))) {
@@ -155,8 +159,8 @@ const ObjectStorageInventory = ({
       let mutated = false;
       const next = { ...prev };
       Object.entries(prev).forEach(([key, override]) => {
-        const pricing = pricingMap[key];
-        if (pricing && Number(pricing.price_usd) === Number(override.price_usd)) {
+        const pricing = pricingMap[key] as Record<string, unknown> | undefined;
+        if (pricing && Number(pricing.price_usd) === Number((override as Record<string, unknown>).price_usd)) {
           delete next[key];
           mutated = true;
         }
@@ -166,13 +170,13 @@ const ObjectStorageInventory = ({
   }, [pricingMap]);
 
   const enrichedProducts = useMemo(() => {
-    return filteredProducts.map((product: any) => {
+    return filteredProducts.map((product: Record<string, unknown>) => {
       const key = makeKey(product.region, product);
-      const pricing = pricingMap[key] || null;
+      const pricing = (pricingMap[key] as Record<string, unknown> | undefined) || null;
       const override = priceOverrides[key];
       const mergedPricing = override
         ? {
-            ...(pricing || override),
+            ...((pricing as Record<string, unknown>) || override),
             price_usd: override.price_usd,
           }
         : pricing;
@@ -196,7 +200,7 @@ const ObjectStorageInventory = ({
   const searchedRows = useMemo(() => {
     if (!search.trim()) return filteredByRegion;
     const query = search.toLowerCase();
-    return filteredByRegion.filter((item: any) => {
+    return filteredByRegion.filter((item: Record<string, unknown>) => {
       const name = (item.name || item.pricing?.product_name || "").toLowerCase();
       const identifier = (item.provider_resource_id || "").toLowerCase();
       const pricingName = (item.pricing?.product_name || "").toLowerCase();
@@ -206,7 +210,7 @@ const ObjectStorageInventory = ({
 
   const total = searchedRows.length;
   const totalQuota = useMemo(() => {
-    return searchedRows.reduce((acc: number, item: any) => {
+    return searchedRows.reduce((acc: number, item: Record<string, unknown>) => {
       const quota = parseQuota(item);
       return acc + (quota || 0);
     }, 0);
@@ -214,8 +218,8 @@ const ObjectStorageInventory = ({
 
   const baseRate = useMemo(() => {
     const baseRow =
-      searchedRows.find((row: any) => parseQuota(row) === 1) ||
-      filteredByRegion.find((row: any) => parseQuota(row) === 1);
+      searchedRows.find((row: Record<string, unknown>) => parseQuota(row) === 1) ||
+      filteredByRegion.find((row: Record<string, unknown>) => parseQuota(row) === 1);
     if (!baseRow?.pricing?.price_usd) return null;
     return Number(baseRow.pricing.price_usd);
   }, [filteredByRegion, searchedRows]);
@@ -295,7 +299,7 @@ const ObjectStorageInventory = ({
       if (!Array.isArray(existing)) {
         return existing;
       }
-      return existing.filter((product: any) => {
+      return existing.filter((product: Record<string, unknown>) => {
         const productKey = makeKey(product.region, product);
         return productKey !== key;
       });
@@ -310,13 +314,13 @@ const ObjectStorageInventory = ({
       "",
       "object_storage_configuration",
     ];
-    queryClient.setQueryData(pricingKey, (payload: any) => {
+    queryClient.setQueryData(pricingKey, (payload: Record<string, unknown>) => {
       if (!payload || !Array.isArray(payload.data)) {
         return payload;
       }
       return {
         ...payload,
-        data: payload.data.filter((pricing: any) => {
+        data: payload.data.filter((pricing: Record<string, unknown>) => {
           const productMeta = pricing.product || {};
           const productKey = makeKey(pricing.region, {
             ...productMeta,
@@ -358,11 +362,11 @@ const ObjectStorageInventory = ({
       "",
       "object_storage_configuration",
     ];
-    queryClient.setQueryData(pricingKey, (payload: any) => {
+    queryClient.setQueryData(pricingKey, (payload: Record<string, unknown>) => {
       if (!payload || !Array.isArray(payload.data)) {
         return payload;
       }
-      const updated = payload.data.map((pricing: any) => {
+      const updated = payload.data.map((pricing: Record<string, unknown>) => {
         const productMeta = pricing.product || {};
         const productKey = makeKey(pricing.region, {
           ...productMeta,
@@ -445,7 +449,7 @@ const ObjectStorageInventory = ({
               }}
               className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 focus:border-primary-300 focus:outline-none"
             >
-              {[10, 20, 50].map((option: any) => (
+              {[10, 20, 50].map((option: number) => (
                 <option key={option} value={option}>
                   {option}
                 </option>
@@ -464,7 +468,7 @@ const ObjectStorageInventory = ({
         ) : paginatedRows.length > 0 ? (
           <>
             <ModernTable
-              data={paginatedRows.map((row: any) => ({
+              data={paginatedRows.map((row: Record<string, unknown>) => ({
                 ...row,
                 id: `${row.id}-${row.provider_resource_id}`,
                 _quotaValue: formatNumber(parseQuota(row)),
@@ -481,7 +485,7 @@ const ObjectStorageInventory = ({
                 {
                   key: "name",
                   header: "SKU",
-                  render: (_: any, row: any) => (
+                  render: (_: unknown, row: Record<string, unknown>) => (
                     <div className="flex items-start gap-3">
                       <IconBadge
                         iconKey="business.companyType"
@@ -502,9 +506,9 @@ const ObjectStorageInventory = ({
                 {
                   key: "region",
                   header: "REGION",
-                  render: (val: any) => (
+                  render: (val: unknown) => (
                     <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                      {val || "Global"}
+                      {String(val || "Global")}
                     </span>
                   ),
                 },
@@ -512,29 +516,29 @@ const ObjectStorageInventory = ({
                   key: "_quotaValue",
                   header: "QUOTA (GIB)",
                   align: "center",
-                  render: (val: any) => <span className="font-semibold text-slate-900">{val}</span>,
+                  render: (val: unknown) => <span className="font-semibold text-slate-900">{String(val ?? "")}</span>,
                 },
                 {
                   key: "_perGiB",
                   header: "PER GIB (USD)",
                   align: "right",
-                  render: (val: any) => (
-                    <span className="text-slate-700">{val ? `$${val}` : "—"}</span>
+                  render: (val: unknown) => (
+                    <span className="text-slate-700">{val ? `$` : "—"}</span>
                   ),
                 },
                 {
                   key: "_totalPrice",
                   header: "TOTAL (USD)",
                   align: "right",
-                  render: (val: any) => (
-                    <span className="font-semibold text-slate-900">{val ? `$${val}` : "—"}</span>
+                  render: (val: unknown) => (
+                    <span className="font-semibold text-slate-900">{val ? `$` : "—"}</span>
                   ),
                 },
                 {
                   key: "actions",
                   header: "ACTIONS",
                   align: "right",
-                  render: (_: any, row: any) => (
+                  render: (_: unknown, row: Record<string, unknown>) => (
                     <div className="flex items-center justify-end gap-2">
                       <ModernButton
                         variant="outline"
@@ -614,7 +618,7 @@ const ObjectStorageInventory = ({
         isOpen={isEditOpen}
         onClose={closeModals}
         tier={selectedTier}
-        onUpdated={(updatedTier: any, totalPrice: any) => {
+        onUpdated={(updatedTier: unknown, totalPrice: number) => {
           handleTierUpdated(updatedTier || selectedTier, totalPrice);
         }}
       />
@@ -622,7 +626,7 @@ const ObjectStorageInventory = ({
         isOpen={isDeleteOpen}
         onClose={closeModals}
         tier={selectedTier}
-        onDeleted={(deletedTier: any) => {
+        onDeleted={(deletedTier: Record<string, unknown>) => {
           handleTierDeleted(deletedTier || selectedTier);
         }}
       />

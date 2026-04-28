@@ -2,6 +2,7 @@
  * AttackHistoryTable — Historical attack data for a Shield domain.
  */
 import React, { useMemo } from "react";
+import { RefreshCw, Shield } from "lucide-react";
 import ModernTable from "@/shared/components/ui/ModernTable/ModernTable";
 import type { Column } from "@/shared/components/ui/ModernTable/types";
 import StatusPill from "@/shared/components/ui/StatusPill";
@@ -20,7 +21,7 @@ const STATUS_TONE: Record<string, "success" | "danger" | "warning" | "info"> = {
 };
 
 const AttackHistoryTable: React.FC<AttackHistoryTableProps> = ({ domainId }) => {
-  const { data: attacks = [], isLoading } = useFetchAttacks(domainId);
+  const { data: attacks = [], isLoading, isError, error, refetch } = useFetchAttacks(domainId);
 
   const columns: Column<ShieldAttack>[] = useMemo(
     () => [
@@ -58,6 +59,24 @@ const AttackHistoryTable: React.FC<AttackHistoryTableProps> = ({ domainId }) => 
     ],
     []
   );
+
+  if (isError) {
+    return (
+      <div className="db-surface-card flex flex-col items-center justify-center gap-3 rounded-2xl border p-8 text-center">
+        <Shield size={32} className="text-red-400" />
+        <p className="text-sm text-red-600">
+          {error?.message || "Failed to load attack history."}
+        </p>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className="flex items-center gap-1.5 rounded-xl bg-[var(--theme-color)] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+        >
+          <RefreshCw size={14} /> Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="db-surface-card rounded-2xl border p-5">

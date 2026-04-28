@@ -18,7 +18,7 @@ const toTitleCase = (value = "") =>
     .map((segment: string) => segment.charAt(0).toUpperCase() + segment.slice(1))
     .join(" ");
 
-const getOsDescriptor = (image: any) =>
+const getOsDescriptor = (image: unknown) =>
   (image?.os_family || image?.platform || image?.distribution || image?.name || "").toLowerCase();
 
 const stringHash = (value = "") => {
@@ -79,7 +79,7 @@ const buildInitials = (value = "") => {
   return `${first}${second}`.toUpperCase();
 };
 
-const getAvatarVisuals = (image: any) => {
+const getAvatarVisuals = (image: unknown) => {
   const descriptor = getOsDescriptor(image);
   const seed = descriptor || image?.identifier || image?.name || image?.id?.toString() || "os";
   const palette = avatarPaletteForSeed(seed);
@@ -96,7 +96,7 @@ const getAvatarVisuals = (image: any) => {
   };
 };
 
-const buildDetailChips = (image: any) => {
+const buildDetailChips = (image: unknown) => {
   const values = [
     image?.version,
     image?.architecture ? image.architecture.toUpperCase() : null,
@@ -138,7 +138,7 @@ const OSImages = ({
   const [activeSubTab, setActiveSubTab] = useState<"catalog" | "discovery" | "requests">("catalog");
   const { data: regionsData } = useFetchRegions();
   const allRegionCodes = useMemo(
-    () => (Array.isArray(regionsData) ? regionsData.map((r: any) => r.code as string) : []),
+    () => (Array.isArray(regionsData) ? regionsData.map((r: unknown) => r.code as string) : []),
     [regionsData]
   );
 
@@ -156,8 +156,8 @@ const OSImages = ({
     }
   );
 
-  const rows = useMemo(() => data?.data ?? [], [data]);
-  const meta = data?.meta ?? null;
+  const rows = useMemo(() => (data as { data?: unknown[] } | undefined)?.data ?? [], [data]);
+  const meta = (data as { meta?: { total?: number; current_page?: number; per_page?: number } } | undefined)?.meta ?? null;
   const total = meta?.total ?? rows.length;
 
   const handleAddOSImage = () => {
@@ -165,12 +165,12 @@ const OSImages = ({
     setIsAddOSImageModalOpen(true);
   };
 
-  const handleEditOSImage = (image: any) => {
+  const handleEditOSImage = (image: unknown) => {
     setSelectedOSImage(image);
     setIsEditOSImageModalOpen(true);
   };
 
-  const handleDeleteOSImage = (image: any) => {
+  const handleDeleteOSImage = (image: unknown) => {
     setSelectedOSImage(image);
     setIsDeleteOSImageModalOpen(true);
   };
@@ -209,7 +209,7 @@ const OSImages = ({
     });
   }, [total, licensedCount, unlicensedCount, onMetricsChange]);
 
-  const formatLicenseStatus = (isLicensed: any) => {
+  const formatLicenseStatus = (isLicensed: boolean) => {
     if (isLicensed) {
       return (
         <span className="inline-flex items-center gap-1 rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-600">
@@ -228,7 +228,7 @@ const OSImages = ({
     {
       key: "name",
       header: "Image",
-      render: (image: any) => {
+      render: (image: unknown) => {
         const { label, className, style } = getAvatarVisuals(image);
         const chips = buildDetailChips(image);
         const platform = image?.platform || image?.os_family;
@@ -244,7 +244,7 @@ const OSImages = ({
               <p className="text-xs text-slate-500">{platform ? toTitleCase(platform) : "—"}</p>
               {chips.length > 0 && (
                 <div className="flex flex-wrap gap-1">
-                  {chips.map((chip: any) => (
+                  {chips.map((chip: unknown) => (
                     <span
                       key={chip}
                       className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500"
@@ -263,7 +263,7 @@ const OSImages = ({
       key: "region",
       header: "Region",
       align: "center",
-      render: (image: any) => (
+      render: (image: unknown) => (
         <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
           {image.region || "—"}
         </span>
@@ -273,13 +273,13 @@ const OSImages = ({
       key: "is_licenced",
       header: "License",
       align: "center",
-      render: (image: any) => formatLicenseStatus(image.is_licenced),
+      render: (image: unknown) => formatLicenseStatus(image.is_licenced),
     },
     {
       key: "actions",
       header: "",
       align: "right",
-      render: (image: any) => (
+      render: (image: unknown) => (
         <div className="flex items-center justify-end gap-2">
           <button
             type="button"

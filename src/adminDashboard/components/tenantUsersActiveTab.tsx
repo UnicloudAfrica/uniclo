@@ -23,7 +23,7 @@ const ManagementSideMenu = () => {
       </div>
 
       <nav className="flex flex-wrap gap-2">
-        {tabs.map((tab: any) => (
+        {tabs.map((tab: { id: string; name: string; path: string }) => (
           <NavLink
             key={tab.id}
             to={tab.path}

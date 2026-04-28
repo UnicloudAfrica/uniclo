@@ -39,8 +39,8 @@ interface SharedTicketDetailProps {
     comment?: string;
     agent_scores?: Record<string, number>;
   }) => void;
-  onFetchMessages?: (page: number) => Promise<any>;
-  onUpdateLastRead?: (messageId: number) => Promise<any> | void;
+  onFetchMessages?: (page: number) => Promise<unknown>;
+  onUpdateLastRead?: (messageId: number) => Promise<unknown> | void;
   canEscalate?: boolean;
   canDeescalate?: boolean;
   canResolve?: boolean;

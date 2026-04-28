@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
 
-const useImageFallback = (primarySrc: any, fallbackSrc: any) => {
-  const [src, setSrc] = useState(primarySrc || fallbackSrc || "");
+type SrcLike = string | null | undefined;
+
+/**
+ * Render an image with a graceful-degradation fallback. `primarySrc`
+ * is attempted first; if it fires `onError` the hook swaps to the
+ * fallback. Accepts any nullable string shape (nothing, URL, data-URI,
+ * import reference) — both inputs are coerced to `string | null`.
+ */
+const useImageFallback = (primarySrc: SrcLike, fallbackSrc: SrcLike) => {
+  const [src, setSrc] = useState<string>(primarySrc || fallbackSrc || "");
 
   useEffect(() => {
     setSrc(primarySrc || fallbackSrc || "");
@@ -9,7 +17,7 @@ const useImageFallback = (primarySrc: any, fallbackSrc: any) => {
 
   const handleError = () => {
     if (!fallbackSrc) return;
-    setSrc((current: any) => (current === fallbackSrc ? current : fallbackSrc));
+    setSrc((current) => (current === fallbackSrc ? current : fallbackSrc));
   };
 
   return { src, onError: handleError };

@@ -15,7 +15,6 @@ import {
   ToggleRight,
   HardDrive,
   Archive,
-  Camera,
   CheckCircle2,
 } from "lucide-react";
 import ModernCard from "@/shared/components/ui/ModernCard";
@@ -84,7 +83,7 @@ const DatabaseBackupPolicy: React.FC<DatabaseBackupPolicyProps> = ({ databaseId 
   const { data: policyRaw, isLoading, refetch } = useFetchDatabaseBackupPolicy(databaseId);
   const updateMutation = useUpdateDatabaseBackupPolicy();
 
-  const policy = (policyRaw ?? {}) as BackupPolicy;
+  const policy = (policyRaw ?? {}) as unknown as BackupPolicy;
 
   const [enabled, setEnabled] = useState(true);
   const [retentionDays, setRetentionDays] = useState(7);

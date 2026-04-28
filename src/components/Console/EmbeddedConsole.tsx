@@ -11,8 +11,10 @@ import {
   WifiOff,
   RotateCw,
   Monitor,
+  TerminalSquare,
 } from "lucide-react";
 import { useApiContext } from "@/hooks/useApiContext";
+import SshTerminal from "./SshTerminal";
 
 type Position = {
   x: number;
@@ -26,7 +28,7 @@ type Size = {
 
 type ConnectionStatus = "disconnected" | "connecting" | "connected" | "error";
 
-type ConsoleType = "novnc" | "spice-html5" | "rdp-html5" | "serial";
+type ConsoleType = "novnc" | "spice-html5" | "rdp-html5" | "serial" | "ssh";
 
 type ConsoleApiResponse = {
   success?: boolean;
@@ -45,7 +47,7 @@ type EmbeddedConsoleProps = {
   initialSize?: Size;
 };
 
-const consoleTypes: ConsoleType[] = ["novnc", "spice-html5", "rdp-html5", "serial"];
+const consoleTypes: ConsoleType[] = ["novnc", "spice-html5", "rdp-html5", "serial", "ssh"];
 
 const EmbeddedConsole = ({
   instanceId,
@@ -129,7 +131,7 @@ const EmbeddedConsole = ({
   );
 
   useEffect(() => {
-    if (isVisible && instanceId) {
+    if (isVisible && instanceId && consoleType !== "ssh") {
       fetchConsoleUrl(consoleType);
     }
   }, [isVisible, instanceId, consoleType, fetchConsoleUrl]);
@@ -232,6 +234,8 @@ const EmbeddedConsole = ({
         return <Monitor className="w-4 h-4" />;
       case "serial":
         return <Terminal className="w-4 h-4" />;
+      case "ssh":
+        return <TerminalSquare className="w-4 h-4" />;
       default:
         return <Terminal className="w-4 h-4" />;
     }
@@ -335,7 +339,7 @@ const EmbeddedConsole = ({
       {/* Console Content */}
       {!isMinimized && (
         <div className="relative w-full h-full bg-black">
-          {isLoading && (
+          {consoleType !== "ssh" && isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-2" />
@@ -344,7 +348,7 @@ const EmbeddedConsole = ({
             </div>
           )}
 
-          {error && (
+          {consoleType !== "ssh" && error && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
               <div className="text-center p-4">
                 <div className="bg-red-900/50 border border-red-600 rounded-lg p-4 mb-4">
@@ -361,7 +365,22 @@ const EmbeddedConsole = ({
             </div>
           )}
 
-          {consoleUrl && !isLoading && !error && (
+          {consoleType === "ssh" && instanceId && (
+            <div className="absolute inset-0 bottom-[28px]">
+              <SshTerminal
+                instanceId={instanceId}
+                onStatusChange={(s) => {
+                  if (s === "connected") setConnectionStatus("connected");
+                  else if (s === "connecting" || s === "requesting") setConnectionStatus("connecting");
+                  else if (s === "error") setConnectionStatus("error");
+                  else if (s === "closed") setConnectionStatus("disconnected");
+                }}
+                onError={(msg) => setError(msg)}
+              />
+            </div>
+          )}
+
+          {consoleType !== "ssh" && consoleUrl && !isLoading && !error && (
             <iframe
               ref={iframeRef}
               src={consoleUrl}

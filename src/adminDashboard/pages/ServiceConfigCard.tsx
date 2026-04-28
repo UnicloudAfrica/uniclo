@@ -34,7 +34,7 @@ const ServiceConfigCard = ({
   };
 
   // Determine if we should show the credential form
-  const hasCredentialsEntered = Object.values(credentials || {}).some((v: any) => v && v !== "");
+  const hasCredentialsEntered = Object.values(credentials || {}).some((v: unknown) => v && v !== "");
   const shouldShowCredentialsForm =
     !isExistingConnection || showUpdateForm || hasCredentialsEntered;
 
@@ -196,7 +196,7 @@ const ServiceConfigCard = ({
                           label={`${fieldDef.label}${fieldDef.required ? "" : " (optional)"}`}
                           name={fieldName}
                           type={getInputType(fieldDef)}
-                          value={credentials[fieldName] || ""}
+                          value={(credentials[fieldName] as string | number | undefined) || ""}
                           onChange={(e) => onCredentialChange(fieldName, e.target.value)}
                           placeholder={
                             isExistingConnection

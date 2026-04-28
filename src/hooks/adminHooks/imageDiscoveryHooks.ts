@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
 import logger from "@/utils/logger";
+import type { QueryHookOptions } from "@/shared/types/admin";
 
 // ---------- Types ----------
 
@@ -44,11 +45,14 @@ interface ImportPayload {
 
 const fetchDiscoveredImages = async (distro?: string): Promise<DiscoveredImageEntry[]> => {
   const params = distro ? `?distro=${distro}` : "";
-  const res = await silentApi("GET", `/inventory/image-discovery${params}`);
-  return (res as any)?.data ?? [];
+  const res = await silentApi<{ data?: DiscoveredImageEntry[] }>(
+    "GET",
+    `/inventory/image-discovery${params}`
+  );
+  return res?.data ?? [];
 };
 
-export const useDiscoveredImages = (distro?: string, options: any = {}) => {
+export const useDiscoveredImages = (distro?: string, options: QueryHookOptions = {}) => {
   return useQuery<DiscoveredImageEntry[]>({
     queryKey: ["discoveredImages", distro],
     queryFn: () => fetchDiscoveredImages(distro),
@@ -60,8 +64,9 @@ export const useDiscoveredImages = (distro?: string, options: any = {}) => {
 
 export const useImportUpstreamImage = () => {
   const queryClient = useQueryClient();
-  return useMutation<any, Error, ImportPayload>({
-    mutationFn: (payload) => api("POST", "/inventory/image-discovery/import", payload),
+  return useMutation<unknown, Error, ImportPayload>({
+    mutationFn: (payload) =>
+      api("POST", "/inventory/image-discovery/import", payload as unknown as Record<string, unknown>),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["discoveredImages"] });
       queryClient.invalidateQueries({ queryKey: ["osImages"] });
@@ -73,11 +78,14 @@ export const useImportUpstreamImage = () => {
 };
 
 const fetchDiscoverySources = async () => {
-  const res = await silentApi("GET", "/inventory/image-discovery/sources");
-  return (res as any)?.data ?? [];
+  const res = await silentApi<{ data?: unknown[] }>(
+    "GET",
+    "/inventory/image-discovery/sources"
+  );
+  return res?.data ?? [];
 };
 
-export const useDiscoverySources = (options: any = {}) => {
+export const useDiscoverySources = (options: QueryHookOptions = {}) => {
   return useQuery({
     queryKey: ["discoverySources"],
     queryFn: fetchDiscoverySources,
@@ -89,11 +97,14 @@ export const useDiscoverySources = (options: any = {}) => {
 // ---------- Admin: Image Requests ----------
 
 const fetchImageRequests = async (): Promise<AggregatedRequest[]> => {
-  const res = await silentApi("GET", "/inventory/image-requests");
-  return (res as any)?.data ?? [];
+  const res = await silentApi<{ data?: AggregatedRequest[] }>(
+    "GET",
+    "/inventory/image-requests"
+  );
+  return res?.data ?? [];
 };
 
-export const useImageRequests = (options: any = {}) => {
+export const useImageRequests = (options: QueryHookOptions = {}) => {
   return useQuery<AggregatedRequest[]>({
     queryKey: ["adminImageRequests"],
     queryFn: fetchImageRequests,
@@ -105,7 +116,7 @@ export const useImageRequests = (options: any = {}) => {
 
 export const useApproveImageRequest = () => {
   const queryClient = useQueryClient();
-  return useMutation<any, Error, string>({
+  return useMutation<unknown, Error, string>({
     mutationFn: (identifier) => api("POST", `/inventory/image-requests/${identifier}/approve`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminImageRequests"] });
@@ -119,7 +130,7 @@ export const useApproveImageRequest = () => {
 
 export const useBulkApproveImageRequests = () => {
   const queryClient = useQueryClient();
-  return useMutation<any, Error, string[]>({
+  return useMutation<unknown, Error, string[]>({
     mutationFn: (identifiers) =>
       api("POST", "/inventory/image-requests/bulk-approve", { identifiers }),
     onSuccess: () => {
@@ -133,7 +144,7 @@ export const useBulkApproveImageRequests = () => {
 
 export const useRejectImageRequest = () => {
   const queryClient = useQueryClient();
-  return useMutation<any, Error, { identifier: string; reason?: string }>({
+  return useMutation<unknown, Error, { identifier: string; reason?: string }>({
     mutationFn: ({ identifier, reason }) =>
       api("POST", `/inventory/image-requests/${identifier}/reject`, { reason }),
     onSuccess: () => {

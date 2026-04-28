@@ -30,7 +30,7 @@ const AdminTicketDetail: React.FC = () => {
   // Mutations
   const replyMutation = useMutation({
     mutationFn: (payload: { message: string; files?: File[] }) => {
-      let body: any;
+      let body: unknown;
       if (payload.files && payload.files.length > 0) {
         const formData = new FormData();
         formData.append("body", payload.message);

@@ -254,7 +254,7 @@ export default function AdminUsers() {
       key: "actions",
       header: "Actions",
       align: "right",
-      render: (_: any, admin: AdminUser) => (
+      render: (_: unknown, admin: AdminUser) => (
         <TableActionButtons
           onView={() => handleViewAdmin(admin)}
           onEdit={() => handleEditAdmin(admin)}
@@ -308,7 +308,7 @@ export default function AdminUsers() {
             description="Manage system administrators and their permissions"
             actions={headerActions}
           >
-            <TenantClientsSideMenu activeTab="admin-users" {...({} as never)} />
+            <TenantClientsSideMenu />
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-6">

@@ -4,6 +4,12 @@ import { useDiscoveredImages, useImportUpstreamImage } from "@/hooks/adminHooks/
 import { ModernButton } from "@/shared/components/ui";
 import ToastUtils from "@/utils/toastUtil";
 
+interface DiscoveredImage {
+  image: { distro: string; version: string; arch: string; file_size_bytes: number | null };
+  existing_regions?: string[];
+  [key: string]: unknown;
+}
+
 interface ImageDiscoveryPanelProps {
   regions: string[];
 }
@@ -19,7 +25,8 @@ const formatBytes = (bytes: number | null) => {
 
 const ImageDiscoveryPanel = ({ regions }: ImageDiscoveryPanelProps) => {
   const [distroFilter, setDistroFilter] = useState<string>("");
-  const { data: discovered = [], isFetching } = useDiscoveredImages(distroFilter || undefined);
+  const { data: discoveredRaw = [], isFetching } = useDiscoveredImages(distroFilter || undefined);
+  const discovered = discoveredRaw as unknown as DiscoveredImage[];
   const importMutation = useImportUpstreamImage();
   const [importingKey, setImportingKey] = useState<string | null>(null);
 

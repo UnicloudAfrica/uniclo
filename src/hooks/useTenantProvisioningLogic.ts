@@ -27,8 +27,8 @@ export const useTenantProvisioningLogic = () => {
   // ─────────────────────────────────────────────────────────────────
   // Auth & Config
   // ─────────────────────────────────────────────────────────────────
-  const isAuthenticated = useTenantAuthStore((state: any) => state.isAuthenticated);
-  const profile = useTenantAuthStore((state: any) => state.profile);
+  const isAuthenticated = useTenantAuthStore((state: unknown) => state.isAuthenticated);
+  const profile = useTenantAuthStore((state: unknown) => state.profile);
   const {
     contextType,
     setContextType,
@@ -90,7 +90,7 @@ export const useTenantProvisioningLogic = () => {
   // ─────────────────────────────────────────────────────────────────
   const { data: countriesData = [], isLoading: isCountriesLoading } = useFetchCountries();
 
-  const countries = countriesData as Array<Record<string, any>>;
+  const countries = countriesData as Array<Record<string, unknown>>;
   const countryOptions: Option[] = useMemo(
     () =>
       countries.map((c) => ({
@@ -112,10 +112,10 @@ export const useTenantProvisioningLogic = () => {
 
     // 1. Resolve based on context selection (if acting as a Partner/Reseller)
     if (contextType === "tenant" && selectedTenantId) {
-      const selected = tenants.find((t: any) => String(t.id) === String(selectedTenantId));
+      const selected = tenants.find((t: unknown) => String(t.id) === String(selectedTenantId));
       candidate = resolveCountryCodeFromEntity(selected, countryOptions as never);
     } else if (contextType === "user" && selectedUserId) {
-      const selected = userPool.find((u: any) => String(u.id) === String(selectedUserId));
+      const selected = userPool.find((u: unknown) => String(u.id) === String(selectedUserId));
       candidate = resolveCountryCodeFromEntity(selected, countryOptions as never);
     }
 
@@ -148,7 +148,7 @@ export const useTenantProvisioningLogic = () => {
   ]);
 
   // Fetch pricing using public catalog (tenant-specific filter when available)
-  const [pricingData, setPricingData] = useState<any>(null);
+  const [pricingData, setPricingData] = useState<Record<string, unknown> | null>(null);
   const [isPricingLoading, setIsPricingLoading] = useState(false);
 
   useEffect(() => {
@@ -168,7 +168,7 @@ export const useTenantProvisioningLogic = () => {
         const response = (await silentApi(
           "GET",
           `/product-pricing?${params.toString()}`
-        )) as Record<string, any>;
+        )) as Record<string, unknown>;
         setPricingData(response?.data || response || []);
       } catch {
         setPricingData([]);
@@ -182,7 +182,7 @@ export const useTenantProvisioningLogic = () => {
   const { data: generalRegionsRaw = [], isFetching: isRegionsLoading } = useFetchGeneralRegions({
     enabled: isAuthenticated,
   });
-  const generalRegions = generalRegionsRaw as Array<Record<string, any>>;
+  const generalRegions = generalRegionsRaw as Array<Record<string, unknown>>;
 
   // ─────────────────────────────────────────────────────────────────
   // Fast-Track Region Eligibility
@@ -303,8 +303,8 @@ export const useTenantProvisioningLogic = () => {
   // Order Creation & Submission
   // ─────────────────────────────────────────────────────────────────
   const createOrderAction = useAsyncAction();
-  const [submissionResult, setSubmissionResult] = useState<any>(null);
-  const [orderReceipt, setOrderReceipt] = useState<any>(null);
+  const [submissionResult, setSubmissionResult] = useState<Record<string, unknown> | null>(null);
+  const [orderReceipt, setOrderReceipt] = useState<Record<string, unknown> | null>(null);
   const [isPaymentSuccessful, setIsPaymentSuccessful] = useState(false);
   const paymentStepIndex = useMemo(() => steps.findIndex((step) => step.id === "payment"), [steps]);
   const reviewStepIndex = useMemo(() => steps.findIndex((step) => step.id === "review"), [steps]);
@@ -353,7 +353,7 @@ export const useTenantProvisioningLogic = () => {
               ? cfg.security_group_ids
               : ((cfg.security_group_ids as string) || "").split(",")
           )
-            .map((v: unknown) => (v && (v as any).value ? (v as any).value : v))
+            .map((v: unknown) => (v && (v as unknown).value ? (v as unknown).value : v))
             .map((v: unknown) => (v || "").toString().trim())
             .filter(Boolean);
 
@@ -405,7 +405,7 @@ export const useTenantProvisioningLogic = () => {
           };
         });
 
-        const payload: Record<string, any> = {
+        const payload: Record<string, unknown> = {
           country_iso: billingCountry,
           fast_track: isFastTrack,
           pricing_requests,
@@ -419,8 +419,8 @@ export const useTenantProvisioningLogic = () => {
           }
         }
 
-        const response = await tenantApi("POST", "/admin/instances/create", payload);
-        const data = (response?.data || response) as Record<string, any>;
+        const response = await tenantApi<{ data?: unknown }>("POST", "/admin/instances/create", payload);
+        const data = (response?.data || response) as Record<string, unknown>;
 
         const normalizedGatewayOptions = normalizePaymentOptions(
           data?.payment?.payment_gateway_options || data?.payment?.options || data?.payment_options
@@ -441,7 +441,7 @@ export const useTenantProvisioningLogic = () => {
             }
           : null;
 
-        const mergedResult: Record<string, any> = {
+        const mergedResult: Record<string, unknown> = {
           ...(data || {}),
           transaction: mergedTransaction,
           payment: data?.payment
@@ -538,7 +538,7 @@ export const useTenantProvisioningLogic = () => {
       ? orderReceipt?.pricing_breakdown
       : [];
     const totals = breakdown.reduce(
-      (acc: any, item: any) => {
+      (acc: Record<string, unknown>, item: unknown) => {
         acc.subtotal += Number(item?.subtotal || 0);
         acc.tax += Number(item?.tax || 0);
         acc.total += Number(item?.total || 0);
@@ -583,13 +583,13 @@ export const useTenantProvisioningLogic = () => {
 
   const selectedTenantLabel = useMemo(() => {
     if (!selectedTenantId) return "";
-    const match = tenants.find((tenant: any) => String(tenant.id) === String(selectedTenantId));
+    const match = tenants.find((tenant: unknown) => String(tenant.id) === String(selectedTenantId));
     return match?.name || match?.company_name || match?.identifier || "";
   }, [tenants, selectedTenantId]);
 
   const selectedUserLabel = useMemo(() => {
     if (!selectedUserId) return "";
-    const match = userPool.find((user: any) => String(user.id) === String(selectedUserId));
+    const match = userPool.find((user: unknown) => String(user.id) === String(selectedUserId));
     if (!match) return "";
     return (
       match.full_name ||
@@ -601,7 +601,7 @@ export const useTenantProvisioningLogic = () => {
 
   const clientOptions = useMemo(
     () =>
-      userPool.map((user: any) => ({
+      userPool.map((user: unknown) => ({
         value: String(user.id),
         label:
           user.full_name ||

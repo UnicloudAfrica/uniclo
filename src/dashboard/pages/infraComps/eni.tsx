@@ -13,7 +13,7 @@ const useFetchNetworkInterfacesAdapter = (projectId: string, region: string) => 
   };
 };
 
-const ENIs = ({ projectId = "", region = "" }: any) => {
+const ENIs = ({ projectId = "", region = "" }: { projectId?: string; region?: string }) => {
   const syncMutation = useSyncTenantNetworkInterfaces();
 
   return (
@@ -22,7 +22,7 @@ const ENIs = ({ projectId = "", region = "" }: any) => {
       projectId={projectId}
       region={region}
       hooks={{
-        useList: useFetchNetworkInterfacesAdapter as any,
+        useList: useFetchNetworkInterfacesAdapter as unknown,
         onSync: projectId
           ? async () => {
               await syncMutation.mutateAsync({
@@ -32,7 +32,7 @@ const ENIs = ({ projectId = "", region = "" }: any) => {
             }
           : undefined,
       }}
-      wrapper={({ headerActions, children }: any) => (
+      wrapper={({ headerActions, children }: { headerActions: React.ReactNode; children: React.ReactNode }) => (
         <ResourceSection
           title="Network Interfaces"
           description="View and manage virtual NICs attached to instances."

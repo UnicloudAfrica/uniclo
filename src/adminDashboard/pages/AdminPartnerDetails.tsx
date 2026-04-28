@@ -100,7 +100,7 @@ export default function AdminPartnerDetails() {
     isFetching: isPartnerFetching,
     isError: isPartnerError,
     error: partnerError,
-  } = useFetchTenantById(tenantId as any);
+  } = useFetchTenantById(tenantId as unknown);
   const partnerDetails =
     partnerDetailsData && typeof partnerDetailsData === "object"
       ? (partnerDetailsData as PartnerDetails)
@@ -280,7 +280,7 @@ export default function AdminPartnerDetails() {
         contentClassName="space-y-8"
       >
         <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {summaryCards.map(({ label, value, hint, icon: Icon, accentBg, accentText }: any) => (
+          {summaryCards.map(({ label, value, hint, icon: Icon, accentBg, accentText }: { label: React.ReactNode; value: React.ReactNode; hint?: React.ReactNode; icon: React.ComponentType<{ size?: number }>; accentBg?: string; accentText?: string }) => (
             <div
               key={label}
               className="rounded-3xl border border-[var(--theme-surface-alt)] bg-white p-5 shadow-sm transition hover:border-primary/50 hover:shadow-md"
@@ -305,7 +305,7 @@ export default function AdminPartnerDetails() {
 
         <section>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {tabs.map(({ value, label, description, icon: Icon }: any) => {
+            {tabs.map(({ value, label, description, icon: Icon }: { value: string; label: string; description?: string; icon: React.ComponentType<{ size?: number }> }) => {
               const isActive = activeButton === value;
               return (
                 <button

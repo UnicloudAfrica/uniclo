@@ -25,7 +25,7 @@ const SharedPricingCalculator: React.FC<SharedPricingCalculatorProps> = ({
   const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState(1);
   const [isCalculating, setIsCalculating] = useState(false);
-  const [pricingResult, setPricingResult] = useState<Record<string, any> | null>(null);
+  const [pricingResult, setPricingResult] = useState<Record<string, unknown> | null>(null);
   const [errors, setErrors] = useState<Record<string, string | null>>({});
 
   // Initial State
@@ -86,7 +86,7 @@ const SharedPricingCalculator: React.FC<SharedPricingCalculatorProps> = ({
     }
   }, [mode]);
 
-  const updateCalculatorData = (field: keyof CalculatorData, value: any) => {
+  const updateCalculatorData = (field: keyof CalculatorData, value: unknown) => {
     setCalculatorData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: null }));
@@ -140,7 +140,7 @@ const SharedPricingCalculator: React.FC<SharedPricingCalculatorProps> = ({
 
     setIsCalculating(true);
     try {
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         pricing_requests: calculatorData.pricing_requests.map((req) => ({
           region: req.region,
           compute_instance_id: req.compute_instance_id,
@@ -220,8 +220,8 @@ const SharedPricingCalculator: React.FC<SharedPricingCalculatorProps> = ({
           onRemoveStorageItem={onRemoveStorageItem}
           onCountryChange={handleCountryChange}
           mode={mode}
-          clientProfile={clientProfile}
-          tenantSettings={tenantSettings}
+          clientProfile={clientProfile as Record<string, unknown> | undefined}
+          tenantSettings={tenantSettings as Record<string, unknown> | undefined}
         >
           {/* Assignment Context Card - Only show for Admin and Tenant */}
           {mode !== "client" && (
@@ -237,7 +237,7 @@ const SharedPricingCalculator: React.FC<SharedPricingCalculatorProps> = ({
                 isTenantsFetching,
                 userPool,
                 isUsersFetching: isClientsFetching,
-              } as any)}
+              } as unknown)}
             />
           )}
         </PricingCalculatorConfig>

@@ -40,7 +40,7 @@ const fetchAvailableImages = async (region: string): Promise<AvailableImage[]> =
   return res?.data ?? [];
 };
 
-export const useAvailableImages = (region: string, options: any = {}) => {
+export const useAvailableImages = (region: string, options: Record<string, unknown> = src/hooks/imageRequestHooks.ts) => {
   return useQuery<AvailableImage[]>({
     queryKey: ["availableImages", region],
     queryFn: () => fetchAvailableImages(region),
@@ -55,8 +55,8 @@ export const useAvailableImages = (region: string, options: any = {}) => {
 
 export const useSubmitImageRequest = () => {
   const queryClient = useQueryClient();
-  return useMutation<any, Error, SubmitRequestPayload>({
-    mutationFn: (payload) => api.post("/image-requests", payload),
+  return useMutation<unknown, Error, SubmitRequestPayload>({
+    mutationFn: (payload) => api.post("/image-requests", payload as unknown as Record<string, unknown>),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["availableImages"] });
       queryClient.invalidateQueries({ queryKey: ["myImageRequests"] });
@@ -74,7 +74,7 @@ const fetchMyImageRequests = async (): Promise<ImageRequestRecord[]> => {
   return res?.data ?? [];
 };
 
-export const useMyImageRequests = (options: any = {}) => {
+export const useMyImageRequests = (options: Record<string, unknown> = src/hooks/imageRequestHooks.ts) => {
   return useQuery<ImageRequestRecord[]>({
     queryKey: ["myImageRequests"],
     queryFn: fetchMyImageRequests,

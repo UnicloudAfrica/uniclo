@@ -19,7 +19,6 @@ import {
   Info,
   ToggleLeft,
   ToggleRight,
-  X,
   Check,
 } from "lucide-react";
 import ModernCard from "@/shared/components/ui/ModernCard";

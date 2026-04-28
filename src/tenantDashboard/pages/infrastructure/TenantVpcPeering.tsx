@@ -24,7 +24,7 @@ const TenantVpcPeering: React.FC = () => {
 
   const { data: projectData } = useFetchProjectById(projectId);
   const projectObj =
-    projectData && typeof projectData === "object" ? (projectData as Record<string, any>) : null;
+    projectData && typeof projectData === "object" ? (projectData as Record<string, unknown>) : null;
   const provider = projectObj?.provider || searchParams.get("provider");
 
   const [showCreateForm, setShowCreateForm] = useState(false);

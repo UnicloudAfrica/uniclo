@@ -9,8 +9,8 @@ import useTenantAuthStore from "../stores/tenantAuthStore";
 import { BrandingTheme, BrandingCompany, BrandingPalette } from "../types/branding";
 
 // Default colors pulled from the platform marketing palette.
-const DEFAULT_ACCENT = "#288DD1"; // UniCloud blue (global default)
-const DEFAULT_PRIMARY = "#3FE0C8"; // UniCloud teal (secondary default)
+const DEFAULT_ACCENT = "#0A5E3E"; // UniCloud Africa primary (deep emerald)
+const DEFAULT_PRIMARY = "#34D399"; // UniCloud Africa accent (light emerald)
 const LEGACY_PLATFORM_ACCENT = "#1c1c1c";
 const LEGACY_PLATFORM_PRIMARY = "#14547f";
 
@@ -177,7 +177,7 @@ export const mapBrandingPayload = (payload: BrandingPayload = {}): BrandingTheme
     hasCustomBranding,
     isLegacyPlatformTheme,
     isFallback: !hasCustomBranding,
-    raw: payload as any,
+    raw: payload as unknown,
   };
 };
 
@@ -670,13 +670,13 @@ export const lockMarketingTheme = (theme: BrandingTheme | null = null): Branding
   const base = theme ?? mapBrandingPayload();
   return {
     ...base,
-    accentColor: "#3FE0C8",
-    primaryColor: "#288DD1",
+    accentColor: "#34D399", // UniCloud Africa accent (light emerald)
+    primaryColor: "#0A5E3E", // UniCloud Africa primary (deep emerald)
     palette: {
       ...base.palette,
       text: "#6B7280",
       muted: "#6B7280",
-      border: "rgba(63, 224, 200, 0.2)",
+      border: "rgba(10, 94, 62, 0.16)",
     },
   };
 };
@@ -756,8 +756,8 @@ export const applyBrandingToCss = (
   const resolvePaletteColor = (value: string | undefined, fallback: string) =>
     isNonEmptyString(value) ? value : fallback;
   const isDistinct = colorDistance(accentRgb, primaryRgb) >= 40;
-  const onAccent = resolveOnColor(accentRgb);
-  const onSecondary = resolveOnColor(primaryRgb);
+  const _onAccent = resolveOnColor(accentRgb);
+  const _onSecondary = resolveOnColor(primaryRgb);
 
   const root = document.documentElement;
 

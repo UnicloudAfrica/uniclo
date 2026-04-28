@@ -114,11 +114,12 @@ export const useCustomerSelection = (
     enabled: isAdminContext && !!selectedUserId,
   });
   // Tenant/user objects from auth store for country resolution
-  const selfTenant = useTenantAuthStore((state: { tenant?: unknown; profile?: unknown }) => {
-    return state?.tenant || state?.profile;
+  const selfTenant = useTenantAuthStore((state) => {
+    const s = state as unknown as { tenant?: unknown; profile?: unknown };
+    return s?.tenant || s?.profile;
   });
-  const authProfile = useTenantAuthStore((state: { profile?: unknown }) => state?.profile);
-  const authUser = useTenantAuthStore((state: { user?: unknown }) => state?.user);
+  const authProfile = useTenantAuthStore((state) => (state as unknown as { profile?: unknown })?.profile);
+  const authUser = useTenantAuthStore((state) => (state as unknown as { user?: unknown })?.user);
 
   // Tenant/Client Options
   const tenantOptions = useMemo(() => {

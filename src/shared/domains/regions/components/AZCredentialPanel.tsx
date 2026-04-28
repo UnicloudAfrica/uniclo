@@ -4,7 +4,7 @@
  * Used in the Region Edit page — fetches service schemas, loads current status,
  * and allows storing/verifying/deleting credentials per service.
  */
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Loader2, AlertCircle, KeyRound, Wifi, WifiOff, Trash2 } from "lucide-react";
 import { ModernButton } from "@/shared/components/ui";
 import ServiceConfigCard from "./ServiceConfigCard";
@@ -60,16 +60,35 @@ const AZCredentialPanel: React.FC<AZCredentialPanelProps> = ({ regionCode, az })
         if (!providerSchema) {
           const res = await adminRegionApi.getProviderServices(az.provider);
           if (res.success && res.data) {
-            const raw = res.data as any;
-            const servicesMap = raw?.services || raw || {};
+            type RawField = {
+              name?: string;
+              label?: string;
+              type?: string;
+              required?: boolean;
+              placeholder?: string;
+              description?: string;
+              help?: string;
+            };
+            type RawSvcConfig = {
+              label?: string;
+              description?: string;
+              fields?: RawField[] | Record<string, RawField>;
+            };
+
+            const raw = res.data as unknown as Record<string, unknown>;
+            const servicesMap = ((raw?.services as Record<string, RawSvcConfig>) ||
+              (raw as unknown as Record<string, RawSvcConfig>) ||
+              {}) as Record<string, RawSvcConfig>;
             const services: Record<string, ServiceDefinition> = {};
-            for (const [serviceType, svcConfig] of Object.entries(servicesMap as Record<string, any>)) {
-              const fields: Record<string, any> = {};
+            for (const [serviceType, svcConfig] of Object.entries(servicesMap)) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const fields: Record<string, unknown> = {};
               const rawFields = svcConfig?.fields || {};
               if (Array.isArray(rawFields)) {
-                rawFields.forEach((f: any) => {
+                rawFields.forEach((f: RawField) => {
+                  if (!f.name) return;
                   fields[f.name] = {
-                    label: f.label,
+                    label: f.label ?? f.name,
                     type: f.type,
                     required: f.required,
                     ...(f.placeholder ? { placeholder: f.placeholder } : {}),
@@ -77,7 +96,9 @@ const AZCredentialPanel: React.FC<AZCredentialPanelProps> = ({ regionCode, az })
                   };
                 });
               } else {
-                for (const [fieldName, fieldDef] of Object.entries(rawFields as Record<string, any>)) {
+                for (const [fieldName, fieldDef] of Object.entries(
+                  rawFields as Record<string, RawField>
+                )) {
                   fields[fieldName] = {
                     label: fieldDef.label || fieldName,
                     type: fieldDef.type,
@@ -117,7 +138,13 @@ const AZCredentialPanel: React.FC<AZCredentialPanelProps> = ({ regionCode, az })
             }
 
             // Apply status from backend
-            for (const status of statusList) {
+            for (const rawStatus of statusList) {
+              const status = rawStatus as unknown as {
+                service_type?: string;
+                serviceType?: string;
+                status?: string;
+                credentials?: Record<string, string>;
+              };
               const sType = status.service_type || status.serviceType;
               if (sType) {
                 const persistedCredentials =
@@ -215,8 +242,9 @@ const AZCredentialPanel: React.FC<AZCredentialPanelProps> = ({ regionCode, az })
         setConnectedServices((prev) => new Set(prev).add(serviceType));
         ToastUtils.success(result.message || "Connection verified successfully");
       }
-    } catch (error: any) {
-      ToastUtils.error(error.message || "Verification failed");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      ToastUtils.error(message || "Verification failed");
     } finally {
       setTestingService((prev) => ({ ...prev, [serviceType]: false }));
     }
@@ -240,8 +268,9 @@ const AZCredentialPanel: React.FC<AZCredentialPanelProps> = ({ regionCode, az })
       );
       // Mark as connected after successful save
       setConnectedServices((prev) => new Set(prev).add(serviceType));
-    } catch (error: any) {
-      ToastUtils.error(error.message || "Failed to save credentials");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      ToastUtils.error(message || "Failed to save credentials");
     } finally {
       setSavingService((prev) => ({ ...prev, [serviceType]: false }));
     }
@@ -260,8 +289,9 @@ const AZCredentialPanel: React.FC<AZCredentialPanelProps> = ({ regionCode, az })
         ...prev,
         [serviceType]: { ...prev[serviceType], credentials: {}, mode: "manual" },
       }));
-    } catch (error: any) {
-      ToastUtils.error(error.message || "Failed to delete credentials");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      ToastUtils.error(message || "Failed to delete credentials");
     } finally {
       setDeletingService((prev) => ({ ...prev, [serviceType]: false }));
     }

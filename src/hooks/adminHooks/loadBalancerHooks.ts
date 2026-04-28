@@ -34,7 +34,7 @@ export const useLoadBalancer = (projectId: string, lbId: string) => {
 export const useCreateLoadBalancer = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ projectId, payload }: { projectId: string; payload: any }) => {
+    mutationFn: async ({ projectId, payload }: { projectId: string; payload: Record<string, unknown> }) => {
       const result = await adminApi.post<{ data: LoadBalancer }>(
         `/projects/${projectId}/load-balancers`,
         payload
@@ -45,8 +45,8 @@ export const useCreateLoadBalancer = () => {
       ToastUtils.success("Load Balancer created successfully");
       queryClient.invalidateQueries({ queryKey: ["load-balancers", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error?.message || "Failed to create Load Balancer");
+    onError: (error: unknown) => {
+      ToastUtils.error((error instanceof Error ? error.message : undefined) || "Failed to create Load Balancer");
     },
   });
 };
@@ -61,8 +61,8 @@ export const useDeleteLoadBalancer = () => {
       ToastUtils.success("Load Balancer deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["load-balancers", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error?.message || "Failed to delete Load Balancer");
+    onError: (error: unknown) => {
+      ToastUtils.error((error instanceof Error ? error.message : undefined) || "Failed to delete Load Balancer");
     },
   });
 };
@@ -76,7 +76,7 @@ export const useListeners = (projectId: string, lbId?: string) => {
       const url = lbId
         ? `/projects/${projectId}/listeners?load_balancer_id=${lbId}`
         : `/projects/${projectId}/listeners`;
-      const result: any = await adminApi.get(url);
+      const result: Record<string, unknown> = await adminApi.get(url);
       return result.data || [];
     },
     enabled: !!projectId,
@@ -86,19 +86,19 @@ export const useListeners = (projectId: string, lbId?: string) => {
 export const useCreateListener = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ projectId, payload }: { projectId: string; payload: any }) => {
+    mutationFn: async ({ projectId, payload }: { projectId: string; payload: Record<string, unknown> }) => {
       const result = await adminApi.post<{ data: unknown }>(
         `/projects/${projectId}/listeners`,
         payload
       );
       return result;
     },
-    onSuccess: (_: any, { projectId }: any) => {
+    onSuccess: (_: unknown, { projectId }: { projectId: string | number; [key: string]: unknown }) => {
       ToastUtils.success("Listener created successfully");
       queryClient.invalidateQueries({ queryKey: ["listeners", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error?.message || "Failed to create Listener");
+    onError: (error: unknown) => {
+      ToastUtils.error((error instanceof Error ? error.message : undefined) || "Failed to create Listener");
     },
   });
 };
@@ -109,12 +109,12 @@ export const useDeleteListener = () => {
     mutationFn: async ({ projectId, listenerId }: { projectId: string; listenerId: string }) => {
       await adminApi.delete(`/projects/${projectId}/listeners/${listenerId}`);
     },
-    onSuccess: (_: any, { projectId }: any) => {
+    onSuccess: (_: unknown, { projectId }: { projectId: string | number; [key: string]: unknown }) => {
       ToastUtils.success("Listener deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["listeners", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error?.message || "Failed to delete Listener");
+    onError: (error: unknown) => {
+      ToastUtils.error((error instanceof Error ? error.message : undefined) || "Failed to delete Listener");
     },
   });
 };
@@ -125,7 +125,7 @@ export const useTargetGroups = (projectId: string) => {
   return useQuery({
     queryKey: ["target-groups", projectId],
     queryFn: async () => {
-      const result: any = await adminApi.get(`/projects/${projectId}/target-groups`);
+      const result: Record<string, unknown> = await adminApi.get(`/projects/${projectId}/target-groups`);
       return result.data || [];
     },
     enabled: !!projectId,
@@ -135,16 +135,16 @@ export const useTargetGroups = (projectId: string) => {
 export const useCreateTargetGroup = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ projectId, payload }: { projectId: string; payload: any }) => {
-      const result: any = await adminApi.post(`/projects/${projectId}/target-groups`, payload);
+    mutationFn: async ({ projectId, payload }: { projectId: string; payload: Record<string, unknown> }) => {
+      const result: Record<string, unknown> = await adminApi.post(`/projects/${projectId}/target-groups`, payload);
       return result;
     },
-    onSuccess: (_: any, { projectId }: any) => {
+    onSuccess: (_: unknown, { projectId }: { projectId: string | number; [key: string]: unknown }) => {
       ToastUtils.success("Target Group created successfully");
       queryClient.invalidateQueries({ queryKey: ["target-groups", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error?.message || "Failed to create Target Group");
+    onError: (error: unknown) => {
+      ToastUtils.error((error instanceof Error ? error.message : undefined) || "Failed to create Target Group");
     },
   });
 };
@@ -155,12 +155,12 @@ export const useDeleteTargetGroup = () => {
     mutationFn: async ({ projectId, tgId }: { projectId: string; tgId: string }) => {
       await adminApi.delete(`/projects/${projectId}/target-groups/${tgId}`);
     },
-    onSuccess: (_: any, { projectId }: any) => {
+    onSuccess: (_: unknown, { projectId }: { projectId: string | number; [key: string]: unknown }) => {
       ToastUtils.success("Target Group deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["target-groups", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error?.message || "Failed to delete Target Group");
+    onError: (error: unknown) => {
+      ToastUtils.error((error instanceof Error ? error.message : undefined) || "Failed to delete Target Group");
     },
   });
 };
@@ -177,18 +177,18 @@ export const useRegisterTargets = () => {
       tgId: string;
       targets: unknown;
     }) => {
-      const result: any = await adminApi.post(
+      const result: Record<string, unknown> = await adminApi.post(
         `/projects/${projectId}/target-groups/${tgId}/register`,
-        { targets } as any
+        { targets } as Record<string, unknown>
       );
       return result;
     },
-    onSuccess: (_: any, { projectId }: any) => {
+    onSuccess: (_: unknown, { projectId }: { projectId: string | number; [key: string]: unknown }) => {
       ToastUtils.success("Targets registered successfully");
       queryClient.invalidateQueries({ queryKey: ["target-groups", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error?.message || "Failed to register targets");
+    onError: (error: unknown) => {
+      ToastUtils.error((error instanceof Error ? error.message : undefined) || "Failed to register targets");
     },
   });
 };

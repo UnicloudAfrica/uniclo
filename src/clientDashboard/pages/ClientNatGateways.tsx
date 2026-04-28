@@ -21,8 +21,8 @@ const ClientNatGateways: React.FC = () => {
 
   const { data: projectData } = useFetchProjectById(projectId);
   const project =
-    projectData && typeof projectData === "object" ? (projectData as Record<string, any>) : null;
-  const provider = project?.provider || searchParams.get("provider");
+    projectData && typeof projectData === "object" ? (projectData as Record<string, unknown>) : null;
+  const provider = (project?.provider as string | undefined) || searchParams.get("provider");
 
   if (provider && !isFeatureSupported(provider, "nat_gateways")) {
     return (
@@ -33,9 +33,9 @@ const ClientNatGateways: React.FC = () => {
   }
 
   const hooks: NatGatewayHooks = {
-    useList: useNatGateways as NatGatewayHooks["useList"],
-    useCreate: useCreateNatGateway as NatGatewayHooks["useCreate"],
-    useDelete: useDeleteNatGateway as NatGatewayHooks["useDelete"],
+    useList: useNatGateways as unknown as NatGatewayHooks["useList"],
+    useCreate: useCreateNatGateway as unknown as NatGatewayHooks["useCreate"],
+    useDelete: useDeleteNatGateway as unknown as NatGatewayHooks["useDelete"],
   };
 
   return (

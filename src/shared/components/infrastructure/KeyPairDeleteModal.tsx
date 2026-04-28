@@ -37,7 +37,7 @@ const KeyPairDeleteModal: React.FC<KeyPairDeleteModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title="Delete Key Pair"
-      actions={actions as any}
+      actions={actions as unknown}
       loading={isDeleting}
       contentClassName="space-y-4"
     >

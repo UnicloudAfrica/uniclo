@@ -3,7 +3,7 @@
  *
  * Used across admin, tenant, and client dashboards via page wrappers.
  */
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, RefreshCw, Trash2, Wifi, Search } from "lucide-react";
 import ModernTable from "@/shared/components/ui/ModernTable/ModernTable";
@@ -32,7 +32,7 @@ const EndpointsList: React.FC<EndpointsListProps> = ({
   context: _context,
   onRegisterNew,
 }) => {
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const { data: endpoints, isLoading, refetch } = useFetchExternalEndpoints();
   const deleteMutation = useDeleteExternalEndpoint();
   const testConnection = useTestEndpointConnection();

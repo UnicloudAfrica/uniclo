@@ -21,7 +21,7 @@ const AddLeadDocument = ({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  lead: Record<string, any>;
+  lead: Record<string, unknown>;
 }) => {
   const [formData, setFormData] = useState({
     document_type: "",
@@ -29,7 +29,7 @@ const AddLeadDocument = ({
     file: null,
     stage_id: "",
   });
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, unknown>>({});
 
   const { mutate, isPending } = useAddLeadDocument();
 
@@ -46,7 +46,7 @@ const AddLeadDocument = ({
   }, [isOpen]);
 
   const validateForm = () => {
-    const newErrors: Record<string, any> = {};
+    const newErrors: Record<string, unknown> = {};
     if (!formData.document_type) {
       newErrors.document_type = "Please select a document type.";
     }
@@ -65,7 +65,7 @@ const AddLeadDocument = ({
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleFileChange = (value: any) => {
+  const handleFileChange = (value: unknown) => {
     if (value) {
       updateFormData("file", value);
     } else {
@@ -183,7 +183,7 @@ const AddLeadDocument = ({
                 className="w-full rounded-[10px] border border-gray-300 px-3 py-2 text-sm input-field"
               >
                 <option value="">No linked stage</option>
-                {lead?.stages?.map((stage: Record<string, any>) => (
+                {lead?.stages?.map((stage: Record<string, unknown>) => (
                   <option key={stage.id} value={stage.id}>
                     {formatDocumentNameForDisplay(stage.stage_name)} •{" "}
                     {formatDocumentNameForDisplay(stage.status)}
@@ -201,7 +201,7 @@ const AddLeadDocument = ({
               </label>
               <FileInput
                 id="documentFile"
-                icon={Upload as any}
+                icon={Upload as unknown}
                 accept=".pdf,.png,.jpg,.jpeg,.svg,.webp"
                 label={
                   formData.file ? `Selected: ${(formData.file as File).name}` : "Click to upload"

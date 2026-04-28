@@ -15,15 +15,20 @@ interface VerifyPartnerRegionRequest {
 }
 
 const fetchOnboardingState = async (): Promise<OnboardingResponse> => {
-  const response = await api("GET", "/business/onboarding/state");
+  const response = await api<{ data?: OnboardingResponse } | OnboardingResponse>(
+    "GET",
+    "/business/onboarding/state"
+  );
 
-  return (response?.data as OnboardingResponse) ?? (response as OnboardingResponse);
+  const envelope = response as { data?: OnboardingResponse } | null;
+  return envelope?.data ?? (response as OnboardingResponse);
 };
 
 const fetchOnboardingStep = async (step: string): Promise<OnboardingResponse> => {
   const response = await api("GET", `/business/onboarding/${step}`);
 
-  return (response?.data as OnboardingResponse) ?? (response as OnboardingResponse);
+  const envelope = response as { data?: OnboardingResponse } | null;
+  return envelope?.data ?? (response as OnboardingResponse);
 };
 
 const postOnboardingThread = async ({
@@ -32,7 +37,8 @@ const postOnboardingThread = async ({
 }: OnboardingStepRequest): Promise<OnboardingResponse> => {
   const response = await api("POST", `/business/onboarding/${step}/threads`, payload);
 
-  return (response?.data as OnboardingResponse) ?? (response as OnboardingResponse);
+  const envelope = response as { data?: OnboardingResponse } | null;
+  return envelope?.data ?? (response as OnboardingResponse);
 };
 
 const updateOnboardingStep = async ({
@@ -41,7 +47,8 @@ const updateOnboardingStep = async ({
 }: OnboardingStepRequest): Promise<OnboardingResponse> => {
   const response = await api("PATCH", `/business/onboarding/${step}`, payload);
 
-  return (response?.data as OnboardingResponse) ?? (response as OnboardingResponse);
+  const envelope = response as { data?: OnboardingResponse } | null;
+  return envelope?.data ?? (response as OnboardingResponse);
 };
 
 const verifyPartnerRegionQualification = async ({
@@ -51,7 +58,8 @@ const verifyPartnerRegionQualification = async ({
     payload,
   });
 
-  return (response?.data as OnboardingResponse) ?? (response as OnboardingResponse);
+  const envelope = response as { data?: OnboardingResponse } | null;
+  return envelope?.data ?? (response as OnboardingResponse);
 };
 
 export const useOnboardingState = (

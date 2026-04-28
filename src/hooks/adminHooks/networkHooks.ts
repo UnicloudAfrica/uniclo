@@ -37,7 +37,10 @@ const fetchNetworks = async ({
   if (refresh) params.append("refresh", "1");
 
   const queryString = params.toString();
-  const res = await adminSilentApi("GET", `/networks${queryString ? `?${queryString}` : ""}`);
+  const res = await adminSilentApi<{ data?: Record<string, unknown> }>(
+    "GET",
+    `/networks${queryString ? `?${queryString}` : ""}`
+  );
   if (!res.data) throw new Error("Failed to fetch networks");
   return res.data;
 };

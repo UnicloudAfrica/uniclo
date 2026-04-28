@@ -6,7 +6,7 @@ import { ArrowLeft, Loader2, Plus, Trash2 } from "lucide-react";
 import AdminActiveTab from "../components/adminActiveTab";
 import AdminPageShell from "../components/AdminPageShell";
 import { ModernCard, ModernButton } from "@/shared/components/ui";
-import ModernTable from "@/shared/components/ui/ModernTable";
+import ModernTable, { type TableRowBase } from "@/shared/components/ui/ModernTable";
 
 import {
   useFetchRegions,
@@ -109,7 +109,7 @@ const AdminPricingCreate = () => {
           "GET",
           `/regions/${code}/availability-zones`
         );
-        const azList = (res as any)?.data ?? [];
+        const azList = (res as { data?: unknown })?.data ?? [];
         if (!Array.isArray(azList)) throw new Error("Failed to fetch availability zones");
         return { code, data: azList as AZOption[] };
       },
@@ -590,8 +590,8 @@ const AdminPricingCreate = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <ModernCard>
             <ModernTable
-              data={entries}
-              columns={columns as any}
+              data={entries as unknown as TableRowBase[]}
+              columns={columns as unknown}
               className="hidden md:block"
               searchable={false}
               paginated={false}

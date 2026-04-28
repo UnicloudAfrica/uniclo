@@ -3,7 +3,7 @@ import React from "react";
 
 interface PricingBreakdownProps {
   pricingData: {
-    breakdown: any;
+    breakdown: unknown;
     monthly_total_usd: number;
     yearly_total_usd: number;
     currency: string;
@@ -55,7 +55,7 @@ const PricingBreakdown: React.FC<PricingBreakdownProps> = ({ pricingData, showYe
 
         {breakdown.volumes &&
           breakdown.volumes.length > 0 &&
-          breakdown.volumes.map((vol: any, idx: number) => (
+          breakdown.volumes.map((vol: unknown, idx: number) => (
             <div key={idx} className="flex justify-between items-center">
               <span className="text-sm text-slate-600">{vol.name}</span>
               <span className="text-sm font-medium">

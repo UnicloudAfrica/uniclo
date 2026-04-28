@@ -1,11 +1,10 @@
 import {
   Home, Rocket, LayoutDashboard, Users, UserPlus,
   Server, LayoutTemplate, KeyRound, HardDrive, Database,
-  Network, Route, Lock, Scale, Globe,
-  ShieldCheck, CloudOff, ArrowLeftRight,
+  Network, Lock, Scale, Globe,
+  ShieldCheck, ArrowLeftRight,
   Bot, MapPin, ClipboardList,
-  TrendingUp, DollarSign, Calculator, FileText, CreditCard,
-  Percent, Settings, Package,
+  TrendingUp, DollarSign, CreditCard, Package,
   Code2, LifeBuoy, User,
 } from "lucide-react";
 import type { DocSection } from "./adminDocs";
@@ -56,6 +55,7 @@ export const tenantDocSections: DocSection[] = [
     heading: "Platform Services",
     links: [
       { label: "Infrastructure Agent", slug: "agent", icon: Bot },
+      { label: "Shield Protection", slug: "shield", icon: ShieldCheck },
     ],
   },
   {

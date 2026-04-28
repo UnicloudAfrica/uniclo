@@ -22,8 +22,8 @@ const AdminKeyPairCreate: React.FC = () => {
 
   const projects = useMemo(
     () =>
-      Array.isArray((projectsData as Record<string, any>)?.data)
-        ? (projectsData as Record<string, any>).data
+      Array.isArray((projectsData as Record<string, unknown>)?.data)
+        ? (projectsData as Record<string, unknown>).data
         : [],
     [projectsData]
   );
@@ -64,7 +64,7 @@ const AdminKeyPairCreate: React.FC = () => {
         public_key: publicKey || undefined, // Send undefined if empty to trigger generation
       };
 
-      const result = (await createKeyPair(payload)) as Record<string, any>;
+      const result = (await createKeyPair(payload)) as Record<string, unknown>;
 
       // If a private key is returned (generation mode), trigger download
       if (result?.material) {

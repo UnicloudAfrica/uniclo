@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, Users, Building2, Phone } from "lucide-react";
+import { Plus, Users, Building2, Phone } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ModernButton } from "@/shared/components/ui";
+import { ModernButton, DashboardSkeleton } from "@/shared/components/ui";
 import ModernStatsCard from "@/shared/components/ui/ModernStatsCard";
 import { TableActionButtons } from "@/shared/components/tables";
 import ModernTable, { type Column } from "@/shared/components/ui/ModernTable";
@@ -263,7 +263,7 @@ const AdminPartners = () => {
       header: "Name",
       render: ((value: string | null | undefined) => (
         <div className="font-medium text-gray-900">{value || "—"}</div>
-      )) as unknown as string,
+      )) as Column<PartnerTenant>["render"],
       sortable: true,
     },
     {
@@ -271,7 +271,7 @@ const AdminPartners = () => {
       header: "Type",
       render: ((value: string | null | undefined) => (
         <div className="text-gray-500">{formatCompanyType(value)}</div>
-      )) as unknown as string,
+      )) as Column<PartnerTenant>["render"],
       sortable: true,
     },
     {
@@ -279,7 +279,7 @@ const AdminPartners = () => {
       header: "Industry",
       render: ((value: string | null | undefined) => (
         <div className="text-gray-500">{value || "—"}</div>
-      )) as unknown as string,
+      )) as Column<PartnerTenant>["render"],
       sortable: true,
     },
     {
@@ -287,7 +287,7 @@ const AdminPartners = () => {
       header: "Email",
       render: ((value: string | null | undefined) => (
         <div className="text-gray-500">{value || "—"}</div>
-      )) as unknown as string,
+      )) as Column<PartnerTenant>["render"],
       sortable: true,
     },
     {
@@ -295,7 +295,7 @@ const AdminPartners = () => {
       header: "Phone",
       render: ((value: string | null | undefined) => (
         <div className="text-gray-500">{value || "—"}</div>
-      )) as unknown as string,
+      )) as Column<PartnerTenant>["render"],
       sortable: true,
     },
     {
@@ -309,7 +309,7 @@ const AdminPartners = () => {
         >
           {value || "active"}
         </span>
-      )) as unknown as string,
+      )) as Column<PartnerTenant>["render"],
       sortable: true,
     },
     {
@@ -317,7 +317,7 @@ const AdminPartners = () => {
       header: "Created",
       render: ((value: string | null | undefined) => (
         <div className="text-gray-500">{value ? new Date(value).toLocaleDateString() : "—"}</div>
-      )) as unknown as string,
+      )) as Column<PartnerTenant>["render"],
       sortable: true,
     },
     {
@@ -344,11 +344,7 @@ const AdminPartners = () => {
   ];
 
   if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (

@@ -2,7 +2,7 @@ import React from "react";
 import { Info, Layers, Network } from "lucide-react";
 
 interface ResourceHeaderProps {
-  project: any;
+  project: unknown;
   resourceStats: {
     vCPUs: number;
     ram: string;

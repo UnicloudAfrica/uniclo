@@ -46,7 +46,7 @@ const DetailItem = ({
   </div>
 );
 
-type LeadDocument = Record<string, any>;
+type LeadDocument = Record<string, unknown>;
 
 const DocumentItem = ({
   doc,
@@ -122,7 +122,7 @@ const StatusBadge = ({ status }: { status: string }) => {
 
 const DashboardLeadDetails = () => {
   const navigate = useNavigate();
-  const dropdownRef = useRef<any>(null);
+  const dropdownRef = useRef<unknown>(null);
 
   const [uiState, setUiState] = useState({
     isActionsDropdownOpen: false,
@@ -137,7 +137,7 @@ const DashboardLeadDetails = () => {
   const [dataState, setDataState] = useState<{
     leadId: string | null;
     leadNameFromUrl: string;
-    editingStage: Record<string, any> | null;
+    editingStage: Record<string, unknown> | null;
     editingDocument: LeadDocument | null;
     viewingDocument: LeadDocument | null;
   }>({
@@ -181,7 +181,7 @@ const DashboardLeadDetails = () => {
   }, []);
 
   const { data: leadDetailsRaw, isFetching, isError } = useFetchLeadById(dataState.leadId);
-  const leadDetails = leadDetailsRaw as Record<string, any> | undefined;
+  const leadDetails = leadDetailsRaw as Record<string, unknown> | undefined;
   const { mutate: convertLead, isPending: isConverting } = useConvertLeadToUser();
 
   const updateUiState = (updates: Partial<typeof uiState>) =>
@@ -205,7 +205,7 @@ const DashboardLeadDetails = () => {
     updateUiState({ isActionsDropdownOpen: false });
   };
 
-  const handleEditStage = (stage: Record<string, any>) => {
+  const handleEditStage = (stage: Record<string, unknown>) => {
     updateDataState({ editingStage: stage });
     updateUiState({ isEditStageModalOpen: true });
   };
@@ -498,7 +498,7 @@ const DashboardLeadDetails = () => {
       <ModernCard title="Stages" className="mb-2">
         {stages && stages.length > 0 ? (
           <div className="space-y-4">
-            {stages.map((stage: any) => (
+            {stages.map((stage: unknown) => (
               <div key={stage.id} className="border-l-4 border-blue-500 pl-4 py-2 space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-gray-800 capitalize">
@@ -535,7 +535,7 @@ const DashboardLeadDetails = () => {
                   </h4>
                   {stage.documents && stage.documents.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {stage.documents.map((doc: any) => (
+                      {stage.documents.map((doc: unknown) => (
                         <DocumentItem
                           key={doc.id}
                           doc={doc}
@@ -559,7 +559,7 @@ const DashboardLeadDetails = () => {
       <ModernCard title="Notes">
         {notes && notes.length > 0 ? (
           <div className="space-y-3">
-            {notes.split("\n\n").map((note: any, index: any) => (
+            {notes.split("\n\n").map((note: string, index: number) => (
               <div key={index} className="flex items-start">
                 <span className="text-gray-500 mr-2 mt-1">&bull;</span>
                 <p className="text-gray-900 leading-relaxed">
@@ -588,7 +588,7 @@ const DashboardLeadDetails = () => {
       >
         {documents && documents.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {documents.map((doc: any) => (
+            {documents.map((doc: unknown) => (
               <DocumentItem
                 key={doc.id}
                 doc={doc}

@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronRight,
-  Database,
   Globe,
   Layers,
   Network,

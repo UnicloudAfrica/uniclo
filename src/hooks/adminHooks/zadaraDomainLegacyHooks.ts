@@ -130,7 +130,7 @@ export const useUpdateZadaraDomain = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateZadaraDomain,
-    onSuccess: (_data: any, variables: any) => {
+    onSuccess: (_data: unknown, variables: unknown) => {
       queryClient.invalidateQueries({ queryKey: ["zadara-domains"] });
       queryClient.invalidateQueries({ queryKey: ["zadara-domain", variables.id] });
     },

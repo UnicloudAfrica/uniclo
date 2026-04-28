@@ -29,7 +29,7 @@ export interface ApplyToRegionsResult {
 }
 
 const adminApplyToRegions = async (payload: ApplyToRegionsPayload): Promise<ApplyToRegionsResult> => {
-  const res = await adminApi("POST", "/product-pricing/apply-to-regions", payload);
+  const res = await adminApi("POST", "/product-pricing/apply-to-regions", payload as unknown as Record<string, unknown>);
   if (!res) {
     throw new Error("Failed to apply pricing to regions");
   }
@@ -37,7 +37,7 @@ const adminApplyToRegions = async (payload: ApplyToRegionsPayload): Promise<Appl
 };
 
 const tenantApplyToRegions = async (payload: ApplyToRegionsPayload): Promise<ApplyToRegionsResult> => {
-  const res = await tenantApi("POST", "/admin/product-pricing/apply-to-regions", payload);
+  const res = await tenantApi("POST", "/admin/product-pricing/apply-to-regions", payload as unknown as Record<string, unknown>);
   if (!res) {
     throw new Error("Failed to apply pricing to regions");
   }

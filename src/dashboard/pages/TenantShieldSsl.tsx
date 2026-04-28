@@ -1,19 +1,7 @@
-import TenantPageShell from "@/shared/layouts/TenantPageShell";
-import { ShieldDomainList } from "@/shared/components/shield";
+import { Navigate } from "react-router-dom";
 
 const TenantShieldSsl: React.FC = () => {
-  return (
-    <TenantPageShell
-      title="Shield SSL"
-      description="Select a domain to manage its SSL certificates"
-      contentClassName="space-y-6"
-    >
-      <ShieldDomainList
-        context="tenant"
-        detailBasePath="/dashboard/shield/domains"
-      />
-    </TenantPageShell>
-  );
+  return <Navigate to="/dashboard/shield/domains" replace />;
 };
 
 export default TenantShieldSsl;

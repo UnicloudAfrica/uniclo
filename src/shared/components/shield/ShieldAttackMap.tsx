@@ -40,6 +40,7 @@ import {
   type AttackMapData,
   type AttackFlow,
 } from "@/shared/hooks/resources/shieldHooks";
+import { DashboardSkeleton } from "@/shared/components/ui/Skeleton";
 
 // ─── Country Centroids (ISO Alpha-2 → [lng, lat]) ────────────
 
@@ -181,22 +182,28 @@ interface WorldMapProps {
 }
 
 const WorldMap: React.FC<WorldMapProps> = ({
-  flows, activeFlows, sourceMarkers, targetMarkers,
+  flows, _activeFlows, sourceMarkers, targetMarkers,
   zoom, center, onZoom, onCenter,
 }) => {
   const [geoData, setGeoData] = useState<GeoJSON.FeatureCollection | null>(null);
+  const [mapLoadError, setMapLoadError] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
   const [dragging, setDragging] = useState(false);
   const dragStart = useRef<{ x: number; y: number; center: [number, number] } | null>(null);
 
   useEffect(() => {
     fetch(GEO_URL)
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then((topo: Topology) => {
-        const countries = feature(topo, topo.objects.countries as any);
+        const countries = feature(topo, topo.objects.countries as unknown);
         setGeoData(countries as unknown as GeoJSON.FeatureCollection);
       })
-      .catch(() => {});
+      .catch(() => {
+        setMapLoadError(true);
+      });
   }, []);
 
   const projection = useMemo(
@@ -267,6 +274,16 @@ const WorldMap: React.FC<WorldMapProps> = ({
     setDragging(false);
     dragStart.current = null;
   }, []);
+
+  if (mapLoadError) {
+    return (
+      <div className="flex h-64 flex-col items-center justify-center gap-2 rounded-2xl bg-neutral-100 text-[var(--theme-muted-color)] dark:bg-neutral-900">
+        <Globe size={32} className="opacity-40" />
+        <span className="text-sm font-medium">Map unavailable</span>
+        <span className="text-xs opacity-60">Could not load world map data</span>
+      </div>
+    );
+  }
 
   if (!geoData) {
     return (
@@ -355,7 +372,7 @@ const WorldMap: React.FC<WorldMapProps> = ({
 // ─── Main Component ────────────────────────────────────────────
 
 const ShieldAttackMap: React.FC = () => {
-  const { data, isLoading } = useFetchAttackMap(undefined, {
+  const { data, isLoading, isError, error, refetch } = useFetchAttackMap(undefined, {
     refetchInterval: 30_000,
   });
 
@@ -435,14 +452,23 @@ const ShieldAttackMap: React.FC = () => {
   }, []);
 
   if (isLoading) {
+    return <DashboardSkeleton />;
+  }
+
+  if (isError) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-10 w-10 animate-spin rounded-full border-3 border-red-500 border-t-transparent" />
-          <span className="text-sm text-[var(--theme-muted-color)]">
-            Loading attack data...
-          </span>
-        </div>
+      <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+        <ShieldAlert size={40} className="text-red-400" />
+        <p className="text-sm text-red-600">
+          {error?.message || "Failed to load attack map data."}
+        </p>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className="flex items-center gap-1.5 rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+        >
+          Retry
+        </button>
       </div>
     );
   }

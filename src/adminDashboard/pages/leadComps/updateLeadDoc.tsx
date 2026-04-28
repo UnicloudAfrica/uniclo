@@ -3,8 +3,8 @@ import { X, Loader2 } from "lucide-react";
 import { useDownloadDoc, useUpdateDoc } from "@/hooks/adminHooks/leadsHooks";
 import logger from "@/utils/logger";
 
-const formatStatusForDisplay = (status: any) => {
-  return status ? status.replace(/_/g, " ").replace(/\b\w/g, (c: any) => c.toUpperCase()) : "N/A";
+const formatStatusForDisplay = (status: unknown) => {
+  return status ? status.replace(/_/g, " ").replace(/\b\w/g, (c: unknown) => c.toUpperCase()) : "N/A";
 };
 
 const documentStatusOptions = [
@@ -14,7 +14,7 @@ const documentStatusOptions = [
   //   "pending_review",
 ];
 
-const inferMimeTypeFromName = (fileName: any) => {
+const inferMimeTypeFromName = (fileName: unknown) => {
   const name = fileName?.toLowerCase() || "";
   if (name.endsWith(".pdf")) return "application/pdf";
   if (name.endsWith(".png")) return "image/png";
@@ -23,11 +23,11 @@ const inferMimeTypeFromName = (fileName: any) => {
   return "application/octet-stream";
 };
 
-const UpdateLeadDoc = ({ isOpen, onClose, document, leadId }: any) => {
+const UpdateLeadDoc = ({ isOpen, onClose, document, leadId }: { isOpen: boolean; onClose: () => void; document: unknown; leadId: string }) => {
   const [status, setStatus] = useState("");
   const [reviewNotes, setReviewNotes] = useState("");
-  const [documentUrl, setDocumentUrl] = useState<any>(null); // State to hold the object URL
-  const [documentType, setDocumentType] = useState<any>(null); // To store document MIME type
+  const [documentUrl, setDocumentUrl] = useState<unknown>(null); // State to hold the object URL
+  const [documentType, setDocumentType] = useState<unknown>(null); // To store document MIME type
 
   const { mutate, isPending: isUpdatingDoc } = useUpdateDoc();
   const {
@@ -133,7 +133,7 @@ const UpdateLeadDoc = ({ isOpen, onClose, document, leadId }: any) => {
                 <option value="" disabled>
                   Select Status
                 </option>
-                {documentStatusOptions.map((option: any) => (
+                {documentStatusOptions.map((option: unknown) => (
                   <option key={option} value={option}>
                     {formatStatusForDisplay(option)}
                   </option>

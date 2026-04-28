@@ -10,16 +10,44 @@ import SetupProgressCard from "@/shared/components/projects/details/SetupProgres
 
 const encodeId = (id: string) => encodeURIComponent(btoa(id));
 
+interface ClientData {
+  id?: string | number;
+  identifier?: string;
+  first_name?: string;
+  middle_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  country?: string;
+  state?: string;
+  city?: string;
+  address?: string;
+  verified?: number | boolean;
+  zip?: string;
+  role?: string;
+  created_at?: string;
+  updated_at?: string;
+  tenant?: { name?: string; identifier?: string };
+  provisioning_progress?: Array<{
+    id: string;
+    label: string;
+    status: "pending" | "in_progress" | "completed" | "failed" | string;
+    updated_at: string;
+    context?: unknown;
+  }>;
+  [key: string]: unknown;
+}
+
 interface OverviewClientProps {
-  client: any;
+  client: ClientData | null | undefined;
   openEditOnLoad?: boolean;
 }
 
-const OverviewClient: React.FC<OverviewClientProps> = ({ client, openEditOnLoad }: any) => {
+const OverviewClient: React.FC<OverviewClientProps> = ({ client, openEditOnLoad }) => {
   const navigate = useNavigate();
   const [isEditClientModalOpen, setIsEditClientModalOpen] = useState(false);
   const [isDeleteClientModalOpen, setIsDeleteClientModalOpen] = useState(false);
-  const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [selectedClient, setSelectedClient] = useState<ClientData | null>(null);
 
   const statusLabel = client?.verified === 1 ? "Active client" : "Pending activation";
   const statusTone = client?.verified === 1 ? "success" : "warning";
@@ -81,18 +109,18 @@ const OverviewClient: React.FC<OverviewClientProps> = ({ client, openEditOnLoad 
   ];
 
   const provisioningSteps = Array.isArray(client?.provisioning_progress)
-    ? client.provisioning_progress.map((step: any) => ({
+    ? (client.provisioning_progress.map((step) => ({
         id: step.id,
         label: step.label,
         status: step.status,
         updated_at: step.updated_at,
-        context: step.context,
-      }))
+        context: step.context as Record<string, unknown> | undefined,
+      })) as unknown as Parameters<typeof SetupProgressCard>[0]["steps"])
     : [];
 
   const showProvisioning = provisioningSteps.length > 0;
 
-  const openEditClientModal = (clientData: any) => {
+  const openEditClientModal = (clientData: ClientData) => {
     setSelectedClient(clientData);
     setIsEditClientModalOpen(true);
   };
@@ -108,7 +136,7 @@ const OverviewClient: React.FC<OverviewClientProps> = ({ client, openEditOnLoad 
     setSelectedClient(null);
   };
 
-  const openDeleteClientModal = (clientData: any) => {
+  const openDeleteClientModal = (clientData: ClientData) => {
     setSelectedClient(clientData);
     setIsDeleteClientModalOpen(true);
   };
@@ -187,9 +215,14 @@ const OverviewClient: React.FC<OverviewClientProps> = ({ client, openEditOnLoad 
             <div className="rounded-3xl border border-[var(--theme-surface-alt)] bg-white p-5 shadow-sm">
               <h3 className="text-sm font-semibold text-slate-900">Contact Details</h3>
               <ul className="mt-4 space-y-3">
-                {contactItems.map(({ label, value, iconKey, tone, type, action }: any) => (
+                {contactItems.map(({ label, value, iconKey, tone, type, action }) => (
                   <li key={label} className="flex items-start gap-3 text-sm">
-                    <IconBadge iconKey={iconKey} tone={tone as any} size="sm" className="mt-0.5" />
+                    <IconBadge
+                      iconKey={iconKey}
+                      tone={tone as Parameters<typeof IconBadge>[0]["tone"]}
+                      size="sm"
+                      className="mt-0.5"
+                    />
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                         {label}

@@ -107,7 +107,7 @@ const ClientProvisioningWizard: React.FC = () => {
   );
 
   const applyTemplate = useCallback(
-    (template: any) => {
+    (template: unknown) => {
       const patch = buildConfigurationFromTemplate(template);
       const firstConfig = configurations[0];
       const canOverwrite =
@@ -133,7 +133,7 @@ const ClientProvisioningWizard: React.FC = () => {
     const volumeTypes = resources.volume_types || [];
     const keyPairs = resources.keyPairs || [];
 
-    return configurations.map((cfg: Record<string, unknown>) => {
+    return configurations.map((cfg) => {
       const status = evaluateConfigurationCompleteness(cfg);
       const computeLabel =
         (cfg.compute_label as string) ||
@@ -191,18 +191,18 @@ const ClientProvisioningWizard: React.FC = () => {
     return `${reviewSummaries.length} compute profiles`;
   }, [reviewSummaries]);
   const summaryWorkflowLabel = "Standard Request w/ Payment";
-  const clientDisplayName = useMemo(
+  const clientDisplayName = useMemo<string>(
     () =>
       profile
-        ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || profile.email
+        ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || String(profile.email || "")
         : "",
     [profile]
   );
   const clientOptions = useMemo(() => {
     if (!profile) return [];
-    return [{ value: String(profile.id), label: clientDisplayName || profile.email }];
+    return [{ value: String(profile.id), label: clientDisplayName || String(profile.email || "") }];
   }, [profile, clientDisplayName]);
-  const assignmentSummary = clientDisplayName || "Self";
+  const assignmentSummary: string = clientDisplayName || "Self";
 
   const billingCountryLabel = useMemo(() => {
     if (!billingCountry) return "Not selected";
@@ -382,7 +382,7 @@ const ClientProvisioningWizard: React.FC = () => {
             {currentStep?.id === "services" && (
               <ConfigurationListStep
                 configurations={configurations}
-                resources={resources as Record<string, unknown>}
+                resources={resources as unknown as import("@/hooks/useInstanceResources").InstanceResources}
                 generalRegions={generalRegions}
                 regionOptions={regionOptions}
                 isLoadingResources={isLoadingResources}
@@ -400,15 +400,15 @@ const ClientProvisioningWizard: React.FC = () => {
                 onBack={() => setActiveStep(workflowStepIndex >= 0 ? workflowStepIndex : 0)}
                 onSubmit={handleCreateOrder}
                 submitErrorMessage={submissionErrorMessage}
-                useProjectsHook={useFetchClientProjects as (...args: unknown[]) => unknown}
+                useProjectsHook={useFetchClientProjects as unknown as (...args: unknown[]) => { data: unknown; isFetching?: boolean; isLoading?: boolean }}
                 useSecurityGroupsHook={
-                  useFetchClientSecurityGroups as (...args: unknown[]) => unknown
+                  useFetchClientSecurityGroups as unknown as (...args: unknown[]) => { data: unknown; isFetching?: boolean; isLoading?: boolean }
                 }
-                useKeyPairsHook={useFetchClientKeyPairs as (...args: unknown[]) => unknown}
-                useSubnetsHook={useFetchClientSubnets as (...args: unknown[]) => unknown}
-                useNetworksHook={useFetchClientNetworks as (...args: unknown[]) => unknown}
+                useKeyPairsHook={useFetchClientKeyPairs as unknown as (...args: unknown[]) => { data: unknown; isFetching?: boolean; isLoading?: boolean }}
+                useSubnetsHook={useFetchClientSubnets as unknown as (...args: unknown[]) => { data: unknown; isFetching?: boolean; isLoading?: boolean }}
+                useNetworksHook={useFetchClientNetworks as unknown as (...args: unknown[]) => { data: unknown; isFetching?: boolean; isLoading?: boolean }}
                 useProjectMembershipSuggestionsHook={
-                  useClientProjectMembershipSuggestions as (...args: unknown[]) => unknown
+                  useClientProjectMembershipSuggestions as unknown as (...args: unknown[]) => { data: unknown; isFetching?: boolean; isLoading?: boolean }
                 }
                 skipProjectFetch={false}
                 skipNetworkResourcesFetch={false}
@@ -425,9 +425,9 @@ const ClientProvisioningWizard: React.FC = () => {
                 onPlanChange={setSelectedProtectionPlan}
                 onBack={() => setActiveStep(servicesStepIndex)}
                 onContinue={() => setActiveStep(paymentStepIndex >= 0 ? paymentStepIndex : activeStep + 1)}
-                instanceCount={configurations.reduce((sum, c: Record<string, unknown>) => sum + (Number(c.instance_count) || 1), 0)}
-                storageGb={configurations.reduce((sum, c: Record<string, unknown>) => sum + (Number(c.storage_size_gb) || 50), 0) / Math.max(configurations.length, 1)}
-                computePricePerVm={(() => { const n = configurations.reduce((s, c: Record<string, unknown>) => s + (Number(c.instance_count) || 1), 0); return n > 0 ? summarySubtotalValue / n : 0; })()}
+                instanceCount={configurations.reduce((sum: number, c) => sum + (Number(c.instance_count) || 1), 0)}
+                storageGb={configurations.reduce((sum: number, c) => sum + (Number(c.storage_size_gb) || 50), 0) / Math.max(configurations.length, 1)}
+                computePricePerVm={(() => { const n = configurations.reduce((s: number, c) => s + (Number(c.instance_count) || 1), 0); return n > 0 ? summarySubtotalValue / n : 0; })()}
                 currency={summaryDisplayCurrency || "NGN"}
                 selectedRedundancy={selectedRedundancy}
                 onRedundancyChange={setSelectedRedundancy}

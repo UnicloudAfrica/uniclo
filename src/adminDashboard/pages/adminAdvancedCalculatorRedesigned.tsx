@@ -46,7 +46,7 @@ const AdminAdvancedCalculatorRedesigned = () => {
   // const [selectedTenantId, setSelectedTenantId] = useState("");
   // const [selectedUserId, setSelectedUserId] = useState("");
 
-  const [pricingResult, setPricingResult] = useState<any>(null);
+  const [pricingResult, setPricingResult] = useState<Record<string, unknown> | null>(null);
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
 
   const steps = [
@@ -103,7 +103,7 @@ const AdminAdvancedCalculatorRedesigned = () => {
     }));
   };
   const validateConfiguration = () => {
-    const newErrors: Record<string, any> = {};
+    const newErrors: Record<string, unknown> = {};
     if (
       calculatorData.pricing_requests.length === 0 &&
       (calculatorData.object_storage_items?.length || 0) === 0
@@ -138,14 +138,14 @@ const AdminAdvancedCalculatorRedesigned = () => {
       total_discount?: { type: string; value: number; label: string | null };
       country_code?: string;
     } = {
-      pricing_requests: calculatorData.pricing_requests.map((req: any) => {
+      pricing_requests: calculatorData.pricing_requests.map((req: unknown) => {
         const { _display, ...rest } = req;
         return rest;
       }),
     };
 
     if (storageItems.length) {
-      payload.object_storage_items = storageItems.map((item: any) => {
+      payload.object_storage_items = storageItems.map((item: unknown) => {
         const { _display, ...rest } = item;
         return rest;
       });
@@ -213,7 +213,7 @@ const AdminAdvancedCalculatorRedesigned = () => {
     if (currentStep === 0) {
       return (
         <CalculatorConfigStep
-          calculatorData={calculatorData as any}
+          calculatorData={calculatorData as unknown}
           errors={errors}
           updateCalculatorData={updateCalculatorData}
           onAddStorageItem={addStorageItem}

@@ -131,13 +131,13 @@ const useFetchClientDashboardStats = () => {
   const projects = projectsData?.data || [];
   const instances = instancesData?.data || [];
 
-  const activeInstances = instances.filter((i: any) =>
-    ["running", "active", "ready", "online"].includes(i.status?.toLowerCase())
+  const activeInstances = instances.filter((i: Record<string, unknown>) =>
+    ["running", "active", "ready", "online"].includes(String(i.status ?? "").toLowerCase())
   ).length;
 
-  const pendingInstances = instances.filter((i: any) =>
+  const pendingInstances = instances.filter((i: Record<string, unknown>) =>
     ["pending", "provisioning", "creating", "initializing", "processing"].includes(
-      i.status?.toLowerCase()
+      String(i.status ?? "").toLowerCase()
     )
   ).length;
 
@@ -252,7 +252,7 @@ const formatLabel = (value = "") =>
     .replace(/[-_]/g, " ")
     .split(" ")
     .filter(Boolean)
-    .map((word: any) => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 
 const formatDateLabel = (value?: string) => {
@@ -286,14 +286,14 @@ interface OfferCardProps {
   ctaLabel: string;
 }
 
-const OfferCard: React.FC<OfferCardProps> = ({ offer, type, ctaLabel }: any) => {
+const OfferCard: React.FC<OfferCardProps> = ({ offer, type, ctaLabel }) => {
   const isTrial = type === "trial";
   const discountPercentage = Number(offer?.discount_percentage ?? 0);
   const priceValue = Number(offer?.fixed_price ?? 0);
   const hasPrice = Number.isFinite(priceValue) && priceValue > 0;
   const items = Array.isArray(offer?.items) ? offer.items : [];
   const itemNames = items
-    .map((item: any) => item?.name || item?.identifier)
+    .map((item: { name?: string; identifier?: string }) => item?.name || item?.identifier)
     .filter(Boolean)
     .slice(0, 3);
   const spec = itemNames.length ? itemNames.join(" • ") : "Bundle offer";
@@ -340,7 +340,7 @@ const OfferCard: React.FC<OfferCardProps> = ({ offer, type, ctaLabel }: any) => 
           ) : null}
           {itemNames.length ? (
             <ul className="grid gap-1 text-xs text-[--theme-muted-color]">
-              {itemNames.map((item: any) => (
+              {(itemNames as string[]).map((item) => (
                 <li key={item} className="flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full bg-[--theme-color]" />
                   <span>{item}</span>
@@ -403,7 +403,7 @@ const ClientDashboard: React.FC = () => {
 
   const metricsWithIcons = useMemo<MetricWithIcon[]>(
     () =>
-      metrics.map((metric: any) => {
+      metrics.map((metric: Metric) => {
         const Icon = METRIC_ICON_MAP[metric.label] || Gauge;
         return { ...metric, Icon };
       }),
@@ -411,7 +411,7 @@ const ClientDashboard: React.FC = () => {
   );
 
   const highlightMetrics = useMemo<MetricWithIcon[]>(
-    () => metricsWithIcons.filter((metric: any) => HIGHLIGHT_METRICS.includes(metric.label)),
+    () => metricsWithIcons.filter((metric) => HIGHLIGHT_METRICS.includes(metric.label)),
     [metricsWithIcons]
   );
 
@@ -420,7 +420,8 @@ const ClientDashboard: React.FC = () => {
 
   const recentProjects = useMemo(() => {
     if (!projects.length) return [];
-    const sorted = [...projects].sort((a: any, b: any) => {
+    type ProjectLite = { updated_at?: string | number; created_at?: string | number };
+    const sorted = [...projects].sort((a: ProjectLite, b: ProjectLite) => {
       const aDate = new Date(a?.updated_at || a?.created_at || 0).getTime();
       const bDate = new Date(b?.updated_at || b?.created_at || 0).getTime();
       return bDate - aDate;
@@ -456,14 +457,15 @@ const ClientDashboard: React.FC = () => {
       },
     ];
 
-    const normalizedStatuses = instances.map((instance: any) =>
+    const normalizedStatuses = instances.map((instance: Record<string, unknown>) =>
       String(instance?.status || "").toLowerCase()
     );
     const total = normalizedStatuses.length;
     let matched = 0;
 
-    const summary = groups.map((group: any) => {
-      const count = normalizedStatuses.filter((status: any) => group.match.includes(status)).length;
+    type StatusGroup = { key: string; label: string; match: string[]; color: string };
+    const summary = groups.map((group: StatusGroup) => {
+      const count = normalizedStatuses.filter((status: string) => group.match.includes(status)).length;
       matched += count;
       return {
         ...group,
@@ -566,7 +568,7 @@ const ClientDashboard: React.FC = () => {
                     </div>
                   ))
                 ) : highlightMetrics.length ? (
-                  highlightMetrics.map(({ label, value, Icon }: any) => (
+                  highlightMetrics.map(({ label, value, Icon }) => (
                     <div
                       key={label}
                       className="rounded-2xl bg-white/12 p-4 backdrop-blur transition hover:bg-white/20"
@@ -601,7 +603,7 @@ const ClientDashboard: React.FC = () => {
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-              {QUICK_ACTIONS.map(({ title, description, to, Icon }: any) => (
+              {QUICK_ACTIONS.map(({ title, description, to, Icon }) => (
                 <Link
                   key={title}
                   to={to}
@@ -648,7 +650,7 @@ const ClientDashboard: React.FC = () => {
                   <MetricCardSkeleton key={`metric-skeleton-${index}`} />
                 ))
               ) : metricsWithIcons.length ? (
-                metricsWithIcons.map(({ label, value, Icon }: any) => (
+                metricsWithIcons.map(({ label, value, Icon }) => (
                   <div
                     key={label}
                     className="rounded-2xl border border-[--theme-border-color] bg-[--theme-card-bg] p-4 shadow-sm transition hover:border-[--theme-color] hover:shadow-md"
@@ -707,7 +709,7 @@ const ClientDashboard: React.FC = () => {
                     </div>
                   ))
                 ) : recentProjects.length ? (
-                  recentProjects.map((project: any) => {
+                  recentProjects.map((project: { id?: string | number; name?: string; identifier?: string; status?: string; updated_at?: string; created_at?: string }) => {
                     const projectName = project?.name || project?.identifier || "Untitled project";
                     const statusLabel = project?.status ? formatLabel(project.status) : "Active";
                     const dateLabel = formatDateLabel(project?.updated_at || project?.created_at);
@@ -758,7 +760,7 @@ const ClientDashboard: React.FC = () => {
                 </div>
                 <div className="mt-6 space-y-4">
                   {instances.length ? (
-                    instanceStatusSummary.map((status: any) => (
+                    instanceStatusSummary.map((status) => (
                       <div key={status.key} className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
                           <span className="font-medium text-[--theme-heading-color]">
@@ -827,7 +829,7 @@ const ClientDashboard: React.FC = () => {
               </p>
             </div>
 
-            {OFFER_SECTIONS.map(({ key, title, description, ctaLabel }: any) => {
+            {OFFER_SECTIONS.map(({ key, title, description, ctaLabel }) => {
               const items = offers?.[key] ?? [];
               const skeletonCount = key === "discount" ? 2 : 1;
 
@@ -847,7 +849,7 @@ const ClientDashboard: React.FC = () => {
                         <OfferSkeleton key={`${key}-skeleton-${index}`} />
                       ))
                     ) : items.length ? (
-                      items.map((offer: any) => (
+                      items.map((offer: Offer) => (
                         <OfferCard
                           key={`${key}-${offer?.id}`}
                           offer={offer}

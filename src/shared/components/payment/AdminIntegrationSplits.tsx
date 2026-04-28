@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, CheckCircle, XCircle, Building2, DollarSign, Loader2, Search } from "lucide-react";
+import { Plus, CheckCircle, XCircle, Building2, Loader2, Search } from "lucide-react";
 import { designTokens } from "@/styles/designTokens";
 import {
   useFetchIntegrationSplits,
@@ -29,7 +29,7 @@ export default function AdminIntegrationSplits() {
   });
   const [bankSearch, setBankSearch] = useState("");
   const [verifiedName, setVerifiedName] = useState<string | null>(null);
-  const [previewAmount, setPreviewAmount] = useState("100");
+  const [previewAmount, _setPreviewAmount] = useState("100");
 
   const bankList = Array.isArray(banks) ? banks : [];
   const filteredBanks = bankList.filter((b: Bank) => b.name.toLowerCase().includes(bankSearch.toLowerCase()));

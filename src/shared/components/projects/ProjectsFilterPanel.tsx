@@ -86,7 +86,7 @@ const ProjectsFilterPanel: React.FC<ProjectsFilterPanelProps> = ({
     [filters]
   );
 
-  const handleAdvancedFilterChange = (newValues: Record<string, any>) => {
+  const handleAdvancedFilterChange = (newValues: Record<string, unknown>) => {
     // Map back to parent structure
     const updatedFilters: ProjectFilters = {
       ...filters,

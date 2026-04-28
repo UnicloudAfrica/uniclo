@@ -5,7 +5,7 @@ import { useCreateTaxConfiguration } from "@/hooks/adminHooks/taxConfigurationHo
 import ToastUtils from "@/utils/toastUtil";
 import logger from "@/utils/logger";
 
-const AddTaxTypeModal = ({ isOpen, onClose, defaultCountryId, onSuccess }: any) => {
+const AddTaxTypeModal = ({ isOpen, onClose, defaultCountryId, onSuccess }: { isOpen: boolean; onClose: () => void; defaultCountryId?: string; onSuccess?: () => void }) => {
   const { data: countries, isFetching: isCountriesFetching } = useFetchCountries();
   const { mutate, isPending } = useCreateTaxConfiguration();
 
@@ -14,7 +14,7 @@ const AddTaxTypeModal = ({ isOpen, onClose, defaultCountryId, onSuccess }: any) 
     initialRate: "",
     selectedCountryId: "",
   });
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
     if (isOpen) {
@@ -35,7 +35,7 @@ const AddTaxTypeModal = ({ isOpen, onClose, defaultCountryId, onSuccess }: any) 
   }, [isOpen, defaultCountryId]);
 
   const validateForm = () => {
-    const newErrors: Record<string, any> = {};
+    const newErrors: Record<string, unknown> = {};
     if (!formData.name.trim()) {
       newErrors.name = "Tax Type Name is required";
     }
@@ -55,12 +55,12 @@ const AddTaxTypeModal = ({ isOpen, onClose, defaultCountryId, onSuccess }: any) 
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field: any, value: any) => {
+  const updateFormData = (field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.SyntheticEvent) => {
     if (e) e.preventDefault();
 
     if (!validateForm()) return;
@@ -88,9 +88,10 @@ const AddTaxTypeModal = ({ isOpen, onClose, defaultCountryId, onSuccess }: any) 
         onClose();
         onSuccess?.();
       },
-      onError: (err) => {
+      onError: (err: unknown) => {
         logger.error("Failed to create Tax Type:", err);
-        ToastUtils.error(err.message || "Failed to add tax type. Please try again.");
+        const message = err instanceof Error ? err.message : "Failed to add tax type. Please try again.";
+        ToastUtils.error(message);
       },
     });
   };
@@ -197,7 +198,7 @@ const AddTaxTypeModal = ({ isOpen, onClose, defaultCountryId, onSuccess }: any) 
                       disabled={isPending}
                     >
                       <option value="">Select a country</option>
-                      {(countries as Record<string, unknown>[]).map((country) => (
+                      {(countries as Array<{ id: string | number; name: string }>).map((country) => (
                         <option key={country.id} value={country.id}>
                           {country.name}
                         </option>

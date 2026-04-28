@@ -54,10 +54,10 @@ const ProjectDetailsOverview: React.FC<ProjectDetailsOverviewProps> = ({
     });
 
   // Derive checklist data from props already flowing through the overview
-  const rc = unifiedViewProps.resourceCounts ?? {};
+  const rc: Partial<import("./ProjectUnifiedView").ResourceCounts> = unifiedViewProps.resourceCounts ?? {};
   const instanceCount = unifiedViewProps.instanceStats?.total ?? 0;
   const internetEnabled = Boolean(
-    unifiedViewProps.networkStatus?.internet_gateway?.enabled ??
+    (unifiedViewProps.networkStatus?.internet_gateway?.details as { enabled?: boolean } | undefined)?.enabled ??
     unifiedViewProps.edgeNetworkConnected ??
     (rc.internet_gateways ?? 0) > 0
   );

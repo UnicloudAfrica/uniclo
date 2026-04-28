@@ -19,10 +19,29 @@ import {
   getStatusLabel,
   formatCurrency,
 } from "@/hooks/useClientInvoices";
+import { PriceLabel } from "@/shared/components/ui/PriceLabel";
 import logger from "@/utils/logger";
 
+/**
+ * Build a pre-baked `PriceDTO` envelope from a legacy (amount, currency)
+ * pair so `<PriceLabel>` can render it verbatim without triggering a
+ * network call for same-currency display. Backend-emitted envelopes
+ * (e.g. from `InvoiceResource.total_envelope`) should be used directly
+ * via `PriceLabel envelope={...}` once the invoices API starts shipping
+ * them.
+ */
+const toEnvelope = (amount: number | null | undefined, currency: string) => {
+  if (amount === null || amount === undefined) return undefined;
+  return {
+    amount_display: amount,
+    currency_display: currency,
+    formatted_display: formatCurrency(amount, currency),
+    fx_source: "identity",
+  };
+};
+
 // Status badge component
-const StatusBadge: React.FC<{ status: Invoice["status"] }> = ({ status }: any) => {
+const StatusBadge: React.FC<{ status: Invoice["status"] }> = ({ status }) => {
   const colorMap: Record<Invoice["status"], string> = {
     draft: "bg-gray-100 text-gray-700",
     pending: "bg-yellow-100 text-yellow-700",
@@ -34,7 +53,7 @@ const StatusBadge: React.FC<{ status: Invoice["status"] }> = ({ status }: any) =
   };
 
   return (
-    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${(colorMap as any)[status]}`}>
+    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${colorMap[status]}`}>
       {getStatusLabel(status)}
     </span>
   );
@@ -69,7 +88,7 @@ const InvoiceRow: React.FC<{
   invoice: Invoice;
   onPay: (id: number) => void;
   isPaymentLoading: boolean;
-}> = ({ invoice, onPay, isPaymentLoading }: any) => {
+}> = ({ invoice, onPay, isPaymentLoading }) => {
   const isPastDue = invoice.status === "overdue";
   const canPay = ["pending", "partial", "overdue"].includes(invoice.status);
 
@@ -99,10 +118,19 @@ const InvoiceRow: React.FC<{
         <div className="flex items-center gap-4">
           <div className="text-right">
             <p className="font-semibold text-gray-900">
-              {formatCurrency(invoice.amount_due, invoice.currency)}
+              <PriceLabel
+                amount={invoice.amount_due}
+                sourceCurrency={invoice.currency}
+                envelope={toEnvelope(invoice.amount_due, invoice.currency)}
+              />
             </p>
             <p className="text-xs text-gray-500">
-              of {formatCurrency(invoice.total, invoice.currency)}
+              of{" "}
+              <PriceLabel
+                amount={invoice.total}
+                sourceCurrency={invoice.currency}
+                envelope={toEnvelope(invoice.total, invoice.currency)}
+              />
             </p>
           </div>
 
@@ -248,7 +276,7 @@ const ClientBillingPage: React.FC = () => {
             </p>
           </div>
         ) : (
-          invoices.map((invoice: any) => (
+          invoices.map((invoice: Invoice) => (
             <InvoiceRow
               key={invoice.id}
               invoice={invoice}

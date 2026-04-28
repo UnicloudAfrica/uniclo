@@ -7,8 +7,11 @@ export interface TenantOnboardingStateResponse {
 }
 
 const fetchDelegatedOnboarding = async (): Promise<TenantOnboardingStateResponse> => {
-  const response = await api("GET", "/business/onboarding/delegated");
-  return (response?.data as TenantOnboardingStateResponse) ?? { tenants: [], clients: [] };
+  const response = await api<{ data?: TenantOnboardingStateResponse }>(
+    "GET",
+    "/business/onboarding/delegated"
+  );
+  return response?.data ?? { tenants: [], clients: [] };
 };
 
 export const useTenantClientOnboardingState = (

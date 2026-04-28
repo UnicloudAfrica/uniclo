@@ -3,7 +3,13 @@ import { SupportThreadsPanel } from "@/shared/components/support";
 import tenantApi from "../../index/tenant/tenantApi";
 import silentTenantApi from "../../index/tenant/silentTenant";
 
-const buildQuery = (filters: any = {}) => {
+interface SupportFilters {
+  status?: string;
+  search?: string;
+  page?: number;
+}
+
+const buildQuery = (filters: SupportFilters = {}) => {
   const params = new URLSearchParams();
   if (filters.status) params.set("status", filters.status);
   if (filters.search) params.set("search", filters.search);
@@ -17,17 +23,23 @@ import { useNavigate } from "react-router-dom";
 
 export default function SupportTicket() {
   const navigate = useNavigate();
-  const fetchThreads = (filters: any) =>
-    silentTenantApi("GET", `/admin/support${buildQuery(filters)}`);
+  const fetchThreads = (filters: SupportFilters) =>
+    silentTenantApi("GET", `/admin/support${buildQuery(filters)}`) as Promise<
+      Record<string, unknown> & { data?: unknown }
+    >;
 
-  const fetchThread = (id: any) => silentTenantApi("GET", `/admin/support/${id}`);
+  const fetchThread = (id: string | number) =>
+    silentTenantApi("GET", `/admin/support/${id}`) as Promise<
+      Record<string, unknown> & { data?: unknown }
+    >;
 
-  const createThread = (payload: any) => tenantApi("POST", "/admin/support", payload);
+  const createThread = (payload: Record<string, unknown>) =>
+    tenantApi("POST", "/admin/support", payload);
 
-  const replyThread = (id: any, payload: any) =>
+  const replyThread = (id: string | number, payload: Record<string, unknown>) =>
     tenantApi("POST", `/admin/support/${id}/reply`, payload);
 
-  const resolveThread = (id: any) =>
+  const resolveThread = (id: string | number) =>
     tenantApi("PUT", `/admin/support/${id}`, { status: "resolved" });
 
   return (
@@ -37,11 +49,11 @@ export default function SupportTicket() {
     >
       <SupportThreadsPanel
         queryKey={["tenant", "support"]}
-        fetchThreads={fetchThreads}
-        fetchThread={fetchThread}
-        createThread={createThread}
-        replyThread={replyThread}
-        resolveThread={resolveThread}
+        fetchThreads={fetchThreads as never}
+        fetchThread={fetchThread as never}
+        createThread={createThread as never}
+        replyThread={replyThread as never}
+        resolveThread={resolveThread as never}
         canCreate
         canResolve
         showUser

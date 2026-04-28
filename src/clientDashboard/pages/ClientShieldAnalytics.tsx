@@ -1,19 +1,7 @@
-import ClientPageShell from "../components/ClientPageShell";
-import { ShieldDomainList } from "@/shared/components/shield";
+import { Navigate } from "react-router-dom";
 
 const ClientShieldAnalytics: React.FC = () => {
-  return (
-    <ClientPageShell
-      title="Shield Analytics"
-      description="Select a domain to view detailed analytics"
-      contentClassName="space-y-6"
-    >
-      <ShieldDomainList
-        context="client"
-        detailBasePath="/client-dashboard/shield/domains"
-      />
-    </ClientPageShell>
-  );
+  return <Navigate to="/client-dashboard/shield/domains" replace />;
 };
 
 export default ClientShieldAnalytics;

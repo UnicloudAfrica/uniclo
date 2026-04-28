@@ -47,7 +47,7 @@ interface ListParams {
   extra?: Record<string, string | number | boolean>;
 }
 
-type AnyRecord = Record<string, any>;
+type AnyRecord = Record<string, unknown>;
 
 // ─── Query Key Factory ─────────────────────────────────────────────
 

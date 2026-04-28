@@ -3,7 +3,7 @@
  *
  * Using a concrete type (without an index signature) prevents `...options`
  * from corrupting TypeScript's generic inference inside `useQuery` / `useMutation`.
- * Previously, `options: any = {}` caused `data` to be inferred as `{}`.
+ * Previously, `options: Record<string, unknown> = src/shared/types/hooks.ts` caused `data` to be inferred as `{}`.
  */
 
 /**
@@ -18,7 +18,11 @@ export type QueryHookOptions = {
   retry?: boolean | number;
   refetchOnMount?: boolean | "always";
   refetchOnReconnect?: boolean | "always";
-  networkMode?: "online" | "always" | "offConnected";
+  networkMode?: "online" | "always" | "offlineFirst";
+  // React Query v5: keepPreviousData was replaced by placeholderData (kept for backward-compat)
+  keepPreviousData?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  placeholderData?: unknown;
 };
 
 /**
@@ -34,5 +38,5 @@ export type MutationHookOptions<TData = unknown, TError = Error, TVariables = un
     context: unknown
   ) => void;
   retry?: boolean | number;
-  networkMode?: "online" | "always" | "offConnected";
+  networkMode?: "online" | "always" | "offlineFirst";
 };

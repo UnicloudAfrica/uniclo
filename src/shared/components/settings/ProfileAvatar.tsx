@@ -60,9 +60,9 @@ const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
       const nextUrl = data?.data?.avatar_url || data?.data?.setting?.value || null;
       onAvatarChange(nextUrl);
       ToastUtils.success("Profile picture updated");
-    } catch (error: any) {
+    } catch (error) {
       logger.error(error);
-      ToastUtils.error(error.message || "Unable to upload profile picture right now.");
+      ToastUtils.error((error as Error)?.message || "Unable to upload profile picture right now.");
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -87,9 +87,9 @@ const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
       }
       onAvatarChange(null);
       ToastUtils.success("Profile picture removed");
-    } catch (error: any) {
+    } catch (error) {
       logger.error(error);
-      ToastUtils.error(error.message || "Unable to remove your profile picture right now.");
+      ToastUtils.error((error as Error)?.message || "Unable to remove your profile picture right now.");
     } finally {
       setIsUploading(false);
     }

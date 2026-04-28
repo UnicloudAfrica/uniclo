@@ -378,7 +378,7 @@ const ObjectStorageTable: React.FC<ObjectStorageTableProps> = ({
                   <div className="font-semibold text-gray-900">{account.name || "—"}</div>
                   <div className="text-xs text-gray-500">{account.account_id || "—"}</div>
                 </td>
-                <td className="px-6 py-4 text-gray-600">{account.provider || "Zadara"}</td>
+                <td className="px-6 py-4 text-gray-600">{account.provider || "—"}</td>
                 <td className="px-6 py-4 text-gray-600">{account.region || "—"}</td>
                 <td className="px-6 py-4">
                   <StatusBadge status={account.status || ""} />
@@ -427,7 +427,7 @@ const ObjectStorageTable: React.FC<ObjectStorageTableProps> = ({
         <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-gray-500">
           <div>
             <p className="uppercase text-[10px] text-gray-400">Provider</p>
-            <p className="text-sm font-medium text-gray-700">{account.provider || "Zadara"}</p>
+            <p className="text-sm font-medium text-gray-700">{account.provider || "—"}</p>
           </div>
           <div>
             <p className="uppercase text-[10px] text-gray-400">Region</p>

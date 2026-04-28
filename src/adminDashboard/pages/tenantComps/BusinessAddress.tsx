@@ -11,7 +11,7 @@ interface BusinessAddressProps {
       state?: string;
     };
   };
-  setFormData: (data: any) => void;
+  setFormData: (data: unknown) => void;
   errors: Record<string, string>;
   countries: unknown;
   isCountriesFetching: boolean;

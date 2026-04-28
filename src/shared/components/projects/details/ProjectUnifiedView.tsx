@@ -48,6 +48,7 @@ export interface IGWDetails {
   external_id?: string;
   state?: string;
   created_at?: string;
+  enabled?: boolean;
 }
 
 export interface NetworkStatus {
@@ -55,7 +56,7 @@ export interface NetworkStatus {
   internet_gateway?: { configured: boolean; can_enable?: boolean; details?: IGWDetails | null };
   subnets?: { configured: boolean };
   security_groups?: { configured: boolean };
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface SetupStep {

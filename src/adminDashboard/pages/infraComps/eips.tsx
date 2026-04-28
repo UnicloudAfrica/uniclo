@@ -37,7 +37,7 @@ const EIPs = ({ projectId = "", region = "" }: { projectId?: string; region?: st
         <ResourceSection
           title="Elastic IPs"
           description="Manage static public IP addresses for your infrastructure."
-          actions={headerActions}
+          actions={headerActions as React.ReactNode}
         >
           {children}
         </ResourceSection>

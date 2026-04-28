@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useLocation, Routes } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { getSubdomain } from "./utils/getSubdomain";
+import { useRehydrateFromServer } from "./hooks/useRehydrateFromServer";
 
 // Route Modules
 import PublicRoutes from "./routes/PublicRoutes";
@@ -12,16 +13,21 @@ import AdminShell from "./adminDashboard/components/AdminShell";
 import { AdminShellProvider } from "./adminDashboard/components/AdminShellContext";
 
 // Helper types so we can inject the rendered <Route> elements directly.
-const renderPublicRoutes = PublicRoutes as () => React.ReactElement<any>;
-const renderTenantRoutes = TenantRoutes as () => React.ReactElement<any>;
-const renderClientRoutes = ClientRoutes as () => React.ReactElement<any>;
-const renderAdminRoutes = AdminRoutes as () => React.ReactElement<any>;
+const renderPublicRoutes = PublicRoutes as () => React.ReactElement<unknown>;
+const renderTenantRoutes = TenantRoutes as () => React.ReactElement<unknown>;
+const renderClientRoutes = ClientRoutes as () => React.ReactElement<unknown>;
+const renderAdminRoutes = AdminRoutes as () => React.ReactElement<unknown>;
 
 const App: React.FC = () => {
   const location = useLocation();
   const _subdomain = getSubdomain();
   const isAdminRoute = location.pathname.startsWith("/admin-dashboard");
   // const isTenant = !!subdomain; // True for xyz.unicloudafrica.com, false for unicloudafrica.com
+
+  // H-05: Auth state (beyond userEmail / lastActiveRole) is no longer
+  // persisted in localStorage. Re-fetch from /auth/me on mount if a
+  // session appears to exist.
+  useRehydrateFromServer();
 
   useEffect(() => {
     globalThis.window.scrollTo(0, 0);

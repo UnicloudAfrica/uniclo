@@ -46,7 +46,7 @@ export const ObjectStorageTransactions: React.FC<ObjectStorageTransactionsProps>
     try {
       const data = await objectStorageApi.getTransactions(accountId);
       setTransactions(
-        ((data as Record<string, unknown>).transactions as InvoiceTransaction[]) || []
+        ((data as Record<string, unknown>).transactions as unknown as Transaction[]) || []
       );
       setTotal(((data as Record<string, unknown>).total as number) || 0);
     } catch (err) {

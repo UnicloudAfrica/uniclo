@@ -11,7 +11,7 @@ type ColocationSettingResponse = {
   percentage?: number | null;
 };
 
-const ColocationSetting = ({ selectedRegion, onMetricsChange }: any) => {
+const ColocationSetting = ({ selectedRegion, onMetricsChange }: { selectedRegion?: string; onMetricsChange?: (m: unknown) => void }) => {
   const {
     data: fetchedSettingRaw,
     isFetching: isSettingFetching,
@@ -21,7 +21,7 @@ const ColocationSetting = ({ selectedRegion, onMetricsChange }: any) => {
   const { mutate: updateSetting, isPending: isUpdating } = useCreateColocationSettings();
   const [percentage, setPercentage] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
     if (fetchedSetting) {
@@ -55,7 +55,7 @@ const ColocationSetting = ({ selectedRegion, onMetricsChange }: any) => {
   }, [fetchedSetting, onMetricsChange]);
 
   const validateInput = () => {
-    const nextErrors: Record<string, any> = {};
+    const nextErrors: Record<string, unknown> = {};
     const value = Number(percentage);
 
     if (percentage.trim() === "" || Number.isNaN(value)) {

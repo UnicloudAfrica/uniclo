@@ -9,6 +9,6 @@ const adminSilentSettingsApi = <T = unknown>(
   method: HttpMethod,
   path: string,
   body: Record<string, unknown> | null = null
-): Promise<T> => api.request<T>(method, path, body as any, { silent: true });
+): Promise<T> => api.request<T>(method, path, body, { silent: true });
 
 export default adminSilentSettingsApi;

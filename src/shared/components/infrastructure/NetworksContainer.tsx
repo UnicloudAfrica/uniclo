@@ -23,7 +23,7 @@ import { designTokens } from "@/styles/designTokens";
 import ToastUtils from "@/utils/toastUtil";
 import logger from "@/utils/logger";
 
-type AnyRecord = Record<string, any>;
+type AnyRecord = Record<string, unknown>;
 
 const ITEMS_PER_PAGE = 6;
 
@@ -77,7 +77,7 @@ const useFetchNetworks = (
       const res = await entry.silentApi.get<Record<string, unknown>>(
         `${entry.urlPrefix}/networks${qs ? `?${qs}` : ""}`
       );
-      return (res as Record<string, any>)?.data ?? res;
+      return (res as Record<string, unknown>)?.data ?? res;
     },
     enabled: Boolean(projectId && region),
     staleTime: 1000 * 60 * 5,
@@ -320,16 +320,16 @@ const NetworksContainer = ({
                     metadata={[
                       {
                         label: "Region",
-                        value: network.region || region || "\u2014",
+                        value: String(network.region || region || "\u2014"),
                       },
                       {
                         label: "VPC",
-                        value: network.vpc_id || network?.meta?.vpc_id || "\u2014",
+                        value: String(network.vpc_id || network?.meta?.vpc_id || "\u2014"),
                       },
                       { label: "CIDR", value: String(network.cidr || "\u2014") },
                       {
                         label: "Type",
-                        value: network.type || network?.meta?.network_type || "Unknown",
+                        value: String(network.type || network?.meta?.network_type || "Unknown"),
                       },
                     ]}
                     statuses={[

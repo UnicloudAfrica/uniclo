@@ -10,7 +10,7 @@ interface TenantHeadbarProps {
     name?: string;
     logo?: string;
     color?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   onMenuClick?: () => void;
 }

@@ -48,7 +48,7 @@ const IGWs = ({ projectId = "", region = "" }: { projectId?: string; region?: st
         headerActions,
         children,
       }: {
-        headerActions: unknown;
+        headerActions: React.ReactNode;
         children: React.ReactNode;
       }) => (
         <ResourceSection

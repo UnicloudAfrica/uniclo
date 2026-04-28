@@ -413,21 +413,21 @@ const OnboardingDashboard = () => {
                           value={formValues}
                           meta={submissionMeta}
                           onChange={
-                            setFormValues as Dispatch<SetStateAction<Record<string, unknown>>>
+                            setFormValues as Dispatch<SetStateAction<unknown>>
                           }
                         />
                       ) : definition.custom === "brandingTheme" ? (
                         <BrandingThemeForm
                           value={formValues}
                           onChange={
-                            setFormValues as Dispatch<SetStateAction<Record<string, unknown>>>
+                            setFormValues as Dispatch<SetStateAction<unknown>>
                           }
                         />
                       ) : definition.custom === "businessProfile" ? (
                         <BusinessProfileForm
                           value={formValues}
                           onChange={
-                            setFormValues as Dispatch<SetStateAction<Record<string, unknown>>>
+                            setFormValues as Dispatch<SetStateAction<unknown>>
                           }
                         />
                       ) : (

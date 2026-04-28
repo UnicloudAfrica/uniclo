@@ -14,13 +14,13 @@ const documentTypeOptions = [
   "other",
 ];
 
-const UpdateLeadDoc = ({ isOpen, onClose, document }: any) => {
+const UpdateLeadDoc = ({ isOpen, onClose, document }: { isOpen: boolean; onClose: () => void; document: unknown }) => {
   const [formData, setFormData] = useState({
     document_type: "",
     name: "",
     file: null,
   });
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, unknown>>({});
 
   const { mutate, isPending } = useUpdateDoc();
 
@@ -36,7 +36,7 @@ const UpdateLeadDoc = ({ isOpen, onClose, document }: any) => {
   }, [isOpen, document]);
 
   const validateForm = () => {
-    const newErrors: Record<string, any> = {};
+    const newErrors: Record<string, unknown> = {};
     if (!formData.document_type) {
       newErrors.document_type = "Please select a document type.";
     }
@@ -47,17 +47,17 @@ const UpdateLeadDoc = ({ isOpen, onClose, document }: any) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field: any, value: any) => {
+  const updateFormData = (field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleFileChange = (event: any) => {
+  const handleFileChange = (event: unknown) => {
     const fileBase64 = event.target.files[0];
     updateFormData("file", fileBase64 || null);
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.SyntheticEvent) => {
     if (e) e.preventDefault();
     if (!validateForm()) return;
 
@@ -94,8 +94,8 @@ const UpdateLeadDoc = ({ isOpen, onClose, document }: any) => {
 
   if (!isOpen) return null;
 
-  const formatDocumentNameForDisplay = (name: any) =>
-    name.replace(/_/g, " ").replace(/\b\w/g, (c: any) => c.toUpperCase());
+  const formatDocumentNameForDisplay = (name: unknown) =>
+    name.replace(/_/g, " ").replace(/\b\w/g, (c: unknown) => c.toUpperCase());
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">

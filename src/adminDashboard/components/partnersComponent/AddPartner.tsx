@@ -79,7 +79,7 @@ const AddPartner: React.FC<AddPartnerProps> = ({ isOpen, onClose, mode = "modal"
   const [discountFormData, setDiscountFormData] = useState<DiscountFormData>(
     getDefaultDiscountFormData()
   );
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<unknown>({});
 
   const { mutate: createTenant, isPending } = useCreateTenant();
   const { mutate: assignDiscount } = useAssignDiscount();
@@ -106,7 +106,7 @@ const AddPartner: React.FC<AddPartnerProps> = ({ isOpen, onClose, mode = "modal"
       validate: CreateAccount.validate,
     },
     {
-      component: (props: any) => (
+      component: (props: Record<string, unknown>) => (
         <BusinessInfo
           {...props}
           industries={industries}
@@ -119,7 +119,7 @@ const AddPartner: React.FC<AddPartnerProps> = ({ isOpen, onClose, mode = "modal"
       validate: BusinessInfo.validate,
     },
     {
-      component: (props: any) => (
+      component: (props: Record<string, unknown>) => (
         <BusinessAddress
           {...props}
           countries={countries}
@@ -136,7 +136,7 @@ const AddPartner: React.FC<AddPartnerProps> = ({ isOpen, onClose, mode = "modal"
       validate: BusinessAddress.validate,
     },
     {
-      component: (props: any) => (
+      component: (props: Record<string, unknown>) => (
         <UploadFiles
           {...props}
           setErrors={setErrors} // Pass setErrors to UploadFiles if needed
@@ -168,7 +168,7 @@ const AddPartner: React.FC<AddPartnerProps> = ({ isOpen, onClose, mode = "modal"
       validate: () => ({}), // No validation required for discount step
     },
     {
-      component: (props: any) => (
+      component: (props: Record<string, unknown>) => (
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <header className="mb-4">
             <h3 className="text-base font-semibold text-slate-900">Billing Configuration</h3>
@@ -263,7 +263,7 @@ const AddPartner: React.FC<AddPartnerProps> = ({ isOpen, onClose, mode = "modal"
       };
 
       createTenant(payload, {
-        onSuccess: (response: any) => {
+        onSuccess: (response: Record<string, unknown>) => {
           const tenantId = response?.data?.id;
 
           // If discount is enabled and we have a tenant ID, assign the discount
@@ -379,7 +379,7 @@ const AddPartner: React.FC<AddPartnerProps> = ({ isOpen, onClose, mode = "modal"
           .replace(/\b\w/g, (char) => char.toUpperCase())
       : "Not provided";
 
-  const ActiveStep = (currentStepConfig?.component ?? (() => null)) as React.ComponentType<any>;
+  const ActiveStep = (currentStepConfig?.component ?? (() => null)) as React.ComponentType<unknown>;
   const activeStepContent = currentStepConfig ? (
     <ActiveStep
       formData={formData}
@@ -501,14 +501,14 @@ const AddPartner: React.FC<AddPartnerProps> = ({ isOpen, onClose, mode = "modal"
           You can revisit earlier sections at any time without losing the captured data.
         </p>
       </div>
-      {summarySections.map((section: any) => (
+      {summarySections.map((section: unknown) => (
         <div
           key={section.title}
           className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
         >
           <h3 className="text-sm font-semibold text-slate-800">{section.title}</h3>
           <dl className="mt-3 space-y-3">
-            {section.items.map((item: any) => (
+            {section.items.map((item: unknown) => (
               <div
                 key={`${section.title}-${item.label}`}
                 className="flex items-start justify-between gap-3 text-sm"

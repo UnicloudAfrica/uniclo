@@ -120,7 +120,7 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
     const lastSegment = pathSegments[pathSegments.length - 1];
     const pathMap = pathMaps[dashboardType] || {};
     return (
-      pathMap[lastSegment as any] ||
+      pathMap[lastSegment as unknown] ||
       lastSegment?.charAt(0).toUpperCase() + lastSegment?.slice(1).replace(/-/g, " ")
     );
   };

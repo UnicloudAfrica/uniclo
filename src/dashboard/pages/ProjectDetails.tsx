@@ -124,8 +124,8 @@ const ProjectDetails: React.FC = () => {
       refetch: () => void;
     };
   const { data: edgeConfig } = useFetchTenantProjectEdgeConfig(projectId ?? "", project?.region);
-  const edgePayload = (edgeConfig as Record<string, unknown> | undefined)?.data ?? edgeConfig;
-  const edgeNetworkId = edgePayload?.edge_network_id;
+  const edgePayload = ((edgeConfig as Record<string, unknown> | undefined)?.data ?? edgeConfig) as Record<string, unknown> | undefined;
+  const edgeNetworkId = edgePayload?.edge_network_id as string | undefined;
   const { data: ipPools } = useFetchTenantIpPools(projectId ?? "", project?.region, edgeNetworkId, {
     enabled: Boolean(projectId && project?.region && edgeNetworkId),
   });
@@ -154,7 +154,7 @@ const ProjectDetails: React.FC = () => {
     }
     try {
       ToastUtils.info(`Executing ${label}...`);
-      const res = await api(method.toUpperCase(), endpoint, payload || {});
+      const res = await api(method.toUpperCase() as "GET" | "POST" | "PUT" | "PATCH" | "DELETE", endpoint, payload || {});
       ToastUtils.success(`${label} completed successfully!`);
       await Promise.all([refetchStatus(), refetchProject()]);
       return res;
@@ -237,9 +237,6 @@ const ProjectDetails: React.FC = () => {
           <Subnets
             projectId={projectId}
             region={project?.region}
-            actionRequest={null}
-            onActionHandled={() => {}}
-            onStatsUpdate={() => {}}
           />
         );
       case "routes":
@@ -247,9 +244,6 @@ const ProjectDetails: React.FC = () => {
           <RouteTables
             projectId={projectId}
             region={project?.region}
-            actionRequest={null}
-            onActionHandled={() => {}}
-            onStatsUpdate={() => {}}
           />
         );
       case "sgs":
@@ -259,9 +253,6 @@ const ProjectDetails: React.FC = () => {
           <IGWs
             projectId={projectId}
             region={project?.region}
-            actionRequest={null}
-            onActionHandled={() => {}}
-            onStatsUpdate={() => {}}
           />
         );
       case "enis":
@@ -269,9 +260,6 @@ const ProjectDetails: React.FC = () => {
           <ENIs
             projectId={projectId}
             region={project?.region}
-            actionRequest={null}
-            onActionHandled={() => {}}
-            onStatsUpdate={() => {}}
           />
         );
       case "eips":
@@ -279,9 +267,6 @@ const ProjectDetails: React.FC = () => {
           <EIPs
             projectId={projectId}
             region={project?.region}
-            actionRequest={null}
-            onActionHandled={() => {}}
-            onStatsUpdate={() => {}}
           />
         );
       case "nat":
@@ -323,9 +308,9 @@ const ProjectDetails: React.FC = () => {
         isFetching: query.isFetching ?? false,
         refetch: query.refetch,
       };
-    }) as KeyPairHooks["useList"] extends (...args: infer _A) => infer R ? R : never,
-    useSync: useSyncKeyPairs,
-    useDelete: useDeleteKeyPair,
+    }) as unknown as KeyPairHooks["useList"],
+    useSync: useSyncKeyPairs as unknown as KeyPairHooks["useSync"],
+    useDelete: useDeleteKeyPair as unknown as KeyPairHooks["useDelete"],
   };
 
   // Extract project users from status/project responses
@@ -343,7 +328,7 @@ const ProjectDetails: React.FC = () => {
   }, [projectResponse, statusData, project]);
 
   const projectDetails = useProjectDetailsAdapter({
-    project: project as Record<string, unknown>,
+    project: project as unknown as Record<string, unknown>,
     projectId,
     projectStatus: statusData,
     infraStatusData,
@@ -370,10 +355,7 @@ const ProjectDetails: React.FC = () => {
       }),
     computeTab: {
       hierarchy: "tenant",
-      useInstances: useTenantInstances as (
-        params: Record<string, unknown>,
-        options?: Record<string, unknown>
-      ) => { data: unknown[]; isFetching: boolean; refetch: () => void },
+      useInstances: useTenantInstances as never,
       keyPairHooks: tenantKeyPairHooks,
       onProvisionInstance: () =>
         navigate(
@@ -403,7 +385,7 @@ const ProjectDetails: React.FC = () => {
     renderLimitsTab: () => <ProjectLimitsTab projectIdentifier={projectId} />,
     renderSettingsTab: () => (
       <ProjectSettingsTab
-        project={project as any}
+        project={project as unknown}
         onUpdateProject={async (data) => {
           try {
             const encodedId = encodeURIComponent(projectId || "");
@@ -452,7 +434,7 @@ const ProjectDetails: React.FC = () => {
         region={project?.region}
         provider={project?.provider}
         hierarchy="tenant"
-        projectUsers={projectUsers as any[]}
+        projectUsers={projectUsers as import("@/types/project").ProjectUser[]}
         onRefresh={async () => {
           await Promise.all([refetchProject(), refetchStatus()]);
         }}
@@ -493,14 +475,7 @@ const ProjectDetails: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 min-h-[600px]">
           <InfrastructureSetupWizard
             project={project as unknown as import("@/types/project").Project}
-            setupMutation={
-              setupMutation as unknown as import("@tanstack/react-query").UseMutationResult<
-                unknown,
-                unknown,
-                Record<string, unknown>,
-                unknown
-              >
-            }
+            setupMutation={setupMutation as never}
           />
         </div>
       </TenantPageShell>

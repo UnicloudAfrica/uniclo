@@ -182,7 +182,7 @@ const CreateProjectModal = ({ onClose, mode = "modal" }: CreateProjectModalProps
     }
     if (!formData.region || !regionList.length) return "";
     const match = regionList.find((r) => r.code === formData.region);
-    return (match as any)?.provider || "";
+    return (match as unknown)?.provider || "";
   }, [formData.provider, formData.region, regionList, selectedAvailabilityZone]);
 
   const { data: cloudPoliciesData = [] } = useCloudPolicies(
@@ -634,7 +634,7 @@ const CreateProjectModal = ({ onClose, mode = "modal" }: CreateProjectModalProps
 
     // logger.log("Submitting Project Payload (Attempt ", nextAttempt, "):", payload);
 
-    createProject(payload as any, {
+    createProject(payload as unknown, {
       onSuccess: (project) => {
         // logger.log("Project creation response:", project);
         ToastUtils.success("Project created successfully!");

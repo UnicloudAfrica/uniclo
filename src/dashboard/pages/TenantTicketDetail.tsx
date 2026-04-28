@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import TenantPageShell from "../components/TenantPageShell";
 import { SharedTicketDetail } from "@/shared/components/support/SharedTicketDetail";
+import { SkeletonCard } from "@/shared/components/ui/Skeleton";
 import tenantApi from "../../index/tenant/tenantApi";
 import silentTenantApi from "../../index/tenant/silentTenant";
 import { Thread, SlaStatus } from "@/shared/components/support/threadTypes";
@@ -31,7 +32,7 @@ const TenantTicketDetail: React.FC = () => {
   // Mutations
   const replyMutation = useMutation({
     mutationFn: (payload: { message: string; files?: File[] }) => {
-      let body: any;
+      let body: unknown;
       if (payload.files && payload.files.length > 0) {
         const formData = new FormData();
         formData.append("body", payload.message);
@@ -86,9 +87,7 @@ const TenantTicketDetail: React.FC = () => {
   if (threadQuery.isLoading) {
     return (
       <TenantPageShell title="Ticket Details" description="View and reply to your support ticket">
-        <div className="flex h-64 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
-        </div>
+        <SkeletonCard />
       </TenantPageShell>
     );
   }

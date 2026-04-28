@@ -159,7 +159,7 @@ export type DesignTokens = {
   zIndex: ZIndexScale;
 };
 
-type ColorLike = Record<string | number, string | any>;
+type ColorLike = Record<string | number, string | ColorLike>;
 
 export const designTokens: DesignTokens = {
   // ==================== COLORS ====================
@@ -179,7 +179,7 @@ export const designTokens: DesignTokens = {
       950: "rgb(var(--theme-color-900))",
     },
 
-    // Secondary Colors - UniCloud Teal
+    // Secondary Colors — UniCloud Africa accent (light emerald)
     secondary: {
       50: "rgba(var(--secondary-color-rgb), 0.08)",
       100: "rgba(var(--secondary-color-rgb), 0.12)",

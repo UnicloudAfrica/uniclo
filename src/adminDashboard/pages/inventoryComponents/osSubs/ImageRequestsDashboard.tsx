@@ -16,7 +16,8 @@ import { ModernButton } from "@/shared/components/ui";
 import ToastUtils from "@/utils/toastUtil";
 
 const ImageRequestsDashboard = () => {
-  const { data: requests = [], isFetching } = useImageRequests();
+  const { data: requestsRaw = [], isFetching } = useImageRequests();
+  const requests = requestsRaw as Array<Record<string, unknown>>;
   const approveMutation = useApproveImageRequest();
   const rejectMutation = useRejectImageRequest();
   const [rejectId, setRejectId] = useState<string | null>(null);

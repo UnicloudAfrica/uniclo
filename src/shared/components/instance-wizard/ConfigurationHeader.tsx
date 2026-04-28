@@ -13,7 +13,7 @@ interface ConfigurationHeaderProps {
   removeConfiguration: (id: string) => void;
   onSaveTemplate?: (config: Configuration) => void;
   showTemplateSelector?: boolean;
-  onTemplateSelect?: (template: any) => void;
+  onTemplateSelect?: (template: unknown) => void;
 }
 
 const ConfigurationHeader: React.FC<ConfigurationHeaderProps> = ({

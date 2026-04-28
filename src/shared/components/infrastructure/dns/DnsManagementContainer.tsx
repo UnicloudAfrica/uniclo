@@ -23,15 +23,19 @@ const DnsManagementContainer: React.FC<DnsManagementContainerProps> = ({ project
   const [zoneComment, setZoneComment] = useState("");
 
   // Queries & Mutations (projectId and region are now optional for tenant-level)
-  const { data: zones = [], isLoading: isLoadingZones } = useDnsZones(projectId, region);
+  const zonesQuery = useDnsZones(projectId, region);
+  const zones = (zonesQuery.data ?? []) as DnsZone[];
+  const isLoadingZones = zonesQuery.isLoading;
   const { mutate: createZone, isPending: isCreating } = useCreateDnsZone();
   const { mutate: deleteZone } = useDeleteDnsZone();
 
-  const { data: records = [], isLoading: isLoadingRecords } = useDnsRecords(
+  const recordsQuery = useDnsRecords(
     selectedZone?.id || "",
     projectId,
     region
   );
+  const records = (recordsQuery.data ?? []) as DnsRecord[];
+  const isLoadingRecords = recordsQuery.isLoading;
   const { mutate: changeRecords } = useChangeDnsRecords();
 
   const handleCreateZone = (e: React.FormEvent) => {

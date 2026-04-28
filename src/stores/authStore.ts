@@ -11,8 +11,46 @@
  *   - Single getAuthHeaders() used by the unified API client
  */
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
+import type { StateStorage } from "zustand/middleware";
 import type { User, Tenant, TenantContext } from "../types/auth";
+import { setUser as setSentryUser } from "@/utils/sentry";
+import { queryClient } from "@/lib/queryClient";
+import ToastUtils from "@/utils/toastUtil";
+
+// ─── Safe localStorage wrapper (M-01) ─────────────────────────────────
+// Wraps localStorage access so quota-exceeded errors, private-mode
+// disabled storage, or SSR contexts fail soft instead of crashing the
+// persist middleware.
+const safeStorage: StateStorage = {
+  getItem: (name: string) => {
+    try {
+      return localStorage.getItem(name);
+    } catch {
+      return null;
+    }
+  },
+  setItem: (name: string, value: string) => {
+    try {
+      localStorage.setItem(name, value);
+    } catch {
+      // Quota exceeded or storage disabled — clear the key and drop
+      // the write. Swallow nested errors silently.
+      try {
+        localStorage.removeItem(name);
+      } catch {
+        /* ignore */
+      }
+    }
+  },
+  removeItem: (name: string) => {
+    try {
+      localStorage.removeItem(name);
+    } catch {
+      /* ignore */
+    }
+  },
+};
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -71,9 +109,10 @@ export interface UnifiedAuthState {
   // ── Actions ──
   login: (response: LoginResponse) => void;
   logout: () => Promise<void>;
+  forceLogout: () => void;
   setSession: (partial: Partial<SessionUpdate>) => void;
   clearSession: () => void;
-  switchTenant: (tenantSlug: string) => boolean;
+  switchTenant: (tenantSlug: string) => Promise<boolean>;
   setTwoFactorRequired: (value: boolean) => void;
   clearTwoFactorRequirement: () => void;
   setUser: (user: User | null) => void;
@@ -184,7 +223,7 @@ export const inferTenantContext = (): TenantContext => {
 
 const INITIAL_CONTEXT = inferTenantContext();
 
-const resolveAccessToken = (payload: Record<string, unknown> | null | undefined): string | null => {
+const _resolveAccessToken = (payload: Record<string, unknown> | null | undefined): string | null => {
   if (!payload) return null;
 
   const directToken = payload.token;
@@ -250,10 +289,12 @@ const useAuthStore = create<UnifiedAuthState>()(
         ...createInitialState(),
 
         // ── Login ──
+        // Auth is now cookie-based (Sanctum SPA). Token is no longer
+        // stored in state or localStorage — the httpOnly session cookie
+        // set by the server is the sole auth credential.
         login: (response: LoginResponse) => {
           const context = inferTenantContext();
           const role = (response.role as AuthRole) || "client";
-          const token = resolveAccessToken(response as unknown as Record<string, unknown>);
 
           const abilitiesArr = Array.isArray(response.abilities) ? response.abilities : [];
           const cloudRolesArr = Array.isArray(response.cloudRoles) ? response.cloudRoles : [];
@@ -262,13 +303,23 @@ const useAuthStore = create<UnifiedAuthState>()(
             : [];
           const permissionsArr = Array.isArray(response.permissions) ? response.permissions : [];
 
+          // Tag Sentry with non-PII identifiers so subsequent errors
+          // are attributable. We deliberately do NOT send email/name.
+          if (response.user?.id != null) {
+            setSentryUser({
+              id: response.user.id,
+              tenant_id: response.tenant?.id?.toString(),
+              role,
+            });
+          }
+
           set({
             user: response.user || null,
             userEmail: response.email || response.user?.email || null,
             isAuthenticated: true,
             twoFactorRequired: false,
             role,
-            token,
+            token: null, // Cookie-based auth — no token stored
             abilities: abilitiesArr,
             cloudRoles: cloudRolesArr,
             cloudAbilities: cloudAbilitiesArr,
@@ -295,30 +346,70 @@ const useAuthStore = create<UnifiedAuthState>()(
           });
         },
 
-        // ── Logout ──
+        // ── Logout (C-07) ──
+        // Server-confirmed logout: POST to server FIRST, only clear
+        // local state on 2xx (or 401, which means the session was
+        // already invalidated). On network failure or 5xx we surface
+        // the error to the caller and leave local state intact so the
+        // caller can retry or call forceLogout() as an escape hatch.
         logout: async () => {
           const state = get();
           const role = state.session?.role;
 
-          // Call the server logout endpoint
-          try {
-            const config = await import("../config");
-            const baseUrl =
-              role === "admin"
-                ? config.default.adminURL
-                : role === "tenant"
-                  ? config.default.tenantURL
-                  : config.default.baseURL;
+          const config = await import("../config");
+          const baseUrl =
+            role === "admin"
+              ? config.default.adminURL
+              : role === "tenant"
+                ? config.default.tenantURL
+                : config.default.baseURL;
 
-            await fetch(`${baseUrl}/business/auth/logout`, {
+          let response: Response;
+          try {
+            response = await fetch(`${baseUrl}/business/auth/logout`, {
               method: "POST",
               headers: state.getAuthHeaders(),
               credentials: "include",
             });
-          } catch {
-            // Logout failed silently — still clear local state
+          } catch (err) {
+            // Network error — don't clear state, let caller handle.
+            ToastUtils.error(
+              "Couldn't reach server to log out. Check your connection and try again."
+            );
+            throw err;
           }
 
+          // 401 is acceptable — session was already invalidated on the
+          // server side; clearing local state is still safe.
+          if (!response.ok && response.status !== 401) {
+            ToastUtils.error(
+              "Logout failed. Please try again or contact support."
+            );
+            throw new Error(`Logout failed with status ${response.status}`);
+          }
+
+          // Server confirmed logout — safe to clear local state.
+          setSentryUser(null);
+          try {
+            queryClient.clear();
+          } catch {
+            /* swallow cache clear errors */
+          }
+          resetState();
+        },
+
+        // Force-logout escape hatch: clears local state unconditionally
+        // without awaiting the server. Use for "log out all devices"
+        // flows or when the user explicitly wants to bail out of a
+        // broken session (e.g. server unreachable but they need to
+        // switch accounts).
+        forceLogout: () => {
+          setSentryUser(null);
+          try {
+            queryClient.clear();
+          } catch {
+            /* swallow cache clear errors */
+          }
           resetState();
         },
 
@@ -380,13 +471,55 @@ const useAuthStore = create<UnifiedAuthState>()(
 
         clearSession: resetState,
 
-        // ── Tenant switching (admin) ──
-        switchTenant: (tenantSlug: string) => {
+        // ── Tenant switching (admin) — H-01 ──
+        // Before redirecting to the tenant subdomain, server must
+        // confirm the user actually has access. The server endpoint
+        // `/auth/switch-tenant` validates the membership and returns
+        // success. Only on a 2xx do we redirect.
+        //
+        // M-08: Also clear the TanStack Query cache before redirecting,
+        // so cached per-tenant data from the previous context isn't
+        // read by the new tenant.
+        switchTenant: async (tenantSlug: string) => {
           if (typeof window === "undefined" || !tenantSlug) return false;
-          const safeSlug = tenantSlug.replace(/[^a-zA-Z0-9-]/g, '');
+          const safeSlug = tenantSlug.replace(/[^a-zA-Z0-9-]/g, "");
           if (!safeSlug) return false;
+
+          // Server-side authorization check.
+          try {
+            const config = await import("../config");
+            const baseUrl = config.default.baseURL;
+            const res = await fetch(`${baseUrl}/auth/switch-tenant`, {
+              method: "POST",
+              credentials: "include",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              body: JSON.stringify({ tenant_slug: safeSlug }),
+            });
+            if (!res.ok) {
+              ToastUtils.error("You do not have access to that tenant.");
+              return false;
+            }
+          } catch {
+            ToastUtils.error(
+              "Couldn't verify tenant access. Check your connection and try again."
+            );
+            return false;
+          }
+
+          // Clear namespaced query cache before crossing tenant boundary.
+          try {
+            queryClient.clear();
+          } catch {
+            /* swallow */
+          }
+
           const protocol = globalThis.window.location.protocol;
-          const port = globalThis.window.location.port ? `:${globalThis.window.location.port}` : "";
+          const port = globalThis.window.location.port
+            ? `:${globalThis.window.location.port}`
+            : "";
           const targetHost = `${safeSlug}.unicloudafrica.com`;
           globalThis.window.location.href = `${protocol}//${targetHost}${port}`;
           return true;
@@ -487,16 +620,15 @@ const useAuthStore = create<UnifiedAuthState>()(
         setToken: (token: string | null) => set({ token }),
 
         // ── Computed helpers ──
+        // Auth is cookie-based (Sanctum SPA) — no Authorization header
+        // needed. The browser sends the session cookie automatically
+        // when `credentials: "include"` is set on fetch requests.
         getAuthHeaders: () => {
-          const { currentTenant, session, token } = get();
+          const { currentTenant, session } = get();
           const headers: Record<string, string> = {
             "Content-Type": "application/json",
             Accept: "application/json",
           };
-
-          if (token) {
-            headers["Authorization"] = `Bearer ${token}`;
-          }
 
           // Include tenant slug for non-central domains
           const isCentral = session?.isCentralDomain ?? true;
@@ -532,36 +664,20 @@ const useAuthStore = create<UnifiedAuthState>()(
     },
     {
       name: "unicloud_auth",
-      storage: {
-        getItem: (name) => {
-          const str = localStorage.getItem(name);
-          if (!str) return null;
-          return JSON.parse(str);
-        },
-        setItem: (name, value) => {
-          localStorage.setItem(name, JSON.stringify(value));
-        },
-        removeItem: (name) => localStorage.removeItem(name),
-      },
+      // M-01: Use the safe wrapper so quota-exceeded / disabled storage
+      // failures are swallowed instead of crashing the store.
+      storage: createJSONStorage(() => safeStorage),
+      // H-05: Reduce localStorage footprint. Only keep the bare minimum
+      // needed for UX before first render:
+      //   - userEmail: for login-form prefill
+      //   - lastActiveRole: for initial routing decision
+      // Everything else (full user, tenants, session details) must be
+      // fetched from `/api/v1/me` on mount via rehydrateFromServer().
+      // This reduces XSS blast radius and fixes stale-state bugs.
       partialize: (state) =>
         ({
-          user: state.user,
           userEmail: state.userEmail,
-          session: state.session,
-          role: state.role,
-          isAuthenticated: state.isAuthenticated,
-          twoFactorRequired: state.twoFactorRequired,
-          cloudRoles: state.cloudRoles,
-          cloudAbilities: state.cloudAbilities,
-          abilities: state.abilities,
-          permissions: state.permissions,
-          workspaceRole: state.workspaceRole,
-          isCentralDomain: state.isCentralDomain,
-          currentDomain: state.currentDomain,
-          tenant: state.tenant,
-          domain: state.domain,
-          currentTenant: state.currentTenant,
-          availableTenants: state.availableTenants,
+          lastActiveRole: state.session?.role ?? null,
         }) as unknown as UnifiedAuthState,
       onRehydrateStorage: () => () => {
         externalSetHasHydrated?.(true);

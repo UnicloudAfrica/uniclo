@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BarChart3, TrendingUp, AlertCircle, Zap, Loader2, Activity } from "lucide-react";
+import { TrendingUp, AlertCircle, Zap, Loader2, Activity } from "lucide-react";
 import { designTokens } from "@/styles/designTokens";
 import { useFetchApiUsage } from "@/hooks/developerHooks";
 

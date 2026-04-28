@@ -1,7 +1,7 @@
 import {
   Home, Rocket, Server, KeyRound, HardDrive, Database,
   Network, Lock,
-  ShieldCheck, CloudOff, ArrowLeftRight,
+  ShieldCheck, ArrowLeftRight,
   Bot, Calculator, CreditCard,
   Code2, LifeBuoy, Settings,
 } from "lucide-react";
@@ -42,6 +42,7 @@ export const clientDocSections: DocSection[] = [
     heading: "Platform Services",
     links: [
       { label: "Infrastructure Agent", slug: "agent", icon: Bot },
+      { label: "Shield Protection", slug: "shield", icon: ShieldCheck },
     ],
   },
   {

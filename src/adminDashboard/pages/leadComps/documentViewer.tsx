@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { AlertTriangle, ExternalLink, Loader2, X } from "lucide-react";
 import { useDownloadDoc } from "@/hooks/adminHooks/leadsHooks";
 
-const inferMimeTypeFromName = (fileName: any) => {
+const inferMimeTypeFromName = (fileName: unknown) => {
   const lower = fileName?.toLowerCase() || "";
   if (lower.endsWith(".pdf")) return "application/pdf";
   if (/\.(png|jpe?g|gif|bmp|webp)$/i.test(lower)) return "image/*";
@@ -13,7 +13,7 @@ const inferMimeTypeFromName = (fileName: any) => {
   return null;
 };
 
-const categorizeFileType = (mimeType: any, fileName: any) => {
+const categorizeFileType = (mimeType: string, fileName: string) => {
   const fallback = inferMimeTypeFromName(fileName);
   const type = mimeType || fallback || "";
   return {
@@ -24,12 +24,12 @@ const categorizeFileType = (mimeType: any, fileName: any) => {
   };
 };
 
-const DocumentViewerModal = ({ isOpen, onClose, document: documentData }: any) => {
+const DocumentViewerModal = ({ isOpen, onClose, document: documentData }: { isOpen: boolean; onClose: () => void; document: unknown }) => {
   const documentId = documentData?.identifier;
   const documentName = documentData?.name || "Document Viewer";
-  const [modalContainer, setModalContainer] = useState<any>(null);
-  const [objectUrl, setObjectUrl] = useState<any>(null);
-  const [mimeType, setMimeType] = useState<any>(null);
+  const [modalContainer, setModalContainer] = useState<unknown>(null);
+  const [objectUrl, setObjectUrl] = useState<unknown>(null);
+  const [mimeType, setMimeType] = useState<unknown>(null);
 
   const {
     data,
@@ -40,11 +40,11 @@ const DocumentViewerModal = ({ isOpen, onClose, document: documentData }: any) =
     remove: removeQuery,
   } = useDownloadDoc(documentId, {
     enabled: false,
-  }) as any as {
-    data: any;
+  }) as unknown as {
+    data: unknown;
     isFetching: boolean;
     isError: boolean;
-    error: any;
+    error: unknown;
     refetch: () => void;
     remove: () => void;
   };
@@ -85,7 +85,7 @@ const DocumentViewerModal = ({ isOpen, onClose, document: documentData }: any) =
   }, [isOpen, removeQuery]);
 
   useEffect(() => {
-    const handleKeyDown = (event: any) => {
+    const handleKeyDown = (event: unknown) => {
       if (event.key === "Escape") {
         onClose();
       }

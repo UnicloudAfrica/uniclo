@@ -13,7 +13,6 @@ import {
   Loader2,
   MapPin,
   RefreshCw,
-  Settings,
   ShieldCheck,
   Sparkles,
   Users,
@@ -52,7 +51,7 @@ const formatSegment = (value: string | undefined | null) => {
 const formatDateTime = (value: string | Date | undefined | null) =>
   value ? new Date(value).toLocaleString() : "—";
 
-const AttributeTile = ({ label, value, hint, icon: Icon }: any) => {
+const AttributeTile = ({ label, value, hint, icon: Icon }: { label: React.ReactNode; value: React.ReactNode; hint?: React.ReactNode; icon: React.ComponentType<{ size?: number }> }) => {
   const resolvedValue = value !== null && value !== undefined && value !== "" ? value : "—";
   return (
     <div className="flex items-start gap-3 rounded-2xl border border-gray-100 bg-gray-50/70 px-4 py-3">
@@ -73,7 +72,7 @@ const AttributeTile = ({ label, value, hint, icon: Icon }: any) => {
 const RegionDetail = () => {
   const { id: code } = useParams();
   const navigate = useNavigate();
-  const [region, setRegion] = useState<any>(null);
+  const [region, setRegion] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
 
   const { data: availabilityZones = [], isLoading: azLoading } = useFetchAvailabilityZones(
@@ -356,7 +355,7 @@ const RegionDetail = () => {
 
           {statsCards.length > 0 && (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {statsCards.map((card: any) => (
+              {statsCards.map((card: unknown) => (
                 <ModernStatsCard
                   key={card.key}
                   title={card.title}

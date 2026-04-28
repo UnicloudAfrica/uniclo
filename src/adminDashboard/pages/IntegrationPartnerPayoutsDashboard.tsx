@@ -17,7 +17,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import AdminPageShell from "../components/AdminPageShell";
 import { ModernButton } from "@/shared/components/ui";
-import api from "@/lib/api";
+import api from "../../lib/api";
 
 // Types
 interface IntegrationPayout {
@@ -81,7 +81,7 @@ const useIntegrationPayouts = (params: Record<string, unknown>) =>
         `/integration-payouts?${query.toString()}`,
         { silent: true }
       );
-      return (res as { data: PaginatedResponse }).data ?? (res as PaginatedResponse);
+      return (res as { data: PaginatedResponse }).data ?? (res as unknown as PaginatedResponse);
     },
   });
 

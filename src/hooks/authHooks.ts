@@ -12,12 +12,14 @@ type AuthPayload = Record<string, unknown>;
 
 const AUTH_OPTS = { baseUrl: config.baseURL } as const;
 
-// **POST**: Create a new account
+// **POST**: Create a new account — fetch CSRF cookie first for Sanctum SPA auth
 const createAccount = async (userData: AuthPayload) => {
+  await api.csrfCookie();
   return await api.post("/business/auth/register", userData, AUTH_OPTS);
 };
-// **POST** login
+// **POST** login — fetch CSRF cookie first for Sanctum SPA auth
 const loginAccount = async (userData: AuthPayload) => {
+  await api.csrfCookie();
   return await api.post("/business/auth/login", userData, AUTH_OPTS);
 };
 // **POST** verify email

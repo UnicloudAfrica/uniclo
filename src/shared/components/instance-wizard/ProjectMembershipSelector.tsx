@@ -19,17 +19,25 @@ const PROJECT_MEMBERSHIP_SCOPES = [
   },
 ];
 
+export interface MembershipMember {
+  id: string | number;
+  name?: string;
+  email?: string;
+  role?: string;
+  [key: string]: unknown;
+}
+
 export interface ProjectMembershipSelectorProps {
   assignmentScope: string;
   lockAssignmentScope: boolean;
   shouldFetchMembers: boolean;
   isMembersFetching: boolean;
-  selectedMembers: any[];
+  selectedMembers: unknown[];
   selectedMemberIds: Set<number>;
-  suggestedMembers: any[];
+  suggestedMembers: unknown[];
   showRestoreMembers: boolean;
   onAssignmentScopeChange: (value: string) => void;
-  onToggleMember: (member: any) => void;
+  onToggleMember: (member: MembershipMember) => void;
   onRestoreMembers: () => void;
 }
 
@@ -112,7 +120,7 @@ const ProjectMembershipSelector: React.FC<ProjectMembershipSelectorProps> = ({
                 </div>
               ) : selectedMembers.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
-                  {selectedMembers.map((member: any) => (
+                  {(selectedMembers as MembershipMember[]).map((member) => (
                     <span
                       key={member.id}
                       className="inline-flex items-center bg-primary-600 text-white text-xs px-3 py-1 rounded-full"
@@ -147,7 +155,7 @@ const ProjectMembershipSelector: React.FC<ProjectMembershipSelectorProps> = ({
                 </div>
               ) : suggestedMembers.length > 0 ? (
                 <div className="max-h-48 overflow-y-auto divide-y divide-gray-100">
-                  {suggestedMembers.map((member: any) => {
+                  {(suggestedMembers as MembershipMember[]).map((member) => {
                     const isSelected = selectedMemberIds.has(Number(member.id));
                     return (
                       <label

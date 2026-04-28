@@ -30,7 +30,7 @@ import type { AvailabilityZone } from "@/shared/types/resource";
 const RegionEdit = () => {
   const { id: code } = useParams();
   const navigate = useNavigate();
-  const [region, setRegion] = useState<any>(null);
+  const [region, setRegion] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const { data: tenantsData } = useFetchTenants();
@@ -49,7 +49,7 @@ const RegionEdit = () => {
     is_active: true,
     visibility: "public",
   });
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, unknown>>({});
 
   // ── Availability Zone state ──────────────────────────────────
   const { data: availabilityZones, refetch: refetchAZs } = useFetchAvailabilityZones(code);
@@ -92,7 +92,7 @@ const RegionEdit = () => {
     fetchRegionDetail();
   }, [fetchRegionDetail]);
 
-  const handleChange = (event: any) => {
+  const handleChange = (event: unknown) => {
     const { name, value, type, checked } = event.target;
     setFormData((prev) => {
       const updatedValue =
@@ -103,7 +103,7 @@ const RegionEdit = () => {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
-  const handleStatusChange = (event: any) => {
+  const handleStatusChange = (event: unknown) => {
     const { value } = event.target;
     setFormData((prev) => ({ ...prev, status: value }));
     if (errors.status) {
@@ -114,7 +114,7 @@ const RegionEdit = () => {
     setFormData((prev) => ({ ...prev, is_active: !prev.is_active }));
   };
   const validate = () => {
-    const nextErrors: Record<string, any> = {};
+    const nextErrors: Record<string, unknown> = {};
     if (!formData.name.trim()) nextErrors.name = "Region name is required";
     if (!formData.country_code.trim()) nextErrors.country_code = "Country code is required";
 
@@ -123,7 +123,7 @@ const RegionEdit = () => {
   };
 
   // ── AZ handlers ──────────────────────────────────────────────
-  const handleAZFormChange = (event: any) => {
+  const handleAZFormChange = (event: unknown) => {
     const { name, value } = event.target;
     setAzFormData((prev) => ({ ...prev, [name]: value }));
     if (azFormErrors[name]) {
@@ -156,9 +156,9 @@ const RegionEdit = () => {
       setAzFormData({ code: "", name: "", provider: "", is_active: true });
       setShowAddAZForm(false);
       refetchAZs();
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("Error creating AZ:", error);
-      ToastUtils.error(error.message || "Failed to create Availability Zone");
+      ToastUtils.error((error instanceof Error ? error.message : String(error)) || "Failed to create Availability Zone");
     }
   };
 
@@ -171,9 +171,9 @@ const RegionEdit = () => {
       });
       ToastUtils.success("Availability Zone deleted successfully");
       refetchAZs();
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("Error deleting AZ:", error);
-      ToastUtils.error(error.message || "Failed to delete Availability Zone");
+      ToastUtils.error((error instanceof Error ? error.message : String(error)) || "Failed to delete Availability Zone");
     } finally {
       setDeletingAZ(null);
     }
@@ -188,9 +188,9 @@ const RegionEdit = () => {
       });
       ToastUtils.success(`${az.name || az.code} ${az.is_active ? "deactivated" : "activated"}`);
       refetchAZs();
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("Error toggling AZ:", error);
-      ToastUtils.error(error.message || "Failed to update Availability Zone");
+      ToastUtils.error((error instanceof Error ? error.message : String(error)) || "Failed to update Availability Zone");
     }
   };
 
@@ -220,9 +220,9 @@ const RegionEdit = () => {
 
       ToastUtils.success("Region updated successfully");
       navigate(`/admin-dashboard/regions/${formData.code}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("Error updating region:", error);
-      ToastUtils.error(error.message || "Failed to update region");
+      ToastUtils.error((error instanceof Error ? error.message : String(error)) || "Failed to update region");
     } finally {
       setSubmitting(false);
     }
@@ -233,9 +233,9 @@ const RegionEdit = () => {
       await adminRegionApi.revokeFastTrack(region.code, tenantId);
       ToastUtils.success("Fast Track access revoked successfully");
       fetchRegionDetail();
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("Error revoking Fast Track:", error);
-      ToastUtils.error(error.message || "Failed to revoke Fast Track access");
+      ToastUtils.error((error instanceof Error ? error.message : String(error)) || "Failed to revoke Fast Track access");
     }
   };
   const locationLabel = useMemo(() => {
@@ -388,7 +388,7 @@ const RegionEdit = () => {
                     className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 pl-10"
                   >
                     <option value="">Select a country...</option>
-                    {countries.map((c: any) => (
+                    {countries.map((c: unknown) => (
                       <option key={c.id || c.code} value={c.code || c.iso2}>
                         {c.name}
                       </option>
@@ -424,7 +424,7 @@ const RegionEdit = () => {
                   onChange={handleStatusChange}
                   className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 >
-                  {statusOptions.map((option: any) => (
+                  {statusOptions.map((option: unknown) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>

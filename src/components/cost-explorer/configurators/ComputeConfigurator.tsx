@@ -1,7 +1,42 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Plus, Server } from "lucide-react";
 import useCartStore from "@/stores/cartStore";
 import { useFetchCalculatorOptions, useFetchPublicRegions } from "@/hooks/useCostExplorer";
+
+interface Flavor {
+  id: number;
+  name: string;
+  vcpus?: number;
+  memory_mb?: number;
+  memory_gib?: number;
+  unit_local?: number;
+  price?: number;
+  currency?: string;
+}
+interface OsImage {
+  id: number;
+  name?: string;
+  display_name?: string;
+  unit_local?: number;
+  price?: number;
+}
+interface VolumeType {
+  id: number;
+  name: string;
+  unit_local?: number;
+  price_per_gb?: number;
+}
+interface Bandwidth {
+  id: number;
+  name: string;
+  unit_local?: number;
+  price?: number;
+}
+interface FloatingIp {
+  id: number;
+  unit_local?: number;
+  price?: number;
+}
 
 export default function ComputeConfigurator() {
   const { data: regions } = useFetchPublicRegions();
@@ -23,27 +58,28 @@ export default function ComputeConfigurator() {
   const regionList = Array.isArray(regions) ? regions : [];
   const selectedRegion = regionList.find((r) => r.code === region);
   const azList = selectedRegion?.availability_zones ?? [];
-  const flavors = options?.compute_flavors ?? [];
-  const osImages = options?.os_images ?? [];
-  const volumeTypes = options?.block_storage ?? [];
-  const bandwidths = options?.bandwidth ?? [];
+  const flavors = (options?.compute_flavors ?? []) as Flavor[];
+  const osImages = (options?.os_images ?? []) as OsImage[];
+  const volumeTypes = (options?.block_storage ?? []) as VolumeType[];
+  const bandwidths = (options?.bandwidth ?? []) as Bandwidth[];
 
-  const flavor = flavors.find((f: any) => f.id === flavorId);
-  const os = osImages.find((o: any) => o.id === osId);
-  const volType = volumeTypes.find((v: any) => v.id === volumeTypeId);
-  const bw = bandwidths.find((b: any) => b.id === bandwidthId);
+  const flavor = flavors.find((f: Flavor) => f.id === flavorId);
+  const os = osImages.find((o: OsImage) => o.id === osId);
+  const volType = volumeTypes.find((v: VolumeType) => v.id === volumeTypeId);
+  const bw = bandwidths.find((b: Bandwidth) => b.id === bandwidthId);
 
-  const flavorPrice = (flavor as any)?.unit_local ?? (flavor as any)?.price ?? 0;
-  const osPrice = (os as any)?.unit_local ?? (os as any)?.price ?? 0;
-  const storagePrice = ((volType as any)?.unit_local ?? (volType as any)?.price_per_gb ?? 0) * storageGb;
-  const bwPrice = bw ? ((bw as any)?.unit_local ?? (bw as any)?.price ?? 0) * bandwidthCount : 0;
-  const ipPrice = floatingIpCount * ((options?.floating_ips?.[0] as any)?.unit_local ?? 0);
+  const flavorPrice = flavor?.unit_local ?? flavor?.price ?? 0;
+  const osPrice = os?.unit_local ?? os?.price ?? 0;
+  const storagePrice = (volType?.unit_local ?? volType?.price_per_gb ?? 0) * storageGb;
+  const bwPrice = bw ? (bw?.unit_local ?? bw?.price ?? 0) * bandwidthCount : 0;
+  const floatingIpOptions = (options?.floating_ips ?? []) as FloatingIp[];
+  const ipPrice = floatingIpCount * (floatingIpOptions[0]?.unit_local ?? 0);
 
   const unitMonthly = flavorPrice + osPrice + storagePrice + bwPrice + ipPrice;
   const totalMonthly = unitMonthly * instanceCount;
   const totalForPeriod = totalMonthly * months;
 
-  const currency = (flavor as any)?.currency ?? "NGN";
+  const currency = flavor?.currency ?? "NGN";
   const sym = currency === "NGN" ? "₦" : "$";
   const fmt = (v: number) => `${sym}${v.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
@@ -51,8 +87,8 @@ export default function ComputeConfigurator() {
     if (!flavor) return;
     addItem({
       category: "compute",
-      name: `${(flavor as any).name} × ${instanceCount}`,
-      description: `${(flavor as any).vcpus} vCPU, ${Math.round(((flavor as any).memory_mb ?? (flavor as any).memory_gib * 1024) / 1024)}GB RAM, ${storageGb}GB ${(volType as any)?.name ?? "storage"}`,
+      name: `${flavor.name} × ${instanceCount}`,
+      description: `${flavor.vcpus} vCPU, ${Math.round((flavor.memory_mb ?? (flavor.memory_gib ?? 0) * 1024) / 1024)}GB RAM, ${storageGb}GB ${volType?.name ?? "storage"}`,
       config: { flavor_id: flavorId, os_id: osId, volume_type_id: volumeTypeId, storage_gb: storageGb, bandwidth_id: bandwidthId, bandwidth_count: bandwidthCount, floating_ip_count: floatingIpCount, region, az, months },
       monthly_cost: totalMonthly,
       one_time_cost: 0,
@@ -100,14 +136,14 @@ export default function ComputeConfigurator() {
             <label className="mb-1 block text-xs font-medium text-gray-600">Instance Type *</label>
             <select value={flavorId} onChange={(e) => setFlavorId(+e.target.value)} disabled={!region} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-50">
               <option value={0}>Select instance type</option>
-              {flavors.map((f: any) => <option key={f.id} value={f.id}>{f.name} — {f.vcpus} vCPU, {Math.round((f.memory_mb ?? f.memory_gib * 1024) / 1024)}GB RAM — {fmt(f.unit_local ?? f.price ?? 0)}/mo</option>)}
+              {flavors.map((f: Flavor) => <option key={f.id} value={f.id}>{f.name} — {f.vcpus} vCPU, {Math.round((f.memory_mb ?? (f.memory_gib ?? 0) * 1024) / 1024)}GB RAM — {fmt(f.unit_local ?? f.price ?? 0)}/mo</option>)}
             </select>
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-600">Operating System *</label>
             <select value={osId} onChange={(e) => setOsId(+e.target.value)} disabled={!region} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-50">
               <option value={0}>Select OS</option>
-              {osImages.map((o: any) => <option key={o.id} value={o.id}>{o.display_name || o.name}{o.unit_local > 0 ? ` — ${fmt(o.unit_local)}/mo` : " — Free"}</option>)}
+              {osImages.map((o: OsImage) => <option key={o.id} value={o.id}>{o.display_name || o.name}{(o.unit_local ?? 0) > 0 ? ` — ${fmt(o.unit_local ?? 0)}/mo` : " — Free"}</option>)}
             </select>
           </div>
         </div>
@@ -121,7 +157,7 @@ export default function ComputeConfigurator() {
             <label className="mb-1 block text-xs font-medium text-gray-600">Volume Type *</label>
             <select value={volumeTypeId} onChange={(e) => setVolumeTypeId(+e.target.value)} disabled={!region} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-50">
               <option value={0}>Select volume type</option>
-              {volumeTypes.map((v: any) => <option key={v.id} value={v.id}>{v.name} — {fmt(v.unit_local ?? v.price_per_gb ?? 0)}/GB/mo</option>)}
+              {volumeTypes.map((v: VolumeType) => <option key={v.id} value={v.id}>{v.name} — {fmt(v.unit_local ?? v.price_per_gb ?? 0)}/GB/mo</option>)}
             </select>
           </div>
           <div>
@@ -139,7 +175,7 @@ export default function ComputeConfigurator() {
             <label className="mb-1 block text-xs font-medium text-gray-600">Bandwidth</label>
             <select value={bandwidthId} onChange={(e) => setBandwidthId(+e.target.value)} disabled={!region} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-50">
               <option value={0}>None</option>
-              {bandwidths.map((b: any) => <option key={b.id} value={b.id}>{b.name} — {fmt(b.unit_local ?? b.price ?? 0)}/mo</option>)}
+              {bandwidths.map((b: Bandwidth) => <option key={b.id} value={b.id}>{b.name} — {fmt(b.unit_local ?? b.price ?? 0)}/mo</option>)}
             </select>
           </div>
           <div>
@@ -175,9 +211,9 @@ export default function ComputeConfigurator() {
         <div className="rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 p-5">
           <div className="mb-3 text-sm font-semibold text-gray-700">Cost Breakdown</div>
           <div className="space-y-1 text-xs text-gray-600">
-            <div className="flex justify-between"><span>Compute ({(flavor as any).name})</span><span>{fmt(flavorPrice)}/mo</span></div>
+            <div className="flex justify-between"><span>Compute ({flavor.name})</span><span>{fmt(flavorPrice)}/mo</span></div>
             {osPrice > 0 && <div className="flex justify-between"><span>OS License</span><span>{fmt(osPrice)}/mo</span></div>}
-            <div className="flex justify-between"><span>Storage ({storageGb}GB {(volType as any)?.name ?? ""})</span><span>{fmt(storagePrice)}/mo</span></div>
+            <div className="flex justify-between"><span>Storage ({storageGb}GB {volType?.name ?? ""})</span><span>{fmt(storagePrice)}/mo</span></div>
             {bwPrice > 0 && <div className="flex justify-between"><span>Bandwidth × {bandwidthCount}</span><span>{fmt(bwPrice)}/mo</span></div>}
             {ipPrice > 0 && <div className="flex justify-between"><span>Floating IPs × {floatingIpCount}</span><span>{fmt(ipPrice)}/mo</span></div>}
             <div className="flex justify-between border-t border-blue-200 pt-1 font-semibold text-gray-800"><span>Per instance/mo</span><span>{fmt(unitMonthly)}</span></div>

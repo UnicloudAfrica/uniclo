@@ -17,7 +17,8 @@ const ImageSyncPanel = ({ region, provider = "zadara" }: ImageSyncPanelProps) =>
     stale_marked: number;
   } | null>(null);
 
-  const { data: comparison, isFetching: isComparing } = useImageSyncComparison(region, provider);
+  const { data: comparisonRaw, isFetching: isComparing } = useImageSyncComparison(region, provider);
+  const comparison = comparisonRaw as { active?: number; inactive?: number; missing_product?: number } | undefined;
   const syncMutation = useTriggerImageSync();
 
   const handleSync = () => {
@@ -57,18 +58,18 @@ const ImageSyncPanel = ({ region, provider = "zadara" }: ImageSyncPanelProps) =>
               <StatBadge
                 icon={<CheckCircle className="h-3.5 w-3.5 text-emerald-500" />}
                 label="Active"
-                value={comparison.active}
+                value={comparison.active ?? 0}
               />
               <StatBadge
                 icon={<XCircle className="h-3.5 w-3.5 text-slate-400" />}
                 label="Inactive"
-                value={comparison.inactive}
+                value={comparison.inactive ?? 0}
               />
-              {comparison.missing_product > 0 && (
+              {(comparison.missing_product ?? 0) > 0 && (
                 <StatBadge
                   icon={<AlertTriangle className="h-3.5 w-3.5 text-amber-500" />}
                   label="Missing pricing"
-                  value={comparison.missing_product}
+                  value={comparison.missing_product ?? 0}
                 />
               )}
             </>

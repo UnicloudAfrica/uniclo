@@ -36,7 +36,7 @@ const ManagedDatabaseInventory = ({
 }: {
   selectedRegion: string;
   selectedProvider?: string;
-  onMetricsChange?: (payload: { description?: string; metrics?: any[] }) => void;
+  onMetricsChange?: (payload: { description?: string; metrics?: unknown[] }) => void;
 }) => {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
@@ -54,8 +54,8 @@ const ManagedDatabaseInventory = ({
   const allPlans = useMemo<PlanItem[]>(() => {
     if (!data) return [];
     if (Array.isArray(data)) return data;
-    if (Array.isArray((data as any)?.data)) return (data as any).data;
-    if (Array.isArray((data as any)?.plans)) return (data as any).plans;
+    if (Array.isArray((data as { data?: unknown })?.data)) return (data as unknown).data;
+    if (Array.isArray((data as unknown)?.plans)) return (data as unknown).plans;
     return [];
   }, [data]);
 
@@ -182,9 +182,8 @@ const ManagedDatabaseInventory = ({
           const active = row.is_active !== false;
           return (
             <span
-              className={`rounded-full px-3 py-1 text-xs font-medium ${
-                active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
-              }`}
+              className={`rounded-full px-3 py-1 text-xs font-medium ${active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
+                }`}
             >
               {active ? "Active" : "Inactive"}
             </span>

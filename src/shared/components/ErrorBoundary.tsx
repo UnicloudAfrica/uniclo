@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import PageErrorFallback from "./PageErrorFallback";
+import { captureException } from "@/utils/sentry";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -22,6 +23,8 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
 
   override componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    captureException(error, { componentStack: errorInfo.componentStack });
+
     if (import.meta.env.DEV) {
       console.error("[ErrorBoundary] Uncaught error:", error);
       console.error("[ErrorBoundary] Component stack:", errorInfo.componentStack);

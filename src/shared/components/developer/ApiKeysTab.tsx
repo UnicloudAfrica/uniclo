@@ -9,8 +9,6 @@ import {
   Clock,
   Globe2,
   AlertTriangle,
-  Eye,
-  EyeOff,
   Loader2,
   KeyRound,
   ChevronDown,
@@ -31,7 +29,7 @@ interface ApiKeysTabProps {
   context: "admin" | "tenant" | "client";
 }
 
-const ApiKeysTab = ({ context }: ApiKeysTabProps) => {
+const ApiKeysTab = ({ _context }: ApiKeysTabProps) => {
   const { data: keys = [], isLoading } = useFetchApiKeys();
   const { data: scopeGroups = {} } = useFetchAvailableScopes();
   const createMutation = useCreateApiKey();

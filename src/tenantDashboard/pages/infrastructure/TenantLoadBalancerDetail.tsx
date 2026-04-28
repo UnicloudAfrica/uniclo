@@ -116,7 +116,7 @@ const TenantLoadBalancerDetail: React.FC = () => {
 
   const handleRegisterTargets = async () => {
     if (!showRegisterTargets) return;
-    const targets = selectedInstanceIds.map((id: any) => ({ vm_id: id, port: newTG.port || 80 }));
+    const targets = selectedInstanceIds.map((id: string) => ({ vm_id: id, port: newTG.port || 80 }));
     await registerTargetsMutation.mutateAsync({
       projectId,
       tgId: showRegisterTargets,
@@ -301,7 +301,7 @@ const TenantLoadBalancerDetail: React.FC = () => {
                       }
                     >
                       <option value="">Select Target Group</option>
-                      {targetGroups.map((tg: any) => (
+                      {(targetGroups as Array<{ id: string; name?: string; protocol?: string; port?: number }>).map((tg) => (
                         <option key={tg.id} value={tg.id}>
                           {tg.name} ({tg.protocol}:{tg.port})
                         </option>
@@ -355,7 +355,7 @@ const TenantLoadBalancerDetail: React.FC = () => {
                       </td>
                     </tr>
                   ) : (
-                    listeners.map((l: any) => (
+                    (listeners as Array<{ id: string; name?: string; protocol?: string; port?: number; default_action_target_group_name?: string; target_group_id?: string }>).map((l) => (
                       <tr key={l.id} className="hover:bg-gray-50">
                         <td className="py-3 px-4">
                           <div className="font-medium text-gray-900">{l.name}</div>
@@ -515,7 +515,7 @@ const TenantLoadBalancerDetail: React.FC = () => {
                   No target groups created yet.
                 </div>
               ) : (
-                targetGroups.map((tg: any) => (
+                (targetGroups as Array<{ id: string; name?: string; protocol?: string; port?: number; targets?: unknown[]; health_check_protocol?: string; health_check_path?: string }>).map((tg) => (
                   <ModernCard
                     key={tg.id}
                     className="p-5 flex flex-col justify-between hover:shadow-md transition-shadow"
@@ -607,7 +607,7 @@ const TenantLoadBalancerDetail: React.FC = () => {
                   <p className="text-gray-400">No instances available to register.</p>
                 </div>
               ) : (
-                instances.map((instance: any) => {
+                (instances as Array<{ id: string; name?: string; private_ip?: string; private_ip_address?: string; instance_id?: string; instance_type?: string; state?: string; status?: string }>).map((instance) => {
                   const isSelected = selectedInstanceIds.includes(instance.id);
                   return (
                     <button
@@ -615,7 +615,7 @@ const TenantLoadBalancerDetail: React.FC = () => {
                       onClick={() => {
                         if (isSelected) {
                           setSelectedInstanceIds(
-                            selectedInstanceIds.filter((id: any) => id !== instance.id)
+                            selectedInstanceIds.filter((id: string) => id !== instance.id)
                           );
                         } else {
                           setSelectedInstanceIds([...selectedInstanceIds, instance.id]);

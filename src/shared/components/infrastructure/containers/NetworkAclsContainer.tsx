@@ -15,7 +15,7 @@ interface NetworkAclHooks {
     region?: string,
     options?: unknown
   ) => UseQueryResult<NetworkAcl[], Error>;
-  useVpcs: (projectId: string, region?: string, options?: unknown) => UseQueryResult<any[], Error>;
+  useVpcs: (projectId: string, region?: string, options?: unknown) => UseQueryResult<unknown[], Error>;
   useCreate: () => UseMutationResult<
     unknown,
     Error,
@@ -38,7 +38,7 @@ interface NetworkAclsContainerProps {
   wrapper: (props: {
     headerActions: React.ReactNode;
     children: React.ReactNode;
-  }) => React.ReactElement<any>;
+  }) => React.ReactElement;
   onManageRules: (acl: NetworkAcl) => void;
 }
 

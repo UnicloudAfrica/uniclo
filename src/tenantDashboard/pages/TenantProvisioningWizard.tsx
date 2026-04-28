@@ -148,7 +148,7 @@ const TenantProvisioningWizard: React.FC = () => {
   // Calculate which configurations are fast-track eligible vs paid
   const fastTrackConfigs = useMemo(
     () =>
-      configurations.filter((cfg: Record<string, unknown>) =>
+      configurations.filter((cfg) =>
         fastTrackRegions.includes((cfg.region as string) || "")
       ),
     [configurations, fastTrackRegions]
@@ -156,7 +156,7 @@ const TenantProvisioningWizard: React.FC = () => {
   const paidConfigs = useMemo(
     () =>
       configurations.filter(
-        (cfg: Record<string, unknown>) => !fastTrackRegions.includes((cfg.region as string) || "")
+        (cfg) => !fastTrackRegions.includes((cfg.region as string) || "")
       ),
     [configurations, fastTrackRegions]
   );
@@ -186,7 +186,7 @@ const TenantProvisioningWizard: React.FC = () => {
     const volumeTypes = resources.volume_types || [];
     const keyPairs = resources.keyPairs || [];
 
-    return configurations.map((cfg: Record<string, unknown>) => {
+    return configurations.map((cfg) => {
       const status = evaluateConfigurationCompleteness(cfg);
       const computeLabel =
         (cfg.compute_label as string) ||
@@ -398,7 +398,7 @@ const TenantProvisioningWizard: React.FC = () => {
             {currentStep?.id === "services" && (
               <ConfigurationListStep
                 configurations={configurations}
-                resources={resources as Record<string, unknown>}
+                resources={resources as unknown as import("@/hooks/useInstanceResources").InstanceResources}
                 generalRegions={generalRegions}
                 regionOptions={regionOptions}
                 isLoadingResources={isLoadingResources}
@@ -416,15 +416,15 @@ const TenantProvisioningWizard: React.FC = () => {
                 onBack={() => setActiveStep(0)}
                 onSubmit={() => setActiveStep(protectionStepIndex >= 0 ? protectionStepIndex : servicesStepIndex + 1)}
                 submitErrorMessage={submissionErrorMessage}
-                useProjectsHook={useFetchTenantProjects as (...args: unknown[]) => unknown}
+                useProjectsHook={useFetchTenantProjects as unknown as (...args: unknown[]) => { data: unknown; isFetching?: boolean; isLoading?: boolean }}
                 useSecurityGroupsHook={
-                  useFetchTenantSecurityGroups as (...args: unknown[]) => unknown
+                  useFetchTenantSecurityGroups as unknown as (...args: unknown[]) => { data: unknown; isFetching?: boolean; isLoading?: boolean }
                 }
-                useKeyPairsHook={useFetchTenantKeyPairs as (...args: unknown[]) => unknown}
-                useSubnetsHook={useFetchTenantSubnets as (...args: unknown[]) => unknown}
-                useNetworksHook={useFetchTenantNetworks as (...args: unknown[]) => unknown}
+                useKeyPairsHook={useFetchTenantKeyPairs as unknown as (...args: unknown[]) => { data: unknown; isFetching?: boolean; isLoading?: boolean }}
+                useSubnetsHook={useFetchTenantSubnets as unknown as (...args: unknown[]) => { data: unknown; isFetching?: boolean; isLoading?: boolean }}
+                useNetworksHook={useFetchTenantNetworks as unknown as (...args: unknown[]) => { data: unknown; isFetching?: boolean; isLoading?: boolean }}
                 useProjectMembershipSuggestionsHook={
-                  useTenantProjectMembershipSuggestions as (...args: unknown[]) => unknown
+                  useTenantProjectMembershipSuggestions as unknown as (...args: unknown[]) => { data: unknown; isFetching?: boolean; isLoading?: boolean }
                 }
                 skipProjectFetch={false}
                 skipNetworkResourcesFetch={false}
@@ -442,9 +442,9 @@ const TenantProvisioningWizard: React.FC = () => {
                 onPlanChange={setSelectedProtectionPlan}
                 onBack={() => setActiveStep(servicesStepIndex)}
                 onContinue={handleCreateOrder}
-                instanceCount={configurations.reduce((sum, c: Record<string, unknown>) => sum + (Number(c.instance_count) || 1), 0)}
-                storageGb={configurations.reduce((sum, c: Record<string, unknown>) => sum + (Number(c.storage_size_gb) || 50), 0) / Math.max(configurations.length, 1)}
-                computePricePerVm={(() => { const n = configurations.reduce((s, c: Record<string, unknown>) => s + (Number(c.instance_count) || 1), 0); return n > 0 ? summarySubtotalValue / n : 0; })()}
+                instanceCount={configurations.reduce((sum: number, c) => sum + (Number(c.instance_count) || 1), 0)}
+                storageGb={configurations.reduce((sum: number, c) => sum + (Number(c.storage_size_gb) || 50), 0) / Math.max(configurations.length, 1)}
+                computePricePerVm={(() => { const n = configurations.reduce((s: number, c) => s + (Number(c.instance_count) || 1), 0); return n > 0 ? summarySubtotalValue / n : 0; })()}
                 currency={summaryDisplayCurrency || "NGN"}
                 selectedRedundancy={selectedRedundancy}
                 onRedundancyChange={setSelectedRedundancy}

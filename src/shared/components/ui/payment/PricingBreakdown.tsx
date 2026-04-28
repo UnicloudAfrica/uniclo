@@ -1,5 +1,6 @@
 import { designTokens } from "@/styles/designTokens";
 import { formatCurrencyValue } from "@/utils/instanceCreationUtils";
+import { PriceLabel } from "@/shared/components/ui/PriceLabel";
 
 interface AmountDetails {
   resolvedSubtotal: number;
@@ -16,11 +17,32 @@ interface PricingBreakdownProps {
   hasAdjustment: boolean;
 }
 
+/**
+ * Renders pricing-summary amounts through `PriceLabel`. The caller has
+ * already resolved every amount to `amountDetails.displayCurrency`, so
+ * we pass the formatted string back in via the `envelope` prop — no
+ * second FX conversion happens. If we ever switch to emitting raw
+ * source amounts to this component, swap `envelope` for a live call
+ * to `useFormatPrice` inside `PriceLabel`.
+ */
 const PricingBreakdown = ({
   amountDetails,
   displayPayableTotal,
   hasAdjustment,
 }: PricingBreakdownProps) => {
+  const renderAmount = (amount: number) => (
+    <PriceLabel
+      amount={amount}
+      sourceCurrency={amountDetails.displayCurrency}
+      envelope={{
+        amount_display: amount,
+        currency_display: amountDetails.displayCurrency,
+        formatted_display: `${amountDetails.displayCurrency} ${formatCurrencyValue(amount)}`,
+        fx_source: "identity",
+      }}
+    />
+  );
+
   return (
     <div
       className="space-y-2 rounded-lg border px-3 py-2 text-xs"
@@ -33,7 +55,7 @@ const PricingBreakdown = ({
         <div className="flex items-center justify-between">
           <span style={{ color: designTokens.colors.neutral[600] }}>Subtotal</span>
           <span style={{ color: designTokens.colors.neutral[900] }}>
-            {amountDetails.displayCurrency} {formatCurrencyValue(amountDetails.resolvedSubtotal)}
+            {renderAmount(amountDetails.resolvedSubtotal)}
           </span>
         </div>
       )}
@@ -41,7 +63,7 @@ const PricingBreakdown = ({
         <div className="flex items-center justify-between">
           <span style={{ color: designTokens.colors.neutral[600] }}>Estimated tax</span>
           <span style={{ color: designTokens.colors.neutral[900] }}>
-            {amountDetails.displayCurrency} {formatCurrencyValue(amountDetails.resolvedTax)}
+            {renderAmount(amountDetails.resolvedTax)}
           </span>
         </div>
       )}
@@ -50,8 +72,7 @@ const PricingBreakdown = ({
           <div className="flex items-center justify-between text-[11px]">
             <span style={{ color: designTokens.colors.neutral[500] }}>Estimated total</span>
             <span style={{ color: designTokens.colors.neutral[600] }}>
-              {amountDetails.displayCurrency}{" "}
-              {formatCurrencyValue(amountDetails.estimatedTotalResolved)}
+              {renderAmount(amountDetails.estimatedTotalResolved)}
             </span>
           </div>
         )}
@@ -59,7 +80,7 @@ const PricingBreakdown = ({
         <div className="flex items-center justify-between">
           <span style={{ color: designTokens.colors.neutral[600] }}>Gateway fees</span>
           <span style={{ color: designTokens.colors.neutral[900] }}>
-            {amountDetails.displayCurrency} {formatCurrencyValue(amountDetails.resolvedGatewayFees)}
+            {renderAmount(amountDetails.resolvedGatewayFees)}
           </span>
         </div>
       )}
@@ -74,7 +95,7 @@ const PricingBreakdown = ({
                   : designTokens.colors.success[700],
             }}
           >
-            {amountDetails.displayCurrency} {formatCurrencyValue(amountDetails.adjustment)}
+            {renderAmount(amountDetails.adjustment)}
           </span>
         </div>
       )}
@@ -83,7 +104,7 @@ const PricingBreakdown = ({
           Total payable
         </span>
         <span className="font-semibold" style={{ color: designTokens.colors.neutral[900] }}>
-          {amountDetails.displayCurrency} {formatCurrencyValue(displayPayableTotal)}
+          {renderAmount(displayPayableTotal)}
         </span>
       </div>
     </div>

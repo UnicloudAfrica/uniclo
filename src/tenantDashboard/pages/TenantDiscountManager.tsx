@@ -13,6 +13,7 @@ import {
 import config from "../../config";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
 import tenantApi from "../../index/tenant/silentTenant";
+import { SkeletonTable } from "@/shared/components/ui/Skeleton";
 
 type ApiEnvelope<T> = { data?: T };
 
@@ -77,7 +78,8 @@ const useTenantSettlementSummary = () => {
   return useQuery({
     queryKey: ["tenant-settlements", "summary"],
     queryFn: async () => {
-      const response = await tenantApi.get<ApiEnvelope<ApiEnvelope<SettlementSummary>>>(
+      const response = await tenantApi<ApiEnvelope<ApiEnvelope<SettlementSummary>>>(
+        "GET",
         "/admin/settlements/summary"
       );
       return response.data?.data ?? null;
@@ -89,7 +91,8 @@ const useOwnDiscount = () => {
   return useQuery({
     queryKey: ["tenant-own-discount"],
     queryFn: async () => {
-      const response = await tenantApi.get<ApiEnvelope<OwnDiscount>>(
+      const response = await tenantApi<ApiEnvelope<OwnDiscount>>(
+        "GET",
         "/admin/settlements/own-discount"
       );
       return response.data ?? null;
@@ -101,8 +104,10 @@ const useClientDiscounts = () => {
   return useQuery({
     queryKey: ["tenant-client-discounts"],
     queryFn: async () => {
-      const response =
-        await tenantApi.get<ApiEnvelope<ApiEnvelope<ClientDiscount[]>>>("/admin/client-discounts");
+      const response = await tenantApi<ApiEnvelope<ApiEnvelope<ClientDiscount[]>>>(
+        "GET",
+        "/admin/client-discounts"
+      );
       return response.data?.data ?? [];
     },
   });
@@ -115,7 +120,8 @@ const useMarginPreview = () => {
         base_amount: String(data.baseAmount),
         discount_percent: String(data.discountPercent),
       }).toString();
-      const response = await tenantApi.get<ApiEnvelope<ApiEnvelope<MarginPreview>>>(
+      const response = await tenantApi<ApiEnvelope<ApiEnvelope<MarginPreview>>>(
+        "GET",
         `/admin/settlements/margin-preview?${query}`
       );
       if (!response.data?.data) {
@@ -130,7 +136,8 @@ const useRemoveClientDiscount = () => {
   const queryClient = useQueryClient();
   return useMutation<unknown, Error, string | number>({
     mutationFn: async (userId) => {
-      const response = await tenantApi.delete<ApiEnvelope<unknown>>(
+      const response = await tenantApi<ApiEnvelope<unknown>>(
+        "DELETE",
         `/admin/client-discounts/${userId}`
       );
       return response.data;
@@ -285,7 +292,7 @@ const ClientDiscountsList = () => {
   const removeDiscount = useRemoveClientDiscount();
 
   if (isLoading) {
-    return <div className="text-center py-4 text-gray-500">Loading client discounts...</div>;
+    return <SkeletonTable rows={3} cols={3} className="py-4" />;
   }
 
   if (!discounts || discounts.length === 0) {

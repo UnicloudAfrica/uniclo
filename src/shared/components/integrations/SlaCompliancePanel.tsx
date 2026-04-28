@@ -185,7 +185,7 @@ const s = {
     gap: 14,
     marginTop: 20,
   },
-  statCard: (accentBg: string) =>
+  statCard: (_accentBg: string) =>
     ({
       borderRadius: 14,
       border: "1px solid var(--ds-border, #e5e7eb)",

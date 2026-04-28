@@ -6,7 +6,7 @@ import ModernSelect from "../../ui/ModernSelect";
 interface AddRouteModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (data: any) => void;
+  onAdd: (data: unknown) => void;
   internetGateways: unknown;
   natGateways: unknown;
   isLoading?: boolean;

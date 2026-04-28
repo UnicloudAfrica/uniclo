@@ -66,28 +66,38 @@ export interface BillingBalance {
 // API Functions
 // ================================
 
-const fetchBillingConfig = async () => {
-  const res = await silentTenantApi("GET", "/admin/billing");
+const fetchBillingConfig = async (): Promise<BillingConfig> => {
+  const res = await silentTenantApi<{ data?: BillingConfig }>("GET", "/admin/billing");
   if (!res.data) throw new Error("Failed to fetch billing config");
-  return res.data as BillingConfig;
+  return res.data;
 };
 
-const selectBillingModel = async (model: string) => {
-  const res = await tenantApi("POST", "/admin/billing/select-model", { billing_model: model });
+const selectBillingModel = async (model: string): Promise<unknown> => {
+  const res = await tenantApi<{ data?: unknown }>("POST", "/admin/billing/select-model", {
+    billing_model: model,
+  });
   if (!res.data) throw new Error("Failed to select billing model");
   return res.data;
 };
 
-const fetchBillingBalance = async () => {
-  const res = await silentTenantApi("GET", "/admin/billing/balance");
+const fetchBillingBalance = async (): Promise<BillingBalance> => {
+  const res = await silentTenantApi<{ data?: BillingBalance }>("GET", "/admin/billing/balance");
   if (!res.data) throw new Error("Failed to fetch billing balance");
-  return res.data as BillingBalance;
+  return res.data;
 };
 
-const fetchPaymentGateways = async () => {
-  const res = await silentTenantApi("GET", "/admin/payment-gateway");
+interface PaymentGatewaysResponse {
+  gateways: PaymentGateway[];
+  supported_providers: string[];
+}
+
+const fetchPaymentGateways = async (): Promise<PaymentGatewaysResponse> => {
+  const res = await silentTenantApi<{ data?: PaymentGatewaysResponse }>(
+    "GET",
+    "/admin/payment-gateway"
+  );
   if (!res.data) throw new Error("Failed to fetch payment gateways");
-  return res.data as { gateways: PaymentGateway[]; supported_providers: string[] };
+  return res.data;
 };
 
 const savePaymentGateway = async (data: {
@@ -97,14 +107,17 @@ const savePaymentGateway = async (data: {
   webhook_secret?: string;
   subaccount_code?: string;
   is_test_mode?: boolean;
-}) => {
-  const res = await tenantApi("POST", "/admin/payment-gateway", data);
+}): Promise<unknown> => {
+  const res = await tenantApi<{ data?: unknown }>("POST", "/admin/payment-gateway", data);
   if (!res.data) throw new Error("Failed to save payment gateway");
   return res.data;
 };
 
-const deletePaymentGateway = async (gatewayId: number) => {
-  const res = await tenantApi("DELETE", `/admin/payment-gateway/${gatewayId}`);
+const deletePaymentGateway = async (gatewayId: number): Promise<unknown> => {
+  const res = await tenantApi<{ data?: unknown }>(
+    "DELETE",
+    `/admin/payment-gateway/${gatewayId}`
+  );
   if (!res.data) throw new Error("Failed to delete payment gateway");
   return res.data;
 };
@@ -200,17 +213,26 @@ interface VerifyAccountResult {
   bank_id?: number;
 }
 
-const fetchBanks = async () => {
-  const res = await silentTenantApi("GET", "/admin/payment-gateway/banks");
-  const data = res.data as Record<string, unknown>;
-  if (!data?.banks) throw new Error("Failed to fetch banks");
-  return data.banks as Bank[];
+const fetchBanks = async (): Promise<Bank[]> => {
+  const res = await silentTenantApi<{ data?: { banks?: Bank[] } }>(
+    "GET",
+    "/admin/payment-gateway/banks"
+  );
+  if (!res.data?.banks) throw new Error("Failed to fetch banks");
+  return res.data.banks;
 };
 
-const verifyBankAccount = async (data: { account_number: string; bank_code: string }) => {
-  const res = await tenantApi("POST", "/admin/payment-gateway/verify-account", data);
+const verifyBankAccount = async (data: {
+  account_number: string;
+  bank_code: string;
+}): Promise<VerifyAccountResult> => {
+  const res = await tenantApi<{ data?: VerifyAccountResult }>(
+    "POST",
+    "/admin/payment-gateway/verify-account",
+    data
+  );
   if (!res.data) throw new Error("Failed to verify account");
-  return res.data as VerifyAccountResult;
+  return res.data;
 };
 
 const createSubaccount = async (data: {
@@ -218,10 +240,14 @@ const createSubaccount = async (data: {
   bank_code: string;
   account_name?: string;
   phone?: string;
-}) => {
-  const res = await tenantApi("POST", "/admin/payment-gateway/subaccount", data);
+}): Promise<{ subaccount_code: string }> => {
+  const res = await tenantApi<{ data?: { subaccount_code: string } }>(
+    "POST",
+    "/admin/payment-gateway/subaccount",
+    data
+  );
   if (!res.data) throw new Error("Failed to create subaccount");
-  return res.data as { subaccount_code: string };
+  return res.data;
 };
 
 // ================================
@@ -306,29 +332,41 @@ const toQueryString = (params: QueryParams): string => {
   return new URLSearchParams(entries.map(([key, value]) => [key, String(value)])).toString();
 };
 
-const fetchInvoices = async (params: InvoiceQueryParams = {}) => {
+const fetchInvoices = async (params: InvoiceQueryParams = {}): Promise<InvoiceItem[]> => {
   const query = toQueryString(params);
   const url = `/admin/billing/invoices${query ? `?${query}` : ""}`;
-  const res = await silentTenantApi("GET", url);
-  const data = res.data as Record<string, unknown>;
-  if (!data?.invoices) throw new Error("Failed to fetch invoices");
-  return data.invoices as InvoiceItem[];
+  const res = await silentTenantApi<{ data?: { invoices?: InvoiceItem[] } }>("GET", url);
+  if (!res.data?.invoices) throw new Error("Failed to fetch invoices");
+  return res.data.invoices;
 };
 
-const fetchEnforcementSummary = async () => {
-  const res = await silentTenantApi("GET", "/admin/billing/enforcement-summary");
+const fetchEnforcementSummary = async (): Promise<EnforcementSummary> => {
+  const res = await silentTenantApi<{ data?: EnforcementSummary }>(
+    "GET",
+    "/admin/billing/enforcement-summary"
+  );
   if (!res.data) throw new Error("Failed to fetch enforcement summary");
-  return res.data as EnforcementSummary;
+  return res.data;
 };
+
+interface PaySettlementsResult {
+  amount_applied: number;
+  remaining: number;
+  settlements_updated: number;
+}
 
 const paySettlements = async (data: {
   amount_cents: number;
   payment_method: "wallet" | "bank_transfer" | "card";
   reference?: string;
-}) => {
-  const res = await tenantApi("POST", "/admin/billing/pay-settlements", data);
+}): Promise<PaySettlementsResult> => {
+  const res = await tenantApi<{ data?: PaySettlementsResult }>(
+    "POST",
+    "/admin/billing/pay-settlements",
+    data
+  );
   if (!res.data) throw new Error("Failed to process payment");
-  return res.data as { amount_applied: number; remaining: number; settlements_updated: number };
+  return res.data;
 };
 
 // ================================

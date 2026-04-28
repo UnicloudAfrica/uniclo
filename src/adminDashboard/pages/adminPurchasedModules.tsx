@@ -2,9 +2,8 @@ import useAuthRedirect from "@/utils/adminAuthRedirect";
 import { useFetchProducts } from "@/hooks/adminHooks/productsHooks";
 import AdminActiveTab from "../components/adminActiveTab";
 import ModernTable, { Column } from "@/shared/components/ui/ModernTable";
-import { ModernCard } from "@/shared/components/ui";
+import { ModernCard, ModernButton, DashboardSkeleton } from "@/shared/components/ui";
 import ModernStatsCard from "@/shared/components/ui/ModernStatsCard";
-import { ModernButton } from "@/shared/components/ui";
 import {
   Loader2,
   Package,
@@ -185,20 +184,7 @@ export default function AdminPurchasedModules() {
   ];
 
   if (isLoading) {
-    return (
-      <div className="w-full h-svh flex items-center justify-center">
-        <Loader2
-          className="w-8 h-8 animate-spin"
-          style={{ color: designTokens.colors["primary"]?.[500] ?? "var(--theme-color)" }}
-        />
-        <p
-          className="ml-2"
-          style={{ color: designTokens.colors["neutral"]?.[700] ?? "var(--theme-heading-color)" }}
-        >
-          Loading...
-        </p>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   // Module loading state

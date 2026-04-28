@@ -1,5 +1,24 @@
-import { useRef, useState } from "react";
+import { useRef, useState, type DragEvent, type MouseEvent } from "react";
 import { UploadCloud, X } from "lucide-react";
+
+type UploadedFileDescriptor = {
+  url?: string;
+  path?: string;
+  preview?: string;
+  original_name?: string;
+  name?: string;
+};
+
+type FileDropInputValue = string | UploadedFileDescriptor | null | undefined;
+
+interface FileDropInputProps {
+  accept?: string;
+  onFileSelected?: (file: File | null) => void;
+  value?: FileDropInputValue;
+  helperText?: string;
+  placeholder?: string;
+  disabled?: boolean;
+}
 
 const FileDropInput = ({
   accept = ".pdf,.png,.jpg,.jpeg",
@@ -8,11 +27,11 @@ const FileDropInput = ({
   helperText,
   placeholder = "Drag & drop or click to upload",
   disabled = false,
-}) => {
-  const inputRef = useRef<any>(null);
+}: FileDropInputProps) => {
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const handleFiles = (files: any) => {
+  const handleFiles = (files: FileList | null) => {
     if (!files || files.length === 0) {
       return;
     }
@@ -20,7 +39,7 @@ const FileDropInput = ({
     onFileSelected?.(file);
   };
 
-  const handleDrop = (event: any) => {
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
     setIsDragging(false);
@@ -32,20 +51,20 @@ const FileDropInput = ({
     }
   };
 
-  const handleDragOver = (event: any) => {
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
     if (disabled) return;
     setIsDragging(true);
   };
 
-  const handleDragLeave = (event: any) => {
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
     setIsDragging(false);
   };
 
-  const handleClear = (event: any) => {
+  const handleClear = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
     if (disabled) return;
@@ -56,7 +75,7 @@ const FileDropInput = ({
   };
 
   const renderPreview = () => {
-    const renderFileLabel = (stringValue: any) => (
+    const renderFileLabel = (stringValue: string) => (
       <span className="text-xs text-gray-600 text-center break-all">
         {stringValue.split("/").pop()}
       </span>

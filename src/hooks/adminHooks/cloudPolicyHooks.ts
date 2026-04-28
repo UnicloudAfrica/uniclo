@@ -1,8 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
+import type { ApiEnvelope, QueryHookOptions } from "@/shared/types/admin";
+
+interface CloudPoliciesParams {
+  provider?: string;
+  region?: string;
+  active_only?: boolean | string;
+}
 
 // GET: Fetch all cloud policies
-const fetchCloudPolicies = async (params: any = {}) => {
+const fetchCloudPolicies = async (params: CloudPoliciesParams = {}) => {
   const query = new URLSearchParams();
   if (params.provider) {
     query.append("provider", params.provider);
@@ -11,12 +18,12 @@ const fetchCloudPolicies = async (params: any = {}) => {
     query.append("region", params.region);
   }
   if (params.active_only !== undefined) {
-    query.append("active_only", params.active_only);
+    query.append("active_only", String(params.active_only));
   }
 
   const uri = `/cloud-policies${query.toString() ? `?${query.toString()}` : ""}`;
 
-  const res = await silentApi("GET", uri);
+  const res = await silentApi<ApiEnvelope<Record<string, unknown>>>("GET", uri);
   if (!res?.data) {
     throw new Error("Failed to fetch cloud policies");
   }
@@ -25,7 +32,10 @@ const fetchCloudPolicies = async (params: any = {}) => {
 };
 
 // Hook to fetch cloud policies
-export const useCloudPolicies = (params: any = {}, options: any = {}) => {
+export const useCloudPolicies = (
+  params: CloudPoliciesParams = {},
+  options: QueryHookOptions & { enabled?: boolean } = {}
+) => {
   return useQuery<Record<string, unknown>>({
     queryKey: ["admin-cloud-policies", params],
     queryFn: () => fetchCloudPolicies(params),

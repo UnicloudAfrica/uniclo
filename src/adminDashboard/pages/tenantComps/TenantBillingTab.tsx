@@ -100,7 +100,7 @@ export default function TenantBillingTab({ tenantId }: Props) {
     if (current.includes(model)) {
       setFormData({
         ...formData,
-        allowed_billing_models: current.filter((m: any) => m !== model),
+        allowed_billing_models: current.filter((m: unknown) => m !== model),
       });
     } else {
       setFormData({
@@ -259,7 +259,7 @@ export default function TenantBillingTab({ tenantId }: Props) {
               Allowed Billing Models
             </label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {BILLING_MODELS.map(({ value, label, icon: Icon }: any) => (
+              {BILLING_MODELS.map(({ value, label, icon: Icon }: { value: string; label: string; icon: React.ComponentType<{ size?: number }> }) => (
                 <button
                   key={value}
                   onClick={() => toggleAllowedModel(value)}
@@ -289,7 +289,7 @@ export default function TenantBillingTab({ tenantId }: Props) {
               onChange={(e) => setFormData({ ...formData, billing_model: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             >
-              {BILLING_MODELS.filter((m: any) =>
+              {BILLING_MODELS.filter((m: unknown) =>
                 formData.allowed_billing_models?.includes(m.value)
               ).map(({ value, label }) => (
                 <option key={value} value={value}>
@@ -435,7 +435,7 @@ export default function TenantBillingTab({ tenantId }: Props) {
             <div className="mt-4 pt-4 border-t">
               <p className="text-gray-500 text-sm mb-2">Allowed Models</p>
               <div className="flex flex-wrap gap-2">
-                {config?.allowed_billing_models.map((model: any) => (
+                {config?.allowed_billing_models.map((model: unknown) => (
                   <span
                     key={model}
                     className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm capitalize"
@@ -451,7 +451,7 @@ export default function TenantBillingTab({ tenantId }: Props) {
             <div className="mt-4 pt-4 border-t">
               <p className="text-gray-500 text-sm mb-2">Configured Gateways</p>
               <div className="flex flex-wrap gap-2">
-                {config?.payment_gateways.map((gw: any) => (
+                {config?.payment_gateways.map((gw: unknown) => (
                   <span
                     key={gw.id}
                     className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm ${

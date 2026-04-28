@@ -1,7 +1,7 @@
 /**
  * ProtectionModeCard — Toggle protection level for a Shield domain.
  */
-import React from "react";
+import React, { useState } from "react";
 import { Shield, ShieldCheck, ShieldAlert } from "lucide-react";
 import { useSetProtectionMode } from "@/shared/hooks/resources/shieldHooks";
 
@@ -39,12 +39,18 @@ const ProtectionModeCard: React.FC<ProtectionModeCardProps> = ({
   currentMode,
 }) => {
   const setMode = useSetProtectionMode();
+  const [error, setError] = useState<string | null>(null);
 
   return (
     <div className="db-surface-card rounded-2xl border p-5">
       <h3 className="mb-4 text-sm font-semibold uppercase tracking-widest text-[var(--theme-muted-color)]">
         Protection Mode
       </h3>
+      {error && (
+        <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
+          {error}
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {MODES.map((mode) => {
           const isActive = currentMode === mode.value;
@@ -54,7 +60,14 @@ const ProtectionModeCard: React.FC<ProtectionModeCardProps> = ({
               type="button"
               onClick={() => {
                 if (!isActive) {
-                  setMode.mutate({ domainId, mode: mode.value });
+                  setError(null);
+                  setMode.mutate(
+                    { domainId, mode: mode.value },
+                    {
+                      onError: () =>
+                        setError("Failed to change protection mode. Please try again."),
+                    }
+                  );
                 }
               }}
               disabled={setMode.isPending}

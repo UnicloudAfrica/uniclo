@@ -41,18 +41,22 @@ export interface StatusResponse {
 }
 
 export interface NetworkStatusResponse {
-  data?: any;
-  network?: any;
+  data?: unknown;
+  network?: unknown;
 }
 
 // ── Re-export CRUD hooks with client-prefixed names ───────────
 /** @deprecated Use useFetchProjects from shared/hooks/resources/projectHooks */
-export const useFetchClientProjects = (params: any = {}, options: any = {}) =>
-  _useFetchProjects({ extra: params }, options);
+export const useFetchClientProjects = (
+  params: Record<string, string | number | boolean> = {},
+  options: Parameters<typeof _useFetchProjects>[1] = {}
+) => _useFetchProjects({ extra: params }, options);
 
 /** @deprecated Use useFetchProjectById from shared/hooks/resources/projectHooks */
-export const useFetchClientProjectById = (id: string | number, options: any = {}) =>
-  _useFetchProjectById(id, options);
+export const useFetchClientProjectById = (
+  id: string | number,
+  options: Parameters<typeof _useFetchProjectById>[1] = {}
+) => _useFetchProjectById(id, options);
 
 /** @deprecated Use useProjectMembershipSuggestions from shared/hooks/resources/projectHooks */
 export const useClientProjectMembershipSuggestions = useProjectMembershipSuggestions;
@@ -77,8 +81,10 @@ export const useDeleteClientProject = () => {
   const mutation = _useDeleteProject();
   return {
     ...mutation,
-    mutate: (id: any, options?: any) => mutation.mutate({ id }, options),
-    mutateAsync: (id: any, options?: any) => mutation.mutateAsync({ id }, options),
+    mutate: (id: string | number, options?: Parameters<typeof mutation.mutate>[1]) =>
+      mutation.mutate({ id }, options),
+    mutateAsync: (id: string | number, options?: Parameters<typeof mutation.mutateAsync>[1]) =>
+      mutation.mutateAsync({ id }, options),
   };
 };
 

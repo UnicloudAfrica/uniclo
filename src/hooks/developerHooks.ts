@@ -144,7 +144,7 @@ export const useCreateApiKey = () => {
   return useMutation({
     mutationFn: async (payload: CreateApiKeyPayload) => {
       const envelope = asEnvelope<ApiKeyData>(
-        await entry.toastApi.post<AnyRecord>(`${DEV_PREFIX}/api-keys`, payload)
+        await entry.toastApi.post<AnyRecord>(`${DEV_PREFIX}/api-keys`, payload as unknown as Record<string, unknown>)
       );
       if (!envelope.data) throw new Error(envelope.message || "Failed to create API key.");
       return envelope.data;
@@ -269,7 +269,7 @@ export const useCreateWebhook = () => {
   return useMutation({
     mutationFn: async (payload: CreateWebhookPayload) => {
       const envelope = asEnvelope<WebhookEndpointData>(
-        await entry.toastApi.post<AnyRecord>(`${DEV_PREFIX}/webhooks`, payload)
+        await entry.toastApi.post<AnyRecord>(`${DEV_PREFIX}/webhooks`, payload as unknown as Record<string, unknown>)
       );
       if (!envelope.data) throw new Error(envelope.message || "Failed to create webhook.");
       return envelope.data;

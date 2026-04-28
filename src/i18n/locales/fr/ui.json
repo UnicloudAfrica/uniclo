@@ -1,0 +1,16 @@
+{
+  "loading": "Chargement…",
+  "loadingDefault": "Chargement…",
+  "errorTitle": "Une erreur est survenue",
+  "errorMessage": "Nous n'avons pas pu effectuer cette opération. Veuillez réessayer dans un instant.",
+  "retry": "Réessayer",
+  "emptyTitle": "Aucun élément pour l'instant",
+  "dismiss": "Fermer",
+  "remove": "Supprimer",
+  "close": "Fermer",
+  "items_one": "{{count}} élément",
+  "items_other": "{{count}} éléments",
+  "tooltipFallback": "Plus d'informations",
+  "menuActions": "Actions",
+  "breadcrumbLandmark": "Fil d'Ariane"
+}

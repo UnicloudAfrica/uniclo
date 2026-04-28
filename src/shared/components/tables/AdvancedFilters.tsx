@@ -11,8 +11,8 @@ export interface FilterConfig {
 
 export interface AdvancedFiltersProps {
   filters: FilterConfig[];
-  values: Record<string, any>;
-  onChange: (values: Record<string, any>) => void;
+  values: Record<string, unknown>;
+  onChange: (values: Record<string, unknown>) => void;
   onApply: () => void;
   onReset: () => void;
   className?: string;
@@ -31,7 +31,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleValueChange = (filterKey: string, value: any) => {
+  const handleValueChange = (filterKey: string, value: unknown) => {
     onChange({
       ...values,
       [filterKey]: value,
@@ -47,7 +47,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
   }).length;
 
   const handleReset = () => {
-    const resetValues: Record<string, any> = {};
+    const resetValues: Record<string, unknown> = {};
     filters.forEach((filter) => {
       if (filter.type === "multiselect") {
         resetValues[filter.key] = [];

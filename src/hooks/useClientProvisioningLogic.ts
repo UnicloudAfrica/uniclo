@@ -68,7 +68,7 @@ export const useClientProvisioningLogic = () => {
   // Ensure value is string to match resolveCountryCodeFromEntity expectation
   const countryOptions: Option[] = useMemo(
     () =>
-      (countriesData as Record<string, any>[]).map((c: Record<string, any>) => ({
+      (countriesData as Record<string, unknown>[]).map((c: Record<string, unknown>) => ({
         value: String(c.iso2 || c.code || c.id),
         label: c.name,
       })),
@@ -96,7 +96,7 @@ export const useClientProvisioningLogic = () => {
   });
 
   // Fetch pricing using client API (public product-pricing endpoint is fine for clients)
-  const [pricingData, setPricingData] = useState<Record<string, any> | null>(null);
+  const [pricingData, setPricingData] = useState<Record<string, unknown> | null>(null);
   const [isPricingLoading, setIsPricingLoading] = useState(false);
 
   useEffect(() => {
@@ -112,7 +112,7 @@ export const useClientProvisioningLogic = () => {
         const response = (await silentClientApi(
           "GET",
           `/product-pricing?${params.toString()}`
-        )) as Record<string, any>;
+        )) as Record<string, unknown>;
         setPricingData(response?.data || response || []);
       } catch {
         setPricingData([]);
@@ -129,7 +129,7 @@ export const useClientProvisioningLogic = () => {
 
   const regionOptions: Option[] = useMemo(
     () =>
-      (generalRegions as Record<string, any>[]).map((r: Record<string, any>) => ({
+      (generalRegions as Record<string, unknown>[]).map((r: Record<string, unknown>) => ({
         value: r.code || r.region || r.id || r.slug,
         label: r.label || r.name || r.region || r.code,
       })),
@@ -178,8 +178,8 @@ export const useClientProvisioningLogic = () => {
   // Order Creation & Submission
   // ─────────────────────────────────────────────────────────────────
   const createOrderAction = useAsyncAction();
-  const [submissionResult, setSubmissionResult] = useState<Record<string, any> | null>(null);
-  const [orderReceipt, setOrderReceipt] = useState<Record<string, any> | null>(null);
+  const [submissionResult, setSubmissionResult] = useState<Record<string, unknown> | null>(null);
+  const [orderReceipt, setOrderReceipt] = useState<Record<string, unknown> | null>(null);
   const [isPaymentSuccessful, setIsPaymentSuccessful] = useState(false);
   const paymentStepIndex = useMemo(() => steps.findIndex((step) => step.id === "payment"), [steps]);
   const reviewStepIndex = useMemo(() => steps.findIndex((step) => step.id === "review"), [steps]);
@@ -218,7 +218,7 @@ export const useClientProvisioningLogic = () => {
               ? cfg.security_group_ids
               : ((cfg.security_group_ids as string) || "").split(",")
           )
-            .map((v: unknown) => (v && (v as any).value ? (v as any).value : v))
+            .map((v: unknown) => (v && (v as unknown).value ? (v as unknown).value : v))
             .map((v: unknown) => (v || "").toString().trim())
             .filter(Boolean);
 
@@ -280,7 +280,7 @@ export const useClientProvisioningLogic = () => {
           "POST",
           "/business/instances/create",
           payload as never
-        )) as Record<string, any>;
+        )) as Record<string, unknown>;
         const data = response?.data || response;
 
         const normalizedGatewayOptions = normalizePaymentOptions(
@@ -364,7 +364,7 @@ export const useClientProvisioningLogic = () => {
       ? orderReceipt?.pricing_breakdown
       : [];
     const totals = breakdown.reduce(
-      (acc: Record<string, any>, item: Record<string, any>) => {
+      (acc: Record<string, unknown>, item: Record<string, unknown>) => {
         acc.subtotal += Number(item?.subtotal || 0);
         acc.tax += Number(item?.tax || 0);
         acc.total += Number(item?.total || 0);

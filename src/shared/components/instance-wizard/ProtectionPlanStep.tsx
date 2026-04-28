@@ -238,7 +238,7 @@ interface PricingResource {
   pricing?: { effective?: PricingEffect };
 }
 
-const resolveEffectivePrice = (item: PricingResource | null | undefined) => {
+const _resolveEffectivePrice = (item: PricingResource | null | undefined) => {
   const effective = item?.pricing?.effective || {};
   for (const candidate of [
     effective.price_local, effective.price_usd, effective.amount,
@@ -338,17 +338,17 @@ const ProtectionPlanStep: React.FC<ProtectionPlanStepProps> = ({
   // Parse DR compute pricing into selectable options
   const drComputeOptionsWithFamily = useMemo(() => {
     const rawData = computePricingRaw;
-    const rows = Array.isArray(rawData)
+    const rows = (Array.isArray(rawData)
       ? rawData
-      : Array.isArray((rawData as any)?.data)
-        ? (rawData as any).data
-        : [];
+      : Array.isArray((rawData as { data?: unknown })?.data)
+        ? ((rawData as { data: unknown[] }).data)
+        : []) as Array<Record<string, unknown>>;
     return rows
-      .filter((item: any) => {
+      .filter((item) => {
         const eff = item?.pricing?.effective;
         return eff && (eff.price_local != null || eff.price_usd != null);
       })
-      .map((item: any, idx: number) => {
+      .map((item, idx: number) => {
         const product = item?.product || {};
         const value = product?.productable_id || product?.id || item?.product_id || item?.id;
         if (!value) return null;

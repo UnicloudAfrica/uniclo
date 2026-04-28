@@ -101,7 +101,7 @@ const AdminLoadBalancers: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {loadBalancers.map((lb: any) => (
+                  {loadBalancers.map((lb: unknown) => (
                     <tr key={lb.id} className="hover:bg-gray-50">
                       <td className="py-3 px-4">
                         <div className="font-medium text-gray-900">{lb.name}</div>

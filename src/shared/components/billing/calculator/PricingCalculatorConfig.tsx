@@ -86,17 +86,28 @@ const formatCurrency = (amount: number | null | undefined, currency: string = "U
   }
 };
 
+interface SelectableOption {
+  id: string | number;
+  name: string;
+}
+
+interface AvailabilityZone {
+  code: string;
+  name?: string;
+  is_active?: boolean;
+}
+
 interface PricingCalculatorConfigProps {
   calculatorData: CalculatorData;
   errors: Record<string, string | null>;
-  updateCalculatorData: (field: keyof CalculatorData, value: any) => void;
+  updateCalculatorData: (field: keyof CalculatorData, value: unknown) => void;
   onAddStorageItem: (item: ObjectStorageRequest) => void;
   onRemoveStorageItem: (index: number) => void;
   onCountryChange: (countryCode: string, currencyCode: string) => void;
   children?: React.ReactNode;
   mode?: "admin" | "tenant" | "client";
-  clientProfile?: any;
-  tenantSettings?: any;
+  clientProfile?: Record<string, unknown>;
+  tenantSettings?: Record<string, unknown>;
 }
 
 const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
@@ -137,9 +148,9 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
 
   const storageAzOptions = useMemo(() => {
     if (!Array.isArray(storageAzData)) return [];
-    return storageAzData
-      .filter((az: any) => az.is_active !== false)
-      .map((az: any) => ({
+    return (storageAzData as AvailabilityZone[])
+      .filter((az) => az.is_active !== false)
+      .map((az) => ({
         id: az.code,
         name: az.name || az.code,
       }));
@@ -214,7 +225,7 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
     }
   );
 
-  const _handlePricingChange = (index: number, value: any) => {
+  const _handlePricingChange = (index: number, value: string | null | undefined) => {
     if (!onCountryChange) return;
     const upper = value ? value.toUpperCase() : "";
     onCountryChange(upper, resolveCurrencyForCountry(upper));
@@ -289,38 +300,38 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
     );
   };
 
-  const updateStorageItem = (field: keyof ObjectStorageRequest, value: any) => {
+  const updateStorageItem = (field: keyof ObjectStorageRequest, value: unknown) => {
     setStorageItem((prev) => {
-      const next = { ...prev, [field]: value };
+      const next = { ...prev, [field]: value } as Partial<ObjectStorageRequest>;
       if (field === "region") {
         next.tier_id = 0;
       }
       return next;
     });
-    setStorageErrors((prev: any) => ({ ...prev, [field]: "" }));
+    setStorageErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
-  const handleStorageRegionSelect = (option: any) => {
+  const handleStorageRegionSelect = (option?: SelectableOption | null) => {
     const value = option ? option.id : "";
     updateStorageItem("region", value);
     setStorageItem((prev) => ({ ...prev, availability_zone: "" }));
     setSearchTerms((prev) => ({ ...prev, region: option ? option.name : "", az: "" }));
   };
 
-  const handleStorageAzSelect = (option: any) => {
+  const handleStorageAzSelect = (option?: SelectableOption | null) => {
     const value = option ? option.id : "";
-    setStorageItem((prev) => ({ ...prev, availability_zone: value }));
+    setStorageItem((prev) => ({ ...prev, availability_zone: String(value) }));
     setSearchTerms((prev) => ({ ...prev, az: option ? option.name : "" }));
   };
 
-  const handleStorageTierSelect = (option: any) => {
+  const handleStorageTierSelect = (option?: SelectableOption | null) => {
     const value = option ? String(option.id) : null;
     updateStorageItem("tier_id", value);
     setSearchTerms((prev) => ({ ...prev, tier: option ? option.name : "" }));
   };
 
   const validateStorageItem = () => {
-    const newErrors: any = {};
+    const newErrors: Record<string, string> = {};
 
     if (!storageItem.region) newErrors.region = "Required";
     if (!storageItem.tier_id) newErrors.tier_id = "Required";
@@ -619,7 +630,7 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
                 </label>
                 <SelectableInput
                   options={storageAzOptions}
-                  value={(storageItem as any).availability_zone ?? ""}
+                  value={(storageItem as Partial<ObjectStorageRequest> & { availability_zone?: string }).availability_zone ?? ""}
                   searchValue={searchTerms.az}
                   onSearchChange={(value) => setSearchTerms((prev) => ({ ...prev, az: value }))}
                   onSelect={handleStorageAzSelect}
@@ -688,7 +699,7 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
               <div className="space-y-3 pt-4 border-t border-slate-100">
                 <h4 className="text-sm font-medium text-slate-700">Added storage</h4>
                 <div className="space-y-2">
-                  {storageItems.map((item: any, idx: number) => (
+                  {storageItems.map((item: ObjectStorageRequest, idx: number) => (
                     <div
                       key={idx}
                       className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm"

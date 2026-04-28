@@ -19,7 +19,7 @@ export type ServiceConfigCardProps = {
   onToggle: () => void;
   fulfillmentMode: string;
   onModeChange: (mode: string) => void;
-  credentials: Record<string, any>;
+  credentials: Record<string, unknown>;
   onCredentialChange: (fieldName: string, value: string) => void;
   onTestConnection: () => void;
   status?: string;
@@ -47,17 +47,17 @@ export type RegionHeroBannerProps = {
 export type VisibilityApprovalCardProps = {
   formData: RegionFormData;
   setFormData: React.Dispatch<React.SetStateAction<RegionFormData>>;
-  region: Record<string, any>;
-  setRegion: React.Dispatch<React.SetStateAction<any>>;
+  region: Record<string, unknown>;
+  setRegion: React.Dispatch<React.SetStateAction<unknown>>;
   submitting: boolean;
   setSubmitting: React.Dispatch<React.SetStateAction<boolean>>;
   regionCode: string;
 };
 
 export type FastTrackConfigCardProps = {
-  region: Record<string, any>;
-  setRegion: React.Dispatch<React.SetStateAction<any>>;
-  tenants: any[];
+  region: Record<string, unknown>;
+  setRegion: React.Dispatch<React.SetStateAction<unknown>>;
+  tenants: unknown[];
   selectedTenantsToGrant: string[];
   setSelectedTenantsToGrant: React.Dispatch<React.SetStateAction<string[]>>;
   tenantSearch: string;

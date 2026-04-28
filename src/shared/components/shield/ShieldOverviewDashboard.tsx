@@ -2,7 +2,7 @@
  * ShieldOverviewDashboard — Admin overview of Shield platform usage.
  */
 import React from "react";
-import { Globe, Shield, ShieldCheck, Zap } from "lucide-react";
+import { Globe, RefreshCw, Shield, ShieldCheck } from "lucide-react";
 import {
   useFetchShieldOverview,
   useFetchShieldProviders,
@@ -14,8 +14,8 @@ interface ShieldOverviewDashboardProps {
 }
 
 const ShieldOverviewDashboard: React.FC<ShieldOverviewDashboardProps> = () => {
-  const { data: rawOverview, isLoading: overviewLoading } = useFetchShieldOverview();
-  const { data: providers = [], isLoading: providersLoading } = useFetchShieldProviders();
+  const { data: rawOverview, isLoading: overviewLoading, isError: overviewError, error: overviewErr, refetch: refetchOverview } = useFetchShieldOverview();
+  const { data: providers = [], isLoading: providersLoading, isError: providersError, error: providersErr, refetch: refetchProviders } = useFetchShieldProviders();
 
   const overview = rawOverview as ShieldOverview | undefined;
   const providerList = providers as ShieldProviderInfo[];
@@ -24,6 +24,24 @@ const ShieldOverviewDashboard: React.FC<ShieldOverviewDashboardProps> = () => {
     return (
       <div className="flex h-64 items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--theme-color)] border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (overviewError || providersError) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+        <Shield size={40} className="text-red-400" />
+        <p className="text-sm text-red-600">
+          {overviewErr?.message || providersErr?.message || "Failed to load Shield overview."}
+        </p>
+        <button
+          type="button"
+          onClick={() => { refetchOverview(); refetchProviders(); }}
+          className="flex items-center gap-1.5 rounded-xl bg-[var(--theme-color)] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+        >
+          <RefreshCw size={14} /> Retry
+        </button>
       </div>
     );
   }

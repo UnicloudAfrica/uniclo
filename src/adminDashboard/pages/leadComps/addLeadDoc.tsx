@@ -14,14 +14,14 @@ const documentTypeOptions = [
   "other",
 ];
 
-const AddLeadDocument = ({ isOpen, onClose, lead }: any) => {
+const AddLeadDocument = ({ isOpen, onClose, lead }: { isOpen: boolean; onClose: () => void; lead: unknown }) => {
   const [formData, setFormData] = useState({
     document_type: "",
     name: "",
     file: null,
     stage_id: "",
   });
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, unknown>>({});
 
   const { mutate, isPending } = useAddLeadDocument();
 
@@ -40,7 +40,7 @@ const AddLeadDocument = ({ isOpen, onClose, lead }: any) => {
 
   // Validates the form data
   const validateForm = () => {
-    const newErrors: Record<string, any> = {};
+    const newErrors: Record<string, unknown> = {};
     if (!formData.document_type) {
       newErrors.document_type = "Please select a document type.";
     }
@@ -55,13 +55,13 @@ const AddLeadDocument = ({ isOpen, onClose, lead }: any) => {
   };
 
   // Handles form field changes
-  const updateFormData = (field: any, value: any) => {
+  const updateFormData = (field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
   // Handles file input changes
-  const handleFileChange = (event: any) => {
+  const handleFileChange = (event: unknown) => {
     const fileBase64 = event.target.files[0];
     if (fileBase64) {
       updateFormData("file", fileBase64);
@@ -71,7 +71,7 @@ const AddLeadDocument = ({ isOpen, onClose, lead }: any) => {
   };
 
   // Handles form submission
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.SyntheticEvent) => {
     if (e) e.preventDefault();
 
     if (!validateForm()) return;
@@ -101,8 +101,8 @@ const AddLeadDocument = ({ isOpen, onClose, lead }: any) => {
 
   if (!isOpen) return null;
 
-  const formatDocumentNameForDisplay = (name: any) => {
-    return name.replace(/_/g, " ").replace(/\b\w/g, (c: any) => c.toUpperCase());
+  const formatDocumentNameForDisplay = (name: unknown) => {
+    return name.replace(/_/g, " ").replace(/\b\w/g, (c: unknown) => c.toUpperCase());
   };
 
   return (
@@ -143,7 +143,7 @@ const AddLeadDocument = ({ isOpen, onClose, lead }: any) => {
                 <option value="" disabled>
                   Select a document type
                 </option>
-                {documentTypeOptions.map((type: any) => (
+                {documentTypeOptions.map((type: string) => (
                   <option key={type} value={type}>
                     {formatDocumentNameForDisplay(type)}
                   </option>
@@ -189,7 +189,7 @@ const AddLeadDocument = ({ isOpen, onClose, lead }: any) => {
                 }`}
               >
                 <option value="">No specific stage</option>
-                {lead?.stages?.map((stage: any) => (
+                {lead?.stages?.map((stage: unknown) => (
                   <option key={stage.id} value={stage.id}>
                     {formatDocumentNameForDisplay(stage.name)}
                   </option>

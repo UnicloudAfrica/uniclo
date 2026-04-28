@@ -30,14 +30,14 @@ const getRegionEndpoint = (context: string) => {
   return "/regions";
 };
 
-const extractRegions = (payload: unknown): any[] => {
+const extractRegions = (payload: unknown): unknown[] => {
   if (
     payload &&
     typeof payload === "object" &&
     "data" in payload &&
-    Array.isArray((payload as any).data)
+    Array.isArray((payload as unknown).data)
   ) {
-    return (payload as any).data;
+    return (payload as unknown).data;
   }
   if (Array.isArray(payload)) return payload;
   return [];
@@ -213,26 +213,26 @@ const KeyPairCreateModal: React.FC<KeyPairCreateModalProps> = ({
 
   const actions = successState.isSuccess
     ? [
-        {
-          label: "Done",
-          variant: "primary",
-          onClick: handleDone,
-        },
-      ]
+      {
+        label: "Done",
+        variant: "primary",
+        onClick: handleDone,
+      },
+    ]
     : [
-        {
-          label: "Cancel",
-          variant: "ghost",
-          onClick: handleCancel,
-          disabled: isPending,
-        },
-        {
-          label: isPending ? "Creating..." : "Create Key Pair",
-          variant: "primary",
-          onClick: handleSubmit,
-          disabled: isPending || (showRegionSelect && isRegionsFetching),
-        },
-      ];
+      {
+        label: "Cancel",
+        variant: "ghost",
+        onClick: handleCancel,
+        disabled: isPending,
+      },
+      {
+        label: isPending ? "Creating..." : "Create Key Pair",
+        variant: "primary",
+        onClick: handleSubmit,
+        disabled: isPending || (showRegionSelect && isRegionsFetching),
+      },
+    ];
 
   return (
     <ModernModal
@@ -244,7 +244,7 @@ const KeyPairCreateModal: React.FC<KeyPairCreateModalProps> = ({
           ? "Store this private key securely."
           : "Generate a new SSH key pair or register an existing public key for this project."
       }
-      actions={actions as any}
+      actions={actions as unknown}
       size="lg"
       loading={isPending}
       contentClassName="space-y-6"
@@ -305,7 +305,7 @@ const KeyPairCreateModal: React.FC<KeyPairCreateModalProps> = ({
             label="Public Key (Optional)"
             placeholder="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC..."
             value={formData.public_key}
-            onChange={(event: any) => updateFormData("public_key", event.target.value)}
+            onChange={(event: unknown) => updateFormData("public_key", event.target.value)}
             rows={4}
             helper="Leave blank to generate a new key pair. Paste an OpenSSH public key to import it."
           />

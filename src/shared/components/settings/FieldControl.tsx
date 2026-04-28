@@ -17,7 +17,7 @@ const FieldControl: React.FC<FieldControlProps> = ({ field, value, onChange }) =
       return (
         <textarea
           rows={rows}
-          value={value ?? ("" as never)}
+          value={(typeof value === "boolean" ? String(value) : value) ?? ""}
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
           className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100"
@@ -29,7 +29,7 @@ const FieldControl: React.FC<FieldControlProps> = ({ field, value, onChange }) =
     if (type === "select") {
       return (
         <select
-          value={value ?? options[0]?.value ?? ("" as never)}
+          value={((typeof value === "boolean" ? String(value) : value) ?? options[0]?.value ?? "") as string | number}
           onChange={(event) => onChange(event.target.value)}
           className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100"
           disabled={readOnly}
@@ -65,7 +65,7 @@ const FieldControl: React.FC<FieldControlProps> = ({ field, value, onChange }) =
         )}
         <input
           type={inputType}
-          value={value ?? ("" as never)}
+          value={(typeof value === "boolean" ? String(value) : value) ?? ""}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           onChange={(event) => onChange(event.target.value)}

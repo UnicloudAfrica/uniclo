@@ -5,7 +5,7 @@ import { ArrowLeft, Loader2, Save, RotateCcw, Package } from "lucide-react";
 import AdminActiveTab from "../components/adminActiveTab";
 import AdminPageShell from "../components/AdminPageShell";
 import { ModernCard, ModernButton, getRegionOptionLabel } from "@/shared/components/ui";
-import ModernTable from "@/shared/components/ui/ModernTable";
+import ModernTable, { type Column } from "@/shared/components/ui/ModernTable";
 
 import { useFetchRegions, useFetchAvailabilityZones } from "@/hooks/adminHooks/regionHooks";
 import {
@@ -59,7 +59,7 @@ const AdminPricingEdit = () => {
   // Auto-select first region when regions load
   useEffect(() => {
     if (!isRegionsFetching && regionsList.length && !selectedRegion) {
-      setSelectedRegion((regionsList[0] as any).code);
+      setSelectedRegion((regionsList[0] as unknown).code);
     }
   }, [isRegionsFetching, regionsList, selectedRegion]);
 
@@ -72,10 +72,10 @@ const AdminPricingEdit = () => {
     setSearchParams(params, { replace: true });
   }, [selectedRegion, selectedAZ, selectedType, setSearchParams]);
 
-  const pricingRows = useMemo<any[]>(() => {
-    const payload: any = pricingData;
+  const pricingRows = useMemo<unknown[]>(() => {
+    const payload: Record<string, unknown> = pricingData;
     const rows = payload?.data ?? [];
-    return rows.map((item: any) => ({
+    return rows.map((item: unknown) => ({
       ...item,
       product_name: item.product_name || item.name || "Unnamed product",
     }));
@@ -133,12 +133,12 @@ const AdminPricingEdit = () => {
 
   const dirtyCount = dirtyPrices.size;
 
-  const columns = useMemo<any[]>(
+  const columns = useMemo<unknown[]>(
     () => [
       {
         header: "Product",
         key: "product_name",
-        render: (_cellValue: any, row: any) => (
+        render: (_cellValue: unknown, row: unknown) => (
           <div className="flex items-center gap-3">
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500/10 text-primary-500">
               <Package className="h-4 w-4" />
@@ -156,7 +156,7 @@ const AdminPricingEdit = () => {
         header: "Region",
         key: "region",
         align: "center",
-        render: (_cellValue: any, row: any) => (
+        render: (_cellValue: unknown, row: unknown) => (
           <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
             {row.region || "Global"}
           </span>
@@ -166,7 +166,7 @@ const AdminPricingEdit = () => {
         header: "AZ",
         key: "availability_zone",
         align: "center",
-        render: (_cellValue: any, row: any) =>
+        render: (_cellValue: unknown, row: unknown) =>
           row.availability_zone ? (
             <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600">
               {row.availability_zone}
@@ -179,7 +179,7 @@ const AdminPricingEdit = () => {
         header: "Price",
         key: "price_usd",
         align: "right",
-        render: (_cellValue: any, row: any) => {
+        render: (_cellValue: unknown, row: unknown) => {
           const originalPrice = Number(row.price_usd ?? 0);
           const currentPrice = dirtyPrices.has(row.id)
             ? dirtyPrices.get(row.id)!
@@ -245,7 +245,7 @@ const AdminPricingEdit = () => {
                   Loading regions...
                 </option>
               ) : (
-                regionsList.map((region: any) => (
+                regionsList.map((region: unknown) => (
                   <option key={region.code} value={region.code}>
                     {getRegionOptionLabel(region)}
                   </option>
@@ -268,7 +268,7 @@ const AdminPricingEdit = () => {
                   Loading availability zones...
                 </option>
               ) : (
-                azList.map((az: any) => (
+                azList.map((az: unknown) => (
                   <option key={az.code} value={az.code}>
                     {az.name || az.code} ({az.provider})
                   </option>
@@ -314,7 +314,7 @@ const AdminPricingEdit = () => {
           ) : (
             <ModernTable
               data={pricingRows}
-              columns={columns}
+              columns={columns as Column<unknown>[]}
               searchable={false}
               paginated={true}
               pageSize={25}

@@ -4,8 +4,8 @@ import { ModernButton } from "../ui";
 
 interface SecurityTwoFactorPanelProps {
   enabled: boolean;
-  onEnable: (event?: any) => void;
-  onDisable: (event?: any) => void;
+  onEnable: (event?: React.MouseEvent) => void;
+  onDisable: (event?: React.MouseEvent) => void;
   isBusy: boolean;
   isFetching: boolean;
 }

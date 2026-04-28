@@ -1,56 +1,75 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { UseQueryOptions } from "@tanstack/react-query";
 import silentTenantApi from "../../index/tenant/silentTenant";
 import tenantApi from "../../index/tenant/tenantApi";
 
-const fetchPartners = async () => {
-  const res = await silentTenantApi("GET", "/admin/partners");
+type ApiEnvelope<T = unknown> = { data?: T; success?: boolean };
+
+export type PartnerId = string | number;
+
+export interface PartnerPayload {
+  [key: string]: unknown;
+}
+
+interface UpdatePartnerArgs {
+  id: PartnerId;
+  data: PartnerPayload;
+}
+
+const fetchPartners = async (): Promise<unknown> => {
+  const res = await silentTenantApi<ApiEnvelope>("GET", "/admin/partners");
   if (!res?.data) {
     throw new Error("Failed to fetch partners");
   }
   return res.data;
 };
 
-const fetchPartnerById = async (id: any) => {
-  const res = await silentTenantApi("GET", `/admin/partners/${id}`);
+const fetchPartnerById = async (id: PartnerId): Promise<unknown> => {
+  const res = await silentTenantApi<ApiEnvelope>("GET", `/admin/partners/${id}`);
   if (!res?.data) {
     throw new Error(`Failed to fetch partner with id ${id}`);
   }
   return res.data;
 };
 
-const fetchPartnerClients = async (id: any) => {
-  const res = await silentTenantApi("GET", `/admin/partners/${id}/clients`);
+const fetchPartnerClients = async (id: PartnerId): Promise<unknown> => {
+  const res = await silentTenantApi<ApiEnvelope>("GET", `/admin/partners/${id}/clients`);
   if (!res?.data) {
     throw new Error(`Failed to fetch partner clients for ${id}`);
   }
   return res.data;
 };
 
-const createPartner = async (payload: any) => {
-  const res = await tenantApi("POST", "/admin/partners", payload);
+const createPartner = async (payload: PartnerPayload): Promise<unknown> => {
+  const res = await tenantApi<ApiEnvelope>("POST", "/admin/partners", payload);
   if (!res?.data) {
     throw new Error("Failed to create partner");
   }
   return res.data;
 };
 
-const updatePartner = async ({ id, data }: any) => {
-  const res = await tenantApi("PATCH", `/admin/partners/${id}`, data);
+const updatePartner = async ({ id, data }: UpdatePartnerArgs): Promise<unknown> => {
+  const res = await tenantApi<ApiEnvelope>("PATCH", `/admin/partners/${id}`, data);
   if (!res?.data) {
     throw new Error("Failed to update partner");
   }
   return res.data;
 };
 
-const deletePartner = async (id: any) => {
-  const res = await tenantApi("DELETE", `/admin/partners/${id}`);
+const deletePartner = async (id: PartnerId): Promise<ApiEnvelope> => {
+  const res = await tenantApi<ApiEnvelope>("DELETE", `/admin/partners/${id}`);
   if (!res?.success) {
     throw new Error("Failed to delete partner");
   }
   return res;
 };
 
-export const useFetchTenantPartners = (options: any = {}) =>
+type QueryOptions<TData> = Omit<
+  UseQueryOptions<TData, Error, TData, readonly unknown[]>,
+  "queryKey" | "queryFn"
+>;
+
+export const useFetchTenantPartners = (options: QueryOptions<unknown> = {}) =>
   useQuery({
     queryKey: ["tenant-partners"],
     queryFn: fetchPartners,
@@ -59,7 +78,10 @@ export const useFetchTenantPartners = (options: any = {}) =>
     ...options,
   });
 
-export const useFetchTenantPartnerById = (id: any, options = {}) =>
+export const useFetchTenantPartnerById = (
+  id: PartnerId,
+  options: QueryOptions<unknown> = {}
+) =>
   useQuery({
     queryKey: ["tenant-partners", id],
     queryFn: () => fetchPartnerById(id),
@@ -69,7 +91,10 @@ export const useFetchTenantPartnerById = (id: any, options = {}) =>
     ...options,
   });
 
-export const useFetchTenantPartnerClients = (id: any, options = {}) =>
+export const useFetchTenantPartnerClients = (
+  id: PartnerId,
+  options: QueryOptions<unknown> = {}
+) =>
   useQuery({
     queryKey: ["tenant-partner-clients", id],
     queryFn: () => fetchPartnerClients(id),

@@ -11,14 +11,19 @@ export interface TenantNetworkSettingsResponse {
     allow_preset_upgrade_for_eip?: boolean;
     require_eip_preflight?: boolean;
     strict_eip_preflight?: boolean;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
-const fetchTenantNetworkSettings = async (tenantId: string) => {
-  const res = await silentAdminApi("GET", `/tenants/${tenantId}/network`);
+const fetchTenantNetworkSettings = async (
+  tenantId: string
+): Promise<TenantNetworkSettingsResponse> => {
+  const res = await silentAdminApi<{ data?: TenantNetworkSettingsResponse }>(
+    "GET",
+    `/tenants/${tenantId}/network`
+  );
   if (!res.data) throw new Error("Failed to fetch tenant network settings");
-  return res.data as TenantNetworkSettingsResponse;
+  return res.data;
 };
 
 const updateTenantNetworkSettings = async ({
@@ -26,9 +31,9 @@ const updateTenantNetworkSettings = async ({
   data,
 }: {
   tenantId: string;
-  data: Record<string, any>;
-}) => {
-  const res = await adminApi("PUT", `/tenants/${tenantId}/network`, {
+  data: Record<string, unknown>;
+}): Promise<unknown> => {
+  const res = await adminApi<{ data?: unknown }>("PUT", `/tenants/${tenantId}/network`, {
     network_settings: data,
   });
   if (!res.data) throw new Error("Failed to update tenant network settings");

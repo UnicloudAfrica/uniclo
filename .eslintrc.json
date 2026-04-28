@@ -5,7 +5,8 @@
     },
     "extends": [
         "eslint:recommended",
-        "plugin:react-hooks/recommended"
+        "plugin:react-hooks/recommended",
+        "plugin:storybook/recommended"
     ],
     "parserOptions": {
         "ecmaFeatures": {
@@ -15,7 +16,8 @@
         "sourceType": "module"
     },
     "plugins": [
-        "react-hooks"
+        "react-hooks",
+        "unused-imports"
     ],
     "ignorePatterns": [
         "*.d.ts"
@@ -38,11 +40,7 @@
                 "sourceType": "module"
             },
             "rules": {
-                "@typescript-eslint/no-unused-vars": ["warn", {
-                    "argsIgnorePattern": "^_",
-                    "varsIgnorePattern": "^_",
-                    "caughtErrorsIgnorePattern": "^_"
-                }],
+                "@typescript-eslint/no-unused-vars": "off",
                 "@typescript-eslint/no-explicit-any": "warn",
                 "@typescript-eslint/ban-ts-comment": "error"
             }
@@ -98,14 +96,32 @@
     ],
     "rules": {
         "no-unused-vars": "off",
-        "@typescript-eslint/no-unused-vars": ["warn", {
-            "argsIgnorePattern": "^_",
-            "varsIgnorePattern": "^_",
-            "caughtErrorsIgnorePattern": "^_"
-        }],
-        "no-console": ["warn", { "allow": ["warn", "error"] }],
+        "@typescript-eslint/no-unused-vars": "off",
+        "unused-imports/no-unused-imports": "error",
+        "unused-imports/no-unused-vars": [
+            "warn",
+            {
+                "vars": "all",
+                "varsIgnorePattern": "^_",
+                "args": "after-used",
+                "argsIgnorePattern": "^_",
+                "caughtErrorsIgnorePattern": "^_"
+            }
+        ],
+        "no-console": [
+            "warn",
+            {
+                "allow": [
+                    "warn",
+                    "error"
+                ]
+            }
+        ],
         "prefer-const": "error",
         "no-var": "error",
-        "eqeqeq": ["error", "smart"]
+        "eqeqeq": [
+            "error",
+            "smart"
+        ]
     }
 }

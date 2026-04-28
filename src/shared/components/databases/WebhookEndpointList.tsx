@@ -360,7 +360,7 @@ interface WebhookEndpointListProps {
 }
 
 const WebhookEndpointList: React.FC<WebhookEndpointListProps> = ({
-  context,
+  _context,
   onSelectEndpoint,
 }) => {
   const { data: endpointsRaw, isLoading, refetch } = useFetchWebhookEndpoints();

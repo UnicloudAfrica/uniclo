@@ -173,7 +173,7 @@ export const keyPairsKeys = {
 export const useFetchKeyPairs = (
   projectId?: string,
   region?: string,
-  options: Record<string, any> = {}
+  options: Record<string, unknown> = {}
 ) => {
   const { apiBaseUrl, context, authHeaders, isAuthenticated } = useApiContext();
   const resolvedRegion = resolveOptionalRegion(region);

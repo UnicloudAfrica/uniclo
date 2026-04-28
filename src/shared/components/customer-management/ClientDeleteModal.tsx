@@ -26,7 +26,7 @@ const ClientDeleteModal: React.FC<ClientDeleteModalProps> = ({
   const adminMutation = useAdminDeleteClient();
   const tenantMutation = useTenantDeleteClient();
 
-  const { mutate, isPending } = (context === "tenant" ? tenantMutation : adminMutation) as any;
+  const { mutate, isPending } = (context === "tenant" ? tenantMutation : adminMutation) as unknown;
 
   const handleDeleteConfirm = (e: React.MouseEvent) => {
     if (e) e.preventDefault();

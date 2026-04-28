@@ -4,8 +4,8 @@ import { useInstanceTemplates } from "@/hooks/useInstanceTemplates";
 import { LayoutTemplate, Loader2 } from "lucide-react";
 
 interface TemplateGalleryProps {
-  onSelectTemplate?: (template: any) => void;
-  onCustomize?: (template: any) => void;
+  onSelectTemplate?: (template: unknown) => void;
+  onCustomize?: (template: unknown) => void;
 }
 
 const TemplateGallery: React.FC<TemplateGalleryProps> = ({ onSelectTemplate, onCustomize }) => {
@@ -40,12 +40,12 @@ const TemplateGallery: React.FC<TemplateGalleryProps> = ({ onSelectTemplate, onC
 
   const categories = [
     "all",
-    ...Array.from(new Set(templates.map((t: any) => t.category).filter(Boolean))),
+    ...Array.from(new Set(templates.map((t: unknown) => t.category).filter(Boolean))),
   ];
   const filteredTemplates =
     selectedCategory === "all"
       ? templates
-      : templates.filter((t: any) => t.category === selectedCategory);
+      : templates.filter((t: unknown) => t.category === selectedCategory);
 
   return (
     <div className="space-y-6">
@@ -68,7 +68,7 @@ const TemplateGallery: React.FC<TemplateGalleryProps> = ({ onSelectTemplate, onC
 
       {/* Template Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredTemplates.map((template: any) => (
+        {filteredTemplates.map((template: unknown) => (
           <div
             key={template.id}
             className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow"

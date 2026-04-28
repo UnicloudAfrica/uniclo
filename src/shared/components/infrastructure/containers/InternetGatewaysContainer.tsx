@@ -55,7 +55,7 @@ interface InternetGatewaysContainerProps {
   wrapper: (props: {
     headerActions: React.ReactNode;
     children: React.ReactNode;
-  }) => React.ReactElement<any>;
+  }) => React.ReactElement;
 }
 
 const InternetGatewaysContainer: React.FC<InternetGatewaysContainerProps> = ({

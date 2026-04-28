@@ -71,7 +71,9 @@ const NewRegionRequest = () => {
 
     try {
       setSubmitting(true);
-      await tenantRegionApi.createRegionRequest(formData as any);
+      await tenantRegionApi.createRegionRequest(
+        formData as unknown as Parameters<typeof tenantRegionApi.createRegionRequest>[0]
+      );
       navigate("/tenant-dashboard/region-requests");
     } catch (error) {
       logger.error("Error creating region:", error);

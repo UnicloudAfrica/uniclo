@@ -40,7 +40,7 @@ const useAdminBrandingSettingsState = () => {
   const [files, setFiles] = useState<Record<string, File>>({});
 
   useEffect(() => {
-    const data = brandingData as Record<string, any>;
+    const data = brandingData as Record<string, unknown>;
     if (data?.settings) {
       const { branding, business } = data.settings;
       setFormData({
@@ -72,7 +72,7 @@ const useAdminBrandingSettingsState = () => {
   };
 
   const handleSave = () => {
-    const data = brandingData as Record<string, any>;
+    const data = brandingData as Record<string, unknown>;
     const hasExistingFavicon = Boolean(
       data?.resolved?.favicon ||
       data?.settings?.branding?.favicon_url ||

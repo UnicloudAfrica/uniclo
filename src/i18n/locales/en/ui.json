@@ -1,0 +1,16 @@
+{
+  "loading": "Loading…",
+  "loadingDefault": "Loading…",
+  "errorTitle": "Something went wrong",
+  "errorMessage": "We couldn't complete that request. Please try again in a moment.",
+  "retry": "Try again",
+  "emptyTitle": "Nothing here yet",
+  "dismiss": "Dismiss",
+  "remove": "Remove",
+  "close": "Close",
+  "items_one": "{{count}} item",
+  "items_other": "{{count}} items",
+  "tooltipFallback": "More info",
+  "menuActions": "Actions",
+  "breadcrumbLandmark": "Breadcrumb"
+}

@@ -135,7 +135,7 @@ export const deriveIpPoolStats = ({
   ipPools,
   networkStatus,
 }: {
-  edgeConfig?: any;
+  edgeConfig?: unknown;
   ipPools?: unknown[];
   networkStatus?: { ip_pool?: IpPool; public_ip_pool?: IpPool };
 }) => {

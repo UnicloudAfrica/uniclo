@@ -7,7 +7,7 @@ import EditCrossConnect from "./crossConnectSubs/editCC";
 import DeleteCrossConnect from "./crossConnectSubs/deleteCC";
 import { ModernButton, ProviderBadge } from "@/shared/components/ui";
 
-const formatCurrency = (amount: any, currency = "USD") => {
+const formatCurrency = (amount: number, currency = "USD") => {
   if (amount === null || amount === undefined || Number.isNaN(amount)) {
     return "—";
   }
@@ -19,7 +19,7 @@ const formatCurrency = (amount: any, currency = "USD") => {
   }).format(Number(amount));
 };
 
-const formatDate = (dateString: any) => {
+const formatDate = (dateString: string) => {
   if (!dateString) return "—";
   try {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -32,7 +32,7 @@ const formatDate = (dateString: any) => {
   }
 };
 
-const CrossConnect = ({ selectedRegion, onMetricsChange }: any) => {
+const CrossConnect = ({ selectedRegion, onMetricsChange }: { selectedRegion?: string; onMetricsChange?: (m: unknown) => void }) => {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [search, setSearch] = useState("");
@@ -40,7 +40,7 @@ const CrossConnect = ({ selectedRegion, onMetricsChange }: any) => {
   const [isAddCrossConnectModalOpen, setIsAddCrossConnectModalOpen] = useState(false);
   const [isEditCrossConnectModalOpen, setIsEditCrossConnectModalOpen] = useState(false);
   const [isDeleteCrossConnectModalOpen, setIsDeleteCrossConnectModalOpen] = useState(false);
-  const [selectedCrossConnect, setSelectedCrossConnect] = useState<any>(null);
+  const [selectedCrossConnect, setSelectedCrossConnect] = useState<unknown>(null);
 
   useEffect(() => {
     setPage(1);
@@ -53,8 +53,8 @@ const CrossConnect = ({ selectedRegion, onMetricsChange }: any) => {
     { enabled: Boolean(selectedRegion), keepPreviousData: true }
   );
 
-  const rows = useMemo(() => data?.data ?? [], [data]);
-  const meta = data?.meta ?? null;
+  const rows = useMemo(() => (data as { data?: unknown[] } | undefined)?.data ?? [], [data]);
+  const meta = (data as { meta?: { total?: number; current_page?: number; per_page?: number } } | undefined)?.meta ?? null;
   const total = meta?.total ?? rows.length;
 
   const averagePrice = useMemo(() => {
@@ -68,7 +68,7 @@ const CrossConnect = ({ selectedRegion, onMetricsChange }: any) => {
   }, [rows]);
 
   const providerCoverage = useMemo(() => {
-    return new Set(rows.map((item: any) => item.provider || "platform")).size;
+    return new Set(rows.map((item: Record<string, unknown>) => item.provider || "platform")).size;
   }, [rows]);
 
   useEffect(() => {
@@ -103,12 +103,12 @@ const CrossConnect = ({ selectedRegion, onMetricsChange }: any) => {
     setIsAddCrossConnectModalOpen(true);
   };
 
-  const handleEdit = (record: any) => {
+  const handleEdit = (record: Record<string, unknown>) => {
     setSelectedCrossConnect(record);
     setIsEditCrossConnectModalOpen(true);
   };
 
-  const handleDelete = (record: any) => {
+  const handleDelete = (record: Record<string, unknown>) => {
     setSelectedCrossConnect(record);
     setIsDeleteCrossConnectModalOpen(true);
   };
@@ -117,7 +117,7 @@ const CrossConnect = ({ selectedRegion, onMetricsChange }: any) => {
     {
       header: "Cross connect profile",
       key: "name",
-      render: (item: any) => (
+      render: (item: Record<string, unknown>) => (
         <div className="flex flex-col">
           <span className="font-semibold text-slate-900">{item.name || "Cross connect"}</span>
           <span className="text-xs text-slate-500">{item.identifier || "No identifier"}</span>
@@ -128,13 +128,13 @@ const CrossConnect = ({ selectedRegion, onMetricsChange }: any) => {
       header: "Provider",
       key: "provider",
       align: "center",
-      render: (item: any) => <ProviderBadge provider={item.provider} />,
+      render: (item: Record<string, unknown>) => <ProviderBadge provider={item.provider} />,
     },
     {
       header: "Updated",
       key: "updated_at",
       align: "right",
-      render: (item: any) => (
+      render: (item: Record<string, unknown>) => (
         <span className="text-xs text-slate-500">
           {formatDate(item.updated_at || item.created_at)}
         </span>
@@ -144,7 +144,7 @@ const CrossConnect = ({ selectedRegion, onMetricsChange }: any) => {
       header: "",
       key: "actions",
       align: "right",
-      render: (item: any) => (
+      render: (item: Record<string, unknown>) => (
         <div className="flex items-center justify-end gap-2">
           <button
             type="button"
@@ -194,7 +194,7 @@ const CrossConnect = ({ selectedRegion, onMetricsChange }: any) => {
   };
 
   const handleSearch = useCallback(
-    (value: any) => {
+    (value: unknown) => {
       setSearch(value);
       setPage(1);
     },
@@ -206,7 +206,7 @@ const CrossConnect = ({ selectedRegion, onMetricsChange }: any) => {
       <ResourceDataExplorer
         title="Carrier cross connects"
         description="Manage dedicated network cross-connects and pricing for co-located customers."
-        columns={columns as Record<string, unknown>[]}
+        columns={columns as unknown}
         rows={rows as Record<string, unknown>[]}
         loading={isFetching}
         page={(meta?.current_page as number) ?? page}

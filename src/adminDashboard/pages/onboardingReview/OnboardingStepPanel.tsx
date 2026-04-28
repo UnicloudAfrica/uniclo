@@ -72,7 +72,7 @@ const OnboardingStepPanel: React.FC<OnboardingStepPanelProps> = ({
 
   return (
     <div className="space-y-3">
-      {steps.map((step: any) => {
+      {steps.map((step: unknown) => {
         const isActive = activeStep === step.id;
         return (
           <button

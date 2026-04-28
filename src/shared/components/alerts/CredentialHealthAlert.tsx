@@ -20,8 +20,8 @@ const CredentialHealthAlert = ({
   regionCode = "lagos-1",
 }: CredentialHealthAlertProps) => {
   const { data: regions } = useFetchRegions();
-  const region = (regions as any[])?.find(
-    (r: any) => r.provider === provider && r.code === regionCode
+  const region = (regions as Array<{ provider?: string; code?: string }> | undefined)?.find(
+    (r) => r.provider === provider && r.code === regionCode
   );
 
   const { data: health, isLoading, refetch } = useCredentialHealth(region?.code);

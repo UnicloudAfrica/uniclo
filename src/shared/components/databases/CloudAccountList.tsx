@@ -12,9 +12,6 @@ import {
   RefreshCw,
   Trash2,
   ShieldCheck,
-  ShieldAlert,
-  ShieldX,
-  ShieldQuestion,
   ExternalLink,
   Search,
   Server,
@@ -116,7 +113,7 @@ interface CloudAccountListProps {
   context: "admin" | "tenant" | "client";
 }
 
-const CloudAccountList: React.FC<CloudAccountListProps> = ({ createPath, context }) => {
+const CloudAccountList: React.FC<CloudAccountListProps> = ({ createPath, _context }) => {
   const navigate = useNavigate();
   const { data: accountsRaw, isLoading, refetch } = useFetchCloudAccounts();
   const deleteMutation = useDeleteCloudAccount();

@@ -8,7 +8,6 @@ import ResourceDataExplorer from "../components/ResourceDataExplorer";
 import AddTaxTypeModal from "./taxComponents/addTax";
 import EditTaxTypeModal from "./taxComponents/editTax";
 import { useFetchTaxConfigurations } from "@/hooks/adminHooks/taxConfigurationHooks";
-import logger from "@/utils/logger";
 
 interface TaxCountry {
   id?: string | number;
@@ -65,7 +64,7 @@ interface ExplorerColumn {
   render?: (row: Record<string, unknown>) => React.ReactNode;
 }
 
-const formatRate = (rate: any) => {
+const formatRate = (rate: unknown) => {
   if (rate === null || rate === undefined) return "—";
   const numeric = Number(rate);
   if (Number.isNaN(numeric)) return "—";
@@ -82,11 +81,7 @@ export default function AdminTax() {
     data: taxConfigurationsData = [],
     isFetching: isTaxFetching,
     refetch,
-  } = useFetchTaxConfigurations({
-    onError: (error: unknown) => {
-      logger.error("Failed to fetch tax configurations", error);
-    },
-  });
+  } = useFetchTaxConfigurations();
   const taxConfigurations = useMemo<TaxConfiguration[]>(
     () =>
       Array.isArray(taxConfigurationsData) ? (taxConfigurationsData as TaxConfiguration[]) : [],

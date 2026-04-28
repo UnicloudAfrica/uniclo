@@ -19,7 +19,7 @@ const AdminNatGateways: React.FC = () => {
 
   const { data: projectData } = useFetchProjectById(projectId);
   const project =
-    projectData && typeof projectData === "object" ? (projectData as Record<string, any>) : null;
+    projectData && typeof projectData === "object" ? (projectData as Record<string, unknown>) : null;
   const provider = project?.provider || searchParams.get("provider");
 
   if (provider && !isFeatureSupported(provider, "nat_gateways")) {
@@ -42,7 +42,7 @@ const AdminNatGateways: React.FC = () => {
         hierarchy="admin"
         projectId={projectId}
         region={region}
-        hooks={hooks}
+        hooks={hooks as unknown}
         wrapper={({ headerActions, children }) => (
           <AdminPageShell
             title="NAT Gateways"

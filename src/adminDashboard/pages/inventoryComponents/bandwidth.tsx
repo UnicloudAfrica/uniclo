@@ -44,7 +44,7 @@ type ExplorerColumn = {
   render?: (row: Record<string, unknown>) => ReactNode;
 };
 
-const BandWidth = ({ selectedRegion, selectedProvider, onMetricsChange }: any) => {
+const BandWidth = ({ selectedRegion, selectedProvider, onMetricsChange }: { selectedRegion?: string; selectedProvider?: string; onMetricsChange?: (m: unknown) => void }) => {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [search, setSearch] = useState("");
@@ -52,7 +52,7 @@ const BandWidth = ({ selectedRegion, selectedProvider, onMetricsChange }: any) =
   const [isAddBandwidthModalOpen, setIsAddBandwidthModalOpen] = useState(false);
   const [isEditBandwidthModalOpen, setIsEditBandwidthModalOpen] = useState(false);
   const [isDeleteBandwidthModalOpen, setIsDeleteBandwidthModalOpen] = useState(false);
-  const [selectedBandwidth, setSelectedBandwidth] = useState<any>(null);
+  const [selectedBandwidth, setSelectedBandwidth] = useState<unknown>(null);
 
   useEffect(() => {
     setPage(1);
@@ -113,12 +113,12 @@ const BandWidth = ({ selectedRegion, selectedProvider, onMetricsChange }: any) =
     setIsAddBandwidthModalOpen(true);
   };
 
-  const handleEditBandwidth = (bandwidth: any) => {
+  const handleEditBandwidth = (bandwidth: unknown) => {
     setSelectedBandwidth(bandwidth);
     setIsEditBandwidthModalOpen(true);
   };
 
-  const handleDeleteBandwidth = (bandwidth: any) => {
+  const handleDeleteBandwidth = (bandwidth: unknown) => {
     setSelectedBandwidth(bandwidth);
     setIsDeleteBandwidthModalOpen(true);
   };

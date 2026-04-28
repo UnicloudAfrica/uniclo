@@ -42,9 +42,12 @@ const fetchTenantSubjectOnboarding = async ({
   }
 
   const query = buildQuery(target, subjectId);
-  const response = await api("GET", `/business/onboarding/${step}/review?${query}`);
+  const response = await api<{ data?: TenantSubjectOnboardingDetail | null }>(
+    "GET",
+    `/business/onboarding/${step}/review?${query}`
+  );
 
-  return (response?.data as TenantSubjectOnboardingDetail | null) ?? null;
+  return response?.data ?? null;
 };
 
 export const useTenantSubjectOnboarding = (

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FlaskConical, Send, Clock, CheckCircle, XCircle } from "lucide-react";
+import { FlaskConical, Send, Clock, CheckCircle } from "lucide-react";
 import TenantPageShell from "@/shared/layouts/TenantPageShell";
 import ModernTable, { type Column } from "@/shared/components/ui/ModernTable";
 import ModernStatsCard from "@/shared/components/ui/ModernStatsCard";
@@ -28,7 +28,7 @@ const TenantPocTrials: React.FC = () => {
   const trials = trialsResponse?.data ?? [];
   const requests = requestsResponse?.data ?? [];
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): "success" | "info" | "warning" | "danger" | "neutral" => {
     switch (status) {
       case "active":
         return "success";
@@ -37,22 +37,22 @@ const TenantPocTrials: React.FC = () => {
       case "expired":
         return "warning";
       case "cancelled":
-        return "error";
+        return "danger";
       default:
-        return "default";
+        return "neutral";
     }
   };
 
-  const getRequestStatusColor = (status: string) => {
+  const getRequestStatusColor = (status: string): "success" | "warning" | "danger" | "neutral" => {
     switch (status) {
       case "pending":
         return "warning";
       case "approved":
         return "success";
       case "rejected":
-        return "error";
+        return "danger";
       default:
-        return "default";
+        return "neutral";
     }
   };
 
@@ -71,7 +71,7 @@ const TenantPocTrials: React.FC = () => {
       key: "status",
       header: "Status",
       render: (_: unknown, trial: PocTrial) => (
-        <StatusPill status={trial.status} color={getStatusColor(trial.status)} />
+        <StatusPill status={trial.status} tone={getStatusColor(trial.status)} />
       ),
     },
     { key: "trial_days", header: "Days" },
@@ -117,7 +117,7 @@ const TenantPocTrials: React.FC = () => {
       key: "status",
       header: "Status",
       render: (_: unknown, req: PocTrialRequest) => (
-        <StatusPill status={req.status} color={getRequestStatusColor(req.status)} />
+        <StatusPill status={req.status} tone={getRequestStatusColor(req.status)} />
       ),
     },
     {
@@ -234,7 +234,7 @@ const TenantPocTrials: React.FC = () => {
           </div>
           <ModernButton
             onClick={() => setShowRequestModal(true)}
-            icon={<Send size={16} />}
+            leftIcon={<Send size={16} />}
             size="sm"
           >
             Request POC Trial

@@ -204,7 +204,7 @@ export default function AdminSubscriptionPlans() {
   const { data: plansData, isLoading } = useFetchSubscriptionPlans();
   const { mutate: deletePlan } = useDeleteSubscriptionPlan();
 
-  const plans: SubscriptionPlan[] = (plansData as Record<string, any>)?.data || [];
+  const plans: SubscriptionPlan[] = (plansData as Record<string, unknown>)?.data || [];
 
   // Filter plans
   const filteredPlans = plans.filter(

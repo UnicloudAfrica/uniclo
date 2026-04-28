@@ -113,7 +113,7 @@ const CreateProjectForm: React.FC<CreateProjectFormProps> = ({
   // Tenant/client lists (only fetch when needed)
   const { data: tenants, isFetching: isTenantsFetching } = useFetchTenants({
     enabled: isAdmin,
-  } as any);
+  } as Parameters<typeof useFetchTenants>[0]);
   const { data: clients, isFetching: isClientsFetching } = useFetchClients();
 
   // ── Form State ───────────────────────────────────────────────
@@ -378,21 +378,22 @@ const CreateProjectForm: React.FC<CreateProjectFormProps> = ({
   };
 
   // ── Submit ───────────────────────────────────────────────────
-  const resolveProjectIdentifier = (payload: any): string | number | null => {
-    if (!payload || typeof payload !== "object") return null;
-    if (payload.identifier) return payload.identifier;
-    if (payload.project_identifier) return payload.project_identifier;
-    if (payload.projectId) return payload.projectId;
-    if (payload.id) return payload.id;
-    if (payload.project) return resolveProjectIdentifier(payload.project);
-    if (payload.data) return resolveProjectIdentifier(payload.data);
-    if (payload.message && typeof payload.message === "object") {
-      return resolveProjectIdentifier(payload.message);
+  const resolveProjectIdentifier = (payload: unknown): string | number | null => {
+    const p = payload as Record<string, unknown>;
+    if (!p || typeof p !== "object") return null;
+    if (p.identifier) return p.identifier as string | number;
+    if (p.project_identifier) return p.project_identifier as string | number;
+    if (p.projectId) return p.projectId as string | number;
+    if (p.id) return p.id as string | number;
+    if (p.project) return resolveProjectIdentifier(p.project);
+    if (p.data) return resolveProjectIdentifier(p.data);
+    if (p.message && typeof p.message === "object") {
+      return resolveProjectIdentifier(p.message);
     }
     return null;
   };
 
-  const redirectToProjectDetails = (projectPayload: any) => {
+  const redirectToProjectDetails = (projectPayload: unknown) => {
     const identifier = resolveProjectIdentifier(projectPayload);
     if (!identifier) {
       ToastUtils.warning("Project created but could not resolve the identifier.");
@@ -446,7 +447,7 @@ const CreateProjectForm: React.FC<CreateProjectFormProps> = ({
       errorToast: "Failed to create project.",
       fallbackErrorMessage: "Failed to create project.",
       rethrow: false,
-      onSuccess: (project: any) => {
+      onSuccess: (project: unknown) => {
         setSubmitAttempts(0);
         redirectToProjectDetails(project);
       },
@@ -480,7 +481,15 @@ const CreateProjectForm: React.FC<CreateProjectFormProps> = ({
   ];
 
   // ── Client Label Helper ──────────────────────────────────────
-  const getClientLabel = (client: any) => {
+  interface ClientLike {
+    id?: string | number;
+    first_name?: string;
+    middle_name?: string;
+    last_name?: string;
+    name?: string;
+    email?: string;
+  }
+  const getClientLabel = (client: ClientLike) => {
     const parts = [client.first_name, client.middle_name, client.last_name].filter(Boolean);
     const fullName = parts.join(" ").trim();
     return fullName || client.name || client.email || `Client ${client.id}`;
@@ -493,7 +502,7 @@ const CreateProjectForm: React.FC<CreateProjectFormProps> = ({
   const renderSummaryPanel = () => {
     const selectedClientLabel = formData.client_id
       ? (() => {
-          const match = (clients as any[] | undefined)?.find(
+          const match = (clients as ClientLike[] | undefined)?.find(
             (c) => String(c.id) === String(formData.client_id)
           );
           return match ? getClientLabel(match) : formData.client_id;
@@ -789,7 +798,7 @@ const CreateProjectForm: React.FC<CreateProjectFormProps> = ({
                   <option value="" disabled>
                     {isTenantsFetching ? "Loading tenants..." : "Select a tenant"}
                   </option>
-                  {(tenants as any[] | undefined)?.map((t: any) => (
+                  {(tenants as Array<{ id: string | number; name?: string; company_name?: string; email?: string }> | undefined)?.map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.name || t.company_name || t.email || `Tenant ${t.id}`}
                     </option>
@@ -814,7 +823,7 @@ const CreateProjectForm: React.FC<CreateProjectFormProps> = ({
                   <option value="" disabled>
                     {isClientsFetching ? "Loading clients..." : "Select a client"}
                   </option>
-                  {(clients as any[] | undefined)?.map((c: any) => (
+                  {(clients as ClientLike[] | undefined)?.map((c) => (
                     <option key={c.id} value={c.id}>
                       {getClientLabel(c)}
                     </option>

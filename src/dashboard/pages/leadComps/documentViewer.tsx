@@ -2,17 +2,17 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, Loader2, X } from "lucide-react";
 import { useDownloadDoc } from "@/hooks/tenantHooks/leadsHooks";
 
-const getFallbackMimeType = (fileName: any) => {
+const getFallbackMimeType = (fileName: unknown) => {
   const lower = fileName?.toLowerCase() || "";
   if (lower.endsWith(".pdf")) return "application/pdf";
   if (/\.(png|jpe?g|gif|bmp|webp)$/i.test(lower)) return "image/*";
   return null;
 };
 
-const DocumentViewerModal = ({ isOpen, onClose, document }: any) => {
+const DocumentViewerModal = ({ isOpen, onClose, document }: { isOpen: boolean; onClose: () => void; document: unknown }) => {
   const documentId = document?.identifier;
   const documentName = document?.name || "Document preview";
-  const [objectUrl, setObjectUrl] = useState<any>(null);
+  const [objectUrl, setObjectUrl] = useState<unknown>(null);
 
   const {
     data,
@@ -23,11 +23,11 @@ const DocumentViewerModal = ({ isOpen, onClose, document }: any) => {
     remove: removeQuery,
   } = useDownloadDoc(documentId, {
     enabled: false,
-  }) as any as {
-    data: any;
+  }) as unknown as {
+    data: unknown;
     isFetching: boolean;
     isError: boolean;
-    error: any;
+    error: unknown;
     refetch: () => void;
     remove: () => void;
   };

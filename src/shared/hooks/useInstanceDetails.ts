@@ -26,8 +26,9 @@ export const useInstanceDetails = (identifier: string) => {
         : `/admin/cube-instance/${identifier}`;
 
     const api = hierarchy === "admin" ? adminSilentApi : tenantSilentApi;
-    const res = await api("GET", uri);
-    return res?.data || res;
+    const res = await api<{ data?: unknown } | unknown>("GET", uri);
+    const envelope = res as { data?: unknown } | null;
+    return envelope?.data ?? res;
   };
 
   const detailsQuery = useQuery({

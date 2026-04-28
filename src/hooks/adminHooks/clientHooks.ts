@@ -104,7 +104,7 @@ export const useCreateClient = (
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       if (options.onSuccess) {
-        (options.onSuccess as any)(data, variables, context);
+        (options.onSuccess as unknown)(data, variables, context);
       }
     },
   });
@@ -125,7 +125,7 @@ export const useUpdateClient = (
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       queryClient.invalidateQueries({ queryKey: ["clients", String(variables.id)] });
       if (options.onSuccess) {
-        (options.onSuccess as any)(data, variables, context);
+        (options.onSuccess as unknown)(data, variables, context);
       }
     },
   });
@@ -142,7 +142,7 @@ export const useDeleteClient = (
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       if (options.onSuccess) {
-        (options.onSuccess as any)(data, variables, context);
+        (options.onSuccess as unknown)(data, variables, context);
       }
     },
   });

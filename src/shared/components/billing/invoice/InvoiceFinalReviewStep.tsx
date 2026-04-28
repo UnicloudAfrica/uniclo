@@ -49,15 +49,14 @@ const InvoiceFinalReviewStep: React.FC<InvoiceFinalReviewStepProps> = ({
     user: assignedUser,
   } = assignmentDetails || {};
 
-  const selectedTenant =
-    assignedTenant ||
+  const selectedTenant = (assignedTenant ||
     (tenants as Record<string, unknown>[])?.find(
       (t: Record<string, unknown>) => String(t.id) === String(formData.tenant_id)
-    );
+    )) as Record<string, unknown> | undefined;
   const selectedUser = assignedUser || null;
 
   const tenantLabel = selectedTenant
-    ? selectedTenant.name || selectedTenant.company_name || `Tenant ${selectedTenant.id}`
+    ? (selectedTenant.name || selectedTenant.company_name || `Tenant ${selectedTenant.id}`) as string
     : null;
 
   const userLabel = selectedUser
@@ -158,8 +157,8 @@ const InvoiceFinalReviewStep: React.FC<InvoiceFinalReviewStepProps> = ({
               <div className="flex-1">
                 <h4 className="text-sm font-semibold text-slate-900">Assignment</h4>
                 <div className="mt-2">
-                  <p className="text-sm font-medium text-slate-900">{assignmentLabel}</p>
-                  <p className="text-xs text-slate-500">{assignmentSublabel}</p>
+                  <p className="text-sm font-medium text-slate-900">{String(assignmentLabel ?? "")}</p>
+                  <p className="text-xs text-slate-500">{String(assignmentSublabel ?? "")}</p>
                 </div>
               </div>
             </div>

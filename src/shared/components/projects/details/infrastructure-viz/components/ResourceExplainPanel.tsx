@@ -106,7 +106,7 @@ export default function ResourceExplainPanel({
       {/* --- Panel --- */}
       <motion.div
         key={`panel-${resource.typeId}`}
-        variants={isMobile ? mobileVariants : desktopVariants}
+        variants={(isMobile ? mobileVariants : desktopVariants) as never}
         initial="hidden"
         animate="visible"
         exit="exit"

@@ -14,8 +14,8 @@ const formatNumber = (value: unknown, digits = 4) => {
 interface EditObjectStorageTierModalProps {
   isOpen: boolean;
   onClose: () => void;
-  tier: Record<string, any> | null;
-  onUpdated?: (tier: Record<string, any>, newPrice: number) => void;
+  tier: Record<string, unknown> | null;
+  onUpdated?: (tier: Record<string, unknown>, newPrice: number) => void;
 }
 
 const EditObjectStorageTierModal = ({
@@ -95,11 +95,10 @@ const EditObjectStorageTierModal = ({
         onUpdated?.(tier, Number(totalPrice.toFixed(4)));
         onClose?.();
       },
-      onError: (error) => {
+      onError: (error: unknown) => {
         logger.error("Failed to update Silo Storage tier", error);
-        ToastUtils.error(
-          error?.response?.data?.message || "Failed to update Silo Storage tier. Please try again."
-        );
+        const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        ToastUtils.error(msg || "Failed to update Silo Storage tier. Please try again.");
       },
     });
   };

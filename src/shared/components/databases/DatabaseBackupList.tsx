@@ -7,7 +7,6 @@
 import React, { useState, useMemo, useCallback } from "react";
 import {
   Archive,
-  Plus,
   RefreshCw,
   Trash2,
   RotateCcw,
@@ -15,12 +14,10 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
-  AlertTriangle,
   Loader2,
   HardDrive,
   Camera,
   Timer,
-  Download,
   Filter,
 } from "lucide-react";
 import ModernCard from "@/shared/components/ui/ModernCard";

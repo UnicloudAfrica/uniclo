@@ -2,10 +2,10 @@ import { X, Loader2 } from "lucide-react";
 import { useDeleteCrossConnect } from "@/hooks/adminHooks/crossConnectHooks";
 import ToastUtils from "@/utils/toastUtil";
 
-const DeleteCrossConnect = ({ isOpen, onClose, crossConnect }: any) => {
+const DeleteCrossConnect = ({ isOpen, onClose, crossConnect }: { isOpen: boolean; onClose: () => void; crossConnect: unknown }) => {
   const { mutate, isPending } = useDeleteCrossConnect();
 
-  const handleDeleteConfirm = (e: any) => {
+  const handleDeleteConfirm = (e: unknown) => {
     if (e) e.preventDefault();
 
     if (crossConnect?.id) {

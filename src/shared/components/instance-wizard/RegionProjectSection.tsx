@@ -1,6 +1,14 @@
 import React from "react";
 import { Configuration, Option } from "@/types/InstanceConfiguration";
 import { ModernSelect, SearchableSelect } from "../ui";
+import type { NetworkPreset } from "../network/NetworkPresetSelector";
+
+interface ProjectLike {
+  id?: string | number;
+  name?: string;
+  identifier?: string;
+  [key: string]: unknown;
+}
 
 interface RegionProjectSectionProps {
   cfg: Configuration;
@@ -12,9 +20,9 @@ interface RegionProjectSectionProps {
   selectedRegion: string;
   networkPresetValue: string;
   presetOptions: Option[];
-  selectedPreset: any;
-  selectedProjectPreset: any;
-  selectedProject: any;
+  selectedPreset?: NetworkPreset | null;
+  selectedProjectPreset?: NetworkPreset | null;
+  selectedProject?: ProjectLike | null;
   isSelectedProjectPresetPublic: boolean;
   hasFloatingIp: boolean;
   normalizedFloatingIpCount: number;
@@ -158,8 +166,8 @@ interface ExistingProjectFieldsProps {
   handleProjectSelection: (value: string) => void;
   isTemplateLocked: boolean;
   selectedRegion: string;
-  selectedProjectPreset: any;
-  selectedProject: any;
+  selectedProjectPreset: NetworkPreset | null;
+  selectedProject: ProjectLike | null;
   isSelectedProjectPresetPublic: boolean;
   hasFloatingIp: boolean;
 }
@@ -221,7 +229,7 @@ interface NewProjectFieldsProps {
   cfg: Configuration;
   networkPresetValue: string;
   presetOptions: Option[];
-  selectedPreset: any;
+  selectedPreset: NetworkPreset | null;
   hasFloatingIp: boolean;
   normalizedFloatingIpCount: number;
   isSubmitting: boolean;

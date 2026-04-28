@@ -68,7 +68,8 @@ export interface AuthState {
   setSession: (session: Partial<AuthState>) => void;
   clearSession: () => void;
   initializeTenantContext?: () => void;
-  switchTenant?: (tenantSlug: string) => boolean;
+  switchTenant?: (tenantSlug: string) => Promise<boolean>;
+  forceLogout?: () => void;
   getAuthHeaders: () => Record<string, string>;
   getEffectiveRole?: () => string;
   updateContext?: (context: TenantContext) => void;

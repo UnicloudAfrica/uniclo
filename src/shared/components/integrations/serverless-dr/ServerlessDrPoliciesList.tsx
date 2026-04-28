@@ -76,9 +76,9 @@ interface Props {
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 
-export default function ServerlessDrPoliciesList({ context, detailBasePath, createPath }: Props) {
+export default function ServerlessDrPoliciesList({ _context, detailBasePath, createPath }: Props) {
   const navigate = useNavigate();
-  const { data: policies = [], isLoading, refetch } = useFetchServerlessDrPolicies();
+  const { data: policies = [], isLoading, _refetch } = useFetchServerlessDrPolicies();
   const activateMutation = useActivateServerlessDrPolicy();
   const pauseMutation = usePauseServerlessDrPolicy();
 

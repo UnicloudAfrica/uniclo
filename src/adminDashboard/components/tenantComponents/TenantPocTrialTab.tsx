@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FlaskConical, Plus, Save } from "lucide-react";
-import { ModernButton, ModernCard, StatusPill } from "@/shared/components/ui";
+import { ModernButton, ModernCard, StatusPill, SkeletonCard } from "@/shared/components/ui";
 import ModernTable, { type Column } from "@/shared/components/ui/ModernTable";
 import ModernInput from "@/shared/components/ui/ModernInput";
 import {
@@ -100,14 +100,14 @@ const TenantPocTrialTab: React.FC<TenantPocTrialTabProps> = ({ tenantId }) => {
       render: (_: unknown, trial: PocTrial) => (
         <StatusPill
           status={trial.status}
-          color={
+          tone={
             trial.status === "active"
               ? "success"
               : trial.status === "converted"
                 ? "info"
                 : trial.status === "expired"
                   ? "warning"
-                  : "error"
+                  : "danger"
           }
         />
       ),
@@ -144,11 +144,7 @@ const TenantPocTrialTab: React.FC<TenantPocTrialTabProps> = ({ tenantId }) => {
   ];
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-200 border-t-primary-600" />
-      </div>
-    );
+    return <SkeletonCard className="my-4" />;
   }
 
   return (
@@ -204,7 +200,7 @@ const TenantPocTrialTab: React.FC<TenantPocTrialTabProps> = ({ tenantId }) => {
             <ModernButton
               onClick={handleSaveConfig}
               loading={updateConfig.isPending}
-              icon={<Save size={16} />}
+              leftIcon={<Save size={16} />}
             >
               Save Configuration
             </ModernButton>
@@ -216,7 +212,7 @@ const TenantPocTrialTab: React.FC<TenantPocTrialTabProps> = ({ tenantId }) => {
       <ModernCard>
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-700">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Per-Product Overrides</h3>
-          <ModernButton variant="outline" size="sm" onClick={addOverride} icon={<Plus size={14} />}>
+          <ModernButton variant="outline" size="sm" onClick={addOverride} leftIcon={<Plus size={14} />}>
             Add Override
           </ModernButton>
         </div>
@@ -281,7 +277,7 @@ const TenantPocTrialTab: React.FC<TenantPocTrialTabProps> = ({ tenantId }) => {
                   variant="outline"
                   onClick={handleSaveOverrides}
                   loading={updateOverrides.isPending}
-                  icon={<Save size={14} />}
+                  leftIcon={<Save size={14} />}
                 >
                   Save Overrides
                 </ModernButton>

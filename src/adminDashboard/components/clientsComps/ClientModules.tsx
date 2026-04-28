@@ -3,11 +3,20 @@ import DetailedModules from "./detailsModules";
 import ModernTable from "@/shared/components/ui/ModernTable";
 
 interface ClientModulesProps {
-  client?: any; // Added prop for future use if needed, though currently using static data
+  client?: Record<string, unknown>; // Added prop for future use if needed, though currently using static data
+}
+
+interface ModuleRow {
+  id: number;
+  module: string;
+  status: string;
+  plan: string;
+  startDate: string;
+  endDate: string;
 }
 
 const ClientModules: React.FC<ClientModulesProps> = () => {
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [selectedItem, setSelectedItem] = useState<ModuleRow | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const data = [
     {
@@ -92,7 +101,7 @@ const ClientModules: React.FC<ClientModulesProps> = () => {
     },
   ];
 
-  const handleRowClick = (item: any) => {
+  const handleRowClick = (item: ModuleRow) => {
     setSelectedItem(item);
     setIsModalOpen(true);
   };
@@ -150,7 +159,7 @@ const ClientModules: React.FC<ClientModulesProps> = () => {
       <div className="mt-6">
         <ModernTable
           data={data}
-          columns={columns as any}
+          columns={columns as unknown as Parameters<typeof ModernTable>[0]["columns"]}
           onRowClick={handleRowClick}
           paginated={true}
           pageSize={10}

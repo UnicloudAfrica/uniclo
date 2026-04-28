@@ -12,7 +12,7 @@ import {
 import AdminActiveTab from "../components/adminActiveTab";
 import AdminPageShell from "../components/AdminPageShell";
 import { ModernCard, ModernButton, ProviderBadge } from "@/shared/components/ui";
-import ModernTable from "@/shared/components/ui/ModernTable";
+import ModernTable, { type Column, type TableRowBase } from "@/shared/components/ui/ModernTable";
 
 import { useFetchProductFamilies } from "@/hooks/adminHooks/adminProductFamilyHooks";
 import useAuthRedirect from "@/utils/adminAuthRedirect";
@@ -47,11 +47,11 @@ const AdminProductFamilies = () => {
   const [isAutoDerivePending, setIsAutoDerivePending] = useState(false);
 
   const families = useMemo<FamilyRow[]>(() => {
-    const payload: any = familiesData;
+    const payload: Record<string, unknown> = familiesData;
     const rows = payload?.data ?? [];
-    return rows.map((item: any) => {
+    return rows.map((item: unknown) => {
       const providers = Array.isArray(item.products)
-        ? [...new Set(item.products.map((p: any) => p.provider).filter(Boolean))]
+        ? [...new Set(item.products.map((p: unknown) => p.provider).filter(Boolean))]
         : item.providers ?? [];
       return {
         ...item,
@@ -245,12 +245,12 @@ const AdminProductFamilies = () => {
           ) : (
             <>
               <ModernTable
-                data={filteredFamilies}
-                columns={columns}
+                data={filteredFamilies as unknown as TableRowBase[]}
+                columns={columns as unknown as Column<TableRowBase>[]}
                 searchable={false}
                 paginated={true}
                 pageSize={15}
-                onRowClick={(row: FamilyRow) => toggleExpand(row.family_code)}
+                onRowClick={((row: FamilyRow) => toggleExpand(row.family_code)) as unknown as (row: TableRowBase) => void}
               />
 
               {/* Expanded row detail */}

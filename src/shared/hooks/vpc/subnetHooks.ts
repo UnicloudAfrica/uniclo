@@ -45,7 +45,7 @@ export const useCreateSubnet = () => {
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
   return useMutation<
-    any,
+    unknown,
     Error,
     {
       projectId: string;

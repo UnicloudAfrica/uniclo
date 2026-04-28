@@ -54,9 +54,9 @@ const ResourceItemBuilder: React.FC<ResourceItemBuilderProps> = ({
 
   const azOptions = useMemo(() => {
     if (!Array.isArray(availabilityZones)) return [];
-    return availabilityZones
-      .filter((az: any) => az.is_active !== false)
-      .map((az: any) => ({
+    return (availabilityZones as Array<{ code: string; name?: string; is_active?: boolean }>)
+      .filter((az) => az.is_active !== false)
+      .map((az) => ({
         code: az.code,
         name: az.name || az.code,
       }));
@@ -102,8 +102,8 @@ const ResourceItemBuilder: React.FC<ResourceItemBuilderProps> = ({
             Availability Zone
           </label>
           <select
-            value={(formData as any).availability_zone || ""}
-            onChange={(e) => updateFormData("availability_zone" as any, e.target.value)}
+            value={(formData as unknown as Record<string, unknown>).availability_zone as string || ""}
+            onChange={(e) => updateFormData("availability_zone" as keyof typeof formData, e.target.value)}
             className={selectClass}
             disabled={!formData.region || isAzFetching}
           >

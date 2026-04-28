@@ -21,7 +21,7 @@ const AdminNetworkAcls: React.FC = () => {
 
   const { data: projectData } = useFetchProjectById(projectId);
   const project =
-    projectData && typeof projectData === "object" ? (projectData as Record<string, any>) : null;
+    projectData && typeof projectData === "object" ? (projectData as Record<string, unknown>) : null;
   const provider = project?.provider || searchParams.get("provider");
 
   if (provider && !isFeatureSupported(provider, "network_acls")) {
@@ -39,7 +39,7 @@ const AdminNetworkAcls: React.FC = () => {
     useDelete: useDeleteNetworkAcl,
   };
 
-  const handleManageRules = (acl: any) => {
+  const handleManageRules = (acl: unknown) => {
     navigate(
       `/admin-dashboard/infrastructure/network-acl-rules?project=${projectId}&region=${region}&acl=${acl.id}&name=${encodeURIComponent(acl.name || "ACL")}`
     );
@@ -51,7 +51,7 @@ const AdminNetworkAcls: React.FC = () => {
         hierarchy="admin"
         projectId={projectId}
         region={region}
-        hooks={hooks as any}
+        hooks={hooks as unknown}
         onManageRules={handleManageRules}
         wrapper={({ headerActions, children }) => (
           <AdminPageShell

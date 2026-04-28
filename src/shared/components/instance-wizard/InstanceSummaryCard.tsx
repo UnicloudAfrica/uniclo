@@ -47,8 +47,8 @@ interface InstanceSummaryCardProps {
   summaryGatewayFeesValue?: number;
   summaryGrandTotalValue?: number;
   summaryDisplayCurrency?: string;
-  effectivePaymentOption?: any;
-  backendPricingData?: any;
+  effectivePaymentOption?: unknown;
+  backendPricingData?: unknown;
   protectionPlan?: string;
   redundancyPattern?: string;
 }
@@ -349,15 +349,15 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
                         </div>
                       )}
 
-                      {(cfg as Record<string, unknown[]>).volume_types &&
-                        (cfg as Record<string, unknown[]>).volume_types.length > 0 && (
+                      {(cfg as unknown as Record<string, unknown[]>).volume_types &&
+                        (cfg as unknown as Record<string, unknown[]>).volume_types.length > 0 && (
                           <div className="flex flex-wrap gap-2 mt-2">
-                            {(cfg as Record<string, Record<string, unknown>[]>).volume_types.map(
+                            {((cfg as unknown as Record<string, Record<string, unknown>[]>).volume_types).map(
                               (vol: Record<string, unknown>, vIdx: number) => (
                                 <div key={vIdx} className="flex items-center gap-2 text-gray-500">
                                   <HardDrive className="h-3 w-3 flex-shrink-0" />
                                   <span>
-                                    Data Vol {vIdx + 1}: {vol.storage_size_gb} GB
+                                    Data Vol {vIdx + 1}: {String(vol.storage_size_gb ?? "")} GB
                                   </span>
                                 </div>
                               )

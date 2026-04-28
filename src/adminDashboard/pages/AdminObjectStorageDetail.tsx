@@ -31,11 +31,13 @@ const AdminObjectStorageDetail: React.FC = () => {
   const { accountId } = useParams<{ accountId: string }>();
   const navigate = useNavigate();
 
-  const [account, setAccount] = useState<any>(null);
-  const [buckets, setBuckets] = useState<any[]>([]);
+  const [account, setAccount] = useState<unknown>(null);
+  const [buckets, setBuckets] = useState<
+    Array<{ id: string | number; name: string; size_bytes?: number; [key: string]: unknown }>
+  >([]);
   const [loading, setLoading] = useState(true);
   const [bucketsLoading, setBucketsLoading] = useState(false);
-  const [error, setError] = useState<any>(null);
+  const [error, setError] = useState<unknown>(null);
   const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
   const [creatingBucket, setCreatingBucket] = useState(false);
   const [deletingBucketId, setDeletingBucketId] = useState<string | null>(null);
@@ -56,8 +58,8 @@ const AdminObjectStorageDetail: React.FC = () => {
       const data = await objectStorageApi.fetchAccount(accountId);
       setAccount(data);
       setError(null);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)));
       ToastUtils.error("Failed to load account details");
     } finally {
       setLoading(false);
@@ -90,15 +92,15 @@ const AdminObjectStorageDetail: React.FC = () => {
       await objectStorageApi.createBucket(accountId!, { name });
       ToastUtils.success("Silo created successfully");
       fetchBuckets();
-    } catch (err: any) {
-      ToastUtils.error(err.message || "Failed to create silo");
+    } catch (err: unknown) {
+      ToastUtils.error((err instanceof Error ? err.message : String(err)) || "Failed to create silo");
       throw err;
     } finally {
       setCreatingBucket(false);
     }
   };
 
-  const handleDeleteBucket = async (bucket: any) => {
+  const handleDeleteBucket = async (bucket: unknown) => {
     if (!globalThis.window.confirm(`Delete silo "${bucket.name}"? This cannot be undone.`)) return;
     try {
       setDeletingBucketId(bucket.id);
@@ -108,8 +110,8 @@ const AdminObjectStorageDetail: React.FC = () => {
         setSelectedBucket(null);
       }
       fetchBuckets();
-    } catch (err: any) {
-      ToastUtils.error(err.message || "Failed to delete silo");
+    } catch (err: unknown) {
+      ToastUtils.error((err instanceof Error ? err.message : String(err)) || "Failed to delete silo");
     } finally {
       setDeletingBucketId(null);
     }
@@ -125,8 +127,8 @@ const AdminObjectStorageDetail: React.FC = () => {
       await objectStorageApi.deleteAccount(accountId!);
       ToastUtils.success("Storage account deleted successfully");
       navigate("/admin-dashboard/object-storage", { state: { refresh: true } });
-    } catch (err: any) {
-      ToastUtils.error(err.message || "Failed to delete account");
+    } catch (err: unknown) {
+      ToastUtils.error((err instanceof Error ? err.message : String(err)) || "Failed to delete account");
       throw err;
     }
   };
@@ -148,9 +150,8 @@ const AdminObjectStorageDetail: React.FC = () => {
 
   const getTabClass = (tab: string) => {
     const isActive = activeTab === tab;
-    return `flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-      isActive ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
-    }`;
+    return `flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${isActive ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
+      }`;
   };
 
   // Action buttons for the page header

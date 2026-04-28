@@ -47,7 +47,7 @@ const QuickAccessNav = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {quickLinks.map((link: any) => (
+        {quickLinks.map((link: { title: string; path: string; color: string; bgColor: string; icon: React.ComponentType<{ className?: string }>; description: string }) => (
           <button
             key={link.title}
             onClick={() => navigate(link.path)}

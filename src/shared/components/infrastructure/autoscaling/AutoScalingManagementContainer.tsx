@@ -271,7 +271,7 @@ const AutoScalingManagementContainer: React.FC<AutoScalingManagementContainerPro
               message="Create an auto-scaling group to automatically scale your compute capacity."
             />
           ) : (
-            <ModernTable columns={groupColumns as any} data={groups} loading={isLoadingGroups} />
+            <ModernTable columns={groupColumns as unknown} data={groups} loading={isLoadingGroups} />
           )
         ) : !isLoadingConfigs && launchConfigs.length === 0 ? (
           <ResourceEmptyState

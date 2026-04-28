@@ -9,11 +9,9 @@ import React, { useState, useMemo } from "react";
 import {
   DollarSign,
   TrendingUp,
-  TrendingDown,
   BarChart3,
   Download,
   Database,
-  Loader2,
   ArrowUpRight,
   ArrowDownRight,
 } from "lucide-react";

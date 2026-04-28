@@ -30,7 +30,7 @@ export const ICON_CATALOG = {
   },
 };
 
-export const resolveIcon = (iconKey: any) => {
+export const resolveIcon = (iconKey: unknown) => {
   if (!iconKey) return null;
 
   if (typeof iconKey === "function") {

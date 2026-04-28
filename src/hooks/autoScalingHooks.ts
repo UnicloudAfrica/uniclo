@@ -106,8 +106,8 @@ export const useCreateLaunchConfiguration = () => {
       ToastUtils.success("Launch configuration created successfully");
       queryClient.invalidateQueries({ queryKey: ["launch-configurations", variables.project_id] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.message || "Failed to create launch configuration");
+    onError: (error: unknown) => {
+      ToastUtils.error((error as {response?: {data?: {error?: string; message?: string}}}).response?.data?.message || "Failed to create launch configuration");
     },
   });
 };
@@ -137,8 +137,8 @@ export const useDeleteLaunchConfiguration = () => {
       ToastUtils.success("Launch configuration deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["launch-configurations", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.message || "Failed to delete launch configuration");
+    onError: (error: unknown) => {
+      ToastUtils.error((error as {response?: {data?: {error?: string; message?: string}}}).response?.data?.message || "Failed to delete launch configuration");
     },
   });
 };
@@ -265,8 +265,8 @@ export const useUpdateAutoScalingGroup = () => {
       queryClient.invalidateQueries({ queryKey: ["autoscaling-groups", projectId] });
       queryClient.invalidateQueries({ queryKey: ["autoscaling-group", id] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.message || "Failed to update auto-scaling group");
+    onError: (error: unknown) => {
+      ToastUtils.error((error as {response?: {data?: {error?: string; message?: string}}}).response?.data?.message || "Failed to update auto-scaling group");
     },
   });
 };
@@ -296,8 +296,8 @@ export const useDeleteAutoScalingGroup = () => {
       ToastUtils.success("Auto-scaling group deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["autoscaling-groups", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.message || "Failed to delete auto-scaling group");
+    onError: (error: unknown) => {
+      ToastUtils.error((error as {response?: {data?: {error?: string; message?: string}}}).response?.data?.message || "Failed to delete auto-scaling group");
     },
   });
 };
@@ -350,8 +350,8 @@ export const useCreateScalingPolicy = () => {
         queryKey: ["scaling-policies", variables.project_id, variables.region, variables.group_id],
       });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.message || "Failed to create scaling policy");
+    onError: (error: unknown) => {
+      ToastUtils.error((error as {response?: {data?: {error?: string; message?: string}}}).response?.data?.message || "Failed to create scaling policy");
     },
   });
 };
@@ -381,8 +381,8 @@ export const useDeleteScalingPolicy = () => {
       ToastUtils.success("Scaling policy deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["scaling-policies", projectId, region] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.message || "Failed to delete scaling policy");
+    onError: (error: unknown) => {
+      ToastUtils.error((error as {response?: {data?: {error?: string; message?: string}}}).response?.data?.message || "Failed to delete scaling policy");
     },
   });
 };

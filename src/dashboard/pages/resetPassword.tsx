@@ -20,7 +20,7 @@ export default function ResetPassword() {
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, unknown>>({});
   const { mutate: resetPassword, isPending: isResetPending } = useResetPassword();
   const { mutate: resendOtp, isPending: isResendPending } = useResendOTP();
   const navigate = useNavigate();
@@ -57,11 +57,11 @@ export default function ResetPassword() {
     } else if (timeLeft === 0) {
       setIsActive(false);
     }
-    return () => clearInterval(interval as any);
+    return () => clearInterval(interval as unknown);
   }, [isActive, timeLeft]);
 
   // Format time display
-  const formatTime = (seconds: any) => {
+  const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
@@ -69,7 +69,7 @@ export default function ResetPassword() {
 
   // Validation function
   const validateForm = () => {
-    const newErrors: Record<string, any> = {};
+    const newErrors: Record<string, unknown> = {};
     if (!userEmail) {
       newErrors.email = "Email is required";
     }
@@ -91,7 +91,7 @@ export default function ResetPassword() {
   };
 
   // Handle form submission for password reset
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!validateForm()) return;

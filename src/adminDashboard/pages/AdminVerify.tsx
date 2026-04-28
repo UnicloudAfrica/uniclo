@@ -102,7 +102,7 @@ export default function VerifyAdminMail() {
   };
 
   // Handle form submission for email verification
-  const handleSubmit = (otpValue?: any) => {
+  const handleSubmit = (otpValue?: string) => {
     if (otpValue?.preventDefault) {
       otpValue.preventDefault();
     }
@@ -114,7 +114,7 @@ export default function VerifyAdminMail() {
     if (isSubmittingRef.current || isVerifyPending) return;
 
     const email = userEmail;
-    const userData: any = {
+    const userData: unknown = {
       email,
     };
     if (!twoFactorRequired) {
@@ -129,7 +129,7 @@ export default function VerifyAdminMail() {
     isSubmittingRef.current = true;
 
     verifyEmail(userData, {
-      onSuccess: (res: any) => {
+      onSuccess: (res: Record<string, unknown>) => {
         clearUserEmail();
         clearTwoFactorRequirement();
 
@@ -151,7 +151,7 @@ export default function VerifyAdminMail() {
           role: userRole ?? undefined,
           tenant: res?.data?.tenant ?? null,
           domain: domainInfo,
-          token: res?.access_token ?? res?.data?.access_token ?? res?.token ?? res?.data?.token ?? null,
+          token: null, // Cookie-based auth (Sanctum SPA) — no token stored
           availableTenants,
           userEmail: res?.data?.email ?? email,
           cloudRoles: res?.data?.cloud_roles ?? res?.data?.cloudRoles ?? undefined,
@@ -186,7 +186,7 @@ export default function VerifyAdminMail() {
             break;
         }
       },
-      onError: (err: any) => {
+      onError: (err: unknown) => {
         const message = err?.message || "Failed to verify email";
         setErrors({ general: message });
         if (/2fa|two[-\\s]?factor|authenticator/i.test(message)) {

@@ -4,7 +4,7 @@ import ProtectionLanding from "@/shared/components/integrations/ProtectionLandin
 const TenantProtection: React.FC = () => {
   return (
     <ProtectionLanding
-      PageShell={TenantPageShell}
+      PageShell={TenantPageShell as never}
       context="tenant"
       basePath="/dashboard"
       description="Manage replication policies, bidirectional sync, quorum, and traffic control"

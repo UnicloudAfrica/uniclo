@@ -28,7 +28,7 @@ export interface PipelineStep {
   status: "completed" | "pending" | "not_started" | "failed";
   description?: string;
   updated_at?: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 export interface InstanceSummary {

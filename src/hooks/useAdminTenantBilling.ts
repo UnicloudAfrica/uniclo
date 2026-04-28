@@ -54,10 +54,13 @@ export interface TenantBillingSummary {
 // API Functions
 // ================================
 
-const fetchTenantBillingConfig = async (tenantId: string) => {
-  const res = await silentAdminApi("GET", `/tenants/${tenantId}/billing`);
+const fetchTenantBillingConfig = async (tenantId: string): Promise<TenantBillingConfig> => {
+  const res = await silentAdminApi<{ data?: TenantBillingConfig }>(
+    "GET",
+    `/tenants/${tenantId}/billing`
+  );
   if (!res.data) throw new Error("Failed to fetch tenant billing config");
-  return res.data as TenantBillingConfig;
+  return res.data;
 };
 
 const updateTenantBillingConfig = async ({
@@ -105,10 +108,13 @@ const addTenantCredit = async ({
   return res.data;
 };
 
-const fetchTenantBillingSummary = async (tenantId: string) => {
-  const res = await silentAdminApi("GET", `/tenants/${tenantId}/billing/summary`);
+const fetchTenantBillingSummary = async (tenantId: string): Promise<TenantBillingSummary> => {
+  const res = await silentAdminApi<{ data?: TenantBillingSummary }>(
+    "GET",
+    `/tenants/${tenantId}/billing/summary`
+  );
   if (!res.data) throw new Error("Failed to fetch tenant billing summary");
-  return res.data as TenantBillingSummary;
+  return res.data;
 };
 
 // ================================

@@ -57,7 +57,13 @@ const ClientEditModal: React.FC<ClientEditModalProps> = ({
 
   const { mutate: updateClient, isPending } = (
     context === "tenant" ? tenantMutation : adminMutation
-  ) as { mutate: (data: Record<string, unknown>) => void; isPending: boolean };
+  ) as {
+    mutate: (
+      data: Record<string, unknown>,
+      options?: { onSuccess?: (d: unknown) => void; onError?: (e: unknown) => void }
+    ) => void;
+    isPending: boolean;
+  };
 
   const { data: countries } = useFetchCountries();
 
@@ -124,7 +130,7 @@ const ClientEditModal: React.FC<ClientEditModalProps> = ({
     updateClient(
       { id: clientId, clientData: payload },
       {
-        onSuccess: (updatedData: any) => {
+        onSuccess: (updatedData: Record<string, unknown>) => {
           ToastUtils.success("Client updated successfully!");
           if (client) {
             onClientUpdated?.({ ...client, ...updatedData });

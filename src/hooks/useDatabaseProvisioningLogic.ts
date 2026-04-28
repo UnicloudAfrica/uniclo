@@ -170,7 +170,7 @@ export function getRegionLabel(
  * Auto-assign replica regions by picking randomly from available regions
  * (excluding the primary).
  */
-function assignReplicaRegions(
+function _assignReplicaRegions(
   additionalReplicas: number,
   primaryRegion: string,
   allRegions: { value: string; label: string }[],
@@ -208,7 +208,7 @@ export const useDatabaseProvisioningLogic = () => {
     const apiCountries = Array.isArray(rawCountries) ? rawCountries : [];
     if (apiCountries.length > 0) {
       const mapped = apiCountries
-        .map((item: any) => {
+        .map((item: unknown) => {
           const code = normalizeCountryCandidate(
             item?.iso2 || item?.code || item?.country_code || item?.iso_code || item?.iso || ""
           );
@@ -272,6 +272,10 @@ export const useDatabaseProvisioningLogic = () => {
     licenseKey: "",
     licenseMode: "",
     cloudAccountId: null,
+    // FR-031: empty string means "use the platform default" (typically
+    // `management_only`). Admin UI may set this explicitly to override
+    // for a specific order.
+    planKind: "" as "" | "bundled" | "management_only",
   });
 
   // Initialize billing country and customer context from profile once loaded
@@ -325,19 +329,19 @@ export const useDatabaseProvisioningLogic = () => {
     });
 
   const suggestedMembers = useMemo(() => {
-    const raw = (suggestedMembersData as any)?.members ?? (suggestedMembersData as any)?.data ?? suggestedMembersData;
+    const raw = (suggestedMembersData as unknown)?.members ?? (suggestedMembersData as { data?: unknown })?.data ?? suggestedMembersData;
     return Array.isArray(raw) ? raw : [];
   }, [suggestedMembersData]);
 
   // Auto-select all suggested members when they load
   const [memberSignature, setMemberSignature] = useState<string>("");
   useEffect(() => {
-    const sig = suggestedMembers.map((m: any) => m.id).sort().join(",");
+    const sig = suggestedMembers.map((m: unknown) => m.id).sort().join(",");
     if (sig && sig !== memberSignature) {
       setMemberSignature(sig);
       setForm((prev) => ({
         ...prev,
-        memberUserIds: suggestedMembers.map((m: any) => Number(m.id)),
+        memberUserIds: suggestedMembers.map((m: unknown) => Number(m.id)),
       }));
     }
   }, [suggestedMembers, memberSignature]);
@@ -345,11 +349,11 @@ export const useDatabaseProvisioningLogic = () => {
   const selectedMemberIds = useMemo(() => new Set(form.memberUserIds), [form.memberUserIds]);
 
   const selectedMembers = useMemo(
-    () => suggestedMembers.filter((m: any) => selectedMemberIds.has(Number(m.id))),
+    () => suggestedMembers.filter((m: unknown) => selectedMemberIds.has(Number(m.id))),
     [suggestedMembers, selectedMemberIds]
   );
 
-  const toggleMember = useCallback((member: any) => {
+  const toggleMember = useCallback((member: unknown) => {
     const id = Number(member.id);
     setForm((prev) => ({
       ...prev,
@@ -362,12 +366,12 @@ export const useDatabaseProvisioningLogic = () => {
   const restoreDefaultMembers = useCallback(() => {
     setForm((prev) => ({
       ...prev,
-      memberUserIds: suggestedMembers.map((m: any) => Number(m.id)),
+      memberUserIds: suggestedMembers.map((m: unknown) => Number(m.id)),
     }));
   }, [suggestedMembers]);
 
   const showRestoreMembers = useMemo(() => {
-    const defaultIds = suggestedMembers.map((m: any) => Number(m.id)).sort().join(",");
+    const defaultIds = suggestedMembers.map((m: unknown) => Number(m.id)).sort().join(",");
     const currentIds = [...form.memberUserIds].sort().join(",");
     return defaultIds !== currentIds;
   }, [suggestedMembers, form.memberUserIds]);
@@ -676,6 +680,10 @@ export const useDatabaseProvisioningLogic = () => {
         if (form.licenseKey.trim()) payload.license_key = form.licenseKey.trim();
         if (form.licenseMode) payload.license_mode = form.licenseMode;
         if (form.cloudAccountId) payload.cloud_account_id = form.cloudAccountId;
+        // FR-031: pass plan_kind so the API picks the right wholesale tier.
+        // Defaults to platform default (`management_only`) on the backend
+        // when the form leaves it unset.
+        if (form.planKind) payload.plan_kind = form.planKind;
 
         const response = await orderMutation.mutateAsync(payload);
         const data = response?.data ?? (response as unknown as DatabaseOrderResponse["data"]);

@@ -59,7 +59,7 @@ const ClientProjects: React.FC = () => {
 
   // Bulk operations
   const handleBulkExport = async (selectedIds: string[]) => {
-    const projectsRaw = ((projectsResponse as Record<string, any>)?.data || []) as HookProject[];
+    const projectsRaw = ((projectsResponse as Record<string, unknown>)?.data || []) as HookProject[];
     const { exportSelectedProjects } = await import("../../utils/projectExport");
     try {
       await exportSelectedProjects(
@@ -75,7 +75,7 @@ const ClientProjects: React.FC = () => {
   };
 
   // Convert HookProject[] to GlobalProject[] for the container
-  const projects = ((projectsResponse as Record<string, any>)?.data as unknown as Project[]) || [];
+  const projects = ((projectsResponse as Record<string, unknown>)?.data as unknown as Project[]) || [];
 
   return (
     <>

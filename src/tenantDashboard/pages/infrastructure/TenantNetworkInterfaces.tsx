@@ -23,7 +23,7 @@ const TenantNetworkInterfaces: React.FC = () => {
       hierarchy="tenant"
       projectId={projectId}
       region={region}
-      hooks={hooks as any}
+      hooks={hooks as unknown as Parameters<typeof NetworkInterfacesContainer>[0]["hooks"]}
       wrapper={({ headerActions, children }) => (
         <TenantPageShell
           title={

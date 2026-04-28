@@ -157,7 +157,7 @@ const ScoreBar: React.FC<{ score: number; level: string }> = ({ score, level }) 
 /** Horizontal threat gauge with a gradient bar from green to red. */
 const ThreatGauge: React.FC<{ level: string }> = ({ level }) => {
   const percent = threatLevelToPercent(level);
-  const style = THREAT_LEVEL_STYLES[level] ?? THREAT_LEVEL_STYLES.none;
+  const _style = THREAT_LEVEL_STYLES[level] ?? THREAT_LEVEL_STYLES.none;
   return (
     <div
       className="rounded-xl p-4"

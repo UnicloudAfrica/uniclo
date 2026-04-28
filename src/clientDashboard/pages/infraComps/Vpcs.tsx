@@ -13,7 +13,12 @@ const useVpcsAdapter = (projectId: string, region?: string) => {
   };
 };
 
-const VPCs = ({ projectId = "", region = "" }: any) => {
+interface VPCsProps {
+  projectId?: string;
+  region?: string;
+}
+
+const VPCs = ({ projectId = "", region = "" }: VPCsProps) => {
   return (
     <VpcsContainer
       hierarchy="client"
@@ -24,7 +29,7 @@ const VPCs = ({ projectId = "", region = "" }: any) => {
         useCreate: useCreateVpc as never,
         useDelete: useDeleteVpc as never,
       }}
-      wrapper={({ headerActions, children }: any) => (
+      wrapper={({ headerActions, children }: { headerActions: React.ReactNode; children: React.ReactNode }) => (
         <ResourceSection
           title="VPCs"
           description="Manage Virtual Private Clouds for isolated project networking."

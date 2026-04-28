@@ -19,7 +19,11 @@ import ToastUtils from "@/utils/toastUtil";
 import { useCreateTenantPartner } from "@/hooks/tenantHooks/partnerHooks";
 import { getBaseDomain } from "@/utils/getSubdomain";
 
-const TenantAddPartnerWizard = ({ onClose }: any) => {
+interface TenantAddPartnerWizardProps {
+  onClose: () => void;
+}
+
+const TenantAddPartnerWizard = ({ onClose }: TenantAddPartnerWizardProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const baseDomain = getBaseDomain();
   const domainSuffix = baseDomain ? `.${baseDomain}` : "";
@@ -65,7 +69,7 @@ const TenantAddPartnerWizard = ({ onClose }: any) => {
       verified: false,
     },
   });
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, unknown>>({});
 
   const { mutate: createPartner, isPending } = useCreateTenantPartner();
   const { data: industries, isFetching: isIndustriesFetching } = useFetchIndustries();
@@ -87,7 +91,8 @@ const TenantAddPartnerWizard = ({ onClose }: any) => {
       validate: CreateAccount.validate,
     },
     {
-      component: (props: any) => (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      component: (props: Record<string, unknown>) => (
         <BusinessInfo
           {...props}
           industries={industries}
@@ -100,7 +105,8 @@ const TenantAddPartnerWizard = ({ onClose }: any) => {
       validate: BusinessInfo.validate,
     },
     {
-      component: (props: any) => (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      component: (props: Record<string, unknown>) => (
         <BusinessAddress
           {...props}
           countries={countries}
@@ -117,7 +123,8 @@ const TenantAddPartnerWizard = ({ onClose }: any) => {
       validate: BusinessAddress.validate,
     },
     {
-      component: (props: any) => <UploadFiles {...props} setErrors={setErrors} />,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      component: (props: Record<string, unknown>) => <UploadFiles {...props} setErrors={setErrors} />,
       label: "Upload Document",
       description: "Attach supporting documentation to complete onboarding.",
       validate: UploadFiles.validate,
@@ -212,12 +219,11 @@ const TenantAddPartnerWizard = ({ onClose }: any) => {
   const domainPreview = formData.domain ? `${formData.domain}${displaySuffix}` : "Not assigned";
   const contactName = [formData.first_name, formData.last_name].filter(Boolean).join(" ").trim();
 
-  const toTitle = (value: any) =>
+  const toTitle = (value: unknown) =>
     value
-      ? value
-          .toString()
+      ? String(value)
           .replace(/[_-]+/g, " ")
-          .replace(/\b\w/g, (char: any) => char.toUpperCase())
+          .replace(/\b\w/g, (char: string) => char.toUpperCase())
       : "Not provided";
 
   const ActiveStep = steps![currentStep].component;

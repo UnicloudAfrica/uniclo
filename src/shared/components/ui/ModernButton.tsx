@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { forwardRef, memo } from "react";
 import { designTokens } from "@/styles/designTokens";
 import type { ButtonSize, ButtonVariant } from "./types";
 
@@ -22,21 +22,25 @@ export interface ModernButtonProps extends React.ButtonHTMLAttributes<HTMLButton
   style?: React.CSSProperties;
 }
 
-const ModernButton: React.FC<ModernButtonProps> = ({
-  children,
-  variant = "primary",
-  size = "md",
-  loading = false,
-  isLoading = false,
-  isDisabled = false,
-  leftIcon,
-  rightIcon,
-  className = "",
-  style: customStyle = {},
-  onClick,
-  disabled,
-  ...props
-}) => {
+const ModernButtonInner = forwardRef<HTMLButtonElement, ModernButtonProps>(
+  function ModernButton(
+    {
+      children,
+      variant = "primary",
+      size = "md",
+      loading = false,
+      isLoading = false,
+      isDisabled = false,
+      leftIcon,
+      rightIcon,
+      className = "",
+      style: customStyle = {},
+      onClick,
+      disabled,
+      ...props
+    },
+    ref
+  ) {
   const fontStack = designTokens.typography.fontFamily.sans.join(", ");
   const resolvedIsLoading = Boolean(loading || isLoading);
   const resolvedIsDisabled = Boolean(disabled || isDisabled);
@@ -281,6 +285,7 @@ const ModernButton: React.FC<ModernButtonProps> = ({
 
   return (
     <button
+      ref={ref}
       type="button"
       className={`modern-button modern-button--${variant} modern-button--${size} ${className}`}
       style={{ ...buttonStyles, ...customStyle }}
@@ -326,6 +331,9 @@ const ModernButton: React.FC<ModernButtonProps> = ({
       {rightIcon && !resolvedIsLoading && rightIcon}
     </button>
   );
-};
+  }
+);
 
-export default memo(ModernButton);
+const ModernButton = memo(ModernButtonInner);
+
+export default ModernButton;

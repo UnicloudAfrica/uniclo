@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  Loader2,
   Plus,
   Package,
   Globe,
@@ -22,6 +21,7 @@ import {
   ModernCard,
   ProviderBadge,
   getRegionOptionLabel,
+  DashboardSkeleton,
 } from "@/shared/components/ui";
 import ResourceHero from "@/shared/components/ui/ResourceHero";
 import ResourceDataExplorer from "../components/ResourceDataExplorer";
@@ -848,11 +848,7 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
   );
 
   if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-12 w-12 animate-spin text-[var(--theme-color)]" />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   const isLoadingData =
@@ -865,7 +861,7 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
         description="Maintain platform products across regions and keep provisioning catalogues aligned."
       >
         <ResourceHero
-          breadcrumbs={[] as any}
+          breadcrumbs={[] as unknown}
           title={heroState.title}
           subtitle="Products"
           description={heroState.description}
@@ -909,8 +905,11 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
               emptyState={{
                 icon: (
                   <span className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/10 text-blue-500">
-                    {activeConfig.icon ? (
-                      <activeConfig.icon className="h-5 w-5" />
+                    {(activeConfig as { icon?: React.ComponentType<{ className?: string }> }).icon ? (
+                      (() => {
+                        const Icon = (activeConfig as { icon: React.ComponentType<{ className?: string }> }).icon;
+                        return <Icon className="h-5 w-5" />;
+                      })()
                     ) : (
                       <Package className="h-5 w-5" />
                     )}

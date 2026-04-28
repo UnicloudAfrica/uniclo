@@ -15,7 +15,7 @@ import { Vpc } from "../types";
 interface VpcHooks {
   useList: (projectId: string, region?: string, options?: unknown) => UseQueryResult<Vpc[], Error>;
   useCreate: () => UseMutationResult<
-    any,
+    unknown,
     Error,
     {
       projectId: string;
@@ -25,7 +25,7 @@ interface VpcHooks {
     unknown
   >;
   useDelete: () => UseMutationResult<
-    any,
+    unknown,
     Error,
     { projectId: string; region?: string; vpcId: string },
     unknown
@@ -45,7 +45,7 @@ interface VpcsContainerProps {
   wrapper: (props: {
     headerActions: React.ReactNode;
     children: React.ReactNode;
-  }) => React.ReactElement<any>;
+  }) => React.ReactElement;
 }
 
 /**

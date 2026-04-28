@@ -157,7 +157,7 @@ export const useUpdateTenant = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateTenant,
-    onSuccess: (_data: any, variables: any) => {
+    onSuccess: (_data: unknown, variables: unknown) => {
       queryClient.invalidateQueries({ queryKey: ["tenants"] });
       queryClient.invalidateQueries({ queryKey: ["tenant", variables.id] });
     },

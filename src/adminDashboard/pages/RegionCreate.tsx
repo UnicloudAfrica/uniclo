@@ -53,29 +53,29 @@ const RegionCreate = () => {
     const res = await adminRegionApi.getProviderServices(provider);
     if (!res.success || !res.data) return null;
 
-    const raw = res.data as any;
+    const raw = res.data as unknown;
     const servicesMap = raw?.services || raw || {};
 
     const services: Record<string, ServiceDefinition> = {};
-    for (const [serviceType, svcConfig] of Object.entries(servicesMap as Record<string, any>)) {
+    for (const [serviceType, svcConfig] of Object.entries(servicesMap as Record<string, unknown>)) {
       const fields: Record<string, FieldDefinition> = {};
       const rawFields = svcConfig?.fields || {};
 
       if (Array.isArray(rawFields)) {
-        rawFields.forEach((f: any) => {
+        rawFields.forEach((f: unknown) => {
           fields[f.name] = {
             label: f.label,
-            type: f.type as any,
+            type: f.type as unknown,
             required: f.required,
             ...(f.placeholder ? { placeholder: f.placeholder } : {}),
             ...(f.description || f.help ? { help: f.description || f.help } : {}),
           };
         });
       } else {
-        for (const [fieldName, fieldDef] of Object.entries(rawFields as Record<string, any>)) {
+        for (const [fieldName, fieldDef] of Object.entries(rawFields as Record<string, unknown>)) {
           fields[fieldName] = {
             label: fieldDef.label || fieldName,
-            type: fieldDef.type as any,
+            type: fieldDef.type as unknown,
             required: fieldDef.required ?? true,
             ...(fieldDef.placeholder ? { placeholder: fieldDef.placeholder } : {}),
             ...(fieldDef.help ? { help: fieldDef.help } : {}),

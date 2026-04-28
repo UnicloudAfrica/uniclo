@@ -152,7 +152,11 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
     setSelectedClient(null);
   };
 
-  const apiClient: any = context === "admin" ? adminSilentApi : tenantSilentApi;
+  const apiClient = (context === "admin" ? adminSilentApi : tenantSilentApi) as (
+    method: string,
+    url: string,
+    body?: unknown
+  ) => Promise<unknown>;
 
   const refreshClients = () => {
     queryClient.invalidateQueries({ queryKey: ["clients"] });
@@ -175,9 +179,13 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
   };
 
   const handleBulkExport = async (format = "csv") => {
-    const fileApiClient: any = context === "admin" ? adminFileApi : tenantFileApi;
+    const fileApiClient = (context === "admin" ? adminFileApi : tenantFileApi) as (
+      method: string,
+      url: string,
+      body?: unknown
+    ) => Promise<BlobPart>;
     try {
-      const response: any = await fileApiClient("POST", "/clients/bulk-export", {
+      const response = await fileApiClient("POST", "/clients/bulk-export", {
         client_ids: selectedClients,
         format,
       });
@@ -191,7 +199,7 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
       link.remove();
 
       ToastUtil.success(`Successfully exported ${selectedClients.length} client(s)`);
-    } catch (error: any) {
+    } catch (error) {
       ToastUtil.error("Failed to export clients");
       logger.error("Bulk export error:", error);
     }
@@ -261,7 +269,7 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
     {
       key: "name",
       header: "Name",
-      render: (_value: any, item: Client) => (
+      render: (_value: unknown, item: Client) => (
         <div className="font-medium text-gray-900">
           {item.first_name} {item.last_name}
         </div>
@@ -271,7 +279,7 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
     {
       key: "email",
       header: "Email Address",
-      render: (_value: any, item: Client) => <div className="text-gray-600">{item.email}</div>,
+      render: (_value: unknown, item: Client) => <div className="text-gray-600">{item.email}</div>,
       sortable: true,
     },
     ...(context === "admin"
@@ -279,7 +287,7 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
           {
             key: "tenant_name",
             header: "Tenant Name",
-            render: (_value: any, item: Client) => (
+            render: (_value: unknown, item: Client) => (
               <div className="text-gray-600">
                 {(((item as Record<string, unknown>).tenant as Record<string, unknown>)
                   ?.name as string) || "N/A"}
@@ -292,7 +300,7 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
     {
       key: "created_at",
       header: "Created",
-      render: (_value: any, item: Client) => (
+      render: (_value: unknown, item: Client) => (
         <div className="text-gray-600">
           {item.created_at ? new Date(item.created_at).toLocaleDateString() : "—"}
         </div>
@@ -302,7 +310,7 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
     {
       key: "actions",
       header: "Actions",
-      render: (_value: any, item: Client) => (
+      render: (_value: unknown, item: Client) => (
         <div className="flex justify-end">
           <TableActionButtons
             onView={() => handleViewDetails(item)}
@@ -421,9 +429,9 @@ const ClientsManagement: React.FC<ClientsManagementProps> = ({ context = "admin"
                   onChange={(e) => setSelectedTenantId(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 >
-                  {uniqueTenants.map((tenant: any) => (
-                    <option key={tenant.id} value={tenant.id}>
-                      {tenant.name}
+                  {uniqueTenants.map((tenant) => (
+                    <option key={String(tenant?.id ?? "")} value={String(tenant?.id ?? "")}>
+                      {tenant?.name}
                     </option>
                   ))}
                 </select>

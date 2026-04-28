@@ -17,7 +17,7 @@ interface InfraComponent {
 }
 
 interface UseResourceDataFetchingParams {
-  project: Record<string, any> | undefined;
+  project: Record<string, unknown> | undefined;
   infraComponents: Record<string, InfraComponent>;
   getInfraCount: (key: string) => number | undefined;
 }

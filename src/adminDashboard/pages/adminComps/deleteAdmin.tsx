@@ -1,7 +1,7 @@
 import { X, Loader2 } from "lucide-react";
 import { useDeleteAdmin } from "@/hooks/adminHooks/adminHooks";
 
-export const DeleteAdminModal = ({ isOpen, onClose, admin }: any) => {
+export const DeleteAdminModal = ({ isOpen, onClose, admin }: { isOpen: boolean; onClose: () => void; admin: unknown }) => {
   // Use the useDeleteAdmin hook
   const {
     mutate: deleteAdmin, // Renamed mutate to deleteAdmin for clarity
@@ -11,7 +11,7 @@ export const DeleteAdminModal = ({ isOpen, onClose, admin }: any) => {
   } = useDeleteAdmin();
 
   // Handle the actual deletion
-  const handleDeleteConfirm = (e: any) => {
+  const handleDeleteConfirm = (e: unknown) => {
     if (e) e.preventDefault(); // Prevent default form submission behavior if this is part of a form
 
     if (admin?.identifier) {
@@ -71,7 +71,7 @@ export const DeleteAdminModal = ({ isOpen, onClose, admin }: any) => {
 
           {isError && (
             <p className="text-red-500 text-sm my-2">
-              Error: {(error as any)?.message || "Failed to delete admin."}
+              Error: {(error as unknown)?.message || "Failed to delete admin."}
             </p>
           )}
         </div>

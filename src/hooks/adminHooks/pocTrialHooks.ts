@@ -13,7 +13,10 @@ import type {
 // ── Tenant POC Configuration ────────────────────────────
 
 export const fetchTenantPocConfig = async (tenantId: string): Promise<PocTrialConfig> => {
-  const res = await silentApi("GET", `/tenants/${tenantId}/poc-trials`);
+  const res = await silentApi<{ data: PocTrialConfig }>(
+    "GET",
+    `/tenants/${tenantId}/poc-trials`
+  );
   return res.data;
 };
 
@@ -24,7 +27,11 @@ export const updateTenantPocConfig = async ({
   tenantId: string;
   data: Partial<PocTrialConfig>;
 }): Promise<PocTrialConfig> => {
-  const res = await api("PUT", `/tenants/${tenantId}/poc-trials`, data);
+  const res = await api<{ data: PocTrialConfig }>(
+    "PUT",
+    `/tenants/${tenantId}/poc-trials`,
+    data as unknown as Record<string, unknown>
+  );
   return res.data;
 };
 
@@ -35,7 +42,11 @@ export const updateTenantPocOverrides = async ({
   tenantId: string;
   overrides: Array<{ product_type: string; trial_days: number; enabled?: boolean }>;
 }): Promise<PocOverride[]> => {
-  const res = await api("PUT", `/tenants/${tenantId}/poc-trials/overrides`, { overrides });
+  const res = await api<{ data: PocOverride[] }>(
+    "PUT",
+    `/tenants/${tenantId}/poc-trials/overrides`,
+    { overrides }
+  );
   return res.data;
 };
 
@@ -43,7 +54,11 @@ export const fetchTenantPocTrials = async (
   tenantId: string,
   filters?: PocTrialFilters
 ): Promise<{ data: PocTrial[]; meta?: Record<string, unknown> }> => {
-  const res = await silentApi("GET", `/tenants/${tenantId}/poc-trials/list`, { params: filters });
+  const res = await silentApi<{ data: PocTrial[]; meta?: Record<string, unknown> }>(
+    "GET",
+    `/tenants/${tenantId}/poc-trials/list`,
+    { params: filters } as unknown as Record<string, unknown>
+  );
   return res;
 };
 
@@ -52,17 +67,21 @@ export const fetchTenantPocTrials = async (
 export const fetchPocTrials = async (
   filters?: PocTrialFilters
 ): Promise<{ data: PocTrial[]; meta?: Record<string, unknown> }> => {
-  const res = await silentApi("GET", "/poc-trials", { params: filters });
+  const res = await silentApi<{ data: PocTrial[]; meta?: Record<string, unknown> }>(
+    "GET",
+    "/poc-trials",
+    { params: filters } as unknown as Record<string, unknown>
+  );
   return res;
 };
 
 export const fetchPocStatistics = async (): Promise<PocStatistics> => {
-  const res = await silentApi("GET", "/poc-trials/statistics");
+  const res = await silentApi<{ data: PocStatistics }>("GET", "/poc-trials/statistics");
   return res.data;
 };
 
 export const fetchPocTrialById = async (trialId: number): Promise<PocTrial> => {
-  const res = await silentApi("GET", `/poc-trials/${trialId}`);
+  const res = await silentApi<{ data: PocTrial }>("GET", `/poc-trials/${trialId}`);
   return res.data;
 };
 
@@ -77,9 +96,13 @@ export const extendPocTrial = async ({
   trialId: number;
   additionalDays: number;
 }): Promise<PocTrial> => {
-  const res = await api("POST", `/tenants/${tenantId}/poc-trials/${trialId}/extend`, {
-    additional_days: additionalDays,
-  });
+  const res = await api<{ data: PocTrial }>(
+    "POST",
+    `/tenants/${tenantId}/poc-trials/${trialId}/extend`,
+    {
+      additional_days: additionalDays,
+    }
+  );
   return res.data;
 };
 
@@ -92,9 +115,13 @@ export const cancelPocTrial = async ({
   trialId: number;
   reason?: string;
 }): Promise<PocTrial> => {
-  const res = await api("POST", `/tenants/${tenantId}/poc-trials/${trialId}/cancel`, {
-    reason: reason || "admin_cancelled",
-  });
+  const res = await api<{ data: PocTrial }>(
+    "POST",
+    `/tenants/${tenantId}/poc-trials/${trialId}/cancel`,
+    {
+      reason: reason || "admin_cancelled",
+    }
+  );
   return res.data;
 };
 
@@ -179,12 +206,19 @@ export const useCancelPocTrial = () => {
 export const fetchPocTrialRequests = async (
   filters?: { status?: string; product_type?: string; tenant_id?: string; per_page?: number }
 ): Promise<{ data: PocTrialRequest[]; meta?: Record<string, unknown> }> => {
-  const res = await silentApi("GET", "/poc-trial-requests", { params: filters });
+  const res = await silentApi<{ data: PocTrialRequest[]; meta?: Record<string, unknown> }>(
+    "GET",
+    "/poc-trial-requests",
+    { params: filters } as unknown as Record<string, unknown>
+  );
   return res;
 };
 
 export const fetchPocTrialRequestPendingCount = async (): Promise<number> => {
-  const res = await silentApi("GET", "/poc-trial-requests/pending-count");
+  const res = await silentApi<{ data: { count: number } }>(
+    "GET",
+    "/poc-trial-requests/pending-count"
+  );
   return res.data.count;
 };
 
@@ -197,10 +231,14 @@ export const approvePocTrialRequest = async ({
   trialDays?: number;
   reviewNotes?: string;
 }): Promise<PocTrialRequest> => {
-  const res = await api("POST", `/poc-trial-requests/${requestId}/approve`, {
-    trial_days: trialDays,
-    review_notes: reviewNotes,
-  });
+  const res = await api<{ data: PocTrialRequest }>(
+    "POST",
+    `/poc-trial-requests/${requestId}/approve`,
+    {
+      trial_days: trialDays,
+      review_notes: reviewNotes,
+    }
+  );
   return res.data;
 };
 
@@ -211,9 +249,13 @@ export const rejectPocTrialRequest = async ({
   requestId: number;
   reviewNotes?: string;
 }): Promise<PocTrialRequest> => {
-  const res = await api("POST", `/poc-trial-requests/${requestId}/reject`, {
-    review_notes: reviewNotes,
-  });
+  const res = await api<{ data: PocTrialRequest }>(
+    "POST",
+    `/poc-trial-requests/${requestId}/reject`,
+    {
+      review_notes: reviewNotes,
+    }
+  );
   return res.data;
 };
 

@@ -16,12 +16,12 @@ interface TeamTabProps {
     projectId: string | number;
     userId: string | number;
     policyId: number;
-  }) => Promise<ApiResponse<any>>;
+  }) => Promise<ApiResponse<unknown>>;
   revokePolicy: (args: {
     projectId: string | number;
     userId: string | number;
     policyId: number;
-  }) => Promise<ApiResponse<any>>;
+  }) => Promise<ApiResponse<unknown>>;
   handleUserAction: (user: ProjectUser, actionKey: string) => Promise<void>;
   refetchProjectDetails: () => Promise<unknown>;
   refetchProjectStatus: () => Promise<unknown>;
@@ -191,10 +191,10 @@ const TeamTab: React.FC<TeamTabProps> = ({
                                         );
                                         refetchProjectDetails();
                                         refetchProjectStatus();
-                                      } catch (err: any) {
+                                      } catch (err: unknown) {
                                         const msg =
-                                          err?.response?.data?.message ||
-                                          err?.message ||
+                                          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+                                          (err instanceof Error ? err.message : undefined) ||
                                           "Failed to revoke policy";
                                         ToastUtils.error(msg, {
                                           id: `policy-action-${user.id}`,
@@ -223,7 +223,7 @@ const TeamTab: React.FC<TeamTabProps> = ({
 
                       {cloudPolicies.some((p) => {
                         const assignedIds = (user.status?.cloud_policies || []).map(
-                          (cp: any) => cp.id
+                          (cp: unknown) => cp.id
                         );
                         return !p.is_compulsory && !assignedIds.includes(p.id);
                       }) && (
@@ -247,10 +247,10 @@ const TeamTab: React.FC<TeamTabProps> = ({
                                 );
                                 refetchProjectDetails();
                                 refetchProjectStatus();
-                              } catch (err: any) {
+                              } catch (err: unknown) {
                                 const msg =
-                                  err?.response?.data?.message ||
-                                  err?.message ||
+                                  (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+                                  (err instanceof Error ? err.message : undefined) ||
                                   "Failed to assign policy";
                                 ToastUtils.error(msg, { id: `policy-action-${user.id}` });
                               }
@@ -265,7 +265,7 @@ const TeamTab: React.FC<TeamTabProps> = ({
                             {cloudPolicies
                               ?.filter((p) => {
                                 const assignedIds = (user.status?.cloud_policies || []).map(
-                                  (cp: any) => cp.id
+                                  (cp: unknown) => cp.id
                                 );
                                 return !p.is_compulsory && !assignedIds.includes(p.id);
                               })

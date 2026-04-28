@@ -28,7 +28,7 @@ const AdminSecurityGroups: React.FC = () => {
     useVpcs: useVpcs,
   };
 
-  const handleNavigateToRules = (sg: any) => {
+  const handleNavigateToRules = (sg: unknown) => {
     navigate(
       `/admin-dashboard/infrastructure/security-group-rules?project=${projectId}&region=${region}&sg=${sg.id}&name=${encodeURIComponent(sg.name || "SG")}`
     );
@@ -40,7 +40,7 @@ const AdminSecurityGroups: React.FC = () => {
         hierarchy="admin"
         projectId={projectId}
         region={region}
-        hooks={hooks as any}
+        hooks={hooks as unknown}
         onNavigateToRules={handleNavigateToRules}
         wrapper={({ headerActions, children }) => (
           <AdminPageShell

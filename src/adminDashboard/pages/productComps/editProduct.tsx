@@ -4,7 +4,7 @@ import { useFetchRegions } from "@/hooks/adminHooks/regionHooks";
 import { useUpdateProduct } from "@/hooks/adminHooks/adminProductHooks";
 import logger from "@/utils/logger";
 
-const EditProduct = ({ isOpen, onClose, product, onUpdated }: any) => {
+const EditProduct = ({ isOpen, onClose, product, onUpdated }: { isOpen: boolean; onClose: () => void; product: unknown; onUpdated?: () => void }) => {
   const [formData, setFormData] = useState({
     name: "",
     region: "",
@@ -27,11 +27,11 @@ const EditProduct = ({ isOpen, onClose, product, onUpdated }: any) => {
         provider_resource_id: product.provider_resource_id || null,
         created_at: product.created_at || "",
         updated_at: product.updated_at || "",
-      } as any);
+      } as unknown);
     }
   }, [product]);
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!product || !product.id) return;
     updateProduct(
@@ -43,12 +43,12 @@ const EditProduct = ({ isOpen, onClose, product, onUpdated }: any) => {
             onUpdated();
           }
         },
-        onError: (error) => logger.error("Error updating product:", error.message),
+        onError: (error: unknown) => logger.error("Error updating product:", (error as Error)?.message ?? error),
       }
     );
   };
 
-  const handleChange = (e: any) => {
+  const handleChange = (e: unknown) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -97,8 +97,8 @@ const EditProduct = ({ isOpen, onClose, product, onUpdated }: any) => {
                 </option>
               ) : (
                 regions
-                  ?.filter((r: any) => r.name && r.is_active !== false)
-                  .map((region: any) => (
+                  ?.filter((r: unknown) => r.name && r.is_active !== false)
+                  .map((region: unknown) => (
                     <option key={region.code} value={region.code}>
                       {region.name || region.code}
                     </option>

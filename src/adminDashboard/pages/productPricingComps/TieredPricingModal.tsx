@@ -49,7 +49,7 @@ export default function TieredPricingModal({ isOpen, onClose, service }: TieredP
     setTiers(tiers.filter((_, i) => i !== index));
   };
 
-  const updateTier = (index: number, field: keyof PricingTier, value: any) => {
+  const updateTier = (index: number, field: keyof PricingTier, value: unknown) => {
     const updated = [...tiers];
     updated[index] = { ...updated[index]!, [field]: value };
     setTiers(updated);

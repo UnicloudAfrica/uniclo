@@ -173,7 +173,7 @@ const TenantPricingEditList = () => {
     data: catalogPayload,
     isFetching: isCatalogFetching,
     refetch: refetchCatalog,
-  } = useFetchProductPricing(selectedRegion, activeConfig?.productType as any, {
+  } = useFetchProductPricing(selectedRegion, (activeConfig?.productType ?? "") as string, {
     enabled: Boolean(selectedRegion),
     tenantId: tenantId || "",
     countryCode: effectiveCountryCode,

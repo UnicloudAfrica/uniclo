@@ -64,7 +64,7 @@ export interface BillingSummary {
 export const invoiceKeys = {
   all: ["invoices"] as const,
   lists: () => [...invoiceKeys.all, "list"] as const,
-  list: (filters: Record<string, any>) => [...invoiceKeys.lists(), filters] as const,
+  list: (filters: Record<string, unknown>) => [...invoiceKeys.lists(), filters] as const,
   details: () => [...invoiceKeys.all, "detail"] as const,
   detail: (id: number) => [...invoiceKeys.details(), id] as const,
   summary: () => [...invoiceKeys.all, "summary"] as const,

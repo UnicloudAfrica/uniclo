@@ -1,40 +1,57 @@
-// src/hooks/adminHooks/regionHooks.js
+// src/hooks/regionHooks.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { UseQueryOptions } from "@tanstack/react-query";
 import silentApi from "../index/admin/silent";
 import api from "../index/admin/api";
 import logger from "../utils/logger";
 
-const fetchRegions = async () => {
-  const res = await silentApi("GET", "/regions");
+type ApiEnvelope<T = unknown> = { data?: T };
+
+export interface RegionPayload {
+  [key: string]: unknown;
+}
+
+interface UpdateRegionArgs {
+  code: string;
+  regionData: RegionPayload;
+}
+
+const fetchRegions = async (): Promise<unknown> => {
+  const res = await silentApi<ApiEnvelope>("GET", "/regions");
   if (!res.data) throw new Error("Failed to fetch regions");
   return res.data;
 };
 
-const fetchRegionByCode = async (code: string) => {
-  const res = await silentApi("GET", `/regions/${code}`);
+const fetchRegionByCode = async (code: string): Promise<unknown> => {
+  const res = await silentApi<ApiEnvelope>("GET", `/regions/${code}`);
   if (!res.data) throw new Error(`Failed to fetch region ${code}`);
   return res.data;
 };
 
-const createRegion = async (regionData: any) => {
-  const res = await api("POST", "/regions", regionData);
+const createRegion = async (regionData: RegionPayload): Promise<unknown> => {
+  const res = await api<ApiEnvelope>("POST", "/regions", regionData);
   if (!res.data) throw new Error("Failed to create region");
   return res.data;
 };
 
-const updateRegion = async ({ code, regionData }: any) => {
-  const res = await api("PATCH", `/regions/${code}`, regionData);
+const updateRegion = async ({ code, regionData }: UpdateRegionArgs): Promise<unknown> => {
+  const res = await api<ApiEnvelope>("PATCH", `/regions/${code}`, regionData);
   if (!res.data) throw new Error(`Failed to update region ${code}`);
   return res.data;
 };
 
-const deleteRegion = async (code: string) => {
-  const res = await api("DELETE", `/regions/${code}`);
+const deleteRegion = async (code: string): Promise<unknown> => {
+  const res = await api<ApiEnvelope>("DELETE", `/regions/${code}`);
   if (!res.data) throw new Error(`Failed to delete region ${code}`);
   return res.data;
 };
 
-export const useFetchTenantRegions = (options: any = {}) => {
+type QueryOptions<TData> = Omit<
+  UseQueryOptions<TData, Error, TData, readonly unknown[]>,
+  "queryKey" | "queryFn"
+>;
+
+export const useFetchTenantRegions = (options: QueryOptions<unknown> = {}) => {
   return useQuery({
     queryKey: ["regions"],
     queryFn: fetchRegions,
@@ -44,7 +61,7 @@ export const useFetchTenantRegions = (options: any = {}) => {
   });
 };
 
-export const useFetchTenantRegionById = (code: string, options = {}) => {
+export const useFetchTenantRegionById = (code: string, options: QueryOptions<unknown> = {}) => {
   return useQuery({
     queryKey: ["region", code],
     queryFn: () => fetchRegionByCode(code),
@@ -72,7 +89,7 @@ export const useUpdateTenantRegion = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateRegion,
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["regions"] });
       queryClient.invalidateQueries({ queryKey: ["region", variables.code] });
     },

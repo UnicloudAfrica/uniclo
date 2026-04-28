@@ -40,14 +40,14 @@ interface ObjectStorageAnalyticsProps {
   accountId: string;
   accountName?: string;
   onExtendStorage: () => void;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
 
 const getErrorMessage = (error: unknown, fallback: string) => {
-  if (error instanceof Error && (error as any)["message"]) return (error as any)["message"];
+  if (error instanceof Error && (error as unknown)["message"]) return (error as unknown)["message"];
   if (typeof error === "string" && error.trim()) return error;
   if (isRecord(error) && typeof error["message"] === "string" && String(error["message"]).trim()) {
     return String(error["message"]);

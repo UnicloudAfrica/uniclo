@@ -212,20 +212,20 @@ const BusinessProfileForm = ({ value, onChange }: BusinessProfileFormProps) => {
         return [];
       }
 
-      const response = await api("GET", `/states/${payload.state_id}`);
+      const response = await api<{ data?: unknown }>("GET", `/states/${payload.state_id}`);
 
       const responseData = isRecord(response?.data) ? response.data : null;
-      const nestedData = responseData && isRecord(responseData.data) ? responseData.data : null;
+      const nestedData = responseData && isRecord((responseData as Record<string, unknown>).data) ? (responseData as Record<string, unknown>).data : null;
       const stateData =
         nestedData ??
         responseData ??
-        (isRecord((response as Record<string, any>)?.data?.state)
-          ? (response as Record<string, any>).data.state
+        (isRecord((response as Record<string, unknown>)?.data?.state)
+          ? (response as Record<string, unknown>).data.state
           : null);
       const cityCollection =
-        (stateData && isRecord(stateData) ? stateData.cities : undefined) ??
-        (responseData && isRecord(responseData) ? responseData.cities : undefined) ??
-        (isRecord(response) ? response.cities : undefined);
+        (stateData && isRecord(stateData) ? (stateData as Record<string, unknown>).cities : undefined) ??
+        (responseData && isRecord(responseData) ? (responseData as Record<string, unknown>).cities : undefined) ??
+        (isRecord(response) ? (response as Record<string, unknown>).cities : undefined);
 
       return toLookupArray(cityCollection);
     },

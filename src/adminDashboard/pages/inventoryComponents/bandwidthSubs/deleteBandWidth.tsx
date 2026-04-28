@@ -2,11 +2,11 @@ import { X, Loader2 } from "lucide-react";
 import ToastUtils from "@/utils/toastUtil";
 import { useDeleteBandwidthProduct } from "@/hooks/adminHooks/bandwidthHooks";
 
-const DeleteBandwidthModal = ({ isOpen, onClose, bandwidth }: any) => {
+const DeleteBandwidthModal = ({ isOpen, onClose, bandwidth }: { isOpen: boolean; onClose: () => void; bandwidth: unknown }) => {
   // Use the useDeleteBandwidthProduct hook
   const { mutate, isPending } = useDeleteBandwidthProduct();
 
-  const handleDeleteConfirm = (e: any) => {
+  const handleDeleteConfirm = (e: unknown) => {
     if (e) e.preventDefault();
 
     if (bandwidth?.identifier) {

@@ -12,7 +12,7 @@ interface State {
 }
 
 class TabErrorBoundary extends Component<Props, State> {
-  state: State = { hasError: false, error: null };
+  override state: State = { hasError: false, error: null };
 
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
@@ -34,7 +34,7 @@ class TabErrorBoundary extends Component<Props, State> {
               {this.props.tabName ? `Failed to load ${this.props.tabName}` : "Something went wrong"}
             </h3>
             <p className="text-sm text-gray-500 max-w-md mx-auto mb-4">
-              {process.env.NODE_ENV === "production"
+              {import.meta.env.PROD
                 ? "An unexpected error occurred. Please try again."
                 : (this.state.error?.message || "An unexpected error occurred.")}
             </p>

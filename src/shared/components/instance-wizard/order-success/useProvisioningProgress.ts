@@ -42,13 +42,13 @@ export function useProvisioningProgress(instances: unknown) {
     }
 
     const next: Record<string, PipelineStep[]> = {};
-    instances.forEach((instance: any) => {
+    instances.forEach((instance: Record<string, unknown>) => {
       const id = resolveInstanceKey(instance);
       if (!id) return;
       const steps = Array.isArray(instance?.provisioning_progress)
-        ? instance.provisioning_progress
+        ? (instance.provisioning_progress as Array<Record<string, unknown>>)
         : [];
-      next[String(id)] = steps.map((step: any) => ({
+      next[String(id)] = steps.map((step) => ({
         id: step.id || step.key || step.label || "",
         label: step.label || "Step",
         status: normalizeStatus(step.status),
@@ -61,7 +61,7 @@ export function useProvisioningProgress(instances: unknown) {
   }, [instances]);
 
   // Handle broadcast updates
-  const handleInstanceUpdate = useCallback((event: any) => {
+  const handleInstanceUpdate = useCallback((event: Record<string, unknown>) => {
     const instanceId = event?.instance_id || event?.instance?.id;
     const step = event?.step;
     if (!instanceId || !step) return;
@@ -113,7 +113,7 @@ export function useProvisioningProgress(instances: unknown) {
           if (steps.length > 0) {
             setInstanceProgress((prev) => ({
               ...prev,
-              [String(ref.key)]: steps.map((step: any) => ({
+              [String(ref.key)]: (steps as Array<Record<string, unknown>>).map((step) => ({
                 id: step.id || step.key || step.label || "",
                 label: step.label || "Step",
                 status: normalizeStatus(step.status),

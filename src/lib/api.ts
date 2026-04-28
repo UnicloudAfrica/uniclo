@@ -182,6 +182,17 @@ const handleAuthError = (
 
 // ─── Core request function ───────────────────────────────────────────
 
+/**
+ * Read a cookie value by name. Required for Sanctum CSRF with fetch —
+ * we must forward the XSRF-TOKEN cookie value as X-XSRF-TOKEN header
+ * because Laravel's CSRF middleware does not read the cookie directly.
+ */
+const readCookie = (name: string): string | null => {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+};
+
 const request = async <T = unknown>(
   method: HttpMethod,
   path: string,
@@ -197,6 +208,14 @@ const request = async <T = unknown>(
   // FormData: let browser set Content-Type with boundary
   if (body instanceof FormData) {
     delete headers["Content-Type"];
+  }
+
+  // Sanctum CSRF: attach X-XSRF-TOKEN header from cookie on state-changing requests
+  if (method !== "GET" && method !== "HEAD") {
+    const xsrf = readCookie("XSRF-TOKEN");
+    if (xsrf) {
+      headers["X-XSRF-TOKEN"] = xsrf;
+    }
   }
 
   const fetchOptions: RequestInit = {
@@ -262,6 +281,23 @@ const request = async <T = unknown>(
   }
 };
 
+// ─── CSRF ───────────────────────────────────────────────────────────
+
+/**
+ * Fetch the Sanctum CSRF cookie. Must be called before any
+ * state-changing request that initiates a session (login, register).
+ * Axios reads the XSRF-TOKEN cookie automatically; with fetch we
+ * just need the cookie to be set (browser sends it back via
+ * credentials: "include").
+ */
+const csrfCookie = async (): Promise<void> => {
+  const baseUrl = import.meta.env.VITE_API_USER_BASE_URL || "";
+  await fetch(`${baseUrl}/sanctum/csrf-cookie`, {
+    method: "GET",
+    credentials: "include",
+  });
+};
+
 // ─── Public API ──────────────────────────────────────────────────────
 
 export const api = {
@@ -313,6 +349,11 @@ export const api = {
    * Raw request — for cases that need full control.
    */
   request,
+
+  /**
+   * Fetch the Sanctum CSRF cookie (call before login/register).
+   */
+  csrfCookie,
 };
 
 // ─── Backward-compatibility: default export as callable ──────────────

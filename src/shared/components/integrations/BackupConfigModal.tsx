@@ -25,7 +25,7 @@ interface BackupConfigModalProps {
   resourceRegion?: string;
 }
 
-interface BackupConfig {
+export interface BackupConfig {
   schedule_type: string;
   cron_expression?: string;
   backup_type: string;

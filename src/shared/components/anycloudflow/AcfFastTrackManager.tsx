@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Zap, Plus, Trash2, Clock, RefreshCw, Loader2 } from "lucide-react";
+import { Zap, Trash2, RefreshCw, Loader2 } from "lucide-react";
 import { designTokens } from "@/styles/designTokens";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRegistry } from "@/shared/api/apiRegistry";

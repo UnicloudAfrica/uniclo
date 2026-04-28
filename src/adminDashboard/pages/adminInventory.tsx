@@ -215,12 +215,14 @@ export default function AdminInventory() {
   const selectedProvider = useMemo(() => {
     // If a specific AZ is selected, use its provider
     if (selectedAZ && Array.isArray(availabilityZones)) {
-      const az = (availabilityZones as any[]).find((a) => a.code === selectedAZ);
+      const az = (availabilityZones as Array<{ code?: string; provider?: string }>).find(
+        (a) => a.code === selectedAZ
+      );
       if (az?.provider) return az.provider.toLowerCase();
     }
     // Derive from first AZ of the region (provider no longer lives on region)
     if (Array.isArray(availabilityZones) && availabilityZones.length > 0) {
-      return (availabilityZones[0] as any)?.provider?.toLowerCase() || "";
+      return (availabilityZones[0] as { provider?: string })?.provider?.toLowerCase() || "";
     }
     // Legacy fallback
     if (!selectedRegion || !regions.length) return "";

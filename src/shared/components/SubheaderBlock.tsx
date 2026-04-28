@@ -2,7 +2,7 @@ import React, { memo } from "react";
 import { Menu } from "lucide-react";
 import BreadcrumbTrail from "./BreadcrumbTrail";
 
-const DEFAULT_BREADCRUMB_COLOR = "var(--theme-color, var(--theme-color))";
+const DEFAULT_BREADCRUMB_COLOR = "var(--theme-color)";
 
 interface Breadcrumb {
   label: string;
@@ -36,18 +36,21 @@ const SubheaderBlock: React.FC<SubheaderBlockProps> = ({
 
   return (
     <header
-      className={["bg-white border-b px-6 md:px-8 py-6 space-y-4", className]
+      className={["border-b px-6 md:px-8 py-6 space-y-4", className]
         .filter(Boolean)
         .join(" ")
         .trim()}
-      style={{ borderColor: "var(--theme-border-color)" }}
+      style={{
+        backgroundColor: "var(--theme-card-bg)",
+        borderColor: "var(--theme-border-color)",
+      }}
     >
       {(onOpenMobileMenu || items.length > 0) && (
         <div className="flex items-center gap-4">
           {onOpenMobileMenu && (
             <button
               onClick={onOpenMobileMenu}
-              className="md:hidden -ml-2 p-2 hover:bg-gray-100 rounded-lg"
+              className="md:hidden -ml-2 rounded-lg p-2 transition-colors hover:bg-[rgb(var(--theme-neutral-100))]"
               style={{ color: "var(--theme-muted-color)" }}
             >
               <Menu className="w-6 h-6" />
@@ -62,7 +65,13 @@ const SubheaderBlock: React.FC<SubheaderBlockProps> = ({
           <div className="flex flex-col gap-3">
             <div className="flex items-start gap-3">
               {icon && (
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl"
+                  style={{
+                    backgroundColor: "rgb(var(--theme-color-50))",
+                    color: "var(--theme-color)",
+                  }}
+                >
                   {icon}
                 </div>
               )}

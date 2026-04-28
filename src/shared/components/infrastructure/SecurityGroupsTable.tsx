@@ -2,6 +2,7 @@ import React, { ReactNode } from "react";
 import { Shield, Pencil } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
 import { ResourceEmptyState } from "../ui/ResourceEmptyState";
+import { SkeletonTable } from "../ui/Skeleton";
 import type { SecurityGroup } from "./types";
 
 interface SecurityGroupsTableProps {
@@ -28,11 +29,7 @@ const SecurityGroupsTable: React.FC<SecurityGroupsTableProps> = ({
   showActions = false,
 }) => {
   if (isLoading) {
-    return (
-      <div className="py-12 text-center">
-        <div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto" />
-      </div>
-    );
+    return <SkeletonTable rows={4} cols={4} className="py-4" />;
   }
 
   if (securityGroups.length === 0) {

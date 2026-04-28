@@ -100,7 +100,7 @@ import ToastUtils from "@/utils/toastUtil";
 import { buildConfigurationFromTemplate } from "@/utils/instanceCreationUtils";
 
 // Type for custom fetch hook that returns { data, isFetching, ... }
-type FetchHookResult = { data: unknown; isFetching?: boolean; isLoading?: boolean };
+type FetchHookResult = { data?: unknown; isFetching?: boolean; isLoading?: boolean };
 type FetchHookFn = (...args: unknown[]) => FetchHookResult;
 
 interface Props {
@@ -308,19 +308,19 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
   const { data: projectsResp } = skipProjectFetch
     ? { data: null }
     : projectsHook(
-        { per_page: 100, region: selectedRegion },
-        { enabled: Boolean(selectedRegion), keepPreviousData: true }
-      );
+      { per_page: 100, region: selectedRegion },
+      { enabled: Boolean(selectedRegion), keepPreviousData: true }
+    );
 
   const projectOptions = useMemo(() => {
     const combined = [
-      ...(projectsResp?.data && Array.isArray(projectsResp.data) ? projectsResp.data : []),
+      ...((projectsResp as { data?: unknown })?.data && Array.isArray((projectsResp as { data?: unknown }).data) ? ((projectsResp as { data: ProjectResource[] }).data) : ([] as ProjectResource[])),
       ...(Array.isArray(baseProjectOptions) ? baseProjectOptions : []), // Usually baseProjectOptions are transformed Options, wait, in original it was "regionAwareProjects"
     ];
 
-    // In original: baseProjectOptions was "any[]". But here I typed it as Option[].
+    // In original: baseProjectOptions was "unknown[]". But here I typed it as Option[].
     // Let's assume passed in projectOptions are raw? No, in AdminCreateInstance baseProjectOptions was not passed?
-    // Ah, checked lines 311: baseProjectOptions: any[].
+    // Ah, checked lines 311: baseProjectOptions: unknown[].
     // So I should treat them as unknown[] if I want to re-use logic, or pre-process them.
 
     // Re-implementing logic
@@ -330,25 +330,25 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
         project?.value && project?.label
           ? ({ ...project, raw: project.raw ?? project } as Option)
           : (() => {
-              const identifier =
-                project?.identifier || project?.id || project?.project_id || project?.code || "";
-              if (!identifier) return null;
-              const projectRegion =
-                extractRegionCode(project?.region) || project?.region_code || project?.region || "";
-              if (
-                selectedRegion &&
-                projectRegion &&
-                String(projectRegion) !== String(selectedRegion)
-              ) {
-                return null;
-              }
-              const value = String(identifier);
-              return {
-                value,
-                label: String(project?.name || project?.identifier || project?.slug || value),
-                raw: project,
-              };
-            })();
+            const identifier =
+              project?.identifier || project?.id || project?.project_id || project?.code || "";
+            if (!identifier) return null;
+            const projectRegion =
+              extractRegionCode(project?.region) || project?.region_code || project?.region || "";
+            if (
+              selectedRegion &&
+              projectRegion &&
+              String(projectRegion) !== String(selectedRegion)
+            ) {
+              return null;
+            }
+            const value = String(identifier);
+            return {
+              value,
+              label: String(project?.name || project?.identifier || project?.slug || value),
+              raw: project,
+            };
+          })();
 
       if (!candidate) return acc;
       const key = String(candidate.value);
@@ -357,7 +357,7 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
       acc.push(candidate);
       return acc;
     }, []);
-  }, [projectsResp?.data, baseProjectOptions, selectedRegion]);
+  }, [(projectsResp as { data?: unknown })?.data, baseProjectOptions, selectedRegion]);
 
   // 2. Fetch Pricing (filtered by provider when an AZ is selected)
   // When a region has multiple providers, require AZ selection before fetching pricing
@@ -409,7 +409,6 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
             product?.vcpus || product?.config?.vcpus || item?.vcpus || item?.configuration?.vcpus;
           const memoryMb =
             product?.memory_mb ||
-            product?.memoryMb ||
             product?.config?.memory_mb ||
             item?.memory_mb;
           const memoryGb = memoryMb ? Math.round(Number(memoryMb) / 1024) : product?.memory_gb;
@@ -499,23 +498,23 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
   const { data: securityGroups } = skipNetworkResourcesFetch
     ? { data: [] }
     : securityGroupsHook(projectIdentifier, selectedRegion, {
-        enabled: Boolean(projectIdentifier && selectedRegion),
-      });
+      enabled: Boolean(projectIdentifier && selectedRegion),
+    });
   const { data: keyPairs } = skipNetworkResourcesFetch
     ? { data: [] }
     : keyPairsHook(projectIdentifier, selectedRegion, {
-        enabled: Boolean(projectIdentifier && selectedRegion),
-      });
+      enabled: Boolean(projectIdentifier && selectedRegion),
+    });
   const { data: subnets } = skipNetworkResourcesFetch
     ? { data: [] }
     : subnetsHook(projectIdentifier, selectedRegion, {
-        enabled: Boolean(projectIdentifier && selectedRegion),
-      });
+      enabled: Boolean(projectIdentifier && selectedRegion),
+    });
   const { data: networksResponse } = skipNetworkResourcesFetch
     ? { data: [] }
     : networksHook(projectIdentifier, selectedRegion, {
-        enabled: Boolean(projectIdentifier && selectedRegion),
-      });
+      enabled: Boolean(projectIdentifier && selectedRegion),
+    });
 
   // 5. Transform Network Options
   const networkOptions = useMemo(() => {
@@ -634,10 +633,12 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
     ...(isSubmitting === undefined ? {} : { isSubmitting }),
     ...(submitErrorMessage === undefined ? {} : { submitErrorMessage }),
     ...(onSaveTemplate ? { onSaveTemplate } : {}),
-    ...(showTemplateSelector ? { onTemplateSelect: handleTemplateSelect } : {}),
+    ...(showTemplateSelector ? { onTemplateSelect: handleTemplateSelect as unknown as (template: Record<string, unknown>) => void } : {}),
     ...(membershipTenantId === undefined ? {} : { membershipTenantId }),
     ...(membershipUserId === undefined ? {} : { membershipUserId }),
-    ...(useProjectMembershipSuggestionsHook ? { useProjectMembershipSuggestionsHook } : {}),
+    ...(useProjectMembershipSuggestionsHook
+      ? { useProjectMembershipSuggestionsHook: useProjectMembershipSuggestionsHook as unknown as (params?: Record<string, unknown>, options?: Record<string, unknown>) => { data?: Record<string, unknown>[]; isFetching?: boolean; isLoading?: boolean } }
+      : {}),
   };
 
   return (

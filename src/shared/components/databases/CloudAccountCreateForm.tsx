@@ -10,21 +10,17 @@ import { useNavigate } from "react-router-dom";
 import {
   Cloud,
   ArrowLeft,
-  ArrowRight,
   Shield,
   ShieldCheck,
   Eye,
   EyeOff,
-  Loader2,
   CheckCircle2,
   XCircle,
   Info,
 } from "lucide-react";
-import ModernCard from "@/shared/components/ui/ModernCard";
 import ModernButton from "@/shared/components/ui/ModernButton";
 import {
   useCreateCloudAccount,
-  useFetchCloudAccountProviders,
 } from "@/shared/hooks/resources/managedDatabaseHooks";
 
 // ─── Provider Data ────────────────────────────────────────────────

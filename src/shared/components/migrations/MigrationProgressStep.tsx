@@ -9,7 +9,6 @@ import {
   XCircle,
   Loader2,
   ArrowRight,
-  Clock,
 } from "lucide-react";
 import { usePollMigrationProgress, useMigrationPreflight } from "@/shared/hooks/resources";
 import { ModernButton } from "../ui";
@@ -32,7 +31,7 @@ const MigrationProgressStep: React.FC<MigrationProgressStepProps> = ({
   const { data: preflightData } = useMigrationPreflight(migrationId);
 
   const preflightResults = preflightData?.preflight_results as PreflightResults | undefined;
-  const kernelCompat = preflightResults?.kernel_compatibility?.details as KernelCompatibilityResult | undefined;
+  const kernelCompat = preflightResults?.kernel_compatibility?.details as unknown as KernelCompatibilityResult | undefined;
 
   const status = progress?.status ?? "pending";
   const percent = progress?.progress_percent ?? 0;

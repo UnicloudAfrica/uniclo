@@ -8,8 +8,8 @@ import logger from "@/utils/logger";
 interface EditAdminModalProps {
   isOpen: boolean;
   onClose: () => void;
-  admin: Record<string, any> | null;
-  onUpdateSuccess?: (data: any) => void;
+  admin: Record<string, unknown> | null;
+  onUpdateSuccess?: (data: unknown) => void;
   mode?: "modal" | "page";
 }
 
@@ -208,7 +208,7 @@ export const EditAdminModal = ({
         </p>
       </div>
 
-      {summarySections.map((section: { title: string; items: any[] }) => (
+      {summarySections.map((section: { title: string; items: unknown[] }) => (
         <div
           key={section.title}
           className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"

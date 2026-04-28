@@ -3,18 +3,15 @@
  * Per-AZ service config + credentials during region creation.
  * Shows tabs for each AZ, each tab contains ServiceConfigCards.
  */
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Server, Loader2, AlertCircle } from "lucide-react";
-import { ModernCard } from "@/shared/components/ui";
 import ServiceConfigCard from "./ServiceConfigCard";
 import type {
   AZFormData,
   ServiceConfigState,
   ServiceDefinition,
-  FieldDefinition,
   ProviderServicesSchema,
 } from "../types/serviceConfig.types";
-import type { ProviderService } from "@/services/adminRegion/types";
 import logger from "@/utils/logger";
 
 export interface AZServiceConfigStepProps {

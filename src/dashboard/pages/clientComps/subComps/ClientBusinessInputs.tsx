@@ -121,7 +121,7 @@ const ClientBusinessInputs: React.FC<ClientBusinessInputsProps> = ({
           });
         }
       },
-      onError: (err: any) => {
+      onError: (err: unknown) => {
         setIsBusinessVerified(false);
         ToastUtils.error(err.message || "Failed to verify business.");
       },

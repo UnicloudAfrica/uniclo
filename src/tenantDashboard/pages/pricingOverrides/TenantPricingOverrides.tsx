@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Cpu, Database, Globe, HardDrive, Cable, Wifi, Tag, Upload, Download, Shield, Pencil, Layers } from "lucide-react";
+import { Cpu, Database, Globe, HardDrive, Cable, Wifi, Tag, Upload, Download, Shield, Layers } from "lucide-react";
 import TenantPageShell from "../../../dashboard/components/TenantPageShell";
 import PricingSideMenu from "../../../adminDashboard/components/pricingSideMenu";
 import {
@@ -192,8 +192,8 @@ const TenantPricingOverrides = () => {
     isFetching: isAcfFetching,
     refetch: refetchAcf,
   } = useFetchAnyCloudFlowPricing({ enabled: isGlobalTab });
-  const [editingAcfId, setEditingAcfId] = useState<number | null>(null);
-  const [acfEditPrice, setAcfEditPrice] = useState("");
+  const [_editingAcfId, _setEditingAcfId] = useState<number | null>(null);
+  const [_acfEditPrice, _setAcfEditPrice] = useState("");
 
   /* ---- Overrides ---- */
   const {
@@ -237,7 +237,7 @@ const TenantPricingOverrides = () => {
 
   const acfServices = useMemo(() => {
     if (!isGlobalTab) return [];
-    return acfPayload?.data ?? [];
+    return (acfPayload as { data?: unknown[] } | undefined)?.data ?? [];
   }, [acfPayload, isGlobalTab]);
 
   const findOverrideForProduct = useCallback(
@@ -664,12 +664,26 @@ const TenantPricingOverrides = () => {
   );
 
   /* ---- AnyCloudFlow columns ---- */
-  const acfColumns = useMemo<Column<any>[]>(
+  interface AcfRow {
+    id: number | string;
+    name?: string;
+    description?: string;
+    billing_model?: string;
+    unit_label?: string;
+    price_usd?: number | null;
+    pricing_tiers?: Array<{
+      label?: string;
+      min_units?: number;
+      max_units?: number | null;
+      price_usd: number;
+    }>;
+  }
+  const acfColumns = useMemo<Column<AcfRow>[]>(
     () => [
       {
         key: "service",
         header: "Service",
-        render: (_value: unknown, row: any) => (
+        render: (_value: unknown, row: AcfRow) => (
           <div className="flex items-center gap-3">
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-500">
               <Shield className="h-4 w-4" />
@@ -684,7 +698,7 @@ const TenantPricingOverrides = () => {
       {
         key: "billing_model",
         header: "Billing",
-        render: (_value: unknown, row: any) => (
+        render: (_value: unknown, row: AcfRow) => (
           <div className="text-xs text-slate-600">
             <span className="rounded-full bg-slate-100 px-2.5 py-1 font-medium">
               {(row.billing_model || "").replace(/_/g, " ")}
@@ -696,7 +710,7 @@ const TenantPricingOverrides = () => {
       {
         key: "admin_price",
         header: "Admin Default",
-        render: (_value: unknown, row: any) => (
+        render: (_value: unknown, row: AcfRow) => (
           <div className="text-sm text-slate-700">
             {row.price_usd != null ? formatCurrency(row.price_usd, "USD") : "Not set"}
           </div>
@@ -705,14 +719,14 @@ const TenantPricingOverrides = () => {
       {
         key: "tiers",
         header: "Volume Tiers",
-        render: (_value: unknown, row: any) => {
+        render: (_value: unknown, row: AcfRow) => {
           const tiers = row.pricing_tiers;
           if (!tiers?.length) {
             return <span className="text-xs text-slate-400">—</span>;
           }
           return (
             <div className="space-y-0.5">
-              {tiers.map((tier: any, i: number) => (
+              {tiers.map((tier, i: number) => (
                 <div key={i} className="flex items-center gap-2 text-xs text-slate-600">
                   <Layers className="h-3 w-3 text-amber-500" />
                   <span className="font-medium">{tier.label || `${tier.min_units}–${tier.max_units ?? '∞'}`}</span>
@@ -727,7 +741,7 @@ const TenantPricingOverrides = () => {
       {
         key: "tenant_price",
         header: "Your Price",
-        render: (_value: unknown, row: any) => {
+        render: (_value: unknown, row: AcfRow) => {
           const override = overrides.find(
             (o) =>
               o.productable_id != null &&
@@ -747,7 +761,7 @@ const TenantPricingOverrides = () => {
       {
         key: "actions",
         header: "Actions",
-        render: (_value: unknown, row: any) => {
+        render: (_value: unknown, row: AcfRow) => {
           const override = overrides.find(
             (o) =>
               o.productable_id != null &&
@@ -886,8 +900,8 @@ const TenantPricingOverrides = () => {
 
           <div className="rounded-3xl border border-slate-200/70 bg-white p-4 shadow-sm">
             {isGlobalTab ? (
-              <ModernTable<any>
-                data={acfServices}
+              <ModernTable<AcfRow>
+                data={acfServices as AcfRow[]}
                 columns={acfColumns}
                 loading={isLoading}
                 searchable={false}

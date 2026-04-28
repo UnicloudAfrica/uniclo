@@ -41,7 +41,9 @@ export const useEntityDiscount = (entityType: "user" | "tenant", entityId: strin
   return useQuery<DiscountResponse>({
     queryKey: ["discount", entityType, entityId],
     queryFn: async () => {
-      const response = await adminApi.get(`/discounts/${entityType}s/${entityId}`);
+      const response = await adminApi.get<{ data: DiscountResponse }>(
+        `/discounts/${entityType}s/${entityId}`
+      );
       return response.data as DiscountResponse;
     },
     enabled: !!entityId,
@@ -62,7 +64,7 @@ export const useAssignDiscount = () => {
       entityId: string | number;
       data: DiscountFormData;
     }) => {
-      const response = await adminApi.post(
+      const response = await adminApi.post<{ data: unknown }>(
         `/discounts/${entityType}s/${entityId}`,
         data as unknown as Record<string, unknown>
       );
@@ -90,7 +92,7 @@ export const useUpdateDiscount = () => {
       entityId: string | number;
       data: Partial<DiscountFormData> & { is_active?: boolean };
     }) => {
-      const response = await adminApi.put(
+      const response = await adminApi.put<{ data: unknown }>(
         `/discounts/${entityType}s/${entityId}`,
         data as unknown as Record<string, unknown>
       );
@@ -116,7 +118,9 @@ export const useRemoveDiscount = () => {
       entityType: "user" | "tenant";
       entityId: string | number;
     }) => {
-      const response = await adminApi.delete(`/discounts/${entityType}s/${entityId}`);
+      const response = await adminApi.delete<{ data: unknown }>(
+        `/discounts/${entityType}s/${entityId}`
+      );
       return response.data;
     },
     onSuccess: (_, variables) => {

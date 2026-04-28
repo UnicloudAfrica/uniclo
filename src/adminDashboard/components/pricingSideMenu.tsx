@@ -17,7 +17,24 @@
 /**
  * @param {PricingSideMenuProps} props
  */
-const PricingSideMenu = ({ activeTab, onTabChange, items = [], className = "" }: any) => {
+interface PricingMenuItem {
+  id: string;
+  name: string;
+  caption?: string;
+  icon?: React.ComponentType<{ className?: string }>;
+}
+interface PricingSideMenuProps {
+  activeTab: string;
+  onTabChange?: (tabId: string) => void;
+  items?: PricingMenuItem[];
+  className?: string;
+}
+const PricingSideMenu = ({
+  activeTab,
+  onTabChange,
+  items = [],
+  className = "",
+}: PricingSideMenuProps) => {
   const menuItems =
     Array.isArray(items) && items.length
       ? items
@@ -46,7 +63,7 @@ const PricingSideMenu = ({ activeTab, onTabChange, items = [], className = "" }:
         </h3>
       </div>
       <nav className="flex flex-col gap-2">
-        {menuItems.map((item: any) => {
+        {menuItems.map((item: PricingMenuItem) => {
           const isActive = item.id === resolvedActiveTab;
           const Icon = item.icon;
           return (

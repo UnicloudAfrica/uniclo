@@ -98,7 +98,7 @@ export const useUpdateRegion = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateRegion,
-    onSuccess: (_data: any, variables: any) => {
+    onSuccess: (_data: unknown, variables: unknown) => {
       queryClient.invalidateQueries({ queryKey: ["regions"] });
       queryClient.invalidateQueries({ queryKey: ["region", variables.id] });
     },

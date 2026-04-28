@@ -54,6 +54,50 @@ type ApiClient = {
 const toRecord = (value: unknown): ApiResponseRecord =>
   value && typeof value === "object" ? (value as ApiResponseRecord) : {};
 
+/**
+ * Read the Sanctum XSRF-TOKEN cookie (URL-encoded) and return its decoded value.
+ * Returns null when not present (e.g., before the first /sanctum/csrf-cookie call).
+ */
+const readXsrfToken = (): string | null => {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("XSRF-TOKEN="));
+  if (!match) return null;
+  try {
+    return decodeURIComponent(match.substring("XSRF-TOKEN=".length));
+  } catch {
+    return null;
+  }
+};
+
+let csrfPrimed = false;
+
+/**
+ * Fetch the Sanctum CSRF cookie once per session. Subsequent calls are no-ops.
+ * Called lazily before any state-changing request.
+ */
+const ensureCsrfCookie = async (baseURL: string): Promise<void> => {
+  if (csrfPrimed) return;
+  try {
+    // The baseURL usually ends with /api/v1 — strip that to reach /sanctum/csrf-cookie
+    const root = baseURL.replace(/\/api\/v\d+\/?$/, "").replace(/\/+$/, "");
+    await fetch(`${root}/sanctum/csrf-cookie`, {
+      method: "GET",
+      credentials: "include",
+    });
+    csrfPrimed = true;
+  } catch {
+    // Non-fatal — if the backend isn't configured yet, cookie auth still works
+    // for non-mutations and the app will show a clear CSRF error on mutation.
+  }
+};
+
+/** Exported for tests and for auth stores that want to pre-warm the cookie. */
+export const resetCsrfPrimed = (): void => {
+  csrfPrimed = false;
+};
+
 const toMessage = (value: unknown): string => {
   if (typeof value === "string") return value;
   if (value && typeof value === "object") {
@@ -149,6 +193,13 @@ export const createApiClient = ({
 
     if (body instanceof FormData) {
       delete headers["Content-Type"];
+    }
+
+    // Sanctum SPA CSRF: prime the cookie once, then attach X-XSRF-TOKEN for mutations.
+    if (method !== "GET") {
+      await ensureCsrfCookie(baseURL);
+      const xsrf = readXsrfToken();
+      if (xsrf) headers["X-XSRF-TOKEN"] = xsrf;
     }
 
     const options: RequestInit = {
@@ -273,6 +324,12 @@ export const createMultipartApiClient = ({
       Accept: "application/json",
     };
     delete headers["Content-Type"];
+    // Sanctum SPA CSRF for multipart mutations.
+    if (method !== "GET") {
+      await ensureCsrfCookie(baseURL);
+      const xsrf = readXsrfToken();
+      if (xsrf) headers["X-XSRF-TOKEN"] = xsrf;
+    }
     // When using FormData, do not set the 'Content-Type' header
     const options: RequestInit = {
       method,
@@ -378,12 +435,18 @@ export const createFileApiClient = ({
   ): Promise<T> => {
     const url = baseURL + uri;
     const authState = authStore?.getState ? authStore.getState() : undefined;
+    const headers = (authState?.getAuthHeaders?.() as Record<string, string>) || {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    };
+    if (method !== "GET") {
+      await ensureCsrfCookie(baseURL);
+      const xsrf = readXsrfToken();
+      if (xsrf) headers["X-XSRF-TOKEN"] = xsrf;
+    }
     const options: RequestInit = {
       method,
-      headers: (authState?.getAuthHeaders?.() as Record<string, string>) || {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       credentials: "include",
       body: body ? JSON.stringify(body) : null,
     };

@@ -434,7 +434,7 @@ const S = {
     justifyContent: "flex-end",
     gap: 4,
   },
-  iconBtn: (hoverColor: string) =>
+  iconBtn: (_hoverColor: string) =>
     ({
       display: "inline-flex",
       alignItems: "center",
@@ -871,7 +871,7 @@ const HypervisorPanel: React.FC<HypervisorPanelProps> = ({ endpoints, className 
                         </tr>
                       </thead>
                       <tbody>
-                        {vms.map((vm: any) => (
+                        {vms.map((vm: unknown) => (
                           <VMRow
                             key={vm.name}
                             vm={vm}

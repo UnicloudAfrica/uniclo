@@ -229,7 +229,7 @@ const NetworkSecurityCard: React.FC<NetworkSecurityCardProps> = ({
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {networkTopologySummary?.publicIps?.length ? (
-                  networkTopologySummary.publicIps.map((ip: any) => (
+                  networkTopologySummary.publicIps.map((ip: unknown) => (
                     <span
                       key={`public-${ip}`}
                       className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700"
@@ -248,7 +248,7 @@ const NetworkSecurityCard: React.FC<NetworkSecurityCardProps> = ({
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {networkTopologySummary?.privateIps?.length ? (
-                  networkTopologySummary.privateIps.map((ip: any) => (
+                  networkTopologySummary.privateIps.map((ip: unknown) => (
                     <span
                       key={`private-${ip}`}
                       className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700"
@@ -270,7 +270,7 @@ const NetworkSecurityCard: React.FC<NetworkSecurityCardProps> = ({
 
         {hasSecurityDetails ? (
           <div className="space-y-3">
-            {securitySummaryEntries.map((entry: any) => (
+            {securitySummaryEntries.map((entry: unknown) => (
               <div
                 key={entry.label}
                 className="rounded-xl border border-slate-200 bg-white px-4 py-3"
@@ -283,7 +283,7 @@ const NetworkSecurityCard: React.FC<NetworkSecurityCardProps> = ({
                 )}
                 {entry.chips?.length ? (
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {entry.chips.map((chip: any) => (
+                    {entry.chips.map((chip: unknown) => (
                       <span
                         key={chip}
                         className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700"
@@ -325,7 +325,7 @@ const NetworkSecurityCard: React.FC<NetworkSecurityCardProps> = ({
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            {providerSnapshotEntries.map((entry: any) => (
+            {providerSnapshotEntries.map((entry: unknown) => (
               <div
                 key={entry.label}
                 className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"

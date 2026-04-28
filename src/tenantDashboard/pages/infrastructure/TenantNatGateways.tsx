@@ -2,7 +2,9 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Globe } from "lucide-react";
 import TenantPageShell from "../../components/TenantPageShell";
-import NatGatewaysContainer from "@/shared/components/infrastructure/containers/NatGatewaysContainer";
+import NatGatewaysContainer, {
+  type NatGatewayHooks,
+} from "@/shared/components/infrastructure/containers/NatGatewaysContainer";
 import {
   useNatGateways,
   useCreateNatGateway,
@@ -19,8 +21,8 @@ const TenantNatGateways: React.FC = () => {
 
   const { data: projectData } = useFetchProjectById(projectId);
   const project =
-    projectData && typeof projectData === "object" ? (projectData as Record<string, any>) : null;
-  const provider = project?.provider || searchParams.get("provider");
+    projectData && typeof projectData === "object" ? (projectData as Record<string, unknown>) : null;
+  const provider = (project?.provider as string | undefined) || searchParams.get("provider");
 
   if (provider && !isFeatureSupported(provider, "nat_gateways")) {
     return (
@@ -31,10 +33,10 @@ const TenantNatGateways: React.FC = () => {
   }
 
   // Tenant uses same hooks, permission gating handled by container
-  const hooks = {
-    useList: useNatGateways,
-    useCreate: useCreateNatGateway,
-    useDelete: useDeleteNatGateway,
+  const hooks: NatGatewayHooks = {
+    useList: useNatGateways as unknown as NatGatewayHooks["useList"],
+    useCreate: useCreateNatGateway as unknown as NatGatewayHooks["useCreate"],
+    useDelete: useDeleteNatGateway as unknown as NatGatewayHooks["useDelete"],
   };
 
   return (

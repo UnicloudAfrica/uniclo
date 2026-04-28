@@ -12,6 +12,7 @@ import useAuthRedirect from "@/utils/adminAuthRedirect";
 import { useFetchCountries as useAdminFetchCountries } from "@/hooks/adminHooks/countriesHooks";
 import { STEP_CONFIG } from "../../dashboard/onboarding/stepConfig";
 import ModernTable from "@/shared/components/ui/ModernTable";
+import { DashboardSkeleton } from "@/shared/components/ui/Skeleton";
 import logger from "@/utils/logger";
 
 type EnforcementMode = "required" | "grace" | "optional";
@@ -69,7 +70,7 @@ const AdminOnboardingSettings = () => {
 
   const { data: countriesData = [], isFetching: isCountriesFetching } = useAdminFetchCountries();
   const settings = useMemo<OnboardingSetting[]>(
-    () => (Array.isArray(settingsData) ? (settingsData as OnboardingSetting[]) : []),
+    () => (Array.isArray(settingsData) ? (settingsData as unknown as OnboardingSetting[]) : []),
     [settingsData]
   );
   const countries = useMemo<CountryRecord[]>(
@@ -191,11 +192,7 @@ const AdminOnboardingSettings = () => {
     }
   };
   if (isLoading) {
-    return (
-      <div className="w-full h-svh flex items-center justify-center">
-        <Loader2 className="w-12 animate-spin text-[var(--theme-color)]" />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Shield, User as UserIcon } from "lucide-react";
 import TenantPageShell from "../../components/TenantPageShell";
-import { ModernCard, ModernButton } from "@/shared/components/ui";
+import { ModernCard, ModernButton, SkeletonCard } from "@/shared/components/ui";
 import { PermissionChecklist } from "@/shared/components/PermissionChecklist";
 import ToastUtils from "@/utils/toastUtil";
 import { useFetchTenantAdminById, useDeleteTenantAdmin } from "@/hooks/adminUserHooks";
@@ -56,9 +56,7 @@ function TenantPermissionsTab({ userId }: { userId: string }) {
   };
 
   if (isLoading) {
-    return (
-      <div className="py-10 text-center text-sm text-slate-500">Loading permissions…</div>
-    );
+    return <SkeletonCard className="my-4" />;
   }
 
   if (!registry || !permissionsData) {

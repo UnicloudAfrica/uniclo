@@ -4,7 +4,7 @@
  * Uses `useApiContext()` to automatically route requests to the correct
  * API endpoint based on the current dashboard context.
  */
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import { useApiContext } from "@/hooks/useApiContext";
 
 // ── Types ───────────────────────────────────────────────────────
@@ -60,6 +60,33 @@ export interface FlowServer {
   status: string;
   php_version?: string;
   ubuntu_version?: string;
+  /**
+   * Vercel-style auto-issued URL for the underlying Bridge VM.
+   * Surfaced by the backend overlay on /flow/servers — null if no
+   * floating IP is attached yet.
+   */
+  temporary_domain?: TemporaryDomain | null;
+  /**
+   * Bridge link external ID (e.g. srv_uc_6294d192-…) — useful for
+   * cross-linking back to admin tooling.
+   */
+  bridge_server_id?: string | null;
+  [key: string]: unknown;
+}
+
+export interface FlowDatabase {
+  id: number;
+  name: string;
+  type?: string;
+  status?: string;
+  [key: string]: unknown;
+}
+
+export interface FlowCertificate {
+  id: number;
+  domains?: string[];
+  status?: string;
+  expires_at?: string | null;
   [key: string]: unknown;
 }
 
@@ -81,7 +108,32 @@ export interface FlowSite {
   repository: string | null;
   branch: string | null;
   status: string;
+  /**
+   * Vercel/Heroku-style auto-issued URL — present on freshly-created
+   * sites (and on retry via POST /sites/{id}/temporary-domain). null
+   * means none has been allocated yet (e.g. VM has no public IP yet).
+   */
+  temporary_domain?: TemporaryDomain | null;
   [key: string]: unknown;
+}
+
+/**
+ * Auto-issued subdomain a site is reachable on while the customer
+ * configures their own DNS — same UX as `*.vercel.app`.
+ */
+export interface TemporaryDomain {
+  domain: string;
+  points_to: string;
+  https: boolean;
+  /** True when the customer chose the label themselves; false for auto-issued. */
+  custom?: boolean;
+}
+
+export interface TemporaryDomainAvailability {
+  available: boolean;
+  hostname: string;
+  reason?: string;
+  suggestion?: string;
 }
 
 export interface FlowDeployment {
@@ -164,7 +216,15 @@ export function useFlowApi() {
       const res = await fetch(finalUrl, options);
       if (!res.ok) {
         const error = await res.json().catch(() => ({ message: "Request failed" }));
-        throw new Error(error.message || `HTTP ${res.status}`);
+        // Throw a richer error so callers (e.g. the claim flow) can
+        // branch on `status` (409 taken vs 422 invalid) without parsing
+        // the message string.
+        const wrapped: Error & { status?: number; payload?: unknown } = new Error(
+          error.message || `HTTP ${res.status}`,
+        );
+        wrapped.status = res.status;
+        wrapped.payload = error;
+        throw wrapped;
       }
       return res.json();
     },
@@ -181,6 +241,26 @@ export function useFlowApi() {
       request<FlowSubscription>("POST", "/convert-to-paid", { plan_slug: planSlug }),
     cancel: () => request<void>("DELETE", "/cancel"),
 
+    /**
+     * Renew an active or past_due subscription with a fresh Paystack payment.
+     * `payment_reference` is the reference returned by Paystack after the
+     * tenant completes the inline checkout flow on FlowBilling.
+     */
+    renewSubscription: (paymentReference: string) =>
+      request<FlowSubscription>("POST", "/subscription/renew", {
+        payment_reference: paymentReference,
+      }),
+
+    /**
+     * Change plan (active subscription only). Same Paystack-reference
+     * pattern as `convertToPaid`.
+     */
+    changePlan: (planSlug: string, paymentReference: string) =>
+      request<FlowSubscription>("POST", "/subscription/change-plan", {
+        plan_slug: planSlug,
+        payment_reference: paymentReference,
+      }),
+
     // Servers
     getServers: () =>
       request<{ servers: FlowServer[]; linked_server_ids: number[] }>("GET", "/servers"),
@@ -191,6 +271,29 @@ export function useFlowApi() {
         instance_id: instanceId,
       }),
     disconnectServer: (linkId: number) => request<void>("DELETE", `/servers/${linkId}/disconnect`),
+    /**
+     * Allocate (or retry) the temporary subdomain for the underlying
+     * Bridge VM. Pass `name` to claim a custom label — the platform
+     * builds `<name>.unicloudafrica.ng`. Omit it for an auto-issued slug.
+     * 409 when the name is taken, 422 for invalid format.
+     */
+    attachServerTemporaryDomain: (serverId: number, name?: string) =>
+      request<TemporaryDomain>("POST", `/servers/${serverId}/temporary-domain`, {
+        name: name ?? undefined,
+      }),
+
+    /**
+     * Real-time availability check for a customer-typed subdomain label.
+     * Cheap (single Cloudflare GET) so the UI can debounce-call on each
+     * keystroke. `scope` defaults to "flow" — pass "compute" when the
+     * input is for a Bridge VM.
+     */
+    checkTemporaryDomainAvailability: (name: string, scope: "flow" | "compute" = "flow") =>
+      request<TemporaryDomainAvailability>(
+        "GET",
+        `/temporary-domain/availability`,
+        { name, scope },
+      ),
 
     // Sites
     getSites: (serverId: number) => request<FlowSite[]>("GET", `/servers/${serverId}/sites`),
@@ -200,6 +303,19 @@ export function useFlowApi() {
       request<FlowSite>("PUT", `/servers/${serverId}/sites/${siteId}`, data),
     deleteSite: (serverId: number, siteId: number) =>
       request<void>("DELETE", `/servers/${serverId}/sites/${siteId}`),
+
+    /**
+     * Allocate or rename the temporary subdomain for a site. Pass
+     * `name` to claim/rename to a custom label. Idempotent for the
+     * auto-issued case (no name) when one already exists.
+     * 409 when taken, 422 for invalid format.
+     */
+    attachSiteTemporaryDomain: (serverId: number, siteId: number, name?: string) =>
+      request<TemporaryDomain>(
+        "POST",
+        `/servers/${serverId}/sites/${siteId}/temporary-domain`,
+        { name: name ?? undefined },
+      ),
 
     // Deployments
     deploy: (serverId: number, siteId: number) =>
@@ -277,7 +393,15 @@ export function useAdminFlowApi() {
       const res = await fetch(finalUrl, options);
       if (!res.ok) {
         const error = await res.json().catch(() => ({ message: "Request failed" }));
-        throw new Error(error.message || `HTTP ${res.status}`);
+        // Throw a richer error so callers (e.g. the claim flow) can
+        // branch on `status` (409 taken vs 422 invalid) without parsing
+        // the message string.
+        const wrapped: Error & { status?: number; payload?: unknown } = new Error(
+          error.message || `HTTP ${res.status}`,
+        );
+        wrapped.status = res.status;
+        wrapped.payload = error;
+        throw wrapped;
       }
       return res.json();
     },

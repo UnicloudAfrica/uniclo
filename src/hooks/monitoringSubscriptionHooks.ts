@@ -56,7 +56,7 @@ export const useFetchMonitoringStatus = () => {
       const res = asEnvelope<MonitoringStatus>(
         await entry.silentApi.get<AnyRecord>(`${entry.urlPrefix}/monitoring/status`)
       );
-      return res as MonitoringStatus;
+      return res as unknown as MonitoringStatus;
     },
     staleTime: 30_000,
   });

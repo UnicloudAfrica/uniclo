@@ -7,7 +7,7 @@ import EditFloatingIP from "./ipSubs/editFloatingIP";
 import DeleteFloatingIP from "./ipSubs/deleteFloatingIP";
 import { ModernButton } from "@/shared/components/ui";
 
-const formatCurrency = (amount: any, currency = "USD") => {
+const formatCurrency = (amount: number, currency = "USD") => {
   if (amount === null || amount === undefined || Number.isNaN(amount)) {
     return "—";
   }
@@ -19,7 +19,7 @@ const formatCurrency = (amount: any, currency = "USD") => {
   }).format(Number(amount));
 };
 
-const FloatingIP = ({ selectedRegion, selectedProvider, onMetricsChange }: any) => {
+const FloatingIP = ({ selectedRegion, selectedProvider, onMetricsChange }: { selectedRegion?: string; selectedProvider?: string; onMetricsChange?: (m: unknown) => void }) => {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [search, setSearch] = useState("");
@@ -27,7 +27,7 @@ const FloatingIP = ({ selectedRegion, selectedProvider, onMetricsChange }: any) 
   const [isAddIPsModalOpen, setIsAddIPsModalOpen] = useState(false);
   const [isEditIPsModalOpen, setIsEditIPsModalOpen] = useState(false);
   const [isDeleteIPsModalOpen, setIsDeleteIPsModalOpen] = useState(false);
-  const [selectedIPs, setSelectedIPs] = useState<any>(null);
+  const [selectedIPs, setSelectedIPs] = useState<unknown>(null);
 
   useEffect(() => {
     setPage(1);
@@ -40,8 +40,8 @@ const FloatingIP = ({ selectedRegion, selectedProvider, onMetricsChange }: any) 
     { enabled: Boolean(selectedRegion), keepPreviousData: true }
   );
 
-  const rows = useMemo(() => data?.data ?? [], [data]);
-  const meta = data?.meta ?? null;
+  const rows = useMemo(() => (data as { data?: unknown[] } | undefined)?.data ?? [], [data]);
+  const meta = (data as { meta?: { total?: number; current_page?: number; per_page?: number } } | undefined)?.meta ?? null;
   const total = meta?.total ?? rows.length;
 
   const averagePrice = useMemo(() => {
@@ -55,7 +55,7 @@ const FloatingIP = ({ selectedRegion, selectedProvider, onMetricsChange }: any) 
   }, [rows]);
 
   const regionalCoverage = useMemo(() => {
-    return new Set(rows.map((ip: any) => ip.region || "global")).size;
+    return new Set(rows.map((ip: unknown) => ip.region || "global")).size;
   }, [rows]);
 
   useEffect(() => {
@@ -90,12 +90,12 @@ const FloatingIP = ({ selectedRegion, selectedProvider, onMetricsChange }: any) 
     setIsAddIPsModalOpen(true);
   };
 
-  const handleEditIPs = (ip: any) => {
+  const handleEditIPs = (ip: unknown) => {
     setSelectedIPs(ip);
     setIsEditIPsModalOpen(true);
   };
 
-  const handleDeleteIPs = (ip: any) => {
+  const handleDeleteIPs = (ip: unknown) => {
     setSelectedIPs(ip);
     setIsDeleteIPsModalOpen(true);
   };
@@ -104,7 +104,7 @@ const FloatingIP = ({ selectedRegion, selectedProvider, onMetricsChange }: any) 
     {
       header: "IP SKU",
       key: "name",
-      render: (ip: any) => (
+      render: (ip: unknown) => (
         <div className="flex flex-col">
           <span className="font-semibold text-slate-900">{ip.name || "Floating IP"}</span>
           <span className="text-xs text-slate-500">
@@ -117,7 +117,7 @@ const FloatingIP = ({ selectedRegion, selectedProvider, onMetricsChange }: any) 
       header: "Region",
       key: "region",
       align: "center",
-      render: (ip: any) => (
+      render: (ip: unknown) => (
         <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
           {ip.region || "global"}
         </span>
@@ -127,7 +127,7 @@ const FloatingIP = ({ selectedRegion, selectedProvider, onMetricsChange }: any) 
       header: "",
       key: "actions",
       align: "right",
-      render: (ip: any) => (
+      render: (ip: unknown) => (
         <div className="flex items-center justify-end gap-2">
           <button
             type="button"
@@ -177,7 +177,7 @@ const FloatingIP = ({ selectedRegion, selectedProvider, onMetricsChange }: any) 
   };
 
   const handleSearch = useCallback(
-    (value: any) => {
+    (value: unknown) => {
       setSearch(value);
       setPage(1);
     },
@@ -189,7 +189,7 @@ const FloatingIP = ({ selectedRegion, selectedProvider, onMetricsChange }: any) 
       <ResourceDataExplorer
         title="Floating IP catalogue"
         description="Manage routable IP pools and cost structures that back tenant networking."
-        columns={columns as Record<string, unknown>[]}
+        columns={columns as unknown}
         rows={rows as Record<string, unknown>[]}
         loading={isFetching}
         page={(meta?.current_page as number) ?? page}

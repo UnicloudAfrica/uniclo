@@ -6,7 +6,7 @@ import ToastUtils from "@/utils/toastUtil";
 interface DeleteClientModalProps {
   isOpen: boolean;
   onClose: () => void;
-  client: any;
+  client: unknown;
   onDeleteConfirm: () => void;
 }
 

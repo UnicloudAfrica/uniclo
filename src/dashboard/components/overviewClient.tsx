@@ -4,19 +4,42 @@ import { useNavigate } from "react-router-dom";
 import DeleteClientModal from "../pages/clientComps/deleteClient";
 import EditClientModal from "../pages/clientComps/editClient";
 
-const OverviewClient = ({ client, onClientUpdated }: any) => {
+interface ClientRecord {
+  id?: string | number;
+  first_name?: string;
+  middle_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  country?: string;
+  state?: string;
+  city?: string;
+  address?: string;
+  zip_code?: string;
+  verified?: boolean;
+  force_password_reset?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface OverviewClientProps {
+  client: ClientRecord | null | undefined;
+  onClientUpdated?: () => void;
+}
+
+const OverviewClient = ({ client, onClientUpdated }: OverviewClientProps) => {
   // Add onClientUpdated prop for refetching
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [clientToDelete, setClientToDelete] = useState<any>(null);
+  const [clientToDelete, setClientToDelete] = useState<ClientRecord | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false); // State for Edit Modal
-  const [clientToEdit, setClientToEdit] = useState<any>(null); // State to hold client data for editing
+  const [clientToEdit, setClientToEdit] = useState<ClientRecord | null>(null); // State to hold client data for editing
   const navigate = useNavigate();
 
   if (!client) {
     return <div className="text-gray-600">No client data available.</div>;
   }
 
-  const openDeleteModal = (clientData: any) => {
+  const openDeleteModal = (clientData: ClientRecord) => {
     setClientToDelete(clientData);
     setIsDeleteModalOpen(true);
   };
@@ -31,7 +54,7 @@ const OverviewClient = ({ client, onClientUpdated }: any) => {
     navigate("/dashboard/clients"); // Navigate back to clients list after deletion
   };
 
-  const openEditModal = (clientData: any) => {
+  const openEditModal = (clientData: ClientRecord) => {
     setClientToEdit(clientData);
     setIsEditModalOpen(true);
   };

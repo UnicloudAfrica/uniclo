@@ -49,7 +49,7 @@ export const useCreateSecurityGroup = () => {
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
   return useMutation<
-    any,
+    unknown,
     Error,
     {
       projectId: string;
@@ -139,7 +139,7 @@ export const useUpdateSecurityGroup = () => {
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
   return useMutation<
-    any,
+    unknown,
     Error,
     {
       projectId: string;
@@ -287,7 +287,7 @@ export const useAddSecurityGroupRule = () => {
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
   return useMutation<
-    any,
+    unknown,
     Error,
     {
       projectId: string;

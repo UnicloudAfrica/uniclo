@@ -11,7 +11,7 @@ interface CountryRate {
   rate: number | string;
 }
 
-const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }: any) => {
+const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }: { isOpen: boolean; onClose: () => void; taxType: unknown; onSuccess?: () => void }) => {
   const { mutate, isPending } = useUpdateTaxConfiguration(); // Use the new update tax type hook
 
   const [formData, setFormData] = useState<{
@@ -30,7 +30,7 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }: any) => {
         name: taxType.name || "",
         // Deep copy country_rates to avoid direct mutation of prop
         countryRates: taxType.country_rates
-          ? taxType.country_rates.map((rate: any) => ({
+          ? taxType.country_rates.map((rate: unknown) => ({
               ...rate,
               rate:
                 rate?.rate === null || rate?.rate === undefined
@@ -51,7 +51,7 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }: any) => {
   }, [isOpen, taxType]);
 
   const validateForm = () => {
-    const newErrors: Record<string, any> = {};
+    const newErrors: Record<string, unknown> = {};
     if (!formData.name.trim()) {
       newErrors.name = "Tax Type Name is required";
     }
@@ -88,7 +88,7 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }: any) => {
     });
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.SyntheticEvent) => {
     if (e) e.preventDefault();
 
     if (!validateForm()) return;
@@ -96,7 +96,7 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }: any) => {
     if (taxType?.id) {
       const updatedData = {
         name: formData.name,
-        rates: formData.countryRates.map((rate: any) => ({
+        rates: formData.countryRates.map((rate: unknown) => ({
           // Only include 'id' if it exists (for existing rates)
           ...(rate.id && { id: rate.id }),
           country_id: rate.country_id,
@@ -112,9 +112,10 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }: any) => {
             onClose();
             onSuccess?.();
           },
-          onError: (err) => {
+          onError: (err: unknown) => {
             logger.error("Failed to update Tax Type:", err);
-            ToastUtils.error(err.message || "Failed to update tax type. Please try again.");
+            const message = err instanceof Error ? err.message : "Failed to update tax type. Please try again.";
+            ToastUtils.error(message);
           },
         }
       );

@@ -121,7 +121,7 @@ const ConfigurationListStep: React.FC<ConfigurationListStepProps> = ({
           updateAdditionalVolume={onUpdateVolume}
           removeAdditionalVolume={onRemoveVolume}
           regionOptions={regionOptions}
-          baseProjectOptions={resources.projects as any}
+          baseProjectOptions={resources.projects as unknown}
           billingCountry={billingCountry}
           isLoadingResources={isLoadingResources}
           showActionRow={index === configurations.length - 1}
@@ -147,7 +147,7 @@ const ConfigurationListStep: React.FC<ConfigurationListStepProps> = ({
           membershipUserId={membershipUserId}
           lockAssignmentScope={lockAssignmentScope}
           pricingTenantId={pricingTenantId}
-          regions={resources.regions as any[]}
+          regions={resources.regions as unknown[]}
         />
       ))}
     </div>

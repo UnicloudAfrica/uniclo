@@ -33,7 +33,7 @@ const UserSelectModal: React.FC<UserSelectModalProps> = ({
   const tenantQuery = useFetchTenantAdmins({ enabled: context === "tenant" && isOpen });
 
   const users = useMemo<UserType[]>(
-    () => (context === "tenant" ? (tenantQuery.data as any) || [] : (adminQuery.data as any) || []),
+    () => (context === "tenant" ? (tenantQuery.data as unknown) || [] : (adminQuery.data as unknown) || []),
     [context, tenantQuery.data, adminQuery.data]
   );
   const loading = context === "tenant" ? tenantQuery.isLoading : adminQuery.isLoading;

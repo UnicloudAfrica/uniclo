@@ -112,7 +112,7 @@ export default function LayeredDiagramView({
         id: `label-${layer.id}`,
         type: "default",
         position: { x: 0, y: LAYER_Y[layer.id] + 8 },
-        data: { label: layer.label },
+        data: { label: layer.label } as unknown as ResourceNodeData,
         selectable: false,
         draggable: false,
         style: {
@@ -126,7 +126,7 @@ export default function LayeredDiagramView({
           pointerEvents: "none" as const,
           boxShadow: "none",
         },
-      } as Node);
+      } as unknown as Node<ResourceNodeData>);
 
       resources.forEach((res, idx) => {
         const count = getResourceCount(data, res.id);

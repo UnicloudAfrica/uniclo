@@ -12,11 +12,14 @@ import type {
 // ── Registry ──
 
 const fetchPermissionRegistry = async (scope: string): Promise<PermissionRegistry> => {
-  const res = await silentApi("GET", `/permissions/registry?scope=${scope}`);
+  const res = await silentApi<{ data?: PermissionRegistry }>(
+    "GET",
+    `/permissions/registry?scope=${scope}`
+  );
   if (!res?.data) {
     throw new Error("Failed to fetch permission registry");
   }
-  return res.data as PermissionRegistry;
+  return res.data;
 };
 
 export const useFetchPermissionRegistry = (scope: string, options: QueryHookOptions = {}) => {
@@ -32,11 +35,14 @@ export const useFetchPermissionRegistry = (scope: string, options: QueryHookOpti
 // ── User Permissions ──
 
 const fetchUserPermissions = async (userId: number | string): Promise<UserPermissionsData> => {
-  const res = await silentApi("GET", `/users/${userId}/permissions`);
+  const res = await silentApi<{ data?: UserPermissionsData }>(
+    "GET",
+    `/users/${userId}/permissions`
+  );
   if (!res?.data) {
     throw new Error("Failed to fetch user permissions");
   }
-  return res.data as UserPermissionsData;
+  return res.data;
 };
 
 export const useFetchUserPermissions = (
@@ -66,14 +72,18 @@ const updateUserPermissions = async ({
   permissions,
   tenantId,
 }: UpdatePermissionsPayload): Promise<Record<string, unknown>> => {
-  const res = await api("PUT", `/users/${userId}/permissions`, {
-    permissions,
-    tenant_id: tenantId,
-  });
+  const res = await api<{ data?: Record<string, unknown> }>(
+    "PUT",
+    `/users/${userId}/permissions`,
+    {
+      permissions,
+      tenant_id: tenantId,
+    }
+  );
   if (!res?.data) {
     throw new Error("Failed to update user permissions");
   }
-  return res.data as Record<string, unknown>;
+  return res.data;
 };
 
 export const useUpdateUserPermissions = () => {

@@ -11,7 +11,7 @@ import {
 
 export const StatusBadge = ({ status, size = "sm" }: { status: string; size?: "xs" | "sm" }) => {
   const getStatusInfo = (status: string) => {
-    const statusMap: Record<string, any> = {
+    const statusMap: Record<string, unknown> = {
       active: {
         color: "bg-green-100 text-green-800 border-green-200",
         icon: CheckCircle,

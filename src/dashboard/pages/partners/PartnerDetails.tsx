@@ -2,9 +2,7 @@ import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Loader2, ShieldCheck, Users2 } from "lucide-react";
 import TenantPageShell from "../../components/TenantPageShell";
-import { ModernCard } from "@/shared/components/ui";
-import { ModernButton } from "@/shared/components/ui";
-import { StatusPill } from "@/shared/components/ui";
+import { ModernCard, ModernButton, StatusPill, SkeletonTable } from "@/shared/components/ui";
 import ToastUtils from "@/utils/toastUtil";
 import {
   useDeleteTenantPartner,
@@ -12,7 +10,7 @@ import {
   useFetchTenantPartnerClients,
 } from "@/hooks/tenantHooks/partnerHooks";
 
-const InfoRow = ({ label, value }: { label: string; value: any }) => (
+const InfoRow = ({ label, value }: { label: string; value: React.ReactNode }) => (
   <div className="flex flex-col gap-1">
     <span className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</span>
     <span className="text-sm font-semibold text-slate-900">{value ?? "—"}</span>
@@ -25,16 +23,11 @@ const SimpleTable = ({
   onRowClick,
 }: {
   isLoading: boolean;
-  data: any[];
-  onRowClick?: (client: any) => void;
+  data: unknown[];
+  onRowClick?: (client: unknown) => void;
 }) => {
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-3 py-16">
-        <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
-        <p className="text-sm text-slate-500">Loading clients…</p>
-      </div>
-    );
+    return <SkeletonTable rows={4} cols={3} className="py-4" />;
   }
 
   if (!data?.length) {
@@ -48,7 +41,7 @@ const SimpleTable = ({
 
   return (
     <div className="divide-y divide-slate-100">
-      {data.map((client: any) => (
+      {data.map((client: unknown) => (
         <button
           key={client.id || client.identifier}
           type="button"
@@ -70,12 +63,12 @@ export default function PartnerDetailsPage() {
   const { partnerId } = useParams();
 
   const { data: partner, isFetching: isPartnerFetching } = useFetchTenantPartnerById(partnerId) as {
-    data: Record<string, any>;
+    data: Record<string, unknown>;
     isFetching: boolean;
   };
   const { data: partnerClients = [], isFetching: isClientsFetching } = useFetchTenantPartnerClients(
     partnerId
-  ) as { data: any[]; isFetching: boolean };
+  ) as { data: unknown[]; isFetching: boolean };
   const { mutateAsync: deletePartner, isPending: isDeleting } = useDeleteTenantPartner();
 
   const statistics = useMemo(() => {
@@ -110,7 +103,7 @@ export default function PartnerDetailsPage() {
       navigate("/dashboard/clients");
     } catch (error) {
       ToastUtils.error(
-        (error as Record<string, any>)?.response?.data?.message || "Failed to remove partner."
+        (error as Record<string, unknown>)?.response?.data?.message || "Failed to remove partner."
       );
     }
   };
@@ -233,7 +226,7 @@ export default function PartnerDetailsPage() {
           <SimpleTable
             isLoading={isClientsFetching}
             data={partnerClients}
-            onRowClick={(client: Record<string, any>) =>
+            onRowClick={(client: Record<string, unknown>) =>
               navigate(`/dashboard/clients/${client.identifier}`)
             }
           />

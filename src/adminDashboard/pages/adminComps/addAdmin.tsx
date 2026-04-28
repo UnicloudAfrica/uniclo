@@ -15,7 +15,7 @@ type AdminFormData = {
 
 type AdminFormErrors = Partial<Record<keyof AdminFormData, string>>;
 
-export const AddAdminModal = ({ isOpen, onClose, mode = "modal" }: any) => {
+export const AddAdminModal = ({ isOpen, onClose, mode = "modal" }: { isOpen: boolean; onClose: () => void; mode?: "modal" | "inline" }) => {
   const isPageMode = mode === "page";
   const [formData, setFormData] = useState<AdminFormData>({
     first_name: "",
@@ -52,7 +52,7 @@ export const AddAdminModal = ({ isOpen, onClose, mode = "modal" }: any) => {
     }
   }, [isError, error, isSuccess, isPending]);
 
-  const handleChange = (e: any) => {
+  const handleChange = (e: unknown) => {
     const { name, value } = e.target;
     const field = name as keyof AdminFormData;
     setFormData((prevData) => ({
@@ -89,7 +89,7 @@ export const AddAdminModal = ({ isOpen, onClose, mode = "modal" }: any) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     if (e) e.preventDefault();
 
     if (!validateForm()) return;
@@ -210,14 +210,14 @@ export const AddAdminModal = ({ isOpen, onClose, mode = "modal" }: any) => {
         </p>
       </div>
 
-      {summarySections.map((section: any) => (
+      {summarySections.map((section: unknown) => (
         <div
           key={section.title}
           className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
         >
           <h3 className="text-sm font-semibold text-slate-800">{section.title}</h3>
           <dl className="mt-3 space-y-3 text-sm">
-            {section.items.map((item: any) => (
+            {section.items.map((item: unknown) => (
               <div
                 key={`${section.title}-${item.label}`}
                 className="flex items-start justify-between gap-3"
@@ -235,7 +235,7 @@ export const AddAdminModal = ({ isOpen, onClose, mode = "modal" }: any) => {
       <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-100 p-5 shadow-sm">
         <h3 className="text-sm font-semibold text-slate-800">Onboarding tips</h3>
         <ul className="mt-3 space-y-2 text-sm text-slate-600">
-          {guidanceItems.map((tip: any) => (
+          {guidanceItems.map((tip: unknown) => (
             <li key={tip} className="flex items-start gap-2">
               <span
                 className="mt-1 h-1.5 w-1.5 rounded-full"

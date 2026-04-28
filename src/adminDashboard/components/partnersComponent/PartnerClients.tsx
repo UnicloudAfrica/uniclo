@@ -23,7 +23,7 @@ interface PartnerClientRecord {
 const PartnerClients: React.FC<PartnerClientsProps> = ({ tenantId }) => {
   const navigate = useNavigate();
   const { data: partnerClientsData, isFetching: isClientsFetching } = useFetchSubTenantByTenantID(
-    tenantId as any
+    tenantId as string
   );
 
   const clientData: PartnerClientRecord[] = Array.isArray(partnerClientsData)

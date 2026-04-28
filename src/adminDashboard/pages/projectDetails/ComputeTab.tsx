@@ -5,7 +5,7 @@ import { useFetchKeyPairs, useSyncKeyPairs, useDeleteKeyPair } from "@/shared/ho
 import ProjectComputeTab from "@/shared/components/projects/details/ProjectComputeTab";
 
 interface ComputeTabProps {
-  project: any;
+  project: unknown;
   initialSubView?: "instances" | "keypairs";
   onSubViewChange?: (subView: "instances" | "keypairs") => void;
 }
@@ -32,11 +32,11 @@ const ComputeTab: React.FC<ComputeTabProps> = ({ project, initialSubView, onSubV
       projectId={project?.identifier}
       region={project?.region}
       hierarchy="admin"
-      useInstances={useFetchPurchasedInstances as any}
+      useInstances={useFetchPurchasedInstances as unknown}
       keyPairHooks={{
         useList: useFetchKeyPairs,
-        useSync: useSyncKeyPairs,
-        useDelete: useDeleteKeyPair,
+        useSync: useSyncKeyPairs as unknown,
+        useDelete: useDeleteKeyPair as unknown,
       }}
       initialSubView={activeSubView}
       onSubViewChange={handleSubViewChange}

@@ -17,8 +17,6 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
-  Save,
-  Key,
 } from "lucide-react";
 import ModernCard from "@/shared/components/ui/ModernCard";
 import ModernButton from "@/shared/components/ui/ModernButton";

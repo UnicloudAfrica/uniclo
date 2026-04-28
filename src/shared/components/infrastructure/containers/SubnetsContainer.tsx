@@ -19,7 +19,7 @@ interface SubnetHooks {
     options?: { enabled?: boolean }
   ) => UseQueryResult<Subnet[], Error>;
   useCreate: () => UseMutationResult<
-    any,
+    unknown,
     Error,
     {
       projectId: string;
@@ -29,7 +29,7 @@ interface SubnetHooks {
     unknown
   >;
   useDelete: () => UseMutationResult<
-    any,
+    unknown,
     Error,
     { projectId: string; region?: string; subnetId: string },
     unknown
@@ -53,7 +53,7 @@ interface SubnetsContainerProps {
   wrapper: (props: {
     headerActions: React.ReactNode;
     children: React.ReactNode;
-  }) => React.ReactElement<any>;
+  }) => React.ReactElement;
 }
 
 /**

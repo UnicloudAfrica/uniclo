@@ -158,7 +158,7 @@ const CalculatorConfigStep = ({
   );
   const { data: rawRegions, isFetching: isRegionsFetching } = useFetchRegions();
   const regions = useFormattedRegions(
-    Array.isArray(rawRegions) ? (rawRegions as any as RegionLike[]) : []
+    Array.isArray(rawRegions) ? (rawRegions as unknown as RegionLike[]) : []
   );
 
   const selectedCountryCode = useMemo(

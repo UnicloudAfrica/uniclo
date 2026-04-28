@@ -43,8 +43,8 @@ const AddVMModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
     ];
 
     numberFields.forEach((field) => {
-      const value = parseFloat((formData as Record<string, any>)[field]);
-      if (isNaN(value) || (formData as Record<string, any>)[field] === "") {
+      const value = parseFloat((formData as Record<string, unknown>)[field]);
+      if (isNaN(value) || (formData as Record<string, unknown>)[field] === "") {
         newErrors[field] = `${field
           .replace(/_/g, " ")
           .replace("gib", "GiB")

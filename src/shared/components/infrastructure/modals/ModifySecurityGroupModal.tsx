@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Plus, Trash2, RefreshCw, X } from "lucide-react";
+import { Trash2, RefreshCw, X } from "lucide-react";
 import ModernButton from "../../ui/ModernButton";
 import type { SecurityGroup, SecurityGroupRule } from "../types";
 

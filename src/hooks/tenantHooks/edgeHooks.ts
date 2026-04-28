@@ -2,19 +2,23 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import silentTenantApi from "../../index/tenant/silentTenant";
 import tenantApi from "../../index/tenant/tenantApi";
 
-const normalizeCollection = (payload: any): unknown[] => {
+const normalizeCollection = (payload: unknown): unknown[] => {
   if (!payload) return [];
   if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload.items)) return payload.items;
-  if (Array.isArray(payload.edge_networks)) return payload.edge_networks;
-  if (Array.isArray(payload.edge_network_ip_pools)) return payload.edge_network_ip_pools;
-  if (Array.isArray(payload.pools)) return payload.pools;
-  if (Array.isArray(payload.data)) return payload.data;
-  if (payload.data) {
-    return normalizeCollection(payload.data);
+  if (typeof payload !== "object") return [];
+  const record = payload as Record<string, unknown>;
+  if (Array.isArray(record.items)) return record.items;
+  if (Array.isArray(record.edge_networks)) return record.edge_networks;
+  if (Array.isArray(record.edge_network_ip_pools)) return record.edge_network_ip_pools;
+  if (Array.isArray(record.pools)) return record.pools;
+  if (Array.isArray(record.data)) return record.data;
+  if (record.data) {
+    return normalizeCollection(record.data);
   }
   return [];
 };
+
+type EdgeEnvelope<T = unknown> = { data?: T };
 
 const fetchTenantEdgeNetworks = async ({
   project_id,
@@ -26,7 +30,7 @@ const fetchTenantEdgeNetworks = async ({
   const params = new URLSearchParams();
   if (project_id) params.append("project_id", project_id);
   if (region) params.append("region", region);
-  const response = await silentTenantApi(
+  const response = await silentTenantApi<EdgeEnvelope>(
     "GET",
     `/admin/edge-networks${params.toString() ? `?${params}` : ""}`
   );
@@ -46,15 +50,19 @@ const fetchTenantIpPools = async ({
   if (project_id) params.append("project_id", project_id);
   if (region) params.append("region", region);
   if (edge_network_id) params.append("edge_network_id", edge_network_id);
-  const response = await silentTenantApi(
+  const response = await silentTenantApi<EdgeEnvelope>(
     "GET",
     `/admin/edge-ip-pools${params.toString() ? `?${params}` : ""}`
   );
   return normalizeCollection(response?.data ?? response);
 };
 
-const assignTenantProjectEdge = async ({ payload }: { payload: Record<string, unknown> }) => {
-  const response = await tenantApi("POST", "/admin/edge-config/assign", payload);
+const assignTenantProjectEdge = async ({
+  payload,
+}: {
+  payload: Record<string, unknown>;
+}): Promise<unknown> => {
+  const response = await tenantApi<EdgeEnvelope>("POST", "/admin/edge-config/assign", payload);
   return response?.data ?? response;
 };
 
@@ -126,7 +134,10 @@ const fetchTenantProjectEdgeConfig = async (projectId: string, region: string, r
     params.append("project_id", projectId);
     params.append("region", region);
     if (refresh) params.append("refresh", "1");
-    const res = await silentTenantApi("GET", `/admin/edge-config?${params.toString()}`);
+    const res = await silentTenantApi<EdgeEnvelope>(
+      "GET",
+      `/admin/edge-config?${params.toString()}`
+    );
     return res?.data ?? res;
   } catch (_e) {
     return null;

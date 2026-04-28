@@ -24,15 +24,15 @@ import { buildProvisioningSteps } from "../shared/components/instance-wizard/pro
 import useAuthStore from "../stores/authStore";
 import { resolveCountryCodeFromEntity } from "./objectStorageUtils";
 
-const asPricingBreakdownEntries = (value: unknown): Record<string, any>[] => {
+const asPricingBreakdownEntries = (value: unknown): Record<string, unknown>[] => {
   if (Array.isArray(value)) {
     return value.filter(
-      (entry): entry is Record<string, any> => Boolean(entry && typeof entry === "object")
+      (entry): entry is Record<string, unknown> => Boolean(entry && typeof entry === "object")
     );
   }
 
   if (value && typeof value === "object") {
-    return [value as Record<string, any>];
+    return [value as Record<string, unknown>];
   }
 
   return [];
@@ -140,7 +140,7 @@ export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOp
   const tenantOptions = useMemo(() => {
     if (!Array.isArray(tenants)) return [];
     return tenants
-      .map((tenant: any): Option | null => {
+      .map((tenant: unknown): Option | null => {
         const value = tenant.id ?? tenant.identifier ?? tenant.code ?? tenant.slug ?? "";
         if (!value) return null;
         const label =
@@ -157,7 +157,7 @@ export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOp
   const clientOptions = useMemo(() => {
     if (!Array.isArray(userPool)) return [];
     return userPool
-      .map((client: any): Option | null => {
+      .map((client: unknown): Option | null => {
         const value = client.id ?? client.identifier ?? client.code ?? client.slug ?? "";
         if (!value) return null;
         const label =
@@ -173,7 +173,7 @@ export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOp
         ? generalRegions
         : resources.regions || [];
     return primary
-      .map((region: any): Option | null => {
+      .map((region: unknown): Option | null => {
         const value =
           region.code || region.region || region.slug || region.id || region.identifier || "";
         if (!value) return null;
@@ -193,7 +193,7 @@ export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOp
     const apiCountries = Array.isArray(countryOptions) ? countryOptions : [];
     if (apiCountries.length > 0) {
       const mapped = apiCountries
-        .map((item: any): Option | null => {
+        .map((item: unknown): Option | null => {
           const code =
             normalizeCountryCandidate(
               item?.iso2 ||
@@ -381,7 +381,7 @@ export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOp
         return acc;
       },
       {
-        lines: [] as Record<string, any>[],
+        lines: [] as Record<string, unknown>[],
         pre_discount_subtotal: 0,
         discount: 0,
         subtotal: 0,
@@ -438,7 +438,7 @@ export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOp
     submissionResult?.transaction?.identifier || orderReceipt?.transaction?.identifier || "N/A";
   const billingCountryLabel = useMemo(() => {
     if (!billingCountry) return "Not selected";
-    const c = countryOptionsFormatted.find((opt: any) => opt.value === billingCountry);
+    const c = countryOptionsFormatted.find((opt: unknown) => opt.value === billingCountry);
     return c ? c.label : billingCountry;
   }, [billingCountry, countryOptionsFormatted]);
 

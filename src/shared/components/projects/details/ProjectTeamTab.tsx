@@ -88,7 +88,7 @@ const ProjectTeamTab: React.FC<ProjectTeamTabProps> = ({
     { enabled: canManagePolicies && Boolean(region) }
   );
   const cloudPolicies: CloudPolicy[] = useMemo(
-    () => (Array.isArray(cloudPoliciesRaw) ? (cloudPoliciesRaw as CloudPolicy[]) : []),
+    () => (Array.isArray(cloudPoliciesRaw) ? (cloudPoliciesRaw as unknown as CloudPolicy[]) : []),
     [cloudPoliciesRaw]
   );
 

@@ -17,7 +17,7 @@ const STATUS_LABELS: Record<string, string> = {
   rejected: "Rejected",
 };
 
-const STATUS_TONES: Record<string, any> = {
+const STATUS_TONES: Record<string, unknown> = {
   not_started: "neutral",
   draft: "info",
   submitted: "info",
@@ -38,7 +38,18 @@ const formatDateTime = (value: string | null) =>
       })
     : "—";
 
-const deriveProgressBuckets = (steps: any[], statuses: any) => {
+interface OnboardingStep {
+  id: string;
+  label?: string;
+  [key: string]: unknown;
+}
+interface StatusRecord {
+  status: string;
+  submitted_at?: string | null;
+  reviewed_at?: string | null;
+}
+
+const deriveProgressBuckets = (steps: OnboardingStep[], statuses: Record<string, StatusRecord>) => {
   return steps.reduce(
     (acc, step) => {
       const status = statuses[step.id]?.status ?? "not_started";
@@ -83,7 +94,7 @@ const OnboardingStatusBoard: React.FC<OnboardingStatusBoardProps> = ({
   className = "",
 }) => {
   const navigate = useNavigate();
-  const [statuses, setStatuses] = useState<any>({});
+  const [statuses, setStatuses] = useState<Record<string, StatusRecord>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState(0);
@@ -116,7 +127,7 @@ const OnboardingStatusBoard: React.FC<OnboardingStatusBoardProps> = ({
 
       try {
         const stepResults = await Promise.all(
-          steps.map(async (step: any) => {
+          (steps as unknown as OnboardingStep[]).map(async (step) => {
             try {
               const { submission, meta } = await fetchAdminOnboardingSubmission({
                 target,
@@ -150,10 +161,12 @@ const OnboardingStatusBoard: React.FC<OnboardingStatusBoardProps> = ({
         if (!isCancelled) {
           setStatuses(Object.fromEntries(stepResults));
         }
-      } catch (fetchError: any) {
+      } catch (fetchError: unknown) {
         if (!isCancelled) {
           logger.error("Failed to load onboarding submissions", fetchError);
-          setError(fetchError?.message ?? "Unable to load onboarding submissions right now.");
+          const message =
+            fetchError instanceof Error ? fetchError.message : String(fetchError);
+          setError(message || "Unable to load onboarding submissions right now.");
           setStatuses({});
         }
       } finally {
@@ -170,7 +183,7 @@ const OnboardingStatusBoard: React.FC<OnboardingStatusBoardProps> = ({
     };
   }, [target, hasValidSubject, steps, tenantId, userId, refreshToken]);
 
-  const progressBuckets = useMemo(() => deriveProgressBuckets(steps, statuses), [steps, statuses]);
+  const progressBuckets = useMemo(() => deriveProgressBuckets(steps as unknown as OnboardingStep[], statuses), [steps, statuses]);
 
   const headerDescription = useMemo(() => {
     if (!steps.length) {
@@ -244,7 +257,7 @@ const OnboardingStatusBoard: React.FC<OnboardingStatusBoardProps> = ({
         </div>
       ) : (
         <div className="space-y-4">
-          {steps.map((step: any) => {
+          {(steps as Array<OnboardingStep & { description?: string }>).map((step) => {
             const snapshot = statuses[step.id] ?? {
               status: "not_started",
               submitted_at: null,
@@ -336,11 +349,11 @@ const OnboardingSummaryCard = ({
         ring: "ring-slate-100",
       },
     }[tone] ??
-    ({
+    {
       bg: "bg-slate-50",
       text: "text-slate-600",
       ring: "ring-slate-100",
-    } as any);
+    };
 
   return (
     <div

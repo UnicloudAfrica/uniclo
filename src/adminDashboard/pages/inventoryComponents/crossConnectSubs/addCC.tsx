@@ -3,7 +3,7 @@ import { X, Loader2 } from "lucide-react";
 import ToastUtils from "@/utils/toastUtil";
 import { useCreateCrossConnect } from "@/hooks/adminHooks/crossConnectHooks";
 
-const AddCrossConnect = ({ isOpen, onClose }: any) => {
+const AddCrossConnect = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const { mutate, isPending } = useCreateCrossConnect();
 
   const [formData, setFormData] = useState({
@@ -12,10 +12,10 @@ const AddCrossConnect = ({ isOpen, onClose }: any) => {
     description: "",
   });
 
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, unknown>>({});
 
   const validateForm = () => {
-    const newErrors: Record<string, any> = {};
+    const newErrors: Record<string, unknown> = {};
     if (!formData.name.trim()) {
       newErrors.name = "Name is required";
     }
@@ -28,12 +28,12 @@ const AddCrossConnect = ({ isOpen, onClose }: any) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field: any, value: any) => {
+  const updateFormData = (field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.SyntheticEvent) => {
     if (e) e.preventDefault();
 
     if (!validateForm()) return;

@@ -27,9 +27,14 @@ const ClientSupport: React.FC = () => {
   const navigate = useNavigate();
 
   const fetchThreads = (filters: SupportFilters) =>
-    clientSilentApi("GET", `/business/support${buildQuery(filters)}`);
+    clientSilentApi("GET", `/business/support${buildQuery(filters)}`) as Promise<
+      Record<string, unknown> & { data?: unknown }
+    >;
 
-  const fetchThread = (id: string | number) => clientSilentApi("GET", `/business/support/${id}`);
+  const fetchThread = (id: string | number) =>
+    clientSilentApi("GET", `/business/support/${id}`) as Promise<
+      Record<string, unknown> & { data?: unknown }
+    >;
 
   const createThread = (payload: Record<string, unknown>) =>
     clientApi("POST", "/business/support", payload);
@@ -50,11 +55,14 @@ const ClientSupport: React.FC = () => {
       >
         <SupportThreadsPanel
           queryKey={["client", "support"]}
-          fetchThreads={fetchThreads}
-          fetchThread={fetchThread}
-          createThread={createThread as (payload: Record<string, unknown>) => Promise<any>}
+          fetchThreads={fetchThreads as never}
+          fetchThread={fetchThread as never}
+          createThread={createThread as (payload: Record<string, unknown>) => Promise<unknown>}
           replyThread={
-            replyThread as (id: string | number, payload: Record<string, unknown>) => Promise<any>
+            replyThread as (
+              id: string | number,
+              payload: Record<string, unknown>
+            ) => Promise<unknown>
           }
           resolveThread={resolveThread}
           canCreate

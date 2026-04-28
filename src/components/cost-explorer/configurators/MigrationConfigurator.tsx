@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, ArrowLeftRight, CheckCircle } from "lucide-react";
+import { Plus, ArrowLeftRight } from "lucide-react";
 import useCartStore from "@/stores/cartStore";
 import { useFetchAcfPublicServices, type AcfService } from "@/hooks/useCostExplorer";
 

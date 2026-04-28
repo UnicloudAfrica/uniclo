@@ -61,7 +61,7 @@ export const detectApiContext = (): ApiContext => {
 export const notificationKeys = {
   all: ["notifications"] as const,
   lists: () => [...notificationKeys.all, "list"] as const,
-  list: (filters: Record<string, any>) => [...notificationKeys.lists(), filters] as const,
+  list: (filters: Record<string, unknown>) => [...notificationKeys.lists(), filters] as const,
   unreadCount: () => [...notificationKeys.all, "unread-count"] as const,
   preferences: () => [...notificationKeys.all, "preferences"] as const,
 };
@@ -209,7 +209,7 @@ export function useNotificationPreferences() {
         const response = await apiClient("GET", "/settings/profile?category=notifications");
         // Transform from { notifications: { key: value } } to preference array format
         const settings =
-          (response as { data?: { settings?: Record<string, any> } })?.data?.settings || {};
+          (response as { data?: { settings?: Record<string, unknown> } })?.data?.settings || {};
         const preferences = [
           {
             category: "billing",

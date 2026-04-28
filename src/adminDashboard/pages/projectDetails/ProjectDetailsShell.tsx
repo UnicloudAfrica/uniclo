@@ -60,12 +60,12 @@ interface ProjectDetailsShellProps {
     projectId: string | number;
     userId: string | number;
     policyId: number;
-  }) => Promise<ApiResponse<any>>;
+  }) => Promise<ApiResponse<unknown>>;
   revokePolicy: (args: {
     projectId: string | number;
     userId: string | number;
     policyId: number;
-  }) => Promise<ApiResponse<any>>;
+  }) => Promise<ApiResponse<unknown>>;
   handleUserAction: (user: ProjectUser, actionKey: string) => Promise<void>;
   refetchProjectDetails: () => Promise<unknown>;
   refetchProjectStatus: () => Promise<unknown>;
@@ -145,7 +145,7 @@ const ProjectDetailsShell: React.FC<ProjectDetailsShellProps> = ({
       ToastUtils.info("Internet Gateway management from shell");
     },
     onSyncResources: () => syncInfrastructure({ projectId: project?.identifier }),
-    onRequiredAction: onRequiredAction as any,
+    onRequiredAction: onRequiredAction as unknown,
     renderComputeTab: ({
       activeSubView,
       setActiveSubView,
@@ -196,7 +196,7 @@ const ProjectDetailsShell: React.FC<ProjectDetailsShellProps> = ({
       <ProjectStorageTab
         projectId={project?.identifier}
         region={project?.region ?? "lagos-1"}
-        volumes={((project as unknown as Record<string, unknown>)?.volumes as any[]) ?? []}
+        volumes={((project as unknown as Record<string, unknown>)?.volumes as never) ?? []}
         onRefresh={() => syncInfrastructure({ projectId: project?.identifier })}
       />
     ),

@@ -16,7 +16,9 @@ const DocMermaid: React.FC<DocMermaidProps> = ({ chart, caption }) => {
 
   useEffect(() => {
     if (!mermaidInitialized) {
-      const themeColor = getComputedStyle(document.documentElement).getPropertyValue("--theme-color").trim() || "#288DD1";
+      const themeColor =
+        getComputedStyle(document.documentElement).getPropertyValue("--theme-color").trim() ||
+        "#0A5E3E";
       mermaid.initialize({
         startOnLoad: false,
         theme: "base",
@@ -48,9 +50,42 @@ const DocMermaid: React.FC<DocMermaidProps> = ({ chart, caption }) => {
         className="overflow-x-auto p-4 rounded-lg border flex justify-center"
         style={{ borderColor: "var(--theme-border-color, #e5e7eb)", backgroundColor: "#fff" }}
         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(svg, {
-          USE_PROFILES: { svg: true },
-          FORBID_ATTR: ['onload', 'onerror', 'onclick', 'onmouseover'],
-          FORBID_TAGS: ['script'],
+          // M-03: Disable SVG filter profile (no <filter> primitives),
+          // explicitly forbid every SVG element that can execute JS or
+          // pull remote content (<script>, <foreignObject>, the SMIL
+          // animation set, and <use> which can dereference an external
+          // symbol), and block all known event-handler attributes
+          // including SMIL timing attrs (onbegin/onend/onrepeat) and
+          // any `href` / `xlink:href` which <use> relies on.
+          //
+          // ALLOWED_URI_REGEXP restricts attribute URIs to http(s)/
+          // mailto/ftp/tel or relative refs — blocks javascript:,
+          // data: and similar schemes.
+          USE_PROFILES: { svg: true, svgFilters: false },
+          FORBID_TAGS: [
+            'script',
+            'foreignObject',
+            'set',
+            'animate',
+            'animateTransform',
+            'animateMotion',
+            'use',
+          ],
+          FORBID_ATTR: [
+            'onload',
+            'onerror',
+            'onclick',
+            'onmouseover',
+            'onfocus',
+            'onblur',
+            'onbegin',
+            'onend',
+            'onrepeat',
+            'href',
+            'xlink:href',
+          ],
+          ALLOWED_URI_REGEXP:
+            /^(?:(?:https?|mailto|ftp|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.:-]|$))/i,
         }) }}
       />
       {caption && (

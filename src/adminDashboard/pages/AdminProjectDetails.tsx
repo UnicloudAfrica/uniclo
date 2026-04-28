@@ -65,7 +65,7 @@ interface ProvisioningStep {
 
 // Types
 interface User extends Omit<ProjectUser, "actions"> {
-  actions?: Record<string, any>;
+  actions?: Record<string, unknown>;
 }
 
 interface InviteForm {
@@ -115,7 +115,7 @@ const isTenantAdmin = (user: User | null): boolean => {
     const role = user["role"].toLowerCase();
     if (role.includes("tenant_admin") || role.includes("tenant-admin")) return true;
   }
-  if ((user?.["status"] as Record<string, any>)?.["tenant_admin"]) return true;
+  if ((user?.["status"] as Record<string, unknown>)?.["tenant_admin"]) return true;
   return false;
 };
 
@@ -156,7 +156,7 @@ export default function AdminProjectDetails() {
     isFetching: isProjectStatusFetching,
     refetch: refetchProjectStatus,
   } = useProjectStatus(projectId ?? "", {
-    refetchInterval: (query: any) => {
+    refetchInterval: (query: unknown) => {
       const data = query.state.data as ProjectStatusResponse | undefined;
       const status = data?.["project"]?.["status"];
       return status === "provisioning" || status === "pending" ? 3000 : false;
@@ -167,12 +167,12 @@ export default function AdminProjectDetails() {
     projectId as string,
     {
       enabled: Boolean(projectId),
-      refetchInterval: (query: any) => {
+      refetchInterval: (query: unknown) => {
         const status = query?.state?.data?.data?.status;
         return status === "provisioning" || status === "pending" ? 3000 : false;
       },
     }
-  ) as Record<string, unknown>;
+  ) as unknown as { data: Record<string, unknown> | undefined; refetch: () => void };
 
   const { data: infraStatusData } = useProjectInfrastructureStatus(projectId, {
     enabled: Boolean(projectId),
@@ -185,7 +185,7 @@ export default function AdminProjectDetails() {
   >;
   const getInfraCount = (key: string): number | undefined => infraComponents[key]?.count;
 
-  const project = projectStatusData?.project as Record<string, any> | undefined;
+  const project = projectStatusData?.project as Record<string, unknown> | undefined;
   const resolvedProjectId = project?.identifier || projectId;
 
   // --- Extracted hooks ---
@@ -210,10 +210,10 @@ export default function AdminProjectDetails() {
     {
       enabled: Boolean(resolvedProjectId && project?.region),
     }
-  ) as Record<string, unknown>;
-  const edgePayload = edgeConfig?.data ?? edgeConfig;
+  ) as unknown as { data: Record<string, unknown> | undefined; refetch: () => void };
+  const edgePayload = (edgeConfig as { data?: unknown } | undefined)?.data ?? edgeConfig;
   const projectDetailsPayload = projectDetailsResponse?.data ?? projectDetailsResponse;
-  const projectDetails = projectDetailsPayload || project;
+  const projectDetails = (projectDetailsPayload || project) as Record<string, unknown> | undefined;
 
   const infraStatus = useInfrastructureStatus({
     project,
@@ -348,7 +348,7 @@ export default function AdminProjectDetails() {
   const normalizedMembershipOptions = useMemo(() => {
     const entries = Array.isArray(membershipSuggestions) ? membershipSuggestions : [];
     const map = new Map();
-    const upsertMember = (user: any, { isCurrent = false, isOwner = false } = {}) => {
+    const upsertMember = (user: unknown, { isCurrent = false, isOwner = false } = {}) => {
       if (!user || user.id === undefined || user.id === null) return;
       const id = Number(user.id);
       if (!Number.isFinite(id)) return;
@@ -371,11 +371,11 @@ export default function AdminProjectDetails() {
       const numericId = Number(user?.id);
       upsertMember(user, {
         isCurrent: infraStatus.projectUserIdSet.has(numericId),
-        isOwner: infraStatus.tenantAdminUsers.some((admin: any) => Number(admin.id) === numericId),
+        isOwner: infraStatus.tenantAdminUsers.some((admin: unknown) => Number(admin.id) === numericId),
       });
     });
 
-    infraStatus.projectUsers.forEach((user: any) => {
+    infraStatus.projectUsers.forEach((user: unknown) => {
       upsertMember(user, {
         isCurrent: true,
         isOwner: isTenantAdmin(user),
@@ -392,7 +392,7 @@ export default function AdminProjectDetails() {
 
   const pendingOwnerCount = useMemo(() => {
     if (!selectedMemberIds || selectedMemberIds.size === 0) return 0;
-    return infraStatus.tenantAdminUsers.reduce((count: number, user: any) => {
+    return infraStatus.tenantAdminUsers.reduce((count: number, user: unknown) => {
       const id = Number(user.id);
       if (!Number.isFinite(id)) {
         return count;
@@ -420,7 +420,7 @@ export default function AdminProjectDetails() {
   }, [projectDetails, project]);
 
   const areAllSummaryItemsComplete = summary.every(
-    (item: any) => item.completed === true || item.complete === true
+    (item: unknown) => item.completed === true || item.complete === true
   );
 
   const canCreateInstances =
@@ -428,7 +428,7 @@ export default function AdminProjectDetails() {
 
   const instanceStats = useMemo(() => {
     const base = { total: projectInstances.length, running: 0, provisioning: 0, paymentPending: 0 };
-    projectInstances.forEach((instance: any) => {
+    projectInstances.forEach((instance: unknown) => {
       const normalized = (instance.status || "").toLowerCase();
       if (["running", "active", "ready"].includes(normalized)) base.running += 1;
       else if (
@@ -465,7 +465,7 @@ export default function AdminProjectDetails() {
     });
   };
 
-  const handleGenericAction = async ({ method, endpoint, label, payload = {} }: any) => {
+  const handleGenericAction = async ({ method, endpoint, label, payload = src/adminDashboard/pages/AdminProjectDetails.tsx }: { method: string; endpoint: string; label: string; payload?: Record<string, unknown> }) => {
     try {
       const toastId = `project-action-${endpoint}`;
       ToastUtils.info(`Executing ${label}...`, { id: toastId });
@@ -473,9 +473,9 @@ export default function AdminProjectDetails() {
       ToastUtils.success(`${label} completed successfully!`, { id: toastId });
       await Promise.all([refetchProjectStatus(), refetchProjectDetails()]);
       return res;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error(`Action error [${label}]:`, error);
-      ToastUtils.error(error?.message || `Failed to execute ${label}`, {
+      ToastUtils.error((error instanceof Error ? error.message : String(error)) || `Failed to execute ${label}`, {
         id: `project-action-err-${label}`,
       });
       throw error;
@@ -505,8 +505,8 @@ export default function AdminProjectDetails() {
       setIsMemberModalOpen(false);
       // Refresh project data to show updated members
       await Promise.all([refetchProjectStatus(), refetchProjectDetails()]);
-    } catch (err: any) {
-      setMembershipError(err?.message || "Failed to update project members");
+    } catch (err: unknown) {
+      setMembershipError((err instanceof Error ? err.message : undefined) || "Failed to update project members");
     }
   };
 
@@ -660,7 +660,7 @@ export default function AdminProjectDetails() {
                   status: step.status as "pending" | "in_progress" | "completed" | "failed",
                   description: step.status === "completed" ? "Completed" : "Action in progress",
                   updated_at: step.updated_at,
-                }))
+                })) as unknown as Array<{ id: string; label: string; status: "completed" | "pending" | "not_started" | "failed"; description?: string; updated_at?: string; }>
               : []
           }
           setupProgressPercent={infraStatus.healthPercent}
@@ -670,7 +670,7 @@ export default function AdminProjectDetails() {
           assignPolicy={assignPolicy}
           revokePolicy={revokePolicy}
           handleUserAction={handleUserAction}
-          refetchProjectDetails={refetchProjectDetails}
+          refetchProjectDetails={refetchProjectDetails as unknown as () => Promise<unknown>}
           refetchProjectStatus={refetchProjectStatus}
           isAssigningPolicy={isAssigningPolicy}
           isRevokingPolicy={isRevokingPolicy}
@@ -729,7 +729,7 @@ export default function AdminProjectDetails() {
         region={project?.["region"]}
         onSuccess={async () => {
           await refetchProjectStatus();
-          await refetchEdgeConfig();
+          await (refetchEdgeConfig as unknown as () => Promise<unknown>)();
         }}
       />
     </>

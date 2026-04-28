@@ -5,16 +5,16 @@ import { useUploadProductPricingFile } from "@/hooks/adminHooks/adminProductPric
 import { FileInput } from "@/utils/fileInput";
 import logger from "@/utils/logger";
 
-const UploadPricingFileModal = ({ isOpen, onClose }: any) => {
+const UploadPricingFileModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const queryClient = useQueryClient();
-  const [selectedFile, setSelectedFile] = useState<any>(null);
+  const [selectedFile, setSelectedFile] = useState<unknown>(null);
   const [isDryRun, setIsDryRun] = useState(false);
   const [error, setError] = useState("");
-  const [uploadResult, setUploadResult] = useState<any>(null);
+  const [uploadResult, setUploadResult] = useState<unknown>(null);
 
   const { mutate: uploadFile, isPending } = useUploadProductPricingFile();
 
-  const handleFileChange = (file: any) => {
+  const handleFileChange = (file: unknown) => {
     setSelectedFile(file);
     setError("");
   };
@@ -41,7 +41,7 @@ const UploadPricingFileModal = ({ isOpen, onClose }: any) => {
       { file: selectedFile, dry_run: isDryRun },
       {
         onSuccess: (res) => {
-          setUploadResult((res as any).data);
+          setUploadResult((res as unknown).data);
         },
         onError: (err) => {
           // The error toast is already handled by the `multipartApi` utility
@@ -91,11 +91,11 @@ const UploadPricingFileModal = ({ isOpen, onClose }: any) => {
               <div className="mt-6">
                 <h4 className="text-sm font-semibold text-gray-700 mb-2">Error Details</h4>
                 <div className="max-h-40 overflow-y-auto border rounded-lg p-3 space-y-3 bg-red-50">
-                  {errors.map((err: any, index: any) => (
+                  {errors.map((err: unknown, index: number) => (
                     <div key={index} className="text-xs">
                       <p className="font-bold text-red-700">Row {err.row}:</p>
                       <ul className="list-disc list-inside pl-2 text-red-600">
-                        {err.messages.map((msg: any, msgIndex: any) => (
+                        {err.messages.map((msg: string, msgIndex: number) => (
                           <li key={msgIndex}>{msg}</li>
                         ))}
                       </ul>

@@ -7,7 +7,7 @@ interface TenantPageShellProps {
   subHeaderContent?: React.ReactNode;
   mainClassName?: string;
   children?: React.ReactNode;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 const TenantPageShell: React.FC<TenantPageShellProps> = ({

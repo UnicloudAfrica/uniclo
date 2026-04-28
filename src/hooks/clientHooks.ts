@@ -1,15 +1,27 @@
-// src/hooks/adminHooks/clientHooks.js
+// src/hooks/clientHooks.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { QueryFunctionContext, UseQueryOptions } from "@tanstack/react-query";
 import silentTenantApi from "../index/tenant/silentTenant";
 import tenantApi from "../index/tenant/tenantApi";
 import logger from "../utils/logger";
 
+type ApiEnvelope<T = unknown> = { data?: T };
+
+export interface ClientPayload {
+  [key: string]: unknown;
+}
+
+type ClientsQueryKey = readonly ["clients", { tenantId: string | number | null | undefined }];
+type ClientByIdQueryKey = readonly ["clients", string | number];
+
 // GET: Fetch all clients
-const fetchClients = async ({ queryKey }: { queryKey: any[] }) => {
+const fetchClients = async ({
+  queryKey,
+}: QueryFunctionContext<ClientsQueryKey>): Promise<unknown> => {
   const [, params] = queryKey;
   const tenantId = params?.tenantId;
   const query = tenantId ? `?tenant_id=${tenantId}` : "";
-  const res = await silentTenantApi("GET", `/admin/clients${query}`);
+  const res = await silentTenantApi<ApiEnvelope>("GET", `/admin/clients${query}`);
   if (!res.data) {
     throw new Error("Failed to fetch clients");
   }
@@ -17,9 +29,11 @@ const fetchClients = async ({ queryKey }: { queryKey: any[] }) => {
 };
 
 // GET: Fetch client by ID
-const fetchClientById = async ({ queryKey }: { queryKey: any[] }) => {
+const fetchClientById = async ({
+  queryKey,
+}: QueryFunctionContext<ClientByIdQueryKey>): Promise<unknown> => {
   const [, id] = queryKey;
-  const res = await silentTenantApi("GET", `/admin/clients/${id}`);
+  const res = await silentTenantApi<ApiEnvelope>("GET", `/admin/clients/${id}`);
   if (!res) {
     throw new Error(`Failed to fetch client with ID ${id}`);
   }
@@ -27,9 +41,9 @@ const fetchClientById = async ({ queryKey }: { queryKey: any[] }) => {
 };
 
 // POST: Create a new client
-const createClient = async (clientData: any) => {
+const createClient = async (clientData: ClientPayload): Promise<unknown> => {
   try {
-    const response = await tenantApi("POST", "/admin/clients", clientData);
+    const response = await tenantApi<unknown>("POST", "/admin/clients", clientData);
 
     return response;
   } catch (error) {
@@ -39,8 +53,14 @@ const createClient = async (clientData: any) => {
 };
 
 // PATCH: Update a client
-const updateClient = async ({ id, clientData }: { id: any; clientData: any }) => {
-  const res = await tenantApi("PATCH", `/admin/clients/${id}`, clientData);
+const updateClient = async ({
+  id,
+  clientData,
+}: {
+  id: string | number;
+  clientData: ClientPayload;
+}): Promise<unknown> => {
+  const res = await tenantApi<ApiEnvelope>("PATCH", `/admin/clients/${id}`, clientData);
   if (!res.data) {
     throw new Error(`Failed to update client with ID ${id}`);
   }
@@ -48,19 +68,27 @@ const updateClient = async ({ id, clientData }: { id: any; clientData: any }) =>
 };
 
 // DELETE: Delete a client
-const deleteClient = async (id: any) => {
-  const res = await tenantApi("DELETE", `/admin/clients/${id}`);
+const deleteClient = async (id: string | number): Promise<unknown> => {
+  const res = await tenantApi<ApiEnvelope>("DELETE", `/admin/clients/${id}`);
   if (!res.data) {
     throw new Error(`Failed to delete client with ID ${id}`);
   }
   return res.data;
 };
 
+type QueryOptions<TData> = Omit<
+  UseQueryOptions<TData, Error, TData, readonly unknown[]>,
+  "queryKey" | "queryFn"
+>;
+
 // Hook to fetch all clients
-export const useFetchClients = (tenantId: any = null, options: any = {}) => {
+export const useFetchClients = (
+  tenantId: string | number | null | undefined = null,
+  options: QueryOptions<unknown> = {}
+) => {
   return useQuery({
-    queryKey: ["clients", { tenantId }],
-    queryFn: fetchClients,
+    queryKey: ["clients", { tenantId }] as const,
+    queryFn: fetchClients as unknown as () => Promise<unknown>,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     refetchOnWindowFocus: false,
     retry: false, // No retries on failure
@@ -69,10 +97,13 @@ export const useFetchClients = (tenantId: any = null, options: any = {}) => {
 };
 
 // Hook to fetch client by ID
-export const useFetchClientById = (id: any, options: any = {}) => {
+export const useFetchClientById = (
+  id: string | number,
+  options: QueryOptions<unknown> = {}
+) => {
   return useQuery({
-    queryKey: ["clients", id],
-    queryFn: fetchClientById,
+    queryKey: ["clients", id] as const,
+    queryFn: fetchClientById as unknown as () => Promise<unknown>,
     enabled: !!id, // Only fetch if ID is provided
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
@@ -101,7 +132,7 @@ export const useUpdateClient = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateClient,
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       logger.log("Client updated successfully");
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       queryClient.invalidateQueries({ queryKey: ["clients", variables.id] });

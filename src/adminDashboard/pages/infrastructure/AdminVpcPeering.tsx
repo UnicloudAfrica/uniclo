@@ -23,7 +23,7 @@ const AdminVpcPeering: React.FC = () => {
 
   const { data: projectData } = useFetchProjectById(projectId);
   const projectObj =
-    projectData && typeof projectData === "object" ? (projectData as Record<string, any>) : null;
+    projectData && typeof projectData === "object" ? (projectData as Record<string, unknown>) : null;
   const provider = projectObj?.provider || searchParams.get("provider");
 
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -157,7 +157,7 @@ const AdminVpcPeering: React.FC = () => {
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
                   >
                     <option value="">Select Requester VPC</option>
-                    {vpcs.map((vpc: any) => (
+                    {vpcs.map((vpc: unknown) => (
                       <option key={vpc.id} value={vpc.id}>
                         {vpc.name || vpc.id} ({vpc.cidr_block})
                       </option>
@@ -175,7 +175,7 @@ const AdminVpcPeering: React.FC = () => {
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
                   >
                     <option value="">Select Peer VPC</option>
-                    {vpcs.map((vpc: any) => (
+                    {vpcs.map((vpc: unknown) => (
                       <option key={vpc.id} value={vpc.id}>
                         {vpc.name || vpc.id} ({vpc.cidr_block})
                       </option>

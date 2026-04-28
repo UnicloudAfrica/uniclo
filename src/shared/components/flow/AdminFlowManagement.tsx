@@ -15,8 +15,6 @@ import ResourceHero from "@/shared/components/ui/ResourceHero";
 import { ModernCard, ModernButton } from "@/shared/components/ui";
 import {
   Users,
-  CreditCard,
-  Layers,
   Rocket,
   AlertTriangle,
   Plus,
@@ -79,7 +77,7 @@ const AdminFlowManagement: React.FC = () => {
       setOverview(overviewRes.data);
       setPlans(plansRes.data);
       setSubscriptions(
-        Array.isArray(subsRes.data) ? subsRes.data : (subsRes.data as any)?.data || [],
+        Array.isArray(subsRes.data) ? subsRes.data : (subsRes.data as { data?: unknown })?.data || [],
       );
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to load data.");

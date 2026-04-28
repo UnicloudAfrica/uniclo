@@ -2,11 +2,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
 import logger from "@/utils/logger";
+import type { ApiEnvelope, QueryHookOptions } from "@/shared/types/admin";
 
 const QUERY_KEY = "anycloudflow-pricing";
 
 const fetchAnyCloudFlowPricing = async () => {
-  const res = await silentApi("GET", "/anycloudflow-pricing");
+  const res = await silentApi<ApiEnvelope>("GET", "/anycloudflow-pricing");
   if (!res?.data) {
     throw new Error("Failed to fetch AnyCloudFlow pricing");
   }
@@ -22,7 +23,10 @@ const updateAnyCloudFlowPrice = async ({ id, price_usd }: { id: number; price_us
 };
 
 const fetchTenantOverrides = async (serviceId: number) => {
-  const res = await silentApi("GET", `/anycloudflow-pricing/${serviceId}/tenant-overrides`);
+  const res = await silentApi<ApiEnvelope>(
+    "GET",
+    `/anycloudflow-pricing/${serviceId}/tenant-overrides`
+  );
   if (!res?.data) {
     throw new Error("Failed to fetch tenant overrides");
   }
@@ -47,7 +51,7 @@ const updateTenantOverride = async ({
   return res;
 };
 
-export const useFetchAnyCloudFlowPricing = (options: any = {}) => {
+export const useFetchAnyCloudFlowPricing = (options: QueryHookOptions = {}) => {
   return useQuery({
     queryKey: [QUERY_KEY],
     queryFn: fetchAnyCloudFlowPricing,
@@ -64,13 +68,16 @@ export const useUpdateAnyCloudFlowPrice = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       logger.error("Error updating AnyCloudFlow price:", error);
     },
   });
 };
 
-export const useFetchTenantOverrides = (serviceId: number | null, options: any = {}) => {
+export const useFetchTenantOverrides = (
+  serviceId: number | null,
+  options: QueryHookOptions = {}
+) => {
   return useQuery({
     queryKey: [QUERY_KEY, "tenant-overrides", serviceId],
     queryFn: () => fetchTenantOverrides(serviceId!),
@@ -109,7 +116,7 @@ export const useUpdateAnyCloudFlowTiers = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       logger.error("Error updating AnyCloudFlow tiers:", error);
     },
   });
@@ -122,7 +129,7 @@ export const useUpdateTenantOverride = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       logger.error("Error updating tenant override:", error);
     },
   });

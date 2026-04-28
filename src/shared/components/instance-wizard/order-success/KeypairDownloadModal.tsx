@@ -72,8 +72,8 @@ const KeypairDownloadModal: React.FC<KeypairDownloadModalProps> = ({ keypairDown
         ToastUtils.success(
           payload?.message || `Key pair ${keyLabel ? `"${keyLabel}" ` : ""}emailed successfully.`
         );
-      } catch (error: any) {
-        ToastUtils.error(error?.message || "Could not email the key pair.");
+      } catch (error) {
+        ToastUtils.error((error as Error)?.message || "Could not email the key pair.");
       } finally {
         setEmailingKeys((prev) => prev.filter((item) => item !== id));
       }

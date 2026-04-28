@@ -2,19 +2,19 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
 import logger from "@/utils/logger";
-
-type CollectionResponse = {
-  data: unknown[];
-  meta: Record<string, unknown> | null;
-  message?: string;
-  success?: boolean;
-};
+import type {
+  ApiEnvelope,
+  AdminListParams,
+  AdminResourceRecord,
+  CollectionResponse,
+  QueryHookOptions,
+} from "@/shared/types/admin";
 
 interface VmQuery {
   region?: string;
   provider?: string;
-  page?: number;
-  perPage?: number;
+  page?: number | string;
+  perPage?: number | string;
   search?: string;
 }
 
@@ -33,18 +33,21 @@ const normaliseCollectionResponse = (res: unknown): CollectionResponse => {
   if (!res || typeof res !== "object") {
     throw new Error("Unexpected response from server");
   }
-  const r = res as Record<string, any>;
+  const r = res as ApiEnvelope<unknown[]>;
   return {
     data: (r.data as unknown[]) ?? [],
     meta: (r.meta ?? r.pagination ?? null) as Record<string, unknown> | null,
-    message: String(r.message || ""),
+    message: r.message ? String(r.message) : "",
     success: Boolean(r.success),
   };
 };
 
 const fetchVmInstances = async ({ region, provider, page, perPage, search }: VmQuery) => {
   const queryString = buildQueryString({ region, provider, page, perPage, search });
-  const res = await silentApi("GET", `/product-compute-instance${queryString}`);
+  const res = await silentApi<ApiEnvelope<unknown[]>>(
+    "GET",
+    `/product-compute-instance${queryString}`
+  );
   const payload = normaliseCollectionResponse(res);
   if (!Array.isArray(payload.data)) {
     throw new Error("Failed to fetch VM instances");
@@ -52,16 +55,27 @@ const fetchVmInstances = async ({ region, provider, page, perPage, search }: VmQ
   return payload;
 };
 
-const fetchVmInstanceById = async (id: string | number): Promise<any> => {
-  const res = await silentApi("GET", `/product-compute-instance/${id}`);
+const fetchVmInstanceById = async (
+  id: string | number
+): Promise<AdminResourceRecord> => {
+  const res = await silentApi<ApiEnvelope<AdminResourceRecord>>(
+    "GET",
+    `/product-compute-instance/${id}`
+  );
   if (!res?.data) {
     throw new Error(`Failed to fetch VM instance with ID ${id}`);
   }
   return res.data;
 };
 
-const createVmInstance = async (instanceData: any): Promise<any> => {
-  const res = await api("POST", "/product-compute-instance", instanceData);
+const createVmInstance = async (
+  instanceData: AdminResourceRecord
+): Promise<AdminResourceRecord> => {
+  const res = await api<ApiEnvelope<AdminResourceRecord>>(
+    "POST",
+    "/product-compute-instance",
+    instanceData
+  );
   if (!res?.data) {
     throw new Error("Failed to create VM instance");
   }
@@ -73,17 +87,24 @@ const updateVmInstance = async ({
   instanceData,
 }: {
   id: string | number;
-  instanceData: any;
-}): Promise<any> => {
-  const res = await api("PATCH", `/product-compute-instance/${id}`, instanceData);
+  instanceData: AdminResourceRecord;
+}): Promise<AdminResourceRecord> => {
+  const res = await api<ApiEnvelope<AdminResourceRecord>>(
+    "PATCH",
+    `/product-compute-instance/${id}`,
+    instanceData
+  );
   if (!res?.data) {
     throw new Error(`Failed to update VM instance with ID ${id}`);
   }
   return res.data;
 };
 
-const deleteVmInstance = async (id: any) => {
-  const res = await api("DELETE", `/product-compute-instance/${id}`);
+const deleteVmInstance = async (id: string | number) => {
+  const res = await api<ApiEnvelope<AdminResourceRecord>>(
+    "DELETE",
+    `/product-compute-instance/${id}`
+  );
   if (!res?.data) {
     throw new Error(`Failed to delete VM instance with ID ${id}`);
   }
@@ -91,9 +112,9 @@ const deleteVmInstance = async (id: any) => {
 };
 
 export const useFetchVmInstances = (
-  region: any,
-  { page = 1, perPage = 10, search = "", provider = "" }: any = {},
-  options: any = {}
+  region: string | undefined,
+  { page = 1, perPage = 10, search = "", provider = "" }: AdminListParams = {},
+  options: QueryHookOptions = {}
 ) => {
   return useQuery<CollectionResponse>({
     queryKey: ["vmInstances", region, provider, page, perPage, search],
@@ -105,10 +126,13 @@ export const useFetchVmInstances = (
   });
 };
 
-export const useFetchVmInstanceById = (id: any, options: any = {}) => {
-  return useQuery<Record<string, unknown>>({
+export const useFetchVmInstanceById = (
+  id: string | number | undefined,
+  options: QueryHookOptions = {}
+) => {
+  return useQuery<AdminResourceRecord>({
     queryKey: ["vmInstance", id],
-    queryFn: () => fetchVmInstanceById(id),
+    queryFn: () => fetchVmInstanceById(id as string | number),
     enabled: !!id,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
@@ -118,7 +142,7 @@ export const useFetchVmInstanceById = (id: any, options: any = {}) => {
 
 export const useCreateVmInstance = () => {
   const queryClient = useQueryClient();
-  return useMutation<any, Error, any>({
+  return useMutation<AdminResourceRecord, Error, AdminResourceRecord>({
     mutationFn: createVmInstance,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vmInstances"] });
@@ -131,7 +155,11 @@ export const useCreateVmInstance = () => {
 
 export const useUpdateVmInstance = () => {
   const queryClient = useQueryClient();
-  return useMutation<any, Error, { id: string | number; instanceData: any }>({
+  return useMutation<
+    AdminResourceRecord,
+    Error,
+    { id: string | number; instanceData: AdminResourceRecord }
+  >({
     mutationFn: updateVmInstance,
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["vmInstances"] });
@@ -152,7 +180,7 @@ export const useDeleteVmInstance = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vmInstances"] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       logger.error("Error deleting VM instance:", error);
     },
   });

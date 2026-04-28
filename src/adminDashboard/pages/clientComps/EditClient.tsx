@@ -6,9 +6,9 @@ import { useFetchCountries } from "@/hooks/resource"; // Import the resource hoo
 import FormLayout, { formAccent, getAccentRgba } from "../../components/FormLayout";
 
 interface EditClientModalProps {
-  client: any;
+  client: unknown;
   onClose: () => void;
-  onClientUpdated?: (client: any) => void;
+  onClientUpdated?: (client: unknown) => void;
   isOpen?: boolean; // Added for consistency, though not strictly used in the original component logic directly but good for modal patterns
 }
 
@@ -34,7 +34,7 @@ export const EditClientModal: React.FC<EditClientModalProps> = ({
     city: "",
     state: "",
   });
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<unknown>({});
 
   const { mutate: updateClient, isPending } = useUpdateClient();
   const { data: countriesData, isFetching: isCountriesFetching } = useFetchCountries();
@@ -65,12 +65,12 @@ export const EditClientModal: React.FC<EditClientModalProps> = ({
   // Helper function to update form data and clear associated errors
   const updateFormData = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev: any) => ({ ...prev, [field]: null }));
+    setErrors((prev: unknown) => ({ ...prev, [field]: null }));
   };
 
   // Validate form fields before submission
   const validateForm = () => {
-    const newErrors: any = {};
+    const newErrors: Record<string, string> = {};
     if (!formData.first_name.trim()) newErrors.first_name = "First Name is required";
     if (!formData.last_name.trim()) newErrors.last_name = "Last Name is required";
     if (!formData.email.trim()) newErrors.email = "Email is required";
@@ -108,7 +108,7 @@ export const EditClientModal: React.FC<EditClientModalProps> = ({
       updateClient(
         { id: client.identifier, clientData: dataToSubmit },
         {
-          onSuccess: (updatedData: any) => {
+          onSuccess: (updatedData: Record<string, unknown>) => {
             ToastUtils.success("Client updated successfully!");
             if (onClientUpdated) {
               onClientUpdated({ ...client, ...updatedData });
@@ -241,14 +241,14 @@ export const EditClientModal: React.FC<EditClientModalProps> = ({
         </p>
       </div>
 
-      {summarySections.map((section: any) => (
+      {summarySections.map((section: unknown) => (
         <div
           key={section.title}
           className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
         >
           <h3 className="text-sm font-semibold text-slate-800">{section.title}</h3>
           <dl className="mt-3 space-y-3 text-sm">
-            {section.items.map((item: any) => (
+            {section.items.map((item: unknown) => (
               <div
                 key={`${section.title}-${item.label}`}
                 className="flex items-start justify-between gap-3"
@@ -266,7 +266,7 @@ export const EditClientModal: React.FC<EditClientModalProps> = ({
       <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-100 p-5 shadow-sm">
         <h3 className="text-sm font-semibold text-slate-800">Update checklist</h3>
         <ul className="mt-3 space-y-2 text-sm text-slate-600">
-          {guidanceItems.map((tip: any) => (
+          {guidanceItems.map((tip: unknown) => (
             <li key={tip} className="flex items-start gap-2">
               <span
                 className="mt-1 h-1.5 w-1.5 rounded-full"
@@ -317,7 +317,7 @@ export const EditClientModal: React.FC<EditClientModalProps> = ({
       description="Update client contact information and address records to keep your directory accurate."
       accentGradient={accent.gradient}
       accentColor={accent.color}
-      meta={meta as any}
+      meta={meta as unknown}
       aside={asideContent}
       footer={footer}
       maxWidthClass="max-w-4xl"
@@ -515,7 +515,7 @@ export const EditClientModal: React.FC<EditClientModalProps> = ({
                 <option value="">
                   {isCountriesFetching ? "Loading countries..." : "Select a country"}
                 </option>
-                {countries?.map((countryOption: any) => (
+                {countries?.map((countryOption: unknown) => (
                   <option key={countryOption.id} value={countryOption.name}>
                     {countryOption.name}
                   </option>

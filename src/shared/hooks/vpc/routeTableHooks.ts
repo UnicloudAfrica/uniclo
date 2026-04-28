@@ -47,7 +47,7 @@ export const useCreateRoute = () => {
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
   return useMutation<
-    any,
+    unknown,
     Error,
     {
       projectId: string;
@@ -139,7 +139,7 @@ export const useAssociateRouteTable = () => {
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
   return useMutation<
-    any,
+    unknown,
     Error,
     { projectId: string; region?: string; routeTableId: string; subnetId: string }
   >({

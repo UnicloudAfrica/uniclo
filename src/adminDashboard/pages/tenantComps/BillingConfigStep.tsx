@@ -35,13 +35,13 @@ const BILLING_MODELS = [
 ];
 
 interface BillingConfigStepProps {
-  formData: any;
-  setFormData: (data: any) => void;
-  errors: any;
+  formData: unknown;
+  setFormData: (data: unknown) => void;
+  errors: unknown;
 }
 
 const BillingConfigStep: React.FC<BillingConfigStepProps> & {
-  validate: (data: any) => any;
+  validate: (data: unknown) => Record<string, string>;
 } = ({ formData, setFormData, errors }) => {
   const billingConfig = formData.billing || {
     billing_model: "direct",
@@ -53,7 +53,7 @@ const BillingConfigStep: React.FC<BillingConfigStepProps> & {
     allow_client_gateway: false,
   };
 
-  const updateBilling = (updates: any) => {
+  const updateBilling = (updates: Record<string, unknown>) => {
     setFormData({
       ...formData,
       billing: { ...billingConfig, ...updates },
@@ -80,7 +80,7 @@ const BillingConfigStep: React.FC<BillingConfigStepProps> & {
           Select which billing models this partner can use. They can choose from these options.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {BILLING_MODELS.map(({ value, label, description, icon: Icon }: any) => {
+          {BILLING_MODELS.map(({ value, label, description, icon: Icon }: { value: string; label: string; description?: string; icon: React.ComponentType<{ size?: number }> }) => {
             const isSelected = billingConfig.allowed_billing_models?.includes(value);
             return (
               <button
@@ -126,9 +126,9 @@ const BillingConfigStep: React.FC<BillingConfigStepProps> & {
           onChange={(e) => updateBilling({ billing_model: e.target.value })}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
-          {BILLING_MODELS.filter((m: any) =>
+          {BILLING_MODELS.filter((m: unknown) =>
             billingConfig.allowed_billing_models?.includes(m.value)
-          ).map(({ value, label }: any) => (
+          ).map(({ value, label }: { value: string; label: string }) => (
             <option key={value} value={value}>
               {label}
             </option>
@@ -216,8 +216,8 @@ const BillingConfigStep: React.FC<BillingConfigStepProps> & {
   );
 };
 
-BillingConfigStep.validate = (formData: any) => {
-  const errors: any = {};
+BillingConfigStep.validate = (formData: unknown) => {
+  const errors: Record<string, string> = src/adminDashboard/pages/tenantComps/BillingConfigStep.tsx;
   const billing = formData.billing || {};
 
   if (!billing.allowed_billing_models || billing.allowed_billing_models.length === 0) {

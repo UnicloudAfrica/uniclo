@@ -59,7 +59,7 @@ export const ensureBrandingThemeDefaults = (value: unknown): BrandingThemePayloa
 
 interface BrandingThemeFormProps {
   value: Record<string, unknown> | null | undefined;
-  onChange: Dispatch<SetStateAction<Record<string, unknown>>>;
+  onChange: Dispatch<SetStateAction<unknown>>;
 }
 
 const BrandingThemeForm = ({ value, onChange }: BrandingThemeFormProps) => {

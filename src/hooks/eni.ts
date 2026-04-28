@@ -1,16 +1,43 @@
-// src/hooks/eni.js (tenant dashboard)
+// src/hooks/eni.ts (tenant dashboard)
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { UseQueryOptions } from "@tanstack/react-query";
 import silentApi from "../index/silent";
 import api from "../index/api";
 import logger from "../utils/logger";
 
-const fetchNetworkInterfaces = async ({ project_id, region }: any) => {
+type ApiEnvelope<T = unknown> = { data?: T };
+
+interface NetworkInterfaceQueryParams {
+  project_id?: string | number | null;
+  region?: string | null;
+}
+
+interface NetworkInterfacePayload {
+  [key: string]: unknown;
+}
+
+interface DeleteNetworkInterfaceArgs {
+  id: string | number;
+  payload?: NetworkInterfacePayload;
+}
+
+interface SecurityGroupActionParams {
+  network_interface_id?: string | number;
+  id?: string | number;
+  securityGroupData?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+const fetchNetworkInterfaces = async ({
+  project_id,
+  region,
+}: NetworkInterfaceQueryParams): Promise<unknown> => {
   const params = new URLSearchParams();
-  if (project_id) params.append("project_id", project_id);
+  if (project_id !== undefined && project_id !== null) params.append("project_id", String(project_id));
   if (region) params.append("region", region);
 
   const queryString = params.toString();
-  const res = await silentApi(
+  const res = await silentApi<ApiEnvelope>(
     "GET",
     `/business/network-interfaces${queryString ? `?${queryString}` : ""}`
   );
@@ -18,48 +45,66 @@ const fetchNetworkInterfaces = async ({ project_id, region }: any) => {
   return res.data;
 };
 
-const createNetworkInterface = async (payload: any) => {
-  const res = await api("POST", "/business/network-interfaces", payload);
+const createNetworkInterface = async (payload: NetworkInterfacePayload): Promise<unknown> => {
+  const res = await api<ApiEnvelope>("POST", "/business/network-interfaces", payload);
   if (!res.data) throw new Error("Failed to create network interface");
   return res.data;
 };
 
-const deleteNetworkInterface = async ({ id, payload }: any) => {
-  const res = await api("DELETE", `/business/network-interfaces/${id}`, payload);
+const deleteNetworkInterface = async ({
+  id,
+  payload,
+}: DeleteNetworkInterfaceArgs): Promise<unknown> => {
+  const res = await api<ApiEnvelope>(
+    "DELETE",
+    `/business/network-interfaces/${id}`,
+    payload ?? null
+  );
   if (!res.data) throw new Error("Failed to delete network interface");
   return res.data;
 };
 
-const attachSecurityGroup = async (params: any) => {
+const attachSecurityGroup = async (params: SecurityGroupActionParams): Promise<unknown> => {
   // Backward compatibility: support old signature ({ id, securityGroupData })
-  let payload = params;
+  let payload: Record<string, unknown> = params;
   if (params && typeof params === "object" && "id" in params && "securityGroupData" in params) {
     payload = { network_interface_id: params.id, ...(params.securityGroupData || {}) };
   }
-  const res = await api("POST", "/business/network-interface-security-groups", payload);
+  const res = await api<ApiEnvelope>(
+    "POST",
+    "/business/network-interface-security-groups",
+    payload
+  );
   if (!res.data) throw new Error(`Failed to attach security group to network interface`);
   return res.data;
 };
 
-const detachSecurityGroup = async (params: any) => {
+const detachSecurityGroup = async (params: SecurityGroupActionParams): Promise<unknown> => {
   // Backward compatibility: support old signature ({ id, securityGroupData })
-  let payload = params;
+  let payload: Record<string, unknown> = params;
   if (params && typeof params === "object" && "id" in params && "securityGroupData" in params) {
     payload = { network_interface_id: params.id, ...(params.securityGroupData || {}) };
   }
-  const res = await api("DELETE", "/business/network-interface-security-groups", payload);
+  const res = await api<ApiEnvelope>(
+    "DELETE",
+    "/business/network-interface-security-groups",
+    payload
+  );
   if (!res.data) throw new Error(`Failed to detach security group from network interface`);
   return res.data;
 };
 
-const syncNetworkInterfaces = async ({ project_id, region }: any) => {
+const syncNetworkInterfaces = async ({
+  project_id,
+  region,
+}: NetworkInterfaceQueryParams): Promise<unknown> => {
   const params = new URLSearchParams();
-  if (project_id) params.append("project_id", project_id);
+  if (project_id !== undefined && project_id !== null) params.append("project_id", String(project_id));
   if (region) params.append("region", region);
   params.append("refresh", "1");
 
   const queryString = params.toString();
-  const res = await silentApi(
+  const res = await silentApi<ApiEnvelope>(
     "GET",
     `/business/network-interfaces${queryString ? `?${queryString}` : ""}`
   );
@@ -67,7 +112,16 @@ const syncNetworkInterfaces = async ({ project_id, region }: any) => {
   return res.data;
 };
 
-export const useFetchTenantNetworkInterfaces = (projectId: any, region: any, options = {}) => {
+type FetchOptions = Omit<
+  UseQueryOptions<unknown, Error, unknown, readonly unknown[]>,
+  "queryKey" | "queryFn"
+>;
+
+export const useFetchTenantNetworkInterfaces = (
+  projectId: string | number | null | undefined,
+  region: string | null | undefined,
+  options: FetchOptions = {}
+) => {
   return useQuery({
     queryKey: ["networkInterfaces", { projectId, region }],
     queryFn: () => fetchNetworkInterfaces({ project_id: projectId, region }),

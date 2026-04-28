@@ -19,12 +19,16 @@ import {
 
 // ── Re-export CRUD hooks with tenant-prefixed names ───────────
 /** @deprecated Use useFetchProjects from shared/hooks/resources/projectHooks */
-export const useFetchTenantProjects = (params: any = {}, options: any = {}) =>
-  _useFetchProjects({ extra: params }, options);
+export const useFetchTenantProjects = (
+  params: Record<string, string | number | boolean> = {},
+  options: Parameters<typeof _useFetchProjects>[1] = {}
+) => _useFetchProjects({ extra: params }, options);
 
 /** @deprecated Use useFetchProjectById from shared/hooks/resources/projectHooks */
-export const useFetchTenantProjectById = (id: string, options: any = {}) =>
-  _useFetchProjectById(id, options);
+export const useFetchTenantProjectById = (
+  id: string,
+  options: Parameters<typeof _useFetchProjectById>[1] = {}
+) => _useFetchProjectById(id, options);
 
 /** @deprecated Use useProjectStatus from shared/hooks/resources/projectHooks */
 export const useTenantProjectStatus = useProjectStatus;
@@ -40,8 +44,10 @@ export const useDeleteTenantProject = () => {
   const mutation = _useDeleteProject();
   return {
     ...mutation,
-    mutate: (id: any, options?: any) => mutation.mutate({ id }, options),
-    mutateAsync: (id: any, options?: any) => mutation.mutateAsync({ id }, options),
+    mutate: (id: string | number, options?: Parameters<typeof mutation.mutate>[1]) =>
+      mutation.mutate({ id }, options),
+    mutateAsync: (id: string | number, options?: Parameters<typeof mutation.mutateAsync>[1]) =>
+      mutation.mutateAsync({ id }, options),
   };
 };
 

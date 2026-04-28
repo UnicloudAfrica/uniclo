@@ -29,12 +29,11 @@ import {
   useDrTimeline,
   useBidirectionalStatus,
   useReplicationPairs,
-  type DrDashboardData,
   type DrTimelineEvent,
 } from "../../hooks/resources/integrationHooks";
 import { useFetchExternalEndpoints } from "../../hooks/resources/externalEndpointHooks";
 import { designTokens } from "@/styles/designTokens";
-import { QuorumState, QUORUM_STATE_LABELS, QUORUM_STATE_COLORS, ReplicationMode } from "@/types/bidirectional";
+import { QuorumState, QUORUM_STATE_LABELS, ReplicationMode } from "@/types/bidirectional";
 
 interface ExternalEndpointItem {
   id: string;

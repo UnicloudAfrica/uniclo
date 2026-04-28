@@ -98,7 +98,7 @@ export default function DashboardSignUpV2() {
   const { mutate: verifyBusiness, isPending: isVerifying } = useVerifyBusiness();
   const { data: countries = [], isFetching: isCountriesFetching } = useSharedFetchCountries();
   const countriesList = useMemo<Country[]>(
-    () => (Array.isArray(countries) ? (countries as any as Country[]) : []),
+    () => (Array.isArray(countries) ? (countries as unknown as Country[]) : []),
     [countries]
   );
   const hostname = globalThis.window !== undefined ? globalThis.window.location.hostname : "";

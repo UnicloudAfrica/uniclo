@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Calculator, Plus, Trash2, ChevronDown, ChevronUp, Zap, AlertTriangle, CheckCircle, ArrowUpCircle } from "lucide-react";
+import { Calculator, Plus, Trash2, ChevronDown, ChevronUp, Zap, CheckCircle, ArrowUpCircle } from "lucide-react";
 import { designTokens } from "@/styles/designTokens";
 import {
   useFetchAcfServices,
@@ -16,7 +16,7 @@ interface MigrationCalculatorProps {
   context: "admin" | "tenant" | "client";
 }
 
-const MigrationCalculator = ({ context }: MigrationCalculatorProps) => {
+const MigrationCalculator = ({ _context }: MigrationCalculatorProps) => {
   const { data: services, isLoading: servicesLoading } = useFetchAcfServices();
   const { data: quotas } = useFetchAcfQuotas();
   const calculateMutation = useCalculateMigration();
@@ -42,7 +42,7 @@ const MigrationCalculator = ({ context }: MigrationCalculatorProps) => {
 
   const updateItem = (idx: number, field: string, value: number) => {
     const updated = [...items];
-    (updated[idx] as Record<string, unknown>)[field] = value;
+    (updated[idx] as unknown as Record<string, unknown>)[field] = value;
     setItems(updated);
     setResult(null);
   };
@@ -53,12 +53,12 @@ const MigrationCalculator = ({ context }: MigrationCalculatorProps) => {
   };
 
   const handleCalculate = () => {
-    const enabledItems = items.filter((i) => i.enabled).map(({ enabled, ...rest }) => rest);
+    const enabledItems = items.filter((i) => i.enabled).map(({ _enabled, ...rest }) => rest);
     if (enabledItems.length === 0) return;
     calculateMutation.mutate({ items: enabledItems }, { onSuccess: (data) => setResult(data) });
   };
 
-  const getServiceName = (type: string) => serviceList.find((s) => s.service_type === type)?.name ?? type;
+  const _getServiceName = (type: string) => serviceList.find((s) => s.service_type === type)?.name ?? type;
   const getService = (type: string) => serviceList.find((s) => s.service_type === type);
 
   if (servicesLoading) return <div className="flex justify-center p-12 text-gray-400">Loading services...</div>;
@@ -171,7 +171,7 @@ const MigrationCalculator = ({ context }: MigrationCalculatorProps) => {
                 <div key={serviceType} className="rounded-lg border p-3" style={{ borderColor: isFull ? designTokens.colors.error[200] : designTokens.colors.neutral[200], backgroundColor: isFull ? designTokens.colors.error[50] : "#fff" }}>
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-medium capitalize" style={{ color: designTokens.colors.neutral[700] }}>{serviceType.replace(/_/g, " ")}</p>
-                    {quota.fast_tracked && <Zap className="h-3 w-3" style={{ color: designTokens.colors.warning[500] }} title="Fast tracked" />}
+                    {quota.fast_tracked && <Zap className="h-3 w-3" style={{ color: designTokens.colors.warning[500] }} aria-label="Fast tracked" />}
                   </div>
                   <p className="mt-1 text-lg font-bold" style={{ color: isFull ? designTokens.colors.error[600] : designTokens.colors.neutral[900] }}>
                     {isUnlimited ? "Unlimited" : `${quota.used} / ${quota.limit}`}

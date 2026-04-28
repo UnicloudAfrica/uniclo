@@ -1,6 +1,7 @@
 import { Wallet, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { designTokens } from "@/styles/designTokens";
 import { formatCurrencyValue } from "@/utils/instanceCreationUtils";
+import { PriceLabel } from "@/shared/components/ui/PriceLabel";
 
 interface WalletPaymentSectionProps {
   walletBalance: number | null;
@@ -108,7 +109,16 @@ const WalletPaymentSection = ({
                     : designTokens.colors.warning[700],
                 }}
               >
-                {currency} {formatCurrencyValue(walletBalance ?? 0)}
+                <PriceLabel
+                  amount={walletBalance ?? 0}
+                  sourceCurrency={currency}
+                  envelope={{
+                    amount_display: walletBalance ?? 0,
+                    currency_display: currency,
+                    formatted_display: `${currency} ${formatCurrencyValue(walletBalance ?? 0)}`,
+                    fx_source: "identity",
+                  }}
+                />
               </p>
             )}
           </div>
@@ -165,7 +175,16 @@ const WalletPaymentSection = ({
           className="text-base font-bold"
           style={{ color: designTokens.colors.neutral[900] }}
         >
-          {currency} {formatCurrencyValue(payableAmount)}
+          <PriceLabel
+            amount={payableAmount}
+            sourceCurrency={currency}
+            envelope={{
+              amount_display: payableAmount,
+              currency_display: currency,
+              formatted_display: `${currency} ${formatCurrencyValue(payableAmount)}`,
+              fx_source: "identity",
+            }}
+          />
         </span>
       </div>
 
@@ -177,7 +196,16 @@ const WalletPaymentSection = ({
         >
           <span>Balance after payment:</span>
           <span className="font-medium">
-            {currency} {formatCurrencyValue(walletBalance - payableAmount)}
+            <PriceLabel
+              amount={walletBalance - payableAmount}
+              sourceCurrency={currency}
+              envelope={{
+                amount_display: walletBalance - payableAmount,
+                currency_display: currency,
+                formatted_display: `${currency} ${formatCurrencyValue(walletBalance - payableAmount)}`,
+                fx_source: "identity",
+              }}
+            />
           </span>
         </div>
       )}
@@ -198,7 +226,16 @@ const WalletPaymentSection = ({
           <p className="text-xs" style={{ color: designTokens.colors.error[700] }}>
             You need{" "}
             <span className="font-bold">
-              {currency} {formatCurrencyValue(shortfall)}
+              <PriceLabel
+                amount={shortfall}
+                sourceCurrency={currency}
+                envelope={{
+                  amount_display: shortfall,
+                  currency_display: currency,
+                  formatted_display: `${currency} ${formatCurrencyValue(shortfall)}`,
+                  fx_source: "identity",
+                }}
+              />
             </span>{" "}
             more in your wallet. Please top up your wallet before proceeding.
           </p>
@@ -225,7 +262,18 @@ const WalletPaymentSection = ({
         ) : (
           <>
             <Wallet className="h-4 w-4" />
-            Pay {currency} {formatCurrencyValue(payableAmount)} from Wallet
+            Pay{" "}
+            <PriceLabel
+              amount={payableAmount}
+              sourceCurrency={currency}
+              envelope={{
+                amount_display: payableAmount,
+                currency_display: currency,
+                formatted_display: `${currency} ${formatCurrencyValue(payableAmount)}`,
+                fx_source: "identity",
+              }}
+            />{" "}
+            from Wallet
           </>
         )}
       </button>

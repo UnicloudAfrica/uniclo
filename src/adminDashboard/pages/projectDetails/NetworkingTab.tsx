@@ -75,23 +75,36 @@ import {
 } from "@/hooks/adminHooks/networkHooks";
 import { useLoadBalancers, useDeleteLoadBalancer } from "@/hooks/adminHooks/loadBalancerHooks";
 import type { UseQueryResult } from "@tanstack/react-query";
+import type {
+  Vpc,
+  Subnet,
+  SecurityGroup,
+  RouteTable,
+  ElasticIp,
+  NatGateway,
+  InternetGateway,
+  NetworkAcl,
+  LoadBalancer,
+  VpcPeeringConnection,
+} from "@/shared/components/infrastructure/types";
+import type { NetworkInterface } from "@/shared/components/infrastructure/NetworkInterfacesTable";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AdaptedListHook = (
+type AdaptedListHook<T = unknown> = (
   projectId: string,
   region?: string,
-  options?: any
-) => UseQueryResult<any[], Error>;
+  options?: unknown
+) => UseQueryResult<T[], Error>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AdaptedListHook2Args = (
+type AdaptedListHook2Args<T = unknown> = (
   projectId: string,
   region: string,
-  options?: any
-) => UseQueryResult<any[], Error>;
+  options?: unknown
+) => UseQueryResult<T[], Error>;
 
 interface NetworkingTabProps {
-  project: any;
+  project: unknown;
   resourceCounts?: {
     vpcs?: number;
     subnets?: number;
@@ -390,7 +403,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <VpcsContainer
             {...commonProps}
             hooks={{
-              useList: useVpcsAdapter as AdaptedListHook,
+              useList: useVpcsAdapter as AdaptedListHook<Vpc>,
               useCreate: useCreateVpc,
               useDelete: useDeleteVpc,
             }}
@@ -401,10 +414,10 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <SubnetsContainer
             {...commonProps}
             hooks={{
-              useList: useSubnetsAdapter as AdaptedListHook,
+              useList: useSubnetsAdapter as AdaptedListHook<Subnet>,
               useCreate: useCreateSubnet,
               useDelete: useDeleteSubnet,
-              useVpcs: useVpcsAdapter as AdaptedListHook,
+              useVpcs: useVpcsAdapter as AdaptedListHook<Vpc>,
             }}
           />
         );
@@ -413,10 +426,10 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <SecurityGroupsContainer
             {...commonProps}
             hooks={{
-              useList: useSecurityGroupsAdapter as AdaptedListHook,
-              useCreate: useCreateSecurityGroup as any, // mutation payload shape mismatch (description optional vs required)
+              useList: useSecurityGroupsAdapter as AdaptedListHook<SecurityGroup>,
+              useCreate: useCreateSecurityGroup as unknown, // mutation payload shape mismatch (description optional vs required)
               useDelete: useDeleteSecurityGroup,
-              useVpcs: useVpcsAdapter as AdaptedListHook,
+              useVpcs: useVpcsAdapter as AdaptedListHook<Vpc>,
             }}
             onNavigateToRules={(sg) =>
               navigate(
@@ -430,10 +443,10 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <RouteTablesContainer
             {...commonProps}
             hooks={{
-              useList: useRouteTablesAdapter as AdaptedListHook,
-              useSubnets: useSubnetsAdapter as AdaptedListHook,
-              useInternetGateways: useInternetGatewaysAdapter as AdaptedListHook,
-              useNatGateways: useNatGatewaysAdapter as AdaptedListHook,
+              useList: useRouteTablesAdapter as AdaptedListHook<RouteTable>,
+              useSubnets: useSubnetsAdapter as AdaptedListHook<Subnet>,
+              useInternetGateways: useInternetGatewaysAdapter as AdaptedListHook<InternetGateway>,
+              useNatGateways: useNatGatewaysAdapter as AdaptedListHook<NatGateway>,
               useCreate: useCreateRoute,
               useDelete: useDeleteRoute,
               useAssociate: useAssociateRouteTable,
@@ -446,10 +459,10 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <ElasticIpsContainer
             {...commonProps}
             hooks={{
-              useList: useElasticIpsAdapter as AdaptedListHook,
-              useCreate: useCreateElasticIp as any,
+              useList: useElasticIpsAdapter as AdaptedListHook<ElasticIp>,
+              useCreate: useCreateElasticIp as unknown,
               useDelete: useDeleteElasticIp,
-              useAssociate: useAssociateElasticIp as any,
+              useAssociate: useAssociateElasticIp as unknown,
               useDisassociate: useDisassociateElasticIp,
             }}
           />
@@ -459,13 +472,13 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <NetworkInterfacesContainer
             {...commonProps}
             hooks={{
-              useList: useFetchNetworkInterfacesAdapter as AdaptedListHook2Args,
+              useList: useFetchNetworkInterfacesAdapter as AdaptedListHook2Args<NetworkInterface>,
               onSync: projectId
                 ? () =>
-                    syncNetworkInterfacesFromProvider({
-                      project_id: projectId,
-                      region,
-                    })
+                  syncNetworkInterfacesFromProvider({
+                    project_id: projectId,
+                    region,
+                  })
                 : undefined,
             }}
           />
@@ -475,8 +488,8 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <NatGatewaysContainer
             {...commonProps}
             hooks={{
-              useList: useNatGatewaysAdapter as AdaptedListHook,
-              useCreate: useCreateNatGateway as any,
+              useList: useNatGatewaysAdapter as AdaptedListHook<NatGateway>,
+              useCreate: useCreateNatGateway as unknown,
               useDelete: useDeleteNatGateway,
             }}
           />
@@ -486,12 +499,12 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <InternetGatewaysContainer
             {...commonProps}
             hooks={{
-              useList: useInternetGatewaysAdapter as AdaptedListHook,
-              useVpcs: useVpcsAdapter as AdaptedListHook,
-              useCreate: useCreateInternetGateway as any,
-              useDelete: useDeleteInternetGateway as any,
-              useAttach: useAttachInternetGateway as any,
-              useDetach: useDetachInternetGateway as any,
+              useList: useInternetGatewaysAdapter as AdaptedListHook<InternetGateway>,
+              useVpcs: useVpcsAdapter as AdaptedListHook<Vpc>,
+              useCreate: useCreateInternetGateway as unknown,
+              useDelete: useDeleteInternetGateway as unknown,
+              useAttach: useAttachInternetGateway as unknown,
+              useDetach: useDetachInternetGateway as unknown,
             }}
           />
         );
@@ -500,8 +513,8 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <NetworkAclsContainer
             {...commonProps}
             hooks={{
-              useList: useNetworkAclsAdapter as AdaptedListHook,
-              useVpcs: useVpcsAdapter as AdaptedListHook,
+              useList: useNetworkAclsAdapter as AdaptedListHook<NetworkAcl>,
+              useVpcs: useVpcsAdapter as AdaptedListHook<Vpc>,
               useCreate: useCreateNetworkAcl,
               useDelete: useDeleteNetworkAcl,
             }}
@@ -517,8 +530,19 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <VpcPeeringContainer
             {...commonProps}
             hooks={{
-              useList: useVpcPeeringAdapter as AdaptedListHook,
-              useVpcs: useVpcsAdapter as AdaptedListHook,
+              useList: useVpcPeeringAdapter as unknown as (
+                projectId: string,
+                region?: string
+              ) => {
+                data: VpcPeeringConnection[];
+                isLoading: boolean;
+                isFetching?: boolean;
+                refetch: () => void;
+              },
+              useVpcs: useVpcsAdapter as unknown as (
+                projectId: string,
+                region?: string
+              ) => { data: Vpc[] },
               useCreate: useCreateVpcPeering,
               useAccept: useAcceptVpcPeering,
               useReject: useRejectVpcPeering,
@@ -531,7 +555,15 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
           <LoadBalancersContainer
             {...commonProps}
             hooks={{
-              useList: useLoadBalancersAdapter as AdaptedListHook,
+              useList: useLoadBalancersAdapter as unknown as (
+                projectId: string,
+                region?: string
+              ) => {
+                data: LoadBalancer[];
+                isLoading: boolean;
+                isFetching?: boolean;
+                refetch: () => void;
+              },
               useDelete: useDeleteLoadBalancer,
             }}
           />

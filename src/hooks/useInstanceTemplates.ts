@@ -82,7 +82,7 @@ export interface InstanceTemplate {
     monthly_total_usd?: number;
     yearly_total_usd?: number;
     currency?: string;
-    breakdown?: Record<string, any>;
+    breakdown?: Record<string, unknown>;
   };
   is_public: boolean;
   created_at: string;
@@ -157,8 +157,9 @@ export const useInstanceTemplates = () => {
       queryClient.invalidateQueries({ queryKey });
     },
     onError: (err: unknown) => {
-      const error = err as any;
-      const msg = error.response?.data?.message || error.message || "Failed to create template.";
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      const msg =
+        error.response?.data?.message || error.message || "Operation failed.";
       ToastUtils.error(msg);
     },
   });
@@ -189,8 +190,9 @@ export const useInstanceTemplates = () => {
       queryClient.invalidateQueries({ queryKey });
     },
     onError: (err: unknown) => {
-      const error = err as any;
-      const msg = error.response?.data?.message || error.message || "Failed to update template.";
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      const msg =
+        error.response?.data?.message || error.message || "Failed to update template.";
       ToastUtils.error(msg);
     },
   });

@@ -2,8 +2,17 @@ import { useState } from "react";
 import DetailedModules from "./detailsModules";
 import { ModernTable } from "@/shared/components";
 
+interface ModuleRow {
+  id: number;
+  module: string;
+  status: string;
+  plan: string;
+  startDate: string;
+  endDate: string;
+}
+
 const ClientModules = () => {
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [selectedItem, setSelectedItem] = useState<ModuleRow | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const data = [
@@ -41,7 +50,7 @@ const ClientModules = () => {
     },
   ];
 
-  const handleRowClick = (item: any) => {
+  const handleRowClick = (item: ModuleRow) => {
     setSelectedItem(item);
     setIsModalOpen(true);
   };
@@ -55,12 +64,12 @@ const ClientModules = () => {
     {
       key: "module",
       header: "MODULE",
-      render: (val: any) => <span className="text-[var(--theme-text-color)]">{val}</span>,
+      render: (val: string) => <span className="text-[var(--theme-text-color)]">{val}</span>,
     },
     {
       key: "status",
       header: "STATUS",
-      render: (val: any) => {
+      render: (val: string) => {
         const isActive = val === "Active";
         return (
           <span
@@ -78,17 +87,17 @@ const ClientModules = () => {
     {
       key: "plan",
       header: "PLAN",
-      render: (val: any) => <span className="text-[var(--theme-text-color)]">{val}</span>,
+      render: (val: string) => <span className="text-[var(--theme-text-color)]">{val}</span>,
     },
     {
       key: "startDate",
       header: "START DATE",
-      render: (val: any) => <span className="text-[var(--theme-text-color)]">{val}</span>,
+      render: (val: string) => <span className="text-[var(--theme-text-color)]">{val}</span>,
     },
     {
       key: "endDate",
       header: "END DATE",
-      render: (val: any) => <span className="text-[var(--theme-text-color)]">{val}</span>,
+      render: (val: string) => <span className="text-[var(--theme-text-color)]">{val}</span>,
     },
   ];
 

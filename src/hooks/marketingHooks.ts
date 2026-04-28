@@ -4,7 +4,7 @@ import silentApi from "../index/silent";
 
 const fetchMarketingPartners = async (): Promise<unknown[]> => {
   const res = await silentApi("GET", "/marketing/partners");
-  return (res as Record<string, any>)?.data || [];
+  return (res as Record<string, unknown>)?.data || [];
 };
 
 type MarketingPartnersOptions = Partial<

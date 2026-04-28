@@ -92,7 +92,7 @@ export default function ProjectDnsTab({ projectId, region }: ProjectDnsTabProps)
   } = useDnsZones(projectId, region);
 
   // Detect DNS-not-configured state
-  const isDnsNotConfigured = zonesError && (zonesErrorObj as any)?.isDnsNotConfigured;
+  const isDnsNotConfigured = zonesError && (zonesErrorObj as unknown)?.isDnsNotConfigured;
 
   const {
     data: records = [],

@@ -12,6 +12,7 @@ interface VpcPeeringHooks {
   ) => {
     data: VpcPeeringConnection[];
     isLoading: boolean;
+    isFetching?: boolean;
     refetch: () => void;
   };
   useVpcs?: (projectId: string, region?: string) => { data: Vpc[] };
@@ -27,15 +28,24 @@ interface VpcPeeringHooks {
     isPending: boolean;
   };
   useAccept?: () => {
-    mutate: (input: { projectId: string; region?: string; peeringId: string }) => void;
+    mutate: (
+      input: { projectId: string; region?: string; peeringId: string },
+      options?: { onSuccess?: () => void; onError?: (e: Error) => void }
+    ) => void;
     isPending: boolean;
   };
   useReject?: () => {
-    mutate: (input: { projectId: string; region?: string; peeringId: string }) => void;
+    mutate: (
+      input: { projectId: string; region?: string; peeringId: string },
+      options?: { onSuccess?: () => void; onError?: (e: Error) => void }
+    ) => void;
     isPending: boolean;
   };
   useDelete?: () => {
-    mutate: (input: { projectId: string; region?: string; peeringId: string }) => void;
+    mutate: (
+      input: { projectId: string; region?: string; peeringId: string },
+      options?: { onSuccess?: () => void; onError?: (e: Error) => void }
+    ) => void;
     isPending: boolean;
   };
 }
@@ -48,8 +58,9 @@ interface VpcPeeringContainerProps {
   wrapper: (props: {
     headerActions: React.ReactNode;
     children: React.ReactNode;
-  }) => React.ReactElement<any>;
+  }) => React.ReactElement;
 }
+
 
 const VpcPeeringContainer: React.FC<VpcPeeringContainerProps> = ({
   projectId,
@@ -75,10 +86,10 @@ const VpcPeeringContainer: React.FC<VpcPeeringContainerProps> = ({
   const [peerVpcId, setPeerVpcId] = useState("");
   const [peeringName, setPeeringName] = useState("");
 
-  const [rejectConfirm, setRejectConfirm] = useState<{ open: boolean; data?: any }>({
+  const [rejectConfirm, setRejectConfirm] = useState<{ open: boolean; data?: VpcPeeringConnection }>({
     open: false,
   });
-  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; data?: any }>({
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; data?: VpcPeeringConnection }>({
     open: false,
   });
 
@@ -102,11 +113,11 @@ const VpcPeeringContainer: React.FC<VpcPeeringContainerProps> = ({
     );
   };
 
-  const handleAccept = (pc: any) => {
+  const handleAccept = (pc: VpcPeeringConnection) => {
     acceptMutation?.mutate({ projectId, region, peeringId: pc.id }, { onSuccess: () => refetch() });
   };
 
-  const handleReject = (pc: any) => {
+  const handleReject = (pc: VpcPeeringConnection) => {
     if (!rejectMutation) return;
     setRejectConfirm({ open: true, data: pc });
   };
@@ -125,7 +136,7 @@ const VpcPeeringContainer: React.FC<VpcPeeringContainerProps> = ({
     setRejectConfirm({ open: false });
   };
 
-  const handleDelete = (pc: any) => {
+  const handleDelete = (pc: VpcPeeringConnection) => {
     if (!deleteMutation) return;
     setDeleteConfirm({ open: true, data: pc });
   };

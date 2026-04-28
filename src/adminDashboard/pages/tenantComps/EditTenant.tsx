@@ -13,7 +13,7 @@ import logger from "@/utils/logger";
 interface EditTenantModalProps {
   isOpen: boolean;
   onClose: () => void;
-  partnerDetails: any;
+  partnerDetails: unknown;
 }
 
 const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, partnerDetails }) => {
@@ -36,7 +36,7 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
     website: "",
   });
 
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<unknown>({});
 
   const { mutate: updateTenant, isPending } = useUpdateTenant();
   const { data: countries, isFetching: isCountriesFetching } = useFetchCountries();
@@ -78,7 +78,7 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
         (c: Record<string, unknown>) => String(c.id) === String(formData.country_id)
       );
       if (selectedCountry && selectedCountry.name !== formData.country) {
-        setFormData((prev) => ({ ...prev, country: selectedCountry.name }));
+        setFormData((prev) => ({ ...prev, country: String(selectedCountry.name ?? "") }));
       }
     }
   }, [formData.country_id, formData.country, countries]);
@@ -90,7 +90,7 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
         (s: Record<string, unknown>) => String(s.id) === String(formData.state_id)
       );
       if (selectedState && selectedState.name !== formData.state) {
-        setFormData((prev) => ({ ...prev, state: selectedState.name }));
+        setFormData((prev) => ({ ...prev, state: String(selectedState.name ?? "") }));
       }
     }
   }, [formData.state_id, formData.state, states]);
@@ -102,7 +102,7 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
         (c: Record<string, unknown>) => String(c.id) === String(formData.city_id)
       );
       if (selectedCity && selectedCity.name !== formData.city) {
-        setFormData((prev) => ({ ...prev, city: selectedCity.name }));
+        setFormData((prev) => ({ ...prev, city: String(selectedCity.name ?? "") }));
       }
     }
   }, [formData.city_id, formData.city, cities]);
@@ -112,7 +112,7 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
     setFormData((prev) => ({ ...prev, [name]: value }));
     // Clear error when user types
     if (errors[name]) {
-      setErrors((prev: any) => ({ ...prev, [name]: null }));
+      setErrors((prev: unknown) => ({ ...prev, [name]: null }));
     }
 
     // Reset dependent fields
@@ -136,7 +136,7 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
   };
 
   const validateForm = () => {
-    const newErrors: any = {};
+    const newErrors: Record<string, string> = {};
     if (!formData.name.trim()) newErrors.name = "Partner Name is required";
     if (!formData.email.trim()) newErrors.email = "Email is required";
     if (!formData.phone.trim()) newErrors.phone = "Phone is required";
@@ -158,7 +158,7 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
           ToastUtils.success("Partner updated successfully");
           onClose();
         },
-        onError: (err: any) => {
+        onError: (err: unknown) => {
           logger.error("Failed to update partner:", err);
           ToastUtils.error(err.message || "Failed to update partner. Please try again.");
         },

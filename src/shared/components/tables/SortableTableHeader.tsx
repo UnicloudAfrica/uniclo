@@ -12,7 +12,7 @@ export interface ColumnConfig {
   sortable?: boolean;
   className?: string;
 
-  style?: React.CSSProperties | any;
+  style?: React.CSSProperties;
 }
 
 interface SortableTableHeaderProps {

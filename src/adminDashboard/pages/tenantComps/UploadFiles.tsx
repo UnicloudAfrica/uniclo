@@ -2,15 +2,15 @@ import React from "react";
 import { FileInput } from "@/utils/fileInput";
 
 interface UploadFilesProps {
-  formData: any;
-  setFormData: (data: any) => void;
-  errors: any;
-  setErrors?: (errors: any) => void;
+  formData: unknown;
+  setFormData: (data: unknown) => void;
+  errors: unknown;
+  setErrors?: (errors: Record<string, string[]>) => void;
 }
 
 const UploadFiles: React.FC<UploadFilesProps> & {
-  validate: (data: any) => any;
-} = ({ formData, setFormData, errors }: any) => {
+  validate: (data: unknown) => Record<string, string>;
+} = ({ formData, setFormData, errors }: { formData: Record<string, unknown>; setFormData: (data: Record<string, unknown>) => void; errors?: Record<string, string> }) => {
   const documentFields = [
     {
       id: "registration_document",
@@ -39,7 +39,7 @@ const UploadFiles: React.FC<UploadFilesProps> & {
     },
   ];
 
-  const handleFileUpload = (field: string) => (e: any) => {
+  const handleFileUpload = (field: string) => (e: unknown) => {
     const file = e.target.files[0];
     setFormData({
       ...formData,
@@ -49,7 +49,7 @@ const UploadFiles: React.FC<UploadFilesProps> & {
 
   return (
     <div className="space-y-5 w-full font-Outfit">
-      {documentFields.map(({ id, label, field }: any) => (
+      {documentFields.map(({ id, label, field }: { id: string; label: string; field: string }) => (
         <div key={id}>
           <FileInput
             id={id}
@@ -67,8 +67,8 @@ const UploadFiles: React.FC<UploadFilesProps> & {
   );
 };
 
-UploadFiles.validate = (formData: any) => {
-  const newErrors: any = {};
+UploadFiles.validate = (formData: unknown) => {
+  const newErrors: Record<string, string> = {};
   const documentFields = [
     { field: "registration_document" },
     { field: "utility_bill_document" },

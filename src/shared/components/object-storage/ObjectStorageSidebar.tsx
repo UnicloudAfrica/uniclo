@@ -59,10 +59,10 @@ interface ObjectStorageSidebarProps {
   objectCount?: number;
   usedGb?: number;
   quotaGb?: number;
-  onCreateBucket?: any;
+  onCreateBucket?: unknown;
   bucketsLoading?: boolean;
   creatingBucket?: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 const ObjectStorageSidebar: React.FC<ObjectStorageSidebarProps> = ({
@@ -187,7 +187,7 @@ SECRET_ACCESS_KEY=${secretKey || ""}
     if (!account?.id || !accessKey?.id) return;
     setRevealingSecret(true);
     try {
-      const data = (await objectStorageApi.revealSecretKey(account.id, accessKey.id)) as any;
+      const data = (await objectStorageApi.revealSecretKey(account.id, accessKey.id)) as unknown;
       setRevealedSecret(data.secret_key);
       setSecretViewed(true);
     } catch (err) {

@@ -12,12 +12,12 @@ type CustomerUser = {
   company_name?: string;
   business_name?: string;
   tenant_id?: string | number | null;
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 type CustomerContextType = "unassigned" | "tenant" | "user";
 
-export const useCustomerContext = (options: any = {}) => {
+export const useCustomerContext = (options: Record<string, unknown> = src/hooks/adminHooks/useCustomerContext.ts) => {
   const { enabled = true } = options;
   const [contextType, setContextType] = useState<CustomerContextType>("unassigned");
   const [selectedTenantId, setSelectedTenantId] = useState("");

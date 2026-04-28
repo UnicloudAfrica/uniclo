@@ -5,7 +5,7 @@ const DetailedModules = ({
   isModalOpen,
   closeModal,
 }: {
-  selectedItem: Record<string, any>;
+  selectedItem: Record<string, unknown>;
   isModalOpen: boolean;
   closeModal: () => void;
 }) => {

@@ -1,3 +1,4 @@
+import { lazy, Suspense, type JSX } from "react";
 import { Route, Outlet } from "react-router-dom";
 import ObjectStorageProvider from "../contexts/ObjectStorageContext";
 import ClientDashboardLayout from "../clientDashboard/components/ClientDashboardLayout";
@@ -19,6 +20,8 @@ import ClientObjectStorageCreate from "../clientDashboard/pages/ObjectStorageCre
 import ClientObjectStorageDetail from "../clientDashboard/pages/ClientObjectStorageDetail";
 import ClientDeveloperPortal from "../clientDashboard/pages/ClientDeveloperPortal";
 import ClientPricingCalculator from "../clientDashboard/pages/ClientPricingCalculator";
+import ClientDomainPurchase from "../clientDashboard/pages/ClientDomainPurchase";
+import ClientLogViewer from "../clientDashboard/pages/ClientLogViewer";
 import ClientPaymentHistory from "../clientDashboard/pages/ClientTransaction";
 import ClientSettings from "../clientDashboard/pages/ClientAccountSettings";
 import ClientSupport from "../clientDashboard/pages/ClientSupport";
@@ -54,23 +57,27 @@ import ClientBatchMigrationDetail from "../clientDashboard/pages/ClientBatchMigr
 import ClientDrDrills from "../clientDashboard/pages/ClientDrDrills";
 import ClientHypervisor from "../clientDashboard/pages/ClientHypervisor";
 import ClientRansomware from "../clientDashboard/pages/ClientRansomware";
-import ClientShieldDomains from "../clientDashboard/pages/ClientShieldDomains";
-import ClientShieldDomainDetail from "../clientDashboard/pages/ClientShieldDomainDetail";
-import ClientShieldOverview from "../clientDashboard/pages/ClientShieldOverview";
-import ClientShieldAttackMap from "../clientDashboard/pages/ClientShieldAttackMap";
 import ClientFlow from "../clientDashboard/pages/ClientFlow";
-import ClientShieldFirewall from "../clientDashboard/pages/ClientShieldFirewall";
-import ClientShieldAttacks from "../clientDashboard/pages/ClientShieldAttacks";
-import ClientShieldAnalytics from "../clientDashboard/pages/ClientShieldAnalytics";
-import ClientShieldSsl from "../clientDashboard/pages/ClientShieldSsl";
+import ClientFlowBilling from "../clientDashboard/pages/ClientFlowBilling";
+const ClientShieldDomains = lazy(() => import("../clientDashboard/pages/ClientShieldDomains"));
+const ClientShieldDomainDetail = lazy(() => import("../clientDashboard/pages/ClientShieldDomainDetail"));
+const ClientShieldOverview = lazy(() => import("../clientDashboard/pages/ClientShieldOverview"));
+const ClientShieldAttackMap = lazy(() => import("../clientDashboard/pages/ClientShieldAttackMap"));
+const ClientShieldFirewall = lazy(() => import("../clientDashboard/pages/ClientShieldFirewall"));
+const ClientShieldAttacks = lazy(() => import("../clientDashboard/pages/ClientShieldAttacks"));
+const ClientShieldAnalytics = lazy(() => import("../clientDashboard/pages/ClientShieldAnalytics"));
+const ClientShieldSsl = lazy(() => import("../clientDashboard/pages/ClientShieldSsl"));
 import ClientCloudAccounts from "../clientDashboard/pages/ClientCloudAccounts";
 import ClientCloudAccountCreate from "../clientDashboard/pages/ClientCloudAccountCreate";
 import ClientCloudAccountDetail from "../clientDashboard/pages/ClientCloudAccountDetail";
 
+// Path C — client-facing AnyCloudFlow bucket subsystem (read-only).
+import ClientBucketEndpointsPage from "../clientDashboard/pages/integrations/anycloudflow/buckets/ClientBucketEndpointsPage";
+import ClientBucketMigrationsPage from "../clientDashboard/pages/integrations/anycloudflow/buckets/ClientBucketMigrationsPage";
+import ClientBucketReplicationsPage from "../clientDashboard/pages/integrations/anycloudflow/buckets/ClientBucketReplicationsPage";
+
 import ClientDocsLayout from "../clientDashboard/pages/docs/ClientDocsLayout";
 import ClientDocPage from "../clientDashboard/pages/docs/ClientDocPage";
-
-import type { JSX } from "react";
 
 const ObjectStorageRouteProvider = (): JSX.Element => (
   <ObjectStorageProvider>
@@ -120,14 +127,14 @@ const ClientRoutes = (): JSX.Element => (
     <Route path="/client-dashboard/batch-migrations/new" element={<ClientBatchMigrationWizard />} />
     <Route path="/client-dashboard/batch-migrations/:identifier" element={<ClientBatchMigrationDetail />} />
 
-    <Route path="/client-dashboard/shield/domains" element={<ClientShieldDomains />} />
-    <Route path="/client-dashboard/shield/domains/:domainId" element={<ClientShieldDomainDetail />} />
-    <Route path="/client-dashboard/shield/overview" element={<ClientShieldOverview />} />
-    <Route path="/client-dashboard/shield/attack-map" element={<ClientShieldAttackMap />} />
-    <Route path="/client-dashboard/shield/firewall" element={<ClientShieldFirewall />} />
-    <Route path="/client-dashboard/shield/attacks" element={<ClientShieldAttacks />} />
-    <Route path="/client-dashboard/shield/analytics" element={<ClientShieldAnalytics />} />
-    <Route path="/client-dashboard/shield/ssl" element={<ClientShieldSsl />} />
+    <Route path="/client-dashboard/shield/domains" element={<Suspense fallback={null}><ClientShieldDomains /></Suspense>} />
+    <Route path="/client-dashboard/shield/domains/:domainId" element={<Suspense fallback={null}><ClientShieldDomainDetail /></Suspense>} />
+    <Route path="/client-dashboard/shield/overview" element={<Suspense fallback={null}><ClientShieldOverview /></Suspense>} />
+    <Route path="/client-dashboard/shield/attack-map" element={<Suspense fallback={null}><ClientShieldAttackMap /></Suspense>} />
+    <Route path="/client-dashboard/shield/firewall" element={<Suspense fallback={null}><ClientShieldFirewall /></Suspense>} />
+    <Route path="/client-dashboard/shield/attacks" element={<Suspense fallback={null}><ClientShieldAttacks /></Suspense>} />
+    <Route path="/client-dashboard/shield/analytics" element={<Suspense fallback={null}><ClientShieldAnalytics /></Suspense>} />
+    <Route path="/client-dashboard/shield/ssl" element={<Suspense fallback={null}><ClientShieldSsl /></Suspense>} />
 
     <Route path="/client-dashboard/launch" element={<ClientLaunch />} />
     <Route element={<ObjectStorageRouteProvider />}>
@@ -171,13 +178,32 @@ const ClientRoutes = (): JSX.Element => (
     <Route path="/client-dashboard/infrastructure/images" element={<ClientImages />} />
     <Route path="/client-dashboard/infrastructure/autoscaling" element={<ClientAutoScaling />} />
 
+    {/* Path C — AnyCloudFlow Bucket (Object Storage) read-only client views */}
+    <Route
+      path="/client-dashboard/integrations/anycloudflow/buckets/endpoints"
+      element={<ClientBucketEndpointsPage />}
+    />
+    <Route
+      path="/client-dashboard/integrations/anycloudflow/buckets/migrations"
+      element={<ClientBucketMigrationsPage />}
+    />
+    <Route
+      path="/client-dashboard/integrations/anycloudflow/buckets/replications"
+      element={<ClientBucketReplicationsPage />}
+    />
+
     <Route path="/client-dashboard/pricing-calculator" element={<ClientPricingCalculator />} />
+    {/* GAP-034 — buy a domain */}
+    <Route path="/client-dashboard/domains" element={<ClientDomainPurchase />} />
+    {/* GAP-038 — central log viewer */}
+    <Route path="/client-dashboard/logs" element={<ClientLogViewer />} />
     <Route path="/client-dashboard/developer/*" element={<ClientDeveloperPortal />} />
     <Route path="/client-dashboard/orders-payments" element={<ClientPaymentHistory />} />
     <Route path="/client-dashboard/billing" element={<ClientBillingPage />} />
     <Route path="/client-dashboard/account-settings" element={<ClientSettings />} />
     <Route path="/client-dashboard/team" element={<ClientTeam />} />
     <Route path="/client-dashboard/flow" element={<ClientFlow />} />
+    <Route path="/client-dashboard/flow/billing" element={<ClientFlowBilling />} />
     <Route path="/client-dashboard/support" element={<ClientSupport />} />
     <Route path="/client-dashboard/support/:id" element={<ClientTicketDetail />} />
 

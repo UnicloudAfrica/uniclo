@@ -108,7 +108,7 @@ export default function AdminPaymentDetails() {
   const { mutate: downloadReceipt, isPending: isDownloadingReceipt } =
     useDownloadAdminTransactionReceipt();
 
-  const paymentData = data as Record<string, any>;
+  const paymentData = data as Record<string, unknown>;
   const transaction = paymentData?.transaction ?? {};
   const payment = paymentData?.payment ?? {};
   const lineItems = paymentData?.line_items ?? paymentData?.order?.items ?? [];
@@ -214,7 +214,7 @@ export default function AdminPaymentDetails() {
       {
         key: "description",
         header: "SERVICE",
-        render: (_: unknown, item: Record<string, any>) => (
+        render: (_: unknown, item: Record<string, unknown>) => (
           <div>
             <p className="font-semibold text-slate-900">{item.description || "Service charge"}</p>
             {item.itemable?.identifier && (
@@ -256,7 +256,7 @@ export default function AdminPaymentDetails() {
       },
     ];
 
-    const normalizedLineItems = lineItems.map((item: Record<string, any>, idx: number) => ({
+    const normalizedLineItems = lineItems.map((item: Record<string, unknown>, idx: number) => ({
       ...item,
       id: item.identifier || idx,
     }));
@@ -264,7 +264,7 @@ export default function AdminPaymentDetails() {
     return (
       <ModernTable
         data={normalizedLineItems}
-        columns={columns as any}
+        columns={columns as unknown}
         searchable={false}
         filterable={false}
         exportable={false}
@@ -282,7 +282,7 @@ export default function AdminPaymentDetails() {
       {
         key: "name",
         header: "INSTANCE",
-        render: (_: unknown, instance: Record<string, any>) => (
+        render: (_: unknown, instance: Record<string, unknown>) => (
           <div>
             <p className="font-semibold text-slate-900">{instance.name || instance.identifier}</p>
             <span className="text-xs text-slate-500">{instance.identifier}</span>
@@ -306,7 +306,7 @@ export default function AdminPaymentDetails() {
       },
     ];
 
-    const instanceData = paymentData.instances.map((i: Record<string, any>) => ({
+    const instanceData = paymentData.instances.map((i: Record<string, unknown>) => ({
       ...i,
       id: i.identifier || i.id,
     }));
@@ -326,7 +326,7 @@ export default function AdminPaymentDetails() {
         </div>
         <ModernTable
           data={instanceData}
-          columns={instanceColumns as any}
+          columns={instanceColumns as unknown}
           searchable={false}
           filterable={false}
           exportable={false}

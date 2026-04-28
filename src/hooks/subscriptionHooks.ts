@@ -79,8 +79,10 @@ export const useFetchSubscriptionPlan = (
   return useQuery<SubscriptionPlan>({
     queryKey: ["subscriptionPlan", id],
     queryFn: async () => {
-      const res = await silentApi<any>("GET", `/admin/v1/subscription-plans/${id}`);
-      return res.data || res;
+      const res = (await silentApi("GET", `/admin/v1/subscription-plans/${id}`)) as {
+        data?: SubscriptionPlan;
+      } & SubscriptionPlan;
+      return (res.data ?? res) as SubscriptionPlan;
     },
     enabled: !!id,
     ...options,
@@ -162,8 +164,10 @@ export const useFetchSubscription = (
   return useQuery<Subscription>({
     queryKey: ["subscription", id],
     queryFn: async () => {
-      const res = await silentApi<any>("GET", `/admin/v1/subscriptions/${id}`);
-      return res.data || res;
+      const res = (await silentApi("GET", `/admin/v1/subscriptions/${id}`)) as {
+        data?: Subscription;
+      } & Subscription;
+      return (res.data ?? res) as Subscription;
     },
     enabled: !!id,
     ...options,
@@ -175,8 +179,10 @@ export const useFetchSubscriptionStats = (options: Record<string, unknown> = {})
   return useQuery<Record<string, unknown>>({
     queryKey: ["subscriptionStats"],
     queryFn: async () => {
-      const res = await silentApi<any>("GET", "/admin/v1/subscriptions-statistics");
-      return res.data || res;
+      const res = (await silentApi("GET", "/admin/v1/subscriptions-statistics")) as {
+        data?: Record<string, unknown>;
+      } & Record<string, unknown>;
+      return (res.data ?? res) as Record<string, unknown>;
     },
     staleTime: 1000 * 60 * 1,
     ...options,
@@ -275,9 +281,11 @@ export const useRenewSubscription = () => {
 // LEGACY: Business subscription (existing)
 // ═══════════════════════════════════════════════════════════════════
 
-const fetchSubs = async () => {
-  const res = await silentApi<any>("GET", "/business/subscription");
-  return res.data || res;
+const fetchSubs = async (): Promise<Subscription> => {
+  const res = (await silentApi("GET", "/business/subscription")) as {
+    data?: Subscription;
+  } & Subscription;
+  return (res.data ?? res) as Subscription;
 };
 
 export const useFetchSubs = (options: Record<string, unknown> = {}) => {

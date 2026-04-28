@@ -60,10 +60,14 @@ const createEmptyForm = (): TemplateFormState => ({
   volumes: [{ id: genId(), volume_type_id: "", storage_size_gb: 50 }],
 });
 
-const normalizeId = (value: any) => (value !== undefined && value !== null ? String(value) : "");
+const normalizeId = (value: unknown) => (value !== undefined && value !== null ? String(value) : "");
 
-const resolveRegionCode = (region: any) =>
-  region?.code || region?.region || region?.slug || region?.id || region?.identifier || "";
+type ResourceRecord = Record<string, unknown>;
+
+const resolveRegionCode = (region: ResourceRecord | null | undefined) =>
+  (region?.code || region?.region || region?.slug || region?.id || region?.identifier || "") as
+    | string
+    | number;
 
 const buildTemplateForm = (
   template: InstanceTemplate,
@@ -105,12 +109,14 @@ const buildTemplateForm = (
       : [];
 
   const volumeEntries = rawVolumes.length
-    ? rawVolumes.map((volume: any, index: number) => ({
-        id: volume?.id || `vol_${index}_${genId()}`,
+    ? rawVolumes.map((volume: ResourceRecord, index: number) => ({
+        id: (volume?.id as string) || `vol_${index}_${genId()}`,
         volume_type_id: normalizeId(
           volume?.volume_type_id || volume?.id || volume?.identifier || ""
         ),
-        storage_size_gb: volume?.storage_size_gb ?? volume?.size_gb ?? volume?.size ?? 50,
+        storage_size_gb: (volume?.storage_size_gb ?? volume?.size_gb ?? volume?.size ?? 50) as
+          | number
+          | string,
       }))
     : [
         {
@@ -178,7 +184,7 @@ const TemplateManager: React.FC = () => {
 
   const regionProviderMap = useMemo(() => {
     const map = new Map<string, string>();
-    (resources.regions || []).forEach((region: any) => {
+    (resources.regions || []).forEach((region: ResourceRecord) => {
       const code = resolveRegionCode(region);
       if (code && region?.provider) {
         map.set(String(code), String(region.provider));
@@ -189,15 +195,16 @@ const TemplateManager: React.FC = () => {
 
   const regionOptions = useMemo(() => {
     return (resources.regions || [])
-      .map((region: any) => {
+      .map((region: ResourceRecord) => {
         const value = resolveRegionCode(region);
         if (!value) return null;
-        const label = region?.name || region?.display_name || region?.label || value;
+        const label = (region?.name || region?.display_name || region?.label || value) as string;
+        const name = region?.name as string | undefined;
         return {
           value: String(value),
           label:
-            region?.name && region?.name.toLowerCase() !== String(value).toLowerCase()
-              ? `${region.name} (${value})`
+            name && name.toLowerCase() !== String(value).toLowerCase()
+              ? `${name} (${value})`
               : String(label),
         };
       })
@@ -205,37 +212,37 @@ const TemplateManager: React.FC = () => {
   }, [resources.regions]);
 
   const computeOptions = useMemo(() => {
-    return (resources.instance_types || []).map((item: any) => {
-      const vcpu = item?.vcpus || item?.vcpu;
+    return (resources.instance_types || []).map((item: ResourceRecord) => {
+      const vcpu = (item?.vcpus || item?.vcpu) as number | undefined;
       const memoryGb = item?.memory_mb
         ? Math.round(Number(item.memory_mb) / 1024)
-        : item?.memory_gb;
+        : (item?.memory_gb as number | undefined);
       const meta: string[] = [];
       if (vcpu) meta.push(`${vcpu} vCPU`);
       if (memoryGb) meta.push(`${memoryGb} GB RAM`);
-      const label = meta.length ? `${item.name} • ${meta.join(" • ")}` : item.name;
+      const label = meta.length ? `${item.name} • ${meta.join(" • ")}` : (item.name as string);
       return { value: String(item.id), label: label || `Instance ${item.id}` };
     });
   }, [resources.instance_types]);
 
   const osImageOptions = useMemo(() => {
-    return (resources.os_images || []).map((item: any) => ({
+    return (resources.os_images || []).map((item: ResourceRecord) => ({
       value: String(item.id),
-      label: item.name || `OS Image ${item.id}`,
+      label: (item.name as string) || `OS Image ${item.id}`,
     }));
   }, [resources.os_images]);
 
   const volumeOptions = useMemo(() => {
-    return (resources.volume_types || []).map((item: any) => ({
+    return (resources.volume_types || []).map((item: ResourceRecord) => ({
       value: String(item.id),
-      label: item.name || `Volume ${item.id}`,
+      label: (item.name as string) || `Volume ${item.id}`,
     }));
   }, [resources.volume_types]);
 
   const bandwidthOptions = useMemo(() => {
-    return (resources.bandwidths || []).map((item: any) => ({
+    return (resources.bandwidths || []).map((item: ResourceRecord) => ({
       value: String(item.id || item.identifier),
-      label: item.name || item.label || `Bandwidth ${item.id}`,
+      label: (item.name as string) || (item.label as string) || `Bandwidth ${item.id}`,
     }));
   }, [resources.bandwidths]);
 
@@ -336,7 +343,7 @@ const TemplateManager: React.FC = () => {
       return null;
     }
 
-    const configuration: Record<string, any> = {
+    const configuration: Record<string, unknown> = {
       provider: formState.provider,
       region: formState.region,
       compute_instance_id: formState.compute_instance_id,
@@ -483,11 +490,11 @@ const TemplateManager: React.FC = () => {
                   },
                 ]}
                 metadata={[
-                  { label: "Region", value: config.region || "—" },
-                  { label: "Provider", value: config.provider || "—" },
-                  { label: "Compute", value: computeLabel },
-                  { label: "OS Image", value: osLabel },
-                  { label: "Storage", value: storageLabel },
+                  { label: "Region", value: String(config.region || "—") },
+                  { label: "Provider", value: String(config.provider || "—") },
+                  { label: "Compute", value: String(computeLabel) },
+                  { label: "OS Image", value: String(osLabel) },
+                  { label: "Storage", value: String(storageLabel) },
                   { label: "Monthly", value: monthly },
                   { label: "Yearly", value: yearly },
                 ]}

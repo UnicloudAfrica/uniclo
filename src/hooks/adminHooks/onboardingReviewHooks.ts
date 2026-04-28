@@ -267,7 +267,7 @@ export const useAdminUpdateOnboardingStatus = (
       });
 
       if (options.onSuccess) {
-        (options.onSuccess as any)(data, variables, context);
+        (options.onSuccess as unknown)(data, variables, context);
       }
     },
   });

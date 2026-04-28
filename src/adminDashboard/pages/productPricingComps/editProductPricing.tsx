@@ -3,9 +3,9 @@ import { X, Loader2 } from "lucide-react";
 import ToastUtils from "@/utils/toastUtil";
 import { useUpdateProductPricing } from "@/hooks/adminHooks/adminProductPricingHooks";
 
-const EditProductPricingModal = ({ isOpen, onClose, pricing }: any) => {
+const EditProductPricingModal = ({ isOpen, onClose, pricing }: { isOpen: boolean; onClose: () => void; pricing: unknown }) => {
   const [priceUsd, setPriceUsd] = useState("");
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, unknown>>({});
   const { mutate: updatePricing, isPending } = useUpdateProductPricing();
 
   useEffect(() => {
@@ -24,7 +24,7 @@ const EditProductPricingModal = ({ isOpen, onClose, pricing }: any) => {
   }
 
   const validate = () => {
-    const nextErrors: Record<string, any> = {};
+    const nextErrors: Record<string, unknown> = {};
     const numericPrice = Number(priceUsd);
     if (!priceUsd || Number.isNaN(numericPrice)) {
       nextErrors.price_usd = "Enter a valid price.";
@@ -35,7 +35,7 @@ const EditProductPricingModal = ({ isOpen, onClose, pricing }: any) => {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = (event: any) => {
+  const handleSubmit = (event: unknown) => {
     event.preventDefault();
     if (!validate()) return;
 

@@ -36,7 +36,7 @@ const fetchProjectEdgeConfigAdmin = async (
 // Admin: list available edge networks (optionally scoped by project)
 const normalizeCollection = <T>(payload: unknown): T[] => {
   if (!payload) return [];
-  const record = payload as Record<string, any>;
+  const record = payload as Record<string, unknown>;
   if (Array.isArray(payload)) return payload as T[];
   if (Array.isArray(record.items)) return record.items as T[];
   if (Array.isArray(record.edge_networks)) return record.edge_networks as T[];
@@ -185,7 +185,7 @@ export const useAssignProjectEdge = (
       }
 
       if (options.onSuccess) {
-        (options.onSuccess as any)(data, variables, context);
+        (options.onSuccess as unknown)(data, variables, context);
       }
     },
   });

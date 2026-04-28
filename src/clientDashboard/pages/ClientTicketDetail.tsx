@@ -31,7 +31,7 @@ const ClientTicketDetail: React.FC = () => {
   // Mutations
   const replyMutation = useMutation({
     mutationFn: (payload: { message: string; files?: File[] }) => {
-      let body: any;
+      let body: FormData | Record<string, unknown>;
       if (payload.files && payload.files.length > 0) {
         const formData = new FormData();
         formData.append("body", payload.message);

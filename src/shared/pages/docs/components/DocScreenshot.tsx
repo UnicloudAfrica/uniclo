@@ -24,12 +24,12 @@ const DocScreenshot: React.FC<DocScreenshotProps> = ({ caption, src, alt }) => {
       <div
         className="w-full rounded-lg border-2 border-dashed flex flex-col items-center justify-center py-12 px-6"
         style={{
-          borderColor: "var(--theme-color, #288DD1)",
-          backgroundColor: "color-mix(in srgb, var(--theme-color, #288DD1) 5%, transparent)",
+          borderColor: "var(--theme-color, #0A5E3E)",
+          backgroundColor: "color-mix(in srgb, var(--theme-color, #0A5E3E) 5%, transparent)",
         }}
       >
-        <Image size={40} style={{ color: "var(--theme-color, #288DD1)", opacity: 0.5 }} />
-        <p className="mt-3 text-sm font-medium" style={{ color: "var(--theme-color, #288DD1)" }}>
+        <Image size={40} style={{ color: "var(--theme-color, #0A5E3E)", opacity: 0.5 }} />
+        <p className="mt-3 text-sm font-medium" style={{ color: "var(--theme-color, #0A5E3E)" }}>
           {caption}
         </p>
         <p className="mt-1 text-xs" style={{ color: "var(--theme-muted-color, #6b7280)" }}>

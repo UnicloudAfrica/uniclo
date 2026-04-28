@@ -143,37 +143,39 @@ textarea {
 :root {
   color-scheme: light;
   --bar-bg: #121212;
-  --unicloud-blue: var(--theme-color, #288dd1);
-  --theme-color: #288dd1;
-  --theme-color-rgb: 40 141 209;
-  --secondary-color: #3fe0c8;
-  --secondary-color-rgb: 63 224 200;
+  /* UniCloud Africa brand: deep emerald green primary, light mint accent. */
+  --unicloud-blue: var(--theme-color, #0a5e3e);
+  --unicloud-green: var(--theme-color, #0a5e3e);
+  --theme-color: #0a5e3e;
+  --theme-color-rgb: 10 94 62;
+  --secondary-color: #34d399;
+  --secondary-color-rgb: 52 211 153;
   --theme-hero-start: var(--theme-color);
   --theme-hero-end: var(--secondary-color);
-  --secondary-color-10: rgba(63, 224, 200, 0.08);
-  --secondary-color-20: rgba(63, 224, 200, 0.18);
-  --theme-color-10: rgba(40, 141, 209, 0.08);
-  --theme-color-20: rgba(40, 141, 209, 0.18);
-  --theme-color-50: 249 250 251;
-  --theme-color-100: 243 244 246;
-  --theme-color-200: 229 231 235;
-  --theme-color-300: 160 205 235;
-  --theme-color-400: 109 177 224;
-  --theme-color-500: 40 141 209;
-  --theme-color-600: 33 116 171;
-  --theme-color-700: 27 96 142;
-  --theme-color-800: 22 76 113;
-  --theme-color-900: 16 56 84;
-  --secondary-color-50: 249 250 251;
-  --secondary-color-100: 243 244 246;
-  --secondary-color-200: 229 231 235;
-  --secondary-color-300: 171 241 255;
-  --secondary-color-400: 124 234 242;
-  --secondary-color-500: 63 224 200;
-  --secondary-color-600: 52 184 188;
-  --secondary-color-700: 43 152 160;
-  --secondary-color-800: 34 121 132;
-  --secondary-color-900: 25 90 104;
+  --secondary-color-10: rgba(52, 211, 153, 0.08);
+  --secondary-color-20: rgba(52, 211, 153, 0.18);
+  --theme-color-10: rgba(10, 94, 62, 0.08);
+  --theme-color-20: rgba(10, 94, 62, 0.18);
+  --theme-color-50: 230 244 238;
+  --theme-color-100: 204 233 221;
+  --theme-color-200: 154 211 187;
+  --theme-color-300: 95 185 138;
+  --theme-color-400: 50 157 106;
+  --theme-color-500: 10 94 62;
+  --theme-color-600: 8 80 51;
+  --theme-color-700: 6 64 42;
+  --theme-color-800: 5 50 32;
+  --theme-color-900: 3 32 24;
+  --secondary-color-50: 236 253 245;
+  --secondary-color-100: 209 250 229;
+  --secondary-color-200: 167 243 208;
+  --secondary-color-300: 110 231 183;
+  --secondary-color-400: 52 211 153;
+  --secondary-color-500: 16 185 129;
+  --secondary-color-600: 5 150 105;
+  --secondary-color-700: 4 120 87;
+  --secondary-color-800: 6 95 70;
+  --secondary-color-900: 6 78 59;
   --theme-success-rgb: 34 197 94;
   --theme-warning-rgb: 245 158 11;
   --theme-danger-rgb: 239 68 68;
@@ -207,20 +209,20 @@ textarea {
   --theme-danger-700: 185 28 28;
   --theme-danger-800: 153 27 27;
   --theme-danger-900: 127 29 29;
-  --theme-border-color: rgba(63, 224, 200, 0.2);
+  --theme-border-color: rgba(10, 94, 62, 0.16);
   --theme-card-bg: #ffffff;
-  --theme-surface-alt: #f3f4f6;
+  --theme-surface-alt: #f5f7fb;
   --theme-heading-color: #111827;
   --theme-text-color: #6b7280;
   --theme-muted-color: #6b7280;
-  --theme-badge-success-bg: rgba(63, 224, 200, 0.2);
+  --theme-badge-success-bg: rgba(10, 94, 62, 0.12);
   --theme-badge-success-text: rgb(var(--theme-success-700));
   --theme-badge-pending-bg: rgb(var(--theme-warning-500) / 0.16);
   --theme-badge-pending-text: rgb(var(--theme-warning-700));
   --theme-badge-failed-bg: rgb(var(--theme-danger-500) / 0.2);
   --theme-badge-failed-text: rgb(var(--theme-danger-700));
-  --theme-tag-bg: rgba(40, 141, 209, 0.16);
-  --theme-tag-text: #288dd1;
+  --theme-tag-bg: rgba(10, 94, 62, 0.12);
+  --theme-tag-text: #0a5e3e;
   --theme-neutral-50: 249 250 251;
   --theme-neutral-100: 243 244 246;
   --theme-neutral-200: 229 231 235;
@@ -233,7 +235,7 @@ textarea {
   --theme-neutral-900: 17 24 39;
   --theme-on-color: #ffffff;
   --theme-on-secondary: #111827;
-  --theme-focus-ring: rgba(40, 141, 209, 0.34);
+  --theme-focus-ring: rgba(10, 94, 62, 0.34);
   --theme-button-primary-bg: var(--theme-color);
   --theme-button-primary-text: var(--theme-on-color);
   --theme-button-secondary-bg: var(--secondary-color);
@@ -279,9 +281,24 @@ textarea {
   --text-muted: #94a3b8;
   --bar-bg: #f8fafc;
 
-  /* Color palette tints for dark mode */
-  --theme-color-10: rgba(56, 163, 235, 0.12);
-  --theme-color-20: rgba(56, 163, 235, 0.22);
+  /* Neutral scale inversion — flips Tailwind gray/slate/zinc/stone aliases
+   * so bg-gray-100 / text-gray-700 / border-gray-200 etc. all dark-mode
+   * correctly without per-component dark: variants. Scale runs from
+   * darkest (50) to lightest (900) — the inverse of the light mode. */
+  --theme-neutral-50: 15 23 42; /* slate-900 → darkest surface */
+  --theme-neutral-100: 30 41 59; /* slate-800 */
+  --theme-neutral-200: 51 65 85; /* slate-700 */
+  --theme-neutral-300: 71 85 105; /* slate-600 */
+  --theme-neutral-400: 100 116 139; /* slate-500 */
+  --theme-neutral-500: 148 163 184; /* slate-400 (muted text) */
+  --theme-neutral-600: 203 213 225; /* slate-300 */
+  --theme-neutral-700: 226 232 240; /* slate-200 */
+  --theme-neutral-800: 241 245 249; /* slate-100 */
+  --theme-neutral-900: 248 250 252; /* slate-50 → lightest text */
+
+  /* Color palette tints for dark mode (UniCloud Africa green) */
+  --theme-color-10: rgba(52, 211, 153, 0.12);
+  --theme-color-20: rgba(52, 211, 153, 0.22);
 
   /* Input overrides */
   --theme-input-bg: #1e293b;
@@ -585,7 +602,7 @@ body {
 }
 
 .gradient-text {
-  background: linear-gradient(45deg, var(--theme-color, #288dd1), var(--secondary-color, #3fe0c8));
+  background: linear-gradient(45deg, var(--theme-color, #0a5e3e), var(--secondary-color, #34d399));
   -webkit-background-clip: text;
   color: transparent;
 }
@@ -596,8 +613,8 @@ body {
   overflow: hidden;
   background: linear-gradient(
     135deg,
-    var(--theme-hero-start, color-mix(in srgb, var(--theme-color, #288dd1) 85%, #0f172a)) 0%,
-    var(--theme-hero-end, color-mix(in srgb, var(--theme-color, #288dd1) 55%, #1e293b)) 100%
+    var(--theme-hero-start, color-mix(in srgb, var(--theme-color, #0a5e3e) 85%, #0f172a)) 0%,
+    var(--theme-hero-end, color-mix(in srgb, var(--theme-color, #0a5e3e) 55%, #1e293b)) 100%
   );
   color: #fff;
 }
@@ -622,22 +639,22 @@ body {
   background:
     radial-gradient(
       circle at top left,
-      color-mix(in srgb, var(--theme-color, #288dd1) 18%, transparent),
+      color-mix(in srgb, var(--theme-color, #0a5e3e) 18%, transparent),
       transparent 34%
     ),
     radial-gradient(
       circle at 85% 18%,
-      color-mix(in srgb, var(--secondary-color, #3fe0c8) 16%, transparent),
+      color-mix(in srgb, var(--secondary-color, #34d399) 16%, transparent),
       transparent 28%
     ),
     linear-gradient(
       135deg,
-      color-mix(in srgb, var(--theme-card-bg, #ffffff) 88%, var(--theme-color, #288dd1)) 0%,
+      color-mix(in srgb, var(--theme-card-bg, #ffffff) 88%, var(--theme-color, #0a5e3e)) 0%,
       var(--theme-card-bg, #ffffff) 58%,
-      color-mix(in srgb, var(--theme-surface-alt, #f3f4f6) 72%, var(--secondary-color, #3fe0c8))
+      color-mix(in srgb, var(--theme-surface-alt, #f5f7fb) 72%, var(--secondary-color, #34d399))
         100%
     );
-  box-shadow: 0 30px 90px -50px rgb(var(--theme-color-rgb, 40 141 209) / 0.28);
+  box-shadow: 0 30px 90px -50px rgb(var(--theme-color-rgb, 10 94 62) / 0.28);
 }
 
 .db-surface-hero::before {
@@ -717,11 +734,11 @@ body {
 }
 
 .db-signal-panel {
-  border: 1px solid color-mix(in srgb, var(--theme-color, #288dd1) 24%, var(--theme-border-color));
+  border: 1px solid color-mix(in srgb, var(--theme-color, #0a5e3e) 24%, var(--theme-border-color));
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--theme-color, #288dd1) 28%, #0f172a) 0%,
-    color-mix(in srgb, var(--secondary-color, #3fe0c8) 14%, #0f172a) 100%
+    color-mix(in srgb, var(--theme-color, #0a5e3e) 28%, #0f172a) 0%,
+    color-mix(in srgb, var(--secondary-color, #34d399) 14%, #0f172a) 100%
   );
   color: white;
 }
@@ -923,7 +940,7 @@ body {
 }
 
 .gradient-txt {
-  background: linear-gradient(45deg, var(--theme-color, #288dd1), var(--secondary-color, #3fe0c8));
+  background: linear-gradient(45deg, var(--theme-color, #0a5e3e), var(--secondary-color, #34d399));
   -webkit-background-clip: text;
   color: transparent;
 }

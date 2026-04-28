@@ -56,7 +56,11 @@ const IpListSection: React.FC<{
         label: "Remove",
         icon: <Trash2 size={14} />,
         tone: "danger" as const,
-        onClick: (row) => removeRule.mutate({ domainId, listType, ruleId: row.id }),
+        onClick: (row) => {
+          if (window.confirm(`Remove IP ${row.ip} from ${label}?`)) {
+            removeRule.mutate({ domainId, listType, ruleId: row.id });
+          }
+        },
       },
     ],
     [domainId, listType, removeRule]

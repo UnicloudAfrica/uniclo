@@ -79,7 +79,7 @@ const SecurityGroupRulesView: React.FC<SecurityGroupRulesViewProps> = ({
 
   const {
     data: rulesData,
-    isLoading,
+    _isLoading,
     isFetching,
     refetch,
   } = useSecurityGroupRules(projectId, securityGroupId, region);

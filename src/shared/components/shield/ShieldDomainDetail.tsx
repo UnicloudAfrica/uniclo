@@ -3,7 +3,7 @@
  *
  * Tab-based layout: Overview, DNS, SSL, Firewall, Analytics.
  */
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -14,12 +14,11 @@ import {
   ShieldAlert,
   ShieldCheck,
   Activity,
-  Flame,
 } from "lucide-react";
 import StatusPill from "@/shared/components/ui/StatusPill";
+import { SkeletonCard } from "@/shared/components/ui/Skeleton";
 import {
   useFetchShieldDomainById,
-  useFetchProtectionStatus,
   useVerifyShieldDomain,
   useActivateShieldDomain,
 } from "@/shared/hooks/resources/shieldHooks";
@@ -61,11 +60,11 @@ const STATUS_TONE_MAP: Record<string, "success" | "warning" | "danger" | "info" 
 const ShieldDomainDetail: React.FC<ShieldDomainDetailProps> = ({
   identifier,
   backPath,
-  context,
+  _context,
 }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>("overview");
-  const { data: rawDomain, isLoading } = useFetchShieldDomainById(identifier, {
+  const { data: rawDomain, isLoading, isError, error, refetch } = useFetchShieldDomainById(identifier, {
     refetchInterval: 15_000,
   });
 
@@ -75,9 +74,23 @@ const ShieldDomainDetail: React.FC<ShieldDomainDetailProps> = ({
   const activateDomain = useActivateShieldDomain();
 
   if (isLoading) {
+    return <SkeletonCard className="my-8" />;
+  }
+
+  if (isError) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--theme-color)] border-t-transparent" />
+      <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+        <Shield size={40} className="text-red-400" />
+        <p className="text-sm text-red-600">
+          {error?.message || "Failed to load domain details."}
+        </p>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className="flex items-center gap-1.5 rounded-xl bg-[var(--theme-color)] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -160,7 +173,7 @@ const ShieldDomainDetail: React.FC<ShieldDomainDetailProps> = ({
             ) : (
               <ShieldCheck size={14} className="text-emerald-500" />
             )}
-            {domain.protection_mode.replace("_", " ")}
+            {(domain.protection_mode ?? "standard").replace("_", " ")}
           </div>
         </div>
         <div className="db-surface-card rounded-2xl border px-4 py-3">
@@ -169,7 +182,7 @@ const ShieldDomainDetail: React.FC<ShieldDomainDetailProps> = ({
           </div>
           <div className="mt-1 flex items-center gap-1.5 text-sm font-medium text-[var(--theme-heading-color)]">
             <Lock size={14} className={domain.ssl_status === "active" ? "text-emerald-500" : "text-amber-500"} />
-            {domain.ssl_status} ({domain.ssl_type.replace("_", " ")})
+            {domain.ssl_status ?? "unknown"} ({(domain.ssl_type ?? "none").replace("_", " ")})
           </div>
         </div>
         <div className="db-surface-card rounded-2xl border px-4 py-3">

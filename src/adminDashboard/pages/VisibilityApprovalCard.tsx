@@ -90,8 +90,8 @@ const VisibilityApprovalCard = ({
               className="w-full"
               onClick={async () => {
                 try {
-                  await adminRegionApi.verifyRegion(region.code);
-                  setRegion((prev: any) => ({
+                  await adminRegionApi.verifyRegion(String(region.code));
+                  setRegion((prev: unknown) => ({
                     ...prev,
                     is_verified: true,
                     approval_status: "approved",
@@ -124,15 +124,15 @@ const VisibilityApprovalCard = ({
                     const res = await adminRegionApi.unverifyRegion(regionCode);
                     if (res.success) {
                       ToastUtils.success("Region approval revoked");
-                      setRegion((prev: any) => ({
+                      setRegion((prev: unknown) => ({
                         ...prev,
                         is_verified: false,
                         approval_status: "pending",
                       }));
                     }
-                  } catch (error: any) {
+                  } catch (error: unknown) {
                     logger.error("Error revoking region:", error);
-                    ToastUtils.error(error.message || "Failed to revoke region");
+                    ToastUtils.error((error instanceof Error ? error.message : String(error)) || "Failed to revoke region");
                   } finally {
                     setSubmitting(false);
                   }

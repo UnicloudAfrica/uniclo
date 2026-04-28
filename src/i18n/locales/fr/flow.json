@@ -1,0 +1,24 @@
+{
+  "past_due_banner": {
+    "title": "Paiement échoué — action requise",
+    "body": "Nous avons tenté de prélever sur votre carte plusieurs fois sans succès. Mettez à jour votre moyen de paiement maintenant pour maintenir vos serveurs actifs. Vous disposez de 14 jours avant la désactivation de votre abonnement.",
+    "cta": "Mettre à jour le moyen de paiement"
+  },
+  "billing": {
+    "page_title": "Facturation UniCloudFlow",
+    "page_description": "Gérez votre moyen de paiement, renouvelez votre abonnement ou résolvez un paiement bloqué.",
+    "section_subscription": "Détails de l'abonnement",
+    "stat_plan": "Forfait",
+    "stat_amount": "Montant mensuel",
+    "stat_status": "État",
+    "term_next_billing": "Prochaine facturation",
+    "term_period_start": "Début de période",
+    "term_period_end": "Fin de période",
+    "term_failed_attempts": "Tentatives échouées",
+    "term_card_email": "Carte enregistrée",
+    "footer_help": "Besoin de changer de carte ou de résoudre un paiement bloqué ? Ouvrez le flux Paystack.",
+    "success_updated": "Moyen de paiement mis à jour — votre abonnement est actif.",
+    "no_subscription_title": "Aucun abonnement actif",
+    "no_subscription_body": "Vous n'avez pas d'abonnement UniCloudFlow actif. Souscrivez depuis le tableau de bord Flow pour gérer la facturation ici."
+  }
+}

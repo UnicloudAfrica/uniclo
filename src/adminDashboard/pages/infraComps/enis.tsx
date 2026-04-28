@@ -9,7 +9,7 @@ import { ResourceSection } from "@/shared/components/ui";
 const useFetchNetworkInterfacesAdapter = (projectId: string, region: string) => {
   const q = useFetchNetworkInterfaces(projectId, region);
   return {
-    data: (q.data as Record<string, any>[]) || [],
+    data: (q.data as Record<string, unknown>[]) || [],
     isLoading: q.isLoading,
     refetch: q.refetch,
   };
@@ -22,10 +22,7 @@ const ENIs = ({ projectId = "", region = "" }: { projectId?: string; region?: st
       projectId={projectId}
       region={region}
       hooks={{
-        useList: useFetchNetworkInterfacesAdapter as (
-          projectId: string,
-          region: string
-        ) => { data: any[]; isLoading: boolean; refetch: () => void },
+        useList: useFetchNetworkInterfacesAdapter as unknown,
         onSync: projectId
           ? () =>
               syncNetworkInterfacesFromProvider({

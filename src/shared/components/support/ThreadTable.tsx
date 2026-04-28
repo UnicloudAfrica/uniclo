@@ -1,6 +1,7 @@
 import React from "react";
-import { AlertTriangle, Flag, ArrowUpCircle, Inbox, Loader2 } from "lucide-react";
+import { AlertTriangle, Flag, ArrowUpCircle, Inbox } from "lucide-react";
 import { ModernButton } from "../ui";
+import { SkeletonTable } from "../ui/Skeleton";
 import {
   Thread,
   ESCALATION_CONFIG,
@@ -41,9 +42,8 @@ export const ThreadTable: React.FC<ThreadTableProps> = ({
 }) => {
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white p-8 text-sm text-slate-500 shadow-sm">
-        <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
-        Loading tickets...
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <SkeletonTable rows={5} cols={4} />
       </div>
     );
   }

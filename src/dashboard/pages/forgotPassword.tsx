@@ -16,7 +16,7 @@ import logger from "@/utils/logger";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, unknown>>({});
   const { mutate: forgotPassword, isPending } = useForgotPassword();
   const { setUserEmail } = useTenantAuthStore.getState();
   const hostname = globalThis.window !== undefined ? globalThis.window.location.hostname : "";
@@ -42,7 +42,7 @@ export default function ForgotPassword() {
 
   // Validation function
   const validateForm = () => {
-    const newErrors: Record<string, any> = {};
+    const newErrors: Record<string, unknown> = {};
     if (!email) {
       newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(email)) {
@@ -54,7 +54,7 @@ export default function ForgotPassword() {
   };
 
   // Handle form submission for forgot password
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!validateForm()) return;

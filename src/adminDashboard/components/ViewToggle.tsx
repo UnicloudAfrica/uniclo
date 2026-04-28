@@ -3,7 +3,12 @@ import { LayoutGrid, List } from "lucide-react";
 /**
  * ViewToggle - Toggle between table and card view
  */
-const ViewToggle = ({ view, onViewChange }: any) => {
+interface ViewToggleProps {
+  view: string;
+  onViewChange: (view: string) => void;
+}
+
+const ViewToggle = ({ view, onViewChange }: ViewToggleProps) => {
   return (
     <div className="inline-flex items-center rounded-lg border border-slate-200 bg-white p-1">
       <button

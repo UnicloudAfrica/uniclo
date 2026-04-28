@@ -13,6 +13,7 @@ interface LoadBalancerHooks {
   ) => {
     data: LoadBalancer[];
     isLoading: boolean;
+    isFetching?: boolean;
     refetch: () => void;
   };
   useDelete?: () => {
@@ -29,7 +30,7 @@ interface LoadBalancersContainerProps {
   wrapper: (props: {
     headerActions: React.ReactNode;
     children: React.ReactNode;
-  }) => React.ReactElement<any>;
+  }) => React.ReactElement;
   onManage?: (lb: LoadBalancer) => void;
 }
 

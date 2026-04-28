@@ -120,9 +120,9 @@ const DatabaseConnectionInfo: React.FC<DatabaseConnectionInfoProps> = ({ databas
   const { data: sslRaw, isLoading: sslLoading } = useFetchDatabaseSslCertificate(databaseId);
   const poolingMutation = useUpdateDatabasePoolingConfig();
 
-  const connection = connectionRaw as ConnectionInfo | undefined;
-  const pooling = poolingRaw as PoolingConfig | undefined;
-  const ssl = sslRaw as SslCertificate | undefined;
+  const connection = connectionRaw as unknown as ConnectionInfo | undefined;
+  const pooling = poolingRaw as unknown as PoolingConfig | undefined;
+  const ssl = sslRaw as unknown as SslCertificate | undefined;
 
   const [poolSize, setPoolSize] = useState<string>("");
 

@@ -86,8 +86,8 @@ export const useDeleteSnapshot = () => {
       ToastUtils.success("Snapshot deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["snapshots", projectId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.message || "Failed to delete snapshot");
+    onError: (error: unknown) => {
+      ToastUtils.error((error as {response?: {data?: {error?: string; message?: string}}}).response?.data?.message || "Failed to delete snapshot");
     },
   });
 };
@@ -148,8 +148,8 @@ export const useDeleteImage = () => {
       ToastUtils.success("Image deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["images"] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.message || "Failed to delete image");
+    onError: (error: unknown) => {
+      ToastUtils.error((error as {response?: {data?: {error?: string; message?: string}}}).response?.data?.message || "Failed to delete image");
     },
   });
 };
@@ -189,8 +189,8 @@ export const useCreateInstanceSnapshot = () => {
       // Invalidate snapshots query to show the new snapshot if the user is looking at a list
       queryClient.invalidateQueries({ queryKey: ["snapshots"] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.message || "Failed to create instance snapshot");
+    onError: (error: unknown) => {
+      ToastUtils.error((error as {response?: {data?: {error?: string; message?: string}}}).response?.data?.message || "Failed to create instance snapshot");
     },
   });
 };
@@ -227,8 +227,8 @@ export const useCreateInstanceImage = () => {
       ToastUtils.success("Image creation from instance initiated");
       queryClient.invalidateQueries({ queryKey: ["images"] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.message || "Failed to create image from instance");
+    onError: (error: unknown) => {
+      ToastUtils.error((error as {response?: {data?: {error?: string; message?: string}}}).response?.data?.message || "Failed to create image from instance");
     },
   });
 };

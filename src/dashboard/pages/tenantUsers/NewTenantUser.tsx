@@ -18,7 +18,7 @@ const defaultForm = {
   force_password_reset: true,
 };
 
-const Field = ({ label, children }: any) => (
+const Field = ({ label, children }: { label: React.ReactNode; children: React.ReactNode }) => (
   <div className="space-y-2">
     <label className="text-sm font-medium text-slate-700">{label}</label>
     {children}
@@ -31,12 +31,12 @@ export default function InviteTenantUserPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: inviteUser } = useCreateTenantAdmin();
 
-  const updateField = (key: any) => (event: any) => {
+  const updateField = (key: string) => (event: unknown) => {
     const value = event.target.type === "checkbox" ? event.target.checked : event.target.value;
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSubmit = async (event: any) => {
+  const handleSubmit = async (event: unknown) => {
     event.preventDefault();
 
     if (form.password !== form.confirm_password) {
@@ -63,7 +63,7 @@ export default function InviteTenantUserPage() {
       navigate("/dashboard/clients");
     } catch (error) {
       ToastUtils.error(
-        (error as Record<string, any>)?.response?.data?.message ||
+        (error as Record<string, unknown>)?.response?.data?.message ||
           (error as Error)?.message ||
           "Failed to invite tenant user."
       );

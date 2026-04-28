@@ -16,14 +16,25 @@ import adminApi from "../../index/admin/api";
 
 // Types
 // API hooks
+interface AnalyticsData {
+  revenue?: {
+    total?: number;
+    growth_percent?: number;
+    by_currency?: Record<string, { total: number; symbol: string }>;
+  };
+  users?: { active?: number; new_this_month?: number };
+  subscriptions?: { active?: number; revenue?: number };
+  payouts?: { pending?: number; total_amount?: number };
+}
+
 const useAnalytics = () => {
   return useQuery({
     queryKey: ["analytics", "dashboard"],
     queryFn: async () => {
-      const response = await adminApi.get<{ data: Record<string, unknown> }>(
+      const response = await adminApi.get<{ data: AnalyticsData }>(
         "/analytics/dashboard"
       );
-      return response.data.data;
+      return response.data;
     },
   });
 };
@@ -35,7 +46,7 @@ const useTopTenants = () => {
       const response = await adminApi.get<{ data: Record<string, unknown>[] }>(
         "/analytics/top-tenants"
       );
-      return response.data.data;
+      return response.data;
     },
   });
 };
@@ -47,7 +58,7 @@ const useMonthlyRevenue = () => {
       const response = await adminApi.get<{ data: Record<string, unknown>[] }>(
         "/analytics/monthly-revenue"
       );
-      return response.data.data;
+      return response.data;
     },
   });
 };
@@ -59,7 +70,7 @@ const useRecentActivity = () => {
       const response = await adminApi.get<{ data: Record<string, unknown>[] }>(
         "/analytics/recent-activity"
       );
-      return response.data.data;
+      return response.data;
     },
   });
 };

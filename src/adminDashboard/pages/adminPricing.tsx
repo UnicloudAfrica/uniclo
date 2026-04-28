@@ -52,23 +52,43 @@ const SUPPORTED_CURRENCIES = [
   { code: "EUR", label: "EUR (€)" },
 ] as const;
 
-const formatCurrencyValue = (value: any, currencyCode?: string) => {
+interface PricingRow {
+  id?: string | number;
+  name?: string;
+  description?: string;
+  product_name?: string;
+  productable_type?: string;
+  display_price?: number | string;
+  display_currency?: string;
+  currency_code?: string;
+  price_usd?: number | string;
+  region?: string;
+  availability_zone?: string;
+  provider?: string;
+  billing_model?: string;
+  unit_label?: string;
+  pricing_tiers?: unknown[];
+  tenant_override_count?: number;
+  [key: string]: unknown;
+}
+
+const formatCurrencyValue = (value: unknown, currencyCode?: string) => {
   if (typeof value !== "number" && !value) return "—";
   const num = Number(value || 0);
   const symbol = getCurrencySymbol(currencyCode || "USD");
   return `${symbol}${num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
-const computeStats = (rows: any) => {
+const computeStats = (rows: PricingRow[]) => {
   const total = rows.length;
   if (!total) {
     return { total: 0, average: 0, highest: 0, uniqueRegions: 0 };
   }
 
-  const prices = rows.map((item: any) => Number(item.display_price ?? item.price_usd ?? 0));
+  const prices = rows.map((item) => Number(item.display_price ?? item.price_usd ?? 0));
   const sum = prices.reduce((acc: number, price: number) => acc + price, 0);
   const highest = Math.max(...prices);
-  const uniqueRegions = new Set(rows.map((item: any) => item.region || "global")).size;
+  const uniqueRegions = new Set(rows.map((item) => item.region || "global")).size;
 
   return {
     total,
@@ -89,7 +109,7 @@ const PRICING_TAB_CONFIG = [
     tableTitle: "Bandwidth pricing catalogue",
     tableDescription: "Review committed data rate SKUs and their monthly pricing per region.",
     icon: Wifi,
-    metrics: (stats: any, currency?: string) => [
+    metrics: (stats: { total: number; average: number; highest: number; uniqueRegions: number }, currency?: string) => [
       {
         label: "Throughput tiers",
         value: stats.total,
@@ -124,7 +144,7 @@ const PRICING_TAB_CONFIG = [
     tableTitle: "OS image pricing",
     tableDescription: "Monitor licence costs for curated operating system templates.",
     icon: HardDrive,
-    metrics: (stats: any, currency?: string) => [
+    metrics: (stats: { total: number; average: number; highest: number; uniqueRegions: number }, currency?: string) => [
       {
         label: "Licensed templates",
         value: stats.total,
@@ -157,7 +177,7 @@ const PRICING_TAB_CONFIG = [
     tableTitle: "Volume pricing",
     tableDescription: "Review block storage profiles and their configured price points.",
     icon: Database,
-    metrics: (stats: any, currency?: string) => [
+    metrics: (stats: { total: number; average: number; highest: number; uniqueRegions: number }, currency?: string) => [
       {
         label: "Volume profiles",
         value: stats.total,
@@ -191,7 +211,7 @@ const PRICING_TAB_CONFIG = [
     tableTitle: "Object storage pricing",
     tableDescription: "Review per-GB-month pricing for Silo Storage across each region.",
     icon: HardDrive,
-    metrics: (stats: any, currency?: string) => [
+    metrics: (stats: { total: number; average: number; highest: number; uniqueRegions: number }, currency?: string) => [
       {
         label: "Storage SKUs",
         value: stats.total,
@@ -226,7 +246,7 @@ const PRICING_TAB_CONFIG = [
     tableTitle: "Compute pricing",
     tableDescription: "Track compute classes and their per-instance pricing across regions.",
     icon: Cpu,
-    metrics: (stats: any, currency?: string) => [
+    metrics: (stats: { total: number; average: number; highest: number; uniqueRegions: number }, currency?: string) => [
       {
         label: "Instance classes",
         value: stats.total,
@@ -259,7 +279,7 @@ const PRICING_TAB_CONFIG = [
     tableTitle: "Floating IP pricing",
     tableDescription: "Manage routable IP pools and the rates exposed to tenants.",
     icon: Globe,
-    metrics: (stats: any, currency?: string) => [
+    metrics: (stats: { total: number; average: number; highest: number; uniqueRegions: number }, currency?: string) => [
       {
         label: "IP pools",
         value: stats.total,
@@ -292,7 +312,7 @@ const PRICING_TAB_CONFIG = [
     tableTitle: "Cross connect pricing",
     tableDescription: "Review carrier cross connect offers and their monthly pricing.",
     icon: Cable,
-    metrics: (stats: any, currency?: string) => [
+    metrics: (stats: { total: number; average: number; highest: number; uniqueRegions: number }, currency?: string) => [
       {
         label: "Cross connect SKUs",
         value: stats.total,
@@ -325,7 +345,7 @@ const PRICING_TAB_CONFIG = [
     tableTitle: "Lattice database pricing",
     tableDescription: "Review Lattice database plan pricing for MongoDB, PostgreSQL, MySQL, MariaDB, and Redis.",
     icon: Database,
-    metrics: (stats: any, currency?: string) => [
+    metrics: (stats: { total: number; average: number; highest: number; uniqueRegions: number }, currency?: string) => [
       {
         label: "Database plans",
         value: stats.total,
@@ -360,7 +380,7 @@ const PRICING_TAB_CONFIG = [
     tableDescription: "Review and adjust platform service pricing — these apply globally, not per region.",
     icon: Shield,
     isGlobal: true,
-    metrics: (stats: any) => [
+    metrics: (stats: { total: number; average: number; highest: number; uniqueRegions: number }) => [
       {
         label: "Services",
         value: stats.total,
@@ -395,17 +415,23 @@ const PRICING_TAB_CONFIG = [
   },
 ];
 
+type PricingTabConfig = (typeof PRICING_TAB_CONFIG)[number];
+
 const TAB_MAP = PRICING_TAB_CONFIG.reduce(
-  (acc: Record<string, any>, tab: any) => {
+  (acc: Record<string, PricingTabConfig>, tab) => {
     acc[tab.id] = tab;
     return acc;
   },
-  {} as Record<string, any>
+  {} as Record<string, PricingTabConfig>
 );
 
 const DEFAULT_TAB_ID = PRICING_TAB_CONFIG[0]?.id ?? "compute";
 
-export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
+interface AdminPricingProps {
+  initialTab?: string;
+}
+
+export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: AdminPricingProps) {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -428,7 +454,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
     };
   });
   const [isUploadModalOpen, setUploadModalOpen] = useState(false);
-  const [selectedPricing, setSelectedPricing] = useState<any>(null);
+  const [selectedPricing, setSelectedPricing] = useState<PricingRow | null>(null);
   const [isEditPricingOpen, setEditPricingOpen] = useState(false);
   const [isDeletePricingOpen, setDeletePricingOpen] = useState(false);
 
@@ -469,16 +495,19 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
     enabled: isGlobalTab,
   });
   const { mutate: updateAcfPrice, isPending: isAcfUpdating } = useUpdateAnyCloudFlowPrice();
-  const [editingAcfService, setEditingAcfService] = useState<any>(null);
+  const [editingAcfService, setEditingAcfService] = useState<Record<string, unknown> | null>(null);
   const [acfEditPrice, setAcfEditPrice] = useState("");
-  const [tieredPricingService, setTieredPricingService] = useState<any>(null);
+  const [tieredPricingService, setTieredPricingService] = useState<Record<string, unknown> | null>(null);
   const { mutate: exportTemplate, isPending: isExporting } = useExportProductPricingTemplate();
-  const regionsList = useMemo(() => (Array.isArray(regions) ? regions : []), [regions]);
-  const pricingPayload: any = pricingData;
+  const regionsList = useMemo(
+    () => (Array.isArray(regions) ? (regions as Array<{ code: string; name?: string }>) : []),
+    [regions]
+  );
+  const pricingPayload = pricingData as { data?: unknown[]; meta?: Record<string, unknown> } | undefined;
 
   const menuItems = useMemo(
     () =>
-      PRICING_TAB_CONFIG.map(({ id, name, caption, icon }: any) => ({
+      PRICING_TAB_CONFIG.map(({ id, name, caption, icon }) => ({
         id,
         name,
         caption,
@@ -510,32 +539,32 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
 
   useEffect(() => {
     if (!isRegionsFetching && regionsList.length && !selectedRegion) {
-      setSelectedRegion(regionsList[0]!.code as any);
+      setSelectedRegion(regionsList[0]!.code);
     }
   }, [isRegionsFetching, regionsList, selectedRegion]);
 
-  const pricingRows = useMemo<any[]>(() => {
+  const pricingRows = useMemo<PricingRow[]>(() => {
     if (isColocationTab) return [];
     if (isGlobalTab) {
-      const rows = acfData?.data ?? [];
-      return rows.map((item: any) => ({
+      const rows = (acfData as { data?: unknown[] } | undefined)?.data ?? [];
+      return (rows as PricingRow[]).map((item) => ({
         ...item,
         product_name: item.name || "Unnamed service",
       }));
     }
-    const rows = pricingPayload?.data ?? [];
-    return rows.map((item: any) => ({
+    const rows = (pricingPayload?.data ?? []) as PricingRow[];
+    return rows.map((item) => ({
       ...item,
       product_name: item.product_name || item.name || "Unnamed product",
     }));
   }, [pricingPayload, acfData, isColocationTab, isGlobalTab]);
 
-  const filteredRows = useMemo<any[]>(() => {
+  const filteredRows = useMemo<PricingRow[]>(() => {
     if (isColocationTab) return [];
     if (isGlobalTab) return pricingRows;
-    if (!activeConfig?.productType) return pricingRows;
-    return pricingRows.filter((row: any) =>
-      matchesProductType(row.productable_type, activeConfig.productType)
+    if (!activeConfig || !("productType" in activeConfig) || !activeConfig.productType) return pricingRows;
+    return pricingRows.filter((row) =>
+      matchesProductType(row.productable_type as string | undefined, (activeConfig as { productType: string }).productType)
     );
   }, [pricingRows, activeConfig, isColocationTab, isGlobalTab]);
 
@@ -567,12 +596,12 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
     });
   }, [activeConfig, pricingStats, isColocationTab, displayCurrency]);
 
-  const handleRegionChange = (regionCode: any) => {
+  const handleRegionChange = (regionCode: string) => {
     setSelectedRegion(regionCode);
     setSelectedAZ("");
     setPage(1);
   };
-  const handleSearch = useCallback((value: any) => {
+  const handleSearch = useCallback((value: string) => {
     setSearch(value);
     setPage(1);
   }, []);
@@ -586,7 +615,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
       onSuccess: () => ToastUtils.success("Template exported successfully!"),
     });
   };
-  const handleTabChange = (tabId: any) => {
+  const handleTabChange = (tabId: string) => {
     if (!TAB_MAP[tabId] || tabId === activeTab) return;
     setActiveTab(tabId);
     const params = new URLSearchParams(location.search);
@@ -594,7 +623,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
     navigate({ search: params.toString() }, { replace: true });
   };
   const handleColocationSummary = useCallback(
-    (payload: any) => {
+    (payload: { description?: string; metrics?: unknown[] }) => {
       if (!isColocationTab) return;
       setHeroState((prev) => ({
         title: activeConfig.heroTitle,
@@ -605,11 +634,11 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
     [activeConfig, isColocationTab]
   );
 
-  const openEditPricing = (pricing: any) => {
+  const openEditPricing = (pricing: PricingRow) => {
     setSelectedPricing(pricing);
     setEditPricingOpen(true);
   };
-  const openDeletePricing = (pricing: any) => {
+  const openDeletePricing = (pricing: PricingRow) => {
     setSelectedPricing(pricing);
     setDeletePricingOpen(true);
   };
@@ -627,14 +656,15 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
     []
   );
 
-  const handleAcfSave = (service: any) => {
+  const handleAcfSave = (service: PricingRow) => {
+    if (service.id == null) return;
     const newPrice = parseFloat(acfEditPrice);
     if (isNaN(newPrice) || newPrice < 0) {
       ToastUtils.error("Please enter a valid price.");
       return;
     }
     updateAcfPrice(
-      { id: service.id, price_usd: newPrice },
+      { id: Number(service.id), price_usd: newPrice },
       {
         onSuccess: () => {
           ToastUtils.success(`Price updated for ${service.name}.`);
@@ -648,7 +678,8 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
     );
   };
 
-  const columns = useMemo<any[]>(() => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Legacy column type from ResourceDataExplorer; refactoring would require changing the explorer API
+  const columns = useMemo<unknown[]>(() => {
     if (isColocationTab) return [];
 
     if (isGlobalTab) {
@@ -656,7 +687,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
         {
           header: "Service",
           key: "name",
-          render: (row: any) => (
+          render: (row: PricingRow) => (
             <div className="flex items-center gap-3">
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-500">
                 <Shield className="h-4 w-4" />
@@ -672,7 +703,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
           header: "Billing Model",
           key: "billing_model",
           align: "center",
-          render: (row: any) => (
+          render: (row: PricingRow) => (
             <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
               {(row.billing_model || "").replace(/_/g, " ")}
             </span>
@@ -682,7 +713,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
           header: "Unit",
           key: "unit_label",
           align: "center",
-          render: (row: any) => (
+          render: (row: PricingRow) => (
             <span className="text-xs text-slate-500">{row.unit_label || "—"}</span>
           ),
         },
@@ -690,7 +721,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
           header: "Base Price (USD)",
           key: "price_usd",
           align: "right",
-          render: (row: any) => {
+          render: (row: PricingRow) => {
             if (editingAcfService?.id === row.id) {
               return (
                 <div className="flex items-center justify-end gap-2">
@@ -735,7 +766,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
           header: "Tiers",
           key: "pricing_tiers",
           align: "center",
-          render: (row: any) => {
+          render: (row: PricingRow) => {
             const tierCount = row.pricing_tiers?.length ?? 0;
             return tierCount > 0 ? (
               <button
@@ -761,7 +792,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
           header: "Tenants",
           key: "tenant_override_count",
           align: "center",
-          render: (row: any) => (
+          render: (row: PricingRow) => (
             <span className="text-xs text-slate-500">
               {row.tenant_override_count ?? 0} override{(row.tenant_override_count ?? 0) !== 1 ? "s" : ""}
             </span>
@@ -771,7 +802,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
           header: "",
           key: "actions",
           align: "right",
-          render: (row: any) => (
+          render: (row: PricingRow) => (
             <button
               type="button"
               onClick={() => {
@@ -793,7 +824,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
       {
         header: "Product",
         key: "product_name",
-        render: (row: any) => (
+        render: (row: PricingRow) => (
           <div className="flex items-center gap-3">
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500/10 text-primary-500">
               <Package className="h-4 w-4" />
@@ -811,13 +842,13 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
         header: "Provider",
         key: "provider",
         align: "center",
-        render: (row: any) => <ProviderBadge provider={row.provider} />,
+        render: (row: PricingRow) => <ProviderBadge provider={row.provider} />,
       },
       {
         header: "Region",
         key: "region",
         align: "center",
-        render: (row: any) => (
+        render: (row: PricingRow) => (
           <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
             {row.region || "Global"}
           </span>
@@ -827,7 +858,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
         header: "AZ",
         key: "availability_zone",
         align: "center",
-        render: (row: any) =>
+        render: (row: PricingRow) =>
           row.availability_zone ? (
             <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600">
               {row.availability_zone}
@@ -840,7 +871,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
         header: "Price",
         key: "price_usd",
         align: "right",
-        render: (row: any) => {
+        render: (row: PricingRow) => {
           const price = row.display_price ?? row.price_usd;
           const currency = row.display_currency ?? row.currency_code ?? "USD";
           return (
@@ -861,7 +892,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
         header: "",
         key: "actions",
         align: "right",
-        render: (row: any) => (
+        render: (row: PricingRow) => (
           <div className="flex items-center justify-end gap-2">
             <button
               type="button"
@@ -950,7 +981,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
               Loading regions...
             </option>
           ) : (
-            regionsList.map((region: any) => (
+            regionsList.map((region) => (
               <option key={region.code} value={region.code}>
                 {getRegionOptionLabel(region)}
               </option>
@@ -975,7 +1006,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
               Loading availability zones...
             </option>
           ) : (
-            azList.map((az: any) => (
+            (azList as Array<{ code: string; name?: string; provider?: string }>).map((az) => (
               <option key={az.code} value={az.code}>
                 {az.name || az.code} ({az.provider})
               </option>
@@ -1014,11 +1045,11 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
     <ResourceDataExplorer
       title={activeConfig.tableTitle}
       description={activeConfig.tableDescription}
-      columns={columns}
+      columns={columns as React.ComponentProps<typeof ResourceDataExplorer>["columns"]}
       rows={filteredRows}
       loading={isGlobalTab ? isAcfFetching : (isRegionsFetching || isPricingFetching)}
-      page={meta?.current_page ?? page}
-      perPage={meta?.per_page ?? perPage}
+      page={(meta?.current_page as number | undefined) ?? page}
+      perPage={(meta?.per_page as number | undefined) ?? perPage}
       total={total}
       meta={meta}
       onPageChange={setPage}
@@ -1111,7 +1142,7 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
       <TieredPricingModal
         isOpen={!!tieredPricingService}
         onClose={() => setTieredPricingService(null)}
-        service={tieredPricingService}
+        service={tieredPricingService as unknown as { id: number; name: string; price_usd: number; pricing_tiers: never[]; unit_label?: string } | null}
       />
     </>
   );

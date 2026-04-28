@@ -21,7 +21,7 @@ const ClientNetworkInterfaces: React.FC = () => {
   const region = searchParams.get("region") || "";
 
   const hooks: NetworkInterfaceHooks = {
-    useList: useFetchClientNetworkInterfaces as NetworkInterfaceHooks["useList"],
+    useList: useFetchClientNetworkInterfaces as unknown as NetworkInterfaceHooks["useList"],
     onSync: async () => {
       await syncClientNetworkInterfacesFromProvider({ project_id: projectId, region });
       ToastUtils.success("Network Interfaces synced from provider");

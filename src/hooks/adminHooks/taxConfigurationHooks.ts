@@ -2,10 +2,22 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
 import logger from "@/utils/logger";
+import type {
+  ApiEnvelope,
+  AdminResourceRecord,
+  QueryHookOptions,
+} from "@/shared/types/admin";
+
+interface TaxConfigurationRecord extends AdminResourceRecord {
+  id?: string | number;
+}
 
 // GET: Fetch all tax configurations
 const fetchTaxConfigurations = async () => {
-  const res = await silentApi("GET", "/tax-configurations");
+  const res = await silentApi<ApiEnvelope<TaxConfigurationRecord[]>>(
+    "GET",
+    "/tax-configurations"
+  );
   if (!res.data) {
     throw new Error("Failed to fetch tax configurations");
   }
@@ -13,8 +25,11 @@ const fetchTaxConfigurations = async () => {
 };
 
 // GET: Fetch tax configuration by ID
-const fetchTaxConfigurationById = async (id: any) => {
-  const res = await silentApi("GET", `/tax-configurations/${id}`);
+const fetchTaxConfigurationById = async (id: string | number) => {
+  const res = await silentApi<ApiEnvelope<TaxConfigurationRecord>>(
+    "GET",
+    `/tax-configurations/${id}`
+  );
   if (!res.data) {
     throw new Error(`Failed to fetch tax configuration with ID ${id}`);
   }
@@ -22,8 +37,12 @@ const fetchTaxConfigurationById = async (id: any) => {
 };
 
 // POST: Create a new tax configuration
-const createTaxConfiguration = async (configData: any) => {
-  const res = await api("POST", "/tax-configurations", configData);
+const createTaxConfiguration = async (configData: AdminResourceRecord) => {
+  const res = await api<ApiEnvelope<TaxConfigurationRecord>>(
+    "POST",
+    "/tax-configurations",
+    configData
+  );
   if (!res.data) {
     throw new Error("Failed to create tax configuration");
   }
@@ -31,8 +50,18 @@ const createTaxConfiguration = async (configData: any) => {
 };
 
 // PATCH: Update a tax configuration
-const updateTaxConfiguration = async ({ id, configData }: any) => {
-  const res = await api("PATCH", `/tax-configurations/${id}`, configData);
+const updateTaxConfiguration = async ({
+  id,
+  configData,
+}: {
+  id: string | number;
+  configData: AdminResourceRecord;
+}) => {
+  const res = await api<ApiEnvelope<TaxConfigurationRecord>>(
+    "PATCH",
+    `/tax-configurations/${id}`,
+    configData
+  );
   if (!res.data) {
     throw new Error(`Failed to update tax configuration with ID ${id}`);
   }
@@ -40,8 +69,11 @@ const updateTaxConfiguration = async ({ id, configData }: any) => {
 };
 
 // DELETE: Delete a tax configuration
-const deleteTaxConfiguration = async (id: any) => {
-  const res = await api("DELETE", `/tax-configurations/${id}`);
+const deleteTaxConfiguration = async (id: string | number) => {
+  const res = await api<ApiEnvelope<TaxConfigurationRecord>>(
+    "DELETE",
+    `/tax-configurations/${id}`
+  );
   if (!res.data) {
     throw new Error(`Failed to delete tax configuration with ID ${id}`);
   }
@@ -49,7 +81,7 @@ const deleteTaxConfiguration = async (id: any) => {
 };
 
 // Hook to fetch all tax configurations
-export const useFetchTaxConfigurations = (options: any = {}) => {
+export const useFetchTaxConfigurations = (options: QueryHookOptions = {}) => {
   return useQuery({
     queryKey: ["taxConfigurations"],
     queryFn: fetchTaxConfigurations,
@@ -60,10 +92,13 @@ export const useFetchTaxConfigurations = (options: any = {}) => {
 };
 
 // Hook to fetch tax configuration by ID
-export const useFetchTaxConfigurationById = (id: any, options: any = {}) => {
+export const useFetchTaxConfigurationById = (
+  id: string | number | undefined,
+  options: QueryHookOptions = {}
+) => {
   return useQuery({
     queryKey: ["taxConfiguration", id],
-    queryFn: () => fetchTaxConfigurationById(id),
+    queryFn: () => fetchTaxConfigurationById(id as string | number),
     enabled: !!id, // Only fetch if ID is provided
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
@@ -76,23 +111,26 @@ export const useCreateTaxConfiguration = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createTaxConfiguration,
-    onSuccess: async (created: any) => {
+    onSuccess: async (created) => {
       const createdTaxType = created;
       if (createdTaxType) {
-        queryClient.setQueryData(["taxConfigurations"], (current: any) => {
-          if (!Array.isArray(current)) {
-            return [createdTaxType];
+        queryClient.setQueryData(
+          ["taxConfigurations"],
+          (current: TaxConfigurationRecord[] | undefined) => {
+            if (!Array.isArray(current)) {
+              return [createdTaxType];
+            }
+            const alreadyExists = current.some((item) => item?.id === createdTaxType.id);
+            return alreadyExists ? current : [...current, createdTaxType];
           }
-          const alreadyExists = current.some((item: any) => item?.id === createdTaxType.id);
-          return alreadyExists ? current : [...current, createdTaxType];
-        });
+        );
       }
       await queryClient.invalidateQueries({
         queryKey: ["taxConfigurations"],
         refetchType: "active",
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       logger.error("Error creating tax configuration:", error);
     },
   });
@@ -103,15 +141,18 @@ export const useUpdateTaxConfiguration = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateTaxConfiguration,
-    onSuccess: async (updated: any, variables: any) => {
+    onSuccess: async (updated, variables) => {
       const updatedTaxType = updated;
       if (updatedTaxType) {
-        queryClient.setQueryData(["taxConfigurations"], (current: any) => {
-          if (!Array.isArray(current)) return current;
-          return current.map((item: any) =>
-            item?.id === updatedTaxType.id ? updatedTaxType : item
-          );
-        });
+        queryClient.setQueryData(
+          ["taxConfigurations"],
+          (current: TaxConfigurationRecord[] | undefined) => {
+            if (!Array.isArray(current)) return current;
+            return current.map((item) =>
+              item?.id === updatedTaxType.id ? updatedTaxType : item
+            );
+          }
+        );
       }
       await queryClient.invalidateQueries({
         queryKey: ["taxConfigurations"],
@@ -124,7 +165,7 @@ export const useUpdateTaxConfiguration = () => {
         });
       }
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       logger.error("Error updating tax configuration:", error);
     },
   });
@@ -135,17 +176,20 @@ export const useDeleteTaxConfiguration = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteTaxConfiguration,
-    onSuccess: async (_data: any, id: any) => {
-      queryClient.setQueryData(["taxConfigurations"], (current: any) => {
-        if (!Array.isArray(current)) return current;
-        return current.filter((item: any) => item?.id !== id);
-      });
+    onSuccess: async (_data, id) => {
+      queryClient.setQueryData(
+        ["taxConfigurations"],
+        (current: TaxConfigurationRecord[] | undefined) => {
+          if (!Array.isArray(current)) return current;
+          return current.filter((item) => item?.id !== id);
+        }
+      );
       await queryClient.invalidateQueries({
         queryKey: ["taxConfigurations"],
         refetchType: "active",
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       logger.error("Error deleting tax configuration:", error);
     },
   });

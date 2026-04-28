@@ -51,7 +51,7 @@ interface SecurityGroupsContainerProps {
   wrapper: (props: {
     headerActions: React.ReactNode;
     children: React.ReactNode;
-  }) => React.ReactElement<any>;
+  }) => React.ReactElement;
 }
 
 /**

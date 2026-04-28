@@ -64,7 +64,7 @@ export const useActivateServerlessDrPolicy = () => {
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       return (envelope.data ?? {}) as AnyRecord;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: serverlessDrKeys.all }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: serverlessDrKeys.all() }),
   });
 };
 
@@ -79,7 +79,7 @@ export const usePauseServerlessDrPolicy = () => {
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       return (envelope.data ?? {}) as AnyRecord;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: serverlessDrKeys.all }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: serverlessDrKeys.all() }),
   });
 };
 
@@ -94,7 +94,7 @@ export const useServerlessDrFailover = () => {
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       return (envelope.data ?? {}) as AnyRecord;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: serverlessDrKeys.all }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: serverlessDrKeys.all() }),
   });
 };
 
@@ -109,7 +109,7 @@ export const useServerlessDrFailback = () => {
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       return (envelope.data ?? {}) as AnyRecord;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: serverlessDrKeys.all }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: serverlessDrKeys.all() }),
   });
 };
 
@@ -124,7 +124,7 @@ export const useServerlessDrDrill = () => {
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       return (envelope.data ?? {}) as AnyRecord;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: serverlessDrKeys.all }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: serverlessDrKeys.all() }),
   });
 };
 

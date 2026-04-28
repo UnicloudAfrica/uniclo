@@ -46,7 +46,7 @@ const VolumesSection: React.FC<VolumesSectionProps> = ({
           <SearchableSelect
             label="Volume type"
             value={vol.volume_type_id}
-            onChange={(e: any) =>
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
               updateAdditionalVolume(configId, vol.id, { volume_type_id: e.target.value })
             }
             options={[

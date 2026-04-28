@@ -104,7 +104,10 @@ export const fetchOnboardingSubmission = async ({
   }
 
   const queryString = buildQueryParams({ target, tenantId, userId });
-  const response = await api("GET", `/business/onboarding/${step}/review?${queryString}`);
+  const response = await api<{ data?: unknown; meta?: Record<string, unknown> }>(
+    "GET",
+    `/business/onboarding/${step}/review?${queryString}`,
+  );
 
   return {
     submission: (response?.data as Record<string, unknown> | null) ?? null,
@@ -229,7 +232,10 @@ export const fetchOnboardingReviewQueue = async (
   params: QueueParams = {}
 ): Promise<QueueSubmissionRecord[]> => {
   const query = buildQueueQuery(params ?? {});
-  const response = await api("GET", `/business/onboarding/review-queue${query}`);
+  const response = await api<{ data?: unknown }>(
+    "GET",
+    `/business/onboarding/review-queue${query}`,
+  );
 
   const data = response?.data;
   return Array.isArray(data) ? (data as QueueSubmissionRecord[]) : [];

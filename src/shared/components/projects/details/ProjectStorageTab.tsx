@@ -51,7 +51,7 @@ interface Snapshot {
 interface ProjectStorageTabProps {
   projectId?: string;
   region?: string;
-  volumes?: any[];
+  volumes?: Volume[];
   isLoading?: boolean;
   onRefresh?: () => void;
 }
@@ -503,8 +503,9 @@ function VolumesView({
       ToastUtils.success("Volume creation initiated");
       setShowCreateForm(false);
       invalidateVolumes();
-    } catch (err: any) {
-      ToastUtils.error(err.response?.data?.message || "Failed to create volume");
+    } catch (err) {
+      const e = err as { response?: { data?: { message?: string } } };
+      ToastUtils.error(e.response?.data?.message || "Failed to create volume");
     } finally {
       setActionLoading(null);
     }
@@ -523,8 +524,9 @@ function VolumesView({
       ToastUtils.success("Volume deleted successfully");
       setDeletingVolumeId(null);
       invalidateVolumes();
-    } catch (err: any) {
-      ToastUtils.error(err.response?.data?.message || "Failed to delete volume");
+    } catch (err) {
+      const e = err as { response?: { data?: { message?: string } } };
+      ToastUtils.error(e.response?.data?.message || "Failed to delete volume");
     } finally {
       setActionLoading(null);
     }
@@ -544,8 +546,9 @@ function VolumesView({
       ToastUtils.success("Volume extend initiated");
       setExtendingVolume(null);
       invalidateVolumes();
-    } catch (err: any) {
-      ToastUtils.error(err.response?.data?.message || "Failed to extend volume");
+    } catch (err) {
+      const e = err as { response?: { data?: { message?: string } } };
+      ToastUtils.error(e.response?.data?.message || "Failed to extend volume");
     } finally {
       setActionLoading(null);
     }
@@ -565,8 +568,9 @@ function VolumesView({
       );
       ToastUtils.success("Volume attach initiated");
       invalidateVolumes();
-    } catch (err: any) {
-      ToastUtils.error(err.response?.data?.message || "Failed to attach volume");
+    } catch (err) {
+      const e = err as { response?: { data?: { message?: string } } };
+      ToastUtils.error(e.response?.data?.message || "Failed to attach volume");
     } finally {
       setActionLoading(null);
     }
@@ -584,8 +588,9 @@ function VolumesView({
       );
       ToastUtils.success("Volume detach initiated");
       invalidateVolumes();
-    } catch (err: any) {
-      ToastUtils.error(err.response?.data?.message || "Failed to detach volume");
+    } catch (err) {
+      const e = err as { response?: { data?: { message?: string } } };
+      ToastUtils.error(e.response?.data?.message || "Failed to detach volume");
     } finally {
       setActionLoading(null);
     }
@@ -866,7 +871,8 @@ function SnapshotsView({
   const snapshots: Snapshot[] = useMemo(() => {
     if (!snapshotsData) return [];
     if (Array.isArray(snapshotsData)) return snapshotsData;
-    if (Array.isArray((snapshotsData as any).data)) return (snapshotsData as any).data;
+    if (Array.isArray((snapshotsData as { data?: unknown[] }).data))
+      return (snapshotsData as { data: Snapshot[] }).data;
     return [];
   }, [snapshotsData]);
 

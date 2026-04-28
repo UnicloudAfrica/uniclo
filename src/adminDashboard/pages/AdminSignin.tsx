@@ -83,7 +83,7 @@ export default function AdminLogin() {
       password,
     };
     mutate(userData, {
-      onSuccess: (res: any) => {
+      onSuccess: (res: Record<string, unknown>) => {
         const requiresTwoFactor =
           res?.data?.two_factor_enabled ??
           res?.data?.two_factor_required ??
@@ -99,7 +99,7 @@ export default function AdminLogin() {
         setUserEmail(email);
         navigate("/verify-admin-mail"); // Redirect on success
       },
-      onError: (err: any) => {
+      onError: (err: unknown) => {
         setErrors({ general: err.message || "Failed to login" });
         logger.log(err);
       },

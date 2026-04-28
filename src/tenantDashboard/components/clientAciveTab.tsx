@@ -6,7 +6,7 @@ const toTitleCase = (value = "") =>
   value
     .replace(/[-_]/g, " ")
     .split(" ")
-    .map((word: any) => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 
 const buildBreadcrumbs = (pathname = "") => {

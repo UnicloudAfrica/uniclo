@@ -12,7 +12,7 @@ export default function PurchasedModules() {
 
   const instances = fetchedInstances.data;
 
-  const formatDate = (dateString: any) => {
+  const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
     return date.toLocaleString("en-US", {
@@ -29,26 +29,26 @@ export default function PurchasedModules() {
     {
       key: "name",
       header: "Instance Name",
-      render: (val: any) => <span className="text-[var(--theme-text-color)]">{val || "N/A"}</span>,
+      render: (val: unknown) => <span className="text-[var(--theme-text-color)]">{val || "N/A"}</span>,
     },
     {
       key: "storage_size_gb",
       header: "Disk Size",
-      render: (val: any) => (
+      render: (val: unknown) => (
         <span className="text-[var(--theme-text-color)]">{val ? `${val} GiB` : "N/A"}</span>
       ),
     },
     {
       key: "os_image",
       header: "OS Image",
-      render: (_: any, item: any) => (
+      render: (_: unknown, item: unknown) => (
         <span className="text-[var(--theme-text-color)]">{item.os_image?.name || "N/A"}</span>
       ),
     },
     {
       key: "status",
       header: "Status",
-      render: (val: any) => {
+      render: (val: unknown) => {
         const baseClass =
           "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize";
         let styleClass = "";
@@ -74,7 +74,7 @@ export default function PurchasedModules() {
     {
       key: "created_at",
       header: "Creation Date",
-      render: (val: any) => (
+      render: (val: unknown) => (
         <span className="text-[var(--theme-text-color)]">{formatDate(val)}</span>
       ),
     },

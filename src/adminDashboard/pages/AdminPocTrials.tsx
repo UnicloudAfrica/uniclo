@@ -5,8 +5,6 @@ import {
   ArrowRightLeft,
   Building2,
   Inbox,
-  Check,
-  X,
 } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
 import ModernStatsCard from "@/shared/components/ui/ModernStatsCard";
@@ -16,8 +14,6 @@ import {
   useFetchPocTrials,
   useFetchPocStatistics,
   useFetchPocTrialRequests,
-  useApprovePocTrialRequest,
-  useRejectPocTrialRequest,
 } from "@/hooks/adminHooks/pocTrialHooks";
 import type { PocTrial, PocTrialRequest, PocTrialFilters } from "@/types/pocTrial";
 import { PRODUCT_TYPES, POC_STATUS_OPTIONS, POC_REQUEST_STATUS_OPTIONS } from "@/types/pocTrial";
@@ -25,7 +21,6 @@ import ExtendTrialModal from "../components/pocTrialComponents/ExtendTrialModal"
 import CancelTrialModal from "../components/pocTrialComponents/CancelTrialModal";
 import ApproveRequestModal from "../components/pocTrialComponents/ApproveRequestModal";
 import RejectRequestModal from "../components/pocTrialComponents/RejectRequestModal";
-import ToastUtils from "@/utils/toastUtil";
 
 const AdminPocTrials: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"trials" | "requests">("trials");
@@ -50,7 +45,7 @@ const AdminPocTrials: React.FC = () => {
   const trials = trialsResponse?.data ?? [];
   const requests = requestsResponse?.data ?? [];
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): "success" | "info" | "warning" | "danger" | "neutral" => {
     switch (status) {
       case "active":
         return "success";
@@ -59,22 +54,22 @@ const AdminPocTrials: React.FC = () => {
       case "expired":
         return "warning";
       case "cancelled":
-        return "error";
+        return "danger";
       default:
-        return "default";
+        return "neutral";
     }
   };
 
-  const getRequestStatusColor = (status: string) => {
+  const getRequestStatusColor = (status: string): "success" | "warning" | "danger" | "neutral" => {
     switch (status) {
       case "pending":
         return "warning";
       case "approved":
         return "success";
       case "rejected":
-        return "error";
+        return "danger";
       default:
-        return "default";
+        return "neutral";
     }
   };
 
@@ -102,7 +97,7 @@ const AdminPocTrials: React.FC = () => {
       header: "Status",
       sortable: true,
       render: (_: unknown, trial: PocTrial) => (
-        <StatusPill status={trial.status} color={getStatusColor(trial.status)} />
+        <StatusPill status={trial.status} tone={getStatusColor(trial.status)} />
       ),
     },
     { key: "trial_days", header: "Trial Days", sortable: true },
@@ -181,7 +176,7 @@ const AdminPocTrials: React.FC = () => {
       key: "status",
       header: "Status",
       render: (_: unknown, req: PocTrialRequest) => (
-        <StatusPill status={req.status} color={getRequestStatusColor(req.status)} />
+        <StatusPill status={req.status} tone={getRequestStatusColor(req.status)} />
       ),
     },
     {

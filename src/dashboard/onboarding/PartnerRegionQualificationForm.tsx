@@ -220,13 +220,13 @@ const setNestedValue = (
     cursor = cursor[key] as Record<string, unknown>;
   });
 
-  cursor[finalKey as any] = value;
+  cursor[finalKey] = value;
 };
 
 interface PartnerRegionQualificationFormProps {
   value: Record<string, unknown> | null | undefined;
   meta?: Record<string, unknown>;
-  onChange: Dispatch<SetStateAction<Record<string, unknown>>>;
+  onChange: Dispatch<SetStateAction<unknown>>;
 }
 
 const PartnerRegionQualificationForm = ({
@@ -355,7 +355,8 @@ const PartnerRegionQualificationForm = ({
     payload.region.msp_credentials.password &&
     (payload.region.provider === "nobus"
       ? Boolean(
-          payload.region.msp_credentials.username || (payload.region.msp_credentials as any).email
+          payload.region.msp_credentials.username ||
+            (payload.region.msp_credentials as { email?: string }).email
         )
       : Boolean(payload.region.msp_credentials.username && payload.region.msp_credentials.domain));
 

@@ -44,7 +44,7 @@ export interface StepSummary {
 
 export interface OnboardingReviewPageProps {
   personaOptions?: PersonaOption[];
-  useQueueHook?: (params?: Record<string, unknown>, options?: Record<string, unknown>) => any;
+  useQueueHook?: (params?: Record<string, unknown>, options?: Record<string, unknown>) => unknown;
   fetchSubmissionFn?: (args: {
     target: string;
     tenantId?: string | number | null;
@@ -59,7 +59,7 @@ export interface OnboardingReviewPageProps {
       step: string | null;
     },
     options?: Record<string, unknown>
-  ) => any;
+  ) => unknown;
   useUpdateStatusHook?: () => {
     mutate: (
       args: {

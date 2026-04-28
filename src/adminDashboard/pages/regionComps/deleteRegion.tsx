@@ -3,7 +3,7 @@ import { useDeleteRegion } from "@/hooks/adminHooks/regionHooks"; // Adjust path
 import ToastUtils from "@/utils/toastUtil"; // Adjust path
 import logger from "@/utils/logger";
 
-const DeleteRegionModal = ({ isOpen, onClose, regionId, regionName }: any) => {
+const DeleteRegionModal = ({ isOpen, onClose, regionId, regionName }: { isOpen: boolean; onClose: () => void; regionId: string; regionName: string }) => {
   const { mutate, isPending } = useDeleteRegion();
 
   const handleDelete = () => {

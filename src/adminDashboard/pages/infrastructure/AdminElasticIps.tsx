@@ -41,7 +41,7 @@ const AdminElasticIps: React.FC = () => {
         hierarchy="admin"
         projectId={projectId}
         region={region}
-        hooks={hooks}
+        hooks={hooks as unknown}
         wrapper={({ headerActions, children }) => (
           <AdminPageShell
             title="Elastic IPs"

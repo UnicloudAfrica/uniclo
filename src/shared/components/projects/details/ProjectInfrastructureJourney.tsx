@@ -4,7 +4,7 @@ import { designTokens } from "@/styles/designTokens";
 interface InfrastructureSection {
   key: string;
   label: string;
-  icon: React.ReactElement<any>;
+  icon: React.ReactElement;
 }
 
 interface ProjectInfrastructureJourneyProps {
@@ -34,14 +34,17 @@ const ProjectInfrastructureJourney: React.FC<ProjectInfrastructureJourneyProps> 
           {infrastructureSections.map((section, index) => {
             const isComplete = Boolean(getStatusForSection?.(section.key));
             const isActive = activeSection === section.key;
-            const iconNode = React.cloneElement(section.icon as React.ReactElement<any>, {
-              size: 18,
-              style: {
-                color: isComplete
-                  ? designTokens.colors.success[500]
-                  : designTokens.colors.neutral[400],
-              },
-            });
+            const iconNode = React.cloneElement(
+              section.icon as React.ReactElement<{ size?: number; style?: React.CSSProperties }>,
+              {
+                size: 18,
+                style: {
+                  color: isComplete
+                    ? designTokens.colors.success[500]
+                    : designTokens.colors.neutral[400],
+                },
+              }
+            );
 
             return (
               <button

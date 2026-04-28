@@ -21,7 +21,6 @@ import {
   useFetchExternalMigrations,
   useFetchExternalEndpoints,
 } from "@/shared/hooks/resources";
-import type { ExternalMigration } from "@/shared/hooks/resources/externalMigrationHooks";
 
 interface MigrationDashboardProps {
   context: "admin" | "tenant" | "client";

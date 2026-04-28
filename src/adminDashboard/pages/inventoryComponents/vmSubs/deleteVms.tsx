@@ -2,10 +2,10 @@ import { X, Loader2 } from "lucide-react";
 
 import ToastUtils from "@/utils/toastUtil";
 import { useDeleteVmInstance } from "@/hooks/adminHooks/vmHooks";
-const DeleteVMModal = ({ isOpen, onClose, vm }: any) => {
+const DeleteVMModal = ({ isOpen, onClose, vm }: { isOpen: boolean; onClose: () => void; vm: unknown }) => {
   const { mutate, isPending } = useDeleteVmInstance();
 
-  const handleDeleteConfirm = (e: any) => {
+  const handleDeleteConfirm = (e: unknown) => {
     if (e) e.preventDefault();
     if (vm?.identifier) {
       mutate(vm.identifier, {

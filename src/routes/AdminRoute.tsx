@@ -2,6 +2,7 @@ import React, { type JSX } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import useAuthStore from "../stores/authStore";
+import AcfRealtimeStatusPortal from "../adminDashboard/pages/integrations/anycloudflow/realtime/AcfRealtimeStatusPortal";
 
 interface AdminRouteProps {
   children?: React.ReactNode;
@@ -22,5 +23,13 @@ export default function AdminRoute({ children }: AdminRouteProps): JSX.Element {
   if (!hasHydrated) return <LoaderScreen />;
   if (!isAuthenticated || role !== "admin") return <Navigate to="/admin-signin" replace />;
 
-  return (children || <Outlet />) as JSX.Element;
+  // Mount the AnyCloudFlow realtime status pill in the shared admin header
+  // via a portal — no edits required to DashboardHeadbar. See
+  // AcfRealtimeStatusPortal for the DOM attachment strategy.
+  return (
+    <>
+      <AcfRealtimeStatusPortal />
+      {(children || <Outlet />) as JSX.Element}
+    </>
+  );
 }

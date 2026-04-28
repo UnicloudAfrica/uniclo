@@ -22,15 +22,15 @@ interface ProviderConfig {
 const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
   zadara: {
     label: "UCA zCompute",
-    shortLabel: "Zadara",
+    shortLabel: "Zadara", // allow-provider-name — admin-only badge
     dotColor: "bg-blue-500",
     bgColor: "bg-blue-50",
     textColor: "text-blue-700",
     borderColor: "border-blue-200",
   },
   nobus: {
-    label: "Nobus Cloud",
-    shortLabel: "Nobus",
+    label: "Nobus Cloud", // allow-provider-name — admin-only badge
+    shortLabel: "Nobus", // allow-provider-name — admin-only badge
     dotColor: "bg-emerald-500",
     bgColor: "bg-emerald-50",
     textColor: "text-emerald-700",

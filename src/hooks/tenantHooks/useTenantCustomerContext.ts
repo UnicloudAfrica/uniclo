@@ -3,9 +3,37 @@ import useTenantAuthStore from "@/stores/tenantAuthStore";
 import { useFetchTenantPartners, useFetchTenantPartnerClients } from "./partnerHooks";
 import { useSharedClients } from "../sharedCalculatorHooks";
 
+type TenantShape = {
+  id?: string | number;
+  identifier?: string;
+  slug?: string;
+  name?: string;
+  company_name?: string;
+  business?: { name?: string } | null;
+  [key: string]: unknown;
+};
+
+type PartnerShape = {
+  id?: string | number;
+  identifier?: string;
+  slug?: string;
+  code?: string;
+  name?: string;
+  company_name?: string;
+  business?: { name?: string } | null;
+  [key: string]: unknown;
+};
+
+type TenantAuthShape = {
+  tenant?: TenantShape | null;
+  profile?: TenantShape | null;
+  user?: { tenant_id?: string | number } | null;
+  [key: string]: unknown;
+};
+
 export const useTenantCustomerContext = (options: { enabled?: boolean } = {}) => {
   const { enabled = true } = options;
-  const tenantAuth = useTenantAuthStore((state: any) => state);
+  const tenantAuth = useTenantAuthStore((state) => state) as unknown as TenantAuthShape | null;
 
   const selfTenant = tenantAuth?.tenant || tenantAuth?.profile || null;
   const selfTenantId = selfTenant?.id || tenantAuth?.user?.tenant_id || "";
@@ -37,7 +65,7 @@ export const useTenantCustomerContext = (options: { enabled?: boolean } = {}) =>
   );
 
   const tenants = useMemo(() => {
-    const list: any[] = [];
+    const list: Array<Record<string, unknown> & { id: string | number; identifier?: string; name?: string; is_self?: boolean }> = [];
     if (selfTenantId) {
       list.push({
         id: selfTenantId,
@@ -52,18 +80,19 @@ export const useTenantCustomerContext = (options: { enabled?: boolean } = {}) =>
       });
     }
 
-    partners.forEach((partner: any) => {
-      const id = partner?.id;
+    partners.forEach((partner) => {
+      const p = partner as PartnerShape | null;
+      const id = p?.id;
       if (!id) return;
       list.push({
-        ...partner,
+        ...(p as Record<string, unknown>),
         id,
-        identifier: partner?.identifier || partner?.slug || partner?.code || id,
+        identifier: p?.identifier || p?.slug || p?.code || String(id),
         name:
-          partner?.name ||
-          partner?.company_name ||
-          partner?.business?.name ||
-          partner?.identifier ||
+          p?.name ||
+          p?.company_name ||
+          p?.business?.name ||
+          p?.identifier ||
           `Tenant ${id}`,
       });
     });

@@ -27,8 +27,8 @@ const AdminKeyPairs: React.FC = () => {
 
   const projects: Project[] = useMemo(
     () =>
-      Array.isArray((projectsData as Record<string, any>)?.data)
-        ? (projectsData as Record<string, any>).data
+      Array.isArray((projectsData as Record<string, unknown>)?.data)
+        ? (projectsData as Record<string, unknown>).data
         : [],
     [projectsData]
   );
@@ -144,7 +144,7 @@ const AdminKeyPairs: React.FC = () => {
         hierarchy="admin"
         projectId={projectId}
         region={region}
-        hooks={hooks}
+        hooks={hooks as unknown}
         hideResourceHeader={true}
         wrapper={({ headerActions, children }) => (
           <AdminPageShell

@@ -27,12 +27,12 @@ export interface ProjectProvisioningResult {
   setForceHideProvisioning: React.Dispatch<React.SetStateAction<boolean>>;
   setupSteps: SetupStep[];
   allStepsComplete: boolean;
-  networkData: any;
+  networkData: unknown;
   refetchNetworkStatus: () => void;
 }
 
 interface UseProjectProvisioningParams {
-  project: Record<string, any> | undefined;
+  project: Record<string, unknown> | undefined;
   projectId: string | null;
   resolvedProjectId: string | undefined;
   isNewProject: boolean;
@@ -117,7 +117,7 @@ export function useProjectProvisioning({
   const { data: networkStatusData, refetch: refetchNetworkStatus } = useProjectNetworkStatus(
     resolvedProjectId,
     { enabled: Boolean(resolvedProjectId) }
-  ) as { data: any; refetch: () => void };
+  ) as { data: unknown; refetch: () => void };
 
   // Track previous status to detect provisioning completion
   const prevProjectStatusRef = useRef<string | undefined>(undefined);

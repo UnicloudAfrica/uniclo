@@ -31,7 +31,7 @@ interface ResourceAction {
   icon?: ReactNode;
   variant?: ButtonVariant;
   disabled?: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface ResourceListCardProps {
@@ -79,7 +79,7 @@ export const ResourceListCard: React.FC<ResourceListCardProps> = memo(
           {statuses.length > 0 && (
             <div className="flex flex-wrap items-center gap-2">
               {statuses.map(({ label, tone = "neutral" }, index) => (
-                <StatusPill key={`${label}-${index}`} label={label} tone={tone as any} />
+                <StatusPill key={`${label}-${index}`} label={label} tone={tone as React.ComponentProps<typeof StatusPill>["tone"]} />
               ))}
             </div>
           )}

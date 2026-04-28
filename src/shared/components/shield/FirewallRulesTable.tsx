@@ -79,7 +79,11 @@ const FirewallRulesTable: React.FC<FirewallRulesTableProps> = ({ domainId }) => 
         label: "Delete",
         icon: <Trash2 size={14} />,
         tone: "danger" as const,
-        onClick: (row) => deleteRule.mutate({ domainId, ruleId: row.id }),
+        onClick: (row) => {
+          if (window.confirm(`Delete firewall rule "${row.description || row.expression}"?`)) {
+            deleteRule.mutate({ domainId, ruleId: row.id });
+          }
+        },
       },
     ],
     [domainId, deleteRule]
@@ -93,7 +97,7 @@ const FirewallRulesTable: React.FC<FirewallRulesTableProps> = ({ domainId }) => 
         action: form.action,
         description: form.description,
         priority: parseInt(form.priority, 10),
-      } as never,
+      },
       { onSuccess: () => setShowAdd(false) }
     );
   };
@@ -132,7 +136,7 @@ const FirewallRulesTable: React.FC<FirewallRulesTableProps> = ({ domainId }) => 
               label="Action"
               options={ACTION_OPTIONS}
               value={form.action}
-              onChange={(val) => setForm((p) => ({ ...p, action: val }))}
+              onChange={(e) => setForm((p) => ({ ...p, action: e.target.value }))}
             />
             <ModernInput
               label="Description"

@@ -3,6 +3,14 @@ import { Plus, HardDrive } from "lucide-react";
 import useCartStore from "@/stores/cartStore";
 import { useFetchCalculatorOptions, useFetchPublicRegions } from "@/hooks/useCostExplorer";
 
+interface VolumeType {
+  id: number;
+  name: string;
+  unit_local?: number;
+  price_per_gb?: number;
+  currency?: string;
+}
+
 export default function StorageConfigurator() {
   const { data: regions } = useFetchPublicRegions();
   const [region, setRegion] = useState("");
@@ -14,11 +22,11 @@ export default function StorageConfigurator() {
   const [months, setMonths] = useState(1);
 
   const regionList = Array.isArray(regions) ? regions : [];
-  const volumeTypes = options?.block_storage ?? [];
-  const volType = volumeTypes.find((v: any) => v.id === volumeTypeId);
-  const pricePerGb = (volType as any)?.unit_local ?? (volType as any)?.price_per_gb ?? 0;
+  const volumeTypes = (options?.block_storage ?? []) as VolumeType[];
+  const volType = volumeTypes.find((v: VolumeType) => v.id === volumeTypeId);
+  const pricePerGb = volType?.unit_local ?? volType?.price_per_gb ?? 0;
   const totalMonthly = pricePerGb * sizeGb * quantity;
-  const currency = (volType as any)?.currency ?? "NGN";
+  const currency = volType?.currency ?? "NGN";
   const fmt = (v: number) => `₦${v.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
   return (
@@ -34,7 +42,7 @@ export default function StorageConfigurator() {
       <div className="rounded-lg border border-gray-200 p-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <div><label className="mb-1 block text-xs font-medium text-gray-600">Region *</label><select value={region} onChange={(e) => setRegion(e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"><option value="">Select region</option>{regionList.map((r) => <option key={r.code} value={r.code}>{r.name}</option>)}</select></div>
-          <div><label className="mb-1 block text-xs font-medium text-gray-600">Volume Type *</label><select value={volumeTypeId} onChange={(e) => setVolumeTypeId(+e.target.value)} disabled={!region} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-50"><option value={0}>Select type</option>{volumeTypes.map((v: any) => <option key={v.id} value={v.id}>{v.name} — {fmt(v.unit_local ?? v.price_per_gb ?? 0)}/GB/mo</option>)}</select></div>
+          <div><label className="mb-1 block text-xs font-medium text-gray-600">Volume Type *</label><select value={volumeTypeId} onChange={(e) => setVolumeTypeId(+e.target.value)} disabled={!region} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-50"><option value={0}>Select type</option>{volumeTypes.map((v: VolumeType) => <option key={v.id} value={v.id}>{v.name} — {fmt(v.unit_local ?? v.price_per_gb ?? 0)}/GB/mo</option>)}</select></div>
         </div>
       </div>
 
@@ -49,10 +57,10 @@ export default function StorageConfigurator() {
       {volType && (
         <div className="rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 p-5">
           <div className="flex items-center justify-between">
-            <div><span className="text-sm font-semibold text-gray-800">{(volType as any).name} — {sizeGb}GB × {quantity}</span></div>
+            <div><span className="text-sm font-semibold text-gray-800">{volType.name} — {sizeGb}GB × {quantity}</span></div>
             <span className="text-xl font-bold text-orange-700">{fmt(totalMonthly)}/mo</span>
           </div>
-          <button onClick={() => addItem({ category: "storage", name: `${(volType as any).name} ${sizeGb}GB × ${quantity}`, description: `${(volType as any).name} block storage`, config: { volume_type_id: volumeTypeId, size_gb: sizeGb, quantity, region, months }, monthly_cost: totalMonthly, one_time_cost: 0, quantity: 1, currency })} className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-700">
+          <button onClick={() => addItem({ category: "storage", name: `${volType.name} ${sizeGb}GB × ${quantity}`, description: `${volType.name} block storage`, config: { volume_type_id: volumeTypeId, size_gb: sizeGb, quantity, region, months }, monthly_cost: totalMonthly, one_time_cost: 0, quantity: 1, currency })} className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-700">
             <Plus className="h-4 w-4" />Add to Cart
           </button>
         </div>

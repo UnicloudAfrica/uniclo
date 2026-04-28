@@ -14,7 +14,6 @@ import { apiRegistry } from "../../api/apiRegistry";
 import logger from "@/utils/logger";
 import type {
   ManagedDatabase,
-  ManagedDatabaseBackup,
   DatabaseCredentials,
   DatabaseQuoteResponse,
   DatabaseOrderResponse,
@@ -22,13 +21,12 @@ import type {
   DatabaseMetricHistoryEntry,
   AvailableUpgrades,
   ManagedDatabaseOperation,
-  CloudAccount,
-  CloudAccountProvider,
 } from "@/types/managedDatabase";
 
 type AnyRecord = Record<string, unknown>;
 type Identifier = string | number;
-type QueryOptions = Partial<Omit<UseQueryOptions<unknown, Error>, "queryKey" | "queryFn">>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type QueryOptions = Partial<Omit<UseQueryOptions<any, Error>, "queryKey" | "queryFn">>;
 
 const asEnvelope = <T = AnyRecord>(
   res: unknown
@@ -204,7 +202,7 @@ export const useFetchDatabaseBackups = (
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/managed-databases/${identifier}/backups`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
-      return envelope.data ?? [];
+      return (envelope.data ?? []) as AnyRecord;
     },
     enabled: Boolean(identifier) && enabled,
     staleTime: 1000 * 60 * 2,
@@ -478,7 +476,7 @@ export const useFetchMetricHistory = (
       const envelope = asEnvelope<DatabaseMetricHistoryEntry[]>(
         await entry.silentApi.get<AnyRecord>(uri)
       );
-      return envelope.data ?? [];
+      return (envelope.data ?? []) as DatabaseMetricHistoryEntry[];
     },
     enabled: Boolean(identifier) && Boolean(metricType) && enabled,
     staleTime: 1000 * 60 * 5,
@@ -799,7 +797,7 @@ export const useFetchCloudAccountProviders = (options: QueryOptions = {}) => {
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/managed-databases/cloud-accounts/providers`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
-      return envelope.data ?? [];
+      return (envelope.data ?? []) as AnyRecord;
     },
     staleTime: 1000 * 60 * 60, // 1 hour
     ...options,
@@ -816,7 +814,7 @@ export const useFetchCloudAccounts = (options: QueryOptions = {}) => {
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/managed-databases/cloud-accounts`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
-      return envelope.data ?? [];
+      return (envelope.data ?? []) as AnyRecord;
     },
     staleTime: 1000 * 60 * 2, // 2 min
     ...options,
@@ -941,7 +939,7 @@ export const useFetchDatabaseUsers = (identifier: Identifier | null | undefined,
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/managed-databases/${identifier}/users`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
-      return envelope.data ?? [];
+      return (envelope.data ?? []) as AnyRecord;
     },
     enabled: Boolean(identifier) && enabled,
     staleTime: 1000 * 60 * 2,
@@ -1077,7 +1075,7 @@ export const useFetchInstanceClasses = (engine?: string, options: QueryOptions =
       const qs = engine ? `?engine=${engine}` : "";
       const uri = `${entry.urlPrefix}/managed-databases/scaling/instance-classes${qs}`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
-      return envelope.data ?? [];
+      return (envelope.data ?? []) as AnyRecord;
     },
     staleTime: 1000 * 60 * 30,
     ...options,
@@ -1110,7 +1108,7 @@ export const useFetchDatabaseReplicas = (identifier: Identifier | null | undefin
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/managed-databases/${identifier}/replicas`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
-      return envelope.data ?? [];
+      return (envelope.data ?? []) as AnyRecord;
     },
     enabled: Boolean(identifier) && enabled,
     staleTime: 1000 * 60 * 2,
@@ -1176,7 +1174,7 @@ export const useFetchParameterGroups = (engine?: string, options: QueryOptions =
       const qs = engine ? `?engine=${engine}` : "";
       const uri = `${entry.urlPrefix}/managed-databases/parameter-groups${qs}`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
-      return envelope.data ?? [];
+      return (envelope.data ?? []) as AnyRecord;
     },
     staleTime: 1000 * 60 * 5,
     ...options,
@@ -1275,7 +1273,7 @@ export const useFetchAlertRules = (identifier: Identifier | null | undefined, op
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/managed-databases/${identifier}/alerts`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
-      return envelope.data ?? [];
+      return (envelope.data ?? []) as AnyRecord;
     },
     enabled: Boolean(identifier) && enabled,
     staleTime: 1000 * 60 * 2,
@@ -1357,7 +1355,7 @@ export const useFetchAlertEvents = (identifier: Identifier | null | undefined, o
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/managed-databases/${identifier}/alert-events`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
-      return envelope.data ?? [];
+      return (envelope.data ?? []) as AnyRecord;
     },
     enabled: Boolean(identifier) && enabled,
     staleTime: 1000 * 30,
@@ -1406,7 +1404,7 @@ export const useFetchNotificationChannels = (options: QueryOptions = {}) => {
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/managed-databases/notification-channels`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
-      return envelope.data ?? [];
+      return (envelope.data ?? []) as AnyRecord;
     },
     staleTime: 1000 * 60 * 5,
     ...options,
@@ -1490,7 +1488,7 @@ export const useFetchDatabaseUsage = (
       const qs = new URLSearchParams(Object.entries(params).filter(([, v]) => v) as [string, string][]).toString();
       const uri = `${entry.urlPrefix}/managed-databases/${identifier}/usage${qs ? `?${qs}` : ""}`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
-      return envelope.data ?? [];
+      return (envelope.data ?? []) as AnyRecord;
     },
     enabled: Boolean(identifier) && enabled,
     staleTime: 1000 * 60 * 5,
@@ -1581,7 +1579,7 @@ export const useFetchWebhookEndpoints = (options: QueryOptions = {}) => {
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/managed-databases/webhooks`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
-      return envelope.data ?? [];
+      return (envelope.data ?? []) as AnyRecord;
     },
     staleTime: 1000 * 60 * 2,
     ...options,
@@ -1674,7 +1672,7 @@ export const useFetchWebhookDeliveries = (endpointId: number | null | undefined,
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/managed-databases/webhooks/${endpointId}/deliveries`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
-      return envelope.data ?? [];
+      return (envelope.data ?? []) as AnyRecord;
     },
     enabled: Boolean(endpointId) && enabled,
     staleTime: 1000 * 30,
@@ -1708,7 +1706,7 @@ export const useFetchDatabaseEvents = (databaseId?: number | string, options: Qu
       const qs = databaseId ? `?database_id=${databaseId}` : "";
       const uri = `${entry.urlPrefix}/managed-databases/events${qs}`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
-      return envelope.data ?? [];
+      return (envelope.data ?? []) as AnyRecord;
     },
     staleTime: 1000 * 30,
     ...options,

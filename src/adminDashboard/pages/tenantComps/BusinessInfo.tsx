@@ -4,16 +4,16 @@ import { useVerifyBusiness } from "@/hooks/businessHooks";
 import ToastUtils from "@/utils/toastUtil";
 
 interface BusinessInfoProps {
-  formData: any;
-  setFormData: (data: any) => void;
-  errors: any;
-  setErrors: (errors: any) => void;
-  industries: any[] | null | undefined;
+  formData: unknown;
+  setFormData: (data: unknown) => void;
+  errors: unknown;
+  setErrors: (errors: Record<string, string[]>) => void;
+  industries: unknown[] | null | undefined;
   isIndustriesFetching: boolean;
 }
 
 const BusinessInfo: React.FC<BusinessInfoProps> & {
-  validate: (data: Record<string, any>) => Record<string, string>;
+  validate: (data: Record<string, unknown>) => Record<string, string>;
 } = ({ formData, setFormData, errors, setErrors, industries, isIndustriesFetching }) => {
   const [isBusinessVerified, setIsBusinessVerified] = useState(formData.business.verified);
   const [verificationType, setVerificationType] = useState(""); // Local state for CAC verification type
@@ -90,9 +90,8 @@ const BusinessInfo: React.FC<BusinessInfoProps> & {
             id="verification_type"
             value={verificationType}
             onChange={handleInputChange}
-            className={`w-full input-field ${
-              errors.verification_type ? "border-red-500" : "border-gray-300"
-            } rounded px-3 py-2`}
+            className={`w-full input-field ${errors.verification_type ? "border-red-500" : "border-gray-300"
+              } rounded px-3 py-2`}
             disabled={isIndustriesFetching || isPending}
           >
             <option value="">Select verification type</option>
@@ -114,9 +113,8 @@ const BusinessInfo: React.FC<BusinessInfoProps> & {
             id="business_structure"
             value={formData.business.type}
             onChange={handleInputChange}
-            className={`w-full input-field ${
-              errors.business_structure ? "border-red-500" : "border-gray-300"
-            } rounded px-3 py-2`}
+            className={`w-full input-field ${errors.business_structure ? "border-red-500" : "border-gray-300"
+              } rounded px-3 py-2`}
             disabled={isIndustriesFetching || isPending}
           >
             <option value="">Select business structure</option>
@@ -140,9 +138,8 @@ const BusinessInfo: React.FC<BusinessInfoProps> & {
             value={formData.business.name}
             onChange={handleInputChange}
             placeholder="e.g., Acme Corp"
-            className={`w-full input-field ${
-              errors.business_name ? "border-red-500" : "border-gray-300"
-            } rounded px-3 py-2`}
+            className={`w-full input-field ${errors.business_name ? "border-red-500" : "border-gray-300"
+              } rounded px-3 py-2`}
             disabled={isIndustriesFetching || isPending}
           />
           {errors.business_name && (
@@ -157,9 +154,8 @@ const BusinessInfo: React.FC<BusinessInfoProps> & {
             id="company_type"
             value={formData.business.company_type}
             onChange={handleInputChange}
-            className={`w-full input-field ${
-              errors.company_type ? "border-red-500" : "border-gray-300"
-            } rounded px-3 py-2`}
+            className={`w-full input-field ${errors.company_type ? "border-red-500" : "border-gray-300"
+              } rounded px-3 py-2`}
             disabled={isIndustriesFetching || isPending}
           >
             <option value="">Select company type</option>
@@ -188,9 +184,8 @@ const BusinessInfo: React.FC<BusinessInfoProps> & {
               id="industry"
               value={formData.business.industry}
               onChange={handleInputChange}
-              className={`w-full input-field ${
-                errors.industry ? "border-red-500" : "border-gray-300"
-              } rounded px-3 py-2`}
+              className={`w-full input-field ${errors.industry ? "border-red-500" : "border-gray-300"
+                } rounded px-3 py-2`}
               disabled={isIndustriesFetching || isPending}
             >
               <option value="">Select an industry</option>
@@ -218,9 +213,8 @@ const BusinessInfo: React.FC<BusinessInfoProps> & {
             value={formData.business.registration_number}
             onChange={handleInputChange}
             placeholder="e.g., 123456789"
-            className={`w-full input-field ${
-              errors.registration_number ? "border-red-500" : "border-gray-300"
-            } rounded px-3 py-2`}
+            className={`w-full input-field ${errors.registration_number ? "border-red-500" : "border-gray-300"
+              } rounded px-3 py-2`}
             disabled={isIndustriesFetching || isPending}
           />
           {errors.registration_number && (
@@ -237,9 +231,8 @@ const BusinessInfo: React.FC<BusinessInfoProps> & {
             value={formData.business.tin_number}
             onChange={handleInputChange}
             placeholder="e.g., 98-7654321"
-            className={`w-full input-field ${
-              errors.tin_number ? "border-red-500" : "border-gray-300"
-            } rounded px-3 py-2`}
+            className={`w-full input-field ${errors.tin_number ? "border-red-500" : "border-gray-300"
+              } rounded px-3 py-2`}
             disabled={isIndustriesFetching || isPending}
           />
           {errors.tin_number && <p className="text-red-500 text-xs mt-1">{errors.tin_number}</p>}
@@ -254,9 +247,8 @@ const BusinessInfo: React.FC<BusinessInfoProps> & {
             value={formData.business.website}
             onChange={handleInputChange}
             placeholder="e.g., https://example.com"
-            className={`w-full input-field ${
-              errors.website ? "border-red-500" : "border-gray-300"
-            } rounded px-3 py-2`}
+            className={`w-full input-field ${errors.website ? "border-red-500" : "border-gray-300"
+              } rounded px-3 py-2`}
             disabled={isIndustriesFetching || isPending}
           />
           {errors.website && <p className="text-red-500 text-xs mt-1">{errors.website}</p>}
@@ -271,9 +263,8 @@ const BusinessInfo: React.FC<BusinessInfoProps> & {
             value={formData.business.email}
             onChange={handleInputChange}
             placeholder="Enter business email address"
-            className={`w-full input-field ${
-              errors.business_email ? "border-red-500" : "border-gray-300"
-            } rounded px-3 py-2`}
+            className={`w-full input-field ${errors.business_email ? "border-red-500" : "border-gray-300"
+              } rounded px-3 py-2`}
           />
           {errors.business_email && (
             <p className="text-red-500 text-xs mt-1">{errors.business_email}</p>
@@ -289,9 +280,8 @@ const BusinessInfo: React.FC<BusinessInfoProps> & {
             value={formData.business.phone}
             onChange={handleInputChange}
             placeholder="Enter business phone (e.g., +1234567890)"
-            className={`w-full input-field ${
-              errors.business_phone ? "border-red-500" : "border-gray-300"
-            } rounded px-3 py-2`}
+            className={`w-full input-field ${errors.business_phone ? "border-red-500" : "border-gray-300"
+              } rounded px-3 py-2`}
           />
           {errors.business_phone && (
             <p className="text-red-500 text-xs mt-1">{errors.business_phone}</p>

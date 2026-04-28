@@ -1,8 +1,8 @@
 /**
  * GeoFilterPanel — Geo-based traffic filtering for a Shield domain.
  */
-import React, { useState, useEffect } from "react";
-import { MapPin } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { MapPin, RefreshCw } from "lucide-react";
 import ModernButton from "@/shared/components/ui/ModernButton";
 import ModernInput from "@/shared/components/ui/ModernInput";
 import ModernSelect from "@/shared/components/ui/ModernSelect";
@@ -22,16 +22,18 @@ const ACTION_OPTIONS = [
 ];
 
 const GeoFilterPanel: React.FC<GeoFilterPanelProps> = ({ domainId }) => {
-  const { data: rawFilter, isLoading } = useFetchGeoFilter(domainId);
+  const { data: rawFilter, isLoading, isError, error, refetch } = useFetchGeoFilter(domainId);
   const filter = rawFilter as ShieldGeoFilter | undefined;
   const setGeoFilter = useSetGeoFilter();
   const [countries, setCountries] = useState("");
   const [action, setAction] = useState<"block" | "allow">("block");
+  const hasInitialized = useRef(false);
 
   useEffect(() => {
-    if (filter) {
+    if (filter && !hasInitialized.current) {
       setCountries(filter.countries.join(", "));
       setAction(filter.action);
+      hasInitialized.current = true;
     }
   }, [filter]);
 
@@ -48,6 +50,23 @@ const GeoFilterPanel: React.FC<GeoFilterPanelProps> = ({ domainId }) => {
     return (
       <div className="flex h-24 items-center justify-center">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--theme-color)] border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="db-surface-card flex flex-col items-center justify-center gap-3 rounded-2xl border p-8 text-center">
+        <p className="text-sm text-red-600">
+          {error?.message || "Failed to load geo-filter settings."}
+        </p>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className="flex items-center gap-1.5 rounded-xl bg-[var(--theme-color)] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+        >
+          <RefreshCw size={14} /> Retry
+        </button>
       </div>
     );
   }
@@ -73,7 +92,7 @@ const GeoFilterPanel: React.FC<GeoFilterPanelProps> = ({ domainId }) => {
           label="Action"
           options={ACTION_OPTIONS}
           value={action}
-          onChange={(val) => setAction(val as "block" | "allow")}
+          onChange={(e) => setAction(e.target.value as "block" | "allow")}
         />
 
         <ModernButton

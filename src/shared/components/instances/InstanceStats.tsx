@@ -1,21 +1,39 @@
+import React from "react";
 import { Server, Play, Square, Network } from "lucide-react";
 import { ModernStatsCard } from "../ui";
 
-const InstanceStats = ({ instances }: any) => {
+interface InstanceSummary {
+  status?: string;
+  bandwidth_count?: number | string;
+  [key: string]: unknown;
+}
+
+interface InstanceStatsProps {
+  instances: InstanceSummary[];
+}
+
+const InstanceStats = ({ instances }: InstanceStatsProps) => {
   const totalInstancesCount = instances.length;
-  const runningCount = instances.filter((instance: any) =>
+  const runningCount = instances.filter((instance) =>
     ["running", "active"].includes((instance.status || "").toLowerCase())
   ).length;
-  const stoppedCount = instances.filter((instance: any) =>
+  const stoppedCount = instances.filter((instance) =>
     ["stopped", "shutoff", "paused", "suspended"].includes((instance.status || "").toLowerCase())
   ).length;
-  const provisioningCount = instances.filter((instance: any) =>
+  const provisioningCount = instances.filter((instance) =>
     ["provisioning", "building", "reboot", "hard_reboot"].includes(
       (instance.status || "").toLowerCase()
     )
   ).length;
 
-  const fleetStats = [
+  const fleetStats: Array<{
+    key: string;
+    title: string;
+    value: string;
+    description: string;
+    icon: React.ReactElement;
+    color: "error" | "success" | "primary" | "warning" | "info";
+  }> = [
     {
       key: "total",
       title: "Total Instances",
@@ -47,7 +65,7 @@ const InstanceStats = ({ instances }: any) => {
       key: "bandwidth",
       title: "Bandwidth Ready",
       value: instances
-        .filter((instance: any) => Number(instance.bandwidth_count || 0) > 0)
+        .filter((instance) => Number(instance.bandwidth_count || 0) > 0)
         .length.toLocaleString(),
       description: "Floating IP or dedicated bandwidth attached",
       icon: <Network size={24} />,
@@ -57,7 +75,7 @@ const InstanceStats = ({ instances }: any) => {
 
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      {fleetStats.map((stat: any) => (
+      {fleetStats.map((stat) => (
         <ModernStatsCard
           key={stat.key}
           title={stat.title}

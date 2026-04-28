@@ -211,9 +211,7 @@ export const shieldKeys = {
     ["shield-stats", context, domainId] as const,
   attacks: (context: string, domainId: string) =>
     ["shield-attacks", context, domainId] as const,
-  events: (context: string, domainId: string) =>
-    ["shield-events", context, domainId] as const,
-  dns: (context: string, domainId: string) =>
+dns: (context: string, domainId: string) =>
     ["shield-dns", context, domainId] as const,
   ssl: (context: string, domainId: string) =>
     ["shield-ssl", context, domainId] as const,
@@ -248,7 +246,7 @@ export function useVerifyShieldDomain() {
       return asEnvelope(res.data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: shieldDomainKeys.all });
+      queryClient.invalidateQueries({ queryKey: shieldDomainKeys.all() });
     },
   });
 }
@@ -266,7 +264,7 @@ export function useActivateShieldDomain() {
       return asEnvelope(res.data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: shieldDomainKeys.all });
+      queryClient.invalidateQueries({ queryKey: shieldDomainKeys.all() });
     },
   });
 }
@@ -316,7 +314,7 @@ export function useSetProtectionMode() {
       queryClient.invalidateQueries({
         queryKey: shieldKeys.protection(context, domainId),
       });
-      queryClient.invalidateQueries({ queryKey: shieldDomainKeys.all });
+      queryClient.invalidateQueries({ queryKey: shieldDomainKeys.all() });
     },
   });
 }
@@ -401,31 +399,6 @@ export function useCreateDnsRecord() {
   });
 }
 
-export function useUpdateDnsRecord() {
-  const { context } = useApiContext();
-  const queryClient = useQueryClient();
-  const { toastApi, urlPrefix } = apiRegistry[context];
-
-  return useMutation({
-    mutationFn: async ({
-      domainId,
-      recordId,
-      ...data
-    }: { domainId: string; recordId: string } & Partial<ShieldDnsRecord>) => {
-      const res = await toastApi.put(
-        `${urlPrefix}/shield/domains/${domainId}/dns/${recordId}`,
-        data
-      );
-      return asEnvelope(res.data);
-    },
-    onSuccess: (_, { domainId }) => {
-      queryClient.invalidateQueries({
-        queryKey: shieldKeys.dns(context, domainId),
-      });
-    },
-  });
-}
-
 export function useDeleteDnsRecord() {
   const { context } = useApiContext();
   const queryClient = useQueryClient();
@@ -487,7 +460,7 @@ export function useProvisionSsl() {
       queryClient.invalidateQueries({
         queryKey: shieldKeys.ssl(context, domainId),
       });
-      queryClient.invalidateQueries({ queryKey: shieldDomainKeys.all });
+      queryClient.invalidateQueries({ queryKey: shieldDomainKeys.all() });
     },
   });
 }
@@ -517,7 +490,7 @@ export function useUploadCustomSsl() {
       queryClient.invalidateQueries({
         queryKey: shieldKeys.ssl(context, domainId),
       });
-      queryClient.invalidateQueries({ queryKey: shieldDomainKeys.all });
+      queryClient.invalidateQueries({ queryKey: shieldDomainKeys.all() });
     },
   });
 }
@@ -556,34 +529,6 @@ export function useCreateFirewallRule() {
     }: { domainId: string } & Partial<ShieldFirewallRule>) => {
       const res = await toastApi.post(
         `${urlPrefix}/shield/domains/${domainId}/firewall`,
-        data
-      );
-      return asEnvelope(res.data);
-    },
-    onSuccess: (_, { domainId }) => {
-      queryClient.invalidateQueries({
-        queryKey: shieldKeys.firewall(context, domainId),
-      });
-    },
-  });
-}
-
-export function useUpdateFirewallRule() {
-  const { context } = useApiContext();
-  const queryClient = useQueryClient();
-  const { toastApi, urlPrefix } = apiRegistry[context];
-
-  return useMutation({
-    mutationFn: async ({
-      domainId,
-      ruleId,
-      ...data
-    }: {
-      domainId: string;
-      ruleId: string;
-    } & Partial<ShieldFirewallRule>) => {
-      const res = await toastApi.put(
-        `${urlPrefix}/shield/domains/${domainId}/firewall/${ruleId}`,
         data
       );
       return asEnvelope(res.data);
@@ -796,25 +741,6 @@ export function useFetchShieldPlans(options?: QueryOptions) {
   });
 }
 
-export function useFetchTenantUsage(
-  tenantId: string,
-  options?: QueryOptions
-) {
-  const { context } = useApiContext();
-  const { silentApi, urlPrefix } = apiRegistry[context];
-
-  return useQuery({
-    queryKey: shieldKeys.tenantUsage(context, tenantId),
-    queryFn: async () => {
-      const res = await silentApi.get(
-        `${urlPrefix}/shield/tenant-usage/${tenantId}`
-      );
-      return asEnvelope(res.data).data;
-    },
-    enabled: !!tenantId,
-    ...options,
-  });
-}
 
 // ─── Attack Map / Analytics ────────────────────────────────────
 
@@ -828,9 +754,14 @@ export function useFetchAttackMap(
   return useQuery({
     queryKey: [...shieldKeys.attackMap(context), params],
     queryFn: async () => {
-      const res = await silentApi.get(`${urlPrefix}/shield/attack-map`, {
-        params,
-      });
+      const qs = new URLSearchParams();
+      if (params?.from) qs.set("from", params.from);
+      if (params?.to) qs.set("to", params.to);
+      if (params?.limit !== undefined) qs.set("limit", String(params.limit));
+      const q = qs.toString();
+      const res = await silentApi.get(
+        `${urlPrefix}/shield/attack-map${q ? `?${q}` : ""}`
+      );
       return asEnvelope<AttackMapData>(res.data).data;
     },
     ...options,
@@ -848,9 +779,13 @@ export function useFetchDomainAnalytics(
   return useQuery({
     queryKey: [...shieldKeys.domainAnalytics(context, domainId), params],
     queryFn: async () => {
+      const qs = new URLSearchParams();
+      if (params?.from) qs.set("from", params.from);
+      if (params?.to) qs.set("to", params.to);
+      if (params?.granularity) qs.set("granularity", params.granularity);
+      const q = qs.toString();
       const res = await silentApi.get(
-        `${urlPrefix}/shield/domains/${domainId}/analytics`,
-        { params }
+        `${urlPrefix}/shield/domains/${domainId}/analytics${q ? `?${q}` : ""}`
       );
       return asEnvelope<DomainAnalyticsData>(res.data).data;
     },

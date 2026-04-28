@@ -11,27 +11,27 @@ type QuoteResourceStepProps = {
   formData: MultiQuoteFormData;
   errors: MultiQuoteFormErrors;
   updateFormData: UpdateFormData;
-  regions: any[];
+  regions: Array<Record<string, unknown>>;
   isRegionsFetching: boolean;
-  computerInstances: any[];
+  computerInstances: Array<Record<string, unknown>>;
   isComputerInstancesFetching: boolean;
-  ebsVolumes: any[];
+  ebsVolumes: Array<Record<string, unknown>>;
   isEbsVolumesFetching: boolean;
-  osImages: any[];
+  osImages: Array<Record<string, unknown>>;
   isOsImagesFetching: boolean;
-  bandwidths?: any[];
+  bandwidths?: Array<Record<string, unknown>>;
   isBandwidthsFetching: boolean;
-  floatingIps?: any[];
+  floatingIps?: Array<Record<string, unknown>>;
   isFloatingIpsFetching: boolean;
-  crossConnects?: any[];
+  crossConnects?: Array<Record<string, unknown>>;
   isCrossConnectsFetching: boolean;
   onAddRequest: () => void;
-  pricingRequests: any[];
+  pricingRequests: Array<Record<string, unknown>>;
   onRemoveRequest: (index: number) => void;
-  objectStorageProducts: any[];
+  objectStorageProducts: Array<Record<string, unknown>>;
   isObjectStorageProductsFetching: boolean;
   onAddObjectStorageRequest: () => void;
-  objectStorageRequests: any[];
+  objectStorageRequests: Array<Record<string, unknown>>;
   onRemoveObjectStorageRequest: (index: number) => void;
 };
 
@@ -63,12 +63,12 @@ const QuoteResourceStep = ({
   objectStorageRequests,
   onRemoveObjectStorageRequest,
 }: QuoteResourceStepProps) => {
-  const formatCurrency = (amount: any, currency: any) => {
+  const formatCurrency = (amount: number | string, currency: string) => {
     if (amount === null || amount === undefined) return "N/A";
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: currency || "USD",
-    }).format(amount);
+    }).format(Number(amount));
   };
 
   const hasQueuedItems = pricingRequests.length > 0 || objectStorageRequests?.length > 0;
@@ -113,8 +113,8 @@ const QuoteResourceStep = ({
               >
                 <option value="">Select a region</option>
                 {regions
-                  ?.filter((r: any) => r.name && r.is_active !== false)
-                  .map((region: any) => (
+                  ?.filter((r: Record<string, unknown>) => r.name && r.is_active !== false)
+                  .map((region: Record<string, unknown>) => (
                     <option key={region.code} value={region.code}>
                       {region.name || region.code}
                     </option>
@@ -147,7 +147,7 @@ const QuoteResourceStep = ({
                 {isComputerInstancesFetching ? (
                   <option disabled>Loading instances…</option>
                 ) : computerInstances && computerInstances.length > 0 ? (
-                  computerInstances.map(({ product, pricing }: any) => (
+                  computerInstances.map(({ product, pricing }: Record<string, unknown>) => (
                     <option key={product.id} value={product.productable_id}>
                       {product.name} •{" "}
                       {formatCurrency(pricing.effective.price_local, pricing.effective.currency)}
@@ -180,7 +180,7 @@ const QuoteResourceStep = ({
                 {isOsImagesFetching ? (
                   <option disabled>Loading OS images…</option>
                 ) : osImages && osImages.length > 0 ? (
-                  osImages.map(({ product, pricing }: any) => (
+                  osImages.map(({ product, pricing }: Record<string, unknown>) => (
                     <option key={product.id} value={product.productable_id}>
                       {product.name} •{" "}
                       {formatCurrency(pricing.effective.price_local, pricing.effective.currency)}
@@ -240,7 +240,7 @@ const QuoteResourceStep = ({
                       {isEbsVolumesFetching ? (
                         <option disabled>Loading volume types…</option>
                       ) : ebsVolumes && ebsVolumes.length > 0 ? (
-                        ebsVolumes.map(({ product, pricing }: any) => (
+                        ebsVolumes.map(({ product, pricing }: Record<string, unknown>) => (
                           <option key={product.id} value={product.productable_id}>
                             {product.name} •{" "}
                             {formatCurrency(
@@ -302,7 +302,7 @@ const QuoteResourceStep = ({
                       {isBandwidthsFetching ? (
                         <option disabled>Loading bandwidth…</option>
                       ) : bandwidths && bandwidths.length > 0 ? (
-                        bandwidths.map(({ product, pricing }: any) => (
+                        bandwidths.map(({ product, pricing }: Record<string, unknown>) => (
                           <option key={product.id} value={product.productable_id}>
                             {product.name} •{" "}
                             {formatCurrency(
@@ -339,7 +339,7 @@ const QuoteResourceStep = ({
                       {isFloatingIpsFetching ? (
                         <option disabled>Loading floating IPs…</option>
                       ) : floatingIps && floatingIps.length > 0 ? (
-                        floatingIps.map(({ product, pricing }: any) => (
+                        floatingIps.map(({ product, pricing }: Record<string, unknown>) => (
                           <option key={product.id} value={product.productable_id}>
                             {product.name} •{" "}
                             {formatCurrency(
@@ -376,7 +376,7 @@ const QuoteResourceStep = ({
                       {isCrossConnectsFetching ? (
                         <option disabled>Loading cross connects…</option>
                       ) : crossConnects && crossConnects.length > 0 ? (
-                        crossConnects.map(({ product, pricing }: any) => (
+                        crossConnects.map(({ product, pricing }: Record<string, unknown>) => (
                           <option key={product.id} value={product.productable_id}>
                             {product.name} •{" "}
                             {formatCurrency(
@@ -435,8 +435,8 @@ const QuoteResourceStep = ({
               >
                 <option value="">Select a region</option>
                 {regions
-                  ?.filter((r: any) => r.name && r.is_active !== false)
-                  .map((region: any) => (
+                  ?.filter((r: Record<string, unknown>) => r.name && r.is_active !== false)
+                  .map((region: Record<string, unknown>) => (
                     <option key={region.code} value={region.code}>
                       {region.name || region.code}
                     </option>
@@ -465,7 +465,7 @@ const QuoteResourceStep = ({
                 {isObjectStorageProductsFetching ? (
                   <option disabled>Loading tiers…</option>
                 ) : objectStorageProducts && objectStorageProducts.length > 0 ? (
-                  objectStorageProducts.map(({ product, pricing }: any) => (
+                  objectStorageProducts.map(({ product, pricing }: Record<string, unknown>) => (
                     <option key={product.id} value={product.productable_id}>
                       {product.name} •{" "}
                       {formatCurrency(pricing.effective.price_local, pricing.effective.currency)}

@@ -2,7 +2,9 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Globe2 } from "lucide-react";
 import TenantPageShell from "../../components/TenantPageShell";
-import ElasticIpsContainer from "@/shared/components/infrastructure/containers/ElasticIpsContainer";
+import ElasticIpsContainer, {
+  type ElasticIpHooks,
+} from "@/shared/components/infrastructure/containers/ElasticIpsContainer";
 import {
   useElasticIps,
   useCreateElasticIp,
@@ -21,12 +23,12 @@ const TenantElasticIps: React.FC = () => {
   const region = searchParams.get("region") || "";
 
   // Hook references passed to container (not called here)
-  const hooks = {
-    useList: useElasticIps,
-    useCreate: useCreateElasticIp,
-    useDelete: useDeleteElasticIp,
-    useAssociate: useAssociateElasticIp,
-    useDisassociate: useDisassociateElasticIp,
+  const hooks: ElasticIpHooks = {
+    useList: useElasticIps as ElasticIpHooks["useList"],
+    useCreate: useCreateElasticIp as ElasticIpHooks["useCreate"],
+    useDelete: useDeleteElasticIp as ElasticIpHooks["useDelete"],
+    useAssociate: useAssociateElasticIp as ElasticIpHooks["useAssociate"],
+    useDisassociate: useDisassociateElasticIp as ElasticIpHooks["useDisassociate"],
   };
 
   return (

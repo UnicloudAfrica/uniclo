@@ -97,14 +97,7 @@ const ImportImageModal: React.FC<ImportImageModalProps> = ({
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("POST", `/api/v1/client/migrations/upload`);
-
-        const token = document.cookie
-          .split("; ")
-          .find((c) => c.startsWith("token="))
-          ?.split("=")[1];
-        if (token) {
-          xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-        }
+        xhr.withCredentials = true; // Send session cookie (Sanctum SPA auth)
 
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable) {

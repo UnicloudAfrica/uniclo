@@ -61,9 +61,9 @@ export const useInstanceOrderCreation = ({
   const apiPrefix = getContextPrefix(context);
   const createOrderAction = useAsyncAction();
   const verifyPaymentAction = useAsyncAction();
-  const [submissionResult, setSubmissionResult] = useState<any>(null);
-  const [orderReceipt, setOrderReceipt] = useState<any>(null);
-  const [selectedPaymentOption, setSelectedPaymentOption] = useState<any>(null);
+  const [submissionResult, setSubmissionResult] = useState<Record<string, unknown> | null>(null);
+  const [orderReceipt, setOrderReceipt] = useState<Record<string, unknown> | null>(null);
+  const [selectedPaymentOption, setSelectedPaymentOption] = useState<Record<string, unknown> | null>(null);
   const submittedFingerprintRef = useRef<string | null>(null);
 
   const clearOrderState = useCallback(() => {
@@ -133,7 +133,7 @@ export const useInstanceOrderCreation = ({
   }, [orderStateFingerprint, clearOrderState]);
 
   const apiCall = useCallback(
-    async (method: string, endpoint: string, body?: any, idempotencyKey?: string) => {
+    async (method: string, endpoint: string, body?: unknown, idempotencyKey?: string) => {
       const headers: Record<string, string> = { ...authHeaders };
       if (idempotencyKey) {
         headers["Idempotency-Key"] = idempotencyKey;
@@ -146,7 +146,7 @@ export const useInstanceOrderCreation = ({
         body: body ? JSON.stringify(body) : undefined,
       });
 
-      let data: any;
+      let data: unknown;
       try {
         data = await response.json();
       } catch {
@@ -205,10 +205,10 @@ export const useInstanceOrderCreation = ({
       const sanitizedSgIds = (
         Array.isArray(cfg.security_group_ids)
           ? cfg.security_group_ids
-          : ((cfg.security_group_ids as any) || "").split(",")
+          : ((cfg.security_group_ids as unknown) || "").split(",")
       )
-        .map((v: any) => (v && v.value ? v.value : v))
-        .map((v: any) => (v || "").toString().trim())
+        .map((v: unknown) => (v && v.value ? v.value : v))
+        .map((v: unknown) => (v || "").toString().trim())
         .filter(Boolean);
 
       const extraVolumes = (cfg.additional_volumes || [])
@@ -271,7 +271,7 @@ export const useInstanceOrderCreation = ({
 
     const anyFastTrack = isFastTrack;
 
-    const payload: any = {
+    const payload: Record<string, unknown> = {
       fast_track: anyFastTrack,
       country_iso: billingCountry || undefined,
       pricing_requests,
@@ -416,7 +416,7 @@ export const useInstanceOrderCreation = ({
   ]);
 
   const handlePaymentCompleted = useCallback(
-    async (payload?: any) => {
+    async (payload?: unknown) => {
       const identifier =
         selectedPaymentOption?.transaction_reference ||
         submissionResult?.payment?.payment_gateway_options?.[0]?.transaction_reference ||
@@ -454,7 +454,7 @@ export const useInstanceOrderCreation = ({
 
       await verifyPaymentAction.run(
         async () => {
-          const apiPayload: any = {
+          const apiPayload: Record<string, unknown> = {
             payment_gateway: normalizedGateway,
           };
           if (normalizedGateway.toLowerCase().includes("paystack")) {
@@ -475,7 +475,7 @@ export const useInstanceOrderCreation = ({
             responseData?.transaction?.metadata?.keypair_materials ||
             null;
 
-          const updateState = (prev: any) => {
+          const updateState = (prev: unknown) => {
             if (!prev) return prev;
             return {
               ...prev,

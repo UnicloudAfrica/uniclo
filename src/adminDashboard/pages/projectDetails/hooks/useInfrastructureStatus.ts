@@ -23,8 +23,8 @@ interface User {
   email?: string;
   roles?: string[];
   role?: string;
-  status?: Record<string, any>;
-  actions?: Record<string, any>;
+  status?: Record<string, unknown>;
+  actions?: Record<string, unknown>;
 }
 
 const isTenantAdmin = (user: User | null): boolean => {
@@ -39,7 +39,7 @@ const isTenantAdmin = (user: User | null): boolean => {
     const role = user["role"].toLowerCase();
     if (role.includes("tenant_admin") || role.includes("tenant-admin")) return true;
   }
-  if ((user?.["status"] as Record<string, any>)?.["tenant_admin"]) return true;
+  if ((user?.["status"] as Record<string, unknown>)?.["tenant_admin"]) return true;
   return false;
 };
 
@@ -70,13 +70,13 @@ export interface InfrastructureStatusResult {
 }
 
 interface UseInfrastructureStatusParams {
-  project: Record<string, any> | undefined;
-  projectDetails: Record<string, any> | undefined;
+  project: Record<string, unknown> | undefined;
+  projectDetails: Record<string, unknown> | undefined;
   infraStatusData: InfraStatusData | undefined;
   infraComponents: Record<string, InfraComponent>;
   getInfraCount: (key: string) => number | undefined;
   resourceCounts: Record<string, number>;
-  edgePayload: any;
+  edgePayload: unknown;
 }
 
 export function useInfrastructureStatus({
@@ -121,7 +121,7 @@ export function useInfrastructureStatus({
     (projectDetails?.["region"] as string | undefined) ||
     "Provider";
 
-  const projectUsersRaw = (project?.["users"] as Record<string, any> | undefined)?.["local"];
+  const projectUsersRaw = (project?.["users"] as Record<string, unknown> | undefined)?.["local"];
   const projectUsers = useMemo(
     () => (Array.isArray(projectUsersRaw) ? projectUsersRaw : []),
     [projectUsersRaw]
@@ -160,7 +160,7 @@ export function useInfrastructureStatus({
 
   const summaryPatternSets = useMemo(() => {
     const normalizePatterns = (patterns: string[] = []) =>
-      patterns.map((pattern: any) => normalizeSummaryKey(pattern)).filter(Boolean);
+      patterns.map((pattern: unknown) => normalizeSummaryKey(pattern)).filter(Boolean);
     return {
       users: normalizePatterns([
         "Users Assigned",

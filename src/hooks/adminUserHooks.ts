@@ -12,9 +12,11 @@ type UpdateTenantAdminInput = {
   adminData: TenantAdminPayload;
 };
 
+type ApiEnvelope<T = unknown> = { data?: T };
+
 // GET: Fetch all admins
-const fetchTenantAdmins = async () => {
-  const res = await silentTenantApi("GET", "/admin/admins");
+const fetchTenantAdmins = async (): Promise<unknown> => {
+  const res = await silentTenantApi<ApiEnvelope>("GET", "/admin/admins");
   if (!res.data) {
     throw new Error("Failed to fetch admins");
   }
@@ -22,21 +24,21 @@ const fetchTenantAdmins = async () => {
 };
 
 // GET: Fetch admin by ID
-const fetchTenantAdminById = async (id: TenantAdminId) => {
-  const res = await silentTenantApi("GET", `/admin/admins/${id}`);
+const fetchTenantAdminById = async (id: TenantAdminId): Promise<unknown> => {
+  const res = await silentTenantApi<unknown>("GET", `/admin/admins/${id}`);
   if (!res) {
     throw new Error(`Failed to fetch admin with ID ${id}`);
   }
   return res;
 };
 
-const createTenantAdmin = async (adminData: TenantAdminPayload) => {
-  return await tenantApi("POST", "/admin/admins", adminData);
+const createTenantAdmin = async (adminData: TenantAdminPayload): Promise<unknown> => {
+  return await tenantApi<unknown>("POST", "/admin/admins", adminData);
 };
 
 // PATCH: Update an admin
-const updateTenantAdmin = async ({ id, adminData }: UpdateTenantAdminInput) => {
-  const res = await tenantApi("PATCH", `/admin/admins/${id}`, adminData);
+const updateTenantAdmin = async ({ id, adminData }: UpdateTenantAdminInput): Promise<unknown> => {
+  const res = await tenantApi<ApiEnvelope>("PATCH", `/admin/admins/${id}`, adminData);
   if (!res.data) {
     throw new Error(`Failed to update admin with ID ${id}`);
   }
@@ -44,16 +46,21 @@ const updateTenantAdmin = async ({ id, adminData }: UpdateTenantAdminInput) => {
 };
 
 // DELETE: Delete an admin
-const deleteTenantAdmin = async (id: TenantAdminId) => {
-  const res = await tenantApi("DELETE", `/admin/admins/${id}`);
+const deleteTenantAdmin = async (id: TenantAdminId): Promise<unknown> => {
+  const res = await tenantApi<ApiEnvelope>("DELETE", `/admin/admins/${id}`);
   if (!res.data) {
     throw new Error(`Failed to delete admin with ID ${id}`);
   }
   return res.data;
 };
 
+type QueryOptions<TData> = Omit<
+  import("@tanstack/react-query").UseQueryOptions<TData, Error, TData, readonly unknown[]>,
+  "queryKey" | "queryFn"
+>;
+
 // Hook to fetch all admins
-export const useFetchTenantAdmins = (options: any = {}) => {
+export const useFetchTenantAdmins = (options: QueryOptions<unknown> = {}) => {
   return useQuery({
     queryKey: ["tenant-admins"],
     queryFn: fetchTenantAdmins,
@@ -65,7 +72,10 @@ export const useFetchTenantAdmins = (options: any = {}) => {
 };
 
 // Hook to fetch admin by ID
-export const useFetchTenantAdminById = (id: TenantAdminId, options: any = {}) => {
+export const useFetchTenantAdminById = (
+  id: TenantAdminId,
+  options: QueryOptions<unknown> = {}
+) => {
   return useQuery({
     queryKey: ["tenant-admins", id],
     queryFn: () => fetchTenantAdminById(id),

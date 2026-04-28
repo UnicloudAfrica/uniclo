@@ -66,7 +66,11 @@ const DnsRecordTable: React.FC<DnsRecordTableProps> = ({ domainId }) => {
         label: "Delete",
         icon: <Trash2 size={14} />,
         tone: "danger" as const,
-        onClick: (row) => deleteRecord.mutate({ domainId, recordId: row.id }),
+        onClick: (row) => {
+          if (window.confirm(`Delete DNS record "${row.name}" (${row.type})?`)) {
+            deleteRecord.mutate({ domainId, recordId: row.id });
+          }
+        },
       },
     ],
     [domainId, deleteRecord]
@@ -81,7 +85,7 @@ const DnsRecordTable: React.FC<DnsRecordTableProps> = ({ domainId }) => {
         content: form.content,
         ttl: parseInt(form.ttl, 10),
         ...(form.priority ? { priority: parseInt(form.priority, 10) } : {}),
-      } as never,
+      },
       { onSuccess: () => setShowAdd(false) }
     );
   };
@@ -113,7 +117,7 @@ const DnsRecordTable: React.FC<DnsRecordTableProps> = ({ domainId }) => {
               label="Type"
               options={RECORD_TYPES}
               value={form.type}
-              onChange={(val) => setForm((p) => ({ ...p, type: val }))}
+              onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))}
             />
             <ModernInput
               label="Name"

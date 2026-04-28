@@ -282,7 +282,7 @@ const ClientProjectDetails: React.FC = () => {
 
   const clientKeyPairHooks: KeyPairHooks = {
     useList: useFetchClientKeyPairs as KeyPairHooks["useList"],
-    useSync: useSyncKeyPairs,
+    useSync: useSyncKeyPairs as unknown as KeyPairHooks["useSync"],
     useDelete: useDeleteClientKeyPair as KeyPairHooks["useDelete"],
   };
 
@@ -356,7 +356,7 @@ const ClientProjectDetails: React.FC = () => {
     renderLimitsTab: () => <ProjectLimitsTab projectIdentifier={projectId} />,
     renderSettingsTab: () => (
       <ProjectSettingsTab
-        project={project as any}
+        project={(project ?? {}) as Parameters<typeof ProjectSettingsTab>[0]["project"]}
         onUpdateProject={async (data) => {
           try {
             const encodedId = encodeURIComponent(projectId || "");
@@ -405,7 +405,7 @@ const ClientProjectDetails: React.FC = () => {
         region={project?.region}
         provider={project?.provider}
         hierarchy="client"
-        projectUsers={projectUsers as any[]}
+        projectUsers={projectUsers as Parameters<typeof ProjectTeamTab>[0]["projectUsers"]}
         onRefresh={async () => {
           await Promise.all([refetchProject(), refetchStatus()]);
         }}
@@ -417,7 +417,7 @@ const ClientProjectDetails: React.FC = () => {
     return (
       <ProvisioningFullScreen
         project={project}
-        setupSteps={projectDetails.setupSteps as unknown[]}
+        setupSteps={projectDetails.setupSteps as never}
         onRefresh={() => refetchStatus()}
         onViewProject={() => {
           // Force hide overlay immediately to prevent the loop
@@ -453,7 +453,7 @@ const ClientProjectDetails: React.FC = () => {
       >
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 min-h-[600px]">
           <InfrastructureSetupWizard
-            project={project as HookProject}
+            project={project as never}
             setupMutation={setupMutation as never}
           />
         </div>

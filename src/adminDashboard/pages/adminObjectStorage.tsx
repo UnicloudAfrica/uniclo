@@ -73,7 +73,7 @@ const AdminObjectStorage = () => {
     createSilo(accountId, payload);
 
   const handleDeleteSilo = (accountId: string, silo: ObjectStorageSilo) =>
-    deleteSilo(accountId, silo.id as any);
+    deleteSilo(accountId, silo.id as unknown);
   return (
     <>
       <AdminPageShell

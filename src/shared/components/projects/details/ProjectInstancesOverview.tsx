@@ -214,7 +214,7 @@ const ProjectInstancesOverview: React.FC<ProjectInstancesOverviewProps> = ({
 
         <ModernTable
           data={recentInstances}
-          columns={columns as any}
+          columns={columns as unknown}
           paginated={false}
           searchable={false}
           filterable={false}

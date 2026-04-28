@@ -4,7 +4,7 @@ import DatabaseReplicationWorkspace from "@/shared/components/integrations/Datab
 export default function TenantDatabaseReplication() {
   return (
     <DatabaseReplicationWorkspace
-      PageShell={TenantPageShell}
+      PageShell={TenantPageShell as never}
       title="Database Replication"
       description="Manage database-native replication for PostgreSQL, MySQL, and MongoDB workloads"
     />

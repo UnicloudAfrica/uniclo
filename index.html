@@ -2,13 +2,26 @@
 <html lang="en">
 
 <head>
-    <!-- ConveyThis public translation key (non-secret, safe for client) -->
-    <script src="//cdn.conveythis.com/javascript/conveythis-initializer.js"></script>
+    <!-- ConveyThis public translation key (non-secret, safe for client).
+         GAP-035: migrated from a hardcoded literal to `VITE_CONVEYTHIS_KEY`
+         so each environment (prod, staging, dev) can bind its own account
+         without a source-code edit. The script short-circuits when the
+         env var is unset — e.g. in local dev where translation is off. -->
+    <script
+        src="https://cdn.conveythis.com/javascript/conveythis-initializer.js"
+        integrity="sha384-REPLACE_WITH_ACTUAL_HASH"
+        crossorigin="anonymous"></script>
     <script type="text/javascript">
         document.addEventListener("DOMContentLoaded", function () {
+            // Vite replaces `%VITE_CONVEYTHIS_KEY%` at build time. Empty
+            // string means the env var was unset — skip initialisation.
+            var conveyKey = "%VITE_CONVEYTHIS_KEY%";
+            if (!conveyKey || conveyKey === "%VITE_CONVEYTHIS_KEY%") {
+                return;
+            }
             if (typeof globalThis.window.ConveyThis_Initializer === "object" && globalThis.window.ConveyThis_Initializer?.init) {
                 globalThis.window.ConveyThis_Initializer.init({
-                    api_key: "pub_dc5102a17ebf8e31da0adab584e04f75",
+                    api_key: conveyKey,
                 });
             } else {
                 console.warn("ConveyThis initializer script failed to load.");

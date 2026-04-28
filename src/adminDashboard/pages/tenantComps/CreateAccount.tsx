@@ -1,14 +1,14 @@
 import React from "react";
 
 interface CreateAccountProps {
-  formData: any;
-  setFormData: (data: any) => void;
-  errors: any;
+  formData: unknown;
+  setFormData: (data: unknown) => void;
+  errors: unknown;
 }
 
 const CreateAccount: React.FC<CreateAccountProps> & {
-  validate: (data: any) => any;
-} = ({ formData, setFormData, errors }: any) => {
+  validate: (data: unknown) => Record<string, string>;
+} = ({ formData, setFormData, errors }: { formData: Record<string, unknown>; setFormData: (data: Record<string, unknown>) => void; errors?: Record<string, string> }) => {
   return (
     <div className="space-y-4 font-Outfit">
       <div>
@@ -143,8 +143,8 @@ const CreateAccount: React.FC<CreateAccountProps> & {
   );
 };
 
-CreateAccount.validate = (formData: any) => {
-  const newErrors: any = {};
+CreateAccount.validate = (formData: unknown) => {
+  const newErrors: Record<string, string> = {};
   if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Invalid email";
   if (!formData.password || formData.password.length < 6)
     newErrors.password = "Password must be at least 6 characters";

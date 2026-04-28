@@ -15,14 +15,14 @@ const stageOptions = [
   "approval",
 ];
 
-const AddLeadStage = ({ isOpen, onClose }: any) => {
-  const [leadId, setLeadId] = useState<any>(null);
+const AddLeadStage = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+  const [leadId, setLeadId] = useState<unknown>(null);
   const [formData, setFormData] = useState({
     stage_name: "",
     description: "",
     assigned_to: "",
   });
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, unknown>>({});
 
   const { data: admins, isLoading: isAdminsLoading } = useFetchAdmins();
   const { mutate, isPending } = useCreateCustomStage();
@@ -49,7 +49,7 @@ const AddLeadStage = ({ isOpen, onClose }: any) => {
   }, [isOpen]);
 
   const validateForm = () => {
-    const newErrors: Record<string, any> = {};
+    const newErrors: Record<string, unknown> = {};
     if (!formData.stage_name) {
       newErrors.stage_name = "Please select a stage name.";
     }
@@ -57,12 +57,12 @@ const AddLeadStage = ({ isOpen, onClose }: any) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field: any, value: any) => {
+  const updateFormData = (field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.SyntheticEvent) => {
     if (e) e.preventDefault();
 
     if (!validateForm()) return;
@@ -90,8 +90,8 @@ const AddLeadStage = ({ isOpen, onClose }: any) => {
 
   if (!isOpen) return null;
 
-  const formatStageNameForDisplay = (name: any) => {
-    return name.replace(/_/g, " ").replace(/\b\w/g, (c: any) => c.toUpperCase());
+  const formatStageNameForDisplay = (name: unknown) => {
+    return name.replace(/_/g, " ").replace(/\b\w/g, (c: unknown) => c.toUpperCase());
   };
 
   return (
@@ -124,7 +124,7 @@ const AddLeadStage = ({ isOpen, onClose }: any) => {
                 <option value="" disabled>
                   Select a stage
                 </option>
-                {stageOptions.map((stage: any) => (
+                {stageOptions.map((stage: unknown) => (
                   <option key={stage} value={stage}>
                     {formatStageNameForDisplay(stage)}
                   </option>
@@ -171,7 +171,7 @@ const AddLeadStage = ({ isOpen, onClose }: any) => {
                 {isAdminsLoading ? (
                   <option disabled>Loading admins...</option>
                 ) : (
-                  (admins as any)?.map((admin: any) => (
+                  (admins as unknown)?.map((admin: unknown) => (
                     <option key={admin.identifier} value={admin.identifier}>
                       {admin.first_name} {admin.last_name} ({admin.email})
                     </option>

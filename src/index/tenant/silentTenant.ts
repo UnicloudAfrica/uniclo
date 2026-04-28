@@ -9,6 +9,6 @@ const silentTenantApi = <T = unknown>(
   method: HttpMethod,
   path: string,
   body: Record<string, unknown> | FormData | null = null
-): Promise<T> => api.request<T>(method, path, body as any, { silent: true });
+): Promise<T> => api.request<T>(method, path, body as unknown, { silent: true });
 
 export default silentTenantApi;

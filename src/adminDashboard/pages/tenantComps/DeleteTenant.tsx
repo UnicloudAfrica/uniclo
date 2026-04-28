@@ -7,7 +7,7 @@ import logger from "@/utils/logger";
 interface DeleteTenantModalProps {
   isOpen: boolean;
   onClose: () => void;
-  tenantDetails?: any; // Changed from separate props to object to match usage in AdminPartners
+  tenantDetails?: Record<string, unknown>; // Changed from separate props to object to match usage in AdminPartners
   tenantId?: string; // Kept for backward compatibility if needed
   tenantName?: string; // Kept for backward compatibility if needed
 }
@@ -32,7 +32,7 @@ const DeleteTenantModal: React.FC<DeleteTenantModalProps> = ({
           ToastUtils.success("Partner deleted successfully");
           onClose(); // Close the modal
         },
-        onError: (err: any) => {
+        onError: (err: unknown) => {
           logger.error("Failed to delete Partner:", err);
           ToastUtils.error(err.message || "Failed to delete partner. Please try again.");
         },
@@ -70,7 +70,7 @@ const DeleteTenantModal: React.FC<DeleteTenantModalProps> = ({
           </p>
           {isError && (
             <p className="text-red-500 text-sm mb-4">
-              Error: {(error as any)?.message || "An unknown error occurred."}
+              Error: {(error as unknown)?.message || "An unknown error occurred."}
             </p>
           )}
         </div>

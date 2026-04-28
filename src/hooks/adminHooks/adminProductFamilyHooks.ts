@@ -2,9 +2,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
 import logger from "@/utils/logger";
+import type { ApiEnvelope, QueryHookOptions } from "@/shared/types/admin";
 
 const fetchProductFamilies = async () => {
-  const res = await silentApi("GET", "/product-families");
+  const res = await silentApi<ApiEnvelope<unknown[]>>("GET", "/product-families");
   if (!res) {
     throw new Error("Failed to fetch product families");
   }
@@ -20,7 +21,10 @@ const fetchProductFamily = async (familyCode: string) => {
   if (!familyCode) {
     throw new Error("Family code is required");
   }
-  const res = await silentApi("GET", `/product-families/${encodeURIComponent(familyCode)}`);
+  const res = await silentApi<ApiEnvelope<unknown[]>>(
+    "GET",
+    `/product-families/${encodeURIComponent(familyCode)}`
+  );
   if (!res) {
     throw new Error(`Failed to fetch product family: ${familyCode}`);
   }
@@ -43,7 +47,10 @@ const fetchProductEquivalents = async (
   if (filters?.provider) params.append("provider", filters.provider);
   if (filters?.region) params.append("region", filters.region);
   const queryString = params.toString() ? `?${params.toString()}` : "";
-  const res = await silentApi("GET", `/products/${productId}/equivalents${queryString}`);
+  const res = await silentApi<ApiEnvelope<unknown[]>>(
+    "GET",
+    `/products/${productId}/equivalents${queryString}`
+  );
   if (!res) {
     throw new Error(`Failed to fetch equivalents for product ${productId}`);
   }
@@ -86,7 +93,7 @@ const bulkUpdateFamilyCode = async ({
   return res;
 };
 
-export const useFetchProductFamilies = (options: any = {}) => {
+export const useFetchProductFamilies = (options: QueryHookOptions = {}) => {
   return useQuery({
     queryKey: ["product-families-admin"],
     queryFn: fetchProductFamilies,
@@ -96,7 +103,10 @@ export const useFetchProductFamilies = (options: any = {}) => {
   });
 };
 
-export const useFetchProductFamily = (familyCode: string, options: any = {}) => {
+export const useFetchProductFamily = (
+  familyCode: string,
+  options: QueryHookOptions = {}
+) => {
   return useQuery({
     queryKey: ["product-family-admin", familyCode],
     queryFn: () => fetchProductFamily(familyCode),
@@ -110,7 +120,7 @@ export const useFetchProductFamily = (familyCode: string, options: any = {}) => 
 export const useFetchProductEquivalents = (
   productId: string | number,
   filters?: { provider?: string; region?: string },
-  options: any = {}
+  options: QueryHookOptions = {}
 ) => {
   return useQuery({
     queryKey: ["product-equivalents-admin", productId, filters?.provider, filters?.region],
@@ -131,7 +141,7 @@ export const useUpdateProductFamilyCode = () => {
       queryClient.invalidateQueries({ queryKey: ["product-family-admin"] });
       queryClient.invalidateQueries({ queryKey: ["product-equivalents-admin"] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       logger.error("Error updating product family code:", error);
     },
   });
@@ -146,7 +156,7 @@ export const useBulkUpdateFamilyCode = () => {
       queryClient.invalidateQueries({ queryKey: ["product-family-admin"] });
       queryClient.invalidateQueries({ queryKey: ["product-equivalents-admin"] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       logger.error("Error bulk updating family codes:", error);
     },
   });

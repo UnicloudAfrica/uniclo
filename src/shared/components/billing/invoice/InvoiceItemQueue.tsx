@@ -78,7 +78,7 @@ const InvoiceItemQueue: React.FC<InvoiceItemQueueProps> = ({
                   )}
                   {item.months && (
                     <span>
-                      {item.months} month{(item as any).months > 1 ? "s" : ""}
+                      {item.months} month{(item as unknown).months > 1 ? "s" : ""}
                     </span>
                   )}
                   {"_display" in item && item._display && "storage" in item._display && (

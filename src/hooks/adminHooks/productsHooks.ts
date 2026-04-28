@@ -2,10 +2,18 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
 import logger from "@/utils/logger";
+import type {
+  ApiEnvelope,
+  AdminResourceRecord,
+  QueryHookOptions,
+} from "@/shared/types/admin";
 
 // GET: Fetch all products
 const fetchProducts = async () => {
-  const res = await silentApi("GET", "/product-provisioning");
+  const res = await silentApi<ApiEnvelope<AdminResourceRecord[]>>(
+    "GET",
+    "/product-provisioning"
+  );
   if (!res.data) {
     throw new Error("Failed to fetch products");
   }
@@ -14,8 +22,11 @@ const fetchProducts = async () => {
 };
 
 // GET: Fetch product by ID
-const fetchProductById = async (id: any) => {
-  const res = await silentApi("GET", `/product-provisioning/${id}`);
+const fetchProductById = async (id: string | number) => {
+  const res = await silentApi<ApiEnvelope<AdminResourceRecord>>(
+    "GET",
+    `/product-provisioning/${id}`
+  );
   if (!res.data) {
     throw new Error(`Failed to fetch product with ID ${id}`);
   }
@@ -24,8 +35,12 @@ const fetchProductById = async (id: any) => {
 };
 
 // POST: Create a new product
-const createProduct = async (productData: any) => {
-  const res = await api("POST", "/product-provisioning", productData);
+const createProduct = async (productData: AdminResourceRecord) => {
+  const res = await api<ApiEnvelope<AdminResourceRecord>>(
+    "POST",
+    "/product-provisioning",
+    productData
+  );
   if (!res.data) {
     throw new Error("Failed to create product");
   }
@@ -33,8 +48,18 @@ const createProduct = async (productData: any) => {
 };
 
 // PATCH: Update a product
-const updateProduct = async ({ id, productData }: any) => {
-  const res = await api("PATCH", `/product-provisioning/${id}`, productData);
+const updateProduct = async ({
+  id,
+  productData,
+}: {
+  id: string | number;
+  productData: AdminResourceRecord;
+}) => {
+  const res = await api<ApiEnvelope<AdminResourceRecord>>(
+    "PATCH",
+    `/product-provisioning/${id}`,
+    productData
+  );
   if (!res.data) {
     throw new Error(`Failed to update product with ID ${id}`);
   }
@@ -42,8 +67,11 @@ const updateProduct = async ({ id, productData }: any) => {
 };
 
 // DELETE: Delete a product
-const deleteProduct = async (id: any) => {
-  const res = await api("DELETE", `/product-provisioning/${id}`);
+const deleteProduct = async (id: string | number) => {
+  const res = await api<ApiEnvelope<AdminResourceRecord>>(
+    "DELETE",
+    `/product-provisioning/${id}`
+  );
   if (!res.data) {
     throw new Error(`Failed to delete product with ID ${id}`);
   }
@@ -51,7 +79,7 @@ const deleteProduct = async (id: any) => {
 };
 
 // Hook to fetch all products
-export const useFetchProducts = (options: any = {}) => {
+export const useFetchProducts = (options: QueryHookOptions = {}) => {
   return useQuery({
     queryKey: ["products"],
     queryFn: fetchProducts,
@@ -62,10 +90,13 @@ export const useFetchProducts = (options: any = {}) => {
 };
 
 // Hook to fetch product by ID
-export const useFetchProductById = (id: any, options: any = {}) => {
+export const useFetchProductById = (
+  id: string | number | undefined,
+  options: QueryHookOptions = {}
+) => {
   return useQuery({
     queryKey: ["product", id],
-    queryFn: () => fetchProductById(id),
+    queryFn: () => fetchProductById(id as string | number),
     enabled: !!id, // Only fetch if ID is provided
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
@@ -82,7 +113,7 @@ export const useCreateProduct = () => {
       // Invalidate products query to refresh the list
       queryClient.invalidateQueries({ queryKey: ["products"] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       logger.error("Error creating product:", error);
     },
   });
@@ -93,12 +124,12 @@ export const useUpdateProduct = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateProduct,
-    onSuccess: (data: any, variables: any) => {
+    onSuccess: (_data, variables) => {
       // Invalidate both products list and specific product query
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["product", variables.id] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       logger.error("Error updating product:", error);
     },
   });
@@ -113,7 +144,7 @@ export const useDeleteProduct = () => {
       // Invalidate products query to refresh the list
       queryClient.invalidateQueries({ queryKey: ["products"] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       logger.error("Error deleting product:", error);
     },
   });

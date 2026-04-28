@@ -190,8 +190,8 @@ export default function DatabaseReplicationWorkspace({
   const { mutate: createReplication, isPending: creating } = useCreateDatabaseReplicationGroup();
   const { mutate: runPreflight, isPending: preflighting } = usePreflightDatabaseReplication();
   const { mutate: syncReplication } = useSyncDatabaseReplication();
-  const { mutate: pauseReplication } = usePauseDatabaseReplication();
-  const { mutate: resumeReplication } = useResumeDatabaseReplication();
+  const { mutate: _pauseReplication } = usePauseDatabaseReplication();
+  const { mutate: _resumeReplication } = useResumeDatabaseReplication();
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState(INITIAL_FORM);
   const [preflightResult, setPreflightResult] = useState<Record<string, unknown> | null>(null);
@@ -244,7 +244,7 @@ export default function DatabaseReplicationWorkspace({
     createReplication(
       {
         name: form.name,
-        engine: form.engine,
+        engine: form.engine as "postgresql" | "mysql" | "mongodb" | "redis" | "sqlserver" | "mssql",
         sync_mode: form.sync_mode as "full" | "cdc",
         source_endpoint_id: form.source_endpoint_id,
         source_config: {
@@ -427,9 +427,9 @@ export default function DatabaseReplicationWorkspace({
                         <span
                           className={`flex h-8 w-8 items-center justify-center rounded-lg ${meta.bg} ${meta.darkBg} ${meta.color}`}
                         >
-                          {ENGINE_ICON[engine] ?? <Database size={18} />}
+                          {(ENGINE_ICON[engine] as React.ReactNode) ?? <Database size={18} />}
                         </span>
-                        {meta.label}
+                        {String(meta.label ?? "")}
                       </button>
                     );
                   })}

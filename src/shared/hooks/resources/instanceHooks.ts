@@ -17,9 +17,9 @@ import { useApiContext } from "@/hooks/useApiContext";
 import { apiRegistry } from "../../api/apiRegistry";
 import logger from "@/utils/logger";
 
-type AnyRecord = Record<string, any>;
+type AnyRecord = Record<string, unknown>;
 type Identifier = string | number;
-type QueryOptions = Partial<Omit<UseQueryOptions<any, Error>, "queryKey" | "queryFn">>;
+type QueryOptions = Partial<Omit<UseQueryOptions<unknown, Error>, "queryKey" | "queryFn">>;
 
 /** Standard API envelope returned by the api clients */
 interface ApiEnvelope<T = AnyRecord> {

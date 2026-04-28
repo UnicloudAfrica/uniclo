@@ -7,11 +7,28 @@ import logger from "@/utils/logger";
 /**
  * UserSelectModal - Modal for selecting a user to assign leads to
  */
-const UserSelectModal = ({ isOpen, onClose, onSelect, title = "Select User to Assign" }: any) => {
-  const [users, setUsers] = useState<any[]>([]);
+interface UserItem {
+  id: string | number;
+  name?: string;
+  email?: string;
+}
+interface UserSelectModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelect: (user: UserItem) => void;
+  title?: string;
+}
+
+const UserSelectModal = ({
+  isOpen,
+  onClose,
+  onSelect,
+  title = "Select User to Assign",
+}: UserSelectModalProps) => {
+  const [users, setUsers] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<UserItem | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -23,8 +40,8 @@ const UserSelectModal = ({ isOpen, onClose, onSelect, title = "Select User to As
     setLoading(true);
     try {
       // Fetch admins who can be assigned leads
-      const response = await adminSilentApi("GET", "/admins");
-      setUsers(response.data || ([] as any));
+      const response = (await adminSilentApi("GET", "/admins")) as { data?: UserItem[] };
+      setUsers(response.data || []);
     } catch (error) {
       logger.error("Failed to fetch users:", error);
       setUsers([]);
@@ -33,7 +50,7 @@ const UserSelectModal = ({ isOpen, onClose, onSelect, title = "Select User to As
     }
   };
 
-  const filteredUsers = users.filter((user: any) => {
+  const filteredUsers = users.filter((user: UserItem) => {
     const searchLower = searchTerm.toLowerCase();
     return (
       user.name?.toLowerCase().includes(searchLower) ||
@@ -94,7 +111,7 @@ const UserSelectModal = ({ isOpen, onClose, onSelect, title = "Select User to As
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--theme-color)] border-t-transparent" />
             </div>
           ) : filteredUsers.length > 0 ? (
-            filteredUsers.map((user: any) => (
+            filteredUsers.map((user: UserItem) => (
               <button
                 key={user.id}
                 type="button"

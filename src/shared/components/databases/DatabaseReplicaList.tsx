@@ -17,7 +17,6 @@ import {
   Server,
   CheckCircle2,
   XCircle,
-  AlertTriangle,
   Clock,
 } from "lucide-react";
 import ModernCard from "@/shared/components/ui/ModernCard";

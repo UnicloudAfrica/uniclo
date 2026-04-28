@@ -10,7 +10,6 @@ import {
 import {
   Bot,
   Shield,
-  Play,
   CheckCircle,
   XCircle,
   Clock,

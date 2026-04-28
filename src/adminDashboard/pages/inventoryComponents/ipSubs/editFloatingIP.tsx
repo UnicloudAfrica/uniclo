@@ -3,13 +3,13 @@ import { X, Loader2 } from "lucide-react";
 import { useUpdateFloatingIP } from "@/hooks/adminHooks/floatingIPHooks";
 import ToastUtils from "@/utils/toastUtil";
 
-const EditFloatingIP = ({ isOpen, onClose, floatingIP }: any) => {
+const EditFloatingIP = ({ isOpen, onClose, floatingIP }: { isOpen: boolean; onClose: () => void; floatingIP: unknown }) => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     // price: "",
   });
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
     if (isOpen && floatingIP) {
@@ -28,7 +28,7 @@ const EditFloatingIP = ({ isOpen, onClose, floatingIP }: any) => {
   const { mutate, isPending } = useUpdateFloatingIP();
 
   const validateForm = () => {
-    const newErrors: Record<string, any> = {};
+    const newErrors: Record<string, unknown> = {};
     if (!formData.name.trim()) {
       newErrors.name = "Name is required";
     }
@@ -44,12 +44,12 @@ const EditFloatingIP = ({ isOpen, onClose, floatingIP }: any) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field: any, value: any) => {
+  const updateFormData = (field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.SyntheticEvent) => {
     if (e) e.preventDefault();
 
     if (!validateForm()) return;

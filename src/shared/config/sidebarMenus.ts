@@ -50,12 +50,12 @@ import {
   Route,
   Lock,
   Scale,
-  Radar,
   Bot,
   BookOpen,
   Code2,
   Monitor,
   Activity,
+  Radio,
   Flame,
 } from "lucide-react";
 
@@ -128,6 +128,12 @@ const INFRA_MENU_ITEMS: Array<{
     path: "/monitoring",
     roles: ["admin", "tenant", "client"],
     requiredPermission: "instances.view",
+  },
+  {
+    label: "NOC",
+    icon: Radio,
+    path: "/noc",
+    roles: ["admin"],
   },
 ];
 
@@ -265,36 +271,42 @@ const SHIELD_MENU_ITEMS: Array<{
     icon: Globe,
     path: "/shield/domains",
     roles: ["admin", "tenant", "client"],
+    requiredPermission: "shield.view",
   },
   {
     label: "Firewall",
     icon: ShieldCheck,
     path: "/shield/firewall",
     roles: ["admin", "tenant", "client"],
+    requiredPermission: "shield.view",
   },
   {
     label: "Attacks",
     icon: Flame,
     path: "/shield/attacks",
     roles: ["admin", "tenant", "client"],
+    requiredPermission: "shield.view",
   },
   {
     label: "Attack Map",
     icon: Map,
     path: "/shield/attack-map",
     roles: ["admin", "tenant", "client"],
+    requiredPermission: "shield.view",
   },
   {
     label: "Analytics",
     icon: Activity,
     path: "/shield/analytics",
     roles: ["admin", "tenant", "client"],
+    requiredPermission: "shield.view",
   },
   {
     label: "SSL",
     icon: Lock,
     path: "/shield/ssl",
     roles: ["admin", "tenant", "client"],
+    requiredPermission: "shield.view",
   },
 ];
 
@@ -439,6 +451,48 @@ export const adminMenuItems: MenuEntry[] = [
     isLucide: true,
     requiredPermission: "instances.view",
     path: "/admin-dashboard/agent",
+  },
+  {
+    name: "Object Storage",
+    icon: HardDrive,
+    isLucide: true,
+    children: [
+      {
+        name: "Bucket Endpoints",
+        icon: Database,
+        isLucide: true,
+        requiredPermission: "migrations.view",
+        path: "/admin-dashboard/integrations/anycloudflow/buckets/endpoints",
+      },
+      {
+        name: "Bucket Migrations",
+        icon: ArrowLeftRight,
+        isLucide: true,
+        requiredPermission: "migrations.view",
+        path: "/admin-dashboard/integrations/anycloudflow/buckets/migrations",
+      },
+      {
+        name: "Bucket Replications",
+        icon: Repeat,
+        isLucide: true,
+        requiredPermission: "migrations.view",
+        path: "/admin-dashboard/integrations/anycloudflow/buckets/replications",
+      },
+      {
+        // BG-15 Path B — tenant-admin curated client visibility grants.
+        // Permission gate is the workspace `bucket.access_grants.manage`
+        // capability, not generic `migrations.view`. Granting access is a
+        // destructive admin action that mints data-visibility scopes for
+        // a client; viewers should never see this route in the nav.
+        // The route's backend already enforces `workspace.role:owner,admin`
+        // — this nav check is a UX layer (don't show what they can't use).
+        name: "Client Access Grants",
+        icon: KeyRound,
+        isLucide: true,
+        requiredPermission: "bucket.access_grants.manage",
+        path: "/admin-dashboard/integrations/anycloudflow/buckets/client-access",
+      },
+    ],
   },
   {
     name: "Provider Discovery",
@@ -832,6 +886,38 @@ export const buildClientMenuItems = (_hasProjects: boolean): MenuEntry[] => {
       isLucide: true,
       requiredPermission: "instances.view",
       path: "/client-dashboard/agent",
+    },
+    {
+      // Path C — client view of AnyCloudFlow bucket subsystem. Mirrors the
+      // admin "Object Storage" group but read-only: the underlying routes
+      // forward an X-Acf-Client-Id header so AcF automatically narrows the
+      // view to the client's own endpoints/migrations/replications.
+      name: "Object Storage",
+      icon: HardDrive,
+      isLucide: true,
+      children: [
+        {
+          name: "Bucket Endpoints",
+          icon: Database,
+          isLucide: true,
+          requiredPermission: "migrations.view",
+          path: "/client-dashboard/integrations/anycloudflow/buckets/endpoints",
+        },
+        {
+          name: "Bucket Migrations",
+          icon: ArrowLeftRight,
+          isLucide: true,
+          requiredPermission: "migrations.view",
+          path: "/client-dashboard/integrations/anycloudflow/buckets/migrations",
+        },
+        {
+          name: "Bucket Replications",
+          icon: Repeat,
+          isLucide: true,
+          requiredPermission: "migrations.view",
+          path: "/client-dashboard/integrations/anycloudflow/buckets/replications",
+        },
+      ],
     },
     {
       name: "Pricing Calculator",

@@ -7,8 +7,8 @@
  *
  * Responsive: full-width on mobile, centered modal on desktop.
  */
-import React, { useState } from "react";
-import { X, RefreshCw, ArrowRightLeft, ArrowLeftRight, Info, MapPin, AlertTriangle, Server, Webhook } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { X, RefreshCw, ArrowRightLeft, ArrowLeftRight, Info, MapPin, AlertTriangle, Server, Webhook, HardDrive, Lock } from "lucide-react";
 import { ModernButton } from "../ui";
 import { useFetchRegions } from "@/shared/hooks/resources/regionHooks";
 import { formatRegionName } from "@/utils/regionUtils";
@@ -18,6 +18,9 @@ import {
   REPLICATION_MODE_LABELS,
   WORKLOAD_PROFILE_LABELS,
 } from "@/types/bidirectional";
+import { acfApi } from "../../../adminDashboard/pages/integrations/anycloudflow/api";
+import { useReplicationPricing, pickTierCents } from "@/hooks/replicationPricingHooks";
+import { formatPerVmMonthPrice } from "@/lib/replicationBillingTier";
 
 interface ReplicationConfigModalProps {
   isOpen: boolean;
@@ -26,9 +29,16 @@ interface ReplicationConfigModalProps {
   isSubmitting?: boolean;
   resourceName?: string;
   resourceRegion?: string;
+  /**
+   * Optional source+target AnyCloudFlow endpoint identifiers. When both are
+   * provided, the modal probes ZFS capability on each and surfaces a ZFS
+   * transport toggle with dataset selection + live cost preview.
+   */
+  sourceEndpointId?: string;
+  targetEndpointId?: string;
 }
 
-interface ReplicationConfig {
+export interface ReplicationConfig {
   replication_type: string;
   rpo_target_minutes: number;
   topology: string;
@@ -38,6 +48,10 @@ interface ReplicationConfig {
   workload_profile?: string;
   webhook_url?: string;
   webhook_events?: string[];
+  // New — surfaced when both endpoints support ZFS:
+  transfer_method?: "rsync" | "zfs_native" | "zfs_native_raw";
+  zfs_source_dataset?: string;
+  zfs_target_dataset?: string;
 }
 
 const REPLICATION_WEBHOOK_EVENTS = [
@@ -59,6 +73,8 @@ const ReplicationConfigModal: React.FC<ReplicationConfigModalProps> = ({
   isSubmitting = false,
   resourceName,
   resourceRegion,
+  sourceEndpointId,
+  targetEndpointId,
 }) => {
   const [replicationType, setReplicationType] = useState("1_to_1");
   const [rpoTarget, setRpoTarget] = useState(15);
@@ -69,6 +85,58 @@ const ReplicationConfigModal: React.FC<ReplicationConfigModalProps> = ({
   const [workloadProfile, setWorkloadProfile] = useState<WorkloadProfile>(WorkloadProfile.StatelessApp);
   const [webhookUrl, setWebhookUrl] = useState("");
   const [webhookEvents, setWebhookEvents] = useState<string[]>([]);
+
+  // ── ZFS transport selection (IG-6) ─────────────────────────────
+  // Detected when BOTH endpoints support ZFS. Until then the transport
+  // remains implicit rsync and this section stays hidden.
+  type TransferChoice = "rsync" | "zfs_native" | "zfs_native_raw";
+  const [transferMethod, setTransferMethod] = useState<TransferChoice>("rsync");
+  const [srcZfs, setSrcZfs] = useState<{ has_zfs: boolean; datasets?: { name: string; encryption?: boolean }[] } | null>(null);
+  const [tgtZfs, setTgtZfs] = useState<{ has_zfs: boolean; datasets?: { name: string; encryption?: boolean }[] } | null>(null);
+  const [srcDataset, setSrcDataset] = useState<string>("");
+  const [tgtDataset, setTgtDataset] = useState<string>("");
+  const [zfsProbing, setZfsProbing] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen || !sourceEndpointId || !targetEndpointId) {
+      setSrcZfs(null);
+      setTgtZfs(null);
+      return;
+    }
+    let cancelled = false;
+    setZfsProbing(true);
+    Promise.all([
+      acfApi.detectZfsOnEndpoint(sourceEndpointId).then((r: unknown) => r?.data ?? r).catch(() => null),
+      acfApi.detectZfsOnEndpoint(targetEndpointId).then((r: unknown) => r?.data ?? r).catch(() => null),
+    ])
+      .then(([src, tgt]) => {
+        if (cancelled) return;
+        setSrcZfs(src ?? { has_zfs: false });
+        setTgtZfs(tgt ?? { has_zfs: false });
+      })
+      .finally(() => !cancelled && setZfsProbing(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, sourceEndpointId, targetEndpointId]);
+
+  const zfsAvailable = Boolean(srcZfs?.has_zfs && tgtZfs?.has_zfs);
+  const selectedDataset = srcZfs?.datasets?.find((d) => d.name === srcDataset);
+  const datasetIsEncrypted = Boolean(selectedDataset?.encryption);
+
+  // Auto-upgrade to raw-send when the selected dataset is encrypted so
+  // AnyCloudFlow never handles plaintext.
+  useEffect(() => {
+    if (transferMethod === "zfs_native" && datasetIsEncrypted) {
+      setTransferMethod("zfs_native_raw");
+    }
+  }, [datasetIsEncrypted, transferMethod]);
+
+  const pricingMode = topology === "active_active" ? "bidirectional" : "active_passive";
+  const { data: pricingRates } = useReplicationPricing(pricingMode);
+  const currentTier =
+    transferMethod === "zfs_native_raw" ? "zfs_raw" : transferMethod === "zfs_native" ? "zfs_native" : "rsync";
+  const _currentRateCents = pricingRates ? pickTierCents(pricingRates, currentTier) : null;
 
   const { data: regions = [], isLoading: loadingRegions } = useFetchRegions(
     undefined,
@@ -116,6 +184,14 @@ const ReplicationConfigModal: React.FC<ReplicationConfigModalProps> = ({
     }
     if (webhookEvents.length > 0) {
       config.webhook_events = webhookEvents;
+    }
+
+    // Only emit ZFS fields when ZFS was actually selected — prevents
+    // backend from mis-routing an rsync intent through the ZFS code path.
+    if (zfsAvailable && transferMethod !== "rsync") {
+      config.transfer_method = transferMethod;
+      if (srcDataset) config.zfs_source_dataset = srcDataset;
+      if (tgtDataset) config.zfs_target_dataset = tgtDataset;
     }
 
     onSubmit(config);
@@ -395,6 +471,145 @@ const ReplicationConfigModal: React.FC<ReplicationConfigModalProps> = ({
               <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                 How conflicts are resolved when both sides write simultaneously.
               </p>
+            </div>
+          )}
+
+          {/* ── Transport / ZFS (IG-6) ────────────────────────── */}
+          {sourceEndpointId && targetEndpointId && (
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Transport
+              </label>
+              {zfsProbing ? (
+                <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
+                  <RefreshCw size={12} className="animate-spin" />
+                  Detecting ZFS capability on source + target…
+                </div>
+              ) : zfsAvailable ? (
+                <>
+                  <div className="mb-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-200">
+                    <div className="flex items-center gap-2 font-medium">
+                      <HardDrive size={12} />
+                      ZFS Native Replication Available
+                    </div>
+                    <p className="mt-0.5">
+                      Both endpoints run ZFS. Native send/receive is typically 10-100× faster than rsync on large datasets and preserves compression, ACLs, and snapshot history atomically.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    {(
+                      [
+                        {
+                          value: "rsync",
+                          label: "Rsync (file-level)",
+                          tier: "rsync" as const,
+                          disabled: false,
+                        },
+                        {
+                          value: "zfs_native",
+                          label: "ZFS Native",
+                          tier: "zfs_native" as const,
+                          disabled: datasetIsEncrypted,
+                          note: datasetIsEncrypted ? "Encrypted dataset — use encrypted transport below." : undefined,
+                        },
+                        {
+                          value: "zfs_native_raw",
+                          label: "ZFS Native (encrypted raw send)",
+                          tier: "zfs_raw" as const,
+                          disabled: false,
+                          note: "AnyCloudFlow never decrypts — recommended for encrypted pools.",
+                        },
+                      ] as const
+                    ).map((opt) => {
+                      const cents = pricingRates ? pickTierCents(pricingRates, opt.tier) : null;
+                      return (
+                        <label
+                          key={opt.value}
+                          className={`flex items-start gap-3 rounded-lg border p-3 text-sm transition-colors ${
+                            transferMethod === opt.value
+                              ? "border-purple-500 bg-purple-50 dark:border-purple-500 dark:bg-purple-900/20"
+                              : "border-gray-200 dark:border-gray-700"
+                          } ${opt.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                        >
+                          <input
+                            type="radio"
+                            name="zfs-transport"
+                            value={opt.value}
+                            checked={transferMethod === opt.value}
+                            disabled={opt.disabled}
+                            onChange={() => !opt.disabled && setTransferMethod(opt.value as TransferChoice)}
+                            className="mt-0.5 text-purple-600 focus:ring-purple-500"
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-gray-900 dark:text-gray-100">
+                                {opt.label}
+                              </span>
+                              {opt.value === "zfs_native_raw" && (
+                                <Lock size={10} className="text-purple-600 dark:text-purple-400" />
+                              )}
+                              <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
+                                {cents !== null ? formatPerVmMonthPrice(cents) : "—"}
+                              </span>
+                            </div>
+                            {opt.note && (
+                              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{opt.note}</p>
+                            )}
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {transferMethod !== "rsync" && (
+                    <div className="mt-3 grid gap-2 md:grid-cols-2">
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                          Source dataset
+                        </label>
+                        <select
+                          value={srcDataset}
+                          onChange={(e) => setSrcDataset(e.target.value)}
+                          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                        >
+                          <option value="">— choose dataset —</option>
+                          {srcZfs?.datasets?.map((d) => (
+                            <option key={d.name} value={d.name}>
+                              {d.name}
+                              {d.encryption ? " 🔒" : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                          Target dataset
+                        </label>
+                        <select
+                          value={tgtDataset}
+                          onChange={(e) => setTgtDataset(e.target.value)}
+                          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                        >
+                          <option value="">— choose dataset —</option>
+                          {tgtZfs?.datasets?.map((d) => (
+                            <option key={d.name} value={d.name}>
+                              {d.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                (srcZfs || tgtZfs) && (
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
+                    Using rsync (file-level). ZFS native replication requires ZFS on both endpoints.
+                    {" "}
+                    {!srcZfs?.has_zfs && "Source does not have ZFS."}
+                    {!tgtZfs?.has_zfs && " Target does not have ZFS."}
+                  </div>
+                )
+              )}
             </div>
           )}
 

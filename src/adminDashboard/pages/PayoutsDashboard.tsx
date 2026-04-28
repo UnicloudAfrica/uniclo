@@ -47,12 +47,30 @@ interface PayoutSummary {
   total_paid_out: number;
 }
 
+interface PaginationMeta {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+}
+
+interface PayoutsResponse extends PaginationMeta {
+  data: Payout[];
+}
+
 // API hooks
 const usePayouts = (params: Record<string, unknown>) => {
   return useQuery({
     queryKey: ["payouts", params],
     queryFn: async () => {
-      const response = await adminApi.get<{ data: { data: Payout[] } }>("/payouts", { params });
+      const qs = new URLSearchParams(
+        Object.entries(params).reduce((acc, [k, v]) => {
+          if (v !== undefined && v !== null && v !== "") acc[k] = String(v);
+          return acc;
+        }, {} as Record<string, string>)
+      ).toString();
+      const path = qs ? `/payouts?${qs}` : "/payouts";
+      const response = await adminApi.get<{ data: PayoutsResponse }>(path);
       return response.data;
     },
   });
@@ -63,7 +81,8 @@ const usePayoutSummary = () => {
     queryKey: ["payouts", "summary"],
     queryFn: async () => {
       const response = await adminApi.get<Record<string, unknown>>("/payouts/summary");
-      return (response.data ?? response) as PayoutSummary;
+      const record = response as Record<string, unknown>;
+      return ((record.data as PayoutSummary) ?? (record as unknown as PayoutSummary));
     },
   });
 };
@@ -72,7 +91,7 @@ const useProcessPayout = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: number) => {
-      const response = await adminApi.post("/payouts/" + id + "/process");
+      const response = await adminApi.post<{ data?: unknown }>("/payouts/" + id + "/process");
       return response.data;
     },
     onSuccess: () => {
@@ -85,7 +104,7 @@ const useCancelPayout = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: number) => {
-      const response = await adminApi.post("/payouts/" + id + "/cancel");
+      const response = await adminApi.post<{ data?: unknown }>("/payouts/" + id + "/cancel");
       return response.data;
     },
     onSuccess: () => {
@@ -102,7 +121,7 @@ const useGeneratePayouts = () => {
       period_end: string;
       tenant_id?: number;
     }) => {
-      const response = await adminApi.post("/payouts/generate", params);
+      const response = await adminApi.post<{ data?: unknown }>("/payouts/generate", params);
       return response.data;
     },
     onSuccess: () => {
@@ -160,8 +179,15 @@ const PayoutsDashboard: React.FC = () => {
   const cancelPayout = useCancelPayout();
   const generatePayouts = useGeneratePayouts();
 
-  const payouts: Payout[] = payoutsData?.data?.data || [];
-  const pagination = payoutsData?.data || {};
+  const payouts: Payout[] = payoutsData?.data || [];
+  const pagination: PaginationMeta = payoutsData
+    ? {
+        current_page: payoutsData.current_page,
+        last_page: payoutsData.last_page,
+        per_page: payoutsData.per_page,
+        total: payoutsData.total,
+      }
+    : { current_page: 1, last_page: 1, per_page: 20, total: 0 };
 
   const handleProcessPayout = async (id: number) => {
     if (

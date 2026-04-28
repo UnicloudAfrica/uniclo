@@ -2,11 +2,11 @@ import { X, Loader2 } from "lucide-react";
 import ToastUtils from "@/utils/toastUtil";
 import { useDeleteClient } from "@/hooks/clientHooks";
 
-const DeleteClientModal = ({ isOpen, onClose, client, onDeleteConfirm }: any) => {
+const DeleteClientModal = ({ isOpen, onClose, client, onDeleteConfirm }: { isOpen: boolean; onClose: () => void; client: unknown; onDeleteConfirm: () => void }) => {
   // Use the useDeleteClient hook
   const { mutate, isPending } = useDeleteClient();
 
-  const handleDeleteConfirm = (e: any) => {
+  const handleDeleteConfirm = (e: unknown) => {
     if (e) e.preventDefault(); // Prevent default form submission behavior if this is part of a form
 
     if (client?.id) {

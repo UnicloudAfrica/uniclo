@@ -8,14 +8,18 @@
  */
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   useFlowApi,
   type FlowPlan,
   type FlowStatus,
   type FlowServer,
+  type FlowSite,
 } from "@/shared/hooks/useFlowApi";
 import ResourceHero from "@/shared/components/ui/ResourceHero";
 import { ModernCard, ModernButton } from "@/shared/components/ui";
+import { TemporaryDomainBadge } from "./TemporaryDomainBadge";
+import FlowSiteArchitectureModal from "./FlowSiteArchitectureModal";
 import {
   Server,
   Globe,
@@ -27,6 +31,7 @@ import {
   Layers,
   Check,
   Loader2,
+  Workflow,
 } from "lucide-react";
 
 interface FlowDashboardProps {
@@ -73,6 +78,7 @@ const FLOW_TABS: FlowTab[] = [
 const FlowDashboard: React.FC<FlowDashboardProps> = ({ basePath }) => {
   const navigate = useNavigate();
   const api = useFlowApi();
+  const { t } = useTranslation("flow");
 
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<FlowStatus | null>(null);
@@ -108,6 +114,31 @@ const FlowDashboard: React.FC<FlowDashboardProps> = ({ basePath }) => {
   useEffect(() => {
     fetchData();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-refresh:
+  //   - poll every 30s while the dashboard is open
+  //   - refetch immediately when the tab regains focus (user comes back from
+  //     a deploy on LeanPloy and expects to see the new state)
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      if (!document.hidden) {
+        fetchData();
+      }
+    }, 30_000);
+
+    const onFocus = () => fetchData();
+    const onVisibility = () => {
+      if (!document.hidden) fetchData();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [fetchData]);
 
   const handleSubscribe = async (planSlug: string) => {
     setSubscribing(true);
@@ -341,6 +372,39 @@ const FlowDashboard: React.FC<FlowDashboardProps> = ({ basePath }) => {
         </ModernCard>
       )}
 
+      {/*
+        Past-due banner — shown when ChargeFlowSubscriptions has exhausted its
+        retry budget and flipped the subscription to past_due. Paystack auth
+        codes can't be silently refreshed once the card is replaced/expired,
+        so the user must re-enter card details. The renewSubscription endpoint
+        already accepts past_due — we just need to surface the CTA.
+      */}
+      {sub?.status === "past_due" && (
+        <ModernCard
+          className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20"
+          role="alert"
+          aria-live="assertive"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-red-800 dark:text-red-300">
+                {t("past_due_banner.title")}
+              </p>
+              <p className="mt-1 text-xs text-red-700 dark:text-red-400">
+                {t("past_due_banner.body")}
+              </p>
+            </div>
+            <ModernButton
+              onClick={() => navigate(`${basePath}/billing?reauthorize=1`)}
+              variant="primary"
+              size="sm"
+            >
+              {t("past_due_banner.cta")}
+            </ModernButton>
+          </div>
+        </ModernCard>
+      )}
+
       {/* Main content area with side menu (inventory-style layout) */}
       <div className="flex gap-6">
         {/* Side navigation */}
@@ -414,9 +478,14 @@ const FlowDashboard: React.FC<FlowDashboardProps> = ({ basePath }) => {
             />
           )}
           {activeTab === "servers" && (
-            <ServersTab servers={servers} basePath={basePath} onNavigate={navigate} />
+            <ServersTab
+              servers={servers}
+              basePath={basePath}
+              onNavigate={navigate}
+              onChange={fetchData}
+            />
           )}
-          {activeTab === "sites" && <SitesPlaceholder basePath={basePath} />}
+          {activeTab === "sites" && <SitesTab servers={servers} />}
           {activeTab === "git-providers" && <GitProvidersPlaceholder basePath={basePath} />}
           {activeTab === "databases" && <DatabasesPlaceholder basePath={basePath} />}
           {activeTab === "ssl" && <SSLPlaceholder basePath={basePath} />}
@@ -560,71 +629,243 @@ const ServersTab: React.FC<{
   servers: FlowServer[];
   basePath: string;
   onNavigate: (path: string) => void;
-}> = ({ servers, onNavigate }) => (
-  <div className="space-y-4">
-    <div className="flex items-center justify-between">
-      <div>
-        <h3 className="text-base font-semibold text-slate-900 dark:text-white">Servers</h3>
-        <p className="mt-0.5 text-sm text-slate-500">
-          Manage servers linked to your UniCloudFlow subscription.
-        </p>
-      </div>
-    </div>
+  onChange: () => void | Promise<void>;
+}> = ({ servers, onChange }) => {
+  const api = useFlowApi();
 
-    {servers.length === 0 ? (
+  const claim = async (serverId: number, name?: string) => {
+    await api.attachServerTemporaryDomain(serverId, name);
+    await onChange();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">Servers</h3>
+          <p className="mt-0.5 text-sm text-slate-500">
+            Manage servers linked to your UniCloudFlow subscription.
+          </p>
+        </div>
+      </div>
+
+      {servers.length === 0 ? (
+        <ModernCard className="py-12 text-center">
+          <Server className="mx-auto h-10 w-10 text-slate-300" />
+          <p className="mt-3 text-sm text-slate-500">No servers linked yet.</p>
+          <p className="mt-1 text-xs text-slate-400">
+            Servers will appear here once provisioned through LeanPloy.
+          </p>
+        </ModernCard>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {servers.map((server) => (
+            <ModernCard key={server.id}>
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-500 dark:bg-blue-900/30">
+                    <Server className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {server.name}
+                    </p>
+                    <p className="text-xs text-slate-500">{server.ip_address}</p>
+                  </div>
+                </div>
+                <StatusBadge status={server.status} />
+              </div>
+              {server.php_version && (
+                <div className="mt-3 flex gap-3 text-xs text-slate-500">
+                  <span>PHP {server.php_version}</span>
+                  {server.ubuntu_version && <span>Ubuntu {server.ubuntu_version}</span>}
+                </div>
+              )}
+              <div className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-700">
+                <TemporaryDomainBadge
+                  scope="compute"
+                  domain={server.temporary_domain ?? null}
+                  onClaim={(name) => claim(server.id, name)}
+                  onGenerate={() => claim(server.id)}
+                />
+              </div>
+            </ModernCard>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/**
+ * Sites tab: lists all sites across all linked servers, with the
+ * temporary-domain badge inline. The temp-domain pattern is the same
+ * one Vercel/Heroku ships — every freshly created site has a working
+ * URL on `<slug>.flow.unicloudafrica.ng` immediately, before the
+ * customer has wired their custom DNS.
+ */
+const SitesTab: React.FC<{ servers: FlowServer[] }> = ({ servers }) => {
+  const api = useFlowApi();
+  const [loading, setLoading] = useState(true);
+  const [sitesByServer, setSitesByServer] = useState<
+    Record<number, FlowSite[]>
+  >({});
+  const [generatingFor, setGeneratingFor] = useState<string | null>(null);
+  // The architecture-modal state is two values so we can render the modal
+  // OUTSIDE the sites loop without prop-drilling. `null` = closed.
+  const [archTarget, setArchTarget] = useState<{ server: FlowServer; site: FlowSite } | null>(
+    null,
+  );
+
+  const refetch = useCallback(async () => {
+    setLoading(true);
+    try {
+      const results = await Promise.all(
+        servers.map(async (s) => {
+          try {
+            const r = await api.getSites(s.id);
+            return [s.id, r.data ?? []] as const;
+          } catch {
+            return [s.id, []] as const;
+          }
+        }),
+      );
+      const next: Record<number, FlowSite[]> = {};
+      for (const [id, sites] of results) {
+        next[id] = sites;
+      }
+      setSitesByServer(next);
+    } finally {
+      setLoading(false);
+    }
+  }, [api, servers]);
+
+  useEffect(() => {
+    void refetch();
+  }, [refetch]);
+
+  const onGenerateTempDomain = async (serverId: number, siteId: number) => {
+    const key = `${serverId}:${siteId}`;
+    setGeneratingFor(key);
+    try {
+      await api.attachSiteTemporaryDomain(serverId, siteId);
+      await refetch();
+    } finally {
+      setGeneratingFor(null);
+    }
+  };
+
+  const onClaimTempDomain = async (
+    serverId: number,
+    siteId: number,
+    name: string,
+  ) => {
+    // Don't swallow — TemporaryDomainClaim catches and surfaces
+    // 409/422 inline so the user can fix the name.
+    await api.attachSiteTemporaryDomain(serverId, siteId, name);
+    await refetch();
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
+      </div>
+    );
+  }
+
+  const servesAny = Object.values(sitesByServer).some((s) => s.length > 0);
+  if (!servesAny) {
+    return (
       <ModernCard className="py-12 text-center">
-        <Server className="mx-auto h-10 w-10 text-slate-300" />
-        <p className="mt-3 text-sm text-slate-500">No servers linked yet.</p>
-        <p className="mt-1 text-xs text-slate-400">
-          Servers will appear here once provisioned through LeanPloy.
+        <Globe className="mx-auto h-10 w-10 text-slate-300" />
+        <p className="mt-3 text-sm font-medium text-slate-900 dark:text-white">
+          No sites yet
+        </p>
+        <p className="mt-1 text-xs text-slate-500">
+          Sites will appear here as soon as they are created on a connected server.
         </p>
       </ModernCard>
-    ) : (
-      <div className="grid gap-4 sm:grid-cols-2">
-        {servers.map((server) => (
-          <ModernCard
-            key={server.id}
-            className="cursor-pointer transition-shadow hover:shadow-md"
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-500 dark:bg-blue-900/30">
-                  <Server className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {server.name}
-                  </p>
-                  <p className="text-xs text-slate-500">{server.ip_address}</p>
-                </div>
-              </div>
-              <StatusBadge status={server.status} />
-            </div>
-            {server.php_version && (
-              <div className="mt-3 flex gap-3 text-xs text-slate-500">
-                <span>PHP {server.php_version}</span>
-                {server.ubuntu_version && <span>Ubuntu {server.ubuntu_version}</span>}
-              </div>
-            )}
-          </ModernCard>
-        ))}
-      </div>
-    )}
-  </div>
-);
+    );
+  }
 
-// Placeholder tabs — will be expanded into full sub-pages
-const SitesPlaceholder: React.FC<{ basePath: string }> = () => (
-  <ModernCard className="py-12 text-center">
-    <Globe className="mx-auto h-10 w-10 text-slate-300" />
-    <p className="mt-3 text-sm font-medium text-slate-900 dark:text-white">
-      Sites & Deployments
-    </p>
-    <p className="mt-1 text-xs text-slate-500">
-      Select a server from the Servers tab to manage its sites and trigger deployments.
-    </p>
-  </ModernCard>
-);
+  return (
+    <div className="space-y-6">
+      {archTarget && (
+        <FlowSiteArchitectureModal
+          open
+          onClose={() => setArchTarget(null)}
+          server={archTarget.server}
+          site={archTarget.site}
+        />
+      )}
+      {servers.map((server) => {
+        const sites = sitesByServer[server.id] ?? [];
+        if (sites.length === 0) return null;
+        return (
+          <ModernCard key={server.id}>
+            <div className="mb-3 flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-500 dark:bg-blue-900/30">
+                <Server className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {server.name}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {sites.length} site{sites.length === 1 ? "" : "s"}
+                </p>
+              </div>
+            </div>
+
+            <div className="divide-y divide-slate-100 dark:divide-slate-700">
+              {sites.map((site) => {
+                const key = `${server.id}:${site.id}`;
+                return (
+                  <div
+                    key={site.id}
+                    className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-slate-900 dark:text-white">
+                        {site.domain}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {site.project_type}
+                        {site.repository ? ` · ${site.repository}` : ""}
+                        {site.branch ? ` · ${site.branch}` : ""}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <ModernButton
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setArchTarget({ server, site })}
+                        aria-label={`View architecture for ${site.domain}`}
+                        leftIcon={<Workflow className="h-3.5 w-3.5" />}
+                      >
+                        Architecture
+                      </ModernButton>
+                      <TemporaryDomainBadge
+                        scope="flow"
+                        domain={site.temporary_domain ?? null}
+                        isGenerating={generatingFor === key}
+                        onGenerate={() => onGenerateTempDomain(server.id, site.id)}
+                        onClaim={(name) =>
+                          onClaimTempDomain(server.id, site.id, name)
+                        }
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </ModernCard>
+        );
+      })}
+    </div>
+  );
+};
 
 const GitProvidersPlaceholder: React.FC<{ basePath: string }> = () => (
   <ModernCard className="py-12 text-center">

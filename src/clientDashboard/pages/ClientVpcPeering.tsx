@@ -15,7 +15,7 @@ const ClientVpcPeering: React.FC = () => {
 
   const { data: projectData } = useFetchProjectById(projectId);
   const project =
-    projectData && typeof projectData === "object" ? (projectData as Record<string, any>) : null;
+    projectData && typeof projectData === "object" ? (projectData as Record<string, unknown>) : null;
   const provider = project?.provider || searchParams.get("provider");
 
   const { data: peeringConnections = [], isLoading } = useVpcPeering(projectId, region);

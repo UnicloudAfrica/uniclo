@@ -3,13 +3,13 @@ import api from "../index/api";
 import logger from "../utils/logger";
 
 // POST: verify a business
-const verifyBusiness = async (businessData: any): Promise<any> => {
-  const res = await api("POST", "/business-verifications", businessData);
+const verifyBusiness = async (businessData: Record<string, unknown>): Promise<unknown> => {
+  const res = await api<{ data?: unknown }>("POST", "/business-verifications", businessData);
   return res.data;
 };
 
 // Hook to verify a business
-export const useVerifyBusiness = (): UseMutationResult<any, Error, any> => {
+export const useVerifyBusiness = (): UseMutationResult<unknown, Error, unknown> => {
   const _queryClient = useQueryClient();
   return useMutation({
     mutationFn: verifyBusiness,

@@ -34,7 +34,7 @@ interface RouteTableHooks {
   useCreate: () => UseMutationResult<
     unknown,
     Error,
-    { projectId: string; region?: string; payload: { route_table_id: string; [key: string]: any } },
+    { projectId: string; region?: string; payload: { route_table_id: string; [key: string]: unknown } },
     unknown
   >;
   useDelete: () => UseMutationResult<
@@ -69,7 +69,7 @@ interface RouteTablesContainerProps {
   wrapper: (props: {
     headerActions: React.ReactNode;
     children: React.ReactNode;
-  }) => React.ReactElement<any>;
+  }) => React.ReactElement;
 }
 
 const RouteTablesContainer: React.FC<RouteTablesContainerProps> = ({

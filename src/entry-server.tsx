@@ -19,7 +19,7 @@ export const render = (url: string) => {
   const helmetContext: HelmetContext = {};
 
   const html = renderToString(
-    <HelmetProvider context={helmetContext as any}>
+    <HelmetProvider context={helmetContext as unknown}>
       <QueryProvider>
         <StaticRouter location={url}>
           <App />

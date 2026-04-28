@@ -1141,7 +1141,7 @@ function CreateLaunchConfigModal({
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
             >
               <option value="">Select key pair (optional)...</option>
-              {keyPairs.map((kp: any) => (
+              {keyPairs.map((kp: { id?: string | number; name: string }) => (
                 <option key={kp.id || kp.name} value={kp.name}>
                   {kp.name}
                 </option>
@@ -1154,7 +1154,7 @@ function CreateLaunchConfigModal({
               <p className="text-xs text-gray-400 py-1">No security groups available</p>
             ) : (
               <div className="grid grid-cols-1 gap-2 max-h-36 overflow-y-auto">
-                {securityGroups.map((sg: any) => (
+                {securityGroups.map((sg: { id: string; name?: string; description?: string }) => (
                   <button
                     key={sg.id}
                     type="button"
@@ -1385,7 +1385,7 @@ function CreateGroupModal({
               <p className="text-xs text-gray-400 py-1">No subnets available</p>
             ) : (
               <div className="grid grid-cols-1 gap-2 max-h-32 overflow-y-auto">
-                {subnets.map((sub: any) => (
+                {subnets.map((sub: { id: string; cidr_block?: string; cidr?: string; name?: string }) => (
                   <button
                     key={sub.id}
                     type="button"

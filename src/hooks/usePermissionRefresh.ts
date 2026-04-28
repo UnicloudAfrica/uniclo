@@ -27,7 +27,7 @@ interface PermissionsResponse {
  * Resolve the correct API base URL for the user's current role.
  * Admin, tenant, and client each hit different API prefixes.
  */
-function getBaseUrlForRole(role: AuthRole | null): string {
+function _getBaseUrlForRole(role: AuthRole | null): string {
   if (role === "admin") return config.adminURL;
   if (role === "tenant") return config.tenantURL;
   return config.baseURL;

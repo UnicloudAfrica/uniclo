@@ -28,6 +28,23 @@ interface SharedInstanceListProps {
   context: "admin" | "tenant" | "client";
 }
 
+interface InstanceRow {
+  id?: string | number;
+  identifier?: string;
+  name?: string;
+  status?: string;
+  vcpus?: number;
+  memory_gb?: number;
+  private_ip?: string;
+  created_at?: string;
+  compute?: { vcpus?: number; memory_mb?: number };
+  floating_ip?: { ip_address?: string };
+  client?: { name?: string; company_name?: string };
+  user?: { name?: string };
+  tenant?: { name?: string; company_name?: string };
+  [key: string]: unknown;
+}
+
 const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
   const navigate = useNavigate();
 
@@ -46,7 +63,7 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
   }, [context]);
 
   const { isFetching, data: instancesResponse, refetch } = useInstances();
-  const instances = (instancesResponse as Record<string, unknown>)?.data || [];
+  const instances = ((instancesResponse as Record<string, unknown>)?.data || []) as Array<Record<string, unknown>>;
 
   const { consoles, openConsole, closeConsole } = useConsoleManager();
 
@@ -65,8 +82,8 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
   }, [context]);
 
   const navigateToDetails = useCallback(
-    (instance: any) => {
-      const identifier = instance.identifier || instance.id;
+    (instance: InstanceRow) => {
+      const identifier = (instance.identifier || instance.id) as string;
       if (!identifier) {
         ToastUtils.error("Instance identifier missing.");
         return;
@@ -103,7 +120,7 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
         key: "name",
         header: "Instance",
         sortable: true,
-        render: (_: any, instance: any) => (
+        render: (_: unknown, instance: InstanceRow) => (
           <div className="flex items-center gap-3">
             <div className="hidden rounded-lg bg-slate-100 p-2 text-slate-500 md:block">
               <Server className="h-4 w-4" />
@@ -132,7 +149,7 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
             {
               key: "owner",
               header: "Owner",
-              render: (_: any, instance: any) => {
+              render: (_: unknown, instance: InstanceRow) => {
                 const clientName =
                   instance.client?.name ||
                   instance.client?.company_name ||
@@ -152,7 +169,7 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
       {
         key: "resources",
         header: "Resources",
-        render: (_: any, instance: any) => (
+        render: (_: unknown, instance: InstanceRow) => (
           <div className="space-y-1.5 text-sm text-slate-800">
             <div className="flex items-center">
               <Zap className="mr-1 h-3 w-3 text-blue-500" />
@@ -173,7 +190,7 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
       {
         key: "ip_address",
         header: "IP Address",
-        render: (_: any, instance: any) => (
+        render: (_: unknown, instance: InstanceRow) => (
           <div className="flex items-center text-sm text-slate-800">
             <Network className="mr-2 h-4 w-4 text-slate-400" />
             <span>{instance.floating_ip?.ip_address || instance.private_ip || "N/A"}</span>
@@ -208,7 +225,7 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
         key: "actions",
         header: "Actions",
         align: "right",
-        render: (_: any, instance: any) => {
+        render: (_: unknown, instance: InstanceRow) => {
           const status = (instance.status || "").toLowerCase();
           const isRunning = ["active", "running"].includes(status);
 
@@ -218,7 +235,7 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleConsoleAccess(instance.identifier || instance.id);
+                    handleConsoleAccess(String(instance.identifier || instance.id));
                   }}
                   className="rounded-full border border-slate-200 p-1.5 text-slate-500 transition hover:border-blue-200 hover:text-blue-500"
                   title="Console"
@@ -242,7 +259,7 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
     return cols;
   }, [context, navigateToDetails, handleConsoleAccess]);
 
-  const provisioningCount = instances.filter((i: any) =>
+  const provisioningCount = instances.filter((i: InstanceRow) =>
     ["provisioning", "building", "reboot", "hard_reboot"].includes((i.status || "").toLowerCase())
   ).length;
 
@@ -317,7 +334,7 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
         }
       />
 
-      {consoles.map((consoleSession: any) => (
+      {consoles.map((consoleSession) => (
         <EmbeddedConsole
           key={consoleSession.id || consoleSession.instanceId}
           instanceId={consoleSession.instanceId}

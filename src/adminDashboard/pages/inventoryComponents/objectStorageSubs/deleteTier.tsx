@@ -4,7 +4,7 @@ import { useDeleteProduct } from "@/hooks/adminHooks/adminProductHooks";
 import { useDeleteProductPricing } from "@/hooks/adminHooks/adminProductPricingHooks";
 import logger from "@/utils/logger";
 
-const DeleteObjectStorageTierModal = ({ isOpen, onClose, tier, onDeleted }: any) => {
+const DeleteObjectStorageTierModal = ({ isOpen, onClose, tier, onDeleted }: { isOpen: boolean; onClose: () => void; tier: unknown; onDeleted?: () => void }) => {
   const { mutate: deleteProduct, isPending: isDeletingProduct } = useDeleteProduct();
   const { mutate: deletePricing, isPending: isDeletingPricing } = useDeleteProductPricing();
 
@@ -26,10 +26,11 @@ const DeleteObjectStorageTierModal = ({ isOpen, onClose, tier, onDeleted }: any)
         onDeleted?.(tier);
         onClose?.();
       },
-      onError: (error) => {
+      onError: (error: unknown) => {
         logger.error("Failed to delete Silo Storage product", error);
+        const err = error as { response?: { data?: { message?: string } } };
         ToastUtils.error(
-          error?.response?.data?.message || "Failed to delete Silo Storage tier. Please try again."
+          err?.response?.data?.message || "Failed to delete Silo Storage tier. Please try again."
         );
       },
     });

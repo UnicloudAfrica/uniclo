@@ -16,12 +16,26 @@ import AdminPageShell from "../components/AdminPageShell";
 import ModernStatsCard from "@/shared/components/ui/ModernStatsCard";
 import { ModernButton } from "@/shared/components/ui";
 import ModernTable from "@/shared/components/ui/ModernTable";
+import { PriceLabel } from "@/shared/components/ui/PriceLabel";
 import {
   useFetchWalletBalance,
   useFetchWalletTransactions,
   useTopUpWallet,
 } from "@/hooks/walletHooks";
 import { type Column } from "@/shared/components/ui/ModernTable";
+
+/**
+ * Build a same-currency `PriceDTO` envelope so `<PriceLabel>` can
+ * render pre-formatted wallet amounts without triggering the FX hook.
+ * Backend-emitted envelopes (TransactionResource.amount_envelope) are
+ * preferred when available.
+ */
+const toWalletEnvelope = (amount: number, currency: string, symbol: string) => ({
+  amount_display: amount,
+  currency_display: currency,
+  formatted_display: `${symbol}${Number(amount).toLocaleString()}`,
+  fx_source: "identity",
+});
 
 // ═══════════════════════════════════════════════════════════════════
 // TYPES
@@ -174,7 +188,8 @@ export default function WalletDashboard() {
   const { data: transactionsData, isLoading: txLoading } = useFetchWalletTransactions();
   const { mutate: topUp, isPending: topUpLoading } = useTopUpWallet();
 
-  const transactions: WalletTransaction[] = transactionsData?.data || [];
+  const transactions: WalletTransaction[] =
+    (transactionsData?.data as WalletTransaction[] | undefined) ?? [];
   const balance = wallet?.balance || 0;
   const currency = wallet?.currency || "NGN";
   const billingMode = wallet?.billing_mode || "prepaid";
@@ -259,7 +274,7 @@ export default function WalletDashboard() {
       render: (value: unknown) => {
         const type = value as string;
         const config = txTypeConfig[type] || txTypeConfig["credit"];
-        const Icon = config?.icon as any;
+        const Icon = config?.icon as unknown;
         return (
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-lg" style={{ backgroundColor: config?.bg }}>
@@ -284,11 +299,15 @@ export default function WalletDashboard() {
       header: "Amount",
       render: (value: unknown, tx: WalletTransaction) => {
         const isCredit = ["credit", "refund", "promotional", "transfer_in"].includes(tx.type);
+        const amount = Number(value);
         return (
           <span className={`font-semibold ${isCredit ? "text-green-600" : "text-red-600"}`}>
             {isCredit ? "+" : "-"}
-            {symbol}
-            {Number(value).toLocaleString()}
+            <PriceLabel
+              amount={amount}
+              sourceCurrency={tx.currency ?? currency}
+              envelope={toWalletEnvelope(amount, tx.currency ?? currency, symbol)}
+            />
           </span>
         );
       },
@@ -296,12 +315,18 @@ export default function WalletDashboard() {
     {
       key: "balance_after",
       header: "Balance",
-      render: (value: unknown) => (
-        <span className="text-sm text-gray-600">
-          {symbol}
-          {Number(value).toLocaleString()}
-        </span>
-      ),
+      render: (value: unknown) => {
+        const amount = Number(value);
+        return (
+          <span className="text-sm text-gray-600">
+            <PriceLabel
+              amount={amount}
+              sourceCurrency={currency}
+              envelope={toWalletEnvelope(amount, currency, symbol)}
+            />
+          </span>
+        );
+      },
     },
     {
       key: "status",
@@ -358,8 +383,11 @@ export default function WalletDashboard() {
             <div>
               <p className="text-white/70 text-sm mb-1">Available Balance</p>
               <h2 className="text-4xl font-bold">
-                {symbol}
-                {Number(balance).toLocaleString()}
+                <PriceLabel
+                  amount={Number(balance)}
+                  sourceCurrency={currency}
+                  envelope={toWalletEnvelope(Number(balance), currency, symbol)}
+                />
               </h2>
               <p className="text-white/70 text-sm mt-2 flex items-center gap-1">
                 <Clock size={12} />

@@ -14,8 +14,7 @@ import {
 } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
 import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
-import { ModernButton } from "@/shared/components/ui";
-import { ModernCard } from "@/shared/components/ui";
+import { ModernButton, ModernCard, SkeletonCard } from "@/shared/components/ui";
 import { useFetchAdminById } from "@/hooks/adminHooks/adminHooks";
 import { PermissionChecklist } from "@/shared/components/PermissionChecklist";
 import { useFetchUserPermissions, useUpdateUserPermissions } from "@/hooks/adminHooks/permissionHooks";
@@ -54,7 +53,7 @@ const decodeId = (encodedId?: string) => {
     return null;
   }
 };
-const formatDate = (value: any) => {
+const formatDate = (value: unknown) => {
   if (!value) return "Not available";
   try {
     return new Date(value).toLocaleDateString(undefined, {
@@ -74,17 +73,19 @@ function PermissionsTab({ userId }: { userId: string | number }) {
   const { mutateAsync: updatePermissions, isPending: isSaving } = useUpdateUserPermissions();
 
   if (isLoading) {
-    return <div className="flex items-center justify-center py-12 text-sm text-gray-500">Loading permissions...</div>;
+    return <SkeletonCard className="my-4" />;
   }
 
   if (!permData) {
     return <div className="text-sm text-gray-500 py-4">Unable to load permissions.</div>;
   }
 
+  const typedPermData = permData as { registry?: unknown; permissions?: unknown };
+
   return (
     <PermissionChecklist
-      registry={permData.registry}
-      currentPermissions={permData.permissions}
+      registry={typedPermData.registry as never}
+      currentPermissions={typedPermData.permissions as never}
       onSave={async (overrides) => {
         await updatePermissions({
           userId,
@@ -270,7 +271,7 @@ const AdminUserDetails = () => {
             {activeTab === "profile" ? (
               <>
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-                  {summaryCards.map(({ label, value, hint, icon: Icon, accentBg, accentText }: any) => (
+                  {summaryCards.map(({ label, value, hint, icon: Icon, accentBg, accentText }: { label: React.ReactNode; value: React.ReactNode; hint?: React.ReactNode; icon: React.ComponentType<{ size?: number }>; accentBg?: string; accentText?: string }) => (
                     <div
                       key={label}
                       className="rounded-3xl border border-[var(--theme-surface-alt)] bg-white p-5 shadow-sm transition hover:border-primary/50 hover:shadow-md"
@@ -296,7 +297,7 @@ const AdminUserDetails = () => {
                 <ModernCard title="Contact & Access">
                   <div className="grid gap-6 md:grid-cols-2">
                     <dl className="space-y-4">
-                      {profileDetails.slice(0, 3).map(({ label, value }: any) => (
+                      {profileDetails.slice(0, 3).map(({ label, value }: { label: React.ReactNode; value: React.ReactNode }) => (
                         <div key={label} className="flex items-center justify-between gap-4">
                           <dt className="text-sm font-medium text-slate-500">{label}</dt>
                           <dd className="text-sm font-semibold text-slate-900">{value}</dd>
@@ -304,7 +305,7 @@ const AdminUserDetails = () => {
                       ))}
                     </dl>
                     <dl className="space-y-4">
-                      {profileDetails.slice(3).map(({ label, value }: any) => (
+                      {profileDetails.slice(3).map(({ label, value }: { label: React.ReactNode; value: React.ReactNode }) => (
                         <div key={label} className="flex items-center justify-between gap-4">
                           <dt className="text-sm font-medium text-slate-500">{label}</dt>
                           <dd className="text-sm font-semibold text-slate-900">{value}</dd>
@@ -317,7 +318,7 @@ const AdminUserDetails = () => {
                 <ModernCard title="Location & Activity">
                   <div className="grid gap-6 md:grid-cols-2">
                     <dl className="space-y-4">
-                      {locationDetails.slice(0, 3).map(({ label, value }: any) => (
+                      {locationDetails.slice(0, 3).map(({ label, value }: { label: React.ReactNode; value: React.ReactNode }) => (
                         <div key={label} className="flex items-center justify-between gap-4">
                           <dt className="text-sm font-medium text-slate-500">{label}</dt>
                           <dd className="text-sm font-semibold text-slate-900">{value}</dd>
@@ -325,7 +326,7 @@ const AdminUserDetails = () => {
                       ))}
                     </dl>
                     <dl className="space-y-4">
-                      {locationDetails.slice(3).map(({ label, value }: any) => (
+                      {locationDetails.slice(3).map(({ label, value }: { label: React.ReactNode; value: React.ReactNode }) => (
                         <div key={label} className="flex items-center justify-between gap-4">
                           <dt className="text-sm font-medium text-slate-500">{label}</dt>
                           <dd className="text-sm font-semibold text-slate-900">{value}</dd>
@@ -337,7 +338,7 @@ const AdminUserDetails = () => {
 
                 <ModernCard title="Security Controls">
                   <dl className="grid gap-4 md:grid-cols-3">
-                    {devicesDetails.map(({ label, value }: any) => (
+                    {devicesDetails.map(({ label, value }: { label: React.ReactNode; value: React.ReactNode }) => (
                       <div
                         key={label}
                         className="rounded-2xl border border-[var(--theme-surface-alt)] bg-[var(--theme-surface-alt)] px-4 py-3"

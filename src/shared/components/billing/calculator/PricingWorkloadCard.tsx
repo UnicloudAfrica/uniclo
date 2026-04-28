@@ -16,6 +16,28 @@ import { useFetchProductPricing } from "@/hooks/resource";
 import { useFetchAvailabilityZones } from "@/hooks/adminHooks/regionHooks";
 import { BillingRegion, PricingRequest, ProductPricing } from "../types";
 
+interface SearchTerms {
+  region: string;
+  az: string;
+  compute: string;
+  os: string;
+  volume: string;
+  bandwidth: string;
+  floatingIp: string;
+  crossConnect: string;
+}
+
+interface SelectableOption {
+  id: string | number;
+  name: string;
+}
+
+interface AvailabilityZone {
+  code: string;
+  name?: string;
+  is_active?: boolean;
+}
+
 const formatCurrency = (amount: number | null | undefined, currency: string = "USD") => {
   if (amount === null || amount === undefined || Number.isNaN(amount)) {
     return null;
@@ -102,9 +124,9 @@ interface ResourceSelectionSectionProps {
   availabilityZoneOptions: { id: string; name: string }[];
   isAzFetching: boolean;
   itemErrors: Record<string, string | null>;
-  searchTerms: any;
-  setSearchTerms: React.Dispatch<React.SetStateAction<any>>;
-  handleSelectableChange: (field: keyof PricingRequest) => (option?: any) => void;
+  searchTerms: SearchTerms;
+  setSearchTerms: React.Dispatch<React.SetStateAction<SearchTerms>>;
+  handleSelectableChange: (field: keyof PricingRequest) => (option?: SelectableOption | null) => void;
   computerInstances: ProductPricing[];
   isComputerInstancesFetching: boolean;
   selectedCompute: ProductPricing | undefined;
@@ -160,7 +182,7 @@ const ResourceSelectionSection: React.FC<ResourceSelectionSectionProps> = ({
         options={regions?.map((r) => ({ id: r.code, name: r.name })) || []}
         value={data["region"] || ""}
         searchValue={searchTerms.region}
-        onSearchChange={(v) => setSearchTerms((prev: any) => ({ ...prev, region: v }))}
+        onSearchChange={(v) => setSearchTerms((prev) => ({ ...prev, region: v }))}
         onSelect={handleSelectableChange("region")}
         placeholder="Search regions"
         isLoading={isRegionsFetching}
@@ -181,9 +203,9 @@ const ResourceSelectionSection: React.FC<ResourceSelectionSectionProps> = ({
       </div>
       <SelectableInput
         options={availabilityZoneOptions}
-        value={(data as any)["availability_zone"] || ""}
+        value={data["availability_zone"] || ""}
         searchValue={searchTerms.az || ""}
-        onSearchChange={(v) => setSearchTerms((prev: any) => ({ ...prev, az: v }))}
+        onSearchChange={(v) => setSearchTerms((prev) => ({ ...prev, az: v }))}
         onSelect={handleSelectableChange("availability_zone" as keyof PricingRequest)}
         placeholder={!data["region"] ? "Select a region first" : "Select availability zone"}
         disabled={!data["region"]}
@@ -207,14 +229,14 @@ const ResourceSelectionSection: React.FC<ResourceSelectionSectionProps> = ({
       </div>
       <SelectableInput
         options={
-          computerInstances?.filter((i: any) => i?.product)?.map(({ product, pricing }: any) => ({
+          computerInstances?.filter((i) => i?.product)?.map(({ product, pricing }) => ({
             id: Number(product.productable_id),
             name: `${product.name} • ${formatCurrency(pricing?.effective?.price_local, pricing?.effective?.currency) || "N/A"}`,
           })) || []
         }
         value={data["compute_instance_id"] ?? ""}
         searchValue={searchTerms.compute}
-        onSearchChange={(v) => setSearchTerms((prev: any) => ({ ...prev, compute: v }))}
+        onSearchChange={(v) => setSearchTerms((prev) => ({ ...prev, compute: v }))}
         onSelect={handleSelectableChange("compute_instance_id")}
         placeholder="Select instance type"
         disabled={!data["region"]}
@@ -240,14 +262,14 @@ const ResourceSelectionSection: React.FC<ResourceSelectionSectionProps> = ({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <SelectableInput
           options={
-            osImages?.filter((i: any) => i?.product)?.map(({ product, pricing }: any) => ({
+            osImages?.filter((i) => i?.product)?.map(({ product, pricing }) => ({
               id: Number(product.productable_id),
               name: `${product.name} • ${formatCurrency(pricing?.effective?.price_local, pricing?.effective?.currency) || "N/A"}`,
             })) || []
           }
           value={data["os_image_id"] ?? ""}
           searchValue={searchTerms.os}
-          onSearchChange={(v) => setSearchTerms((prev: any) => ({ ...prev, os: v }))}
+          onSearchChange={(v) => setSearchTerms((prev) => ({ ...prev, os: v }))}
           onSelect={handleSelectableChange("os_image_id")}
           placeholder="Select OS image"
           disabled={!data["region"]}
@@ -285,9 +307,9 @@ interface StorageVolumesSectionProps {
   ebsVolumes: ProductPricing[];
   isEbsVolumesFetching: boolean;
   itemErrors: Record<string, string | null>;
-  searchTerms: any;
-  setSearchTerms: React.Dispatch<React.SetStateAction<any>>;
-  handleSelectableChange: (field: keyof PricingRequest) => (option?: any) => void;
+  searchTerms: SearchTerms;
+  setSearchTerms: React.Dispatch<React.SetStateAction<SearchTerms>>;
+  handleSelectableChange: (field: keyof PricingRequest) => (option?: SelectableOption | null) => void;
   handleNumericChange: (
     field: keyof PricingRequest,
     min?: number
@@ -316,7 +338,7 @@ const StorageVolumesSection: React.FC<StorageVolumesSectionProps> = ({
       <div className="space-y-2">
         {data["volumes"].map((vol, idx) => {
           const volProduct = ebsVolumes?.find(
-            (v: any) => v?.product && String(v.product.productable_id) === String(vol.volume_type_id)
+            (v) => v?.product && String(v.product.productable_id) === String(vol.volume_type_id)
           );
           return (
             <div
@@ -346,14 +368,14 @@ const StorageVolumesSection: React.FC<StorageVolumesSectionProps> = ({
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_120px_auto]">
       <SelectableInput
         options={
-          ebsVolumes?.filter((i: any) => i?.product)?.map(({ product, pricing }: any) => ({
+          ebsVolumes?.filter((i) => i?.product)?.map(({ product, pricing }) => ({
             id: Number(product.productable_id),
             name: `${product.name} • ${formatCurrency(Number(pricing?.effective?.price_local), pricing?.effective?.currency)}/GB`,
           })) || []
         }
         value={data["volume_type_id"] || ""}
         searchValue={searchTerms.volume}
-        onSearchChange={(v) => setSearchTerms((prev: any) => ({ ...prev, volume: v }))}
+        onSearchChange={(v) => setSearchTerms((prev) => ({ ...prev, volume: v }))}
         onSelect={handleSelectableChange("volume_type_id")}
         placeholder="Volume Type"
         disabled={!data["region"]}
@@ -386,9 +408,9 @@ interface NetworkingOptionsSectionProps {
   floatingIps: ProductPricing[];
   crossConnects: ProductPricing[];
   isCrossConnectsFetching: boolean;
-  searchTerms: any;
-  setSearchTerms: React.Dispatch<React.SetStateAction<any>>;
-  handleSelectableChange: (field: keyof PricingRequest) => (option?: any) => void;
+  searchTerms: SearchTerms;
+  setSearchTerms: React.Dispatch<React.SetStateAction<SearchTerms>>;
+  handleSelectableChange: (field: keyof PricingRequest) => (option?: SelectableOption | null) => void;
   handleNumericChange: (
     field: keyof PricingRequest,
     min?: number
@@ -430,14 +452,14 @@ const NetworkingOptionsSection: React.FC<NetworkingOptionsSectionProps> = ({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <SelectableInput
               options={
-                bandwidths?.filter((i: any) => i?.product)?.map(({ product }: any) => ({
+                bandwidths?.filter((i) => i?.product)?.map(({ product }) => ({
                   id: Number(product.productable_id),
                   name: product.name,
                 })) || []
               }
               value={data["bandwidth_id"] || ""}
               searchValue={searchTerms.bandwidth}
-              onSearchChange={(v) => setSearchTerms((prev: any) => ({ ...prev, bandwidth: v }))}
+              onSearchChange={(v) => setSearchTerms((prev) => ({ ...prev, bandwidth: v }))}
               onSelect={handleSelectableChange("bandwidth_id")}
               placeholder="Bandwidth"
               disabled={!data["region"]}
@@ -449,14 +471,14 @@ const NetworkingOptionsSection: React.FC<NetworkingOptionsSectionProps> = ({
             />
             <SelectableInput
               options={
-                floatingIps?.filter((i: any) => i?.product)?.map(({ product }: any) => ({
+                floatingIps?.filter((i) => i?.product)?.map(({ product }) => ({
                   id: Number(product.productable_id),
                   name: product.name,
                 })) || []
               }
               value={data["floating_ip_id"] || ""}
               searchValue={searchTerms.floatingIp}
-              onSearchChange={(v) => setSearchTerms((prev: any) => ({ ...prev, floatingIp: v }))}
+              onSearchChange={(v) => setSearchTerms((prev) => ({ ...prev, floatingIp: v }))}
               onSelect={handleSelectableChange("floating_ip_id")}
               placeholder="Floating IP"
               disabled={!data["region"]}
@@ -469,7 +491,7 @@ const NetworkingOptionsSection: React.FC<NetworkingOptionsSectionProps> = ({
             <div className="sm:col-span-2">
               <SelectableInput
                 options={
-                  crossConnects?.filter((i: any) => i?.product)?.map(({ product }: any) => ({
+                  crossConnects?.filter((i) => i?.product)?.map(({ product }) => ({
                     id: Number(product.productable_id),
                     name: product.name,
                   })) || []
@@ -477,7 +499,7 @@ const NetworkingOptionsSection: React.FC<NetworkingOptionsSectionProps> = ({
                 value={data["cross_connect_id"] ?? ""}
                 searchValue={searchTerms.crossConnect}
                 onSearchChange={(v) =>
-                  setSearchTerms((prev: any) => ({ ...prev, crossConnect: v }))
+                  setSearchTerms((prev) => ({ ...prev, crossConnect: v }))
                 }
                 onSelect={handleSelectableChange("cross_connect_id")}
                 placeholder="Cross Connect"
@@ -503,7 +525,7 @@ interface PricingWorkloadCardProps {
   regions?: BillingRegion[];
   isRegionsFetching?: boolean;
   isLastItem?: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 const PricingWorkloadCard: React.FC<PricingWorkloadCardProps> = ({
@@ -529,9 +551,9 @@ const PricingWorkloadCard: React.FC<PricingWorkloadCardProps> = ({
 
   const availabilityZoneOptions = useMemo(() => {
     if (!Array.isArray(availabilityZones)) return [];
-    return availabilityZones
-      .filter((az: any) => az.is_active !== false)
-      .map((az: any) => ({
+    return (availabilityZones as AvailabilityZone[])
+      .filter((az) => az.is_active !== false)
+      .map((az) => ({
         id: az.code,
         name: az.name || az.code,
       }));
@@ -541,7 +563,7 @@ const PricingWorkloadCard: React.FC<PricingWorkloadCardProps> = ({
     setItemErrors(errors);
   }, [errors]);
 
-  const selectedAz = (data as any)["availability_zone"] || "";
+  const selectedAz = data["availability_zone"] || "";
   const hasAz = !!selectedAz;
   const canFetchProducts = !!data["region"] && hasAz;
 
@@ -615,8 +637,8 @@ const PricingWorkloadCard: React.FC<PricingWorkloadCardProps> = ({
     return formatted ? `${formatted}${suffix}` : null;
   };
 
-  const updateField = (field: keyof PricingRequest, value: any) => {
-    onChange({ ...data, [field]: value });
+  const updateField = (field: keyof PricingRequest, value: unknown) => {
+    onChange({ ...data, [field]: value } as PricingRequest);
     setItemErrors((prev) => ({ ...prev, [field]: null }));
   };
 
@@ -629,7 +651,7 @@ const PricingWorkloadCard: React.FC<PricingWorkloadCardProps> = ({
 
   const handleSelectableChange =
     (field: keyof PricingRequest) =>
-    (option: any = null) => {
+    (option?: SelectableOption | null) => {
       const value = option ? String(option.id) : null;
       const name = option ? option.name : "";
 
@@ -650,7 +672,7 @@ const PricingWorkloadCard: React.FC<PricingWorkloadCardProps> = ({
           floating_ip_id: 0,
           floating_ip_count: 0,
           cross_connect_id: 0,
-        } as any);
+        } as PricingRequest);
         setSearchTerms({
           ...createInitialSearchState(),
           region: name,
@@ -659,7 +681,7 @@ const PricingWorkloadCard: React.FC<PricingWorkloadCardProps> = ({
       }
 
       // When AZ changes, reset dependent product selections since products are AZ-specific
-      if (field === ("availability_zone" as any)) {
+      if (field === ("availability_zone" as keyof PricingRequest)) {
         onChange({
           ...data,
           availability_zone: value || "",
@@ -674,7 +696,7 @@ const PricingWorkloadCard: React.FC<PricingWorkloadCardProps> = ({
           floating_ip_id: 0,
           floating_ip_count: 0,
           cross_connect_id: 0,
-        } as any);
+        } as PricingRequest);
         setSearchTerms((prev) => ({
           ...prev,
           az: name,
@@ -703,7 +725,7 @@ const PricingWorkloadCard: React.FC<PricingWorkloadCardProps> = ({
         (newData as Record<string, unknown>)[nameKey] = name;
       }
 
-      onChange(newData);
+      onChange(newData as PricingRequest);
       setItemErrors((prev) => ({ ...prev, [field]: null }));
 
       const getSearchKey = (f: keyof PricingRequest) => {
@@ -740,7 +762,7 @@ const PricingWorkloadCard: React.FC<PricingWorkloadCardProps> = ({
     if (!validateVolumeInput()) return;
 
     const found = ebsVolumes?.find(
-      (item: any) => item?.product && String(item.product.productable_id) === String(data["volume_type_id"])
+      (item) => item?.product && String(item.product.productable_id) === String(data["volume_type_id"])
     );
     const volName = found?.product?.name || "Volume";
 
@@ -764,7 +786,7 @@ const PricingWorkloadCard: React.FC<PricingWorkloadCardProps> = ({
   const removeVolume = (vIdx: number) => {
     onChange({
       ...data,
-      volumes: (data["volumes"] || []).filter((_: any, i: number) => i !== vIdx),
+      volumes: (data["volumes"] || []).filter((_, i) => i !== vIdx),
     });
   };
 
@@ -779,7 +801,7 @@ const PricingWorkloadCard: React.FC<PricingWorkloadCardProps> = ({
     }
     data["volumes"]?.forEach((vol) => {
       const volProduct = ebsVolumes?.find(
-        (v: any) => String(v.product.productable_id) === String(vol.volume_type_id)
+        (v) => String(v.product.productable_id) === String(vol.volume_type_id)
       );
       if (volProduct?.pricing?.effective?.price_local) {
         total +=

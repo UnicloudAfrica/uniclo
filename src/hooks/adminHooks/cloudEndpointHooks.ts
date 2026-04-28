@@ -133,7 +133,7 @@ export const useUpdateAdminCloudProvider = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateAdminCloudProvider,
-    onSuccess: (_data: any, variables: any) => {
+    onSuccess: (_data: unknown, variables: unknown) => {
       queryClient.invalidateQueries({ queryKey: ["admin-cloud-providers"] });
       queryClient.invalidateQueries({ queryKey: ["admin-cloud-provider", variables.id] });
     },
@@ -187,7 +187,7 @@ export const useUpdateAdminCloudRegion = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateAdminCloudRegion,
-    onSuccess: (_data: any, variables: any) => {
+    onSuccess: (_data: unknown, variables: unknown) => {
       queryClient.invalidateQueries({ queryKey: ["admin-cloud-regions"] });
       queryClient.invalidateQueries({ queryKey: ["admin-cloud-region", variables.id] });
     },
@@ -252,7 +252,7 @@ export const useUpdateAdminCloudProjectRegion = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateAdminCloudProjectRegion,
-    onSuccess: (_data: any, variables: any) => {
+    onSuccess: (_data: unknown, variables: unknown) => {
       queryClient.invalidateQueries({ queryKey: ["admin-cloud-project-regions"] });
       queryClient.invalidateQueries({ queryKey: ["admin-cloud-project-region", variables.id] });
     },

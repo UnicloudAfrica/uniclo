@@ -5,7 +5,7 @@ import ToastUtils from "@/utils/toastUtil";
 import { useUpdateVmInstance } from "@/hooks/adminHooks/vmHooks";
 import logger from "@/utils/logger";
 
-const EditVMModal = ({ isOpen, onClose, vm }: any) => {
+const EditVMModal = ({ isOpen, onClose, vm }: { isOpen: boolean; onClose: () => void; vm: unknown }) => {
   const [formData, setFormData] = useState({
     name: "",
     family: "",
@@ -13,7 +13,7 @@ const EditVMModal = ({ isOpen, onClose, vm }: any) => {
     memory_gib: "",
     // price: ""
   });
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, unknown>>({});
 
   // Populate form data when the modal opens or when the vm prop changes
   useEffect(() => {
@@ -47,7 +47,7 @@ const EditVMModal = ({ isOpen, onClose, vm }: any) => {
   const { mutate, isPending } = useUpdateVmInstance();
 
   const validateForm = () => {
-    const newErrors: Record<string, any> = {};
+    const newErrors: Record<string, unknown> = {};
     if (!formData.name.trim()) newErrors.name = "VM Name is required";
     if (!formData.family.trim()) newErrors.family = "Family is required";
 
@@ -57,7 +57,7 @@ const EditVMModal = ({ isOpen, onClose, vm }: any) => {
       // "price",
     ];
 
-    numberFields.forEach((field: any) => {
+    numberFields.forEach((field: string) => {
       const value = parseFloat((formData as Record<string, string>)[field]);
       if (isNaN(value) || (formData as Record<string, string>)[field] === "") {
         newErrors[field] = `${field
@@ -76,12 +76,12 @@ const EditVMModal = ({ isOpen, onClose, vm }: any) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field: any, value: any) => {
+  const updateFormData = (field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.SyntheticEvent) => {
     if (e) e.preventDefault();
 
     if (!validateForm()) return;

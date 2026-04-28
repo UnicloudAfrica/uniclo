@@ -96,10 +96,10 @@ const AdminMultiQuote = () => {
     object_storage_months: 1,
   });
 
-  const [pricingRequests, setPricingRequests] = useState<any[]>([]);
-  const [objectStorageRequests, setObjectStorageRequests] = useState<any[]>([]);
+  const [pricingRequests, setPricingRequests] = useState<unknown[]>([]);
+  const [objectStorageRequests, setObjectStorageRequests] = useState<unknown[]>([]);
   const [errors, setErrors] = useState<MultiQuoteFormErrors>({});
-  const [apiResponse, setApiResponse] = useState<any>(null);
+  const [apiResponse, setApiResponse] = useState<Record<string, unknown> | null>(null);
 
   // Assignment system (Admin only)
   // const [assignType, setAssignType] = useState(''); // '', 'tenant', 'user'
@@ -249,10 +249,10 @@ const AdminMultiQuote = () => {
     if (validateItem()) {
       const computeName =
         computerInstances.find(
-          (c: any) => c.product.productable_id === toInt(formData.compute_instance_id)
+          (c: unknown) => c.product.productable_id === toInt(formData.compute_instance_id)
         )?.product.name || "N/A";
       const osName =
-        osImages.find((o: any) => o.product.productable_id === toInt(formData.os_image_id))?.product
+        osImages.find((o: unknown) => o.product.productable_id === toInt(formData.os_image_id))?.product
           .name || "N/A";
 
       const newRequest = {
@@ -308,7 +308,7 @@ const AdminMultiQuote = () => {
     if (validateObjectStorageItem()) {
       const productName =
         objectStorageProducts.find(
-          (p: any) => p.product.productable_id === toInt(formData.object_storage_product_id)
+          (p: unknown) => p.product.productable_id === toInt(formData.object_storage_product_id)
         )?.product.name || "Silo Storage";
 
       const newRequest = {
@@ -333,10 +333,10 @@ const AdminMultiQuote = () => {
       ToastUtils.success("Object storage added to quote.");
     }
   };
-  const removeObjectStorageRequest = (index: any) => {
+  const removeObjectStorageRequest = (index: number) => {
     setObjectStorageRequests(objectStorageRequests.filter((_, i) => i !== index));
   };
-  const removePricingRequest = (index: any) => {
+  const removePricingRequest = (index: number) => {
     setPricingRequests(pricingRequests.filter((_, i) => i !== index));
   };
   const handleNext = () => {
@@ -360,17 +360,17 @@ const AdminMultiQuote = () => {
       email: formData.email,
       emails: formData.emails.trim()
         ? formData.emails
-            .split(",")
-            .map((e: any) => e.trim())
-            .filter(Boolean)
+          .split(",")
+          .map((e: unknown) => e.trim())
+          .filter(Boolean)
         : [],
       notes: formData.notes,
       bill_to_name: formData.bill_to_name,
-      pricing_requests: pricingRequests.map((req: any) => {
+      pricing_requests: pricingRequests.map((req: unknown) => {
         const { _display, ...rest } = req as Record<string, unknown>;
         return rest;
       }),
-      object_storage_items: objectStorageRequests.map((req: any) => {
+      object_storage_items: objectStorageRequests.map((req: unknown) => {
         const { _display, ...rest } = req as Record<string, unknown>;
         return rest;
       }),
@@ -416,7 +416,7 @@ const AdminMultiQuote = () => {
     });
   };
   const selectedTenant = tenants?.find(
-    (tenant: any) => String(tenant.id) === String(selectedTenantId)
+    (tenant: unknown) => String(tenant.id) === String(selectedTenantId)
   );
   // const userPool = selectedTenantId ? tenantClients : adminClients;
   const selectedUser = userPool?.find((user) => String(user.id) === String(selectedUserId));
@@ -466,7 +466,7 @@ const AdminMultiQuote = () => {
         return (
           <ProductSummaryStep
             pricingRequests={pricingRequests}
-            objectStorageRequests={objectStorageRequests}
+            objectStorageRequests={objectStorageRequests as Array<Record<string, unknown>>}
             formData={formData}
           />
         );

@@ -12,8 +12,8 @@ type Project = {
   identifier?: string;
   region?: string;
   region_name?: string;
-  status?: any;
-  role?: any;
+  status?: unknown;
+  role?: unknown;
   users?: ProjectUser[] | { local?: ProjectUser[] };
   instances?: unknown[];
   pending_instances?: unknown[];
@@ -28,8 +28,8 @@ type ProjectUser = {
   middle_name?: string;
   last_name?: string;
   email?: string;
-  role?: any;
-  status?: any;
+  role?: unknown;
+  status?: Record<string, unknown>;
   [key: string]: unknown;
 };
 
@@ -94,7 +94,7 @@ export const isTenantAdmin = (user: ProjectUser | null | undefined): boolean => 
   // Check roles array
   if (
     Array.isArray(user.roles) &&
-    user.roles.some((role: any) => role === "tenant_admin" || role === "tenant-admin")
+    user.roles.some((role: unknown) => role === "tenant_admin" || role === "tenant-admin")
   ) {
     return true;
   }

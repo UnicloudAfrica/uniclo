@@ -23,50 +23,48 @@ export const useContextAwareSettings = () => {
     return path;
   };
 
-  const fetchProfileSettings = async () => {
+  type ApiEnvelope<T = unknown> = { data?: T };
+
+  const fetchProfileSettings = async (): Promise<unknown> => {
     const endpoint = getEndpoint("/settings/profile");
-    // For admin, settingsHooks.js used silentAdminSettingsApi for fetch
-    // For now we use the main detected api.
-    // If specific silent instances are needed, we might need to enhance detectApiContext
-    // or just use the main one with error handling suppression if the API client supports it.
-    const res = await api("GET", endpoint);
+    const res = await api<ApiEnvelope>("GET", endpoint);
     if (!res.data) throw new Error("Failed to fetch profile settings");
     return res.data;
   };
 
-  const updateProfileSettings = async (data: Record<string, unknown>) => {
+  const updateProfileSettings = async (data: Record<string, unknown>): Promise<unknown> => {
     const endpoint = getEndpoint("/settings/profile");
-    const res = await api("PUT", endpoint, data);
+    const res = await api<ApiEnvelope>("PUT", endpoint, data);
     if (!res.data) throw new Error("Failed to update profile settings");
     return res.data;
   };
 
-  const uploadAvatar = async (formData: FormData) => {
+  const uploadAvatar = async (formData: FormData): Promise<unknown> => {
     const endpoint = getEndpoint("/settings/profile/avatar");
-    // Note: API client usually handles Content-Type automatically or we might need to specify it
-    // Check existing API client implementation if it handles FormData correctly
-    const res = await api("POST", endpoint, formData);
+    const res = await api<ApiEnvelope>("POST", endpoint, formData);
     if (!res.data) throw new Error("Failed to upload avatar");
     return res.data;
   };
 
-  const resetProfileSettings = async (data: Record<string, unknown> = {}) => {
+  const resetProfileSettings = async (
+    data: Record<string, unknown> = {}
+  ): Promise<unknown> => {
     const endpoint = getEndpoint("/settings/profile/reset");
-    const res = await api("POST", endpoint, data);
+    const res = await api<ApiEnvelope>("POST", endpoint, data);
     if (!res.data) throw new Error("Failed to reset profile settings");
     return res.data;
   };
 
-  const exportProfileSettings = async () => {
+  const exportProfileSettings = async (): Promise<unknown> => {
     const endpoint = getEndpoint("/settings/profile/export");
-    const res = await api("GET", endpoint);
+    const res = await api<ApiEnvelope>("GET", endpoint);
     if (!res.data) throw new Error("Failed to export profile settings");
     return res.data;
   };
 
-  const importProfileSettings = async (payload: Record<string, unknown>) => {
+  const importProfileSettings = async (payload: Record<string, unknown>): Promise<unknown> => {
     const endpoint = getEndpoint("/settings/profile/import");
-    const res = await api("POST", endpoint, payload);
+    const res = await api<ApiEnvelope>("POST", endpoint, payload);
     if (!res.data) throw new Error("Failed to import profile settings");
     return res.data;
   };
@@ -135,12 +133,12 @@ export const useContextAwareSettings = () => {
     });
   };
 
-  const updatePassword = async (data: Record<string, unknown>) => {
+  const updatePassword = async (data: Record<string, unknown>): Promise<unknown> => {
     // Both Admin and Business APIs have /profile/password for password updates
     // Admin: PUT /admin/profile/password
     // Business: PUT /api/v1/business/profile/password
     const endpoint = "profile/password";
-    const res = await api("PUT", endpoint, data);
+    const res = await api<ApiEnvelope>("PUT", endpoint, data);
     return res.data;
   };
 

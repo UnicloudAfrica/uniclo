@@ -1,10 +1,9 @@
 import {
   Home, Rocket, Users, Building2, UserPlus, Globe, MapPin, CheckSquare,
   ClipboardList, SlidersHorizontal, Server, Network, HardDrive, Database,
-  LayoutTemplate, KeyRound, ShieldAlert, CloudOff, FlaskConical, Monitor,
+  LayoutTemplate, KeyRound, CloudOff,
   ArrowLeftRight, FolderOutput, ShieldCheck, Bot, CloudDownload,
-  Package, GitMerge, Layers, CreditCard, DollarSign, Calculator,
-  FileText, Settings, Repeat, Wallet, Receipt, BarChart3,
+  Package, CreditCard, DollarSign, Wallet, BarChart3,
   Code2, LifeBuoy, User, Lock, Scale, Route,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -71,6 +70,7 @@ export const adminDocSections: DocSection[] = [
     heading: "Platform Services",
     links: [
       { label: "Infrastructure Agent", slug: "agent", icon: Bot },
+      { label: "Shield Protection", slug: "shield", icon: ShieldCheck },
       { label: "Provider Discovery", slug: "provider-discovery", icon: CloudDownload },
     ],
   },

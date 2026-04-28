@@ -49,7 +49,7 @@ export const useCreateNetworkAcl = () => {
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
   return useMutation<
-    any,
+    unknown,
     Error,
     { projectId: string; region?: string; payload: { vpc_id: string; name?: string } }
   >({
@@ -169,7 +169,7 @@ export const useAddNetworkAclRule = () => {
   const { apiBaseUrl, context, authHeaders } = useApiContext();
 
   return useMutation<
-    any,
+    unknown,
     Error,
     {
       projectId: string;

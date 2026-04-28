@@ -38,7 +38,7 @@ export type SetupInfrastructureInput = { id: string | number; blueprint: unknown
 /** @deprecated Use useFetchProjects from shared/hooks/resources/projectHooks */
 export const useFetchProjects = (
   params: Record<string, string | number | boolean> = {},
-  options: Omit<UseQueryOptions<any, any, any, any>, "queryKey" | "queryFn"> = {}
+  options: Omit<UseQueryOptions<unknown, unknown, unknown, unknown[]>, "queryKey" | "queryFn"> = {}
 ) => _useFetchProjects({ extra: params }, options);
 
 /** @deprecated Use useFetchProjectById from shared/hooks/resources/projectHooks */
@@ -55,9 +55,9 @@ export const useDeleteProject = () => {
   const mutation = _useDeleteProject();
   return {
     ...mutation,
-    mutate: (id: string | number, options?: UseMutationOptions<any, any, any, any>) =>
+    mutate: (id: string | number, options?: UseMutationOptions<unknown, unknown, unknown, unknown>) =>
       mutation.mutate({ id }, options),
-    mutateAsync: (id: string | number, options?: UseMutationOptions<any, any, any, any>) =>
+    mutateAsync: (id: string | number, options?: UseMutationOptions<unknown, unknown, unknown, unknown>) =>
       mutation.mutateAsync({ id }, options),
   };
 };

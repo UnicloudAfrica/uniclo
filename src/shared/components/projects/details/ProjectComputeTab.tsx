@@ -170,7 +170,7 @@ const ProjectComputeTab: React.FC<ProjectComputeTabProps> = ({
   const useKeyPairsAdapter = (projectIdValue: string, regionValue?: string, options = {}) => {
     const query = keyPairHooks.useList(projectIdValue, regionValue, options);
     return {
-      data: (query.data as Record<string, unknown>[]) || [],
+      data: (query.data as unknown as Record<string, unknown>[]) || [],
       isFetching: query.isFetching,
       refetch: query.refetch,
     };
@@ -243,7 +243,7 @@ const ProjectComputeTab: React.FC<ProjectComputeTabProps> = ({
           projectId={projectId || ""}
           region={region || ""}
           hooks={{
-            useList: useKeyPairsAdapter,
+            useList: useKeyPairsAdapter as never,
             useSync: keyPairHooks.useSync,
             useDelete: keyPairHooks.useDelete,
           }}

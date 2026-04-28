@@ -7,13 +7,13 @@ import ToastUtils from "@/utils/toastUtil";
 
 const leadStatusOptions = ["pending", "in_progress", "completed", "skipped"];
 
-export const EditLeadStage = ({ isOpen, onClose, stage, lead }: any) => {
+export const EditLeadStage = ({ isOpen, onClose, stage, lead }: { isOpen: boolean; onClose: () => void; stage: unknown; lead: unknown }) => {
   const [formData, setFormData] = useState({
     status: "",
     notes: "",
     assigned_to: "",
   });
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, unknown>>({});
 
   const { data: admins, isLoading: isAdminsLoading } = useFetchTenantAdmins();
   const { mutate, isPending } = useUpdateLeadStage();
@@ -30,7 +30,7 @@ export const EditLeadStage = ({ isOpen, onClose, stage, lead }: any) => {
   }, [isOpen, stage]);
 
   const validateForm = () => {
-    const newErrors: Record<string, any> = {};
+    const newErrors: Record<string, unknown> = {};
     if (!leadStatusOptions.includes(formData.status)) {
       newErrors.status = "Please select a valid status.";
     }
@@ -38,12 +38,12 @@ export const EditLeadStage = ({ isOpen, onClose, stage, lead }: any) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field: any, value: any) => {
+  const updateFormData = (field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.SyntheticEvent) => {
     e?.preventDefault();
     if (!validateForm()) return;
 
@@ -77,8 +77,8 @@ export const EditLeadStage = ({ isOpen, onClose, stage, lead }: any) => {
 
   if (!isOpen) return null;
 
-  const formatStatusForDisplay = (status: any) =>
-    status.replace(/_/g, " ").replace(/\b\w/g, (c: any) => c.toUpperCase());
+  const formatStatusForDisplay = (status: unknown) =>
+    status.replace(/_/g, " ").replace(/\b\w/g, (c: unknown) => c.toUpperCase());
 
   return createPortal(
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">

@@ -78,7 +78,7 @@ export const normalizeRegionList = (payload: unknown): NormalizedRegion[] => {
     .filter((region: RegionLike) => {
       // Filter out regions without a proper display name (raw codes only)
       const hasName = Boolean(region?.name || region?.label);
-      const isActive = (region as any)?.is_active !== false;
+      const isActive = (region as RegionLike & { is_active?: boolean })?.is_active !== false;
       return hasName && isActive;
     })
     .map((region: RegionLike) => {

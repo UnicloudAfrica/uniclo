@@ -78,8 +78,8 @@ const WorkflowSelectionStep: React.FC<WorkflowSelectionStepProps> = ({
 
   const eligibleRegionNames = showFastTrackInfo
     ? allRegionOptions
-        .filter((r: any) => fastTrackRegions.includes(r.value))
-        .map((r: any) => r.label)
+        .filter((r: { value: string; label: string }) => fastTrackRegions.includes(r.value))
+        .map((r: { value: string; label: string }) => r.label)
     : [];
 
   return (

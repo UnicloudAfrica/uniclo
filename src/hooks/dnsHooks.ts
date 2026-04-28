@@ -71,14 +71,14 @@ export const useDnsZones = (projectId?: string, region?: string) => {
           message.toLowerCase().includes("not found")
         ) {
           const dnsError = new Error("DNS_NOT_CONFIGURED");
-          (dnsError as any).isDnsNotConfigured = true;
+          (dnsError as unknown).isDnsNotConfigured = true;
           throw dnsError;
         }
         throw error;
       }
     },
     enabled: isAuthenticated,
-    retry: (failureCount, error: any) => {
+    retry: (failureCount: number, error: unknown) => {
       // Don't retry DNS-not-configured errors
       if (error?.isDnsNotConfigured) return false;
       return failureCount < 2;
@@ -144,8 +144,8 @@ export const useDeleteDnsZone = () => {
       ToastUtils.success("DNS Zone deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["dns-zones"] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to delete DNS Zone");
+    onError: (error: unknown) => {
+      ToastUtils.error((error as {response?: {data?: {error?: string; message?: string}}}).response?.data?.error || "Failed to delete DNS Zone");
     },
   });
 };
@@ -217,8 +217,8 @@ export const useChangeDnsRecords = () => {
       ToastUtils.success("DNS Records updated successfully");
       queryClient.invalidateQueries({ queryKey: ["dns-records", zoneId] });
     },
-    onError: (error: any) => {
-      ToastUtils.error(error.response?.data?.error || "Failed to update DNS Records");
+    onError: (error: unknown) => {
+      ToastUtils.error((error as {response?: {data?: {error?: string; message?: string}}}).response?.data?.error || "Failed to update DNS Records");
     },
   });
 };

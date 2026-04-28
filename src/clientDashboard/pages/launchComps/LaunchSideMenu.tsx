@@ -25,7 +25,7 @@ const LaunchSideMenu: React.FC = () => {
     <div className="w-full lg:w-[20%] bg-[--theme-card-bg] rounded-lg shadow-sm p-4 lg:p-6 flex flex-col space-y-2 mb-6 lg:mb-0 lg:mr-6 font-Outfit">
       <h3 className="text-lg font-semibold text-[--theme-heading-color] mb-2">Network</h3>
       <nav className="flex flex-col space-y-1">
-        {tabs.map((tab: any) => (
+        {tabs.map((tab: Tab) => (
           <NavLink
             key={tab.id}
             to={tab.path}

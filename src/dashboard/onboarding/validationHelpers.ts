@@ -99,11 +99,11 @@ export const validatePartnerRegionPayload = (payload: unknown): string[] => {
     ({ key }) => key
   );
 
-  if (provider && !automatedProviders.includes(provider) && fulfillmentMode === "automated") {
+  if (provider && !(automatedProviders as string[]).includes(provider) && fulfillmentMode === "automated") {
     missing.push("Automated fulfilment is not yet available for this provider");
   }
 
-  if (!automatedProviders.includes(provider)) {
+  if (!(automatedProviders as string[]).includes(provider)) {
     return [...new Set(missing)];
   }
 

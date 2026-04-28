@@ -20,7 +20,7 @@ import type { ApiContext } from "@/hooks/useApiContext";
 import { apiRegistry } from "../../api/apiRegistry";
 import logger from "@/utils/logger";
 
-type AnyRecord = Record<string, any>;
+type AnyRecord = Record<string, unknown>;
 
 // ─── URL Helpers ────────────────────────────────────────────────
 
@@ -41,14 +41,14 @@ const infraBasePath = (context: ApiContext): string => {
 
 // ─── Normalisation Helpers ──────────────────────────────────────
 
-export const normalizeDetails = (component: any): any[] | null => {
+export const normalizeDetails = (component: Record<string, unknown>): unknown[] | null => {
   if (!component || !component.details) return null;
   if (Array.isArray(component.details)) return component.details;
   if (typeof component.details === "object") return [component.details];
   return null;
 };
 
-export const normalizeStatus = (component: any): string => {
+export const normalizeStatus = (component: Record<string, unknown>): string => {
   if (!component) return "pending";
   const status = component.status;
   if (status === "configured" || status === "completed") return "completed";
@@ -122,14 +122,14 @@ const componentsForContext = (context: ApiContext): readonly ComponentKey[] => {
 
 // ─── Backend → Frontend Conversion ──────────────────────────────
 
-const buildComponent = (infraEntry: any) => ({
+const buildComponent = (infraEntry: Record<string, unknown>) => ({
   status: normalizeStatus(infraEntry),
   details: normalizeDetails(infraEntry),
   count: infraEntry?.count ?? null,
   error: null,
 });
 
-const buildKeypairsComponent = (kp: any) => ({
+const buildKeypairsComponent = (kp: Record<string, unknown>) => ({
   status: (() => {
     if (!kp) return "pending";
     if (kp.status === "configured" || kp.status === "completed") return "completed";
@@ -143,7 +143,7 @@ const buildKeypairsComponent = (kp: any) => ({
   error: null,
 });
 
-export const convertBackendResponse = (backendData: any, context: ApiContext = "admin") => {
+export const convertBackendResponse = (backendData: Record<string, unknown>, context: ApiContext = "admin") => {
   if (!backendData) return null;
 
   const infrastructure = backendData.infrastructure || {};
@@ -175,19 +175,19 @@ export const convertBackendResponse = (backendData: any, context: ApiContext = "
   const counts: AnyRecord | undefined =
     context !== "admin"
       ? {
-          vpcs: infrastructure.vpc?.count ?? infraLegacy.vpcs_count ?? null,
-          subnets: infrastructure.subnets?.count ?? infraLegacy.subnets_count ?? null,
-          security_groups:
-            infrastructure.security_groups?.count ?? infraLegacy.security_groups_count ?? null,
-          keypairs: infrastructure.keypairs?.count ?? infraLegacy.keypairs_count ?? null,
-          internet_gateways:
-            infrastructure.internet_gateways?.count ?? infraLegacy.igws_count ?? null,
-          route_tables:
-            infrastructure.route_tables?.count ?? infraLegacy.route_tables_count ?? null,
-          network_interfaces:
-            infrastructure.network_interfaces?.count ?? infraLegacy.enis_count ?? null,
-          elastic_ips: infrastructure.elastic_ips?.count ?? infraLegacy.eips_count ?? null,
-        }
+        vpcs: infrastructure.vpc?.count ?? infraLegacy.vpcs_count ?? null,
+        subnets: infrastructure.subnets?.count ?? infraLegacy.subnets_count ?? null,
+        security_groups:
+          infrastructure.security_groups?.count ?? infraLegacy.security_groups_count ?? null,
+        keypairs: infrastructure.keypairs?.count ?? infraLegacy.keypairs_count ?? null,
+        internet_gateways:
+          infrastructure.internet_gateways?.count ?? infraLegacy.igws_count ?? null,
+        route_tables:
+          infrastructure.route_tables?.count ?? infraLegacy.route_tables_count ?? null,
+        network_interfaces:
+          infrastructure.network_interfaces?.count ?? infraLegacy.enis_count ?? null,
+        elastic_ips: infrastructure.elastic_ips?.count ?? infraLegacy.eips_count ?? null,
+      }
       : undefined;
 
   const result: AnyRecord = {
@@ -212,16 +212,16 @@ export const convertBackendResponse = (backendData: any, context: ApiContext = "
 // ─── Query Key Factories ────────────────────────────────────────
 
 export const projectInfraKeys = {
-  status: (context: ApiContext, projectId: any) =>
+  status: (context: ApiContext, projectId: string | number) =>
     ["project-infrastructure-status", context, projectId] as const,
-  polling: (context: ApiContext, projectId: any) =>
+  polling: (context: ApiContext, projectId: string | number) =>
     ["project-status-polling", context, projectId] as const,
 };
 
 // ─── Shared Hooks (all roles) ───────────────────────────────────
 
 /** Fetch project infrastructure status — all roles */
-export const useProjectInfrastructureStatus = (projectId: any, options: AnyRecord = {}) => {
+export const useProjectInfrastructureStatus = (projectId: string | number, options: AnyRecord = {}) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
   const basePath = infraBasePath(context);
@@ -246,8 +246,9 @@ export const useProjectInfrastructureStatus = (projectId: any, options: AnyRecor
     enabled: !!projectId,
     staleTime: 30000,
     cacheTime: 300000,
-    retry: (failureCount: any, error: any) => {
-      if (error?.message?.includes?.("404") || error?.message?.includes?.("403")) {
+    retry: (failureCount: number, error: unknown) => {
+      const msg = error instanceof Error ? error.message : "";
+      if (msg.includes("404") || msg.includes("403")) {
         return false;
       }
       return failureCount < 3;
@@ -266,7 +267,7 @@ export const useSetupInfrastructureComponent = () => {
   const basePath = infraBasePath(context);
 
   return useMutation({
-    mutationFn: async ({ projectId, componentType }: any) => {
+    mutationFn: async ({ projectId, componentType }: { projectId: string | number; componentType: string }) => {
       if (!projectId || !componentType) {
         throw new Error("Project ID and component type are required");
       }
@@ -278,7 +279,7 @@ export const useSetupInfrastructureComponent = () => {
         timestamp: new Date().toISOString(),
       });
     },
-    onSuccess: (_data: any, variables: any) => {
+    onSuccess: (_data: unknown, variables: { projectId: string | number; componentType?: string; components?: string[] }) => {
       queryClient.invalidateQueries({
         queryKey: projectInfraKeys.status(context, variables.projectId),
       });
@@ -286,7 +287,7 @@ export const useSetupInfrastructureComponent = () => {
         queryKey: ["project-details", variables.projectId],
       });
     },
-    onError: (error: any, variables: any) => {
+    onError: (error: unknown, variables: { projectId: string | number; componentType?: string; components?: string[] }) => {
       logger.error(`Failed to setup ${variables.componentType}:`, error);
     },
   });
@@ -299,7 +300,7 @@ export const useProvisionVpc = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ projectId, payload = {} }: any) => {
+    mutationFn: async ({ projectId, payload = {} }: { projectId: string | number; payload?: Record<string, unknown> }) => {
       if (!projectId) {
         throw new Error("Project ID is required");
       }
@@ -309,7 +310,7 @@ export const useProvisionVpc = () => {
         payload
       );
     },
-    onSuccess: (_data: any, variables: any) => {
+    onSuccess: (_data: unknown, variables: { projectId: string | number; componentType?: string; components?: string[] }) => {
       queryClient.invalidateQueries({
         queryKey: projectInfraKeys.status(context, variables.projectId),
       });
@@ -323,7 +324,7 @@ export const useProvisionVpc = () => {
         queryKey: ["admin-projects"],
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       logger.error("Failed to provision VPC:", error);
     },
   });
@@ -336,14 +337,14 @@ export const useEnableProjectVpc = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ projectId }: any) => {
+    mutationFn: async ({ projectId }: { projectId: string | number }) => {
       if (!projectId) {
         throw new Error("Project ID is required");
       }
 
       return entry.toastApi.post<AnyRecord>(`${entry.urlPrefix}/projects/${projectId}/enable-vpc`);
     },
-    onSuccess: (_data: any, variables: any) => {
+    onSuccess: (_data: unknown, variables: { projectId: string | number; componentType?: string; components?: string[] }) => {
       queryClient.invalidateQueries({
         queryKey: projectInfraKeys.status(context, variables.projectId),
       });
@@ -357,14 +358,14 @@ export const useEnableProjectVpc = () => {
         queryKey: ["admin-projects"],
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       logger.error("Failed to enable VPC:", error);
     },
   });
 };
 
 /** Real-time project status polling — admin only */
-export const useProjectStatusPolling = (projectId: any, options: AnyRecord = {}) => {
+export const useProjectStatusPolling = (projectId: string | number, options: AnyRecord = {}) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
   const {
@@ -393,7 +394,7 @@ export const useProjectStatusPolling = (projectId: any, options: AnyRecord = {})
       return (response as AnyRecord)?.data ?? response;
     },
     enabled: enabled && !!projectId && !shouldStop,
-    refetchInterval: (data: any, _query: any) => {
+    refetchInterval: (data: Record<string, unknown>, _query: unknown) => {
       if (Date.now() - pollingStartTime > maxPollingTime) {
         setShouldStop(true);
         return false;
@@ -408,10 +409,10 @@ export const useProjectStatusPolling = (projectId: any, options: AnyRecord = {})
     },
     refetchIntervalInBackground: false,
     staleTime: 0,
-    retry: (failureCount: any, _error: any) => {
+    retry: (failureCount: number, _error: unknown) => {
       return failureCount < 3;
     },
-    onSuccess: (data: any) => {
+    onSuccess: (data: Record<string, unknown>) => {
       logger.log(`Project ${projectId} status:`, data.status);
 
       if (options.onStatusChange) {
@@ -430,7 +431,7 @@ export const useBulkSetupInfrastructure = () => {
   const basePath = infraBasePath(context);
 
   return useMutation({
-    mutationFn: async ({ projectId, components }: any) => {
+    mutationFn: async ({ projectId, components }: { projectId: string | number; components: string[] }) => {
       if (!projectId || !Array.isArray(components) || components.length === 0) {
         throw new Error("Project ID and components array are required");
       }
@@ -447,7 +448,7 @@ export const useBulkSetupInfrastructure = () => {
       }
       return { success: true, results };
     },
-    onSuccess: (_data: any, variables: any) => {
+    onSuccess: (_data: unknown, variables: { projectId: string | number; componentType?: string; components?: string[] }) => {
       queryClient.invalidateQueries({
         queryKey: projectInfraKeys.status(context, variables.projectId),
       });
@@ -455,7 +456,7 @@ export const useBulkSetupInfrastructure = () => {
         queryKey: ["project-details", variables.projectId],
       });
     },
-    onError: (error: any, _variables: any) => {
+    onError: (error: unknown, _variables: { projectId: string | number; componentType?: string; components?: string[] }) => {
       logger.error("Failed to setup infrastructure components:", error);
     },
   });
@@ -469,7 +470,7 @@ export const useResetInfrastructureComponent = () => {
   const basePath = infraBasePath(context);
 
   return useMutation({
-    mutationFn: async ({ projectId, componentType }: any) => {
+    mutationFn: async ({ projectId, componentType }: { projectId: string | number; componentType: string }) => {
       if (!projectId || !componentType) {
         throw new Error("Project ID and component type are required");
       }
@@ -479,19 +480,19 @@ export const useResetInfrastructureComponent = () => {
         timestamp: new Date().toISOString(),
       });
     },
-    onSuccess: (_data: any, variables: any) => {
+    onSuccess: (_data: unknown, variables: { projectId: string | number; componentType?: string; components?: string[] }) => {
       queryClient.invalidateQueries({
         queryKey: projectInfraKeys.status(context, variables.projectId),
       });
     },
-    onError: (error: any, variables: any) => {
+    onError: (error: unknown, variables: { projectId: string | number; componentType?: string; components?: string[] }) => {
       logger.error(`Failed to reset ${variables.componentType}:`, error);
     },
   });
 };
 
 /** Infrastructure setup progress helper — admin only */
-export const useInfrastructureProgress = (projectId: any) => {
+export const useInfrastructureProgress = (projectId: string | number) => {
   const { data: infraStatus } = useProjectInfrastructureStatus(projectId);
   const normalizedInfraStatus = (infraStatus as AnyRecord)?.data ?? infraStatus;
 
@@ -510,13 +511,13 @@ export const useInfrastructureProgress = (projectId: any) => {
     const stepOrder = ["domain", "vpc", "edge_networks", "security_groups", "subnets"];
 
     const completedSteps = stepOrder.filter(
-      (step: any) => components[step]?.status === "completed"
+      (step: string) => components[step]?.status === "completed"
     ).length;
 
-    const currentStep = stepOrder.find((step: any) => components[step]?.status === "in_progress");
+    const currentStep = stepOrder.find((step: string) => components[step]?.status === "in_progress");
 
     const nextStep = stepOrder.find(
-      (step: any) => components[step]?.status === "pending" || !components[step]
+      (step: string) => components[step]?.status === "pending" || !components[step]
     );
 
     return {
@@ -540,7 +541,7 @@ export const useSyncProjectInfrastructure = () => {
   const basePath = infraBasePath(context);
 
   return useMutation({
-    mutationFn: async ({ projectId }: any) => {
+    mutationFn: async ({ projectId }: { projectId: string | number }) => {
       if (!projectId) {
         throw new Error("Project ID is required");
       }
@@ -552,7 +553,7 @@ export const useSyncProjectInfrastructure = () => {
         await entry.silentApi.post<AnyRecord>(
           `${entry.urlPrefix}/projects/${projectId}/sync-resources`
         );
-      } catch (syncErr: any) {
+      } catch (syncErr: unknown) {
         // Log but don't abort — the refresh below has its own driver-based sync fallback
         logger.warn("sync-resources pre-sync failed, falling back to refresh:", syncErr);
       }
@@ -562,7 +563,7 @@ export const useSyncProjectInfrastructure = () => {
       // runs as a second safety net, then returns the formatted response.
       return entry.silentApi.get<AnyRecord>(`${basePath}/${projectId}?refresh=true`);
     },
-    onSuccess: (_data: any, variables: any) => {
+    onSuccess: (_data: unknown, variables: { projectId: string | number; componentType?: string; components?: string[] }) => {
       queryClient.invalidateQueries({
         queryKey: projectInfraKeys.status(context, variables.projectId),
       });
@@ -586,9 +587,9 @@ export const useSyncProjectInfrastructure = () => {
         "elasticIps",
         "networkInterfaces",
       ];
-      resourceKeys.forEach((key: any) => queryClient.invalidateQueries({ queryKey: [key] }));
+      resourceKeys.forEach((key: string) => queryClient.invalidateQueries({ queryKey: [key] }));
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       logger.error("Failed to sync infrastructure:", error);
     },
   });

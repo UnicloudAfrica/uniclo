@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import logo from "./assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
@@ -23,12 +23,16 @@ interface Country {
   iso3?: string;
 }
 
-const TenantRegister = ({ tenant = "Tenant" }: any) => {
+interface TenantRegisterProps {
+  tenant?: string;
+}
+
+const TenantRegister = ({ tenant = "Tenant" }: TenantRegisterProps) => {
   const navigate = useNavigate();
   const { setUserEmail } = useTenantAuthStore.getState();
   const { mutate, isPending } = useCreateAccount();
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, string | null>>({});
   const { isLoading } = useAuthRedirect();
   const {
     data: countriesRaw,
@@ -48,7 +52,8 @@ const TenantRegister = ({ tenant = "Tenant" }: any) => {
     domain: hostname,
     ...(subdomain ? { subdomain } : {}),
   });
-  const branding: any = brandingRaw; // Avoid complex branding type issues for now
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const branding: unknown = brandingRaw; // Avoid complex branding type issues for now
   useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
   const accentColor = branding?.accentColor || fallbackBrand.color;
   const brandName = branding?.company?.name || fallbackBrand.name;
@@ -77,7 +82,7 @@ const TenantRegister = ({ tenant = "Tenant" }: any) => {
   });
 
   const validateForm = () => {
-    const newErrors: Record<string, any> = {};
+    const newErrors: Record<string, string | null> = {};
     if (!formData["email"]) newErrors["email"] = "Email is required";
     else if (!/\S+@\S+\.\S+/.test(formData["email"])) newErrors["email"] = "Invalid email format";
     if (!formData["password"]) newErrors["password"] = "Password is required";
@@ -105,7 +110,7 @@ const TenantRegister = ({ tenant = "Tenant" }: any) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field: any, value: any) => {
+  const updateFormData = (field: string, value: string) => {
     setFormData((prev) => {
       if (field === "countryId") {
         const selectedCountry = countries.find((country) => String(country.id) === value);
@@ -129,7 +134,7 @@ const TenantRegister = ({ tenant = "Tenant" }: any) => {
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleRoleChange = (role: any) => {
+  const handleRoleChange = (role: string) => {
     setSignupRole(role);
     setFormData((prev) => ({
       ...prev,
@@ -142,7 +147,7 @@ const TenantRegister = ({ tenant = "Tenant" }: any) => {
     }));
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (validateForm()) {
       const isTenant = signupRole === "tenant";

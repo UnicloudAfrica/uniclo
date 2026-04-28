@@ -53,7 +53,7 @@ const BatchMigrationWizard: React.FC<BatchMigrationWizardProps> = ({
 
   const endpoints = useMemo(() => {
     if (!endpointData) return [];
-    return Array.isArray(endpointData) ? (endpointData as AnyRecord[]) : [];
+    return Array.isArray(endpointData) ? (endpointData as unknown as AnyRecord[]) : [];
   }, [endpointData]);
 
   // Settings state
@@ -152,7 +152,7 @@ const BatchMigrationWizard: React.FC<BatchMigrationWizardProps> = ({
     };
 
     setError(null);
-    createMutation.mutate(payload as any, {
+    createMutation.mutate(payload as unknown, {
       onSuccess: (result: AnyRecord) => {
         const id = String(result.identifier ?? result.id ?? "");
         if (id) {

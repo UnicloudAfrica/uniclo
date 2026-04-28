@@ -5,6 +5,8 @@
  */
 import React, { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { useManagedDatabaseBroadcasting } from "@/hooks/useManagedDatabaseBroadcasting";
 import {
   ArrowLeft,
   CalendarDays,
@@ -38,6 +40,7 @@ import {
   Loader2,
   Wand2,
 } from "lucide-react";
+import { SkeletonCard } from "../ui/Skeleton";
 import EngineIcon, { getEngineLabel } from "./EngineIcon";
 import DatabaseStatusBadge from "./DatabaseStatusBadge";
 import DatabaseProvisioningPipeline from "./DatabaseProvisioningPipeline";
@@ -165,12 +168,52 @@ const ManagedDatabaseDetail: React.FC<ManagedDatabaseDetailProps> = ({
     return dbData as ManagedDatabase;
   }, [dbData]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-      </div>
+  // FR-031: subscribe to real-time provisioning progress via Echo. The
+  // backend broadcasts `progress.updated` on every step transition (VM
+  // provisioning, StaqDB delegation, engine install, backup setup, ready)
+  // — we patch the React Query cache so the UI re-renders instantly
+  // without waiting for the next 15s poll.
+  const queryClient = useQueryClient();
+  const broadcastIds = useMemo(() => (db?.id ? [db.id] : []), [db?.id]);
+
+  useManagedDatabaseBroadcasting(broadcastIds, useCallback((event: unknown) => {
+    const payload = event as {
+      database_id?: number;
+      status?: string;
+      progress?: unknown[];
+    } | null;
+    if (!payload || !db) return;
+
+    queryClient.setQueryData(
+      ["managedDatabase", identifier],
+      (prev: unknown) => {
+        const wrapper = prev as { data?: ManagedDatabase } | ManagedDatabase | null;
+        if (!wrapper) return prev;
+
+        const target = (typeof wrapper === "object" && wrapper !== null && "data" in wrapper)
+          ? (wrapper as { data?: ManagedDatabase }).data
+          : (wrapper as ManagedDatabase);
+
+        if (!target) return prev;
+
+        const updated = {
+          ...target,
+          status: payload.status ?? target.status,
+          provisioning_progress: Array.isArray(payload.progress)
+            ? payload.progress as ManagedDatabase["provisioning_progress"]
+            : target.provisioning_progress,
+        };
+
+        if (typeof wrapper === "object" && wrapper !== null && "data" in wrapper) {
+          return { ...wrapper, data: updated };
+        }
+        return updated;
+      }
     );
+  }, [db, identifier, queryClient]));
+
+  if (isLoading) {
+    return <SkeletonCard className="my-8" />;
   }
 
   if (!db) {
@@ -265,10 +308,55 @@ const ManagedDatabaseDetail: React.FC<ManagedDatabaseDetailProps> = ({
               <HeroStatCard
                 label="Monthly Run Rate"
                 value={formatMoney(db.monthly_cost)}
-                hint={`Created ${formatDateLabel(db.created_at)}`}
+                hint={
+                  db.plan_kind === "management_only"
+                    ? "Compute + StaqDB management"
+                    : `Created ${formatDateLabel(db.created_at)}`
+                }
                 icon={<CalendarDays size={18} />}
               />
             </div>
+
+            {/* FR-031: plan-kind indicator with admin-only wholesale view */}
+            {db.plan_kind && (
+              <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+                <span
+                  className={`rounded-full px-3 py-1 font-medium ${
+                    db.plan_kind === "management_only"
+                      ? "border border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-300"
+                      : "border border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-300"
+                  }`}
+                  title={
+                    db.plan_kind === "management_only"
+                      ? "UniCloud provisioned the underlying VM; StaqDB operates the database engine on top."
+                      : "StaqDB billed UniCloud the all-in wholesale price (VM included)."
+                  }
+                >
+                  {db.plan_kind === "management_only" ? "Management-only" : "Bundled"}
+                </span>
+                {db.plan_kind === "management_only" && db.vm_instance_id && (
+                  <span className="rounded-full border border-slate-200 bg-white px-3 py-1 font-mono text-[10px] text-slate-600 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-400">
+                    VM: {db.vm_instance_id.slice(0, 14)}…
+                  </span>
+                )}
+                {_context === "admin" && (() => {
+                  const pricing = (metadata.pricing_breakdown ?? null) as
+                    | { lines?: Array<{ name?: string; unit_amount?: number; meta?: { kind?: string; wholesale_usd?: number; retail_usd?: number } }> }
+                    | null;
+                  const vmLine = pricing?.lines?.find((l) => l.meta?.kind === "compute_vm");
+                  const mgmtLine = pricing?.lines?.find((l) => l.meta?.kind === "managed_db_fee");
+                  if (!vmLine && !mgmtLine) return null;
+                  return (
+                    <span
+                      className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 font-medium text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300"
+                      title={`Wholesale: VM ${formatMoney(vmLine?.unit_amount ?? 0)} + StaqDB ${mgmtLine?.meta?.wholesale_usd != null ? "$" + mgmtLine.meta.wholesale_usd.toFixed(2) : "—"}/mo`}
+                    >
+                      Admin · Wholesale visible
+                    </span>
+                  );
+                })()}
+              </div>
+            )}
           </div>
 
           <div className="db-signal-panel rounded-[28px] p-5 shadow-[0_18px_50px_-34px_rgb(var(--theme-color-rgb)_/_0.28)]">
@@ -1598,9 +1686,27 @@ const SettingsTab: React.FC<{
   const rotateMutation = useRotateDatabaseCredentials();
   const retryMutation = useRetryDatabaseOperation();
   const reconcileMutation = useReconcileDatabaseOperation();
+  // FR-031: refetch creds after rotation so the modal can show the new password.
+  // `enabled: false` keeps it from running on mount; we call refetch() manually.
+  const { refetch: fetchCredentials } = useFetchDatabaseCredentials(identifier, {
+    enabled: false,
+  });
   const [rotationUsername, setRotationUsername] = useState("");
   const [rotationPassword, setRotationPassword] = useState("");
   const [generatePassword, setGeneratePassword] = useState(true);
+  // FR-031: rotated-credentials modal — surfaces the freshly minted
+  // password to the user exactly once. Triggered by useRotateDatabaseCredentials
+  // success; the next live credentials fetch (triggered by webhook from StaqDB)
+  // populates the password in this modal so the user can copy it before close.
+  const [rotatedModalOpen, setRotatedModalOpen] = useState(false);
+  const [rotatedSnapshot, setRotatedSnapshot] = useState<{
+    username?: string;
+    password?: string;
+    host?: string;
+    port?: number;
+    database?: string;
+  } | null>(null);
+  const [rotatedCopied, setRotatedCopied] = useState(false);
   const operationSeed = useMemo<ManagedDatabaseOperation[]>(
     () => (Array.isArray(db.operations) ? db.operations : []),
     [db.operations]
@@ -1761,7 +1867,53 @@ const SettingsTab: React.FC<{
 
                 <div className="flex flex-wrap items-center gap-3">
                   <button
-                    onClick={() =>
+                    onClick={() => {
+                      // FR-031: open rotated-credentials modal IMMEDIATELY on click
+                      // so we begin watching for the password to change. We capture
+                      // the current password as the baseline; whatever lands different
+                      // is the new rotated value (regardless of whether the mutation
+                      // resolves successfully — the queue+webhook chain is the source
+                      // of truth, and the React Query mutation can race ahead of it).
+                      const currentDbCreds: unknown = (db as { credentials?: unknown })?.credentials;
+                      const baselinePassword =
+                        (typeof currentDbCreds === "object" && currentDbCreds?.password) ||
+                        (typeof currentDbCreds === "string"
+                          ? (() => {
+                              try {
+                                return JSON.parse(currentDbCreds)?.password;
+                              } catch {
+                                return null;
+                              }
+                            })()
+                          : null);
+                      setRotatedSnapshot(null);
+                      setRotatedCopied(false);
+                      setRotatedModalOpen(true);
+                      const startedAt = Date.now();
+                      const watchTick = async () => {
+                        try {
+                          const r = await fetchCredentials();
+                          const data: unknown = r.data;
+                          const c = data?.credentials ?? data?.data?.credentials ?? data;
+                          if (c?.password && c.password !== baselinePassword) {
+                            setRotatedSnapshot({
+                              username: c.username,
+                              password: c.password,
+                              host: c.host,
+                              port: c.port,
+                              database: c.database,
+                            });
+                            return;
+                          }
+                        } catch (_e) {
+                          /* ignore error during poll */
+                        }
+                        if (Date.now() - startedAt < 90000) {
+                          setTimeout(watchTick, 2000);
+                        }
+                      };
+                      setTimeout(watchTick, 1500);
+
                       rotateMutation.mutate(
                         {
                           identifier,
@@ -1775,10 +1927,47 @@ const SettingsTab: React.FC<{
                             setRotationPassword("");
                             setGeneratePassword(true);
                             setActiveOperationKnown(true);
+                            // FR-031: poll the credentials endpoint until
+                            // the new password lands. StaqDB short-circuits
+                            // the round-trip when isOnExternalVm so this
+                            // doesn't deadlock under single-worker dev.
+                            const startedAt = Date.now();
+                            const tick = async () => {
+                              try {
+                                const r = await fetchCredentials();
+                                const data: unknown = r.data;
+                                console.log('[rotate-modal-poll] data:', data);
+                                // Endpoint shape: { success, data: { credentials: {...} } }
+                                // Also handle the flat shape some clients return.
+                                const creds =
+                                  data?.data?.credentials ??
+                                  data?.credentials ??
+                                  data?.data ??
+                                  data;
+                                const password = creds?.password;
+                                console.log('[rotate-modal-poll] password found:', !!password);
+                                if (password) {
+                                  setRotatedSnapshot({
+                                    username: creds.username,
+                                    password,
+                                    host: creds.host,
+                                    port: creds.port,
+                                    database: creds.database,
+                                  });
+                                  return;
+                              }
+                              } catch {
+                                /* ignore error during poll */
+                              }
+                              if (Date.now() - startedAt < 60000) {
+                                setTimeout(tick, 2000);
+                              }
+                            };
+                            setTimeout(tick, 1500);
                           },
                         }
-                      )
-                    }
+                      );
+                    }}
                     disabled={!canSubmitRotation || rotateMutation.isPending}
                     className="db-primary-button inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60"
                   >
@@ -1891,6 +2080,111 @@ const SettingsTab: React.FC<{
           {deleteMutation.isPending ? "Deleting..." : "Delete Database"}
         </button>
       </SurfaceCard>
+
+      {rotatedModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+          role="dialog"
+          aria-modal="true"
+          data-testid="rotated-credentials-modal"
+        >
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              New credentials issued
+            </h3>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+              Copy the password now — it will not be shown in cleartext again. Old credentials
+              are revoked and any clients using them will fail authentication.
+            </p>
+
+            {!rotatedSnapshot ? (
+              <div className="mt-4 flex items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                <Loader2 size={16} className="animate-spin" />
+                <span>Waiting for StaqDB to confirm rotation…</span>
+              </div>
+            ) : (
+              <div className="mt-4 space-y-3">
+                <RotatedField label="Username" value={rotatedSnapshot.username ?? ""} mono />
+                <RotatedField label="Password" value={rotatedSnapshot.password ?? ""} mono mask />
+                <RotatedField label="Host" value={rotatedSnapshot.host ?? ""} mono />
+                <RotatedField label="Port" value={String(rotatedSnapshot.port ?? "")} mono />
+                <RotatedField label="Database" value={rotatedSnapshot.database ?? ""} mono />
+              </div>
+            )}
+
+            <div className="mt-6 flex items-center justify-end gap-3">
+              {rotatedSnapshot && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const lines = [
+                      `host=${rotatedSnapshot.host}`,
+                      `port=${rotatedSnapshot.port}`,
+                      `database=${rotatedSnapshot.database}`,
+                      `username=${rotatedSnapshot.username}`,
+                      `password=${rotatedSnapshot.password}`,
+                    ].join("\n");
+                    try {
+                      await navigator.clipboard.writeText(lines);
+                      setRotatedCopied(true);
+                      setTimeout(() => setRotatedCopied(false), 2500);
+                    } catch {
+                      /* ignore */
+                    }
+                  }}
+                  className="inline-flex items-center gap-2 rounded-2xl bg-slate-200 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600"
+                >
+                  {rotatedCopied ? "Copied" : "Copy all"}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setRotatedModalOpen(false);
+                  setRotatedSnapshot(null);
+                }}
+                className="db-primary-button inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium"
+              >
+                I&apos;ve saved them
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const RotatedField: React.FC<{ label: string; value: string; mono?: boolean; mask?: boolean }> = ({
+  label,
+  value,
+  mono,
+  mask,
+}) => {
+  const [revealed, setRevealed] = useState(!mask);
+  return (
+    <div>
+      <label className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        {label}
+      </label>
+      <div className="mt-1 flex items-center gap-2">
+        <code
+          className={`flex-1 rounded-xl bg-slate-100 px-3 py-2 text-sm dark:bg-slate-800 ${
+            mono ? "font-mono" : ""
+          }`}
+        >
+          {revealed || !mask ? value : "•".repeat(Math.min(24, value.length))}
+        </code>
+        {mask && (
+          <button
+            type="button"
+            onClick={() => setRevealed((r) => !r)}
+            className="rounded-xl bg-slate-200 px-3 py-2 text-xs hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600"
+          >
+            {revealed ? "Hide" : "Show"}
+          </button>
+        )}
+      </div>
     </div>
   );
 };

@@ -69,7 +69,7 @@ const KeyPairsSection: React.FC<KeyPairsSectionProps> = ({
   const showRegionPicker = showRegionSelect ?? !region;
 
   const stats = useMemo(() => {
-    const baseStats = [
+    const baseStats: Array<{ label: string; value: string | number; tone: "primary" | "info" | "success" | "warning" | "danger" | "neutral"; icon: React.ReactElement }> = [
       {
         label: "Total Key Pairs",
         value: totalItems,

@@ -9,6 +9,7 @@ const adminMultipartApi = <T = unknown>(
   method: HttpMethod,
   path: string,
   body: FormData | Record<string, unknown> | null = null
-): Promise<T> => api.request<T>(method, path, body as any);
+): Promise<T> =>
+  api.request<T>(method, path, body as unknown as Record<string, unknown> | null);
 
 export default adminMultipartApi;

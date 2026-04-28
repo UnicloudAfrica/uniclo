@@ -30,8 +30,8 @@ interface Settlement {
   settled_amount_cents: number;
   currency: string;
   created_at: string;
-  payer?: any;
-  payee?: any;
+  payer?: unknown;
+  payee?: unknown;
 }
 
 interface SettlementSummary {
@@ -51,10 +51,15 @@ const useSettlements = (params: Record<string, unknown>) => {
   return useQuery({
     queryKey: ["settlements", params],
     queryFn: async () => {
-      const response = await adminApi.get<{ data: { data: Settlement[] } }>("/settlements", {
-        params,
-      });
-      return response.data;
+      const qs = new URLSearchParams(
+        Object.entries(params).reduce((acc, [k, v]) => {
+          if (v !== undefined && v !== null && v !== "") acc[k] = String(v);
+          return acc;
+        }, {} as Record<string, string>)
+      ).toString();
+      const path = qs ? `/settlements?${qs}` : "/settlements";
+      const response = await adminApi.get<{ data: Settlement[] }>(path);
+      return response;
     },
   });
 };
@@ -64,7 +69,8 @@ const useSettlementSummary = () => {
     queryKey: ["settlements", "summary"],
     queryFn: async () => {
       const response = await adminApi.get<Record<string, unknown>>("/settlements/summary");
-      return (response.data ?? response) as SettlementSummary;
+      const record = response as Record<string, unknown>;
+      return ((record.data as SettlementSummary) ?? (record as unknown as SettlementSummary));
     },
   });
 };
@@ -81,7 +87,7 @@ const useMarkSettled = () => {
       reference?: string;
       method?: string;
     }) => {
-      const response = await adminApi.post(`/settlements/${id}/mark-settled`, {
+      const response = await adminApi.post<{ data?: unknown }>(`/settlements/${id}/mark-settled`, {
         reference,
         method,
       });
@@ -97,7 +103,7 @@ const useSendReminder = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: number) => {
-      const response = await adminApi.post(`/settlements/${id}/send-reminder`);
+      const response = await adminApi.post<{ data?: unknown }>(`/settlements/${id}/send-reminder`);
       return response.data;
     },
     onSuccess: () => {
@@ -174,8 +180,8 @@ const SettlementsDashboard: React.FC = () => {
   const markSettled = useMarkSettled();
   const sendReminder = useSendReminder();
 
-  const settlements = settlementData?.data?.data || [];
-  const _pagination = settlementData?.data || {};
+  const settlements = settlementData?.data || [];
+  const _pagination = settlementData || {};
 
   const handleMarkSettled = async (id: number) => {
     if (globalThis.window.confirm("Mark this settlement as paid?")) {
@@ -201,7 +207,7 @@ const SettlementsDashboard: React.FC = () => {
     if (filters.payer_type) params.append("payer_type", filters.payer_type);
 
     // Open export URL in new tab (will download CSV)
-    const baseUrl = (adminApi.defaults as unknown as { baseURL?: string }).baseURL || "";
+    const baseUrl = ((adminApi as unknown as { defaults?: { baseURL?: string } }).defaults?.baseURL) || "";
     globalThis.window.open(`${baseUrl}/settlements/export?${params.toString()}`, "_blank");
   };
 

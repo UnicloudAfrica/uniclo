@@ -50,6 +50,7 @@ import {
   ModernTable,
   ModernStatsCard,
   ModernInput,
+  DashboardSkeleton,
 } from "../ui";
 import { useInstanceDetails } from "../../hooks/useInstanceDetails";
 import { useInstanceBroadcasting } from "@/hooks/useInstanceBroadcasting";
@@ -283,12 +284,7 @@ const UnifiedInstanceDetails: React.FC<{ identifier: string }> = ({ identifier }
   }, []);
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <RefreshCw className="w-8 h-8 text-indigo-500 animate-spin mb-4" />
-        <p className="text-slate-400 text-sm font-medium">Loading Instance Workspace...</p>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (isError) {
@@ -434,7 +430,7 @@ const UnifiedInstanceDetails: React.FC<{ identifier: string }> = ({ identifier }
 
           <div className="p-6 bg-indigo-600 rounded-2xl text-white shadow-lg shadow-indigo-100 relative overflow-hidden group">
             <Zap className="absolute -right-2 -bottom-2 w-20 h-20 text-white/10" />
-            <h3 className="text-sm font-bold mb-1">Zadara Shield</h3>
+            <h3 className="text-sm font-bold mb-1">UniCloud Shield</h3>
             <p className="text-[11px] text-indigo-100 opacity-80 leading-snug">
               Enterprise-grade protection active for this workload.
             </p>
@@ -607,7 +603,7 @@ const UnifiedInstanceDetails: React.FC<{ identifier: string }> = ({ identifier }
                     <h4 className="mb-3 text-sm font-semibold text-gray-700">Advanced Monitoring</h4>
                     <div className="flex flex-wrap gap-3">
                       <a
-                        href={`${(import.meta as any).env?.VITE_CUBERWATCH_URL || "https://app.cuberwatch.com"}/hosts/${instance?.id || ""}`}
+                        href={`${(import.meta as unknown).env?.VITE_CUBERWATCH_URL || "https://app.cuberwatch.com"}/hosts/${instance?.id || ""}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 rounded-lg border border-teal-300 bg-teal-50 px-4 py-2 text-sm font-medium text-teal-700 transition-colors hover:bg-teal-100"
@@ -617,7 +613,7 @@ const UnifiedInstanceDetails: React.FC<{ identifier: string }> = ({ identifier }
                         <ExternalLink className="h-3 w-3 text-teal-400" />
                       </a>
                       <a
-                        href={`${(import.meta as any).env?.VITE_CUBERWATCH_URL || "https://app.cuberwatch.com"}/grafana/d/host-detail?var-instance=${instance?.ip_address || ""}:9100`}
+                        href={`${(import.meta as unknown).env?.VITE_CUBERWATCH_URL || "https://app.cuberwatch.com"}/grafana/d/host-detail?var-instance=${(instance as unknown as { ip_address?: string })?.ip_address || ""}:9100`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-100"

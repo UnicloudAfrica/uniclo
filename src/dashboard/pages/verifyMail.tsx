@@ -178,12 +178,7 @@ export default function VerifyMail() {
           role: resolvedRole,
           tenant: userData?.tenant ?? response?.tenant ?? null,
           domain: domainInfo,
-          token:
-            response?.access_token ??
-            response?.data?.access_token ??
-            response?.token ??
-            response?.data?.token ??
-            null,
+          token: null, // Cookie-based auth (Sanctum SPA) — no token stored
           availableTenants,
           userEmail: userData?.email ?? email,
           cloudRoles: userData?.cloud_roles ?? userData?.cloudRoles ?? undefined,

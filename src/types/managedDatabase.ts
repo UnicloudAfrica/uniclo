@@ -100,6 +100,13 @@ export interface ManagedDatabase {
   region: string;
   plan_size: PlanSize;
   managed_database_plan_id: number | null;
+  /**
+   * FR-031: which wholesale tier StaqDB bills against. `bundled` = StaqDB's
+   * all-in price (VM + management). `management_only` = UniCloud provides
+   * the VM separately and StaqDB charges only the management layer.
+   */
+  plan_kind?: "bundled" | "management_only";
+  cloud_account_id?: number | null;
   storage_gb: number;
   memory_mb: number;
   vcpu_count: number;
@@ -150,7 +157,7 @@ export interface ManagedDatabaseBackup {
   id: number;
   database_id: number;
   type: "automated" | "manual";
-  status: "creating" | "available" | "restoring" | "deleting" | "deleted" | "error";
+  status: "creating" | "available" | "restoring" | "deleting" | "deleted" | "error" | "in_progress" | "completed" | "failed";
   name: string | null;
   description: string | null;
   size_mb: number | null;
@@ -297,18 +304,51 @@ export interface DatabaseQuoteResponse {
   months: number;
   replica_count: number;
   monthly_cost: number;
+  /**
+   * Plan info from the resolver. `id` is now nullable because Option C
+   * eliminated the local ManagedDatabasePlan catalog — plans come from
+   * StaqDB live. wholesale/retail USD + price_source surface the
+   * pricing composition for admin debugging + audit.
+   *
+   * `price_source` is `"staqdb"` when the live API answered, `"fallback"`
+   * when local config was used (and a warning log was emitted server-side).
+   */
   plan: {
-    id: number;
+    id: number | null;
     name: string;
     engine: DatabaseEngine;
     plan_size: PlanSize;
     vcpu: number;
     memory_mb: number;
     storage_gb: number;
+    wholesale_usd?: number;
+    retail_usd?: number;
+    price_source?: "staqdb" | "fallback";
   };
   discount_label?: string;
   discount_type?: "percent" | "fixed";
   discount_rate?: number;
+}
+
+/**
+ * One row from `GET /managed-databases/plans` (the resolver-backed catalog).
+ *
+ * `management_only_retail_usd` is non-null when StaqDB exposes a BYOC /
+ * partner-supplied-VM price tier for that plan (StaqDB GAP-127). UniCloud
+ * adopts this once StaqDB ships the management-only column — see UniCloud
+ * `FR-031`.
+ */
+export interface ManagedDatabasePlanRow {
+  engine: DatabaseEngine;
+  plan_size: PlanSize;
+  vcpu: number;
+  memory_mb: number;
+  storage_gb: number;
+  wholesale_usd: number;
+  retail_usd: number;
+  management_only_wholesale_usd: number | null;
+  management_only_retail_usd: number | null;
+  source: "staqdb" | "fallback";
 }
 
 // ─── API Responses ─────────────────────────────────────────────
@@ -404,6 +444,13 @@ export interface DatabaseFormState {
   licenseMode: "byol" | "purchase" | "";
   /** BYOC: Selected cloud account ID for customer-provisioned infrastructure */
   cloudAccountId: number | null;
+  /**
+   * FR-031: which wholesale tier StaqDB bills against. Empty string ("")
+   * means "use the platform default" (typically `management_only`).
+   * `bundled` = StaqDB charges all-in (VM + management). `management_only`
+   * = UniCloud provisions the VM separately; StaqDB charges only management.
+   */
+  planKind: "" | "bundled" | "management_only";
 }
 
 export const DEFAULT_DATABASE_FORM: DatabaseFormState = {
@@ -442,6 +489,7 @@ export const DEFAULT_DATABASE_FORM: DatabaseFormState = {
   licenseKey: "",
   licenseMode: "",
   cloudAccountId: null,
+  planKind: "",
 };
 
 // ─── Database Backups ────────────────────────────────────────

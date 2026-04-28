@@ -4,9 +4,9 @@ import { useUpdateOsImage } from "@/hooks/adminHooks/os-imageHooks";
 import ToastUtils from "@/utils/toastUtil";
 import logger from "@/utils/logger";
 
-const EditOS = ({ isOpen, onClose, osImage }: any) => {
+const EditOS = ({ isOpen, onClose, osImage }: { isOpen: boolean; onClose: () => void; osImage: unknown }) => {
   const [formData, setFormData] = useState({ name: "" });
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
     if (isOpen && osImage) {
@@ -18,7 +18,7 @@ const EditOS = ({ isOpen, onClose, osImage }: any) => {
   const { mutate, isPending } = useUpdateOsImage();
 
   const validateForm = () => {
-    const newErrors: Record<string, any> = {};
+    const newErrors: Record<string, unknown> = {};
     if (!formData.name.trim()) {
       newErrors.name = "OS Image Name is required";
     }
@@ -26,12 +26,12 @@ const EditOS = ({ isOpen, onClose, osImage }: any) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field: any, value: any) => {
+  const updateFormData = (field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.SyntheticEvent) => {
     if (e) e.preventDefault();
 
     if (!validateForm()) return;

@@ -219,7 +219,7 @@ const LaunchConfigurationWizard: React.FC = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {keyPairs.map((kp: any) => (
+              {(keyPairs as Array<{ id?: string; name: string }>).map((kp) => (
                 <button
                   key={kp.id || kp.name}
                   onClick={() => setFormData({ ...formData, key_pair: kp.name })}
@@ -251,7 +251,7 @@ const LaunchConfigurationWizard: React.FC = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {sgs.map((sg: any) => (
+              {(sgs as Array<{ id: string; name?: string; description?: string }>).map((sg) => (
                 <button
                   key={sg.id}
                   onClick={() => {
@@ -259,7 +259,9 @@ const LaunchConfigurationWizard: React.FC = () => {
                     if (exists) {
                       setFormData({
                         ...formData,
-                        security_groups: formData.security_groups.filter((id: any) => id !== sg.id),
+                        security_groups: formData.security_groups.filter(
+                          (id: string) => id !== sg.id
+                        ),
                       });
                     } else {
                       setFormData({
@@ -366,7 +368,7 @@ const LaunchConfigurationWizard: React.FC = () => {
             </div>
             <div className="flex flex-wrap gap-2">
               {formData.security_groups.map((id: string) => {
-                const sg = sgs.find((s: any) => s.id === id);
+                const sg = (sgs as Array<{ id: string; name?: string }>).find((s) => s.id === id);
                 return (
                   <span
                     key={id}

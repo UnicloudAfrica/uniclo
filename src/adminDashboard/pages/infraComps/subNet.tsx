@@ -40,7 +40,7 @@ const Subnets = ({ projectId = "", region = "" }: { projectId?: string; region?:
         <ResourceSection
           title="Subnets"
           description="Manage subnet segments within your VPCs."
-          actions={headerActions}
+          actions={headerActions as React.ReactNode}
         >
           {children}
         </ResourceSection>

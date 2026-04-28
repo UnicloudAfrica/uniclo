@@ -374,8 +374,9 @@ export const SupportThreadsPanel: React.FC<SupportThreadsPanelProps> = ({
     queryKey: [...queryKey, filters],
     queryFn: ({ pageParam = 1 }) => fetchThreads({ ...filters, page: pageParam }),
     initialPageParam: 1,
-    getNextPageParam: (lastPage: any) => {
-      const meta = lastPage?.meta || lastPage;
+    getNextPageParam: (lastPage: unknown) => {
+      const page = lastPage as { meta?: { current_page?: number; last_page?: number }; current_page?: number; last_page?: number };
+      const meta = page?.meta || page;
       const current = meta?.current_page || 1;
       const last = meta?.last_page || 1;
       return current < last ? current + 1 : undefined;
@@ -454,7 +455,7 @@ export const SupportThreadsPanel: React.FC<SupportThreadsPanelProps> = ({
 
   const threads = useMemo(() => {
     if (!listQuery.data) return [];
-    return listQuery.data.pages.flatMap((page: any) => extractThreads(page));
+    return listQuery.data.pages.flatMap((page: unknown) => extractThreads(page));
   }, [listQuery.data]);
 
   const totalFromMeta =

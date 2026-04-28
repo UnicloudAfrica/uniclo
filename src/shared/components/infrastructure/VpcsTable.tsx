@@ -2,6 +2,7 @@ import React, { ReactNode } from "react";
 import { Trash2, Network } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
 import { ResourceEmptyState } from "../ui/ResourceEmptyState";
+import { SkeletonTable } from "../ui/Skeleton";
 
 import { Vpc } from "./types";
 
@@ -29,11 +30,8 @@ const VpcsTable: React.FC<VpcsTableProps> = ({
 }) => {
   if (isLoading) {
     return (
-      <ModernCard className="p-12">
-        <div className="text-center">
-          <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <div className="text-gray-500 text-sm">Loading VPCs...</div>
-        </div>
+      <ModernCard className="p-6">
+        <SkeletonTable rows={4} cols={3} />
       </ModernCard>
     );
   }

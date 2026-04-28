@@ -142,7 +142,7 @@ const SelectableInput: React.FC<SelectableInputProps> = ({
 
     if (event.key === "Enter" && filteredOptions.length === 1) {
       event.preventDefault();
-      handleOptionSelect(filteredOptions[0] as any);
+      handleOptionSelect(filteredOptions[0] as unknown);
     }
   };
 

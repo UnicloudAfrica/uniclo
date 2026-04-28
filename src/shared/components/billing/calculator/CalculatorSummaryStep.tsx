@@ -30,9 +30,48 @@ const formatCurrency = (amount: number | null | undefined, currency: string = "U
   }).format(amount);
 };
 
+interface PricingLine {
+  name?: string;
+  region?: string | null;
+  quantity?: number;
+  unit_price?: number;
+  unit_amount?: number;
+  total?: number;
+  currency?: string;
+  term_months?: number | null;
+  meta?: {
+    region?: string;
+    object_storage?: { months?: number; quantity?: number };
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+interface PricingResult {
+  pricing?: {
+    subtotal?: number;
+    tax?: number;
+    total?: number;
+    monthly_total?: number;
+    object_storage?: {
+      included_in_totals?: boolean;
+      lines?: PricingLine[];
+      subtotal?: number;
+    };
+    [key: string]: unknown;
+  };
+  summary?: {
+    total_items?: number;
+    total_instances?: number;
+    regions?: string[];
+    has_discount?: boolean;
+  };
+  [key: string]: unknown;
+}
+
 interface CalculatorSummaryStepProps {
   calculatorData: CalculatorData;
-  pricingResult: any; // Complex API response, using any for now but can be refined
+  pricingResult: PricingResult;
   onRecalculate: () => void;
 }
 
@@ -64,7 +103,7 @@ const CalculatorSummaryStep: React.FC<CalculatorSummaryStepProps> = ({
     country: "",
   });
 
-  const [formErrors, setFormErrors] = useState<Record<string, any>>({});
+  const [formErrors, setFormErrors] = useState<Record<string, Record<string, string>>>({});
 
   const pricingMeta = pricingResult?.pricing || {};
   const summaryMeta = pricingResult?.summary || {
@@ -75,7 +114,7 @@ const CalculatorSummaryStep: React.FC<CalculatorSummaryStepProps> = ({
   };
   const primaryCurrency = calculatorData.currency_code || "USD";
 
-  const normalizeLine = (line: any) => ({
+  const normalizeLine = (line: PricingLine) => ({
     name: line.name || "",
     region: line.region || line.meta?.region || null,
     quantity: Number(line.quantity || 0),
@@ -115,7 +154,7 @@ const CalculatorSummaryStep: React.FC<CalculatorSummaryStepProps> = ({
 
   const storageSubtotal = hasApiStorage
     ? Number(apiStorage.subtotal || 0)
-    : storageLines.reduce((sum: number, line: any) => sum + Number(line.total || 0), 0);
+    : storageLines.reduce((sum: number, line) => sum + Number(line.total || 0), 0);
 
   const baseSubtotal = Number(pricingMeta?.subtotal || 0);
   const baseTax = Number(pricingMeta?.tax || 0);
@@ -133,8 +172,8 @@ const CalculatorSummaryStep: React.FC<CalculatorSummaryStepProps> = ({
 
   const effectiveTaxRate = baseSubtotal > 0 ? baseTax / baseSubtotal : 0;
 
-  const storageMonthly = storageLines.reduce((sum: number, line: any) => {
-    const months = line.term_months || line.meta?.object_storage?.months || 1;
+  const storageMonthly = storageLines.reduce((sum: number, line) => {
+    const months = Number(line.term_months || line.meta?.object_storage?.months || 1);
     return sum + (months > 0 ? Number(line.total || 0) / months : Number(line.total || 0));
   }, 0);
 
@@ -147,7 +186,7 @@ const CalculatorSummaryStep: React.FC<CalculatorSummaryStepProps> = ({
   const { data: countries = [], isFetching: isCountriesFetching } = useFetchCountries();
   const countryOptions = Array.isArray(countries)
     ? countries
-        .map((country: any, index: number) => {
+        .map((country: unknown, index: number) => {
           if (!country) return null;
           if (typeof country === "string") {
             return {
@@ -156,12 +195,13 @@ const CalculatorSummaryStep: React.FC<CalculatorSummaryStepProps> = ({
               label: country,
             };
           }
-          const name = country.name || country.country || country.code || country.iso2;
+          const c = country as Record<string, unknown>;
+          const name = (c.name || c.country || c.code || c.iso2) as string | undefined;
           if (!name) return null;
-          const emoji = country.emoji || country.flag || null;
+          const emoji = (c.emoji || c.flag || null) as string | null;
           const label = [emoji, name].filter(Boolean).join(" ").trim();
           return {
-            key: country.id || country.code || name || `country-${index}`,
+            key: (c.id || c.code || name || `country-${index}`) as string | number,
             value: name,
             label: label || name,
           };
@@ -175,17 +215,17 @@ const CalculatorSummaryStep: React.FC<CalculatorSummaryStepProps> = ({
   const totalRegions = hasApiStorage
     ? new Set(summaryMeta.regions || []).size
     : new Set([
-        ...calculatorData.pricing_requests.map((req: any) => req.region),
-        ...storageItems.map((item: any) => item.region),
+        ...calculatorData.pricing_requests.map((req) => req.region),
+        ...storageItems.map((item) => item.region),
       ]).size;
 
-  const invoicePayloadBase = (additional: Record<string, any> = {}) => {
+  const invoicePayloadBase = (additional: Record<string, unknown> = {}) => {
     const total_discount_label =
       calculatorData.total_discount_type === "percentage"
         ? `${calculatorData.total_discount_value}%`
         : formatCurrency(Number(calculatorData.total_discount_value), primaryCurrency);
 
-    const payload: any = {
+    const payload: Record<string, unknown> = {
       ...additional,
       pricing_requests: calculatorData.pricing_requests.map((req) => {
         const { volumes, ...rest } = req as unknown as Record<string, unknown>;
@@ -193,13 +233,13 @@ const CalculatorSummaryStep: React.FC<CalculatorSummaryStepProps> = ({
         return {
           ...rest,
           volume_types:
-            volumes?.map((vol: any) => ({
+            (volumes as Array<Record<string, unknown>> | undefined)?.map((vol) => ({
               volume_type_id: vol.volume_type_id,
               storage_size_gb: vol.storage_size_gb,
             })) || [],
         };
       }),
-      object_storage_items: calculatorData.object_storage_items?.map((item: any) => {
+      object_storage_items: calculatorData.object_storage_items?.map((item) => {
         const { ...rest } = item;
         delete (rest as Record<string, unknown>)._display;
         return {
@@ -266,9 +306,10 @@ const CalculatorSummaryStep: React.FC<CalculatorSummaryStepProps> = ({
     });
 
     createMultiQuote(payload, {
-      onSuccess: (data: any) => {
+      onSuccess: (data: unknown) => {
         ToastUtils.success("Invoice generated successfully!");
-        const firstInvoice = (data["invoices"] as Record<string, unknown>[])?.[0];
+        const dataRec = (data as Record<string, unknown>) || {};
+        const firstInvoice = (dataRec["invoices"] as Record<string, unknown>[])?.[0];
         if (firstInvoice?.["pdf"]) {
           const { pdf, filename = "invoice.pdf" } = firstInvoice as {
             pdf: string;

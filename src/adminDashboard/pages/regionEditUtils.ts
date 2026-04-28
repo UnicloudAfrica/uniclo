@@ -1,3 +1,4 @@
+import type { ComponentType } from "react";
 import { Server, Database, Globe } from "lucide-react";
 
 export const statusOptions = [
@@ -19,18 +20,18 @@ export const statusLabelMap: Record<string, string> = {
   down: "Down",
 };
 
-export const formatSegment = (value: any) => {
+export const formatSegment = (value: unknown) => {
   if (!value) return "";
   return value
     .toString()
     .split(/[_-]/)
     .filter(Boolean)
-    .map((segment: any) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .map((segment: unknown) => segment.charAt(0).toUpperCase() + segment.slice(1))
     .join(" ");
 };
 
 // Service icons
-export const SERVICE_ICONS: Record<string, any> = {
+export const SERVICE_ICONS: Record<string, ComponentType<{ className?: string }>> = {
   compute: Server,
   object_storage: Database,
   network: Globe,

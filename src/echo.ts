@@ -1,7 +1,10 @@
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
 import config from "./config";
-(globalThis.window as any).Pusher = Pusher;
+
+// Laravel Echo + Pusher.js bridge: the Pusher constructor must be on `window`
+// before Echo instantiates so it can pick it up via the runtime global.
+(globalThis.window as Window & { Pusher: typeof Pusher }).Pusher = Pusher;
 
 /**
  * Initialize Laravel Echo for real-time events.

@@ -1,7 +1,6 @@
 import React, { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import AdminPageHeader from "./AdminPageHeader";
-import { designTokens } from "@/styles/designTokens";
 
 const friendlyPathMap: Record<string, string> = {
   "admin-dashboard": "Home",
@@ -47,7 +46,7 @@ const friendlyPathMap: Record<string, string> = {
 const toTitleCase = (value = "") =>
   value
     .split(/[-_]/)
-    .map((segment: any) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .map((segment: string) => segment.charAt(0).toUpperCase() + segment.slice(1))
     .join(" ");
 
 const buildBreadcrumbs = (pathname = "") => {

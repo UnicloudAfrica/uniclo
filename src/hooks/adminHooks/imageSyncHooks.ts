@@ -36,11 +36,15 @@ interface TriggerSyncPayload {
 }
 
 const triggerImageSync = async (payload: TriggerSyncPayload): Promise<ImageSyncResponse> => {
-  const res = await api("POST", "/inventory/image-sync", payload);
+  const res = await api<ImageSyncResponse>(
+    "POST",
+    "/inventory/image-sync",
+    payload as unknown as Record<string, unknown>
+  );
   if (!res) {
     throw new Error("Failed to trigger image sync");
   }
-  return res as ImageSyncResponse;
+  return res;
 };
 
 const fetchImageSyncComparison = async (
@@ -72,7 +76,7 @@ export const useTriggerImageSync = () => {
 export const useImageSyncComparison = (
   region: string,
   provider = "zadara",
-  options: any = {}
+  options: import("@/shared/types/admin").QueryHookOptions = {}
 ) => {
   return useQuery<ImageSyncComparison>({
     queryKey: ["imageSyncComparison", region, provider],

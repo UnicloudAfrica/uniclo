@@ -7,12 +7,12 @@ import EditVMModal from "./vmSubs/editVms";
 import DeleteVMModal from "./vmSubs/deleteVms";
 import { ModernButton, ProviderBadge } from "@/shared/components/ui";
 
-const formatMemory = (memoryMb: any) => {
+const formatMemory = (memoryMb: number) => {
   if (memoryMb === null || memoryMb === undefined) return "—";
   return `${Math.round(Number(memoryMb) / 1024)} GiB`;
 };
 
-const Vms = ({ selectedRegion, selectedProvider, onMetricsChange }: any) => {
+const Vms = ({ selectedRegion, selectedProvider, onMetricsChange }: { selectedRegion?: string; selectedProvider?: string; onMetricsChange?: (m: unknown) => void }) => {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [search, setSearch] = useState("");
@@ -20,7 +20,7 @@ const Vms = ({ selectedRegion, selectedProvider, onMetricsChange }: any) => {
   const [isAddVMModalOpen, setIsAddVMModalOpen] = useState(false);
   const [isEditVMModalOpen, setIsEditVMModalOpen] = useState(false);
   const [isDeleteVMModalOpen, setIsDeleteVMModalOpen] = useState(false);
-  const [selectedVM, setSelectedVM] = useState<any>(null);
+  const [selectedVM, setSelectedVM] = useState<unknown>(null);
 
   useEffect(() => {
     setPage(1);
@@ -33,8 +33,8 @@ const Vms = ({ selectedRegion, selectedProvider, onMetricsChange }: any) => {
     { enabled: Boolean(selectedRegion), keepPreviousData: true }
   );
 
-  const rows = useMemo(() => data?.data ?? [], [data]);
-  const meta = data?.meta ?? null;
+  const rows = useMemo(() => (data as { data?: unknown[] } | undefined)?.data ?? [], [data]);
+  const meta = (data as { meta?: { total?: number; current_page?: number; per_page?: number } } | undefined)?.meta ?? null;
   const total = meta?.total ?? rows.length;
 
   const totalVCpus = useMemo(() => {
@@ -86,12 +86,12 @@ const Vms = ({ selectedRegion, selectedProvider, onMetricsChange }: any) => {
     setIsAddVMModalOpen(true);
   };
 
-  const handleEditVM = (vm: any) => {
+  const handleEditVM = (vm: unknown) => {
     setSelectedVM(vm);
     setIsEditVMModalOpen(true);
   };
 
-  const handleDeleteVM = (vm: any) => {
+  const handleDeleteVM = (vm: unknown) => {
     setSelectedVM(vm);
     setIsDeleteVMModalOpen(true);
   };
@@ -100,7 +100,7 @@ const Vms = ({ selectedRegion, selectedProvider, onMetricsChange }: any) => {
     {
       header: "Compute profile",
       key: "name",
-      render: (vm: any) => (
+      render: (vm: unknown) => (
         <div className="flex flex-col gap-1">
           <span className="font-semibold text-slate-900">{vm.name || "Unnamed profile"}</span>
           <ProviderBadge provider={vm.provider} />
@@ -111,7 +111,7 @@ const Vms = ({ selectedRegion, selectedProvider, onMetricsChange }: any) => {
       header: "Memory",
       key: "memory_mb",
       align: "center" as const,
-      render: (vm: any) => (
+      render: (vm: unknown) => (
         <span className="font-semibold text-slate-800">{formatMemory(vm.memory_mb)}</span>
       ),
     },
@@ -119,7 +119,7 @@ const Vms = ({ selectedRegion, selectedProvider, onMetricsChange }: any) => {
       header: "vCPU / cores",
       key: "vcpus",
       align: "center" as const,
-      render: (vm: any) => (
+      render: (vm: unknown) => (
         <div className="flex flex-col items-center text-xs text-slate-500">
           <span className="font-medium text-slate-700">{vm.vcpus ?? "—"} vCPU</span>
           <span>
@@ -132,7 +132,7 @@ const Vms = ({ selectedRegion, selectedProvider, onMetricsChange }: any) => {
       header: "",
       key: "actions",
       align: "right" as const,
-      render: (vm: any) => (
+      render: (vm: unknown) => (
         <div className="flex items-center justify-end gap-2">
           <button
             type="button"
@@ -180,7 +180,7 @@ const Vms = ({ selectedRegion, selectedProvider, onMetricsChange }: any) => {
     ),
   };
 
-  const handleSearch = useCallback((value: any) => {
+  const handleSearch = useCallback((value: unknown) => {
     setSearch(value);
     setPage(1);
   }, []);

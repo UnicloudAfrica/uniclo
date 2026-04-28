@@ -1,3 +1,4 @@
+import { lazy, Suspense, type JSX } from "react";
 import { Route, Navigate, Outlet } from "react-router-dom";
 import ObjectStorageProvider from "../contexts/ObjectStorageContext";
 import TenantRoute from "./TenantRoute";
@@ -55,6 +56,7 @@ import TenantCloudAccountCreate from "../dashboard/pages/TenantCloudAccountCreat
 import TenantCloudAccountDetail from "../dashboard/pages/TenantCloudAccountDetail";
 import TenantMonitoring from "../tenantDashboard/pages/TenantMonitoring";
 import TenantFlow from "../tenantDashboard/pages/TenantFlow";
+import TenantFlowBilling from "../tenantDashboard/pages/TenantFlowBilling";
 import TenantMigrationCalculator from "../tenantDashboard/pages/TenantMigrationCalculator";
 import TenantDatabaseCreate from "../dashboard/pages/TenantDatabaseCreate";
 import TenantDatabaseDetail from "../dashboard/pages/TenantDatabaseDetail";
@@ -76,14 +78,14 @@ import TenantDrDrills from "../dashboard/pages/TenantDrDrills";
 import TenantHypervisor from "../dashboard/pages/TenantHypervisor";
 import TenantDatabaseReplication from "../dashboard/pages/TenantDatabaseReplication";
 import TenantRansomware from "../dashboard/pages/TenantRansomware";
-import TenantShieldDomains from "../dashboard/pages/TenantShieldDomains";
-import TenantShieldDomainDetail from "../dashboard/pages/TenantShieldDomainDetail";
-import TenantShieldOverview from "../dashboard/pages/TenantShieldOverview";
-import TenantShieldAttackMap from "../dashboard/pages/TenantShieldAttackMap";
-import TenantShieldFirewall from "../dashboard/pages/TenantShieldFirewall";
-import TenantShieldAttacks from "../dashboard/pages/TenantShieldAttacks";
-import TenantShieldAnalytics from "../dashboard/pages/TenantShieldAnalytics";
-import TenantShieldSsl from "../dashboard/pages/TenantShieldSsl";
+const TenantShieldDomains = lazy(() => import("../dashboard/pages/TenantShieldDomains"));
+const TenantShieldDomainDetail = lazy(() => import("../dashboard/pages/TenantShieldDomainDetail"));
+const TenantShieldOverview = lazy(() => import("../dashboard/pages/TenantShieldOverview"));
+const TenantShieldAttackMap = lazy(() => import("../dashboard/pages/TenantShieldAttackMap"));
+const TenantShieldFirewall = lazy(() => import("../dashboard/pages/TenantShieldFirewall"));
+const TenantShieldAttacks = lazy(() => import("../dashboard/pages/TenantShieldAttacks"));
+const TenantShieldAnalytics = lazy(() => import("../dashboard/pages/TenantShieldAnalytics"));
+const TenantShieldSsl = lazy(() => import("../dashboard/pages/TenantShieldSsl"));
 import {
   TenantKeyPairs,
   TenantNetworkInterfaces,
@@ -109,8 +111,6 @@ import {
 
 import TenantDocsLayout from "../tenantDashboard/pages/docs/TenantDocsLayout";
 import TenantDocPage from "../tenantDashboard/pages/docs/TenantDocPage";
-
-import type { JSX } from "react";
 
 const ObjectStorageRouteProvider = (): JSX.Element => (
   <ObjectStorageProvider>
@@ -160,6 +160,7 @@ const TenantRoutes = (): JSX.Element => (
 
         <Route path="/dashboard/monitoring" element={<TenantMonitoring />} />
         <Route path="/dashboard/flow" element={<TenantFlow />} />
+        <Route path="/dashboard/flow/billing" element={<TenantFlowBilling />} />
         <Route path="/dashboard/databases" element={<TenantManagedDatabases />} />
         <Route path="/dashboard/databases/create" element={<TenantDatabaseCreate />} />
         <Route path="/dashboard/databases/:identifier" element={<TenantDatabaseDetail />} />
@@ -183,14 +184,14 @@ const TenantRoutes = (): JSX.Element => (
         <Route path="/dashboard/destinations" element={<TenantDestinations />} />
         <Route path="/dashboard/serverless-dr" element={<TenantServerlessDr />} />
 
-        <Route path="/dashboard/shield/domains" element={<TenantShieldDomains />} />
-        <Route path="/dashboard/shield/domains/:domainId" element={<TenantShieldDomainDetail />} />
-        <Route path="/dashboard/shield/overview" element={<TenantShieldOverview />} />
-        <Route path="/dashboard/shield/attack-map" element={<TenantShieldAttackMap />} />
-        <Route path="/dashboard/shield/firewall" element={<TenantShieldFirewall />} />
-        <Route path="/dashboard/shield/attacks" element={<TenantShieldAttacks />} />
-        <Route path="/dashboard/shield/analytics" element={<TenantShieldAnalytics />} />
-        <Route path="/dashboard/shield/ssl" element={<TenantShieldSsl />} />
+        <Route path="/dashboard/shield/domains" element={<Suspense fallback={null}><TenantShieldDomains /></Suspense>} />
+        <Route path="/dashboard/shield/domains/:domainId" element={<Suspense fallback={null}><TenantShieldDomainDetail /></Suspense>} />
+        <Route path="/dashboard/shield/overview" element={<Suspense fallback={null}><TenantShieldOverview /></Suspense>} />
+        <Route path="/dashboard/shield/attack-map" element={<Suspense fallback={null}><TenantShieldAttackMap /></Suspense>} />
+        <Route path="/dashboard/shield/firewall" element={<Suspense fallback={null}><TenantShieldFirewall /></Suspense>} />
+        <Route path="/dashboard/shield/attacks" element={<Suspense fallback={null}><TenantShieldAttacks /></Suspense>} />
+        <Route path="/dashboard/shield/analytics" element={<Suspense fallback={null}><TenantShieldAnalytics /></Suspense>} />
+        <Route path="/dashboard/shield/ssl" element={<Suspense fallback={null}><TenantShieldSsl /></Suspense>} />
         <Route path="/dashboard/agent" element={<TenantAgent />} />
 
         <Route element={<ObjectStorageRouteProvider />}>

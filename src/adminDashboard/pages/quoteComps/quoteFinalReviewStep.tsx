@@ -19,15 +19,15 @@ const selectBaseClass =
 
 type QuoteFinalReviewStepProps = {
   formData: MultiQuoteFormData;
-  pricingRequests: any[];
-  objectStorageRequests: any[];
-  tenants: any[];
+  pricingRequests: Array<Record<string, unknown>>;
+  objectStorageRequests: unknown[];
+  tenants: unknown[];
   updateFormData: UpdateFormData;
   errors?: MultiQuoteFormErrors;
   assignmentDetails?: {
     assignType?: string;
-    tenant?: any;
-    user?: any;
+    tenant?: unknown;
+    user?: unknown;
   };
 };
 
@@ -54,9 +54,9 @@ const QuoteFinalReviewStep = ({
     : null;
   const userLabel = selectedUser
     ? selectedUser.business_name ||
-      [selectedUser.first_name, selectedUser.last_name].filter(Boolean).join(" ") ||
-      selectedUser.email ||
-      `User ${selectedUser.id}`
+    [selectedUser.first_name, selectedUser.last_name].filter(Boolean).join(" ") ||
+    selectedUser.email ||
+    `User ${selectedUser.id}`
     : null;
   const assignmentType = assignmentMode || (selectedUser ? "user" : selectedTenant ? "tenant" : "");
   const assignmentLabel =
@@ -79,7 +79,7 @@ const QuoteFinalReviewStep = ({
     0
   );
 
-  const regionCount = new Set(pricingRequests.map((req: any) => req.region).filter(Boolean)).size;
+  const regionCount = new Set(pricingRequests.map((req: unknown) => req.region).filter(Boolean)).size;
 
   return (
     <div className="space-y-8">
@@ -247,15 +247,14 @@ const QuoteFinalReviewStep = ({
                       value={formData.lead_country || ""}
                       onChange={(e) => updateFormData("lead_country", e.target.value)}
                       disabled={isCountriesLoading}
-                      className={`${selectBaseClass} ${
-                        errors.lead_country ? "border-red-400" : ""
-                      }`}
+                      className={`${selectBaseClass} ${errors.lead_country ? "border-red-400" : ""
+                        }`}
                       required
                     >
                       <option value="">
                         {isCountriesLoading ? "Loading countries..." : "Select a country"}
                       </option>
-                      {countries?.map((country: any) => (
+                      {countries?.map((country: unknown) => (
                         <option key={country.id} value={country.name}>
                           {country.emoji} {country.name}
                         </option>

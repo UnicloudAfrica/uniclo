@@ -14,7 +14,6 @@ import {
   Trash2,
   RefreshCw,
   Moon,
-  ChevronDown,
   ZapOff,
   Move,
   Globe,
@@ -93,10 +92,10 @@ const MORE_ACTIONS = [
 ];
 
 const InstanceHeroBanner: React.FC<InstanceHeaderProps> = ({
-  name,
+  _name,
   identifier,
   status,
-  provider,
+  _provider,
   instanceType,
   availabilityZone,
   providerVmId,
@@ -129,7 +128,7 @@ const InstanceHeroBanner: React.FC<InstanceHeaderProps> = ({
   // Status-aware disable rules: disable actions that don't make sense for current state
   const isDisabledByStatus = (key: string): boolean => {
     const runningStates = ["running", "active"];
-    const stoppedStates = ["stopped", "shutoff", "shutdown"];
+    const _stoppedStates = ["stopped", "shutoff", "shutdown"];
     switch (key) {
       case "start":
       case "resume":

@@ -7,14 +7,14 @@ import EditEBSModal from "./ebsSubs/editEbs";
 import DeleteEBSModal from "./ebsSubs/deleteEbs";
 import { ModernButton } from "@/shared/components/ui";
 
-const formatMetric = (value: any, unit: any) => {
+const formatMetric = (value: unknown, unit: string) => {
   if (value === null || value === undefined || Number.isNaN(value)) {
     return "—";
   }
   return `${Number(value).toLocaleString()} ${unit}`;
 };
 
-const EBSVolumes = ({ selectedRegion, selectedProvider, onMetricsChange }: any) => {
+const EBSVolumes = ({ selectedRegion, selectedProvider, onMetricsChange }: { selectedRegion?: string; selectedProvider?: string; onMetricsChange?: (m: unknown) => void }) => {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [search, setSearch] = useState("");
@@ -22,7 +22,7 @@ const EBSVolumes = ({ selectedRegion, selectedProvider, onMetricsChange }: any) 
   const [isAddEBSModalOpen, setIsAddEBSModalOpen] = useState(false);
   const [isEditEBSModalOpen, setIsEditEBSModalOpen] = useState(false);
   const [isDeleteEBSModalOpen, setIsDeleteEBSModalOpen] = useState(false);
-  const [selectedEBSVolume, setSelectedEBSVolume] = useState<any>(null);
+  const [selectedEBSVolume, setSelectedEBSVolume] = useState<unknown>(null);
 
   useEffect(() => {
     setPage(1);
@@ -35,8 +35,8 @@ const EBSVolumes = ({ selectedRegion, selectedProvider, onMetricsChange }: any) 
     { enabled: Boolean(selectedRegion), keepPreviousData: true }
   );
 
-  const rows = useMemo(() => data?.data ?? [], [data]);
-  const meta = data?.meta ?? null;
+  const rows = useMemo(() => (data as { data?: unknown[] } | undefined)?.data ?? [], [data]);
+  const meta = (data as { meta?: { total?: number; current_page?: number; per_page?: number } } | undefined)?.meta ?? null;
   const total = meta?.total ?? rows.length;
 
   const avgReadIOPS = useMemo(() => {
@@ -92,12 +92,12 @@ const EBSVolumes = ({ selectedRegion, selectedProvider, onMetricsChange }: any) 
     setIsAddEBSModalOpen(true);
   };
 
-  const handleEditEBSVolume = (volume: any) => {
+  const handleEditEBSVolume = (volume: unknown) => {
     setSelectedEBSVolume(volume);
     setIsEditEBSModalOpen(true);
   };
 
-  const handleDeleteEBSVolume = (volume: any) => {
+  const handleDeleteEBSVolume = (volume: unknown) => {
     setSelectedEBSVolume(volume);
     setIsDeleteEBSModalOpen(true);
   };
@@ -106,7 +106,7 @@ const EBSVolumes = ({ selectedRegion, selectedProvider, onMetricsChange }: any) 
     {
       header: "Volume profile",
       key: "name",
-      render: (volume: any) => (
+      render: (volume: unknown) => (
         <div className="flex flex-col">
           <span className="font-semibold text-slate-900">{volume.name || "Unnamed volume"}</span>
           <span className="text-xs text-slate-500">
@@ -119,7 +119,7 @@ const EBSVolumes = ({ selectedRegion, selectedProvider, onMetricsChange }: any) 
       header: "IOPS (R/W)",
       key: "read_iops_limit",
       align: "center" as const,
-      render: (volume: any) => (
+      render: (volume: unknown) => (
         <div className="flex flex-col items-center text-xs text-slate-500">
           <span className="font-medium text-slate-700">
             {formatMetric(volume.read_iops_limit, "IOPS")}
@@ -132,7 +132,7 @@ const EBSVolumes = ({ selectedRegion, selectedProvider, onMetricsChange }: any) 
       header: "Bandwidth (R/W)",
       key: "read_bandwidth_limit",
       align: "center" as const,
-      render: (volume: any) => (
+      render: (volume: unknown) => (
         <div className="flex flex-col items-center text-xs text-slate-500">
           <span className="font-medium text-slate-700">
             {formatMetric(volume.read_bandwidth_limit, "MB/s")}
@@ -145,7 +145,7 @@ const EBSVolumes = ({ selectedRegion, selectedProvider, onMetricsChange }: any) 
       header: "",
       key: "actions",
       align: "right" as const,
-      render: (volume: any) => (
+      render: (volume: unknown) => (
         <div className="flex items-center justify-end gap-2">
           <button
             type="button"
@@ -195,7 +195,7 @@ const EBSVolumes = ({ selectedRegion, selectedProvider, onMetricsChange }: any) 
   };
 
   const handleSearch = useCallback(
-    (value: any) => {
+    (value: unknown) => {
       setSearch(value);
       setPage(1);
     },

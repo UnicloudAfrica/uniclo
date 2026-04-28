@@ -1,7 +1,20 @@
 import { X } from "lucide-react";
 
-const DetailedModules = ({ selectedItem, isModalOpen, closeModal }: any) => {
-  const StatusBadge = ({ status }: any) => {
+interface ModuleItem {
+  module: string;
+  status: string;
+  plan: string;
+  startDate: string;
+  endDate: string;
+}
+interface DetailedModulesProps {
+  selectedItem: ModuleItem | null;
+  isModalOpen: boolean;
+  closeModal: () => void;
+}
+
+const DetailedModules = ({ selectedItem, isModalOpen, closeModal }: DetailedModulesProps) => {
+  const StatusBadge = ({ status }: { status: string }) => {
     const isActive = status === "Active";
     return (
       <span

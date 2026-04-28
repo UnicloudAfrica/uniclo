@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Building2, CheckCircle, AlertCircle, Search, Loader2, Landmark } from "lucide-react";
+import { CheckCircle, AlertCircle, Search, Loader2, Landmark } from "lucide-react";
 import { designTokens } from "@/styles/designTokens";
 import {
   useFetchTenantSplitStatus,

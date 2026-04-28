@@ -1,6 +1,6 @@
 import { designTokens } from "@/styles/designTokens";
 
-const ProductSideMenu = ({ items = [], activeTab, onTabChange, className = "" }: any) => {
+const ProductSideMenu = ({ items = [], activeTab, onTabChange, className = "" }: { items?: unknown[]; activeTab?: string; onTabChange?: (tab: string) => void; className?: string }) => {
   return (
     <aside
       className={[
@@ -16,7 +16,7 @@ const ProductSideMenu = ({ items = [], activeTab, onTabChange, className = "" }:
         </h3>
       </div>
       <nav className="flex flex-col gap-2">
-        {items.map((item: any) => {
+        {items.map((item: unknown) => {
           const isActive = item.id === activeTab;
           const Icon = item.icon;
           return (

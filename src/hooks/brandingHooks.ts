@@ -49,7 +49,7 @@ export const useFetchBranding = (options: Record<string, unknown> = {}) => {
     queryKey: ["tenantBranding"],
     queryFn: async () => {
       const res = await silentApi<BrandingResponse>("GET", "/admin/branding");
-      const data = res as Record<string, any>;
+      const data = res as Record<string, unknown>;
       return data?.data?.branding || data?.branding || res;
     },
     staleTime: 1000 * 60 * 5,
@@ -83,7 +83,7 @@ export const usePreviewBranding = () => {
   return useMutation({
     mutationFn: async (payload: Record<string, unknown>) => {
       const res = await api<BrandingResponse>("POST", "/admin/branding/preview", payload);
-      const data = res as Record<string, any>;
+      const data = res as Record<string, unknown>;
       return (
         data?.data?.branding || data?.data?.data?.branding || data?.data?.resolved || data?.data
       );

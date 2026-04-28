@@ -3,7 +3,7 @@ import ModernCard from "@/shared/components/ui/ModernCard";
 import { ModernButton } from "@/shared/components/ui";
 import ModernTable from "@/shared/components/ui/ModernTable";
 
-const formatCurrency = (amount: any, currency = "USD") => {
+const formatCurrency = (amount: number, currency = "USD") => {
   if (amount === null || amount === undefined) return "—";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -11,7 +11,7 @@ const formatCurrency = (amount: any, currency = "USD") => {
   }).format(amount);
 };
 
-const downloadPdf = (base64String: any, filename: any) => {
+const downloadPdf = (base64String: string, filename: string) => {
   const byteCharacters = atob(base64String);
   const byteNumbers = new Array(byteCharacters.length);
   for (let i = 0; i < byteCharacters.length; i++) {
@@ -29,7 +29,7 @@ const downloadPdf = (base64String: any, filename: any) => {
   URL.revokeObjectURL(url);
 };
 
-const TotalsCard = ({ amounts }: any) => (
+const TotalsCard = ({ amounts }: { amounts: Record<string, number> }) => (
   <div className="w-full max-w-xs space-y-2">
     {amounts.pre_discount_subtotal && amounts.pre_discount_subtotal !== amounts.subtotal && (
       <div className="flex items-center justify-between text-sm text-slate-500">
@@ -60,7 +60,7 @@ const TotalsCard = ({ amounts }: any) => (
   </div>
 );
 
-const QuoteBreakdownStep = ({ apiResponse }: any) => {
+const QuoteBreakdownStep = ({ apiResponse }: { apiResponse: unknown }) => {
   if (!apiResponse?.invoices?.length) {
     return (
       <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-8 text-center text-sm text-slate-500">
@@ -82,14 +82,14 @@ const QuoteBreakdownStep = ({ apiResponse }: any) => {
       </div>
 
       <div className="space-y-6">
-        {apiResponse.invoices.map((invoiceData: any) => {
+        {apiResponse.invoices.map((invoiceData: unknown) => {
           const invoice = invoiceData.payload;
 
           const lineItemColumns = [
             {
               key: "name",
               header: "ITEM",
-              render: (_: any, item: any) => (
+              render: (_: unknown, item: unknown) => (
                 <div>
                   <p className="font-medium text-slate-900">{item.name}</p>
                   {item.description && <p className="text-xs text-slate-500">{item.description}</p>}
@@ -100,13 +100,13 @@ const QuoteBreakdownStep = ({ apiResponse }: any) => {
               key: "quantity",
               header: "QTY",
               align: "right",
-              render: (val: any) => <span className="text-slate-600">{val}</span>,
+              render: (val: unknown) => <span className="text-slate-600">{val}</span>,
             },
             {
               key: "unit_amount",
               header: "UNIT PRICE",
               align: "right",
-              render: (val: any, item: any) => (
+              render: (val: unknown, item: unknown) => (
                 <span className="text-slate-600">{formatCurrency(val, item.currency)}</span>
               ),
             },
@@ -114,7 +114,7 @@ const QuoteBreakdownStep = ({ apiResponse }: any) => {
               key: "total",
               header: "TOTAL",
               align: "right",
-              render: (val: any, item: any) => (
+              render: (val: unknown, item: unknown) => (
                 <span className="font-medium text-slate-900">
                   {formatCurrency(val, item.currency)}
                 </span>
@@ -122,7 +122,7 @@ const QuoteBreakdownStep = ({ apiResponse }: any) => {
             },
           ];
 
-          const lineItemsData = (invoice.line_items || []).map((item: any, idx: any) => ({
+          const lineItemsData = (invoice.line_items || []).map((item: unknown, idx: number) => ({
             ...item,
             id: `line-${idx}`,
           }));
@@ -178,7 +178,7 @@ const QuoteBreakdownStep = ({ apiResponse }: any) => {
 
               <ModernTable
                 data={lineItemsData}
-                columns={lineItemColumns as any}
+                columns={lineItemColumns as unknown}
                 searchable={false}
                 filterable={false}
                 exportable={false}

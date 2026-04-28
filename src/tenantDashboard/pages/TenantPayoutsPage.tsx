@@ -18,8 +18,8 @@ const useBankDetails = () => {
   return useQuery({
     queryKey: ["tenant", "bank-details"],
     queryFn: async () => {
-      const res = await silentTenantApi("GET", "/admin/bank-details");
-      return res.data as BankDetails;
+      const res = await silentTenantApi<{ data: BankDetails } | BankDetails>("GET", "/admin/bank-details");
+      return ((res as { data?: BankDetails })?.data ?? (res as BankDetails)) as BankDetails;
     },
   });
 };
@@ -28,8 +28,8 @@ const useBanks = () => {
   return useQuery({
     queryKey: ["banks"],
     queryFn: async () => {
-      const res = await silentTenantApi("GET", "/admin/bank-details/banks");
-      return res.data as Bank[];
+      const res = await silentTenantApi<{ data: Bank[] } | Bank[]>("GET", "/admin/bank-details/banks");
+      return ((res as { data?: Bank[] })?.data ?? (res as Bank[])) as Bank[];
     },
     staleTime: 1000 * 60 * 60, // Cache banks for 1 hour
   });
@@ -39,8 +39,8 @@ const usePayoutSummary = () => {
   return useQuery({
     queryKey: ["tenant", "payout-summary"],
     queryFn: async () => {
-      const res = await silentTenantApi("GET", "/admin/payouts/summary");
-      return res.data as PayoutSummary;
+      const res = await silentTenantApi<{ data: PayoutSummary } | PayoutSummary>("GET", "/admin/payouts/summary");
+      return ((res as { data?: PayoutSummary })?.data ?? (res as PayoutSummary)) as PayoutSummary;
     },
   });
 };
@@ -49,8 +49,9 @@ const usePayoutHistory = () => {
   return useQuery({
     queryKey: ["tenant", "payouts"],
     queryFn: async () => {
-      const res = await silentTenantApi("GET", "/admin/payouts");
-      return ((res.data as Record<string, unknown>)?.data || res.data || []) as Payout[];
+      const res = await silentTenantApi<{ data: Payout[] } | Payout[]>("GET", "/admin/payouts");
+      const nested = (res as { data?: Payout[] })?.data;
+      return (nested ?? (res as Payout[]) ?? []) as Payout[];
     },
   });
 };
@@ -80,11 +81,11 @@ const TenantPayoutsPage: React.FC = () => {
   });
 
   const verifyAccount = async (accountNumber: string, bankCode: string) => {
-    const res = await silentTenantApi("POST", "/admin/bank-details/verify", {
+    const res = await silentTenantApi<{ data: unknown } | unknown>("POST", "/admin/bank-details/verify", {
       account_number: accountNumber,
       bank_code: bankCode,
     });
-    return res.data;
+    return (res as { data?: unknown })?.data ?? res;
   };
 
   return (

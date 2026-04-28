@@ -47,9 +47,9 @@ export const ObjectStorageProfileCard: React.FC<ObjectStorageProfileCardProps> =
 
   const azOptions = useMemo(() => {
     if (!Array.isArray(availabilityZones)) return [];
-    return availabilityZones
-      .filter((az: any) => az.is_active !== false)
-      .map((az: any) => ({
+    return (availabilityZones as Array<{ code: string; name?: string; is_active?: boolean }>)
+      .filter((az) => az.is_active !== false)
+      .map((az) => ({
         value: az.code,
         label: az.name || az.code,
       }));
@@ -131,7 +131,7 @@ export const ObjectStorageProfileCard: React.FC<ObjectStorageProfileCardProps> =
 
         <ModernSelect
           label="Availability Zone"
-          value={(profile as any).availability_zone || ""}
+          value={(profile as unknown as Record<string, unknown>).availability_zone as string || ""}
           onChange={(event) => onAvailabilityZoneChange?.(event.target.value)}
           options={azOptions}
           placeholder={!profile.region ? "Select a region first" : isAzFetching ? "Loading..." : "Select availability zone"}

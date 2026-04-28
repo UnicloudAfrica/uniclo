@@ -18,7 +18,7 @@ const InstanceOverviewCard: React.FC<InstanceOverviewCardProps> = ({
   const relatedResources = useMemo(() => {
     if (!displayInstance) return [];
 
-    const resources: any[] = [];
+    const resources: unknown[] = [];
 
     if (displayInstance.project?.name) {
       const projectIdentifier =
@@ -142,7 +142,7 @@ const InstanceOverviewCard: React.FC<InstanceOverviewCardProps> = ({
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-slate-900">Related Resources</h3>
           <div className="grid gap-3 md:grid-cols-2">
-            {relatedResources.map((resource: any) => (
+            {relatedResources.map((resource: unknown) => (
               <div
                 key={resource.key}
                 className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
@@ -175,7 +175,7 @@ const InstanceOverviewCard: React.FC<InstanceOverviewCardProps> = ({
                 )}
                 {resource.chips?.length ? (
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {resource.chips.map((chip: any) => (
+                    {resource.chips.map((chip: unknown) => (
                       <span
                         key={chip}
                         className="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600"

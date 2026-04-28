@@ -15,7 +15,7 @@ import { useApiContext } from "@/hooks/useApiContext";
 import { apiRegistry } from "../../api/apiRegistry";
 import logger from "@/utils/logger";
 
-type AnyRecord = Record<string, any>;
+type AnyRecord = Record<string, unknown>;
 
 // ─── Basic CRUD via factory ──────────────────────────────────────
 
@@ -50,7 +50,7 @@ export const useUpdateProjectMembers = () => {
         user_ids,
       });
     },
-    onSuccess: (_data: any, variables: { identifier: string }) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: projectExtendedKeys.status(context, variables.identifier),
       });
@@ -86,7 +86,7 @@ export const useInviteProjectMember = () => {
         email,
       });
     },
-    onSuccess: (_data: any, variables: { identifier: string }) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: projectExtendedKeys.status(context, variables.identifier),
       });
@@ -167,7 +167,7 @@ export const useEnableInternetAccess = () => {
         `${entry.urlPrefix}/projects/${encodedId}/network/enable-internet`
       );
     },
-    onSuccess: (_data: any, id: any) => {
+    onSuccess: (_data: unknown, id: string | number) => {
       queryClient.invalidateQueries({
         queryKey: projectExtendedKeys.networkStatus(context, id),
       });
@@ -199,7 +199,7 @@ export const useSetupProjectInfrastructure = () => {
       );
       return res;
     },
-    onSuccess: (_data: any, variables: { id: any }) => {
+    onSuccess: (_data: unknown, variables: { id: string | number }) => {
       queryClient.invalidateQueries({
         queryKey: projectExtendedKeys.status(context, variables.id),
       });
@@ -253,7 +253,7 @@ export const useEnableProjectVpc = () => {
       const encodedId = encodeURIComponent(String(id));
       return entry.toastApi.post<AnyRecord>(`${entry.urlPrefix}/projects/${encodedId}/enable-vpc`);
     },
-    onSuccess: (_data: any, _id: any) => {
+    onSuccess: (_data: unknown, _id: string | number) => {
       queryClient.invalidateQueries({
         queryKey: projectExtendedKeys.all(context),
       });
@@ -279,7 +279,7 @@ export const useProvisionProject = () => {
       const encodedId = encodeURIComponent(String(id));
       return entry.toastApi.post<AnyRecord>(`${entry.urlPrefix}/projects/${encodedId}/provision`);
     },
-    onSuccess: (_data: any, _id: any) => {
+    onSuccess: (_data: unknown, _id: string | number) => {
       queryClient.invalidateQueries({
         queryKey: projectExtendedKeys.all(context),
       });
@@ -351,7 +351,7 @@ export const useSyncProjectUser = () => {
         data
       );
     },
-    onSuccess: (_data: any, _variables: { projectId: any }) => {
+    onSuccess: (_data: unknown, _variables: { projectId: string | number }) => {
       queryClient.invalidateQueries({
         queryKey: projectExtendedKeys.all(context),
       });
@@ -385,7 +385,7 @@ export const useRevokeProjectUserPolicy = () => {
         `${entry.urlPrefix}/projects/${ep}/users/${eu}/policies/${epl}`
       );
     },
-    onSuccess: (_data: any, variables: { projectId: any }) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: projectExtendedKeys.status(context, variables.projectId),
       });
@@ -422,7 +422,7 @@ export const useAssignProjectUserPolicy = () => {
         { policy_id: policyId }
       );
     },
-    onSuccess: (_data: any, variables: { projectId: any }) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: projectExtendedKeys.status(context, variables.projectId),
       });
@@ -450,7 +450,7 @@ export const useAddProjectSubnet = () => {
         data
       );
     },
-    onSuccess: (_data: any, variables: { projectId: any }) => {
+    onSuccess: (_data: unknown, variables: { projectId: string | number }) => {
       queryClient.invalidateQueries({
         queryKey: projectExtendedKeys.networkStatus(context, variables.projectId),
       });
@@ -475,7 +475,7 @@ export const useAddProjectSecurityGroup = () => {
         data
       );
     },
-    onSuccess: (_data: any, variables: { projectId: any }) => {
+    onSuccess: (_data: unknown, variables: { projectId: string | number }) => {
       queryClient.invalidateQueries({
         queryKey: projectExtendedKeys.networkStatus(context, variables.projectId),
       });
@@ -497,7 +497,7 @@ export const useSyncProjectStatus = () => {
       const encodedId = encodeURIComponent(String(id));
       return entry.toastApi.post<AnyRecord>(`${entry.urlPrefix}/projects/${encodedId}/sync-status`);
     },
-    onSuccess: (_data: any, id: any) => {
+    onSuccess: (_data: unknown, id: string | number) => {
       queryClient.invalidateQueries({
         queryKey: projectExtendedKeys.status(context, id),
       });

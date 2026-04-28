@@ -3,7 +3,12 @@ import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 /**
  * TrendIndicator - Shows trend direction with icon and percentage
  */
-const TrendIndicator = ({ value, className = "" }: any) => {
+interface TrendIndicatorProps {
+  value: number;
+  className?: string;
+}
+
+const TrendIndicator = ({ value, className = "" }: TrendIndicatorProps) => {
   if (!value || value === 0) {
     return (
       <span

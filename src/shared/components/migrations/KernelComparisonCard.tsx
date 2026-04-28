@@ -79,7 +79,7 @@ const KernelComparisonCard: React.FC<KernelComparisonCardProps> = ({
         ? AlertTriangle
         : CheckCircle;
 
-  const verdictColor =
+  const _verdictColor =
     result.severity === "error"
       ? "text-red-500"
       : result.severity === "warning"

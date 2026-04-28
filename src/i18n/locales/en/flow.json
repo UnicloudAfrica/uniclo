@@ -1,0 +1,24 @@
+{
+  "past_due_banner": {
+    "title": "Payment failed — action required",
+    "body": "We tried to charge your card on file multiple times and it didn't go through. Update your payment method now to keep your servers running. You have 14 days before the subscription is deactivated.",
+    "cta": "Update payment method"
+  },
+  "billing": {
+    "page_title": "UniCloudFlow Billing",
+    "page_description": "Manage your payment method, renew the subscription, or fix a stuck payment.",
+    "section_subscription": "Subscription details",
+    "stat_plan": "Plan",
+    "stat_amount": "Monthly amount",
+    "stat_status": "Status",
+    "term_next_billing": "Next billing",
+    "term_period_start": "Period start",
+    "term_period_end": "Period end",
+    "term_failed_attempts": "Failed attempts",
+    "term_card_email": "Card on file",
+    "footer_help": "Need to swap cards or fix a stuck payment? Open the Paystack flow.",
+    "success_updated": "Payment method updated successfully — your subscription is active.",
+    "no_subscription_title": "No active subscription",
+    "no_subscription_body": "You don't have an active UniCloudFlow subscription. Subscribe from the Flow dashboard to manage billing here."
+  }
+}

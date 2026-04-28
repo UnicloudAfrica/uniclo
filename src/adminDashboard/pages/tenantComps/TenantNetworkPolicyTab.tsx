@@ -23,7 +23,7 @@ export default function TenantNetworkPolicyTab({ tenantId }: Props) {
     []
   );
 
-  const normalizeBool = (value: any, fallback: any) => {
+  const normalizeBool = (value: unknown, fallback: boolean) => {
     if (typeof value === "boolean") return value;
     if (typeof value === "number") return value === 1;
     if (typeof value === "string") {
@@ -58,9 +58,9 @@ export default function TenantNetworkPolicyTab({ tenantId }: Props) {
     });
   }, [defaultNetworkSettings, networkData]);
 
-  const handleToggle = (key: any) => {
+  const handleToggle = (key: string) => {
     setNetworkSettings((prev) => {
-      const nextValue = !(prev as any)[key];
+      const nextValue = !(prev as unknown)[key];
       if (key === "require_eip_preflight" && !nextValue) {
         return {
           ...prev,

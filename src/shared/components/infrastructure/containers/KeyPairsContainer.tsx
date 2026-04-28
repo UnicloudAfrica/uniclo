@@ -67,7 +67,7 @@ interface KeyPairsContainerProps {
   wrapper: (props: {
     headerActions: React.ReactNode;
     children: React.ReactNode;
-  }) => React.ReactElement<any>;
+  }) => React.ReactElement;
   onStatsUpdate?: (count: number) => void;
   hideResourceHeader?: boolean;
 }

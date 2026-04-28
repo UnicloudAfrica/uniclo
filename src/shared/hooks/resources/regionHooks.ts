@@ -37,7 +37,7 @@ export const useFetchAvailabilityZones = (regionCode: string | null | undefined)
         "GET",
         `${entry.urlPrefix}/regions/${regionCode}/availability-zones`
       );
-      const data = (res as any)?.data ?? (res as any);
+      const data = (res as { data?: unknown })?.data ?? (res as unknown);
       return Array.isArray(data) ? data : (data?.data ?? []);
     },
     enabled: !!regionCode,

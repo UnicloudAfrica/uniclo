@@ -337,7 +337,7 @@ export const useUpdateLead = (
       queryClient.invalidateQueries({ queryKey: ["admin-leads"] });
       queryClient.invalidateQueries({ queryKey: ["admin-lead", variables.id] });
       if (options.onSuccess) {
-        (options.onSuccess as any)(data, variables, context);
+        (options.onSuccess as unknown)(data, variables, context);
       }
     },
   });
@@ -355,7 +355,7 @@ export const useUpdateLeadStage = (
       queryClient.invalidateQueries({ queryKey: ["admin-leads-stage"] });
       queryClient.invalidateQueries({ queryKey: ["admin-lead-stage", variables.id] });
       if (options.onSuccess) {
-        (options.onSuccess as any)(data, variables, context);
+        (options.onSuccess as unknown)(data, variables, context);
       }
     },
   });
@@ -373,7 +373,7 @@ export const useUpdateDoc = (
       queryClient.invalidateQueries({ queryKey: ["admin-leads-stage"] });
       queryClient.invalidateQueries({ queryKey: ["admin-lead-stage", variables.id] });
       if (options.onSuccess) {
-        (options.onSuccess as any)(data, variables, context);
+        (options.onSuccess as unknown)(data, variables, context);
       }
     },
   });
@@ -392,7 +392,7 @@ export const useCreateNewLead = (
       queryClient.invalidateQueries({ queryKey: ["admin-leads"] });
       queryClient.invalidateQueries({ queryKey: ["admin-leads-stage"] });
       if (options.onSuccess) {
-        (options.onSuccess as any)(data, variables, context);
+        (options.onSuccess as unknown)(data, variables, context);
       }
     },
   });
@@ -408,7 +408,7 @@ export const useCreateCustomStage = (
       // Invalidate CustomStages query to refresh the list
       queryClient.invalidateQueries({ queryKey: ["admin-lead-stage"] });
       if (options.onSuccess) {
-        (options.onSuccess as any)(data, variables, context);
+        (options.onSuccess as unknown)(data, variables, context);
       }
     },
   });
@@ -424,7 +424,7 @@ export const useAddLeadDocument = (
       // Invalidate CustomStages query to refresh the list
       queryClient.invalidateQueries({ queryKey: ["admin-leads"] });
       if (options.onSuccess) {
-        (options.onSuccess as any)(data, variables, context);
+        (options.onSuccess as unknown)(data, variables, context);
       }
     },
   });
@@ -443,7 +443,7 @@ export const useConvertLeadToUser = (
       queryClient.invalidateQueries({ queryKey: ["admin-leads"] });
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       if (options.onSuccess) {
-        (options.onSuccess as any)(data, id, context);
+        (options.onSuccess as unknown)(data, id, context);
       }
     },
   });

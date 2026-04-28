@@ -42,6 +42,7 @@ export interface ModernTableProps<T> {
   loading?: boolean;
   onRowClick?: (row: T) => void;
   emptyMessage?: ReactNode;
+  emptyState?: { title?: string; description?: string; icon?: ReactNode; action?: { label: string; onClick: () => void } };
   actions?: Action<T>[];
   bulkActions?: BulkAction<T>[];
   selectable?: boolean;

@@ -22,9 +22,9 @@ const TicketsDashboard: React.FC = () => {
 
   const fetchThread = (id: string | number) => adminSilentApi("GET", `/support/${id}`);
 
-  const createThread = (payload: Record<string, any>) => adminApi("POST", "/support", payload);
+  const createThread = (payload: Record<string, unknown>) => adminApi("POST", "/support", payload);
 
-  const replyThread = (id: string | number, payload: Record<string, any>) =>
+  const replyThread = (id: string | number, payload: Record<string, unknown>) =>
     adminApi("POST", `/support/${id}/reply`, payload);
 
   const resolveThread = (id: string | number) =>
@@ -39,8 +39,8 @@ const TicketsDashboard: React.FC = () => {
     >
       <SupportThreadsPanel
         queryKey={["admin", "support"]}
-        fetchThreads={fetchThreads}
-        fetchThread={fetchThread}
+        fetchThreads={fetchThreads as never}
+        fetchThread={fetchThread as never}
         createThread={createThread}
         replyThread={replyThread}
         resolveThread={resolveThread}

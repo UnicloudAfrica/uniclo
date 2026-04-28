@@ -157,7 +157,7 @@ const SecurityGroupList: React.FC<SecurityGroupListProps> = ({
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {isProjectScoped ? (
           (Array.isArray(securityGroups) && securityGroups.length > 0 ? securityGroups : []).map(
-            (sg: any) => {
+            (sg: { id?: string | number; identifier?: string; name?: string; label?: string }) => {
               const id = sg.id || sg.identifier || sg.name;
               if (!id) return null;
               const label = sg.name || sg.label || `SG ${id}`;
@@ -173,7 +173,7 @@ const SecurityGroupList: React.FC<SecurityGroupListProps> = ({
                     type="checkbox"
                     className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     checked={checked}
-                    onChange={(e) => handleSecurityGroupToggle(id, e.target.checked)}
+                    onChange={(e) => handleSecurityGroupToggle(String(id), e.target.checked)}
                   />
                   <span>{label}</span>
                 </label>

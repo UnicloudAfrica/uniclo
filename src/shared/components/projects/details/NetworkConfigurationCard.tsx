@@ -53,7 +53,7 @@ const NetworkConfigurationCard: React.FC<NetworkConfigurationCardProps> = ({
   onViewCompute,
 }) => {
   const supportsVpc = isFeatureSupported(provider, "vpcs");
-  const supportsInternetGateway = isFeatureSupported(provider, "internet_gateways");
+  const _supportsInternetGateway = isFeatureSupported(provider, "internet_gateways");
 
   /* ------------------------------------------------------------------ */
   /* Nobus Layout — "Security & Access"                                  */

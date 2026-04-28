@@ -2,7 +2,7 @@
  * TrafficChart — Traffic stats display for a Shield domain.
  */
 import React from "react";
-import { BarChart3, Globe, Shield, Zap } from "lucide-react";
+import { BarChart3, Globe, RefreshCw, Shield, Zap } from "lucide-react";
 import { useFetchTrafficStats } from "@/shared/hooks/resources/shieldHooks";
 import type { ShieldTrafficStats } from "@/shared/hooks/resources/shieldHooks";
 
@@ -25,11 +25,28 @@ const formatBytes = (bytes: number | undefined): string => {
 };
 
 const TrafficChart: React.FC<TrafficChartProps> = ({ domainId }) => {
-  const { data: rawStats, isLoading } = useFetchTrafficStats(domainId, {
+  const { data: rawStats, isLoading, isError, error, refetch } = useFetchTrafficStats(domainId, {
     refetchInterval: 30_000,
   });
 
   const stats = rawStats as ShieldTrafficStats | undefined;
+
+  if (isError) {
+    return (
+      <div className="db-surface-card flex flex-col items-center justify-center gap-3 rounded-2xl border p-8 text-center">
+        <p className="text-sm text-red-600">
+          {error?.message || "Failed to load traffic stats."}
+        </p>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className="flex items-center gap-1.5 rounded-xl bg-[var(--theme-color)] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+        >
+          <RefreshCw size={14} /> Retry
+        </button>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

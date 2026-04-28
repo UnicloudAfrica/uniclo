@@ -5,7 +5,7 @@ import { useUpdateClient } from "@/hooks/adminHooks/clientHooks";
 import ToastUtils from "@/utils/toastUtil";
 import logger from "@/utils/logger";
 
-const EditClientModal = ({ isOpen, onClose, clientData }: any) => {
+const EditClientModal = ({ isOpen, onClose, clientData }: { isOpen: boolean; onClose: () => void; clientData: unknown }) => {
   const { data: profile, isFetching: isProfileFetching } = useFetchProfile();
   const { data: countries, isFetching: isCountriesFetching } = useFetchCountries();
 
@@ -25,7 +25,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }: any) => {
     zip_code: "",
     force_password_reset: false,
   });
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, unknown>>({});
 
   const { data: states, isFetching: isStatesFetching } = useFetchStatesById(formData.country_id, {
     enabled: !!formData.country_id,
@@ -90,10 +90,10 @@ const EditClientModal = ({ isOpen, onClose, clientData }: any) => {
   useEffect(() => {
     if (formData.country_id && countries) {
       const selectedCountry = (countries as Record<string, unknown>[]).find(
-        (c: any) => c.id === parseInt(formData.country_id)
+        (c) => c.id === parseInt(formData.country_id)
       );
       if (selectedCountry) {
-        setFormData((prev) => ({ ...prev, country: selectedCountry.name }));
+        setFormData((prev) => ({ ...prev, country: String(selectedCountry.name ?? "") }));
       }
     } else if (!formData.country_id) {
       setFormData((prev) => ({ ...prev, country: "" }));
@@ -107,7 +107,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }: any) => {
         (s: Record<string, unknown>) => s.id === parseInt(String(formData.state_id))
       );
       if (selectedState) {
-        setFormData((prev) => ({ ...prev, state: selectedState.name }));
+        setFormData((prev) => ({ ...prev, state: String(selectedState.name ?? "") }));
       }
     } else if (!formData.state_id) {
       setFormData((prev) => ({ ...prev, state: "" }));
@@ -128,7 +128,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }: any) => {
   // }, [formData.city_id, cities]);
 
   const validateForm = () => {
-    const newErrors: Record<string, any> = {};
+    const newErrors: Record<string, unknown> = {};
     if (!formData.first_name.trim()) newErrors.first_name = "First Name is required";
     if (!formData.last_name.trim()) newErrors.last_name = "Last Name is required";
     if (!formData.email.trim()) {
@@ -152,7 +152,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }: any) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleInputChange = (e: any) => {
+  const handleInputChange = (e: unknown) => {
     const { id, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -161,7 +161,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }: any) => {
     setErrors((prev) => ({ ...prev, [id]: null }));
   };
 
-  const handleCountryChange = (e: any) => {
+  const handleCountryChange = (e: unknown) => {
     const countryId = e.target.value;
     setFormData((prev) => ({
       ...prev,
@@ -179,7 +179,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }: any) => {
     }));
   };
 
-  const handleStateChange = (e: any) => {
+  const handleStateChange = (e: unknown) => {
     const stateId = e.target.value;
     setFormData((prev) => ({
       ...prev,
@@ -191,7 +191,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }: any) => {
   };
 
   // Simplified handleCityChange for direct text input
-  const _handleCityChange = (e: any) => {
+  const _handleCityChange = (e: unknown) => {
     const { value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -200,7 +200,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }: any) => {
     setErrors((prev) => ({ ...prev, city: null }));
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.SyntheticEvent) => {
     e.preventDefault();
 
     if (!validateForm()) {
@@ -226,7 +226,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }: any) => {
     };
 
     updateClient(
-      { id: clientData.identifier, clientData: payload },
+      { id: clientData.identifier, clientData: payload as never },
       {
         onSuccess: () => {
           ToastUtils.success("Client updated successfully!");

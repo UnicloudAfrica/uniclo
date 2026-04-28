@@ -89,16 +89,16 @@ const ResourceProtectionTab: React.FC<ResourceProtectionTabProps> = ({
   const disableReplication = useDisableReplication();
   const failover = useFailover();
 
-  const handleEnableBackup = (config: Record<string, unknown>) => {
+  const handleEnableBackup = (config: Record<string, unknown> | import("./BackupConfigModal").BackupConfig) => {
     enableBackup.mutate(
-      { integrationKey, resourceType, resourceId, config },
+      { integrationKey, resourceType, resourceId, config: config as Record<string, unknown> },
       { onSuccess: () => setShowBackupModal(false) },
     );
   };
 
-  const handleEnableReplication = (config: Record<string, unknown>) => {
+  const handleEnableReplication = (config: Record<string, unknown> | import("./ReplicationConfigModal").ReplicationConfig) => {
     enableReplication.mutate(
-      { integrationKey, resourceType, resourceId, config },
+      { integrationKey, resourceType, resourceId, config: config as Record<string, unknown> },
       {
         onSuccess: (data: Record<string, unknown> | undefined) => {
           const payment = data?.payment as Record<string, unknown> | undefined;

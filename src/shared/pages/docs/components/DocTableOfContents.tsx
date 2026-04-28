@@ -23,7 +23,7 @@ const DocTableOfContents: React.FC<DocTableOfContentsProps> = ({ items }) => {
       <ul className="space-y-1.5">
         {items.map((item) => (
           <li key={item.id}>
-            <a href={`#${item.id}`} className="text-sm hover:underline" style={{ color: "var(--theme-color, #288DD1)" }}>
+            <a href={`#${item.id}`} className="text-sm hover:underline" style={{ color: "var(--theme-color, #0A5E3E)" }}>
               {item.label}
             </a>
           </li>

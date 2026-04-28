@@ -119,7 +119,7 @@ const AutoScalingGroupWizard: React.FC = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3">
-              {launchConfigs.map((lc: any) => (
+              {(launchConfigs as Array<{ id: string; name?: string; instance_type?: string }>).map((lc) => (
                 <button
                   key={lc.id}
                   onClick={() => setFormData({ ...formData, launch_configuration_id: lc.id })}
@@ -220,7 +220,7 @@ const AutoScalingGroupWizard: React.FC = () => {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Subnets (Optional)</label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {subnets.map((sub: any) => (
+          {(subnets as Array<{ id: string; name?: string; cidr?: string }>).map((sub) => (
             <button
               key={sub.id}
               onClick={() => {
@@ -228,7 +228,7 @@ const AutoScalingGroupWizard: React.FC = () => {
                 if (exists) {
                   setFormData({
                     ...formData,
-                    subnets: formData.subnets.filter((id: any) => id !== sub.id),
+                    subnets: formData.subnets.filter((id: string) => id !== sub.id),
                   });
                 } else {
                   setFormData({ ...formData, subnets: [...formData.subnets, sub.id] });
@@ -315,7 +315,7 @@ const AutoScalingGroupWizard: React.FC = () => {
                   name: "Average Network Out",
                   desc: "Scale based on outgoing network bytes",
                 },
-              ].map((metric: any) => (
+              ].map((metric: { id: string; name: string; desc: string }) => (
                 <button
                   key={metric.id}
                   onClick={() => setFormData({ ...formData, metric_type: metric.id })}
@@ -386,7 +386,7 @@ const AutoScalingGroupWizard: React.FC = () => {
               Subnets ({formData.subnets.length})
             </div>
             <div className="flex flex-wrap gap-2">
-              {formData.subnets.map((id: any) => (
+              {formData.subnets.map((id: string) => (
                 <span
                   key={id}
                   className="px-2 py-1 bg-white border border-gray-200 rounded text-xs font-mono"
@@ -433,7 +433,7 @@ const AutoScalingGroupWizard: React.FC = () => {
         {/* Stepper */}
         <div className="flex items-center justify-between mb-12 relative px-4">
           <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-100 -translate-y-1/2 z-0"></div>
-          {[1, 2, 3, 4].map((num: any) => (
+          {[1, 2, 3, 4].map((num: number) => (
             <div
               key={num}
               className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${

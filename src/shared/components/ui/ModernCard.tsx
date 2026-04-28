@@ -19,7 +19,7 @@ export interface ModernCardProps extends React.HTMLAttributes<HTMLDivElement> {
   hover?: boolean;
   className?: string;
   onClick?: () => void;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 const ModernCard: React.FC<ModernCardProps> = ({

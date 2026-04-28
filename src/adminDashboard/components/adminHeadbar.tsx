@@ -37,7 +37,7 @@ const AdminHeadbar: React.FC<AdminHeadbarProps> = ({ forceRender = false }) => {
 
   const preset = buildAdminHeadbarPreset(
     resolveBrandLogo(branding?.data as BrandingTheme, logo),
-    branding?.data?.accentColor || branding?.data?.primaryColor
+    (branding?.data as BrandingTheme | undefined)?.accentColor || (branding?.data as BrandingTheme | undefined)?.primaryColor
   );
 
   if (!shouldRender) {

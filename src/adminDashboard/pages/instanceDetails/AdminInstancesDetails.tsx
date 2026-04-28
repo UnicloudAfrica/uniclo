@@ -79,7 +79,6 @@ import type {
   LifecycleEvent,
   PricingBreakdown,
   PricingLine,
-  ResourceVolume,
 } from "./instanceDetailsTypes";
 
 import {
@@ -95,7 +94,7 @@ import {
 
 import InstanceTelemetryCard from "./InstanceTelemetryCard";
 import InstancePricingCard, { TransactionsCard } from "./InstancePricingCard";
-import { ConsoleLogsViewer, LifecycleTimeline } from "./ConsoleLogsViewer";
+import { ConsoleLogsViewer } from "./ConsoleLogsViewer";
 import InstanceHeroBanner from "./InstanceHeroBanner";
 import InstanceMetadataForm from "./InstanceMetadataForm";
 import AttachElasticIpModal from "./AttachElasticIpModal";
@@ -170,7 +169,7 @@ const AdminInstancesDetails = () => {
   });
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [isConsoleLoading, setIsConsoleLoading] = useState(false);
-  const [isAutoSyncing, setIsAutoSyncing] = useState(false);
+  const [_isAutoSyncing, setIsAutoSyncing] = useState(false);
   const [showAttachEipModal, setShowAttachEipModal] = useState(false);
   const [showResizeModal, setShowResizeModal] = useState(false);
   const provisioningPollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -224,7 +223,7 @@ const AdminInstancesDetails = () => {
 
   const {
     data: lifecycleDataRaw,
-    isLoading: isLifecycleLoading,
+    isLoading: _isLifecycleLoading,
     refetch: refetchLifecycle,
   } = useAdminFetchInstanceLifecycleById(instanceIdentifier);
   const lifecycleData = lifecycleDataRaw as LifecycleData | LifecycleData[] | null;
@@ -308,7 +307,7 @@ const AdminInstancesDetails = () => {
   const { mutateAsync: deleteBackupGroupMutation } = useDeleteBackupGroup();
   const { mutateAsync: triggerSnapshotMutation } = useTriggerSnapshot();
   const { mutateAsync: deleteSnapshotMutation } = useDeleteSnapshot();
-  const { mutateAsync: createRestoreGroupMutation } = useCreateRestoreGroup();
+  const { mutateAsync: _createRestoreGroupMutation } = useCreateRestoreGroup();
   const { mutateAsync: deleteRestoreGroupMutation } = useDeleteRestoreGroup();
   const { mutateAsync: closeAlarmMutation } = useCloseAlarm();
 
@@ -814,7 +813,7 @@ const AdminInstancesDetails = () => {
     ToastUtils.success("Identifier copied to clipboard");
   }, [displayInstance?.identifier]);
 
-  const handleExportJson = useCallback(() => {
+  const _handleExportJson = useCallback(() => {
     if (!managedInstance) return;
     const blob = new Blob([JSON.stringify(managedInstance, null, 2)], {
       type: "application/json",
@@ -885,7 +884,7 @@ const AdminInstancesDetails = () => {
           action: actionKey,
           params: actionConfig?.default_params || {},
           confirmed,
-        });
+        } as { identifier: typeof instanceIdentifier });
         ToastUtils.success(`${formatStatusText(actionKey)} initiated.`);
         if (actionKey === "retry_provisioning") {
           startProvisioningPoll();
@@ -1720,7 +1719,7 @@ const AdminInstancesDetails = () => {
       }
     };
 
-    const isLoading = isBackupGroupsFetching || isSnapshotsFetching || isRestoreGroupsFetching;
+    const _isLoading = isBackupGroupsFetching || isSnapshotsFetching || isRestoreGroupsFetching;
 
     return (
       <div className="space-y-8">

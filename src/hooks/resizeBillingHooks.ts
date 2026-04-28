@@ -71,7 +71,7 @@ export const useResizePreview = () => {
   return useMutation({
     mutationFn: async (payload: ResizePreviewRequest) => {
       const envelope = asEnvelope<ResizePreviewResponse>(
-        await entry.silentApi.post<AnyRecord>(`${entry.urlPrefix}/billing/resize-preview`, payload)
+        await entry.silentApi.post<AnyRecord>(`${entry.urlPrefix}/billing/resize-preview`, payload as unknown as Record<string, unknown>)
       );
 
       if (!envelope.data) {
@@ -91,7 +91,7 @@ export const useResizeConfirm = () => {
   return useMutation({
     mutationFn: async (payload: ResizeConfirmRequest) => {
       const envelope = asEnvelope<ResizeConfirmResponse>(
-        await entry.toastApi.post<AnyRecord>(`${entry.urlPrefix}/billing/resize-confirm`, payload)
+        await entry.toastApi.post<AnyRecord>(`${entry.urlPrefix}/billing/resize-confirm`, payload as unknown as Record<string, unknown>)
       );
 
       if (!envelope.data) {

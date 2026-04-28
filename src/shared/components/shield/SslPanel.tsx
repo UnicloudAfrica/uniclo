@@ -19,13 +19,14 @@ interface SslPanelProps {
 }
 
 const SslPanel: React.FC<SslPanelProps> = ({ domainId }) => {
-  const { data: rawSsl, isLoading } = useFetchSslStatus(domainId);
+  const { data: rawSsl, isLoading, isError, refetch } = useFetchSslStatus(domainId);
   const ssl = rawSsl as ShieldSslStatus | undefined;
   const provisionSsl = useProvisionSsl();
   const uploadCustom = useUploadCustomSsl();
   const [showUpload, setShowUpload] = useState(false);
   const [cert, setCert] = useState("");
   const [key, setKey] = useState("");
+  const [actionError, setActionError] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -35,10 +36,23 @@ const SslPanel: React.FC<SslPanelProps> = ({ domainId }) => {
     );
   }
 
+  if (isError) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center dark:border-red-800 dark:bg-red-950">
+        <p className="text-sm text-red-600 dark:text-red-400">Failed to load SSL status.</p>
+        <button onClick={() => refetch()} className="mt-2 text-sm font-medium text-red-700 hover:text-red-800 dark:text-red-300">Retry</button>
+      </div>
+    );
+  }
+
   const handleUpload = () => {
+    setActionError(null);
     uploadCustom.mutate(
       { domainId, certificate: cert, private_key: key },
-      { onSuccess: () => setShowUpload(false) }
+      {
+        onSuccess: () => setShowUpload(false),
+        onError: () => setActionError("Failed to upload certificate. Ensure valid PEM format."),
+      }
     );
   };
 
@@ -66,10 +80,21 @@ const SslPanel: React.FC<SslPanelProps> = ({ domainId }) => {
         </div>
       </div>
 
+      {actionError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
+          {actionError}
+        </div>
+      )}
+
       <div className="flex gap-3">
         <ModernButton
           variant="secondary"
-          onClick={() => provisionSsl.mutate(domainId)}
+          onClick={() => {
+            setActionError(null);
+            provisionSsl.mutate(domainId, {
+              onError: () => setActionError("Failed to provision SSL. Please try again."),
+            });
+          }}
           disabled={provisionSsl.isPending}
           loading={provisionSsl.isPending}
         >

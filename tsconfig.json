@@ -40,11 +40,17 @@
             "@/services/*": [
                 "src/services/*"
             ],
+            "@/config": [
+                "src/config.ts"
+            ],
             "@/config/*": [
                 "src/config/*"
             ],
             "@/docs/*": [
                 "src/docs/*"
+            ],
+            "@/lib/*": [
+                "src/lib/*"
             ]
         },
         "esModuleInterop": true,

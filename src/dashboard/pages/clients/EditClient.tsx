@@ -108,7 +108,7 @@ export default function EditClientPage() {
     }
 
     try {
-      await updateClient({ id: clientId, clientData: payload });
+      await updateClient({ id: clientId, clientData: payload as never });
       ToastUtils.success("Client updated.");
       navigate(`/dashboard/clients/${clientId}`);
     } catch (error) {

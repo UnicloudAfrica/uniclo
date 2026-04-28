@@ -21,7 +21,7 @@ const AdminPartnerCreate = () => {
         }
         contentClassName="space-y-6"
       >
-        <TenantClientsSideMenu activeTab="partners" {...({} as any)} />
+        <TenantClientsSideMenu activeTab="partners" {...({} as unknown)} />
         <AddPartner isOpen mode="page" onClose={goBack} />
       </AdminPageShell>
     </>

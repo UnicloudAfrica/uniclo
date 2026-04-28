@@ -15,7 +15,7 @@ const ImageRequestPanel = ({ region }: ImageRequestPanelProps) => {
   const { data: available = [], isFetching: loadingAvailable } = useAvailableImages(region, {
     enabled: isExpanded && !!region,
   });
-  const { data: myRequests = [], isFetching: loadingRequests } = useMyImageRequests({
+  const { data: myRequests = [], isFetching: _loadingRequests } = useMyImageRequests({
     enabled: isExpanded,
   });
   const submitMutation = useSubmitImageRequest();

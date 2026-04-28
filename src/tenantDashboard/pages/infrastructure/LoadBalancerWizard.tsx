@@ -29,8 +29,9 @@ const LoadBalancerWizard: React.FC = () => {
   const { data: sgs = [] } = useSecurityGroups(projectId, region);
   const createMutation = useCreateLoadBalancer();
 
-  const filteredSubnets = subnets.filter(
-    (s: any) => s.vpc_id === formData.vpc_id || s.network_id === formData.vpc_id
+  type SubnetLike = { id?: string; name?: string; vpc_id?: string; network_id?: string; cidr?: string; az?: string };
+  const filteredSubnets = (subnets as SubnetLike[]).filter(
+    (s) => s.vpc_id === formData.vpc_id || s.network_id === formData.vpc_id
   );
 
   const handleNext = () => setStep(step + 1);
@@ -144,7 +145,7 @@ const LoadBalancerWizard: React.FC = () => {
             className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
           >
             <option value="">Select VPC</option>
-            {vpcs.map((vpc: any) => (
+            {(vpcs as Array<{ id: string; name?: string; cidr_block?: string; cidr?: string }>).map((vpc) => (
               <option key={vpc.id} value={vpc.id}>
                 {vpc.name || vpc.id} ({vpc.cidr_block || vpc.cidr})
               </option>
@@ -158,18 +159,19 @@ const LoadBalancerWizard: React.FC = () => {
               Subnets (Select at least 2 for High Availability)
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {filteredSubnets.map((sub: any) => (
+              {filteredSubnets.map((sub) => (
                 <button
                   key={sub.id}
                   onClick={() => {
-                    const exists = formData.subnet_ids.includes(sub.id);
+                    const subId = sub.id ?? "";
+                    const exists = formData.subnet_ids.includes(subId);
                     if (exists) {
                       setFormData({
                         ...formData,
-                        subnet_ids: formData.subnet_ids.filter((id: any) => id !== sub.id),
+                        subnet_ids: formData.subnet_ids.filter((id: string) => id !== subId),
                       });
                     } else {
-                      setFormData({ ...formData, subnet_ids: [...formData.subnet_ids, sub.id] });
+                      setFormData({ ...formData, subnet_ids: [...formData.subnet_ids, subId] });
                     }
                   }}
                   className={`flex items-center gap-3 p-3 rounded-lg border transition-all text-left ${
@@ -196,7 +198,7 @@ const LoadBalancerWizard: React.FC = () => {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Security Groups</label>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {sgs.map((sg: any) => (
+            {(sgs as Array<{ id: string; name?: string; description?: string }>).map((sg) => (
               <button
                 key={sg.id}
                 onClick={() => {
@@ -267,7 +269,7 @@ const LoadBalancerWizard: React.FC = () => {
             Selected Subnets ({formData.subnet_ids.length})
           </div>
           <div className="flex flex-wrap gap-2">
-            {formData.subnet_ids.map((id: any) => (
+            {formData.subnet_ids.map((id: string) => (
               <span
                 key={id}
                 className="px-2 py-1 bg-white border border-gray-200 rounded text-xs font-mono"
@@ -282,7 +284,7 @@ const LoadBalancerWizard: React.FC = () => {
             Security Groups ({formData.security_groups_ids.length})
           </div>
           <div className="flex flex-wrap gap-2">
-            {formData.security_groups_ids.map((id: any) => (
+            {formData.security_groups_ids.map((id: string) => (
               <span
                 key={id}
                 className="px-2 py-1 bg-white border border-gray-200 rounded text-xs font-mono"
@@ -317,7 +319,7 @@ const LoadBalancerWizard: React.FC = () => {
         {/* Stepper */}
         <div className="flex items-center justify-between mb-12 relative px-4">
           <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-100 -translate-y-1/2 z-0"></div>
-          {[1, 2, 3].map((num: any) => (
+          {[1, 2, 3].map((num: number) => (
             <div
               key={num}
               className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${

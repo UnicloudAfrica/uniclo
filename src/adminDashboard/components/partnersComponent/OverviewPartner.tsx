@@ -8,8 +8,48 @@ import IconBadge from "../IconBadge";
 import SetupProgressCard from "@/shared/components/projects/details/SetupProgressCard";
 import logger from "@/utils/logger";
 
+interface PartnerDetails {
+  id?: string | number;
+  identifier?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  domain?: string;
+  verified?: number | boolean;
+  verification_token?: string;
+  website?: string;
+  national_id_document?: string;
+  registration_document?: string;
+  utility_bill_document?: string;
+  logo?: string;
+  updated_at?: string;
+  created_at?: string;
+  business?: {
+    email?: string;
+    phone?: string;
+    domain?: string;
+    company_type?: string;
+    industry?: string;
+    website?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    registration_number?: string;
+    tin_number?: string;
+  };
+  provisioning_progress?: Array<{
+    id: string;
+    label: string;
+    status: string;
+    updated_at: string;
+    context?: unknown;
+  }>;
+  [key: string]: unknown;
+}
+
 interface OverviewPartnerProps {
-  partnerDetails: any;
+  partnerDetails: PartnerDetails | null | undefined;
   tenantId?: string;
   openEditOnLoad?: boolean;
 }
@@ -66,7 +106,7 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails, openE
       path: partnerDetails?.utility_bill_document,
     },
     { title: "Company Logo", path: partnerDetails?.logo },
-  ].filter((doc: any) => doc.path);
+  ].filter((doc) => doc.path);
 
   const contactItems = useMemo(
     () => [
@@ -149,7 +189,7 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails, openE
   ];
 
   const provisioningSteps = Array.isArray(partnerDetails?.provisioning_progress)
-    ? partnerDetails.provisioning_progress.map((step: any) => ({
+    ? partnerDetails.provisioning_progress.map((step) => ({
         id: step.id,
         label: step.label,
         status: step.status,
@@ -174,7 +214,7 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails, openE
         {showProvisioning && (
           <div className="grid grid-cols-1 gap-6 mb-6">
             <SetupProgressCard
-              steps={provisioningSteps}
+              steps={provisioningSteps as never}
               isLoading={partnerDetails?.onboarding_status === "processing"}
             />
           </div>
@@ -226,7 +266,9 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails, openE
             <InfoStat
               label="Dependants"
               value={
-                Array.isArray(business?.dependant_tenant) ? business.dependant_tenant.length : "—"
+                Array.isArray((business as Record<string, unknown> | undefined)?.dependant_tenant)
+                  ? ((business as Record<string, unknown>).dependant_tenant as unknown[]).length
+                  : "—"
               }
             />
           </div>
@@ -237,7 +279,7 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails, openE
             <div className="rounded-3xl border border-[var(--theme-surface-alt)] bg-white p-5 shadow-sm">
               <h3 className="text-sm font-semibold text-slate-900">Key Contacts</h3>
               <ul className="mt-4 space-y-3">
-                {contactItems.map(({ iconKey, tone, label, value, type }: any) => (
+                {contactItems.map(({ iconKey, tone, label, value, type }) => (
                   <li key={label} className="flex items-start gap-3 text-sm">
                     <IconBadge
                       iconKey={iconKey as never}
@@ -287,9 +329,10 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails, openE
                         src={doc.path}
                         alt={doc.title}
                         className="mx-auto h-24 w-auto rounded-lg object-contain"
-                        onError={(e: any) => {
-                          e.target.onerror = null;
-                          e.target.src = "https://placehold.co/200x120/E0E0E0/676767?text=Preview";
+                        onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                          const target = e.currentTarget;
+                          target.onerror = null;
+                          target.src = "https://placehold.co/200x120/E0E0E0/676767?text=Preview";
                         }}
                       />
                       <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -313,7 +356,7 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails, openE
                 <h3 className="text-sm font-semibold text-slate-900">Business Profile</h3>
               </div>
               <dl className="mt-4 space-y-4">
-                {businessItems.map(({ iconKey, tone, label, value, type }: any) => (
+                {businessItems.map(({ iconKey, tone, label, value, type }) => (
                   <div
                     key={label}
                     className="flex items-start gap-3 rounded-2xl border border-[var(--theme-surface-alt)] bg-[var(--theme-surface-alt)] p-3"
@@ -347,7 +390,7 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails, openE
                 <h3 className="text-sm font-semibold text-slate-900">Compliance & Lifecycle</h3>
               </div>
               <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-                {complianceItems.map(({ label, value }: any) => (
+                {complianceItems.map(({ label, value }: { label: string; value: string }) => (
                   <div
                     key={label}
                     className="rounded-2xl border border-[var(--theme-surface-alt)] bg-[var(--theme-surface-alt)] p-3"
@@ -378,7 +421,7 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails, openE
   );
 };
 
-const InfoStat = ({ label, value }: { label: string; value: any }) => (
+const InfoStat = ({ label, value }: { label: string; value: React.ReactNode }) => (
   <div className="rounded-2xl border border-[var(--theme-surface-alt)] bg-white p-4 shadow-sm">
     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
     <p className="mt-1 text-sm font-semibold text-slate-900">{value}</p>

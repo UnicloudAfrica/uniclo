@@ -217,12 +217,12 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     const scopeKey = JSON.stringify([formData.assignment_scope]);
     const newDefaultSignature = suggestedMembers?.length
       ? JSON.stringify(
-          [...suggestedMembers.map((member: any) => Number(member.id))].sort((a, b) => a - b)
+          [...suggestedMembers.map((member: ProjectMember) => Number(member.id))].sort((a, b) => a - b)
         )
       : null;
     const currentSignature = selectedMembers.length
       ? JSON.stringify(
-          [...selectedMembers.map((member: any) => Number(member.id))].sort((a, b) => a - b)
+          [...selectedMembers.map((member: ProjectMember) => Number(member.id))].sort((a, b) => a - b)
         )
       : null;
     const lastState = membersFetchKeyRef.current;
@@ -261,7 +261,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     setSelectedMembers((prev) => {
       const exists = prev.some((item) => item.id === member.id);
       if (exists) {
-        return prev.filter((item: any) => item.id !== member.id);
+        return prev.filter((item: ProjectMember) => item.id !== member.id);
       }
       return [...prev, member];
     });
@@ -310,7 +310,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
       type: formData.type,
       region: formData.region,
       assignment_scope: formData.assignment_scope,
-      member_user_ids: selectedMembers.map((member: any) => Number(member.id)),
+      member_user_ids: selectedMembers.map((member: ProjectMember) => Number(member.id)),
       user_policies: Object.keys(userPolicies).length > 0 ? userPolicies : undefined,
       metadata: formData.network_preset ? { network_preset: formData.network_preset } : undefined,
     };
@@ -414,7 +414,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
               Type<span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-2 gap-3">
-              {["vpc", "dvs"].map((type: any) => (
+              {["vpc", "dvs"].map((type: string) => (
                 <label
                   key={type}
                   className={`flex cursor-pointer flex-col rounded-xl border px-3 py-2 text-sm ${
@@ -521,7 +521,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 </div>
               ) : selectedMembers.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
-                  {selectedMembers.map((member: any) => (
+                  {selectedMembers.map((member: ProjectMember) => (
                     <span
                       key={member.id}
                       className="inline-flex items-center bg-[var(--theme-color)] text-white text-xs px-3 py-1 rounded-full"
@@ -558,7 +558,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 </div>
               ) : suggestedMembers.length > 0 ? (
                 <div className="max-h-48 overflow-y-auto divide-y divide-gray-100">
-                  {suggestedMembers.map((member: any) => {
+                  {suggestedMembers.map((member: ProjectMember) => {
                     const isSelected = selectedMembers.some((item) => item.id === member.id);
                     return (
                       <label
@@ -701,7 +701,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         <div className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm">
           <h3 className="text-sm font-semibold text-slate-900">Live summary</h3>
           <dl className="mt-4 space-y-3 text-sm">
-            {summaryItems.map((item: any) => (
+            {summaryItems.map((item: { label: string; value: string }) => (
               <div key={item.label} className="flex items-center justify-between gap-3">
                 <dt className="text-slate-500">{item.label}</dt>
                 <dd className="text-right font-semibold text-slate-900">{item.value}</dd>
@@ -712,7 +712,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         <div className="brand-hero rounded-2xl p-5 text-white">
           <p className="text-sm font-semibold">Launch checklist</p>
           <ul className="mt-3 space-y-2 text-sm text-white/80">
-            {guidanceItems.map((tip: any) => (
+            {guidanceItems.map((tip: string) => (
               <li key={tip} className="flex items-start gap-2">
                 <span className="mt-1 h-1.5 w-1.5 rounded-full bg-white/70" />
                 <span>{tip}</span>

@@ -11,7 +11,10 @@ import type {
 // ── Tenant POC Configuration (Read-Only) ───────────────
 
 export const fetchTenantPocConfig = async (): Promise<TenantPocConfig> => {
-  const res = await silentTenantApi("GET", "/admin/poc-trials/config");
+  const res = await silentTenantApi<{ data: TenantPocConfig }>(
+    "GET",
+    "/admin/poc-trials/config"
+  );
   return res.data;
 };
 
@@ -20,16 +23,26 @@ export const fetchTenantPocConfig = async (): Promise<TenantPocConfig> => {
 export const fetchTenantPocTrials = async (
   filters?: PocTrialFilters
 ): Promise<{ data: PocTrial[]; meta?: Record<string, unknown> }> => {
-  const res = await silentTenantApi("GET", "/admin/poc-trials", { params: filters });
+  const res = await silentTenantApi<{ data: PocTrial[]; meta?: Record<string, unknown> }>(
+    "GET",
+    "/admin/poc-trials",
+    { params: filters as Record<string, unknown> | undefined } as unknown as Record<string, unknown>
+  );
   return res;
 };
 
 // ── Tenant POC Trial Requests ──────────────────────────
 
-export const fetchTenantPocRequests = async (
-  filters?: { status?: string; per_page?: number }
-): Promise<{ data: PocTrialRequest[]; meta?: Record<string, unknown> }> => {
-  const res = await silentTenantApi("GET", "/admin/poc-trials/requests", { params: filters });
+export const fetchTenantPocRequests = async (filters?: {
+  status?: string;
+  per_page?: number;
+}): Promise<{ data: PocTrialRequest[]; meta?: Record<string, unknown> }> => {
+  const res = await silentTenantApi<{
+    data: PocTrialRequest[];
+    meta?: Record<string, unknown>;
+  }>("GET", "/admin/poc-trials/requests", {
+    params: filters,
+  } as unknown as Record<string, unknown>);
   return res;
 };
 
@@ -41,7 +54,11 @@ export const submitPocTrialRequest = async (data: {
   customer_user_id?: number;
   resource_description?: string;
 }): Promise<PocTrialRequest> => {
-  const res = await tenantApi("POST", "/admin/poc-trials/requests", data);
+  const res = await tenantApi<{ data: PocTrialRequest }>(
+    "POST",
+    "/admin/poc-trials/requests",
+    data
+  );
   return res.data;
 };
 

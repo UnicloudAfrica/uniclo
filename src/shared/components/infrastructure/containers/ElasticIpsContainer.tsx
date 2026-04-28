@@ -18,21 +18,21 @@ interface ElasticIpHooks {
     region?: string,
     options?: { enabled?: boolean }
   ) => UseQueryResult<ElasticIp[], Error>;
-  useCreate: () => UseMutationResult<any, Error, { projectId: string; region?: string }, unknown>;
+  useCreate: () => UseMutationResult<unknown, Error, { projectId: string; region?: string }, unknown>;
   useDelete: () => UseMutationResult<
-    any,
+    unknown,
     Error,
     { projectId: string; region?: string; elasticIpId: string },
     unknown
   >;
   useAssociate: () => UseMutationResult<
-    any,
+    unknown,
     Error,
     { projectId: string; region?: string; elasticIpId: string; payload: { instance_id: string } },
     unknown
   >;
   useDisassociate: () => UseMutationResult<
-    any,
+    unknown,
     Error,
     { projectId: string; region?: string; elasticIpId: string },
     unknown
@@ -58,7 +58,7 @@ interface ElasticIpsContainerProps {
   wrapper: (props: {
     headerActions: React.ReactNode;
     children: React.ReactNode;
-  }) => React.ReactElement<any>;
+  }) => React.ReactElement;
 }
 
 /**

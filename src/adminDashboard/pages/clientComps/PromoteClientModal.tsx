@@ -8,8 +8,8 @@ import logger from "@/utils/logger";
 interface PromoteClientModalProps {
   isOpen: boolean;
   onClose: () => void;
-  client: any;
-  onPromoted?: (payload: any) => void;
+  client: unknown;
+  onPromoted?: (payload: unknown) => void;
 }
 
 const PromoteClientModal: React.FC<PromoteClientModalProps> = ({
@@ -52,12 +52,13 @@ const PromoteClientModal: React.FC<PromoteClientModalProps> = ({
       );
 
       ToastUtils.success("Client promoted to tenant.");
-      if (onPromoted) onPromoted(response?.data ?? response);
+      if (onPromoted) onPromoted((response as { data?: unknown })?.data ?? response);
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errResp = (error as { response?: { data?: { error?: string; message?: string } } })?.response?.data;
       const message =
-        error?.response?.data?.error ||
-        error?.response?.data?.message ||
+        errResp?.error ||
+        errResp?.message ||
         "Failed to promote client.";
       ToastUtils.error(message);
       logger.error("Promote client error:", error);

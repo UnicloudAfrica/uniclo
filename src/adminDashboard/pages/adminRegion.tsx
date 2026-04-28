@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  Loader2,
   Eye,
   Trash2,
   Edit,
@@ -13,7 +12,7 @@ import {
   Activity,
 } from "lucide-react";
 import ModernTable, { Column } from "@/shared/components/ui/ModernTable";
-import { ModernCard } from "@/shared/components/ui";
+import { ModernCard, DashboardSkeleton } from "@/shared/components/ui";
 import ModernStatsCard from "@/shared/components/ui/ModernStatsCard";
 import { ModernButton } from "@/shared/components/ui";
 import AdminPageShell from "../components/AdminPageShell";
@@ -240,14 +239,7 @@ const AdminRegion = () => {
   ];
 
   if (isLoading) {
-    return (
-      <div className="w-full h-svh flex items-center justify-center">
-        <Loader2
-          className="w-12 animate-spin"
-          style={{ color: designTokens.colors.primary[500] }}
-        />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (

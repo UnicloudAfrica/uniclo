@@ -10,7 +10,6 @@ import {
   Shield,
   Clock,
   Globe,
-  Server,
   Key,
   AlertTriangle,
   Eye,
@@ -30,6 +29,19 @@ import {
 // TYPES
 // ═══════════════════════════════════════════════════════════════════
 
+/**
+ * Article 4.4 — SSH key rotation status surfaced from the API. The
+ * backend computes the WORST status across all SSH keys this client
+ * has uploaded so the table can render a single badge per row.
+ */
+interface SshKeyRotation {
+  key_count: number;
+  oldest_age_days: number;
+  worst_status: "fresh" | "warning" | "overdue" | "suspended" | "no_keys";
+  rotation_window_days: number;
+  rotation_grace_days: number;
+}
+
 interface BridgeClient {
   id: number;
   uuid: string;
@@ -47,6 +59,7 @@ interface BridgeClient {
   last_used_at: string | null;
   last_used_ip: string | null;
   created_at: string;
+  ssh_key_rotation?: SshKeyRotation;
 }
 
 interface CreateResponse {
@@ -353,7 +366,7 @@ const AdminBridgeClients: React.FC = () => {
 
   const activeCount = clients.filter((c) => c.is_active && !c.is_expired).length;
   const expiredCount = clients.filter((c) => c.is_expired).length;
-  const totalServers = 0; // Could be fetched from a summary endpoint
+  const _totalServers = 0; // Could be fetched from a summary endpoint
 
   const filtered = clients.filter(
     (c) =>
@@ -419,6 +432,66 @@ const AdminBridgeClients: React.FC = () => {
     );
   };
 
+  /**
+   * Article 4.4 — surfaces the worst SSH key rotation status for the
+   * bridge client's keys. A red "Suspended" badge means the daily
+   * `security:check-bridge-ssh-keys` enforcement command will (or
+   * already did) flip is_active=false.
+   */
+  const sshKeyBadge = (rot: SshKeyRotation | undefined) => {
+    if (!rot || rot.worst_status === "no_keys") {
+      return (
+        <span
+          className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-500 rounded-full inline-flex items-center gap-1 w-fit"
+          title="No SSH keys uploaded for this bridge client yet."
+        >
+          <Key size={10} /> None
+        </span>
+      );
+    }
+
+    const tooltipBase = `${rot.key_count} key${rot.key_count === 1 ? "" : "s"} · oldest ${rot.oldest_age_days}d (rotation window ${rot.rotation_window_days}d, grace ${rot.rotation_grace_days}d)`;
+
+    if (rot.worst_status === "suspended") {
+      return (
+        <span
+          className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full inline-flex items-center gap-1 w-fit"
+          title={`Past 30-day grace — bridge client will be auto-suspended. ${tooltipBase}`}
+        >
+          <AlertTriangle size={10} /> Suspended ({rot.oldest_age_days}d)
+        </span>
+      );
+    }
+    if (rot.worst_status === "overdue") {
+      return (
+        <span
+          className="px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700 rounded-full inline-flex items-center gap-1 w-fit"
+          title={`Rotation overdue (Article 4.4 90-day window exceeded). ${tooltipBase}`}
+        >
+          <Clock size={10} /> Overdue ({rot.oldest_age_days}d)
+        </span>
+      );
+    }
+    if (rot.worst_status === "warning") {
+      return (
+        <span
+          className="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded-full inline-flex items-center gap-1 w-fit"
+          title={`Rotation due within ${rot.rotation_window_days - rot.oldest_age_days} days. ${tooltipBase}`}
+        >
+          <Clock size={10} /> Rotate soon ({rot.oldest_age_days}d)
+        </span>
+      );
+    }
+    return (
+      <span
+        className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full inline-flex items-center gap-1 w-fit"
+        title={`Within rotation window. ${tooltipBase}`}
+      >
+        <Check size={10} /> Fresh ({rot.oldest_age_days}d)
+      </span>
+    );
+  };
+
   return (
     <AdminPageShell
       title="Bridge Clients"
@@ -474,6 +547,9 @@ const AdminBridgeClients: React.FC = () => {
               <th className="px-4 py-3 text-left">Billing</th>
               <th className="px-4 py-3 text-left">Status</th>
               <th className="px-4 py-3 text-left">Last Used</th>
+              <th className="px-4 py-3 text-left" title="StaqDB bridge SSH key rotation status (Article 4.4 — 90-day window).">
+                SSH Key
+              </th>
               <th className="px-4 py-3 text-left">Expires</th>
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
@@ -481,13 +557,13 @@ const AdminBridgeClients: React.FC = () => {
           <tbody className="divide-y divide-gray-100">
             {isLoading ? (
               <tr>
-                <td colSpan={8} className="px-4 py-12 text-center text-gray-400">
+                <td colSpan={9} className="px-4 py-12 text-center text-gray-400">
                   Loading...
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-12 text-center text-gray-400">
+                <td colSpan={9} className="px-4 py-12 text-center text-gray-400">
                   {search ? "No clients match your search" : "No bridge clients yet. Create one to get started."}
                 </td>
               </tr>
@@ -534,6 +610,7 @@ const AdminBridgeClients: React.FC = () => {
                       "Never"
                     )}
                   </td>
+                  <td className="px-4 py-3">{sshKeyBadge(client.ssh_key_rotation)}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{formatDate(client.expires_at)}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">

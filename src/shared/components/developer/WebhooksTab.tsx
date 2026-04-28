@@ -11,7 +11,6 @@ import {
   AlertTriangle,
   ToggleLeft,
   ToggleRight,
-  ExternalLink,
 } from "lucide-react";
 import { designTokens } from "@/styles/designTokens";
 import {
@@ -28,7 +27,7 @@ interface WebhooksTabProps {
   context: "admin" | "tenant" | "client";
 }
 
-const WebhooksTab = ({ context }: WebhooksTabProps) => {
+const WebhooksTab = ({ _context }: WebhooksTabProps) => {
   const { data: webhooks = [], isLoading } = useFetchWebhooks();
   const { data: availableEvents = {} } = useFetchWebhookEvents();
   const createMutation = useCreateWebhook();

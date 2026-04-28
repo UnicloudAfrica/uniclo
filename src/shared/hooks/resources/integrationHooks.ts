@@ -17,7 +17,8 @@ import { apiRegistry } from "../../api/apiRegistry";
 
 type AnyRecord = Record<string, unknown>;
 type Identifier = string | number;
-type QueryOptions = Partial<Omit<UseQueryOptions<unknown, Error>, "queryKey" | "queryFn">>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type QueryOptions = Partial<Omit<UseQueryOptions<any, Error>, "queryKey" | "queryFn">>;
 
 const asEnvelope = <T = AnyRecord>(
   res: unknown,
@@ -112,6 +113,10 @@ export interface ReplicationStatus {
   lag_seconds?: number;
   health?: string;
   target_region?: string;
+  topology?: "one-way" | "bidirectional" | string;
+  active_side?: "a" | "b" | string;
+  lag_a_to_b?: number;
+  lag_b_to_a?: number;
 }
 
 // ─── Basic CRUD via factory (operations listing) ────────────────
@@ -592,7 +597,7 @@ export const useFailover = () => {
   return useMutation<
     AnyRecord,
     Error,
-    { integrationKey: string; resourceType: string; resourceId: Identifier }
+    { integrationKey: string; resourceType: string; resourceId: Identifier; config?: AnyRecord }
   >({
     mutationFn: async ({ integrationKey, resourceType, resourceId }) => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/replication/${resourceType}/${resourceId}/failover`;
@@ -1715,7 +1720,7 @@ export const useExportSlaReport = () => {
       const uri = `${entry.urlPrefix}/integrations/reports/sla/export${qs.toString() ? `?${qs}` : ""}`;
       const response = await fetch(uri, {
         method: "GET",
-        headers: entry.silentApi.defaults?.headers as Record<string, string> ?? {},
+        headers: ((entry.silentApi as unknown as { defaults?: { headers?: Record<string, string> } }).defaults?.headers) ?? {},
         credentials: "include",
       });
       if (!response.ok) {

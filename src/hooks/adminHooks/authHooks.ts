@@ -5,17 +5,18 @@ import { api as unifiedApi } from "../../lib/api";
 import logger from "@/utils/logger";
 
 // **POST**: Create a new account
-const createAdminAccount = async (userData: any) => {
+const createAdminAccount = async (userData: unknown) => {
   return await api("POST", "/users", userData);
 };
 
-// **POST** login — always hits api/v1 (shared auth route, not admin-scoped)
-const loginAdminAccount = async (userData: any) => {
+// **POST** login — fetch CSRF cookie first for Sanctum SPA auth
+const loginAdminAccount = async (userData: unknown) => {
+  await unifiedApi.csrfCookie();
   return await unifiedApi.post("/business/auth/login", userData, { baseUrl: config.baseURL });
 };
 
 // **POST** verify email — always hits api/v1
-const verifyEmail = async (userData: any) => {
+const verifyEmail = async (userData: unknown) => {
   return await unifiedApi.post("/business/auth/verify-email", userData, { baseUrl: config.baseURL });
 };
 
@@ -23,7 +24,7 @@ const verifyEmail = async (userData: any) => {
 export const useCreateAdminAccount = () => {
   return useMutation({
     mutationFn: createAdminAccount,
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       logger.error(error);
     },
     onSuccess: () => {
@@ -49,7 +50,7 @@ export const useLoginAdminAccount = () => {
 export const useVerifyAdminMail = () => {
   return useMutation({
     mutationFn: verifyEmail,
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       logger.error(error);
     },
     onSuccess: () => {

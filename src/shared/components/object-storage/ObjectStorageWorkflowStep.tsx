@@ -123,7 +123,7 @@ export const ObjectStorageWorkflowStep: React.FC<ObjectStorageWorkflowStepProps>
 
         {showCustomerContext && dashboardContext === "admin" && (
           <CustomerContextSelector
-            contextType={contextType as any}
+            contextType={contextType as unknown}
             setContextType={onContextTypeChange}
             selectedTenantId={selectedTenantId}
             setSelectedTenantId={onTenantChange}

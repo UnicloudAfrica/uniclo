@@ -145,7 +145,7 @@ const RegionApprovalCreate = () => {
       if (name === "provider" && typeof value === "string") {
         const normalized = value.toLowerCase();
         next.provider = normalized;
-        if (!AUTOMATED_PROVIDERS.includes(normalized)) {
+        if (!(AUTOMATED_PROVIDERS as readonly string[]).includes(normalized)) {
           next.fulfillment_mode = "manual";
           next.base_url = "";
           next.object_storage_enabled = false;
@@ -239,7 +239,7 @@ const RegionApprovalCreate = () => {
     if (!formData.name) nextErrors.name = "Region name is required";
     if (!formData.country_code) nextErrors.country_code = "Country code is required";
 
-    if (AUTOMATED_PROVIDERS.includes(formData.provider)) {
+    if ((AUTOMATED_PROVIDERS as readonly string[]).includes(formData.provider)) {
       validateProviderFields(nextErrors);
     } else {
       if (formData.base_url && !/^https?:\/\/.+/.test(formData.base_url)) {
@@ -292,7 +292,7 @@ const RegionApprovalCreate = () => {
       payload["platform_fee_percentage"] = Number.parseFloat(formData.platform_fee_percentage);
     }
 
-    if (!AUTOMATED_PROVIDERS.includes(provider)) {
+    if (!(AUTOMATED_PROVIDERS as readonly string[]).includes(provider)) {
       payload["base_url"] = null;
       payload["fulfillment_mode"] = "manual";
     } else if (formData.object_storage_enabled) {
@@ -318,7 +318,7 @@ const RegionApprovalCreate = () => {
     try {
       setSubmitting(true);
       const payload = buildPayload();
-      await adminRegionApi.createPlatformRegion(payload as any);
+      await adminRegionApi.createPlatformRegion(payload as unknown);
 
       if (isTenantOwned) {
         navigate("/admin-dashboard/region-approvals");
@@ -427,7 +427,7 @@ const RegionApprovalCreate = () => {
     },
   ];
 
-  const providerSupportsAutomation = AUTOMATED_PROVIDERS.includes(formData.provider);
+  const providerSupportsAutomation = (AUTOMATED_PROVIDERS as readonly string[]).includes(formData.provider);
 
   const infoBanner = useMemo<InfoBanner>(() => {
     if (!providerSupportsAutomation) {

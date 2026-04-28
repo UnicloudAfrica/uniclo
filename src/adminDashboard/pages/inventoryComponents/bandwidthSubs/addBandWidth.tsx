@@ -3,12 +3,12 @@ import { X, Loader2 } from "lucide-react";
 import ToastUtils from "@/utils/toastUtil";
 import { useCreateBandwidthProduct } from "@/hooks/adminHooks/bandwidthHooks";
 
-const AddBandwidthModal = ({ isOpen, onClose }: any) => {
+const AddBandwidthModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const [formData, setFormData] = useState({
     name: "",
     // price: "",
   });
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, unknown>>({});
 
   // Reset form data and errors when modal opens or closes
   useEffect(() => {
@@ -25,7 +25,7 @@ const AddBandwidthModal = ({ isOpen, onClose }: any) => {
   const { mutate, isPending } = useCreateBandwidthProduct();
 
   const validateForm = () => {
-    const newErrors: Record<string, any> = {};
+    const newErrors: Record<string, unknown> = {};
     if (!formData.name.trim()) {
       newErrors["name"] = "Bandwidth Name is required";
     }
@@ -39,12 +39,12 @@ const AddBandwidthModal = ({ isOpen, onClose }: any) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field: any, value: any) => {
+  const updateFormData = (field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.SyntheticEvent) => {
     if (e) e.preventDefault();
 
     if (!validateForm()) return;

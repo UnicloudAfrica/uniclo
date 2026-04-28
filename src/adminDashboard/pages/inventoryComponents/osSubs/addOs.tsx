@@ -4,17 +4,17 @@ import { useCreateOsImage } from "@/hooks/adminHooks/os-imageHooks";
 import ToastUtils from "@/utils/toastUtil";
 import logger from "@/utils/logger";
 
-const AddOSImageModal = ({ isOpen, onClose }: any) => {
+const AddOSImageModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const { mutate, isPending } = useCreateOsImage();
 
   const [formData, setFormData] = useState({
     name: "",
     price: "",
   });
-  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, unknown>>({});
 
   const validateForm = () => {
-    const newErrors: Record<string, any> = {};
+    const newErrors: Record<string, unknown> = {};
     if (!formData.name.trim()) {
       newErrors.name = "OS Image Name is required";
     }
@@ -29,12 +29,12 @@ const AddOSImageModal = ({ isOpen, onClose }: any) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateFormData = (field: any, value: any) => {
+  const updateFormData = (field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null })); // Clear error when input changes
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.SyntheticEvent) => {
     if (e) e.preventDefault();
 
     if (!validateForm()) return;

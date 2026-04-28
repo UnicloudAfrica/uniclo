@@ -11,7 +11,7 @@ const ClientObjectStoragePurchasePage = () => {
       <ClientActiveTab />
       <ClientPageShell
         title="Purchase Silo Storage"
-        description="Choose the Zadara region and tier required for this client workspace."
+        description="Choose the cloud region and tier required for this client workspace."
         breadcrumbs={[
           { label: "Home", href: "/client-dashboard" },
           { label: "Silo Storage", href: "/client-dashboard/object-storage" },

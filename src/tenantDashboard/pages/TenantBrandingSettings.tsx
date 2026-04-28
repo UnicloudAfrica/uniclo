@@ -184,12 +184,12 @@ const DomainVerification: React.FC<{
   isVerified?: boolean;
 }> = ({ currentDomain, isVerified }) => {
   const [domain, setDomain] = useState(currentDomain || "");
-  const [verificationData, setVerificationData] = useState<Record<string, any> | null>(null);
+  const [verificationData, setVerificationData] = useState<Record<string, unknown> | null>(null);
   const { mutate: verifyDomain, isPending } = useVerifyDomain();
 
   const handleVerify = () => {
     verifyDomain(domain as never, {
-      onSuccess: (data: unknown) => setVerificationData(data as Record<string, any>),
+      onSuccess: (data: unknown) => setVerificationData(data as Record<string, unknown>),
     });
   };
 
@@ -283,8 +283,8 @@ export const BrandingSettingsSections = ({
   onFileChange,
   showDomain = true,
 }: {
-  brandingData: Record<string, any> | null | undefined;
-  formData: Record<string, any>;
+  brandingData: Record<string, unknown> | null | undefined;
+  formData: Record<string, unknown>;
   palette: Record<string, string> | null;
   onChange: (field: string, value: string) => void;
   onFileChange: (field: string, file: File | null) => void;
@@ -441,7 +441,7 @@ const useTenantBrandingSettingsState = () => {
   const [files, setFiles] = useState<Record<string, File>>({});
 
   useEffect(() => {
-    const raw = brandingData as Record<string, any> | undefined;
+    const raw = brandingData as Record<string, unknown> | undefined;
     // Handle both shapes: direct { settings: ... } or wrapped { data: { settings: ... } }
     const data = raw?.settings ? raw : raw?.data;
     if (data?.settings) {
@@ -477,7 +477,7 @@ const useTenantBrandingSettingsState = () => {
   };
 
   const handleSave = () => {
-    const data = brandingData as Record<string, any> | undefined;
+    const data = brandingData as Record<string, unknown> | undefined;
     const hasExistingFavicon = Boolean(
       data?.resolved?.favicon ||
       data?.settings?.branding?.favicon_url ||

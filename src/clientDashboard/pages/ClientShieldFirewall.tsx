@@ -1,19 +1,7 @@
-import ClientPageShell from "../components/ClientPageShell";
-import { ShieldDomainList } from "@/shared/components/shield";
+import { Navigate } from "react-router-dom";
 
 const ClientShieldFirewall: React.FC = () => {
-  return (
-    <ClientPageShell
-      title="Shield Firewall"
-      description="Select a domain to manage its firewall rules"
-      contentClassName="space-y-6"
-    >
-      <ShieldDomainList
-        context="client"
-        detailBasePath="/client-dashboard/shield/domains"
-      />
-    </ClientPageShell>
-  );
+  return <Navigate to="/client-dashboard/shield/domains" replace />;
 };
 
 export default ClientShieldFirewall;

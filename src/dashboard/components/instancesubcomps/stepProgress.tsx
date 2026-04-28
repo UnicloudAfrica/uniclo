@@ -1,8 +1,13 @@
 import React from "react";
 
-const StepProgress = ({ currentStep, steps }: any) => (
+interface StepProgressProps {
+  currentStep: number;
+  steps: string[];
+}
+
+const StepProgress = ({ currentStep, steps }: StepProgressProps) => (
   <div className="flex items-center justify-between mb-8 w-full">
-    {steps.map((step: any, index: any) => {
+    {steps.map((step: string, index: number) => {
       const isCompleted = index < currentStep;
       const isActive = index === currentStep;
       const _isPending = index > currentStep;

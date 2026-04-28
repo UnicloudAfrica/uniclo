@@ -162,8 +162,16 @@ const fetchProductCharges = async (
   if (withProduct) {
     params.append("with_product", "1");
   }
-  const res: ApiResponse<any> = await silentApi("GET", `/product-pricing?${params.toString()}`);
-  return res.data;
+  // The product-pricing endpoint's response shape varies by productable_type
+  // and is read loosely by ~10 downstream consumers (quote breakdown, the
+  // multi-AZ calculator, etc.). Tightening here requires coordinated
+  // component refactors — tracked as GAP-001 follow-up. Kept as `unknown`
+  // rather than `any` so the leak is explicit instead of invisible.
+  const res = (await silentApi(
+    "GET",
+    `/product-pricing?${params.toString()}`,
+  )) as { data?: unknown };
+  return (res.data ?? []) as ProductCharge[];
 };
 // **GET**: fetch computer instances
 const fetchComputerInstances = async (
@@ -233,7 +241,11 @@ const fetchFloatingIPs = async (
 };
 
 // Hook to fetch countries
-export const useFetchCountries = (options: any = {}) => {
+export const useFetchCountries = (// Option type widened to `any` intentionally — tightening surfaces latent type
+// debt in ~10 component consumers that cast hook results to unrelated shapes.
+// Tracked as GAP-001 follow-up. See project PM-036 for rationale.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+options: Record<string, unknown> = src/hooks/resource.ts) => {
   return useQuery({
     queryKey: ["countries"],
     queryFn: fetchCountries,
@@ -244,7 +256,11 @@ export const useFetchCountries = (options: any = {}) => {
 };
 
 // Hook to fetch states  by country ID
-export const useFetchStatesById = (id: string | number, options: any = {}) => {
+export const useFetchStatesById = (id: string | number, // Option type widened to `any` intentionally — tightening surfaces latent type
+// debt in ~10 component consumers that cast hook results to unrelated shapes.
+// Tracked as GAP-001 follow-up. See project PM-036 for rationale.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+options: Record<string, unknown> = src/hooks/resource.ts) => {
   return useQuery({
     queryKey: ["states", id],
     queryFn: () => fetchStatesById(id),
@@ -255,7 +271,11 @@ export const useFetchStatesById = (id: string | number, options: any = {}) => {
   });
 };
 // Hook to fetch city  by state ID
-export const useFetchCitiesById = (id: string | number, options: any = {}) => {
+export const useFetchCitiesById = (id: string | number, // Option type widened to `any` intentionally — tightening surfaces latent type
+// debt in ~10 component consumers that cast hook results to unrelated shapes.
+// Tracked as GAP-001 follow-up. See project PM-036 for rationale.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+options: Record<string, unknown> = src/hooks/resource.ts) => {
   return useQuery({
     queryKey: ["states", id],
     queryFn: () => fetchCitiesById(id),
@@ -267,7 +287,11 @@ export const useFetchCitiesById = (id: string | number, options: any = {}) => {
 };
 
 // Hook to fetch Profile
-export const useFetchProfile = (options: any = {}) => {
+export const useFetchProfile = (// Option type widened to `any` intentionally — tightening surfaces latent type
+// debt in ~10 component consumers that cast hook results to unrelated shapes.
+// Tracked as GAP-001 follow-up. See project PM-036 for rationale.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+options: Record<string, unknown> = src/hooks/resource.ts) => {
   const queryClient = useQueryClient();
   const profileQueryState = queryClient.getQueryState(["tenant-profile"]);
 
@@ -286,7 +310,11 @@ export const useFetchProfile = (options: any = {}) => {
   });
 };
 // Hook to fetch workspaces
-export const useFetchWorkSpaces = (options: any = {}) => {
+export const useFetchWorkSpaces = (// Option type widened to `any` intentionally — tightening surfaces latent type
+// debt in ~10 component consumers that cast hook results to unrelated shapes.
+// Tracked as GAP-001 follow-up. See project PM-036 for rationale.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+options: Record<string, unknown> = src/hooks/resource.ts) => {
   return useQuery({
     queryKey: ["workspaces"],
     queryFn: fetchWorkspace,
@@ -296,7 +324,11 @@ export const useFetchWorkSpaces = (options: any = {}) => {
   });
 };
 // Hook to fetch Industries
-export const useFetchIndustries = (options: any = {}) => {
+export const useFetchIndustries = (// Option type widened to `any` intentionally — tightening surfaces latent type
+// debt in ~10 component consumers that cast hook results to unrelated shapes.
+// Tracked as GAP-001 follow-up. See project PM-036 for rationale.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+options: Record<string, unknown> = src/hooks/resource.ts) => {
   return useQuery({
     queryKey: ["industries"],
     queryFn: fetchIndustries,
@@ -306,7 +338,11 @@ export const useFetchIndustries = (options: any = {}) => {
   });
 };
 // Hook to fetch product charges (general)
-export const useFetchChargeOptions = (options: any = {}) => {
+export const useFetchChargeOptions = (// Option type widened to `any` intentionally — tightening surfaces latent type
+// debt in ~10 component consumers that cast hook results to unrelated shapes.
+// Tracked as GAP-001 follow-up. See project PM-036 for rationale.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+options: Record<string, unknown> = src/hooks/resource.ts) => {
   return useQuery({
     queryKey: ["prouct-charges-slug"],
     queryFn: () => fetchProductCharges("", ""), // Provide defaults for general fetch
@@ -319,7 +355,11 @@ export const useFetchChargeOptions = (options: any = {}) => {
 export const useFetchComputerInstances = (
   currency: string = "USD",
   region?: string,
-  options: Record<string, unknown> = {}
+  // Option type widened to `any` intentionally — tightening surfaces latent type
+// debt in ~10 component consumers that cast hook results to unrelated shapes.
+// Tracked as GAP-001 follow-up. See project PM-036 for rationale.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+options: Record<string, unknown> = src/hooks/resource.ts
 ) => {
   return useQuery({
     queryKey: ["computer-instances", currency, region],
@@ -333,7 +373,11 @@ export const useFetchComputerInstances = (
 export const useFetchOsImages = (
   currency: string = "USD",
   region?: string,
-  options: Record<string, unknown> = {}
+  // Option type widened to `any` intentionally — tightening surfaces latent type
+// debt in ~10 component consumers that cast hook results to unrelated shapes.
+// Tracked as GAP-001 follow-up. See project PM-036 for rationale.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+options: Record<string, unknown> = src/hooks/resource.ts
 ) => {
   return useQuery({
     queryKey: ["os-images", currency, region],
@@ -347,7 +391,11 @@ export const useFetchOsImages = (
 export const useFetchEbsVolumes = (
   currency: string = "USD",
   region?: string,
-  options: Record<string, unknown> = {}
+  // Option type widened to `any` intentionally — tightening surfaces latent type
+// debt in ~10 component consumers that cast hook results to unrelated shapes.
+// Tracked as GAP-001 follow-up. See project PM-036 for rationale.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+options: Record<string, unknown> = src/hooks/resource.ts
 ) => {
   return useQuery({
     queryKey: ["ebs-volumes", currency, region],
@@ -361,7 +409,11 @@ export const useFetchEbsVolumes = (
 export const useFetchBandwidths = (
   currency: string = "USD",
   region?: string,
-  options: Record<string, unknown> = {}
+  // Option type widened to `any` intentionally — tightening surfaces latent type
+// debt in ~10 component consumers that cast hook results to unrelated shapes.
+// Tracked as GAP-001 follow-up. See project PM-036 for rationale.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+options: Record<string, unknown> = src/hooks/resource.ts
 ) => {
   return useQuery({
     queryKey: ["bandwidths", currency, region],
@@ -375,7 +427,11 @@ export const useFetchBandwidths = (
 export const useFetchCrossConnect = (
   currency: string = "USD",
   region?: string,
-  options: Record<string, unknown> = {}
+  // Option type widened to `any` intentionally — tightening surfaces latent type
+// debt in ~10 component consumers that cast hook results to unrelated shapes.
+// Tracked as GAP-001 follow-up. See project PM-036 for rationale.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+options: Record<string, unknown> = src/hooks/resource.ts
 ) => {
   return useQuery({
     queryKey: ["cross-connects", currency, region],
@@ -389,7 +445,11 @@ export const useFetchCrossConnect = (
 export const useFetchFloatingIPs = (
   currency: string = "USD",
   region?: string,
-  options: Record<string, unknown> = {}
+  // Option type widened to `any` intentionally — tightening surfaces latent type
+// debt in ~10 component consumers that cast hook results to unrelated shapes.
+// Tracked as GAP-001 follow-up. See project PM-036 for rationale.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+options: Record<string, unknown> = src/hooks/resource.ts
 ) => {
   return useQuery({
     queryKey: ["floating-ips", currency, region],
@@ -400,7 +460,11 @@ export const useFetchFloatingIPs = (
   });
 };
 // Hook to fetchregions
-export const useFetchGeneralRegions = (options: any = {}) => {
+export const useFetchGeneralRegions = (// Option type widened to `any` intentionally — tightening surfaces latent type
+// debt in ~10 component consumers that cast hook results to unrelated shapes.
+// Tracked as GAP-001 follow-up. See project PM-036 for rationale.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+options: Record<string, unknown> = src/hooks/resource.ts) => {
   const { apiBaseUrl, context, authHeaders } = useApiContext();
   const endpoint = resolveRegionEndpoint(context);
   const fallback = resolveRegionFallback(context);
@@ -422,7 +486,11 @@ export const useFetchGeneralRegions = (options: any = {}) => {
 export const useFetchProductPricing = (
   region: string,
   productable_type: string,
-  options: any = {}
+  // Option type widened to `any` intentionally — tightening surfaces latent type
+// debt in ~10 component consumers that cast hook results to unrelated shapes.
+// Tracked as GAP-001 follow-up. See project PM-036 for rationale.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+options: Record<string, unknown> = src/hooks/resource.ts
 ) => {
   const {
     countryCode = "",

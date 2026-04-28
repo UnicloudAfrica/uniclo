@@ -1,9 +1,8 @@
 import QuickAccessNav from "../components/quickAccessNav";
 import ModernStatsCard from "@/shared/components/ui/ModernStatsCard";
-import { ModernButton, ModernCard, StatusPill } from "@/shared/components/ui";
+import { ModernButton, ModernCard, StatusPill, DashboardSkeleton } from "@/shared/components/ui";
 import ModernTable, { Column } from "@/shared/components/ui/ModernTable";
 import {
-  Loader2,
   Upload,
   Settings2,
   Users,
@@ -159,11 +158,7 @@ export default function AdminDashboard() {
   ];
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="w-12 text-[var(--theme-color)] animate-spin" />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (

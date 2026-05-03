@@ -27,7 +27,7 @@ const fetchMigration = async (identifier: string) => {
   return (res as { data?: unknown })?.data ?? null;
 };
 
-export const useProviderMigrations = (page = 1, options: Record<string, unknown> = src/hooks/adminHooks/providerMigrationHooks.ts) => {
+export const useProviderMigrations = (page = 1, options: Record<string, unknown> = {}) => {
   return useQuery<MigrationsListResponse>({
     queryKey: ["providerMigrations", page],
     queryFn: () => fetchMigrations(page),
@@ -37,7 +37,7 @@ export const useProviderMigrations = (page = 1, options: Record<string, unknown>
   });
 };
 
-export const useProviderMigration = (identifier: string | null, options: Record<string, unknown> = src/hooks/adminHooks/providerMigrationHooks.ts) => {
+export const useProviderMigration = (identifier: string | null, options: Record<string, unknown> = {}) => {
   return useQuery({
     queryKey: ["providerMigration", identifier],
     queryFn: () => fetchMigration(identifier as string),

@@ -100,7 +100,16 @@ const AdminPricingCreate = () => {
     [entries]
   );
 
-  // Fetch AZs for all used regions using useQueries (stable hook count)
+  // Fetch AZs for all used regions using useQueries (stable hook count).
+  //
+  // IMPORTANT: queryKey MUST match the canonical `useFetchAvailabilityZones`
+  // hook (`["availability-zones", code]`) AND the queryFn must return the
+  // SAME shape (a raw `AvailabilityZone[]` array). Earlier this page
+  // returned `{ code, data: [...] }` and silently broke whenever the
+  // platform-wide hook had already populated the cache with a raw array
+  // — `result.data.code` / `result.data.data` were both undefined and
+  // the AZ dropdown stayed empty until a hard refresh raced the local
+  // queryFn into the cache first.
   const azQueryResults = useQueries({
     queries: usedRegionCodes.map((code) => ({
       queryKey: ["availability-zones", code],
@@ -111,7 +120,7 @@ const AdminPricingCreate = () => {
         );
         const azList = (res as { data?: unknown })?.data ?? [];
         if (!Array.isArray(azList)) throw new Error("Failed to fetch availability zones");
-        return { code, data: azList as AZOption[] };
+        return azList as AZOption[];
       },
       enabled: !!code,
       staleTime: 1000 * 60 * 5,
@@ -121,13 +130,14 @@ const AdminPricingCreate = () => {
 
   const azByRegion = useMemo(() => {
     const map: Record<string, AZOption[]> = {};
-    azQueryResults.forEach((result) => {
-      if (result.data) {
-        map[result.data.code] = result.data.data;
+    usedRegionCodes.forEach((code, index) => {
+      const data = azQueryResults[index]?.data;
+      if (Array.isArray(data)) {
+        map[code] = data as AZOption[];
       }
     });
     return map;
-  }, [azQueryResults]);
+  }, [azQueryResults, usedRegionCodes]);
 
   const azFetchingByRegion = useMemo(() => {
     const map: Record<string, boolean> = {};

@@ -111,6 +111,44 @@ const getAuthConfig = (): AuthConfig => {
   };
 };
 
+// ─── Sanctum CSRF helpers ─────────────────────────────────────────────
+// The shared calculator endpoints sit behind Laravel Sanctum's stateful
+// SPA guard, so every state-changing request needs to send the
+// `X-XSRF-TOKEN` header that mirrors the `XSRF-TOKEN` cookie. Without
+// this, Laravel returns 419 "CSRF token mismatch". The rest of the app
+// uses `createApiClient.ts` which already does this — `sharedApiCall`
+// was the odd one out, and that's why "Calculate Pricing" was failing.
+
+const readXsrfToken = (): string | null => {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("XSRF-TOKEN="));
+  if (!match) return null;
+  try {
+    return decodeURIComponent(match.substring("XSRF-TOKEN=".length));
+  } catch {
+    return null;
+  }
+};
+
+let csrfPrimed = false;
+
+const ensureCsrfCookie = async (baseURL: string): Promise<void> => {
+  if (csrfPrimed) return;
+  try {
+    const root = baseURL.replace(/\/api\/v\d+(?:\/admin)?\/?$/, "").replace(/\/+$/, "");
+    const res = await fetch(`${root}/sanctum/csrf-cookie`, {
+      method: "GET",
+      credentials: "include",
+      headers: { Accept: "application/json" },
+    });
+    if (res.ok) csrfPrimed = true;
+  } catch (err) {
+    logger.warn("Could not prime Sanctum CSRF cookie:", err);
+  }
+};
+
 // Shared API call function
 const sharedApiCall = async <
   TResponse = SharedApiResponse,
@@ -123,15 +161,41 @@ const sharedApiCall = async <
   const { baseURL, headers } = getAuthConfig();
   const url = baseURL + uri;
 
+  const isStateChanging = method !== "GET" && method !== "HEAD";
+
+  // Prime + attach the CSRF token on POST/PUT/PATCH/DELETE so Sanctum's
+  // VerifyCsrfToken middleware accepts the request.
+  let mergedHeaders: Record<string, string> = { ...headers };
+  if (isStateChanging) {
+    if (!readXsrfToken()) {
+      await ensureCsrfCookie(baseURL);
+    }
+    const token = readXsrfToken();
+    if (token) mergedHeaders["X-XSRF-TOKEN"] = token;
+  }
+
   const options: RequestInit = {
     method,
-    headers,
+    headers: mergedHeaders,
     credentials: "include",
     body: body ? JSON.stringify(body) : null,
   };
 
   try {
-    const response = await fetch(url, options);
+    let response = await fetch(url, options);
+
+    // Sanctum returns 419 when the XSRF cookie has rotated out from
+    // under us (idle session, server restart). Re-prime once and retry
+    // the same request before surfacing the error.
+    if (response.status === 419 && isStateChanging) {
+      csrfPrimed = false;
+      await ensureCsrfCookie(baseURL);
+      const retryToken = readXsrfToken();
+      if (retryToken) {
+        mergedHeaders = { ...mergedHeaders, "X-XSRF-TOKEN": retryToken };
+        response = await fetch(url, { ...options, headers: mergedHeaders });
+      }
+    }
 
     // Check if response is ok before trying to parse JSON
     if (!response.ok && response.status !== 201) {

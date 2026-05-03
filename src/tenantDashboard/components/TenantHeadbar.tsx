@@ -4,6 +4,8 @@ import { useDashboardProfile } from "@/shared/hooks/useDashboardProfile";
 import useSidebarStore from "@/stores/sidebarStore";
 import { buildTenantHeadbarPreset } from "@/shared/config/headbarPresets";
 import { resolveBrandLogo, useTenantBrandingTheme } from "@/hooks/useBrandingTheme";
+import { tenantMenuItems } from "@/shared/config/sidebarMenus";
+import { useMenuPaletteItems } from "@/shared/components/command-palette/useMenuPaletteItems";
 
 interface TenantHeadbarProps {
   tenantData?: {
@@ -31,6 +33,8 @@ const TenantHeadbar: React.FC<TenantHeadbarProps> = ({ tenantData, onMenuClick }
     onMenuClick?.();
   };
 
+  const searchItems = useMenuPaletteItems(tenantMenuItems);
+
   return (
     <DashboardHeadbar
       {...preset}
@@ -43,6 +47,7 @@ const TenantHeadbar: React.FC<TenantHeadbarProps> = ({ tenantData, onMenuClick }
         avatar: profile.avatar,
       }}
       isProfileLoading={isProfileFetching}
+      searchItems={searchItems}
     />
   );
 };

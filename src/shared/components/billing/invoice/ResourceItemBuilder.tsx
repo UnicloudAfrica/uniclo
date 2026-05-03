@@ -4,6 +4,67 @@ import { ModernInput, ModernButton } from "../../ui";
 import { useFetchAvailabilityZones } from "@/hooks/adminHooks/regionHooks";
 import { BillingRegion, InvoiceFormData, ProductPricing, UpdateInvoiceFormData } from "../types";
 
+/**
+ * Build a customer-facing label for a compute instance dropdown row.
+ *
+ * Priority order:
+ *   1. family_code (already provider-agnostic, e.g. `compute-2vcpu-8gb`)
+ *   2. derived "N vCPU · M GB RAM" from the nested productable's
+ *      vcpus + memory_mb fields
+ *   3. raw product.name as last resort (which leaks Zadara naming
+ *      like `z16.10xlarge` and is what users were rightly confused
+ *      by — surfacing this fallback only if neither structured
+ *      hint is present)
+ *
+ * Returns both the headline and a price suffix when available so the
+ * dropdown can render "8 vCPU · 32 GB RAM — ₦12,400/mo".
+ */
+function describeComputeInstance(instance: ProductPricing): string {
+  const product = instance.product as Record<string, unknown> & {
+    name?: string;
+    family_code?: string | null;
+    productable?: Record<string, unknown> | null;
+  };
+  const productable = (product.productable ?? {}) as {
+    vcpus?: number | string | null;
+    memory_mb?: number | string | null;
+  };
+
+  const vcpus = Number(productable.vcpus ?? 0);
+  const memMb = Number(productable.memory_mb ?? 0);
+  const memGb = memMb > 0 ? Math.round((memMb / 1024) * 10) / 10 : 0;
+
+  // Prefer the structured spec — most readable.
+  if (vcpus > 0 && memGb > 0) {
+    const memLabel = Number.isInteger(memGb) ? `${memGb}` : `${memGb}`;
+    return `${vcpus} vCPU · ${memLabel} GB RAM`;
+  }
+
+  // family_code is already provider-safe (set by the Bridge offer service).
+  if (typeof product.family_code === "string" && product.family_code !== "") {
+    return product.family_code;
+  }
+
+  // Last-resort fallback: provider-native name.
+  return product.name ?? "Compute instance";
+}
+
+function formatPriceSuffix(instance: ProductPricing): string {
+  const eff = instance.pricing?.effective as
+    | { price_local?: number; currency?: string }
+    | undefined;
+  const price = Number(eff?.price_local ?? 0);
+  const currency = (eff?.currency as string | undefined) ?? "";
+  if (!price || !currency) return "";
+
+  const formatted = new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: currency.toUpperCase(),
+    maximumFractionDigits: 0,
+  }).format(price);
+  return ` — ${formatted}/mo`;
+}
+
 interface ResourceItemBuilderProps {
   formData: InvoiceFormData;
   errors: Record<string, string | null>;
@@ -118,9 +179,12 @@ const ResourceItemBuilder: React.FC<ResourceItemBuilderProps> = ({
 
         {/* Compute Instance */}
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">
+          <label className="mb-1 block text-sm font-medium text-slate-700">
             Compute Instance <span className="text-red-500">*</span>
           </label>
+          <p className="mb-2 text-xs text-slate-500">
+            Each option shows vCPU and RAM so you can pick by size.
+          </p>
           <select
             value={formData.compute_instance_id || ""}
             onChange={(e) => updateFormData("compute_instance_id", e.target.value)}
@@ -130,7 +194,8 @@ const ResourceItemBuilder: React.FC<ResourceItemBuilderProps> = ({
             <option value="">Select compute instance</option>
             {computerInstances?.map((instance) => (
               <option key={instance.product.productable_id} value={instance.product.productable_id}>
-                {instance.product.name}
+                {describeComputeInstance(instance)}
+                {formatPriceSuffix(instance)}
               </option>
             ))}
           </select>
@@ -244,28 +309,33 @@ const ResourceItemBuilder: React.FC<ResourceItemBuilderProps> = ({
             <div className="space-y-4 border-t border-slate-200 p-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">Bandwidth</label>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Bandwidth <span className="text-xs font-normal text-slate-500">(Internet Bandwidth Included)</span>
+                  </label>
                   <select
                     value={formData.bandwidth_id || ""}
                     onChange={(e) => updateFormData("bandwidth_id", e.target.value)}
                     className={selectClass}
                     disabled={!formData.region || isBandwidthsFetching}
                   >
-                    <option value="">None</option>
+                    <option value="">Default (Internet Bandwidth Included)</option>
                     {bandwidths?.map((bw) => (
                       <option key={bw.product.productable_id} value={bw.product.productable_id}>
                         {bw.product.name}
                       </option>
                     ))}
                   </select>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Internet bandwidth is included with every compute instance. Pick a higher tier to upgrade.
+                  </p>
                 </div>
                 <ModernInput
                   label="Bandwidth Count"
                   type="number"
-                  min="0"
-                  value={formData.bandwidth_count}
+                  min="1"
+                  value={formData.bandwidth_count || 1}
                   onChange={(e) => updateFormData("bandwidth_count", e.target.value)}
-                  placeholder="0"
+                  placeholder="1"
                 />
               </div>
 

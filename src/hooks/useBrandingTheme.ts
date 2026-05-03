@@ -9,8 +9,8 @@ import useTenantAuthStore from "../stores/tenantAuthStore";
 import { BrandingTheme, BrandingCompany, BrandingPalette } from "../types/branding";
 
 // Default colors pulled from the platform marketing palette.
-const DEFAULT_ACCENT = "#0A5E3E"; // UniCloud Africa primary (deep emerald)
-const DEFAULT_PRIMARY = "#34D399"; // UniCloud Africa accent (light emerald)
+const DEFAULT_ACCENT = "#288DD1"; // UniCloud Africa primary (vivid blue)
+const DEFAULT_PRIMARY = "#3FE0C8"; // UniCloud Africa accent (teal)
 const LEGACY_PLATFORM_ACCENT = "#1c1c1c";
 const LEGACY_PLATFORM_PRIMARY = "#14547f";
 
@@ -670,13 +670,13 @@ export const lockMarketingTheme = (theme: BrandingTheme | null = null): Branding
   const base = theme ?? mapBrandingPayload();
   return {
     ...base,
-    accentColor: "#34D399", // UniCloud Africa accent (light emerald)
-    primaryColor: "#0A5E3E", // UniCloud Africa primary (deep emerald)
+    accentColor: "#3FE0C8", // UniCloud Africa accent (teal)
+    primaryColor: "#288DD1", // UniCloud Africa primary (vivid blue)
     palette: {
       ...base.palette,
       text: "#6B7280",
       muted: "#6B7280",
-      border: "rgba(10, 94, 62, 0.16)",
+      border: "rgba(63, 224, 200, 0.2)",
     },
   };
 };

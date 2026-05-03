@@ -217,7 +217,7 @@ const BillingConfigStep: React.FC<BillingConfigStepProps> & {
 };
 
 BillingConfigStep.validate = (formData: unknown) => {
-  const errors: Record<string, string> = src/adminDashboard/pages/tenantComps/BillingConfigStep.tsx;
+  const errors: Record<string, string> = {};
   const billing = formData.billing || {};
 
   if (!billing.allowed_billing_models || billing.allowed_billing_models.length === 0) {

@@ -4,7 +4,7 @@ import AdminFlowManagement from "@/shared/components/flow/AdminFlowManagement";
 export default function AdminFlow() {
   return (
     <AdminPageShell
-      title="UniCloudFlow"
+      title="SimpleDeploy"
       description="Manage Flow plans, subscriptions, and provision tenants."
     >
       <AdminFlowManagement />

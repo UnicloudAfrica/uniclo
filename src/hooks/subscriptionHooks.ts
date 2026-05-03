@@ -60,7 +60,7 @@ export const useFetchSubscriptionPlans = (
     queryFn: async () => {
       const res = await silentApi<ListResponse<SubscriptionPlan>>(
         "GET",
-        "/admin/v1/subscription-plans",
+        "/subscription-plans",
         params
       );
       // Handle both { data: [...] } and direct [...] if wrapped by silentApi
@@ -79,7 +79,7 @@ export const useFetchSubscriptionPlan = (
   return useQuery<SubscriptionPlan>({
     queryKey: ["subscriptionPlan", id],
     queryFn: async () => {
-      const res = (await silentApi("GET", `/admin/v1/subscription-plans/${id}`)) as {
+      const res = (await silentApi("GET", `/subscription-plans/${id}`)) as {
         data?: SubscriptionPlan;
       } & SubscriptionPlan;
       return (res.data ?? res) as SubscriptionPlan;
@@ -94,7 +94,7 @@ export const useCreateSubscriptionPlan = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: MutationPayload) => {
-      const res = await api<SubscriptionPlan>("POST", "/admin/v1/subscription-plans", data);
+      const res = await api<SubscriptionPlan>("POST", "/subscription-plans", data);
       return res.data;
     },
     onSuccess: () => {
@@ -108,7 +108,7 @@ export const useUpdateSubscriptionPlan = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...data }: IdPayload) => {
-      const res = await api<SubscriptionPlan>("PUT", `/admin/v1/subscription-plans/${id}`, data);
+      const res = await api<SubscriptionPlan>("PUT", `/subscription-plans/${id}`, data);
       return res.data;
     },
     onSuccess: (_, variables) => {
@@ -123,7 +123,7 @@ export const useDeleteSubscriptionPlan = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await api<{ data: unknown }>("DELETE", `/admin/v1/subscription-plans/${id}`);
+      const res = await api<{ data: unknown }>("DELETE", `/subscription-plans/${id}`);
       return res.data;
     },
     onSuccess: () => {
@@ -146,7 +146,7 @@ export const useFetchSubscriptions = (
     queryFn: async () => {
       const res = await silentApi<ListResponse<Subscription>>(
         "GET",
-        "/admin/v1/subscriptions",
+        "/subscriptions",
         params
       );
       return res;
@@ -164,7 +164,7 @@ export const useFetchSubscription = (
   return useQuery<Subscription>({
     queryKey: ["subscription", id],
     queryFn: async () => {
-      const res = (await silentApi("GET", `/admin/v1/subscriptions/${id}`)) as {
+      const res = (await silentApi("GET", `/subscriptions/${id}`)) as {
         data?: Subscription;
       } & Subscription;
       return (res.data ?? res) as Subscription;
@@ -179,7 +179,7 @@ export const useFetchSubscriptionStats = (options: Record<string, unknown> = {})
   return useQuery<Record<string, unknown>>({
     queryKey: ["subscriptionStats"],
     queryFn: async () => {
-      const res = (await silentApi("GET", "/admin/v1/subscriptions-statistics")) as {
+      const res = (await silentApi("GET", "/subscriptions-statistics")) as {
         data?: Record<string, unknown>;
       } & Record<string, unknown>;
       return (res.data ?? res) as Record<string, unknown>;
@@ -194,7 +194,7 @@ export const useCreateSubscription = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: MutationPayload) => {
-      const res = await api<Subscription>("POST", "/admin/v1/subscriptions", data);
+      const res = await api<Subscription>("POST", "/subscriptions", data);
       return res.data;
     },
     onSuccess: () => {
@@ -209,7 +209,7 @@ export const useUpdateSubscription = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...data }: IdPayload) => {
-      const res = await api<Subscription>("PUT", `/admin/v1/subscriptions/${id}`, data);
+      const res = await api<Subscription>("PUT", `/subscriptions/${id}`, data);
       return res.data;
     },
     onSuccess: (_, variables) => {
@@ -224,7 +224,7 @@ export const useCancelSubscription = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, reason, note, immediately }: CancelSubscriptionPayload) => {
-      const res = await api<{ data: unknown }>("POST", `/admin/v1/subscriptions/${id}/cancel`, {
+      const res = await api<{ data: unknown }>("POST", `/subscriptions/${id}/cancel`, {
         reason,
         note,
         immediately,
@@ -246,7 +246,7 @@ export const useChangeSubscriptionPlan = () => {
     mutationFn: async ({ id, plan_id, prorate }: ChangeSubscriptionPlanPayload) => {
       const res = await api<{ data: Subscription }>(
         "POST",
-        `/admin/v1/subscriptions/${id}/change-plan`,
+        `/subscriptions/${id}/change-plan`,
         {
           plan_id,
           prorate,
@@ -266,7 +266,7 @@ export const useRenewSubscription = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await api<{ data: unknown }>("POST", `/admin/v1/subscriptions/${id}/renew`);
+      const res = await api<{ data: unknown }>("POST", `/subscriptions/${id}/renew`);
       return res.data;
     },
     onSuccess: (_, id) => {

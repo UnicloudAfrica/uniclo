@@ -11,6 +11,7 @@ import ClientRoutes from "./routes/ClientRoutes";
 import AdminRoutes from "./routes/AdminRoutes";
 import AdminShell from "./adminDashboard/components/AdminShell";
 import { AdminShellProvider } from "./adminDashboard/components/AdminShellContext";
+import KeyboardShortcutHelp from "./shared/components/keyboard/KeyboardShortcutHelp";
 
 // Helper types so we can inject the rendered <Route> elements directly.
 const renderPublicRoutes = PublicRoutes as () => React.ReactElement<unknown>;
@@ -51,6 +52,9 @@ const App: React.FC = () => {
           {renderAdminRoutes()}
         </Routes>
       </AnimatePresence>
+
+      {/* Global "?" overlay — registers a window-level keyboard listener. */}
+      <KeyboardShortcutHelp />
     </AdminShellProvider>
   );
 };

@@ -8,8 +8,8 @@ import FlowDashboard from "@/shared/components/flow/FlowDashboard";
 export default function AdminFlowDashboard() {
   return (
     <AdminPageShell
-      title="UniCloudFlow Dashboard"
-      description="Operate UniCloudFlow on behalf of a tenant."
+      title="SimpleDeploy Dashboard"
+      description="Operate SimpleDeploy on behalf of a tenant."
     >
       <FlowDashboard basePath="/admin-dashboard/flow-dashboard" />
     </AdminPageShell>

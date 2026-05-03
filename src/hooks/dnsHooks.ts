@@ -97,6 +97,9 @@ export const useCreateDnsZone = () => {
       region?: string;
       name: string;
       comment?: string;
+      private_zone?: boolean;
+      vpc_id?: string;
+      vpc_region?: string;
     }) => {
       const { data } = await axios.post(`${apiBaseUrl}${prefix}/dns-zones`, payload, {
         headers: authHeaders,

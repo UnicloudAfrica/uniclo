@@ -44,6 +44,12 @@ const ClientSidebar: React.FC<ClientSidebarProps> = ({ isMobileMenuOpen, onClose
         firstName: clientProfile?.first_name,
         lastName: clientProfile?.last_name,
       }}
+      regionStatus={{
+        code: "NG-1",
+        label: "Lagos",
+        detail: "Sovereign · 99.99% SLA",
+        status: "operational",
+      }}
     />
   );
 };

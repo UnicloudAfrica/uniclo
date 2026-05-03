@@ -54,6 +54,9 @@ import ClientMigrationWizard from "../clientDashboard/pages/ClientMigrationWizar
 import ClientBatchMigrations from "../clientDashboard/pages/ClientBatchMigrations";
 import ClientBatchMigrationWizard from "../clientDashboard/pages/ClientBatchMigrationWizard";
 import ClientBatchMigrationDetail from "../clientDashboard/pages/ClientBatchMigrationDetail";
+import ClientMigrationRequests from "../clientDashboard/pages/ClientMigrationRequests";
+import ClientMigrationRequestDetail from "../clientDashboard/pages/ClientMigrationRequestDetail";
+import ClientImageRequests from "../clientDashboard/pages/ClientImageRequests";
 import ClientDrDrills from "../clientDashboard/pages/ClientDrDrills";
 import ClientHypervisor from "../clientDashboard/pages/ClientHypervisor";
 import ClientRansomware from "../clientDashboard/pages/ClientRansomware";
@@ -61,6 +64,8 @@ import ClientFlow from "../clientDashboard/pages/ClientFlow";
 import ClientFlowBilling from "../clientDashboard/pages/ClientFlowBilling";
 const ClientShieldDomains = lazy(() => import("../clientDashboard/pages/ClientShieldDomains"));
 const ClientShieldDomainDetail = lazy(() => import("../clientDashboard/pages/ClientShieldDomainDetail"));
+const ClientInvoices = lazy(() => import("../clientDashboard/pages/ClientInvoices"));
+const ClientInvoiceDetail = lazy(() => import("../clientDashboard/pages/ClientInvoiceDetail"));
 const ClientShieldOverview = lazy(() => import("../clientDashboard/pages/ClientShieldOverview"));
 const ClientShieldAttackMap = lazy(() => import("../clientDashboard/pages/ClientShieldAttackMap"));
 const ClientShieldFirewall = lazy(() => import("../clientDashboard/pages/ClientShieldFirewall"));
@@ -126,9 +131,14 @@ const ClientRoutes = (): JSX.Element => (
     <Route path="/client-dashboard/batch-migrations" element={<ClientBatchMigrations />} />
     <Route path="/client-dashboard/batch-migrations/new" element={<ClientBatchMigrationWizard />} />
     <Route path="/client-dashboard/batch-migrations/:identifier" element={<ClientBatchMigrationDetail />} />
+    <Route path="/client-dashboard/migration-requests" element={<ClientMigrationRequests />} />
+    <Route path="/client-dashboard/migration-requests/:identifier" element={<ClientMigrationRequestDetail />} />
+    <Route path="/client-dashboard/image-requests" element={<ClientImageRequests />} />
 
     <Route path="/client-dashboard/shield/domains" element={<Suspense fallback={null}><ClientShieldDomains /></Suspense>} />
     <Route path="/client-dashboard/shield/domains/:domainId" element={<Suspense fallback={null}><ClientShieldDomainDetail /></Suspense>} />
+    <Route path="/client-dashboard/invoices" element={<Suspense fallback={null}><ClientInvoices /></Suspense>} />
+    <Route path="/client-dashboard/invoices/:invoiceId" element={<Suspense fallback={null}><ClientInvoiceDetail /></Suspense>} />
     <Route path="/client-dashboard/shield/overview" element={<Suspense fallback={null}><ClientShieldOverview /></Suspense>} />
     <Route path="/client-dashboard/shield/attack-map" element={<Suspense fallback={null}><ClientShieldAttackMap /></Suspense>} />
     <Route path="/client-dashboard/shield/firewall" element={<Suspense fallback={null}><ClientShieldFirewall /></Suspense>} />

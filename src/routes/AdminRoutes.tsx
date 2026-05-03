@@ -1,5 +1,5 @@
 import { lazy, Suspense, type JSX } from "react";
-import { Route, Outlet } from "react-router-dom";
+import { Route, Outlet, Navigate } from "react-router-dom";
 import ObjectStorageProvider from "../contexts/ObjectStorageContext";
 import AdminRoute from "./AdminRoute";
 import AdminDashboard from "../adminDashboard/pages/AdminDashboard";
@@ -32,8 +32,12 @@ import AdminRegion from "../adminDashboard/pages/adminRegion";
 import AdminPricing from "../adminDashboard/pages/adminPricing";
 import AdminProducts from "../adminDashboard/pages/AdminProducts";
 import AdminProductFamilies from "../adminDashboard/pages/AdminProductFamilies";
-import AdminProductCreate from "../adminDashboard/pages/AdminProductCreate";
-import AdminPricingCreate from "../adminDashboard/pages/AdminPricingCreate";
+import AdminCatalogCreate from "../adminDashboard/pages/AdminCatalogCreate";
+// Unified pricing shell — replaces the legacy hub + per-track screens
+// (AdminFlowPlanPricing / AdminShieldPricing / AdminMeteredPricing /
+// AdminPricingHub). The legacy URLs still resolve via redirects below
+// so deep links don't break.
+import PricingShell from "../adminDashboard/pages/pricing/PricingShell";
 import AdminPricingEdit from "../adminDashboard/pages/AdminPricingEdit";
 import AdminTemplates from "../adminDashboard/pages/AdminTemplates";
 import CreateInvoice from "../adminDashboard/pages/CreateInvoice";
@@ -89,6 +93,10 @@ import AdminMigrationWizard from "../adminDashboard/pages/AdminMigrationWizard";
 import AdminBatchMigrations from "../adminDashboard/pages/AdminBatchMigrations";
 import AdminBatchMigrationWizard from "../adminDashboard/pages/AdminBatchMigrationWizard";
 import AdminBatchMigrationDetail from "../adminDashboard/pages/AdminBatchMigrationDetail";
+import AdminFailedJobs from "../adminDashboard/pages/AdminFailedJobs";
+import AdminImageRequests from "../adminDashboard/pages/AdminImageRequests";
+import AdminLoadBalancers from "../adminDashboard/pages/AdminLoadBalancers";
+import AdminDnsZones from "../adminDashboard/pages/AdminDnsZones";
 import AdminDestinations from "../adminDashboard/pages/AdminDestinations";
 import AdminServerlessDr from "../adminDashboard/pages/AdminServerlessDr";
 import AdminAgent from "../adminDashboard/pages/AdminAgent";
@@ -97,8 +105,12 @@ import AdminDrDrills from "../adminDashboard/pages/AdminDrDrills";
 import AdminHypervisor from "../adminDashboard/pages/AdminHypervisor";
 import AdminDatabaseReplication from "../adminDashboard/pages/AdminDatabaseReplication";
 import AdminRansomware from "../adminDashboard/pages/AdminRansomware";
+const AdminExchangeRates = lazy(() => import("../adminDashboard/pages/AdminExchangeRates"));
+const AdminAccounting = lazy(() => import("../adminDashboard/pages/AdminAccounting"));
 const AdminShieldDomains = lazy(() => import("../adminDashboard/pages/AdminShieldDomains"));
 const AdminShieldDomainDetail = lazy(() => import("../adminDashboard/pages/AdminShieldDomainDetail"));
+const AdminInvoices = lazy(() => import("../adminDashboard/pages/AdminInvoices"));
+const AdminInvoiceDetail = lazy(() => import("../adminDashboard/pages/AdminInvoiceDetail"));
 const AdminShieldOverview = lazy(() => import("../adminDashboard/pages/AdminShieldOverview"));
 const AdminShieldAttackMap = lazy(() => import("../adminDashboard/pages/AdminShieldAttackMap"));
 const AdminShieldFirewall = lazy(() => import("../adminDashboard/pages/AdminShieldFirewall"));
@@ -145,7 +157,10 @@ import {
   AdminNetworkInterfaces,
   AdminVpcs,
   AdminInternetGateways,
-  AdminLoadBalancers,
+  // Project-scoped LB view (per-project under /infrastructure/...) — aliased
+  // to avoid clashing with the top-level inventory `AdminLoadBalancers`
+  // page imported above (mounted under /inventory/...).
+  AdminLoadBalancers as AdminLoadBalancersProject,
   AdminDnsManagement,
   AdminSnapshots,
   AdminImages,
@@ -186,7 +201,12 @@ const AdminRoutes = (): JSX.Element => {
         <Route path="/admin-dashboard/payment" element={<AdminPayment />} />
         <Route path="/admin-dashboard/payment/:transactionId" element={<AdminPaymentDetails />} />
         <Route path="/admin-dashboard/products" element={<AdminProducts />} />
-        <Route path="/admin-dashboard/products/add" element={<AdminProductCreate />} />
+        {/* Unified Add flow — replaces the split products/add + pricing/add. */}
+        <Route path="/admin-dashboard/catalog/add" element={<AdminCatalogCreate />} />
+        <Route
+          path="/admin-dashboard/products/add"
+          element={<Navigate to="/admin-dashboard/catalog/add" replace />}
+        />
         <Route path="/admin-dashboard/product-families" element={<AdminProductFamilies />} />
         <Route path="/admin-dashboard/templates" element={<AdminTemplates />} />
         <Route
@@ -217,15 +237,50 @@ const AdminRoutes = (): JSX.Element => {
 
         <Route path="/admin-dashboard/create-instance" element={<AdminCreateInstance />} />
         <Route path="/admin-dashboard/key-pairs" element={<AdminKeyPairs />} />
-        <Route path="/admin-dashboard/pricing" element={<AdminPricing />} />
-        <Route path="/admin-dashboard/pricing/add" element={<AdminPricingCreate />} />
+        {/*
+          /pricing is the unified single-page pricing shell — left menu
+          lists every priceable product (catalog SKUs, third-party
+          services, pay-as-you-go meters); the right pane swaps based
+          on the `?product=…` query param. Legacy deep links to the
+          per-track screens redirect into this shell with the matching
+          query param.
+        */}
+        <Route path="/admin-dashboard/pricing" element={<PricingShell role="admin" />} />
+        <Route
+          path="/admin-dashboard/pricing/add"
+          element={<Navigate to="/admin-dashboard/catalog/add" replace />}
+        />
         <Route path="/admin-dashboard/pricing/edit" element={<AdminPricingEdit />} />
+
+        {/* Legacy per-track URLs → redirect into the unified shell. */}
+        <Route
+          path="/admin-dashboard/pricing/flow-plans"
+          element={<Navigate to="/admin-dashboard/pricing?product=simpledeploy" replace />}
+        />
+        <Route
+          path="/admin-dashboard/pricing/shield"
+          element={<Navigate to="/admin-dashboard/pricing?product=shield" replace />}
+        />
+        <Route
+          path="/admin-dashboard/pricing/metered"
+          element={<Navigate to="/admin-dashboard/pricing?product=pay_as_you_go" replace />}
+        />
 
         <Route path="/admin-dashboard/pricing-calculator" element={<AdminPricingCalculator />} />
         <Route path="/admin-dashboard/pricing/unit-costs" element={<AdminProviderUnitCosts />} />
         <Route path="/admin-dashboard/pricing/fx-rates" element={<AdminPublishedFxRates />} />
+        <Route
+          path="/admin-dashboard/exchange-rates"
+          element={<Suspense fallback={null}><AdminExchangeRates /></Suspense>}
+        />
         <Route path="/admin-dashboard/pricing/localizations" element={<AdminPricingLocalizations />} />
         <Route path="/admin-dashboard/create-invoice" element={<CreateInvoice />} />
+        {/* Quote+Invoice convergence — alias path so docs / deep-links to
+            "billing/new" land on the unified wizard. */}
+        <Route
+          path="/admin-dashboard/billing/new"
+          element={<Navigate to="/admin-dashboard/create-invoice" replace />}
+        />
 
         <Route path="/admin-dashboard/account" element={<EnhancedProfileSettings />} />
         <Route path="/admin-dashboard/cube-instances" element={<AdminInstances />} />
@@ -256,10 +311,17 @@ const AdminRoutes = (): JSX.Element => {
         <Route path="/admin-dashboard/batch-migrations" element={<AdminBatchMigrations />} />
         <Route path="/admin-dashboard/batch-migrations/new" element={<AdminBatchMigrationWizard />} />
         <Route path="/admin-dashboard/batch-migrations/:identifier" element={<AdminBatchMigrationDetail />} />
+        <Route path="/admin-dashboard/ops/failed-jobs" element={<AdminFailedJobs />} />
+        <Route path="/admin-dashboard/inventory/image-requests" element={<AdminImageRequests />} />
+        <Route path="/admin-dashboard/inventory/load-balancers" element={<AdminLoadBalancers />} />
+        <Route path="/admin-dashboard/inventory/dns-zones" element={<AdminDnsZones />} />
         <Route path="/admin-dashboard/destinations" element={<AdminDestinations />} />
 
         <Route path="/admin-dashboard/shield/domains" element={<Suspense fallback={null}><AdminShieldDomains /></Suspense>} />
         <Route path="/admin-dashboard/shield/domains/:domainId" element={<Suspense fallback={null}><AdminShieldDomainDetail /></Suspense>} />
+        <Route path="/admin-dashboard/invoices" element={<Suspense fallback={null}><AdminInvoices /></Suspense>} />
+        <Route path="/admin-dashboard/invoices/:invoiceId" element={<Suspense fallback={null}><AdminInvoiceDetail /></Suspense>} />
+        <Route path="/admin-dashboard/accounting" element={<Suspense fallback={null}><AdminAccounting /></Suspense>} />
         <Route path="/admin-dashboard/shield/overview" element={<Suspense fallback={null}><AdminShieldOverview /></Suspense>} />
         <Route path="/admin-dashboard/shield/attack-map" element={<Suspense fallback={null}><AdminShieldAttackMap /></Suspense>} />
         <Route path="/admin-dashboard/shield/firewall" element={<Suspense fallback={null}><AdminShieldFirewall /></Suspense>} />
@@ -347,7 +409,7 @@ const AdminRoutes = (): JSX.Element => {
         <Route path="/admin-dashboard/infrastructure/vpc-peering" element={<AdminVpcPeering />} />
         <Route
           path="/admin-dashboard/infrastructure/load-balancers"
-          element={<AdminLoadBalancers />}
+          element={<AdminLoadBalancersProject />}
         />
         <Route path="/admin-dashboard/key-pairs" element={<AdminKeyPairs />} />
         <Route path="/admin-dashboard/key-pairs/create" element={<AdminKeyPairCreate />} />

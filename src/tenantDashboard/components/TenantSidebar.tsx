@@ -57,6 +57,12 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({ tenantData }) => {
         firstName: tenantData?.first_name,
         lastName: tenantData?.last_name,
       }}
+      regionStatus={{
+        code: "NG-1",
+        label: "Lagos",
+        detail: "Sovereign · 99.99% SLA",
+        status: "operational",
+      }}
     />
   );
 };

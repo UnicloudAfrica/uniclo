@@ -258,7 +258,7 @@ export default function AdminProviderMigrations() {
   return (
     <AdminPageShell
       title="Provider Migrations"
-      description="Plan, execute, and roll back tenant migrations from Zadara/Nobus to OpenStack."
+      description="Plan, execute, and roll back tenant migrations between cloud regions."
       headerAction={
         <ModernButton size="sm" onClick={() => setPlanOpen(true)}>
           <Plus className="mr-1 h-3.5 w-3.5" />

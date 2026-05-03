@@ -35,6 +35,8 @@ const DeleteProduct = ({ isOpen, onClose, productId, productName, refetch }: { i
         </div>
         <p className="text-sm text-gray-600">
           Are you sure you want to delete "{productName || "this product"}"?
+          This also removes any published prices for this SKU across every
+          region — the action cannot be undone.
         </p>
         <div className="flex justify-end gap-3 mt-4">
           <button

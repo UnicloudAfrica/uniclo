@@ -14,6 +14,8 @@ import type { BrandingTheme } from "@/types/branding";
 import logo from "./assets/logo.png";
 import { useAdminShellContext } from "./AdminShellContext";
 import logger from "@/utils/logger";
+import { adminMenuItems } from "@/shared/config/sidebarMenus";
+import { useMenuPaletteItems } from "@/shared/components/command-palette/useMenuPaletteItems";
 
 interface AdminHeadbarProps {
   forceRender?: boolean;
@@ -39,6 +41,8 @@ const AdminHeadbar: React.FC<AdminHeadbarProps> = ({ forceRender = false }) => {
     resolveBrandLogo(branding?.data as BrandingTheme, logo),
     (branding?.data as BrandingTheme | undefined)?.accentColor || (branding?.data as BrandingTheme | undefined)?.primaryColor
   );
+
+  const searchItems = useMenuPaletteItems(adminMenuItems);
 
   if (!shouldRender) {
     return null;
@@ -70,6 +74,7 @@ const AdminHeadbar: React.FC<AdminHeadbarProps> = ({ forceRender = false }) => {
       onLogout={handleLogout}
       isProfileLoading={isProfileFetching}
       isThemeLoading={isBrandingFetching}
+      searchItems={searchItems}
     />
   );
 };

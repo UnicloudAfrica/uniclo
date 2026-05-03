@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Server } from "lucide-react";
 import useCartStore from "@/stores/cartStore";
 import { useFetchCalculatorOptions, useFetchPublicRegions } from "@/hooks/useCostExplorer";
@@ -62,6 +62,16 @@ export default function ComputeConfigurator() {
   const osImages = (options?.os_images ?? []) as OsImage[];
   const volumeTypes = (options?.block_storage ?? []) as VolumeType[];
   const bandwidths = (options?.bandwidth ?? []) as Bandwidth[];
+
+  // Product policy: every compute purchase ships with at least 10 Mbps.
+  // Auto-select the 10 Mbps tier when the bandwidth list arrives so the
+  // calculator never quotes compute without bandwidth.
+  useEffect(() => {
+    if (!bandwidths.length || bandwidthId) return;
+    const baseline = bandwidths.find((b) => /\b10\s*mbps/i.test(b.name));
+    const fallback = baseline ?? bandwidths[0];
+    if (fallback) setBandwidthId(fallback.id);
+  }, [bandwidths, bandwidthId]);
 
   const flavor = flavors.find((f: Flavor) => f.id === flavorId);
   const os = osImages.find((o: OsImage) => o.id === osId);
@@ -172,15 +182,16 @@ export default function ComputeConfigurator() {
         <h4 className="mb-3 text-sm font-semibold text-gray-700">Networking</h4>
         <div className="grid gap-3 sm:grid-cols-3">
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">Bandwidth</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600">
+              Bandwidth <span className="text-[10px] font-normal text-gray-400">(Internet Bandwidth Included)</span>
+            </label>
             <select value={bandwidthId} onChange={(e) => setBandwidthId(+e.target.value)} disabled={!region} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-50">
-              <option value={0}>None</option>
               {bandwidths.map((b: Bandwidth) => <option key={b.id} value={b.id}>{b.name} — {fmt(b.unit_local ?? b.price ?? 0)}/mo</option>)}
             </select>
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-600">Bandwidth Units</label>
-            <input type="number" value={bandwidthCount} onChange={(e) => setBandwidthCount(Math.max(0, +e.target.value))} min={0} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+            <input type="number" value={bandwidthCount} onChange={(e) => setBandwidthCount(Math.max(1, +e.target.value))} min={1} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-600">Floating IPs</label>
@@ -214,7 +225,7 @@ export default function ComputeConfigurator() {
             <div className="flex justify-between"><span>Compute ({flavor.name})</span><span>{fmt(flavorPrice)}/mo</span></div>
             {osPrice > 0 && <div className="flex justify-between"><span>OS License</span><span>{fmt(osPrice)}/mo</span></div>}
             <div className="flex justify-between"><span>Storage ({storageGb}GB {volType?.name ?? ""})</span><span>{fmt(storagePrice)}/mo</span></div>
-            {bwPrice > 0 && <div className="flex justify-between"><span>Bandwidth × {bandwidthCount}</span><span>{fmt(bwPrice)}/mo</span></div>}
+            {bw && <div className="flex justify-between"><span>Bandwidth ({bw.name}) × {bandwidthCount}</span><span>{fmt(bwPrice)}/mo</span></div>}
             {ipPrice > 0 && <div className="flex justify-between"><span>Floating IPs × {floatingIpCount}</span><span>{fmt(ipPrice)}/mo</span></div>}
             <div className="flex justify-between border-t border-blue-200 pt-1 font-semibold text-gray-800"><span>Per instance/mo</span><span>{fmt(unitMonthly)}</span></div>
             {instanceCount > 1 && <div className="flex justify-between font-semibold text-gray-800"><span>× {instanceCount} instances</span><span>{fmt(totalMonthly)}/mo</span></div>}

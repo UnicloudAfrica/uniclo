@@ -18,7 +18,7 @@ const DocMermaid: React.FC<DocMermaidProps> = ({ chart, caption }) => {
     if (!mermaidInitialized) {
       const themeColor =
         getComputedStyle(document.documentElement).getPropertyValue("--theme-color").trim() ||
-        "#0A5E3E";
+        "#288DD1";
       mermaid.initialize({
         startOnLoad: false,
         theme: "base",

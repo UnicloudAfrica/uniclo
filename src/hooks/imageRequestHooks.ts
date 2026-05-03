@@ -40,7 +40,7 @@ const fetchAvailableImages = async (region: string): Promise<AvailableImage[]> =
   return res?.data ?? [];
 };
 
-export const useAvailableImages = (region: string, options: Record<string, unknown> = src/hooks/imageRequestHooks.ts) => {
+export const useAvailableImages = (region: string, options: Record<string, unknown> = {}) => {
   return useQuery<AvailableImage[]>({
     queryKey: ["availableImages", region],
     queryFn: () => fetchAvailableImages(region),
@@ -74,7 +74,7 @@ const fetchMyImageRequests = async (): Promise<ImageRequestRecord[]> => {
   return res?.data ?? [];
 };
 
-export const useMyImageRequests = (options: Record<string, unknown> = src/hooks/imageRequestHooks.ts) => {
+export const useMyImageRequests = (options: Record<string, unknown> = {}) => {
   return useQuery<ImageRequestRecord[]>({
     queryKey: ["myImageRequests"],
     queryFn: fetchMyImageRequests,

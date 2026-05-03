@@ -4,7 +4,7 @@ import FlowDashboard from "@/shared/components/flow/FlowDashboard";
 const ClientFlow = () => {
   return (
     <ClientPageShell
-      title="UniCloudFlow"
+      title="SimpleDeploy"
       description="Automated server provisioning, site deployments, and SSL management."
     >
       <FlowDashboard basePath="/client-dashboard/flow" />

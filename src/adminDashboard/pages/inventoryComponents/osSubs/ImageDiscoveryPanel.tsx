@@ -53,8 +53,10 @@ const ImageDiscoveryPanel = ({ regions }: ImageDiscoveryPanelProps) => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-slate-700">Upstream Image Discovery</h3>
-          <p className="text-xs text-slate-400">
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            Upstream Image Discovery
+          </h3>
+          <p className="text-xs text-slate-400 dark:text-slate-500">
             Images discovered from upstream OS mirrors. Import directly to any region.
           </p>
         </div>
@@ -65,7 +67,7 @@ const ImageDiscoveryPanel = ({ regions }: ImageDiscoveryPanelProps) => {
             <select
               value={distroFilter}
               onChange={(e) => setDistroFilter(e.target.value)}
-              className="rounded-lg border border-slate-200 py-1.5 pl-8 pr-3 text-xs text-slate-600"
+              className="rounded-lg border border-slate-200 bg-white py-1.5 pl-8 pr-3 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
             >
               <option value="">All distros</option>
               {distros.map((d) => (
@@ -79,21 +81,32 @@ const ImageDiscoveryPanel = ({ regions }: ImageDiscoveryPanelProps) => {
       </div>
 
       {isFetching && !discovered.length ? (
-        <div className="flex items-center justify-center py-12 text-slate-400">
+        <div className="flex items-center justify-center py-12 text-slate-400 dark:text-slate-500">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           Discovering upstream images...
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200">
+        <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/80">
-                <th className="px-4 py-2.5 text-left font-medium text-slate-500">Distro</th>
-                <th className="px-4 py-2.5 text-left font-medium text-slate-500">Version</th>
-                <th className="px-4 py-2.5 text-center font-medium text-slate-500">Arch</th>
-                <th className="px-4 py-2.5 text-center font-medium text-slate-500">Size</th>
+              <tr className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-900/40">
+                <th className="px-4 py-2.5 text-left font-medium text-slate-500 dark:text-slate-400">
+                  Distro
+                </th>
+                <th className="px-4 py-2.5 text-left font-medium text-slate-500 dark:text-slate-400">
+                  Version
+                </th>
+                <th className="px-4 py-2.5 text-center font-medium text-slate-500 dark:text-slate-400">
+                  Arch
+                </th>
+                <th className="px-4 py-2.5 text-center font-medium text-slate-500 dark:text-slate-400">
+                  Size
+                </th>
                 {regions.map((r) => (
-                  <th key={r} className="px-4 py-2.5 text-center font-medium text-slate-500">
+                  <th
+                    key={r}
+                    className="px-4 py-2.5 text-center font-medium text-slate-500 dark:text-slate-400"
+                  >
                     {r}
                   </th>
                 ))}
@@ -105,14 +118,16 @@ const ImageDiscoveryPanel = ({ regions }: ImageDiscoveryPanelProps) => {
                 return (
                   <tr
                     key={`${img.distro}-${img.version}-${idx}`}
-                    className="border-b border-slate-50 last:border-0"
+                    className="border-b border-slate-50 last:border-0 dark:border-slate-800/50"
                   >
-                    <td className="px-4 py-3 font-medium text-slate-800">
+                    <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-200">
                       {capitalize(img.distro)}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">{img.version}</td>
-                    <td className="px-4 py-3 text-center text-slate-500">{img.arch}</td>
-                    <td className="px-4 py-3 text-center text-slate-500">
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{img.version}</td>
+                    <td className="px-4 py-3 text-center text-slate-500 dark:text-slate-400">
+                      {img.arch}
+                    </td>
+                    <td className="px-4 py-3 text-center text-slate-500 dark:text-slate-400">
                       {formatBytes(img.file_size_bytes)}
                     </td>
                     {regions.map((region) => {
@@ -123,7 +138,7 @@ const ImageDiscoveryPanel = ({ regions }: ImageDiscoveryPanelProps) => {
                       return (
                         <td key={region} className="px-4 py-3 text-center">
                           {status === "active" ? (
-                            <span className="inline-flex items-center gap-1 text-xs text-emerald-600">
+                            <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
                               <CheckCircle className="h-3.5 w-3.5" />
                               Active
                             </span>

@@ -167,99 +167,126 @@ const ResourceSelectionSection: React.FC<ResourceSelectionSectionProps> = ({
   handleNumericChange,
 }) => (
   <div className="space-y-6">
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <label htmlFor={`region-${index}`} className="text-sm font-medium text-slate-700">
-          Region<span className="text-red-500">*</span>
-        </label>
-        {isRegionsFetching && (
-          <span className="flex items-center gap-1 text-xs text-slate-500">
-            <Loader2 className="h-3 w-3 animate-spin" /> Loading
-          </span>
-        )}
+    {/* Region + Availability Zone — paired in one row so the workload
+        card reads "where" before "what". On mobile they stack. */}
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <label htmlFor={`region-${index}`} className="text-sm font-medium text-slate-700">
+            Region<span className="text-red-500">*</span>
+          </label>
+          {isRegionsFetching && (
+            <span className="flex items-center gap-1 text-xs text-slate-500">
+              <Loader2 className="h-3 w-3 animate-spin" /> Loading
+            </span>
+          )}
+        </div>
+        <SelectableInput
+          options={regions?.map((r) => ({ id: r.code, name: r.name })) || []}
+          value={data["region"] || ""}
+          searchValue={searchTerms.region}
+          onSearchChange={(v) => setSearchTerms((prev) => ({ ...prev, region: v }))}
+          onSelect={handleSelectableChange("region")}
+          placeholder="Search regions"
+          isLoading={isRegionsFetching}
+          hasError={Boolean(itemErrors["region"])}
+        />
       </div>
-      <SelectableInput
-        options={regions?.map((r) => ({ id: r.code, name: r.name })) || []}
-        value={data["region"] || ""}
-        searchValue={searchTerms.region}
-        onSearchChange={(v) => setSearchTerms((prev) => ({ ...prev, region: v }))}
-        onSelect={handleSelectableChange("region")}
-        placeholder="Search regions"
-        isLoading={isRegionsFetching}
-        hasError={Boolean(itemErrors["region"])}
-      />
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium text-slate-700">Availability Zone</label>
+          {isAzFetching && (
+            <span className="flex items-center gap-1 text-xs text-slate-500">
+              <Loader2 className="h-3 w-3 animate-spin" /> Loading
+            </span>
+          )}
+        </div>
+        <SelectableInput
+          options={availabilityZoneOptions}
+          value={data["availability_zone"] || ""}
+          searchValue={searchTerms.az || ""}
+          onSearchChange={(v) => setSearchTerms((prev) => ({ ...prev, az: v }))}
+          onSelect={handleSelectableChange("availability_zone" as keyof PricingRequest)}
+          placeholder={!data["region"] ? "Select a region first" : "Select availability zone"}
+          disabled={!data["region"]}
+          isLoading={isAzFetching}
+        />
+      </div>
     </div>
 
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-slate-700">
-          Availability Zone
-        </label>
-        {isAzFetching && (
-          <span className="flex items-center gap-1 text-xs text-slate-500">
-            <Loader2 className="h-3 w-3 animate-spin" /> Loading
-          </span>
-        )}
-      </div>
-      <SelectableInput
-        options={availabilityZoneOptions}
-        value={data["availability_zone"] || ""}
-        searchValue={searchTerms.az || ""}
-        onSearchChange={(v) => setSearchTerms((prev) => ({ ...prev, az: v }))}
-        onSelect={handleSelectableChange("availability_zone" as keyof PricingRequest)}
-        placeholder={!data["region"] ? "Select a region first" : "Select availability zone"}
-        disabled={!data["region"]}
-        isLoading={isAzFetching}
-      />
-    </div>
+    {/* Compute instance + OS image — paired so the "what runs" decisions
+        sit side-by-side. Compute label uses vCPU / RAM / family_code so
+        users see "8 vCPU · 32 GB RAM — ₦12,400/mo" instead of an opaque
+        provider flavor name like "z16.10xlarge". */}
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <label htmlFor={`compute-${index}`} className="text-sm font-medium text-slate-700">
+            Compute instance<span className="text-red-500">*</span>
+          </label>
+          {renderPricePill(
+            selectedCompute
+              ? buildPriceLabel(
+                  selectedCompute.pricing.effective.price_local,
+                  selectedCompute.pricing.effective.currency
+                )
+              : null
+          )}
+        </div>
+        <SelectableInput
+          options={
+            computerInstances?.filter((i) => i?.product)?.map(({ product, pricing }) => {
+              const productable = ((product as Record<string, unknown>)?.productable ?? {}) as {
+                vcpus?: number | string | null;
+                memory_mb?: number | string | null;
+              };
+              const vcpus = Number(productable.vcpus ?? 0);
+              const memMb = Number(productable.memory_mb ?? 0);
+              const memGb = memMb > 0 ? Math.round((memMb / 1024) * 10) / 10 : 0;
+              const family = (product as { family_code?: string | null }).family_code;
 
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <label htmlFor={`compute-${index}`} className="text-sm font-medium text-slate-700">
-          Compute instance<span className="text-red-500">*</span>
-        </label>
-        {renderPricePill(
-          selectedCompute
-            ? buildPriceLabel(
-                selectedCompute.pricing.effective.price_local,
-                selectedCompute.pricing.effective.currency
-              )
-            : null
-        )}
-      </div>
-      <SelectableInput
-        options={
-          computerInstances?.filter((i) => i?.product)?.map(({ product, pricing }) => ({
-            id: Number(product.productable_id),
-            name: `${product.name} • ${formatCurrency(pricing?.effective?.price_local, pricing?.effective?.currency) || "N/A"}`,
-          })) || []
-        }
-        value={data["compute_instance_id"] ?? ""}
-        searchValue={searchTerms.compute}
-        onSearchChange={(v) => setSearchTerms((prev) => ({ ...prev, compute: v }))}
-        onSelect={handleSelectableChange("compute_instance_id")}
-        placeholder="Select instance type"
-        disabled={!data["region"]}
-        isLoading={isComputerInstancesFetching}
-        hasError={Boolean(itemErrors["compute_instance_id"])}
-      />
-    </div>
+              const label =
+                vcpus > 0 && memGb > 0
+                  ? `${vcpus} vCPU · ${memGb} GB RAM`
+                  : family && family !== ""
+                    ? family
+                    : product.name;
+              const price =
+                formatCurrency(pricing?.effective?.price_local, pricing?.effective?.currency) ||
+                "N/A";
 
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-slate-700">
-          OS image<span className="text-red-500">*</span>
-        </label>
-        {renderPricePill(
-          selectedOs
-            ? buildPriceLabel(
-                selectedOs.pricing.effective.price_local,
-                selectedOs.pricing.effective.currency
-              )
-            : null
-        )}
+              return {
+                id: Number(product.productable_id),
+                name: `${label} • ${price}`,
+              };
+            }) || []
+          }
+          value={data["compute_instance_id"] ?? ""}
+          searchValue={searchTerms.compute}
+          onSearchChange={(v) => setSearchTerms((prev) => ({ ...prev, compute: v }))}
+          onSelect={handleSelectableChange("compute_instance_id")}
+          placeholder="Select instance type"
+          disabled={!data["region"]}
+          isLoading={isComputerInstancesFetching}
+          hasError={Boolean(itemErrors["compute_instance_id"])}
+        />
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium text-slate-700">
+            OS image<span className="text-red-500">*</span>
+          </label>
+          {renderPricePill(
+            selectedOs
+              ? buildPriceLabel(
+                  selectedOs.pricing.effective.price_local,
+                  selectedOs.pricing.effective.currency
+                )
+              : null
+          )}
+        </div>
         <SelectableInput
           options={
             osImages?.filter((i) => i?.product)?.map(({ product, pricing }) => ({

@@ -17,7 +17,7 @@ const DocBreadcrumb: React.FC<DocBreadcrumbProps> = ({ crumbs }) => (
       <React.Fragment key={i}>
         {i > 0 && <ChevronRight size={14} />}
         {crumb.href && i < crumbs.length - 1 ? (
-          <Link to={crumb.href} className="hover:underline" style={{ color: "var(--theme-color, #0A5E3E)" }}>
+          <Link to={crumb.href} className="hover:underline" style={{ color: "var(--theme-color, #288DD1)" }}>
             {crumb.label}
           </Link>
         ) : (

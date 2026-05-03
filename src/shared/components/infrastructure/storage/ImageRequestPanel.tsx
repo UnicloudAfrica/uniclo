@@ -43,7 +43,7 @@ const ImageRequestPanel = ({ region }: ImageRequestPanelProps) => {
       <button
         type="button"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-700"
+        className="flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
       >
         {isExpanded ? (
           <ChevronUp className="h-4 w-4" />
@@ -54,50 +54,58 @@ const ImageRequestPanel = ({ region }: ImageRequestPanelProps) => {
       </button>
 
       {isExpanded && (
-        <div className="mt-3 space-y-4 rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4">
+        <div className="mt-3 space-y-4 rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
           {/* Available for request */}
           <div>
-            <h4 className="mb-2 text-sm font-semibold text-slate-700">
+            <h4 className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
               Request an Image
             </h4>
-            <p className="mb-3 text-xs text-slate-400">
+            <p className="mb-3 text-xs text-slate-400 dark:text-slate-500">
               These upstream images can be requested. Once approved by our team, they'll be available in your region.
             </p>
 
             {loadingAvailable ? (
-              <div className="flex items-center gap-2 py-4 text-sm text-slate-400">
+              <div className="flex items-center gap-2 py-4 text-sm text-slate-400 dark:text-slate-500">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 Loading available images...
               </div>
             ) : available.length === 0 ? (
-              <p className="py-4 text-center text-sm text-slate-400">
+              <p className="py-4 text-center text-sm text-slate-400 dark:text-slate-500">
                 All known upstream images are already available in this region.
               </p>
             ) : (
-              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50/80">
-                      <th className="px-4 py-2 text-left font-medium text-slate-500">Image</th>
-                      <th className="px-4 py-2 text-center font-medium text-slate-500">Arch</th>
-                      <th className="px-4 py-2 text-right font-medium text-slate-500">Action</th>
+                    <tr className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-900/50">
+                      <th className="px-4 py-2 text-left font-medium text-slate-500 dark:text-slate-400">
+                        Image
+                      </th>
+                      <th className="px-4 py-2 text-center font-medium text-slate-500 dark:text-slate-400">
+                        Arch
+                      </th>
+                      <th className="px-4 py-2 text-right font-medium text-slate-500 dark:text-slate-400">
+                        Action
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {available.map((img) => (
                       <tr
                         key={`${img.distro}-${img.version}`}
-                        className="border-b border-slate-50 last:border-0"
+                        className="border-b border-slate-50 last:border-0 dark:border-slate-800/50"
                       >
                         <td className="px-4 py-2.5">
-                          <span className="font-medium text-slate-800">
+                          <span className="font-medium text-slate-800 dark:text-slate-200">
                             {capitalize(img.distro)} {img.version}
                           </span>
                         </td>
-                        <td className="px-4 py-2.5 text-center text-slate-500">{img.arch}</td>
+                        <td className="px-4 py-2.5 text-center text-slate-500 dark:text-slate-400">
+                          {img.arch}
+                        </td>
                         <td className="px-4 py-2.5 text-right">
                           {img.request_status ? (
-                            <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+                            <span className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                               <Clock className="h-3 w-3" />
                               {img.request_status === "pending"
                                 ? "Requested"
@@ -127,35 +135,45 @@ const ImageRequestPanel = ({ region }: ImageRequestPanelProps) => {
           {/* My requests */}
           {myRequests.length > 0 && (
             <div>
-              <h4 className="mb-2 text-sm font-semibold text-slate-700">My Requests</h4>
-              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+              <h4 className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                My Requests
+              </h4>
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50/80">
-                      <th className="px-4 py-2 text-left font-medium text-slate-500">Image</th>
-                      <th className="px-4 py-2 text-center font-medium text-slate-500">Region</th>
-                      <th className="px-4 py-2 text-center font-medium text-slate-500">Status</th>
-                      <th className="px-4 py-2 text-right font-medium text-slate-500">Date</th>
+                    <tr className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-900/50">
+                      <th className="px-4 py-2 text-left font-medium text-slate-500 dark:text-slate-400">
+                        Image
+                      </th>
+                      <th className="px-4 py-2 text-center font-medium text-slate-500 dark:text-slate-400">
+                        Region
+                      </th>
+                      <th className="px-4 py-2 text-center font-medium text-slate-500 dark:text-slate-400">
+                        Status
+                      </th>
+                      <th className="px-4 py-2 text-right font-medium text-slate-500 dark:text-slate-400">
+                        Date
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {myRequests.map((req) => (
                       <tr
                         key={req.identifier}
-                        className="border-b border-slate-50 last:border-0"
+                        className="border-b border-slate-50 last:border-0 dark:border-slate-800/50"
                       >
-                        <td className="px-4 py-2.5 font-medium text-slate-800">
+                        <td className="px-4 py-2.5 font-medium text-slate-800 dark:text-slate-200">
                           {capitalize(req.distro)} {req.version}
                         </td>
                         <td className="px-4 py-2.5 text-center">
-                          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-600">
+                          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                             {req.region}
                           </span>
                         </td>
                         <td className="px-4 py-2.5 text-center">
                           <RequestStatus status={req.status} />
                         </td>
-                        <td className="px-4 py-2.5 text-right text-xs text-slate-400">
+                        <td className="px-4 py-2.5 text-right text-xs text-slate-400 dark:text-slate-500">
                           {new Date(req.created_at).toLocaleDateString()}
                         </td>
                       </tr>
@@ -176,22 +194,22 @@ const RequestStatus = ({ status }: { status: string }) => {
     pending: {
       icon: <Clock className="h-3 w-3" />,
       label: "Pending",
-      cls: "bg-amber-50 text-amber-600 border-amber-100",
+      cls: "bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-400/30",
     },
     importing: {
       icon: <Loader2 className="h-3 w-3 animate-spin" />,
       label: "Importing",
-      cls: "bg-blue-50 text-blue-600 border-blue-100",
+      cls: "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-400/30",
     },
     available: {
       icon: <CheckCircle className="h-3 w-3" />,
       label: "Available",
-      cls: "bg-emerald-50 text-emerald-600 border-emerald-100",
+      cls: "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-400/30",
     },
     rejected: {
       icon: null,
       label: "Rejected",
-      cls: "bg-red-50 text-red-600 border-red-100",
+      cls: "bg-red-50 text-red-600 border-red-100 dark:bg-red-500/10 dark:text-red-300 dark:border-red-400/30",
     },
   };
 

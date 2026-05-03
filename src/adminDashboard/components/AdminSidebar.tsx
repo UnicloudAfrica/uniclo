@@ -59,6 +59,12 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ forceRender = false }) => {
         email: "admin@email.com",
         firstName: "Admin",
       }}
+      regionStatus={{
+        code: "NG-1",
+        label: "Lagos",
+        detail: "Sovereign · 99.99% SLA",
+        status: "operational",
+      }}
     />
   );
 };

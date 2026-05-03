@@ -178,7 +178,15 @@ export default function VerifyMail() {
           role: resolvedRole,
           tenant: userData?.tenant ?? response?.tenant ?? null,
           domain: domainInfo,
-          token: null, // Cookie-based auth (Sanctum SPA) — no token stored
+          // Cookie-based stateful Sanctum is the original intent, but most
+          // fetch sites in the codebase don't opt into credentials:"include",
+          // so we ALSO capture the Bearer token from the verify-email
+          // payload. Without this, every API call after sign-in 401s.
+          token:
+            (res?.access_token as string | undefined) ??
+            (res?.data?.access_token as string | undefined) ??
+            (res?.token as string | undefined) ??
+            null,
           availableTenants,
           userEmail: userData?.email ?? email,
           cloudRoles: userData?.cloud_roles ?? userData?.cloudRoles ?? undefined,

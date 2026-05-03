@@ -48,7 +48,7 @@ const DynamicDocPage: React.FC<DynamicDocPageProps> = ({ loadDoc, scope }) => {
   if (!content) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--theme-color, #0A5E3E)" }} />
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--theme-color, #288DD1)" }} />
       </div>
     );
   }

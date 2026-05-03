@@ -1,10 +1,143 @@
-import { Fragment, useMemo, type ReactNode } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { ChevronDown, ChevronRight, MoreVertical } from "lucide-react";
 import { designTokens } from "@/styles/designTokens";
 import { useResponsive } from "@/hooks/useResponsive";
 import type { Action, Column, TableRowBase } from "./types";
 import type { TableStyleMap } from "./useTableStyles";
-import { getRowValue, formatCellValue, getActionToneStyles, getFontSize, getColor } from "./utils";
+import { getRowValue, formatCellValue, getActionToneStyles, getColor } from "./utils";
+
+/**
+ * Render row-level actions as a single overflow menu (kebab) when there
+ * are 2+ actions — avoids the "rainbow row of buttons" problem that
+ * stacked tone-tinted inline buttons produced. A single action stays
+ * inline so the common case ("View") doesn't require a click-through.
+ */
+function RowActionsMenu<T>({ actions, row }: { actions: Action<T>[]; row: T }) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  // Floating-menu coords. The dropdown is rendered via a portal in
+  // `document.body` and positioned with `position: fixed` so the
+  // table's `overflow-x: auto` scroll container can't clip it.
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(
+    null
+  );
+
+  // Reposition every time we open + on viewport changes. Right-anchor
+  // the menu to the trigger button so it never sticks past the right
+  // edge of the screen.
+  useLayoutEffect(() => {
+    if (!open || !buttonRef.current) return;
+    const MENU_WIDTH = 176; // matches the w-44 utility (44 × 4px)
+    const updatePosition = () => {
+      if (!buttonRef.current) return;
+      const rect = buttonRef.current.getBoundingClientRect();
+      const top = rect.bottom + 4; // 4px gap below the trigger
+      const left = Math.max(
+        8,
+        Math.min(rect.right - MENU_WIDTH, window.innerWidth - MENU_WIDTH - 8)
+      );
+      setCoords({ top, left });
+    };
+    updatePosition();
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+    return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (containerRef.current?.contains(target)) return;
+      if (menuRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  if (actions.length === 0) return null;
+
+  // Single action → render the existing tone-tinted inline button so the
+  // most common case stays a one-click hop (the "rainbow" problem only
+  // shows up when there are several visible at once).
+  if (actions.length === 1) {
+    const action = actions[0];
+    const tone = getActionToneStyles(action.tone);
+    return (
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          action.onClick(row);
+        }}
+        className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition hover:opacity-90"
+        style={{ color: tone.color, backgroundColor: tone.bg, borderColor: tone.border }}
+      >
+        {action.icon && <span className="inline-flex">{action.icon}</span>}
+        {action.label}
+      </button>
+    );
+  }
+
+  return (
+    <div ref={containerRef} className="relative inline-block text-left">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="Row actions"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((v) => !v);
+        }}
+        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200"
+      >
+        <MoreVertical size={16} />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 z-30 mt-1 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {actions.map((action, idx) => {
+            const tone = getActionToneStyles(action.tone);
+            return (
+              <button
+                key={idx}
+                type="button"
+                role="menuitem"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpen(false);
+                  action.onClick(row);
+                }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition hover:bg-slate-50"
+                style={{ color: tone.color }}
+              >
+                {action.icon && <span className="inline-flex">{action.icon}</span>}
+                <span className="truncate">{action.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface TableBodyProps<T extends TableRowBase> {
   paginatedData: T[];
@@ -165,55 +298,7 @@ function TableBody<T extends TableRowBase>({
               ))}
               {actions.length > 0 && (
                 <td style={styles.td} className="table-actions">
-                  <div style={{ display: "flex", gap: "8px" }}>
-                    {actions.map((action, actionIndex) => {
-                      const tone = getActionToneStyles(action.tone);
-                      return (
-                        <button
-                          key={actionIndex}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            action.onClick(row);
-                          }}
-                          style={{
-                            padding: "6px 10px",
-                            border: `1px solid ${tone.border}`,
-                            borderRadius: designTokens.borderRadius.main,
-                            backgroundColor: tone.bg,
-                            color: tone.color,
-                            cursor: "pointer",
-                            transition: prefersReducedMotion
-                              ? "color 0.2s ease"
-                              : "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                            transform: "scale(1)",
-                            boxShadow: tone.shadow,
-                            fontWeight: designTokens.typography.fontWeight.medium,
-                            fontSize: getFontSize("sm"),
-                          }}
-                          className={
-                            enableAnimations && !prefersReducedMotion ? "modern-button-action" : ""
-                          }
-                          onMouseEnter={(e) => {
-                            if (!prefersReducedMotion) {
-                              e.currentTarget.style.backgroundColor = tone.hoverBg;
-                              e.currentTarget.style.border = `1px solid ${tone.hoverBorder}`;
-                              e.currentTarget.style.transform = "scale(1.05)";
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!prefersReducedMotion) {
-                              e.currentTarget.style.backgroundColor = tone.bg;
-                              e.currentTarget.style.border = `1px solid ${tone.border}`;
-                              e.currentTarget.style.transform = "scale(1)";
-                            }
-                          }}
-                        >
-                          {action.icon && action.icon}
-                          {action.label}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <RowActionsMenu actions={actions} row={row} />
                 </td>
               )}
             </tr>

@@ -29,13 +29,26 @@ export function useRehydrateFromServer(): void {
     if (!persistedEmail) return;
 
     (async () => {
+      // Pull whatever Bearer token the auth store has. After H-05 the
+      // partialize layer persists the top-level `token` field so reload
+      // survives without needing the Sanctum cookie path. Cookie-based
+      // stateful auth still works as a fallback via `credentials: "include"`.
+      const token = useAuthStore.getState().token;
+      const headers: Record<string, string> = { Accept: "application/json" };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
       try {
-        const res = await fetch(`${config.baseURL}/auth/me`, {
+        // Real route is `/api/v1/business/auth/user` (see
+        // routes/api.php → ProfileController::index). The previous
+        // `/auth/me` URL produced 404 → no `login()` call → next
+        // request had no Bearer header → 401 → reflexive logout. That's
+        // why every refresh booted the user out.
+        const res = await fetch(`${config.baseURL}/business/auth/user`, {
           method: "GET",
           credentials: "include",
-          headers: {
-            Accept: "application/json",
-          },
+          headers,
         });
 
         if (!res.ok) {

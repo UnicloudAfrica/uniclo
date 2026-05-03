@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Configuration, Option } from "@/types/InstanceConfiguration";
 import { SearchableSelect } from "../ui";
 
@@ -29,6 +29,22 @@ const NetworkingSection: React.FC<NetworkingSectionProps> = ({
   updateConfigWithFocus,
   handleSecurityGroupToggle,
 }) => {
+  // Product policy: every compute instance ships with the platform's
+  // baseline internet bandwidth allocation. When the option list arrives
+  // and the user hasn't already picked one, default to the 10 Mbps tier
+  // (matched by label) so the field never lands empty in flight.
+  useEffect(() => {
+    if (cfg.bandwidth_id || !bandwidthOptions.length) return;
+    const baseline = bandwidthOptions.find((opt) => /\b10\s*mbps/i.test(opt.label));
+    const fallback = baseline ?? bandwidthOptions[0];
+    if (fallback?.value) {
+      updateConfigWithFocus({ bandwidth_id: fallback.value, bandwidth_count: 1 });
+    }
+    // Intentionally only react to the option list arriving and to
+    // bandwidth_id resetting — `updateConfigWithFocus` is stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bandwidthOptions, cfg.bandwidth_id]);
+
   return (
     <>
       <div className="grid gap-4 md:grid-cols-3">
@@ -55,7 +71,9 @@ const NetworkingSection: React.FC<NetworkingSectionProps> = ({
           disabled={!isProjectScoped}
         />
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Bandwidth</label>
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            Bandwidth <span className="text-xs font-normal text-gray-500">(Internet Bandwidth Included)</span>
+          </label>
           <SearchableSelect
             label=""
             value={cfg.bandwidth_id}
@@ -65,8 +83,8 @@ const NetworkingSection: React.FC<NetworkingSectionProps> = ({
                 bandwidth_count: e.target.value ? 1 : 0,
               })
             }
-            options={[{ value: "", label: "Select bandwidth (optional)" }, ...bandwidthOptions]}
-            helper="Optional. Leave blank if not required."
+            options={[{ value: "", label: "Default (Internet Bandwidth Included)" }, ...bandwidthOptions]}
+            helper="Internet bandwidth is included with every instance. Pick a higher tier to upgrade."
             disabled={isLoadingResources}
           />
         </div>

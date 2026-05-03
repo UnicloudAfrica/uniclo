@@ -4,6 +4,17 @@ import { Menu, HelpCircle, Settings, LogOut, ChevronDown, Sun, Moon } from "luci
 import { designTokens } from "@/styles/designTokens";
 import NotificationCenter from "../NotificationCenter";
 import { useTheme } from "@/shared/hooks/useTheme";
+import {
+  GlobalSearchTrigger,
+  type CommandPaletteItem,
+} from "@/shared/components/command-palette";
+import {
+  TenantThemeSwitcher,
+  SettingsDrawer,
+  useSettingsHotkey,
+  useTenantThemeEnforcer,
+} from "@/shared/components/shell";
+import useShellPreferencesStore from "@/stores/shellPreferencesStore";
 
 const logoCache = new Map<string, string>();
 
@@ -46,6 +57,11 @@ export interface DashboardHeadbarProps {
   isProfileLoading?: boolean;
   /** Loading state for logo/theme */
   isThemeLoading?: boolean;
+  /**
+   * Items powering the global ⌘K search bar in the centre of the headbar.
+   * When provided, a `<GlobalSearchTrigger />` is rendered. Omit to hide.
+   */
+  searchItems?: CommandPaletteItem[];
 }
 
 const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
@@ -53,7 +69,7 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
   onMobileMenuToggle,
   userProfile,
   logo,
-  themeColor = designTokens.colors.primary[500],
+  themeColor: _themeColor = designTokens.colors.primary[500],
   onLogout,
   logoutPath = "/sign-in",
   profilePath,
@@ -62,11 +78,19 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
   helpPath,
   isProfileLoading = false,
   isThemeLoading = false,
+  searchItems,
 }) => {
   const location = useLocation();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const { toggleTheme, isDark } = useTheme();
+  const setSettingsOpen = useShellPreferencesStore((state) => state.setSettingsOpen);
+
+  // Bind the global ⌘, shortcut for opening the shell settings drawer.
+  useSettingsHotkey();
+  // Keep the active tenant palette winning even when the branding hook
+  // re-runs and rewrites root inline styles (race fix).
+  useTenantThemeEnforcer();
 
   // Path mapping for page titles
   const pathMaps: Record<string, Record<string, string>> = {
@@ -117,11 +141,11 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
   const getActivePageName = (): string => {
     const pathSegments = location.pathname.split("/").filter((s) => s);
     if (pathSegments.length === 0) return "Dashboard";
-    const lastSegment = pathSegments[pathSegments.length - 1];
+    const lastSegment = pathSegments[pathSegments.length - 1] ?? "";
     const pathMap = pathMaps[dashboardType] || {};
     return (
-      pathMap[lastSegment as unknown] ||
-      lastSegment?.charAt(0).toUpperCase() + lastSegment?.slice(1).replace(/-/g, " ")
+      pathMap[lastSegment] ||
+      lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1).replace(/-/g, " ")
     );
   };
 
@@ -206,7 +230,7 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
         }}
       >
         {/* Left Section - Logo */}
-        <div className="flex items-center gap-6">
+        <div className="flex shrink-0 items-center gap-6">
           {isThemeLoading ? (
             <div className="w-[110px] h-[48px] bg-gray-200 rounded animate-pulse" />
           ) : (
@@ -221,8 +245,18 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
           )}
         </div>
 
+        {/* Centre — global ⌘K search trigger */}
+        {searchItems && searchItems.length > 0 ? (
+          <div className="mx-6 hidden flex-1 justify-center md:flex">
+            <GlobalSearchTrigger items={searchItems} />
+          </div>
+        ) : null}
+
         {/* Right Section */}
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
+          {/* Tenant theme switcher (whitelabel preview) */}
+          <TenantThemeSwitcher />
+
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
@@ -246,6 +280,17 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
             )}
           </button>
 
+          {/* Display settings (nav variant + density + dark mode) */}
+          <button
+            onClick={() => setSettingsOpen(true)}
+            className="p-2 rounded-lg transition-colors duration-200 hover:bg-gray-100"
+            title="Display settings (⌘,)"
+            aria-label="Open display settings"
+            style={{ color: "var(--theme-muted-color)" }}
+          >
+            <Settings size={20} />
+          </button>
+
           {/* Help Button */}
           {showHelp && helpPath && (
             <Link
@@ -267,8 +312,13 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
               onClick={() => setIsProfileOpen(!isProfileOpen)}
             >
               <div
-                className="w-8 h-8 rounded-full font-semibold text-sm text-white flex items-center justify-center"
-                style={{ backgroundColor: themeColor }}
+                className="w-9 h-9 rounded-full font-semibold text-sm text-white flex items-center justify-center"
+                style={{
+                  // Brand → secondary gradient (matches reference avatar)
+                  background:
+                    "linear-gradient(135deg, var(--theme-color), var(--secondary-color))",
+                  boxShadow: "var(--shadow-xs)",
+                }}
               >
                 {userProfile?.avatar ? (
                   <img
@@ -392,6 +442,9 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
           {showNotifications && <NotificationCenter />}
         </div>
       </div>
+
+      {/* Shell-wide display settings drawer (mounted once per headbar). */}
+      <SettingsDrawer />
     </>
   );
 };

@@ -216,7 +216,7 @@ const DocEditor: React.FC = () => {
         }}
       >
         <div className="flex items-center gap-3">
-          <FileText size={18} style={{ color: "var(--theme-color, #0A5E3E)" }} />
+          <FileText size={18} style={{ color: "var(--theme-color, #288DD1)" }} />
           <div className="flex items-center gap-2 flex-wrap">
             {/* Scope selector */}
             <select
@@ -264,8 +264,8 @@ const DocEditor: React.FC = () => {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium border transition-colors hover:opacity-80"
             style={{
               borderColor: "var(--theme-border-color, #e5e7eb)",
-              color: showImagePanel ? "var(--theme-color, #0A5E3E)" : "var(--theme-text-color, #374151)",
-              backgroundColor: showImagePanel ? "color-mix(in srgb, var(--theme-color, #0A5E3E) 10%, transparent)" : "transparent",
+              color: showImagePanel ? "var(--theme-color, #288DD1)" : "var(--theme-text-color, #374151)",
+              backgroundColor: showImagePanel ? "color-mix(in srgb, var(--theme-color, #288DD1) 10%, transparent)" : "transparent",
             }}
           >
             <ImagePlus size={14} /> Images
@@ -276,8 +276,8 @@ const DocEditor: React.FC = () => {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium border transition-colors hover:opacity-80"
             style={{
               borderColor: "var(--theme-border-color, #e5e7eb)",
-              color: isPreview ? "var(--theme-color, #0A5E3E)" : "var(--theme-text-color, #374151)",
-              backgroundColor: isPreview ? "color-mix(in srgb, var(--theme-color, #0A5E3E) 10%, transparent)" : "transparent",
+              color: isPreview ? "var(--theme-color, #288DD1)" : "var(--theme-text-color, #374151)",
+              backgroundColor: isPreview ? "color-mix(in srgb, var(--theme-color, #288DD1) 10%, transparent)" : "transparent",
             }}
           >
             {isPreview ? <><Edit3 size={14} /> Edit</> : <><Eye size={14} /> Preview</>}
@@ -299,7 +299,7 @@ const DocEditor: React.FC = () => {
           <button
             onClick={handleSave}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-white transition-colors hover:opacity-90"
-            style={{ backgroundColor: "var(--theme-color, #0A5E3E)" }}
+            style={{ backgroundColor: "var(--theme-color, #288DD1)" }}
           >
             <Save size={14} /> {saved ? "Saved!" : "Save"}
           </button>
@@ -332,7 +332,7 @@ const DocEditor: React.FC = () => {
               <label
                 htmlFor="doc-image-upload"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-white cursor-pointer transition-colors hover:opacity-90"
-                style={{ backgroundColor: "var(--theme-color, #0A5E3E)" }}
+                style={{ backgroundColor: "var(--theme-color, #288DD1)" }}
               >
                 <Upload size={14} /> Upload Image
               </label>
@@ -365,8 +365,8 @@ const DocEditor: React.FC = () => {
                         onClick={() => insertScreenshotSyntax(img.name.replace(/^\d+-/, ""), img.dataUrl)}
                         className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors hover:opacity-80"
                         style={{
-                          backgroundColor: "color-mix(in srgb, var(--theme-color, #0A5E3E) 10%, transparent)",
-                          color: "var(--theme-color, #0A5E3E)",
+                          backgroundColor: "color-mix(in srgb, var(--theme-color, #288DD1) 10%, transparent)",
+                          color: "var(--theme-color, #288DD1)",
                         }}
                       >
                         {copiedImage === img.name ? <><Check size={12} /> Inserted</> : <><Copy size={12} /> Insert</>}

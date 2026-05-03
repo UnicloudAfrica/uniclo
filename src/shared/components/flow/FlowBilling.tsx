@@ -225,7 +225,7 @@ const FlowBilling: React.FC<FlowBillingProps> = ({ paystackPublicKey }) => {
   if (!status?.subscribed || !sub || !plan) {
     return (
       <InfoCallout tone="info" title="No active subscription">
-        You don't have an active UniCloudFlow subscription. Subscribe from the
+        You don't have an active SimpleDeploy subscription. Subscribe from the
         Flow dashboard to manage billing here.
       </InfoCallout>
     );

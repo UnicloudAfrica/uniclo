@@ -4,6 +4,8 @@ import { useDashboardProfile } from "@/shared/hooks/useDashboardProfile";
 import useClientTheme from "@/hooks/clientHooks/useClientTheme";
 import useSidebarStore from "@/stores/sidebarStore";
 import { buildClientHeadbarPreset } from "@/shared/config/headbarPresets";
+import { buildClientMenuItems } from "@/shared/config/sidebarMenus";
+import { useMenuPaletteItems } from "@/shared/components/command-palette/useMenuPaletteItems";
 
 interface ClientHeadbarProps {
   onMenuClick?: () => void;
@@ -24,6 +26,10 @@ const ClientHeadbar: React.FC<ClientHeadbarProps> = ({ onMenuClick }) => {
     }
   };
 
+  // Client menu builder takes a `hasProjects` flag — pass true to expose
+  // project-scoped pages in the global ⌘K palette regardless of state.
+  const searchItems = useMenuPaletteItems(buildClientMenuItems(true));
+
   return (
     <DashboardHeadbar
       {...preset}
@@ -37,6 +43,7 @@ const ClientHeadbar: React.FC<ClientHeadbarProps> = ({ onMenuClick }) => {
       }}
       isProfileLoading={isProfileFetching}
       isThemeLoading={isThemeLoading}
+      searchItems={searchItems}
     />
   );
 };

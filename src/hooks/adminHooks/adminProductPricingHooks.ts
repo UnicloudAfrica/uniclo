@@ -304,11 +304,68 @@ export const useDeleteProductPricing = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteProductPricing,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["product-pricing-admin"] });
+    // Optimistic removal — the modal closes immediately on success
+    // and the user expected the row to disappear instantly. Strip the
+    // deleted entry from every cached `product-pricing-admin` page,
+    // then refetch in the background to reconcile.
+    onMutate: async (id: number | string) => {
+      await queryClient.cancelQueries({ queryKey: ["product-pricing-admin"] });
+
+      const previous = queryClient.getQueriesData({ queryKey: ["product-pricing-admin"] });
+
+      queryClient.setQueriesData(
+        { queryKey: ["product-pricing-admin"] },
+        (old: unknown) => {
+          if (!old || typeof old !== "object") return old;
+          const cache = old as Record<string, unknown> & {
+            data?: unknown;
+            pricings?: unknown;
+            items?: unknown;
+          };
+          const targetKeys = ["data", "pricings", "items"] as const;
+          const next = { ...cache };
+          let mutated = false;
+
+          for (const key of targetKeys) {
+            const value = cache[key];
+            if (Array.isArray(value)) {
+              const filtered = value.filter(
+                (row) =>
+                  String((row as { id?: unknown })?.id ?? "") !== String(id),
+              );
+              if (filtered.length !== value.length) {
+                next[key] = filtered;
+                mutated = true;
+              }
+            }
+          }
+
+          // Some endpoints return a flat array
+          if (!mutated && Array.isArray(old)) {
+            const filtered = (old as unknown[]).filter(
+              (row) =>
+                String((row as { id?: unknown })?.id ?? "") !== String(id),
+            );
+            return filtered;
+          }
+
+          return mutated ? next : old;
+        },
+      );
+
+      return { previous } as { previous: unknown };
     },
-    onError: (error: unknown) => {
+    onError: (error: unknown, _id, context) => {
+      // Roll back the optimistic removal
+      const ctx = context as { previous?: Array<[unknown, unknown]> } | undefined;
+      ctx?.previous?.forEach(([key, value]) => {
+        queryClient.setQueryData(key as readonly unknown[], value);
+      });
       logger.error("Error deleting product pricing:", error);
+    },
+    onSettled: () => {
+      // Refetch to reconcile with server (in case totals or pagination shift)
+      queryClient.invalidateQueries({ queryKey: ["product-pricing-admin"] });
     },
   });
 };

@@ -61,6 +61,46 @@
     }
   }
 
+  /* Variant-driven content margins. The pinned variant uses the
+   * defaults above (15rem / 20%); the others lock to a fixed width
+   * matching their sidebar component. */
+  @media (min-width: 768px) {
+    [data-variant="palette"] .dashboard-content-shell {
+      left: 72px;
+      width: calc(100% - 72px);
+    }
+    [data-variant="twotier"] .dashboard-content-shell {
+      left: 260px;
+      width: calc(100% - 260px);
+    }
+    [data-variant="rail"] .dashboard-content-shell {
+      left: 284px;
+      width: calc(100% - 284px);
+    }
+  }
+
+  @media (min-width: 1280px) {
+    [data-variant="palette"] .dashboard-content-shell {
+      left: 72px;
+      width: calc(100% - 72px);
+    }
+    [data-variant="twotier"] .dashboard-content-shell {
+      left: 260px;
+      width: calc(100% - 260px);
+    }
+    [data-variant="rail"] .dashboard-content-shell {
+      left: 284px;
+      width: calc(100% - 284px);
+    }
+  }
+
+  /* Compact density: tighten vertical spacing so data-heavy screens
+   * (NOC, billing rollups) show more rows above the fold. */
+  [data-density="compact"] .dashboard-content-shell {
+    padding-top: 12px;
+    padding-bottom: 32px;
+  }
+
   .dashboard-content-shell.admin-dashboard-shell {
     top: 74px;
   }
@@ -143,39 +183,40 @@ textarea {
 :root {
   color-scheme: light;
   --bar-bg: #121212;
-  /* UniCloud Africa brand: deep emerald green primary, light mint accent. */
-  --unicloud-blue: var(--theme-color, #0a5e3e);
-  --unicloud-green: var(--theme-color, #0a5e3e);
-  --theme-color: #0a5e3e;
-  --theme-color-rgb: 10 94 62;
-  --secondary-color: #34d399;
-  --secondary-color-rgb: 52 211 153;
+  /* UniCloud Africa brand: vivid blue primary, teal accent. */
+  --unicloud-blue: var(--theme-color, #288dd1);
+  --theme-color: #288dd1;
+  --theme-color-rgb: 40 141 209;
+  --secondary-color: #3fe0c8;
+  --secondary-color-rgb: 63 224 200;
   --theme-hero-start: var(--theme-color);
   --theme-hero-end: var(--secondary-color);
-  --secondary-color-10: rgba(52, 211, 153, 0.08);
-  --secondary-color-20: rgba(52, 211, 153, 0.18);
-  --theme-color-10: rgba(10, 94, 62, 0.08);
-  --theme-color-20: rgba(10, 94, 62, 0.18);
-  --theme-color-50: 230 244 238;
-  --theme-color-100: 204 233 221;
-  --theme-color-200: 154 211 187;
-  --theme-color-300: 95 185 138;
-  --theme-color-400: 50 157 106;
-  --theme-color-500: 10 94 62;
-  --theme-color-600: 8 80 51;
-  --theme-color-700: 6 64 42;
-  --theme-color-800: 5 50 32;
-  --theme-color-900: 3 32 24;
-  --secondary-color-50: 236 253 245;
-  --secondary-color-100: 209 250 229;
-  --secondary-color-200: 167 243 208;
-  --secondary-color-300: 110 231 183;
-  --secondary-color-400: 52 211 153;
-  --secondary-color-500: 16 185 129;
-  --secondary-color-600: 5 150 105;
-  --secondary-color-700: 4 120 87;
-  --secondary-color-800: 6 95 70;
-  --secondary-color-900: 6 78 59;
+  --secondary-color-10: rgba(63, 224, 200, 0.1);
+  --secondary-color-20: rgba(63, 224, 200, 0.2);
+  /* 0.12 (up from 0.08) so active-state tints are clearly visible against
+   * the off-white surface. */
+  --theme-color-10: rgba(40, 141, 209, 0.12);
+  --theme-color-20: rgba(40, 141, 209, 0.22);
+  --theme-color-50: 249 250 251;
+  --theme-color-100: 243 244 246;
+  --theme-color-200: 229 231 235;
+  --theme-color-300: 160 205 235;
+  --theme-color-400: 109 177 224;
+  --theme-color-500: 40 141 209;
+  --theme-color-600: 33 116 171;
+  --theme-color-700: 27 96 142;
+  --theme-color-800: 22 76 113;
+  --theme-color-900: 16 56 84;
+  --secondary-color-50: 249 250 251;
+  --secondary-color-100: 243 244 246;
+  --secondary-color-200: 229 231 235;
+  --secondary-color-300: 171 241 255;
+  --secondary-color-400: 124 234 242;
+  --secondary-color-500: 63 224 200;
+  --secondary-color-600: 52 184 188;
+  --secondary-color-700: 43 152 160;
+  --secondary-color-800: 34 121 132;
+  --secondary-color-900: 25 90 104;
   --theme-success-rgb: 34 197 94;
   --theme-warning-rgb: 245 158 11;
   --theme-danger-rgb: 239 68 68;
@@ -209,20 +250,20 @@ textarea {
   --theme-danger-700: 185 28 28;
   --theme-danger-800: 153 27 27;
   --theme-danger-900: 127 29 29;
-  --theme-border-color: rgba(10, 94, 62, 0.16);
+  --theme-border-color: rgba(63, 224, 200, 0.2);
   --theme-card-bg: #ffffff;
   --theme-surface-alt: #f5f7fb;
   --theme-heading-color: #111827;
   --theme-text-color: #6b7280;
   --theme-muted-color: #6b7280;
-  --theme-badge-success-bg: rgba(10, 94, 62, 0.12);
+  --theme-badge-success-bg: rgba(63, 224, 200, 0.2);
   --theme-badge-success-text: rgb(var(--theme-success-700));
   --theme-badge-pending-bg: rgb(var(--theme-warning-500) / 0.16);
   --theme-badge-pending-text: rgb(var(--theme-warning-700));
   --theme-badge-failed-bg: rgb(var(--theme-danger-500) / 0.2);
   --theme-badge-failed-text: rgb(var(--theme-danger-700));
-  --theme-tag-bg: rgba(10, 94, 62, 0.12);
-  --theme-tag-text: #0a5e3e;
+  --theme-tag-bg: rgba(40, 141, 209, 0.16);
+  --theme-tag-text: #288dd1;
   --theme-neutral-50: 249 250 251;
   --theme-neutral-100: 243 244 246;
   --theme-neutral-200: 229 231 235;
@@ -235,7 +276,7 @@ textarea {
   --theme-neutral-900: 17 24 39;
   --theme-on-color: #ffffff;
   --theme-on-secondary: #111827;
-  --theme-focus-ring: rgba(10, 94, 62, 0.34);
+  --theme-focus-ring: rgba(40, 141, 209, 0.34);
   --theme-button-primary-bg: var(--theme-color);
   --theme-button-primary-text: var(--theme-on-color);
   --theme-button-secondary-bg: var(--secondary-color);
@@ -257,13 +298,113 @@ textarea {
   --shadow-md:
     0 10px 15px -3px rgb(var(--theme-neutral-900) / 0.1),
     0 4px 6px -2px rgb(var(--theme-neutral-900) / 0.05);
+  --shadow-brand: 0 24px 80px -45px rgb(var(--theme-color-rgb) / 0.28);
   --surface-page: var(--theme-surface-alt);
   --surface-card: var(--theme-card-bg);
   --text-primary: var(--theme-heading-color);
   --text-secondary: var(--theme-text-color);
   --text-muted: var(--theme-muted-color);
   --border-default: var(--theme-border-color);
+
+  /* ── Type scale (matches Outfit weights used in product) ───────── */
+  --fs-display: 32px;
+  --lh-display: 1.15;
+  --fw-display: 600;
+  --fs-h1: 24px;
+  --lh-h1: 1.2;
+  --fw-h1: 600;
+  --fs-h2: 20px;
+  --lh-h2: 1.25;
+  --fw-h2: 600;
+  --fs-h3: 18px;
+  --lh-h3: 1.3;
+  --fw-h3: 600;
+  --fs-body: 14px;
+  --lh-body: 1.5;
+  --fw-body: 400;
+  --fs-body-lg: 16px;
+  --lh-body-lg: 1.55;
+  --fs-small: 13px;
+  --lh-small: 1.45;
+  --fs-xs: 12px;
+  --lh-xs: 1.4;
+  --fs-eyebrow: 11px;
+  --ls-eyebrow: 0.18em;
+
+  /* ── Spacing scale ─────────────────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* ── Radius scale ──────────────────────────────────────────────── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-pill: 9999px;
+
   font-family: var(--font-sans);
+}
+
+/* ── Tenant overrides — flip brand variables when <html data-tenant> ─
+ * is set. Used by the headbar tenant switcher to whitelabel any section
+ * of the app. */
+[data-tenant="emerald"] {
+  --theme-color: #10b981;
+  --theme-color-rgb: 16 185 129;
+  --secondary-color: #34d399;
+  --secondary-color-rgb: 52 211 153;
+  --theme-color-10: rgba(16, 185, 129, 0.12);
+  --theme-color-20: rgba(16, 185, 129, 0.22);
+  --theme-color-300: 110 231 183;
+  --theme-color-500: 16 185 129;
+  --theme-color-600: 5 150 105;
+  --theme-color-700: 4 120 87;
+  --theme-tag-bg: rgba(16, 185, 129, 0.16);
+  --theme-tag-text: #10b981;
+  --theme-focus-ring: rgba(16, 185, 129, 0.34);
+  --theme-border-color: rgba(52, 211, 153, 0.2);
+}
+
+[data-tenant="indigo"] {
+  --theme-color: #4f46e5;
+  --theme-color-rgb: 79 70 229;
+  --secondary-color: #a78bfa;
+  --secondary-color-rgb: 167 139 250;
+  --theme-color-10: rgba(79, 70, 229, 0.12);
+  --theme-color-20: rgba(79, 70, 229, 0.22);
+  --theme-color-300: 165 180 252;
+  --theme-color-500: 79 70 229;
+  --theme-color-600: 67 56 202;
+  --theme-color-700: 55 48 163;
+  --theme-tag-bg: rgba(79, 70, 229, 0.16);
+  --theme-tag-text: #4f46e5;
+  --theme-focus-ring: rgba(79, 70, 229, 0.34);
+  --theme-border-color: rgba(167, 139, 250, 0.2);
+}
+
+[data-tenant="sunset"] {
+  --theme-color: #ea580c;
+  --theme-color-rgb: 234 88 12;
+  --secondary-color: #f59e0b;
+  --secondary-color-rgb: 245 158 11;
+  --theme-color-10: rgba(234, 88, 12, 0.12);
+  --theme-color-20: rgba(234, 88, 12, 0.22);
+  --theme-color-300: 253 186 116;
+  --theme-color-500: 234 88 12;
+  --theme-color-600: 194 65 12;
+  --theme-color-700: 154 52 18;
+  --theme-tag-bg: rgba(234, 88, 12, 0.16);
+  --theme-tag-text: #ea580c;
+  --theme-focus-ring: rgba(234, 88, 12, 0.34);
+  --theme-border-color: rgba(245, 158, 11, 0.2);
 }
 
 [data-theme="dark"] {
@@ -296,9 +437,9 @@ textarea {
   --theme-neutral-800: 241 245 249; /* slate-100 */
   --theme-neutral-900: 248 250 252; /* slate-50 → lightest text */
 
-  /* Color palette tints for dark mode (UniCloud Africa green) */
-  --theme-color-10: rgba(52, 211, 153, 0.12);
-  --theme-color-20: rgba(52, 211, 153, 0.22);
+  /* Color palette tints for dark mode */
+  --theme-color-10: rgba(56, 163, 235, 0.12);
+  --theme-color-20: rgba(56, 163, 235, 0.22);
 
   /* Input overrides */
   --theme-input-bg: #1e293b;
@@ -602,7 +743,7 @@ body {
 }
 
 .gradient-text {
-  background: linear-gradient(45deg, var(--theme-color, #0a5e3e), var(--secondary-color, #34d399));
+  background: linear-gradient(45deg, var(--theme-color, #288dd1), var(--secondary-color, #3fe0c8));
   -webkit-background-clip: text;
   color: transparent;
 }
@@ -613,8 +754,8 @@ body {
   overflow: hidden;
   background: linear-gradient(
     135deg,
-    var(--theme-hero-start, color-mix(in srgb, var(--theme-color, #0a5e3e) 85%, #0f172a)) 0%,
-    var(--theme-hero-end, color-mix(in srgb, var(--theme-color, #0a5e3e) 55%, #1e293b)) 100%
+    var(--theme-hero-start, color-mix(in srgb, var(--theme-color, #288dd1) 85%, #0f172a)) 0%,
+    var(--theme-hero-end, color-mix(in srgb, var(--theme-color, #288dd1) 55%, #1e293b)) 100%
   );
   color: #fff;
 }
@@ -632,6 +773,170 @@ body {
   position: relative;
 }
 
+/* ── Brand card surface (matches reference .brand-card) ──────────── */
+.brand-card {
+  border: 1px solid var(--theme-border-color);
+  background: var(--theme-card-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-brand);
+}
+
+.brand-card-hover {
+  transition:
+    transform 180ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    box-shadow 180ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    border-color 180ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.brand-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--theme-color);
+}
+
+/* ── Semantic type utility classes ───────────────────────────────── */
+.t-display {
+  font: var(--fw-display) var(--fs-display) / var(--lh-display) var(--font-sans);
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.t-h1 {
+  font: var(--fw-h1) var(--fs-h1) / var(--lh-h1) var(--font-sans);
+  color: var(--text-primary);
+  letter-spacing: -0.005em;
+}
+
+.t-h2 {
+  font: var(--fw-h2) var(--fs-h2) / var(--lh-h2) var(--font-sans);
+  color: var(--text-primary);
+}
+
+.t-h3 {
+  font: var(--fw-h3) var(--fs-h3) / var(--lh-h3) var(--font-sans);
+  color: var(--text-primary);
+}
+
+.t-body {
+  font: var(--fw-body) var(--fs-body) / var(--lh-body) var(--font-sans);
+  color: var(--text-secondary);
+}
+
+.t-body-lg {
+  font: 400 var(--fs-body-lg) / var(--lh-body-lg) var(--font-sans);
+  color: var(--text-secondary);
+}
+
+.t-small {
+  font: 400 var(--fs-small) / var(--lh-small) var(--font-sans);
+  color: var(--text-secondary);
+}
+
+.t-xs {
+  font: 500 var(--fs-xs) / var(--lh-xs) var(--font-sans);
+  color: var(--text-muted);
+}
+
+.t-eyebrow {
+  font: 600 var(--fs-eyebrow) / 1.4 var(--font-sans);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--ls-eyebrow);
+}
+
+.t-mono {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.t-gradient {
+  background: linear-gradient(84.45deg, var(--theme-color) 2.78%, var(--secondary-color) 91.98%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ── Skeleton shimmer keyframe ────────────────────────────────────── */
+@keyframes skel-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skel-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgb(var(--theme-neutral-100)) 0%,
+    rgb(var(--theme-neutral-200)) 50%,
+    rgb(var(--theme-neutral-100)) 100%
+  );
+  background-size: 200% 100%;
+  animation: skel-shimmer 1.4s ease-in-out infinite;
+}
+
+/* ── App shell layout (reference parity) ─────────────────────────── */
+.app-shell-content {
+  margin-top: 74px;
+  padding: 28px 32px 64px;
+  transition: margin-left 240ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.app-shell[data-variant="twotier"] .app-shell-content {
+  margin-left: 260px;
+}
+
+.app-shell[data-variant="pinned"] .app-shell-content {
+  margin-left: 272px;
+}
+
+.app-shell[data-variant="rail"] .app-shell-content {
+  margin-left: 284px;
+}
+
+.app-shell[data-variant="palette"] .app-shell-content {
+  margin-left: 72px;
+}
+
+.app-shell[data-density="compact"] .app-shell-content {
+  padding: 18px 22px 48px;
+}
+
+@media (max-width: 900px) {
+  .app-shell .app-shell-content {
+    margin-left: 0 !important;
+    padding: 18px 14px 64px;
+  }
+  .hb-search {
+    display: none !important;
+  }
+  .hb-mobile-btn {
+    display: inline-flex !important;
+  }
+  .hb-tenant {
+    display: none !important;
+  }
+}
+
+.hb-mobile-btn {
+  display: none;
+}
+
+/* Pin button reveal on row hover (NavPinned) */
+.nav-row:hover .pin-btn {
+  opacity: 1 !important;
+}
+.nav-row:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .nav-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
 .db-surface-hero {
   position: relative;
   overflow: hidden;
@@ -639,22 +944,22 @@ body {
   background:
     radial-gradient(
       circle at top left,
-      color-mix(in srgb, var(--theme-color, #0a5e3e) 18%, transparent),
+      color-mix(in srgb, var(--theme-color, #288dd1) 18%, transparent),
       transparent 34%
     ),
     radial-gradient(
       circle at 85% 18%,
-      color-mix(in srgb, var(--secondary-color, #34d399) 16%, transparent),
+      color-mix(in srgb, var(--secondary-color, #3fe0c8) 16%, transparent),
       transparent 28%
     ),
     linear-gradient(
       135deg,
-      color-mix(in srgb, var(--theme-card-bg, #ffffff) 88%, var(--theme-color, #0a5e3e)) 0%,
+      color-mix(in srgb, var(--theme-card-bg, #ffffff) 88%, var(--theme-color, #288dd1)) 0%,
       var(--theme-card-bg, #ffffff) 58%,
-      color-mix(in srgb, var(--theme-surface-alt, #f5f7fb) 72%, var(--secondary-color, #34d399))
+      color-mix(in srgb, var(--theme-surface-alt, #f5f7fb) 72%, var(--secondary-color, #3fe0c8))
         100%
     );
-  box-shadow: 0 30px 90px -50px rgb(var(--theme-color-rgb, 10 94 62) / 0.28);
+  box-shadow: 0 30px 90px -50px rgb(var(--theme-color-rgb, 40 141 209) / 0.28);
 }
 
 .db-surface-hero::before {
@@ -734,11 +1039,11 @@ body {
 }
 
 .db-signal-panel {
-  border: 1px solid color-mix(in srgb, var(--theme-color, #0a5e3e) 24%, var(--theme-border-color));
+  border: 1px solid color-mix(in srgb, var(--theme-color, #288dd1) 24%, var(--theme-border-color));
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--theme-color, #0a5e3e) 28%, #0f172a) 0%,
-    color-mix(in srgb, var(--secondary-color, #34d399) 14%, #0f172a) 100%
+    color-mix(in srgb, var(--theme-color, #288dd1) 28%, #0f172a) 0%,
+    color-mix(in srgb, var(--secondary-color, #3fe0c8) 14%, #0f172a) 100%
   );
   color: white;
 }
@@ -940,7 +1245,7 @@ body {
 }
 
 .gradient-txt {
-  background: linear-gradient(45deg, var(--theme-color, #0a5e3e), var(--secondary-color, #34d399));
+  background: linear-gradient(45deg, var(--theme-color, #288dd1), var(--secondary-color, #3fe0c8));
   -webkit-background-clip: text;
   color: transparent;
 }

@@ -29,7 +29,7 @@ const buildResource = <T>(path: string, queryKey: string) => {
   const remove = async (identifier: string) => api.delete(`/${path}/${identifier}`);
 
   return {
-    useList: (options: Record<string, unknown> = src/hooks/openstackResourceHooks.ts) =>
+    useList: (options: Record<string, unknown> = {}) =>
       useQuery({
         queryKey: [queryKey],
         queryFn: fetchList,
@@ -37,7 +37,7 @@ const buildResource = <T>(path: string, queryKey: string) => {
         refetchInterval: 1000 * 20,
         ...options,
       }),
-    useOne: (identifier: string | null, options: Record<string, unknown> = src/hooks/openstackResourceHooks.ts) =>
+    useOne: (identifier: string | null, options: Record<string, unknown> = {}) =>
       useQuery({
         queryKey: [queryKey, identifier],
         queryFn: () => fetchOne(identifier as string),

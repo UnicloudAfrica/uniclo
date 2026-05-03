@@ -20,7 +20,7 @@ const ConfigDocsSidebar: React.FC<ConfigDocsSidebarProps> = ({ sections, baseHre
     }}
   >
     <div className="flex items-center gap-2 px-2 mb-5">
-      <BookOpen size={18} style={{ color: "var(--theme-color, #0A5E3E)" }} />
+      <BookOpen size={18} style={{ color: "var(--theme-color, #288DD1)" }} />
       <span className="text-sm font-bold uppercase tracking-wider" style={{ color: "var(--theme-muted-color, #6b7280)" }}>
         {label}
       </span>
@@ -33,10 +33,10 @@ const ConfigDocsSidebar: React.FC<ConfigDocsSidebarProps> = ({ sections, baseHre
           className="flex items-center gap-2.5 px-2 py-2 rounded-md text-sm font-medium transition-colors"
           style={({ isActive }) => ({
             backgroundColor: isActive
-              ? "color-mix(in srgb, var(--theme-color, #0A5E3E) 10%, transparent)"
+              ? "color-mix(in srgb, var(--theme-color, #288DD1) 10%, transparent)"
               : "transparent",
             color: isActive
-              ? "var(--theme-color, #0A5E3E)"
+              ? "var(--theme-color, #288DD1)"
               : "var(--theme-text-color, #374151)",
           })}
         >
@@ -66,10 +66,10 @@ const ConfigDocsSidebar: React.FC<ConfigDocsSidebarProps> = ({ sections, baseHre
                   className="flex items-center gap-2.5 px-2 py-2 rounded-md text-sm font-medium transition-colors"
                   style={({ isActive }) => ({
                     backgroundColor: isActive
-                      ? "color-mix(in srgb, var(--theme-color, #0A5E3E) 10%, transparent)"
+                      ? "color-mix(in srgb, var(--theme-color, #288DD1) 10%, transparent)"
                       : "transparent",
                     color: isActive
-                      ? "var(--theme-color, #0A5E3E)"
+                      ? "var(--theme-color, #288DD1)"
                       : "var(--theme-text-color, #374151)",
                   })}
                 >

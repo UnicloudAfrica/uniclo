@@ -4,7 +4,7 @@
  * Uses `useApiContext()` to automatically route requests to the correct
  * API endpoint based on the current dashboard context.
  */
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useApiContext } from "@/hooks/useApiContext";
 
 // ── Types ───────────────────────────────────────────────────────
@@ -182,6 +182,17 @@ interface ApiResponse<T> {
 export function useFlowApi() {
   const { apiBaseUrl, authHeaders } = useApiContext();
 
+  // useApiContext rebuilds `authHeaders` (object literal) on every
+  // render, so depending on it directly destabilises every downstream
+  // useCallback / useMemo and tips consumers into render loops. Derive
+  // a stable string key from the bits we actually care about (the
+  // Bearer token + tenant slug); the request callback only re-creates
+  // when one of those primitives genuinely changes.
+  const headersKey = JSON.stringify({
+    auth: authHeaders.Authorization ?? null,
+    slug: authHeaders["X-Tenant-Slug"] ?? null,
+  });
+
   const request = useCallback(
     async <T>(
       method: string,
@@ -228,10 +239,18 @@ export function useFlowApi() {
       }
       return res.json();
     },
-    [apiBaseUrl, authHeaders],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally use headersKey instead of authHeaders to avoid re-creating on every render
+    [apiBaseUrl, headersKey],
   );
 
-  return {
+  // CRITICAL: memoize the returned object on `request` so consumers
+  // can put `api` (or any of its bound methods) in a `useEffect` /
+  // `useCallback` dep list without triggering an infinite re-render
+  // loop. Without this, useFlowApi() returns a fresh object literal
+  // every render → any consumer that effects on `[api, …]` schedules
+  // another render → loop → Chrome kills the tab with
+  // RESULT_CODE_HUNG. SitesTab specifically tripped this.
+  return useMemo(() => ({
     // Plans & Status
     getPlans: () => request<FlowPlan[]>("GET", "/plans"),
     getStatus: () => request<FlowStatus>("GET", "/status"),
@@ -351,7 +370,7 @@ export function useFlowApi() {
       request<string>("GET", `/servers/${serverId}/sites/${siteId}/env`),
     updateEnv: (serverId: number, siteId: number, content: string) =>
       request<void>("PUT", `/servers/${serverId}/sites/${siteId}/env`, { content }),
-  };
+  }), [request]);
 }
 
 /**

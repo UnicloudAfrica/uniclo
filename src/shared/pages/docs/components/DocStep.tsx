@@ -13,13 +13,13 @@ const DocStep: React.FC<DocStepProps> = ({ number, icon: Icon, title, children, 
   <div className="flex gap-4 py-5 border-b" style={{ borderColor: "var(--theme-border-color, #e5e7eb)" }}>
     <div
       className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
-      style={{ backgroundColor: "var(--theme-color, #0A5E3E)", color: "var(--theme-on-color, #fff)" }}
+      style={{ backgroundColor: "var(--theme-color, #288DD1)", color: "var(--theme-on-color, #fff)" }}
     >
       {number}
     </div>
     <div className="flex-1 space-y-2">
       <div className="flex items-center gap-2">
-        <Icon size={20} style={{ color: "var(--theme-color, #0A5E3E)" }} />
+        <Icon size={20} style={{ color: "var(--theme-color, #288DD1)" }} />
         <h3 className="text-lg font-semibold" style={{ color: "var(--theme-heading-color, #1f2937)" }}>
           {title}
         </h3>

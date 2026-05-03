@@ -10,6 +10,7 @@ import useClientAuthStore from "@/stores/clientAuthStore";
 
 import { clearAuthSessionsExcept } from "@/stores/sessionUtils";
 import { useVerifyAdminMail } from "@/hooks/adminHooks/authHooks";
+import { popIntendedPath } from "@/utils/intendedPath";
 import {
   resolveBrandLogo,
   usePlatformBrandingTheme,
@@ -151,7 +152,15 @@ export default function VerifyAdminMail() {
           role: userRole ?? undefined,
           tenant: res?.data?.tenant ?? null,
           domain: domainInfo,
-          token: null, // Cookie-based auth (Sanctum SPA) — no token stored
+          // Cookie-based stateful Sanctum is the original intent, but most
+          // fetch sites in the codebase don't opt into credentials:"include",
+          // so we ALSO capture the Bearer token from the verify-email
+          // payload. Without this, every API call after sign-in 401s.
+          token:
+            (res?.access_token as string | undefined) ??
+            (res?.data?.access_token as string | undefined) ??
+            (res?.token as string | undefined) ??
+            null,
           availableTenants,
           userEmail: res?.data?.email ?? email,
           cloudRoles: res?.data?.cloud_roles ?? res?.data?.cloudRoles ?? undefined,
@@ -171,20 +180,27 @@ export default function VerifyAdminMail() {
 
         clearAuthSessionsExcept(normalizedRole);
 
-        switch (normalizedRole) {
-          case "tenant":
-            navigate("/dashboard");
-            break;
-          case "client":
-            navigate("/client-dashboard");
-            break;
-          case "admin":
-            navigate("/admin-dashboard");
-            break;
-          default:
-            navigate("/dashboard");
-            break;
-        }
+        // Honour the deep-linked URL the user was trying to reach when
+        // they were bounced to /admin-signin (or /sign-in). The route
+        // guard stashes the intended path in sessionStorage; restore it
+        // here so the user lands back where they started instead of
+        // always at the role's default dashboard.
+        const fallback =
+          normalizedRole === "tenant"
+            ? "/dashboard"
+            : normalizedRole === "client"
+              ? "/client-dashboard"
+              : normalizedRole === "admin"
+                ? "/admin-dashboard"
+                : "/dashboard";
+        const scope =
+          normalizedRole === "admin"
+            ? "admin"
+            : normalizedRole === "client"
+              ? "client"
+              : "tenant";
+        const intended = popIntendedPath(scope as "admin" | "tenant" | "client");
+        navigate(intended || fallback);
       },
       onError: (err: unknown) => {
         const message = err?.message || "Failed to verify email";

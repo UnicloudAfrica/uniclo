@@ -20,6 +20,9 @@ import TenantDeveloperPortal from "../tenantDashboard/pages/DeveloperPortal";
 import TenantPricingCalculator from "../tenantDashboard/pages/TenantPricingCalculator";
 import TenantPricingOverrides from "../tenantDashboard/pages/TenantPricingOverrides";
 import TenantPricingEditList from "../tenantDashboard/pages/TenantPricingEditList";
+// Unified tenant pricing shell — same single-page layout the admin
+// uses, with role="tenant" so each pane shows the override column.
+import PricingShell from "../adminDashboard/pages/pricing/PricingShell";
 import TenantCreateInvoice from "../tenantDashboard/pages/TenantCreateInvoice";
 import DashboardInstances from "../dashboard/pages/Instances";
 import InstanceDetails from "../dashboard/pages/InstanceDetails";
@@ -63,7 +66,6 @@ import TenantDatabaseDetail from "../dashboard/pages/TenantDatabaseDetail";
 import TenantDiscountManager from "../tenantDashboard/pages/TenantDiscountManager";
 import TenantPayoutsPage from "../tenantDashboard/pages/TenantPayoutsPage";
 import TenantBillingSettings from "../tenantDashboard/pages/TenantBillingSettings";
-import TenantInvoicesPage from "../tenantDashboard/pages/TenantInvoicesPage";
 import TenantPocTrials from "../tenantDashboard/pages/TenantPocTrials";
 import TenantProtection from "../dashboard/pages/TenantProtection";
 import TenantMigrations from "../dashboard/pages/TenantMigrations";
@@ -80,6 +82,9 @@ import TenantDatabaseReplication from "../dashboard/pages/TenantDatabaseReplicat
 import TenantRansomware from "../dashboard/pages/TenantRansomware";
 const TenantShieldDomains = lazy(() => import("../dashboard/pages/TenantShieldDomains"));
 const TenantShieldDomainDetail = lazy(() => import("../dashboard/pages/TenantShieldDomainDetail"));
+const TenantInvoices = lazy(() => import("../dashboard/pages/TenantInvoices"));
+const TenantInvoiceDetail = lazy(() => import("../dashboard/pages/TenantInvoiceDetail"));
+const TenantAccounting = lazy(() => import("../dashboard/pages/TenantAccounting"));
 const TenantShieldOverview = lazy(() => import("../dashboard/pages/TenantShieldOverview"));
 const TenantShieldAttackMap = lazy(() => import("../dashboard/pages/TenantShieldAttackMap"));
 const TenantShieldFirewall = lazy(() => import("../dashboard/pages/TenantShieldFirewall"));
@@ -186,6 +191,9 @@ const TenantRoutes = (): JSX.Element => (
 
         <Route path="/dashboard/shield/domains" element={<Suspense fallback={null}><TenantShieldDomains /></Suspense>} />
         <Route path="/dashboard/shield/domains/:domainId" element={<Suspense fallback={null}><TenantShieldDomainDetail /></Suspense>} />
+        <Route path="/dashboard/invoices" element={<Suspense fallback={null}><TenantInvoices /></Suspense>} />
+        <Route path="/dashboard/invoices/:invoiceId" element={<Suspense fallback={null}><TenantInvoiceDetail /></Suspense>} />
+        <Route path="/dashboard/accounting" element={<Suspense fallback={null}><TenantAccounting /></Suspense>} />
         <Route path="/dashboard/shield/overview" element={<Suspense fallback={null}><TenantShieldOverview /></Suspense>} />
         <Route path="/dashboard/shield/attack-map" element={<Suspense fallback={null}><TenantShieldAttackMap /></Suspense>} />
         <Route path="/dashboard/shield/firewall" element={<Suspense fallback={null}><TenantShieldFirewall /></Suspense>} />
@@ -266,17 +274,28 @@ const TenantRoutes = (): JSX.Element => (
 
         {/* Billing & Revenue */}
         <Route path="/dashboard/revenue" element={<RevenueDashboard />} />
+        {/*
+          Unified tenant pricing shell — left menu lists every priceable
+          product (catalog SKUs, third-party services, pay-as-you-go);
+          right pane shows the platform default + the tenant's override
+          inline. Same component the admin uses, with role="tenant".
+        */}
+        <Route path="/dashboard/pricing" element={<PricingShell role="tenant" />} />
         <Route path="/dashboard/pricing-overrides" element={<TenantPricingOverrides />} />
         <Route path="/dashboard/pricing-overrides/edit-list" element={<TenantPricingEditList />} />
         <Route path="/dashboard/pricing-calculator" element={<TenantPricingCalculator />} />
         <Route path="/dashboard/create-invoice" element={<TenantCreateInvoice />} />
+        {/* Quote+Invoice convergence — alias path for the unified wizard. */}
+        <Route
+          path="/dashboard/billing/new"
+          element={<Navigate to="/dashboard/create-invoice" replace />}
+        />
         <Route path="/dashboard/quote-invoice" element={<TenantQuoteCalculator />} />
         <Route path="/dashboard/payment-history" element={<PaymentHistory />} />
         <Route path="/dashboard/tax-configurations" element={<DashboardTaxConfigurations />} />
         <Route path="/dashboard/discounts" element={<TenantDiscountManager />} />
         <Route path="/dashboard/payouts" element={<TenantPayoutsPage />} />
         <Route path="/dashboard/billing" element={<TenantBillingSettings />} />
-        <Route path="/dashboard/invoices" element={<TenantInvoicesPage />} />
         <Route path="/dashboard/poc-trials" element={<TenantPocTrials />} />
 
         {/* Standalone */}

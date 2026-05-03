@@ -5,7 +5,7 @@
     "cta": "Update payment method"
   },
   "billing": {
-    "page_title": "UniCloudFlow Billing",
+    "page_title": "SimpleDeploy Billing",
     "page_description": "Manage your payment method, renew the subscription, or fix a stuck payment.",
     "section_subscription": "Subscription details",
     "stat_plan": "Plan",
@@ -19,6 +19,6 @@
     "footer_help": "Need to swap cards or fix a stuck payment? Open the Paystack flow.",
     "success_updated": "Payment method updated successfully — your subscription is active.",
     "no_subscription_title": "No active subscription",
-    "no_subscription_body": "You don't have an active UniCloudFlow subscription. Subscribe from the Flow dashboard to manage billing here."
+    "no_subscription_body": "You don't have an active SimpleDeploy subscription. Subscribe from the SimpleDeploy dashboard to manage billing here."
   }
 }

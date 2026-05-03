@@ -74,6 +74,7 @@ export interface PricingRequest {
 
 export interface ObjectStorageRequest {
   region: string;
+  availability_zone?: string;
   productable_id?: number | null;
   tier_id: number | null;
   quantity: number | string;
@@ -107,6 +108,14 @@ export interface TotalDiscount {
   label?: string | null;
 }
 
+/**
+ * Quote+Invoice convergence — the wizard's final step lets the user
+ * decide whether the document should be saved as a Quote (draft document
+ * pre-acceptance) or generated as an Invoice. The string is forwarded
+ * to the `intent` field on the multi-quotes API.
+ */
+export type QuoteInvoiceIntent = "quote" | "invoice";
+
 export interface InvoiceFormData {
   // Step 1: Info
   subject: string;
@@ -116,6 +125,9 @@ export interface InvoiceFormData {
   bill_to_name: string;
   invoice_date: string;
   due_date: string;
+
+  // Final step: Save as Quote vs Generate Invoice
+  intent: QuoteInvoiceIntent;
 
   // Total discount
   apply_total_discount: boolean;
@@ -148,6 +160,7 @@ export interface InvoiceFormData {
 
   // Silo Storage staging fields
   object_storage_region: string;
+  object_storage_availability_zone?: string;
   object_storage_product_id: number | null;
   object_storage_quantity: number;
   object_storage_months: number;
@@ -173,9 +186,60 @@ export interface AssignmentDetails {
   user?: unknown;
 }
 
+export interface FlowPlanLineItem {
+  id: string;
+  plan_id: number;
+  plan_name: string;
+  monthly_naira: number; // resolved per-month price in NGN
+  quantity: number;
+  months: number;
+  total_price?: number;
+  currency?: string;
+  unit_summary?: string;
+}
+
+export interface ShieldServiceLineItem {
+  id: string;
+  service_id: number;
+  service_name: string;
+  provider: string;
+  unit_label: string | null;
+  unit_price: number;
+  currency: string;
+  quantity: number; // domains, certs, attacks, …
+  months: number;
+  billing_model: string; // monthly_flat | one_time | per_usage | …
+  total_price?: number;
+  unit_summary?: string;
+}
+
+export interface MeteredLineItem {
+  id: string;
+  metric_id: number;
+  metric_key: string;
+  metric_label: string;
+  unit: string; // per-vm-month, per-gb, …
+  unit_price: number;
+  currency: string;
+  estimated_quantity: number; // operator-projected usage for the month
+  months: number;
+  total_price?: number;
+  unit_summary?: string;
+}
+
 export interface CalculatorData {
   pricing_requests: PricingRequest[];
   object_storage_items: ObjectStorageRequest[];
+  // Track-3 add-ons surfaced through dedicated admin pricing pages
+  // (SimpleDeploy plans, Shield/StormWall packages, AnyCloudFlow
+  // services, usage-based metrics). Each is a separate bucket on the
+  // calculator so the totals can be grouped by track in the summary.
+  // AnyCloudFlow shares the same line-item shape as Shield because
+  // both are IntegrationProduct-backed services.
+  flow_plan_items?: FlowPlanLineItem[];
+  shield_items?: ShieldServiceLineItem[];
+  anycloudflow_items?: ShieldServiceLineItem[];
+  metered_items?: MeteredLineItem[];
   apply_total_discount: boolean;
   total_discount_type: string;
   total_discount_value: string | number;
@@ -221,8 +285,16 @@ export interface InvoicePayload {
 
 export interface InvoiceData {
   payload: InvoicePayload;
-  pdf: string;
+  pdf?: string;
   filename?: string;
+  // Persisted IDs surfaced by QuoteMultiInvoiceController::store on the
+  // wrapper object alongside `payload` (the controller also folds them
+  // into payload itself). Quotes carry `quote_number` and `status="quote"`.
+  invoice_id?: number;
+  invoice_uuid?: string;
+  invoice_number?: string | null;
+  quote_number?: string | null;
+  status?: string;
 }
 
 export interface InvoiceResponse {

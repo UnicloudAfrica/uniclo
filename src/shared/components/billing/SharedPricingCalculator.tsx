@@ -32,6 +32,10 @@ const SharedPricingCalculator: React.FC<SharedPricingCalculatorProps> = ({
   const [calculatorData, setCalculatorData] = useState<CalculatorData>({
     pricing_requests: [],
     object_storage_items: [],
+    flow_plan_items: [],
+    shield_items: [],
+    anycloudflow_items: [],
+    metered_items: [],
     apply_total_discount: false,
     total_discount_type: "percent",
     total_discount_value: "",

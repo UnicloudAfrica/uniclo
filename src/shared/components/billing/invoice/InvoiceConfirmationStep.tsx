@@ -1,8 +1,8 @@
 import React from "react";
-import { Download, CheckCircle, FileText, Plus } from "lucide-react";
+import { Download, CheckCircle, FileText, Plus, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ModernCard, ModernButton, ModernTable, Column } from "../../ui";
-import { InvoiceResponse, LineItem } from "../types";
+import { InvoiceResponse, LineItem, QuoteInvoiceIntent } from "../types";
 import logger from "@/utils/logger";
 
 const formatCurrency = (amount: number | null | undefined, currency: string = "USD") => {
@@ -84,20 +84,32 @@ const TotalsCard: React.FC<{ amounts: Amounts }> = ({ amounts }) => (
 
 interface InvoiceConfirmationStepProps {
   apiResponse: InvoiceResponse | null;
+  intent?: QuoteInvoiceIntent;
+  /** Detail base path used to deep-link into the saved Quote / Invoice. */
+  detailBasePath?: string;
 }
 
-const InvoiceConfirmationStep: React.FC<InvoiceConfirmationStepProps> = ({ apiResponse }) => {
+const InvoiceConfirmationStep: React.FC<InvoiceConfirmationStepProps> = ({
+  apiResponse,
+  intent = "invoice",
+  detailBasePath = "/admin-dashboard/invoices",
+}) => {
   const navigate = useNavigate();
+  const isQuote = intent === "quote";
 
   logger.log("API Response:", apiResponse); // Debug log
 
   if (!apiResponse?.invoices?.length) {
     return (
       <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-8 text-center text-sm text-slate-500">
-        No invoice details available yet.
+        {isQuote
+          ? "No quote details available yet."
+          : "No invoice details available yet."}
       </div>
     );
   }
+
+  const documentLabel = isQuote ? "Quote" : "Invoice";
 
   return (
     <div className="space-y-8">
@@ -106,9 +118,13 @@ const InvoiceConfirmationStep: React.FC<InvoiceConfirmationStepProps> = ({ apiRe
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-4 ring-emerald-100">
           <CheckCircle className="h-9 w-9" />
         </div>
-        <h3 className="text-xl font-bold text-slate-900">Invoice Generated Successfully</h3>
+        <h3 className="text-xl font-bold text-slate-900">
+          {isQuote ? "Quote Saved Successfully" : "Invoice Generated Successfully"}
+        </h3>
         <p className="text-sm text-slate-500">
-          Your invoice has been created and is ready to download or share.
+          {isQuote
+            ? "Your quote has been saved. The customer can review it before you convert it into an invoice."
+            : "Your invoice has been created and is ready to download or share."}
         </p>
       </div>
 
@@ -160,8 +176,20 @@ const InvoiceConfirmationStep: React.FC<InvoiceConfirmationStepProps> = ({ apiRe
             },
           ];
 
+          // For quotes the persisted document is keyed by `quote_number`
+          // (the wrapper exposes both that and `invoice_uuid`). We prefer
+          // the UUID for routing because the InvoiceDetail component
+          // resolves rows by `uuid`.
+          const documentNumber =
+            (isQuote ? invoiceData.quote_number : invoiceData.invoice_number) ??
+            invoice.invoice_number;
+          const persistedUuid = invoiceData.invoice_uuid;
+          const detailHref = persistedUuid
+            ? `${detailBasePath}/${persistedUuid}`
+            : null;
+
           return (
-            <ModernCard key={invoice.invoice_number} padding="xl" className="space-y-6">
+            <ModernCard key={documentNumber} padding="xl" className="space-y-6">
               {/* Invoice Header */}
               <div className="flex items-start justify-between border-b border-slate-200 pb-6">
                 <div className="flex items-start gap-4">
@@ -170,9 +198,11 @@ const InvoiceConfirmationStep: React.FC<InvoiceConfirmationStepProps> = ({ apiRe
                   </div>
                   <div>
                     <h4 className="text-lg font-semibold text-slate-900">
-                      {invoice.subject || "Invoice"}
+                      {invoice.subject || documentLabel}
                     </h4>
-                    <p className="text-sm text-slate-500">Invoice #{invoice.invoice_number}</p>
+                    <p className="text-sm text-slate-500">
+                      {documentLabel} #{documentNumber}
+                    </p>
                     <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
                       <span>Bill To: {invoice.bill_to?.name || invoice.bill_to_name}</span>
                       {invoice.issued_at && (
@@ -185,19 +215,32 @@ const InvoiceConfirmationStep: React.FC<InvoiceConfirmationStepProps> = ({ apiRe
                     </div>
                   </div>
                 </div>
-                <ModernButton
-                  variant="primary"
-                  size="sm"
-                  leftIcon={<Download className="h-4 w-4" />}
-                  onClick={() =>
-                    downloadPdf(
-                      invoiceData.pdf,
-                      invoiceData.filename || `invoice-${invoice.invoice_number}.pdf`
-                    )
-                  }
-                >
-                  Download PDF
-                </ModernButton>
+                <div className="flex flex-col items-end gap-2">
+                  <ModernButton
+                    variant="primary"
+                    size="sm"
+                    leftIcon={<Download className="h-4 w-4" />}
+                    onClick={() =>
+                      downloadPdf(
+                        invoiceData.pdf,
+                        invoiceData.filename ||
+                          `${isQuote ? "quote" : "invoice"}-${documentNumber}.pdf`
+                      )
+                    }
+                  >
+                    Download PDF
+                  </ModernButton>
+                  {detailHref && (
+                    <ModernButton
+                      variant="outline"
+                      size="sm"
+                      leftIcon={<ExternalLink className="h-4 w-4" />}
+                      onClick={() => navigate(detailHref)}
+                    >
+                      View {documentLabel}
+                    </ModernButton>
+                  )}
+                </div>
               </div>
 
               {/* Line Items */}
@@ -245,7 +288,7 @@ const InvoiceConfirmationStep: React.FC<InvoiceConfirmationStepProps> = ({ apiRe
           leftIcon={<Plus className="h-5 w-5" />}
           onClick={() => globalThis.window.location.reload()}
         >
-          Create Another Invoice
+          Create Another {documentLabel}
         </ModernButton>
         <ModernButton variant="primary" size="lg" onClick={() => navigate("/admin-dashboard")}>
           Back to Dashboard

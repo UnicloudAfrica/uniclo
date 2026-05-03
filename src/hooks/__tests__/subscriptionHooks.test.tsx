@@ -62,7 +62,7 @@ describe("subscriptionHooks — envelope handling", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(mockSilentApi).toHaveBeenCalledWith("GET", "/admin/v1/subscription-plans/p_1");
+    expect(mockSilentApi).toHaveBeenCalledWith("GET", "/subscription-plans/p_1");
     expect(result.current.data).toMatchObject({ id: "p_1", name: "Pro" });
   });
 
@@ -93,7 +93,7 @@ describe("subscriptionHooks — envelope handling", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(mockSilentApi).toHaveBeenCalledWith("GET", "/admin/v1/subscriptions", {
+    expect(mockSilentApi).toHaveBeenCalledWith("GET", "/subscriptions", {
       status: "active",
       page: 2,
     });
@@ -118,7 +118,7 @@ describe("subscriptionHooks — mutation cache invalidation", () => {
       await result.current.mutateAsync({ id: "sub_1", reason: "downgrade" });
     });
 
-    expect(mockApi).toHaveBeenCalledWith("POST", "/admin/v1/subscriptions/sub_1/cancel", {
+    expect(mockApi).toHaveBeenCalledWith("POST", "/subscriptions/sub_1/cancel", {
       reason: "downgrade",
       note: undefined,
       immediately: undefined,
@@ -146,7 +146,7 @@ describe("subscriptionHooks — mutation cache invalidation", () => {
       });
     });
 
-    expect(mockApi).toHaveBeenCalledWith("POST", "/admin/v1/subscriptions/sub_1/change-plan", {
+    expect(mockApi).toHaveBeenCalledWith("POST", "/subscriptions/sub_1/change-plan", {
       plan_id: "new_plan",
       prorate: true,
     });

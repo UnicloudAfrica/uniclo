@@ -1,12 +1,16 @@
 /**
  * Thin typed wrapper around the UniCloud → AnyCloudFlow proxy routes.
- * All requests hit `/v1/integrations/anycloudflow/*` which UniCloud's
- * `AnyCloudFlowSecurityController` forwards to AnyCloudFlow with the
- * tenant's integration credentials.
+ *
+ * The shared `api` client already prepends the role-scoped prefix
+ * (`/admin/v1`, `/tenant/v1`, or `/api/v1`) — see config.adminURL etc.
+ * So `base` here MUST start at `/integrations/anycloudflow`, not
+ * `/v1/integrations/anycloudflow`. The previous `/v1/` here produced
+ * URLs like `/admin/v1/v1/integrations/anycloudflow/bucket-endpoints`,
+ * which 404'd on the backend.
  */
 import api from "@/lib/api";
 
-const base = "/v1/integrations/anycloudflow";
+const base = "/integrations/anycloudflow";
 
 export const acfApi = {
   // 2FA
@@ -420,13 +424,13 @@ export const acfApi = {
         .filter(([, v]) => v !== undefined && v !== "")
         .map(([k, v]) => [k, String(v)])
     ).toString();
-    return api.get(`/v1/client/anycloudflow/bucket/endpoints${qs ? `?${qs}` : ""}`);
+    return api.get(`/client/anycloudflow/bucket/endpoints${qs ? `?${qs}` : ""}`);
   },
   getClientBucketEndpoint: (id: string) =>
-    api.get(`/v1/client/anycloudflow/bucket/endpoints/${encodeURIComponent(id)}`),
+    api.get(`/client/anycloudflow/bucket/endpoints/${encodeURIComponent(id)}`),
   getClientBucketEndpointIamPolicy: (id: string, role: "source" | "target" = "source") =>
     api.get(
-      `/v1/client/anycloudflow/bucket/endpoints/${encodeURIComponent(id)}/iam-policy?role=${role}`
+      `/client/anycloudflow/bucket/endpoints/${encodeURIComponent(id)}/iam-policy?role=${role}`
     ),
 
   listClientBucketMigrations: (q: Record<string, string | number | undefined> = {}) => {
@@ -435,18 +439,18 @@ export const acfApi = {
         .filter(([, v]) => v !== undefined && v !== "")
         .map(([k, v]) => [k, String(v)])
     ).toString();
-    return api.get(`/v1/client/anycloudflow/bucket/migrations${qs ? `?${qs}` : ""}`);
+    return api.get(`/client/anycloudflow/bucket/migrations${qs ? `?${qs}` : ""}`);
   },
   getClientBucketMigration: (id: string) =>
-    api.get(`/v1/client/anycloudflow/bucket/migrations/${encodeURIComponent(id)}`),
+    api.get(`/client/anycloudflow/bucket/migrations/${encodeURIComponent(id)}`),
   getClientBucketMigrationProgress: (id: string) =>
-    api.get(`/v1/client/anycloudflow/bucket/migrations/${encodeURIComponent(id)}/progress`),
+    api.get(`/client/anycloudflow/bucket/migrations/${encodeURIComponent(id)}/progress`),
   getClientBucketMigrationFailures: (id: string, page = 1) =>
     api.get(
-      `/v1/client/anycloudflow/bucket/migrations/${encodeURIComponent(id)}/failures?page=${page}`
+      `/client/anycloudflow/bucket/migrations/${encodeURIComponent(id)}/failures?page=${page}`
     ),
   getClientBucketMigrationManifest: (id: string) =>
-    api.get(`/v1/client/anycloudflow/bucket/migrations/${encodeURIComponent(id)}/manifest`),
+    api.get(`/client/anycloudflow/bucket/migrations/${encodeURIComponent(id)}/manifest`),
 
   listClientBucketReplications: (q: Record<string, string | number | undefined> = {}) => {
     const qs = new URLSearchParams(
@@ -454,12 +458,12 @@ export const acfApi = {
         .filter(([, v]) => v !== undefined && v !== "")
         .map(([k, v]) => [k, String(v)])
     ).toString();
-    return api.get(`/v1/client/anycloudflow/bucket/replications${qs ? `?${qs}` : ""}`);
+    return api.get(`/client/anycloudflow/bucket/replications${qs ? `?${qs}` : ""}`);
   },
   getClientBucketReplication: (id: string) =>
-    api.get(`/v1/client/anycloudflow/bucket/replications/${encodeURIComponent(id)}`),
+    api.get(`/client/anycloudflow/bucket/replications/${encodeURIComponent(id)}`),
   getClientBucketReplicationHealth: (id: string) =>
-    api.get(`/v1/client/anycloudflow/bucket/replications/${encodeURIComponent(id)}/health`),
+    api.get(`/client/anycloudflow/bucket/replications/${encodeURIComponent(id)}/health`),
   getClientBucketReplicationChangeFeed: (id: string, query: { page?: number; per_page?: number; status?: string } = {}) => {
     const qs = new URLSearchParams(
       Object.entries(query).reduce<Record<string, string>>((acc, [k, v]) => {
@@ -467,19 +471,19 @@ export const acfApi = {
         return acc;
       }, {})
     ).toString();
-    return api.get(`/v1/client/anycloudflow/bucket/replications/${encodeURIComponent(id)}/change-feed${qs ? `?${qs}` : ""}`);
+    return api.get(`/client/anycloudflow/bucket/replications/${encodeURIComponent(id)}/change-feed${qs ? `?${qs}` : ""}`);
   },
   listClientBucketReplicationConflicts: (id: string, page = 1) =>
-    api.get(`/v1/client/anycloudflow/bucket/replications/${encodeURIComponent(id)}/conflicts?page=${page}`),
+    api.get(`/client/anycloudflow/bucket/replications/${encodeURIComponent(id)}/conflicts?page=${page}`),
 
   // Capabilities + pricing — same payloads as admin surface, reachable
   // from the client surface with client scopes.
   getClientBucketProviderCapabilities: () =>
-    api.get(`/v1/client/anycloudflow/bucket/providers/capabilities`),
+    api.get(`/client/anycloudflow/bucket/providers/capabilities`),
   getClientBucketMigrationPricing: (gb: number) =>
-    api.get(`/v1/client/anycloudflow/bucket/pricing/migration?gb=${Math.max(0, Math.floor(gb))}`),
+    api.get(`/client/anycloudflow/bucket/pricing/migration?gb=${Math.max(0, Math.floor(gb))}`),
   getClientBucketReplicationPricing: () =>
-    api.get(`/v1/client/anycloudflow/bucket/pricing/replication-active-passive`),
+    api.get(`/client/anycloudflow/bucket/pricing/replication-active-passive`),
 };
 
 /**

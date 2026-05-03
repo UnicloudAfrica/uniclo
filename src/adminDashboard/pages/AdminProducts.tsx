@@ -4,7 +4,6 @@ import {
   Plus,
   Package,
   Globe,
-  DollarSign,
   Zap,
   Wifi,
   HardDrive,
@@ -26,7 +25,7 @@ import {
 import ResourceHero from "@/shared/components/ui/ResourceHero";
 import ResourceDataExplorer from "../components/ResourceDataExplorer";
 import PricingSideMenu from "../components/pricingSideMenu";
-import { useFetchRegions } from "@/hooks/adminHooks/regionHooks";
+import { useFetchRegions, useFetchAvailabilityZones } from "@/hooks/adminHooks/regionHooks";
 import { useFetchCountries } from "@/hooks/resource";
 import { useFetchProducts } from "@/hooks/adminHooks/adminProductHooks";
 import { useFetchProductPricing } from "@/hooks/adminHooks/adminProductPricingHooks";
@@ -94,11 +93,36 @@ interface ExplorerColumn {
   render?: (row: Record<string, unknown>) => React.ReactNode;
 }
 
-const formatCurrency = (value: number | string | null | undefined) => {
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  NGN: "₦",
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+  KES: "KSh",
+  ZAR: "R",
+  GHS: "₵",
+};
+
+const formatCurrency = (
+  value: number | string | null | undefined,
+  currency: string | null | undefined = "USD",
+) => {
   if (value === null || value === undefined || Number.isNaN(Number(value))) {
     return "—";
   }
-  return `$${Number(value).toFixed(2)}`;
+  const code = (currency || "USD").toUpperCase();
+  const amount = Number(value);
+  // Try the locale-aware Intl formatter first (handles minor units, separators).
+  try {
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: code,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    const symbol = CURRENCY_SYMBOLS[code] ?? `${code} `;
+    return `${symbol}${amount.toFixed(2)}`;
+  }
 };
 
 const deriveProductStats = (rows: ProductRow[]) => {
@@ -412,6 +436,7 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("");
   const [selectedCountryCode, setSelectedCountryCode] = useState("");
+  const [selectedAz, setSelectedAz] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<ProductRow | null>(null);
   const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -420,6 +445,16 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
 
   const { isLoading } = useAuthRedirect();
   const { isFetching: isRegionsFetching, data: regionsData } = useFetchRegions();
+  // AZ list is region-scoped; fetch only when a region is selected.
+  const { isFetching: isAzsFetching, data: azsData } = useFetchAvailabilityZones(
+    selectedRegion || null,
+  );
+  const azOptions = useMemo(() => {
+    if (!Array.isArray(azsData)) return [];
+    return (azsData as Array<{ code: string; name?: string; is_active?: boolean }>)
+      .filter((az) => az.is_active !== false)
+      .map((az) => ({ code: az.code, name: az.name || az.code }));
+  }, [azsData]);
   const { isFetching: isCountriesFetching, data: countriesData } = useFetchCountries();
   const regions = useMemo<RegionOption[]>(
     () => (Array.isArray(regionsData) ? (regionsData as unknown as RegionOption[]) : []),
@@ -520,10 +555,22 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
     );
   }, [filteredByType, selectedRegion]);
 
-  const searchedRows = useMemo(() => {
-    if (!searchQuery.trim()) return filteredByRegion;
-    const query = searchQuery.trim().toLowerCase();
+  const filteredByAz = useMemo(() => {
+    if (!selectedAz) return filteredByRegion;
+    const target = selectedAz.toLowerCase();
     return filteredByRegion.filter((item) => {
+      const rowAz = ((item as { availability_zone?: string }).availability_zone || "").toLowerCase();
+      // Some seeded rows store the AZ code in the `region` column (object
+      // storage products are keyed that way). Match either column.
+      const rowRegion = (item.region || "").toLowerCase();
+      return rowAz === target || rowRegion === target;
+    });
+  }, [filteredByRegion, selectedAz]);
+
+  const searchedRows = useMemo(() => {
+    if (!searchQuery.trim()) return filteredByAz;
+    const query = searchQuery.trim().toLowerCase();
+    return filteredByAz.filter((item) => {
       const name = (item.name || "").toLowerCase();
       const identifier = (item.identifier || "").toLowerCase();
       return (
@@ -532,7 +579,7 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
         (item.region || "").toLowerCase().includes(query)
       );
     });
-  }, [filteredByRegion, searchQuery]);
+  }, [filteredByAz, searchQuery]);
 
   const rowsWithPricing = useMemo(() => {
     if (!pricingLookup.size) return searchedRows;
@@ -560,9 +607,16 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
       }
       if (!pricingMatch) return row;
       const price = pricingMatch.price_usd ?? pricingMatch.price_local ?? row.price ?? null;
+      // Carry the currency through so the Price column can render
+      // `₦4,060` for NGN-denominated SKUs and `$0.16` for USD ones.
+      const currency =
+        (pricingMatch as { currency_code?: string | null }).currency_code ??
+        (row as { currency_code?: string | null }).currency_code ??
+        null;
       return {
         ...row,
         price,
+        currency_code: currency,
       };
     });
   }, [searchedRows, pricingLookup]);
@@ -600,11 +654,18 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
   const handleCountryChange = (countryCode: string) => {
     setSelectedCountryCode(countryCode);
     setSelectedRegion("");
+    setSelectedAz("");
     setPage(1);
   };
 
   const handleRegionChange = (regionCode: string) => {
     setSelectedRegion(regionCode);
+    setSelectedAz("");
+    setPage(1);
+  };
+
+  const handleAzChange = (azCode: string) => {
+    setSelectedAz(azCode);
     setPage(1);
   };
 
@@ -696,11 +757,17 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
       key: "price",
       align: "right",
       render: (rowData: Record<string, unknown>) => {
-        const row = rowData as ProductRow;
+        const row = rowData as ProductRow & { currency_code?: string | null };
+        if (row.price === null || row.price === undefined || row.price === "") {
+          return (
+            <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500">
+              No price
+            </span>
+          );
+        }
         return (
-          <span className="inline-flex items-center gap-1 text-sm font-semibold text-slate-900">
-            <DollarSign className="h-3.5 w-3.5 text-slate-400" />
-            {formatCurrency(row.price)}
+          <span className="text-sm font-semibold text-slate-900">
+            {formatCurrency(row.price, row.currency_code)}
           </span>
         );
       },
@@ -777,7 +844,7 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
 
   const addProductButton = (
     <ModernButton
-      onClick={() => navigate("/admin-dashboard/products/add")}
+      onClick={() => navigate("/admin-dashboard/catalog/add")}
       className="flex items-center gap-2"
     >
       <Plus size={16} />
@@ -786,7 +853,7 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
   );
 
   const filterControls = (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <div className="flex flex-col gap-1">
         <label htmlFor="country-select" className="text-sm font-medium text-slate-600">
           Country
@@ -838,6 +905,34 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
             {regions.map((region) => (
               <option key={region.code} value={region.code}>
                 {getRegionOptionLabel(region)}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        </div>
+      </div>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="az-select" className="text-sm font-medium text-slate-600">
+          Availability Zone
+        </label>
+        <div className="relative">
+          <select
+            id="az-select"
+            value={selectedAz}
+            onChange={(event) => handleAzChange(event.target.value)}
+            className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={!selectedRegion || isAzsFetching}
+          >
+            <option value="">
+              {!selectedRegion
+                ? "Pick a region first"
+                : isAzsFetching
+                  ? "Loading zones..."
+                  : "All availability zones"}
+            </option>
+            {azOptions.map((az) => (
+              <option key={az.code} value={az.code}>
+                {az.name}
               </option>
             ))}
           </select>

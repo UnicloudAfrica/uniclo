@@ -118,7 +118,7 @@ const MarkdownContent: React.FC<{ content: string }> = ({ content }) => {
             <a
               href={href}
               className="underline"
-              style={{ color: "var(--theme-color, #0A5E3E)" }}
+              style={{ color: "var(--theme-color, #288DD1)" }}
               {...props}
             >
               {children}

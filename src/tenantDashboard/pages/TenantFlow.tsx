@@ -4,7 +4,7 @@ import FlowDashboard from "@/shared/components/flow/FlowDashboard";
 const TenantFlow = () => {
   return (
     <TenantPageShell
-      title="UniCloudFlow"
+      title="SimpleDeploy"
       description="Automated server provisioning, site deployments, and SSL management."
     >
       <FlowDashboard basePath="/dashboard/flow" />

@@ -7,7 +7,7 @@
  *   - Side-menu navigation for sub-sections (servers, sites, git providers, etc.)
  */
 import React, { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   useFlowApi,
@@ -75,16 +75,50 @@ const FLOW_TABS: FlowTab[] = [
   { id: "ssl", name: "SSL Certificates", caption: "Certificate management", icon: Shield },
 ];
 
+const VALID_TAB_IDS = FLOW_TABS.map((t) => t.id);
+
 const FlowDashboard: React.FC<FlowDashboardProps> = ({ basePath }) => {
   const navigate = useNavigate();
   const api = useFlowApi();
   const { t } = useTranslation("flow");
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<FlowStatus | null>(null);
   const [plans, setPlans] = useState<FlowPlan[]>([]);
   const [servers, setServers] = useState<FlowServer[]>([]);
-  const [activeTab, setActiveTab] = useState("overview");
+  // Read the initial tab from the URL — lets sidebar submenus deep-link
+  // straight into a section (e.g. /dashboard/flow?tab=sites).
+  const tabFromUrl = searchParams.get("tab") ?? "overview";
+  const initialTab = VALID_TAB_IDS.includes(tabFromUrl) ? tabFromUrl : "overview";
+  const [activeTab, setActiveTabState] = useState(initialTab);
+
+  // Wrap setActiveTab so every change keeps `?tab=` in sync. Browser
+  // back/forward then navigates between sections, and refresh stays on
+  // the same tab the user was viewing.
+  const setActiveTab = useCallback(
+    (next: string) => {
+      setActiveTabState(next);
+      const sp = new URLSearchParams(searchParams);
+      if (next === "overview") {
+        sp.delete("tab");
+      } else {
+        sp.set("tab", next);
+      }
+      setSearchParams(sp, { replace: false });
+    },
+    [searchParams, setSearchParams],
+  );
+
+  // If the URL changes from outside (sidebar nav, back button), follow it.
+  useEffect(() => {
+    const fromUrl = searchParams.get("tab") ?? "overview";
+    const next = VALID_TAB_IDS.includes(fromUrl) ? fromUrl : "overview";
+    if (next !== activeTab) {
+      setActiveTabState(next);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
   const [subscribing, setSubscribing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -154,7 +188,7 @@ const FlowDashboard: React.FC<FlowDashboardProps> = ({ basePath }) => {
   };
 
   const handleCancel = async () => {
-    if (!window.confirm("Are you sure you want to cancel your UniCloudFlow subscription?")) return;
+    if (!window.confirm("Are you sure you want to cancel your SimpleDeploy subscription?")) return;
     try {
       await api.cancel();
       await fetchData();
@@ -234,7 +268,7 @@ const FlowDashboard: React.FC<FlowDashboardProps> = ({ basePath }) => {
     return (
       <div className="space-y-6">
         <ResourceHero
-          title="UniCloudFlow"
+          title="SimpleDeploy"
           subtitle="Deployment Platform"
           description="Automated server provisioning, site deployments, and SSL management — powered by LeanPloy. Start with a free 30-day trial."
           metrics={heroMetrics}
@@ -318,7 +352,7 @@ const FlowDashboard: React.FC<FlowDashboardProps> = ({ basePath }) => {
   return (
     <div className="space-y-6">
       <ResourceHero
-        title="UniCloudFlow"
+        title="SimpleDeploy"
         subtitle={sub?.plan?.name || "Deployment Platform"}
         description="Manage your servers, deploy sites, and configure SSL — all from one dashboard."
         metrics={heroMetrics}
@@ -359,7 +393,7 @@ const FlowDashboard: React.FC<FlowDashboardProps> = ({ basePath }) => {
         <ModernCard className="border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
-              Your free trial has expired. Upgrade to continue using UniCloudFlow.
+              Your free trial has expired. Upgrade to continue using SimpleDeploy.
             </p>
             <ModernButton
               onClick={() => navigate(`${basePath}/upgrade`)}
@@ -644,7 +678,7 @@ const ServersTab: React.FC<{
         <div>
           <h3 className="text-base font-semibold text-slate-900 dark:text-white">Servers</h3>
           <p className="mt-0.5 text-sm text-slate-500">
-            Manage servers linked to your UniCloudFlow subscription.
+            Manage servers linked to your SimpleDeploy subscription.
           </p>
         </div>
       </div>
@@ -717,6 +751,11 @@ const SitesTab: React.FC<{ servers: FlowServer[] }> = ({ servers }) => {
     null,
   );
 
+  // Use the server-id list as the dep, not the array reference. The
+  // parent re-creates `servers` on each render even when the contents
+  // don't change — that previously thrashed this useCallback +
+  // dependent useEffect into an infinite loop (RESULT_CODE_HUNG).
+  const serverIdsKey = servers.map((s) => s.id).join(",");
   const refetch = useCallback(async () => {
     setLoading(true);
     try {
@@ -732,13 +771,14 @@ const SitesTab: React.FC<{ servers: FlowServer[] }> = ({ servers }) => {
       );
       const next: Record<number, FlowSite[]> = {};
       for (const [id, sites] of results) {
-        next[id] = sites;
+        next[id] = [...sites]; // narrow `readonly []` to mutable `FlowSite[]`
       }
       setSitesByServer(next);
     } finally {
       setLoading(false);
     }
-  }, [api, servers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- serverIdsKey is the stable identity for `servers`
+  }, [api, serverIdsKey]);
 
   useEffect(() => {
     void refetch();

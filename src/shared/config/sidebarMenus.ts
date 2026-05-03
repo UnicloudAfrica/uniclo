@@ -57,6 +57,8 @@ import {
   Activity,
   Radio,
   Flame,
+  Rocket,
+  GitBranch,
 } from "lucide-react";
 
 type InfraRole = "admin" | "tenant" | "client";
@@ -453,6 +455,61 @@ export const adminMenuItems: MenuEntry[] = [
     path: "/admin-dashboard/agent",
   },
   {
+    // SimpleDeploy = customer-facing brand for the LeanPloy-powered
+    // managed-deployment surface. Internally the subsystem is still
+    // UniCloudFlow; only the sidebar label is rebranded. Each child
+    // deep-links into the dashboard's tab via ?tab=… (read by
+    // FlowDashboard on mount + on URL change).
+    name: "SimpleDeploy",
+    icon: Rocket,
+    isLucide: true,
+    requiredPermission: "instances.view",
+    children: [
+      {
+        name: "Overview",
+        icon: Layers,
+        isLucide: true,
+        requiredPermission: "instances.view",
+        path: "/admin-dashboard/flow-dashboard",
+      },
+      {
+        name: "Servers",
+        icon: Server,
+        isLucide: true,
+        requiredPermission: "instances.view",
+        path: "/admin-dashboard/flow-dashboard?tab=servers",
+      },
+      {
+        name: "Sites & Deployments",
+        icon: Globe,
+        isLucide: true,
+        requiredPermission: "instances.view",
+        path: "/admin-dashboard/flow-dashboard?tab=sites",
+      },
+      {
+        name: "Git Providers",
+        icon: GitBranch,
+        isLucide: true,
+        requiredPermission: "instances.view",
+        path: "/admin-dashboard/flow-dashboard?tab=git-providers",
+      },
+      {
+        name: "Databases",
+        icon: Database,
+        isLucide: true,
+        requiredPermission: "instances.view",
+        path: "/admin-dashboard/flow-dashboard?tab=databases",
+      },
+      {
+        name: "SSL Certificates",
+        icon: Shield,
+        isLucide: true,
+        requiredPermission: "instances.view",
+        path: "/admin-dashboard/flow-dashboard?tab=ssl",
+      },
+    ],
+  },
+  {
     name: "Object Storage",
     icon: HardDrive,
     isLucide: true,
@@ -534,6 +591,10 @@ export const adminMenuItems: MenuEntry[] = [
         requiredPermission: "billing.view",
         path: "/admin-dashboard/payment",
       },
+      // Pricing surfaces — single entry. The Pricing page itself is a
+      // unified shell with a left menu listing every priceable product
+      // (catalog SKUs, third-party services, pay-as-you-go meters), so
+      // there are no track-specific entries here anymore.
       {
         name: "Pricing",
         icon: DollarSign,
@@ -542,18 +603,39 @@ export const adminMenuItems: MenuEntry[] = [
         path: "/admin-dashboard/pricing",
       },
       {
-        name: "Pricing Calculator",
-        icon: Calculator,
+        name: "Exchange Rates",
+        icon: ArrowLeftRight,
         isLucide: true,
-        requiredPermission: "pricing.view",
-        path: "/admin-dashboard/pricing-calculator",
+        requiredPermission: "exchange-rates.view",
+        path: "/admin-dashboard/exchange-rates",
       },
+      // Quote+Invoice convergence — the Pricing Calculator entry has
+      // moved into the wizard's first step (calculator becomes accessible
+      // from inside "New Quote / Invoice"), and the Generate Invoice
+      // entry is renamed to reflect the unified Quote vs Invoice toggle.
       {
-        name: "Generate Invoice",
+        name: "New Quote / Invoice",
         icon: FileText,
         isLucide: true,
         requiredPermission: "invoices.create",
         path: "/admin-dashboard/create-invoice",
+      },
+      {
+        name: "Quotes & Invoices",
+        icon: Receipt,
+        isLucide: true,
+        requiredPermission: "invoices.view",
+        path: "/admin-dashboard/invoices",
+      },
+      {
+        // Phase B — read-only accounting reports (trial balance, P&L,
+        // balance sheet, general ledger). Backed by the journal entries
+        // the InvoiceAccountingObserver posts on invoice issue/payment.
+        name: "Accounting",
+        icon: BookOpen,
+        isLucide: true,
+        requiredPermission: "accounting.view",
+        path: "/admin-dashboard/accounting",
       },
       {
         name: "Tax Configuration",
@@ -730,6 +812,63 @@ export const tenantMenuItems: MenuEntry[] = [
     path: "/dashboard/agent",
   },
   {
+    name: "SimpleDeploy",
+    icon: Rocket,
+    isLucide: true,
+    requiredPermission: "instances.view",
+    children: [
+      {
+        name: "Overview",
+        icon: Layers,
+        isLucide: true,
+        requiredPermission: "instances.view",
+        path: "/dashboard/flow",
+      },
+      {
+        name: "Servers",
+        icon: Server,
+        isLucide: true,
+        requiredPermission: "instances.view",
+        path: "/dashboard/flow?tab=servers",
+      },
+      {
+        name: "Sites & Deployments",
+        icon: Globe,
+        isLucide: true,
+        requiredPermission: "instances.view",
+        path: "/dashboard/flow?tab=sites",
+      },
+      {
+        name: "Git Providers",
+        icon: GitBranch,
+        isLucide: true,
+        requiredPermission: "instances.view",
+        path: "/dashboard/flow?tab=git-providers",
+      },
+      {
+        name: "Databases",
+        icon: Database,
+        isLucide: true,
+        requiredPermission: "instances.view",
+        path: "/dashboard/flow?tab=databases",
+      },
+      {
+        name: "SSL Certificates",
+        icon: Shield,
+        isLucide: true,
+        requiredPermission: "instances.view",
+        path: "/dashboard/flow?tab=ssl",
+      },
+      {
+        name: "Billing",
+        icon: CreditCard,
+        isLucide: true,
+        requiredPermission: "instances.view",
+        path: "/dashboard/flow/billing",
+      },
+    ],
+  },
+  {
     name: "Regional",
     icon: MapPin,
     isLucide: true,
@@ -769,15 +908,11 @@ export const tenantMenuItems: MenuEntry[] = [
         requiredPermission: "pricing.view",
         path: "/dashboard/pricing-overrides",
       },
+      // Quote+Invoice convergence — calculator folded into the wizard's
+      // first step; "Generate Invoice" replaced by the unified
+      // "New Quote / Invoice" entry.
       {
-        name: "Pricing Calculator",
-        icon: Calculator,
-        isLucide: true,
-        requiredPermission: "pricing.view",
-        path: "/dashboard/pricing-calculator",
-      },
-      {
-        name: "Generate Invoice",
+        name: "New Quote / Invoice",
         icon: FileText,
         isLucide: true,
         requiredPermission: "invoices.create",
@@ -805,11 +940,21 @@ export const tenantMenuItems: MenuEntry[] = [
         path: "/dashboard/billing",
       },
       {
-        name: "Invoices",
+        name: "Quotes & Invoices",
         icon: FileText,
         isLucide: true,
         requiredPermission: "invoices.view",
         path: "/dashboard/invoices",
+      },
+      {
+        // Phase B — read-only accounting reports for the tenant ledger.
+        // Same component used by admin; the hooks switch URL prefix
+        // automatically based on context.
+        name: "Accounting",
+        icon: BookOpen,
+        isLucide: true,
+        requiredPermission: "accounting.view",
+        path: "/dashboard/accounting",
       },
       {
         name: "POC Trials",
@@ -888,6 +1033,63 @@ export const buildClientMenuItems = (_hasProjects: boolean): MenuEntry[] => {
       path: "/client-dashboard/agent",
     },
     {
+      name: "SimpleDeploy",
+      icon: Rocket,
+      isLucide: true,
+      requiredPermission: "instances.view",
+      children: [
+        {
+          name: "Overview",
+          icon: Layers,
+          isLucide: true,
+          requiredPermission: "instances.view",
+          path: "/client-dashboard/flow",
+        },
+        {
+          name: "Servers",
+          icon: Server,
+          isLucide: true,
+          requiredPermission: "instances.view",
+          path: "/client-dashboard/flow?tab=servers",
+        },
+        {
+          name: "Sites & Deployments",
+          icon: Globe,
+          isLucide: true,
+          requiredPermission: "instances.view",
+          path: "/client-dashboard/flow?tab=sites",
+        },
+        {
+          name: "Git Providers",
+          icon: GitBranch,
+          isLucide: true,
+          requiredPermission: "instances.view",
+          path: "/client-dashboard/flow?tab=git-providers",
+        },
+        {
+          name: "Databases",
+          icon: Database,
+          isLucide: true,
+          requiredPermission: "instances.view",
+          path: "/client-dashboard/flow?tab=databases",
+        },
+        {
+          name: "SSL Certificates",
+          icon: Shield,
+          isLucide: true,
+          requiredPermission: "instances.view",
+          path: "/client-dashboard/flow?tab=ssl",
+        },
+        {
+          name: "Billing",
+          icon: CreditCard,
+          isLucide: true,
+          requiredPermission: "instances.view",
+          path: "/client-dashboard/flow/billing",
+        },
+      ],
+    },
+    {
       // Path C — client view of AnyCloudFlow bucket subsystem. Mirrors the
       // admin "Object Storage" group but read-only: the underlying routes
       // forward an X-Acf-Client-Id header so AcF automatically narrows the
@@ -932,6 +1134,13 @@ export const buildClientMenuItems = (_hasProjects: boolean): MenuEntry[] => {
       isLucide: true,
       requiredPermission: "billing.view",
       path: "/client-dashboard/orders-payments",
+    },
+    {
+      name: "Invoices",
+      icon: Receipt,
+      isLucide: true,
+      requiredPermission: "billing.view",
+      path: "/client-dashboard/invoices",
     },
     {
       name: "Developer",

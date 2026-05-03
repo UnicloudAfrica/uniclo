@@ -9,8 +9,7 @@ import { ModernButton } from "../ui";
 import InvoiceWizardStepper from "./invoice/InvoiceWizardStepper";
 import InvoiceInfoStep from "./invoice/InvoiceInfoStep";
 import InvoiceItemsStep from "./invoice/InvoiceItemsStep";
-import InvoiceSummaryStep from "./invoice/InvoiceSummaryStep";
-import InvoiceFinalReviewStep from "./invoice/InvoiceFinalReviewStep";
+import InvoiceReviewStep from "./invoice/InvoiceReviewStep";
 import InvoiceConfirmationStep from "./invoice/InvoiceConfirmationStep";
 import ToastUtils from "@/utils/toastUtil";
 import {
@@ -48,6 +47,9 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
     bill_to_name: "",
     invoice_date: todayValue,
     due_date: dueValue,
+    // Quote+Invoice convergence — default to "invoice" so legacy callers
+    // and back-compat tests keep their current behaviour.
+    intent: "invoice",
     // Total discount fields
     apply_total_discount: false,
     total_discount_type: "percent",
@@ -75,6 +77,7 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
     floating_ip_count: 0,
     // Silo Storage fields
     object_storage_region: "",
+    object_storage_availability_zone: "",
     object_storage_product_id: null,
     object_storage_quantity: 1000,
     object_storage_months: 1,
@@ -166,13 +169,27 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
     }
   ) as { data: ProductPricing[] | undefined; isFetching: boolean };
 
+  // Storage products are seeded per-AZ — each ObjectStorageConfiguration row
+  // is keyed by AZ code in the `region` column. Pass the AZ code as the
+  // region argument so the lookup matches the seeded rows. The geographic
+  // region selector is purely a filter for the AZ dropdown.
+  const objectStorageAz = formData.object_storage_availability_zone || "";
   const { data: objectStorageProducts, isFetching: isObjectStorageProductsFetching } =
-    useFetchProductPricing(formData.object_storage_region, "object_storage", {
-      enabled: !!formData.object_storage_region,
+    useFetchProductPricing(objectStorageAz, "object_storage", {
+      enabled: !!formData.object_storage_region && !!objectStorageAz,
       countryCode: countryCode,
+      availabilityZone: objectStorageAz,
     }) as { data: ProductPricing[] | undefined; isFetching: boolean };
 
-  const steps = ["Invoice Info", "Add Items", "Invoice Summary", "Final Review", "Confirmation"];
+  // Wizard order (4 steps — Summary + Review merged into one screen):
+  //   1. Invoice Info       — customer / billing metadata first
+  //                            (sets currency / tenant context for pricing)
+  //   2. Add Items          — pick the resources for the "who"
+  //   3. Review & Submit    — line items + totals + optional lead capture,
+  //                            single screen so admins confirm everything
+  //                            before submission
+  //   4. Confirmation       — success state
+  const steps = ["Invoice Info", "Add Items", "Review & Submit", "Confirmation"];
 
   useEffect(() => {
     globalThis.window.scrollTo({ top: 0, behavior: "smooth" });
@@ -191,6 +208,7 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
       ...prev,
       region: "",
       object_storage_region: "",
+      object_storage_availability_zone: "",
     }));
     setPricingRequests([]);
     setObjectStorageRequests([]);
@@ -198,16 +216,19 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
 
   const validateStep = (step = currentStep): boolean => {
     const newErrors: InvoiceErrors = {};
+    // Step 0 — Invoice Info: customer + invoice metadata.
     if (step === 0) {
       if (!formData.subject) newErrors.subject = "Subject is required.";
       if (!formData.email) newErrors.email = "Primary email is required.";
       if (!formData.bill_to_name) newErrors.bill_to_name = "Bill to name is required.";
     } else if (step === 1) {
+      // Step 1 — Add Items: at least one item must be on the invoice.
       if (pricingRequests.length === 0 && objectStorageRequests.length === 0) {
         newErrors.general =
           "Please add at least one item (compute or Silo Storage) to the invoice.";
       }
-    } else if (step === 3) {
+    } else if (step === 2) {
+      // Step 2 — Review & Submit: lead-capture toggle lives here.
       if (formData.create_lead) {
         if (!formData.lead_first_name) {
           newErrors.lead_first_name = "First name is required for lead creation.";
@@ -288,6 +309,8 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
   const validateObjectStorageItem = (): boolean => {
     const newErrors: InvoiceErrors = {};
     if (!formData.object_storage_region) newErrors.object_storage_region = "Region is required.";
+    if (!formData.object_storage_availability_zone)
+      newErrors.object_storage_availability_zone = "Availability zone is required.";
     if (!formData.object_storage_product_id)
       newErrors.object_storage_product_id = "Storage tier is required.";
     if (!formData.object_storage_quantity || formData.object_storage_quantity < 1)
@@ -305,8 +328,11 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
           (p) => p.product.productable_id === Number(formData.object_storage_product_id)
         )?.product.name || "Silo Storage";
 
+      // Send the AZ code as the canonical region for the storage request —
+      // the backend joins by AZ-coded `region` for object storage products.
       const newRequest: ObjectStorageRequest = {
-        region: formData.object_storage_region,
+        region: formData.object_storage_availability_zone || formData.object_storage_region,
+        availability_zone: formData.object_storage_availability_zone,
         productable_id: Number(formData.object_storage_product_id),
         tier_id: Number(formData.object_storage_product_id),
         quantity: Number(formData.object_storage_quantity),
@@ -349,10 +375,12 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
   };
 
   const handleSubmit = () => {
-    if (!validateStep(0) || !validateStep(1) || !validateStep(3)) {
+    if (!validateStep(0) || !validateStep(1) || !validateStep(2)) {
       ToastUtils.error("Please complete all required fields in all steps.");
       return;
     }
+
+    const intent = formData.intent ?? "invoice";
 
     const payload: Record<string, unknown> = {
       subject: formData.subject,
@@ -375,6 +403,7 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
         const { _display, ...rest } = req;
         return rest;
       }),
+      intent,
     };
 
     if (contextType === "tenant" && selectedTenantId) {
@@ -409,13 +438,22 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
     createMultiQuotes(payload, {
       onSuccess: (data) => {
         const res = data as InvoiceResponse;
-        ToastUtils.success("Invoice created successfully!");
+        ToastUtils.success(
+          intent === "quote"
+            ? "Quote saved successfully!"
+            : "Invoice created successfully!"
+        );
         setApiResponse(res);
         setCurrentStep((prev) => prev + 1);
       },
       onError: (err: unknown) => {
         const message = err instanceof Error ? err.message : undefined;
-        ToastUtils.error(message || "Failed to create invoice. Please try again.");
+        ToastUtils.error(
+          message ||
+            (intent === "quote"
+              ? "Failed to save quote. Please try again."
+              : "Failed to create invoice. Please try again.")
+        );
       },
     });
   };
@@ -491,37 +529,43 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
         );
       case 2:
         return (
-          <InvoiceSummaryStep
-            pricingRequests={pricingRequests}
-            objectStorageRequests={objectStorageRequests}
+          <InvoiceReviewStep
             formData={formData}
-          />
-        );
-      case 3:
-        return (
-          <InvoiceFinalReviewStep
-            formData={formData}
+            errors={errors}
+            updateFormData={updateFormData}
             pricingRequests={pricingRequests}
             objectStorageRequests={objectStorageRequests}
             tenants={tenants}
             assignmentDetails={assignmentDetails}
-            updateFormData={updateFormData}
-            errors={errors}
             mode={mode}
           />
         );
-      case 4:
-        return <InvoiceConfirmationStep apiResponse={apiResponse} />;
+      case 3: {
+        const detailBasePath =
+          mode === "tenant"
+            ? "/dashboard/invoices"
+            : mode === "client"
+            ? "/client-dashboard/invoices"
+            : "/admin-dashboard/invoices";
+        return (
+          <InvoiceConfirmationStep
+            apiResponse={apiResponse}
+            intent={formData.intent ?? "invoice"}
+            detailBasePath={detailBasePath}
+          />
+        );
+      }
       default:
         return null;
     }
   };
 
+  const intent = formData.intent ?? "invoice";
+  const reviewCta = intent === "quote" ? "Save as Quote" : "Generate Invoice";
   const stepCtas = [
-    "Continue to Items",
-    "Continue to Summary",
-    "Continue to Final Review",
-    "Submit Invoice",
+    "Continue to Add Items",
+    "Continue to Review",
+    reviewCta,
     "Finish",
   ];
   const isReviewStep = currentStep === steps.length - 2;
@@ -544,14 +588,22 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
 
   const disablePrimary =
     isSubmissionPending ||
+    // Block Continue from the Add Items step until at least one item is added.
     (currentStep === 1 && pricingRequests.length === 0 && objectStorageRequests.length === 0) ||
     (isReviewStep && pricingRequests.length === 0 && objectStorageRequests.length === 0);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* Stepper */}
+      {/* Stepper. Completed steps are clickable so the user can hop back
+          to a finished phase without unwinding through the Back button. */}
       <div className="mb-8">
-        <InvoiceWizardStepper currentStep={currentStep} steps={steps} />
+        <InvoiceWizardStepper
+          currentStep={currentStep}
+          steps={steps}
+          onStepClick={(index) => {
+            if (index < currentStep) setCurrentStep(index);
+          }}
+        />
       </div>
 
       {/* Step Content */}

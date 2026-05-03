@@ -80,6 +80,11 @@ const AdminProductCreate = () => {
     [entries]
   );
 
+  // queryKey MUST match the canonical `useFetchAvailabilityZones` hook
+  // (`["availability-zones", code]`) AND the queryFn must return the
+  // SAME shape (raw `AvailabilityZone[]`). Earlier this returned
+  // `{ code, data: [...] }`, which collided with the canonical cache
+  // shape and left the AZ dropdown empty until a refresh.
   const azQueryResults = useQueries({
     queries: usedRegionCodes.map((code) => ({
       queryKey: ["availability-zones", code],
@@ -90,7 +95,7 @@ const AdminProductCreate = () => {
         );
         const azList = (res as { data?: AZOption[] })?.data ?? [];
         if (!Array.isArray(azList)) throw new Error("Failed to fetch availability zones");
-        return { code, data: azList as AZOption[] };
+        return azList as AZOption[];
       },
       enabled: !!code,
       staleTime: 1000 * 60 * 5,
@@ -100,13 +105,14 @@ const AdminProductCreate = () => {
 
   const azByRegion = useMemo(() => {
     const map: Record<string, AZOption[]> = {};
-    azQueryResults.forEach((result) => {
-      if (result.data) {
-        map[result.data.code] = result.data.data;
+    usedRegionCodes.forEach((code, index) => {
+      const data = azQueryResults[index]?.data;
+      if (Array.isArray(data)) {
+        map[code] = data as AZOption[];
       }
     });
     return map;
-  }, [azQueryResults]);
+  }, [azQueryResults, usedRegionCodes]);
 
   const getAzsForRegion = useCallback(
     (regionCode: string): AZOption[] => azByRegion[regionCode] || [],

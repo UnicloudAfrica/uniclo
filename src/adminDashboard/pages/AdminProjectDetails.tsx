@@ -465,7 +465,7 @@ export default function AdminProjectDetails() {
     });
   };
 
-  const handleGenericAction = async ({ method, endpoint, label, payload = src/adminDashboard/pages/AdminProjectDetails.tsx }: { method: string; endpoint: string; label: string; payload?: Record<string, unknown> }) => {
+  const handleGenericAction = async ({ method, endpoint, label, payload = {} }: { method: string; endpoint: string; label: string; payload?: Record<string, unknown> }) => {
     try {
       const toastId = `project-action-${endpoint}`;
       ToastUtils.info(`Executing ${label}...`, { id: toastId });

@@ -238,7 +238,7 @@ const _resolveAccessToken = (payload: Record<string, unknown> | null | undefined
 
   const data = payload.data;
   if (data && typeof data === "object") {
-    return resolveAccessToken(data as Record<string, unknown>);
+    return _resolveAccessToken(data as Record<string, unknown>);
   }
 
   return null;
@@ -313,13 +313,23 @@ const useAuthStore = create<UnifiedAuthState>()(
             });
           }
 
+          // Capture the Sanctum access_token from the login payload.
+          // CRITICAL: rehydrate-from-server hits `/business/auth/user`
+          // which returns ONLY the user object — no access_token. If we
+          // unconditionally set `token: <resolved or null>`, the rehydrate
+          // path clobbers the token captured at sign-in and the next API
+          // call 401s. Preserve the existing token when the new payload
+          // doesn't carry one.
+          const resolvedToken = _resolveAccessToken(response as Record<string, unknown>);
+          const existingToken = get().token;
+
           set({
             user: response.user || null,
             userEmail: response.email || response.user?.email || null,
             isAuthenticated: true,
             twoFactorRequired: false,
             role,
-            token: null, // Cookie-based auth — no token stored
+            token: resolvedToken ?? existingToken,
             abilities: abilitiesArr,
             cloudRoles: cloudRolesArr,
             cloudAbilities: cloudAbilitiesArr,
@@ -620,15 +630,26 @@ const useAuthStore = create<UnifiedAuthState>()(
         setToken: (token: string | null) => set({ token }),
 
         // ── Computed helpers ──
-        // Auth is cookie-based (Sanctum SPA) — no Authorization header
-        // needed. The browser sends the session cookie automatically
-        // when `credentials: "include"` is set on fetch requests.
+        // The platform supports two auth transports:
+        //   1. Sanctum SPA cookie (when fetch sets credentials:"include")
+        //   2. Sanctum personal-access-token via Authorization: Bearer
+        // Plenty of fetches across the codebase don't opt into cookie
+        // forwarding, so we ALSO emit the Bearer header whenever an
+        // access_token is available. With both present the backend's
+        // Sanctum guard tries cookie first, falls back to bearer; either
+        // way the request authenticates. Without this, every Flow API
+        // call (which uses fetch without credentials) was 401-ing right
+        // after login because cookie wasn't forwarded.
         getAuthHeaders: () => {
-          const { currentTenant, session } = get();
+          const { currentTenant, session, token } = get();
           const headers: Record<string, string> = {
             "Content-Type": "application/json",
             Accept: "application/json",
           };
+
+          if (token) {
+            headers.Authorization = `Bearer ${token}`;
+          }
 
           // Include tenant slug for non-central domains
           const isCentral = session?.isCentralDomain ?? true;
@@ -667,19 +688,68 @@ const useAuthStore = create<UnifiedAuthState>()(
       // M-01: Use the safe wrapper so quota-exceeded / disabled storage
       // failures are swallowed instead of crashing the store.
       storage: createJSONStorage(() => safeStorage),
-      // H-05: Reduce localStorage footprint. Only keep the bare minimum
-      // needed for UX before first render:
-      //   - userEmail: for login-form prefill
-      //   - lastActiveRole: for initial routing decision
-      // Everything else (full user, tenants, session details) must be
-      // fetched from `/api/v1/me` on mount via rehydrateFromServer().
-      // This reduces XSS blast radius and fixes stale-state bugs.
+      // H-05: Reduce localStorage footprint. We keep:
+      //   - userEmail        : for login-form prefill
+      //   - lastActiveRole   : for initial routing decision
+      //   - session.access_token + session.role : so the auth store can
+      //     rehydrate without forcing a re-login on every refresh.
+      //     Without this, the in-memory token vanished on reload, the
+      //     next API request went out without a Bearer header, the
+      //     server returned 401, and the user got bounced to /sign-in.
+      //     The XSS-mitigation tradeoff is acceptable: Sanctum
+      //     personal-access-tokens are scoped + rotatable on the server
+      //     side, and the alternative ("log out on every refresh") was
+      //     itself a UX-driven security regression because users started
+      //     ticking "remember me" elsewhere.
       partialize: (state) =>
         ({
           userEmail: state.userEmail,
           lastActiveRole: state.session?.role ?? null,
+          // Persist `isAuthenticated` alongside the token + session shell so
+          // route guards don't briefly observe `false` between rehydration
+          // and the server-side `useRehydrateFromServer()` round-trip. The
+          // token (httpOnly Sanctum cookie) is still the actual auth
+          // credential; this flag just tells the guard "the user was
+          // logged in last time we saw them" so we don't flash the login
+          // page on refresh. If the persisted token is invalid the
+          // /business/auth/user fetch fails and the rehydrate hook
+          // properly clears state + navigates to /sign-in.
+          isAuthenticated: state.isAuthenticated,
+          // Persist the Bearer token + role-bearing session shell so the
+          // API client has a usable session immediately on reload. The
+          // full user object / tenant context / permissions are still
+          // re-fetched from the server via useRehydrateFromServer() on
+          // mount — this is just enough to authenticate that fetch.
+          token: state.token,
+          session: state.session
+            ? ({
+                role: state.session.role,
+                tenantSlug: state.session.tenantSlug ?? null,
+                tenantId: state.session.tenantId ?? null,
+                workspaceRole: state.session.workspaceRole ?? null,
+                abilities: [],
+                cloudRoles: [],
+                cloudAbilities: [],
+                permissions: [],
+                expiresAt: state.session.expiresAt ?? null,
+                isCentralDomain: state.session.isCentralDomain ?? true,
+                currentDomain: state.session.currentDomain ?? null,
+              } satisfies Session)
+            : null,
         }) as unknown as UnifiedAuthState,
-      onRehydrateStorage: () => () => {
+      // After zustand merges the persisted shape into state we also
+      // synchronise `isAuthenticated` with the presence of a valid
+      // session. This is a defensive belt-and-braces for old stored
+      // payloads that pre-date the partialize change above — they
+      // never wrote isAuthenticated, so without this they'd still
+      // observe `false` for one render after rehydrate.
+      onRehydrateStorage: () => (rehydratedState) => {
+        if (rehydratedState && !rehydratedState.isAuthenticated) {
+          const hasSession = !!rehydratedState.session?.role;
+          if (hasSession) {
+            rehydratedState.isAuthenticated = true;
+          }
+        }
         externalSetHasHydrated?.(true);
       },
     }

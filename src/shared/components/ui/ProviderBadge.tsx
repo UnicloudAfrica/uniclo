@@ -19,18 +19,21 @@ interface ProviderConfig {
   borderColor: string;
 }
 
+// Per the operator memory rule: never expose cloud-partner brand names
+// (Zadara, Nobus) anywhere in the UI — even in admin tooling. The dot
+// colour still distinguishes the underlying fabric without naming it.
 const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
   zadara: {
     label: "UCA zCompute",
-    shortLabel: "Zadara", // allow-provider-name — admin-only badge
+    shortLabel: "UCA zCompute",
     dotColor: "bg-blue-500",
     bgColor: "bg-blue-50",
     textColor: "text-blue-700",
     borderColor: "border-blue-200",
   },
   nobus: {
-    label: "Nobus Cloud", // allow-provider-name — admin-only badge
-    shortLabel: "Nobus", // allow-provider-name — admin-only badge
+    label: "UCA Sovereign",
+    shortLabel: "UCA Sovereign",
     dotColor: "bg-emerald-500",
     bgColor: "bg-emerald-50",
     textColor: "text-emerald-700",

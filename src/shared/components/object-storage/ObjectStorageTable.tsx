@@ -136,6 +136,13 @@ export interface Account extends Record<string, unknown> {
   account_id?: string;
   status?: string;
   region?: string;
+  /** Vendor-neutral AZ code (e.g. `uni-ng-az-1`). Preferred for display. */
+  availability_zone?: string;
+  /**
+   * @deprecated Backend no longer ships this for customer-facing reads.
+   * Kept on the type to ease incremental migration of admin-only call sites.
+   * Never render this string in the UI — see white-label rule.
+   */
   provider?: string;
   created_at?: string;
 }
@@ -358,7 +365,7 @@ const ObjectStorageTable: React.FC<ObjectStorageTableProps> = ({
       <thead className="bg-gray-50 text-xs uppercase text-gray-500">
         <tr>
           <th className="px-6 py-4 font-semibold">Account</th>
-          <th className="px-6 py-4 font-semibold">Provider</th>
+          <th className="px-6 py-4 font-semibold">Availability Zone</th>
           <th className="px-6 py-4 font-semibold">Region</th>
           <th className="px-6 py-4 font-semibold">Status</th>
           <th className="px-6 py-4 font-semibold">Created</th>
@@ -378,7 +385,7 @@ const ObjectStorageTable: React.FC<ObjectStorageTableProps> = ({
                   <div className="font-semibold text-gray-900">{account.name || "—"}</div>
                   <div className="text-xs text-gray-500">{account.account_id || "—"}</div>
                 </td>
-                <td className="px-6 py-4 text-gray-600">{account.provider || "—"}</td>
+                <td className="px-6 py-4 text-gray-600">{account.availability_zone || account.region || "—"}</td>
                 <td className="px-6 py-4 text-gray-600">{account.region || "—"}</td>
                 <td className="px-6 py-4">
                   <StatusBadge status={account.status || ""} />
@@ -426,8 +433,8 @@ const ObjectStorageTable: React.FC<ObjectStorageTableProps> = ({
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-gray-500">
           <div>
-            <p className="uppercase text-[10px] text-gray-400">Provider</p>
-            <p className="text-sm font-medium text-gray-700">{account.provider || "—"}</p>
+            <p className="uppercase text-[10px] text-gray-400">Availability Zone</p>
+            <p className="text-sm font-medium text-gray-700">{account.availability_zone || account.region || "—"}</p>
           </div>
           <div>
             <p className="uppercase text-[10px] text-gray-400">Region</p>

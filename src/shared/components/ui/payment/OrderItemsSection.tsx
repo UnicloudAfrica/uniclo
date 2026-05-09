@@ -93,7 +93,10 @@ const OrderItemsSection = ({ storageProfiles, instances }: OrderItemsSectionProp
                         color: designTokens.colors.primary[800],
                       }}
                     >
-                      {instance.provider} {"\u2022"} {instance.region}
+                      {/* Customer-facing payment UI \u2014 never display vendor key.
+                          Show the AZ + region instead. */}
+                      {(instance as { availability_zone?: string }).availability_zone || instance.region}{" "}
+                      {"\u2022"} {instance.region}
                     </span>
                   </div>
                   <div className="text-xs" style={{ color: designTokens.colors.neutral[600] }}>

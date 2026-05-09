@@ -176,7 +176,13 @@ const CloudAccountDetail: React.FC<CloudAccountDetailProps> = ({ listPath }) => 
                   {account.name}
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {PROVIDER_LABELS[account.provider] ?? account.provider}
+                  {/*
+                    AWS / GCP / Azure / etc are public cloud names that customers
+                    knowingly connect their accounts to — safe to display by name.
+                    Defensive fallback hides any unknown key (which could be a
+                    UCA-internal provider name leaking into customer-facing UI).
+                  */}
+                  {PROVIDER_LABELS[account.provider] ?? "External Cloud"}
                 </p>
               </div>
             </div>

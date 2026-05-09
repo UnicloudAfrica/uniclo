@@ -627,7 +627,7 @@ export default function AdminProjectDetails() {
         title={project?.["name"] || "Project Overview"}
         description={
           project
-            ? `${project?.["identifier"] || projectId} • ${project?.["provider"] || "Provider"} • ${project?.["region"] || "Region"}`
+            ? `${project?.["identifier"] || projectId} • ${project?.["availability_zone"] || "Availability Zone"} • ${project?.["region"] || "Region"}`
             : "Loading project context..."
         }
         breadcrumbs={[

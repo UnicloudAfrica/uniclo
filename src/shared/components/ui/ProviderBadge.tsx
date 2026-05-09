@@ -93,18 +93,25 @@ export default function ProviderBadge({
 
 /**
  * Helper to get the provider label for display purposes.
+ *
+ * IMPORTANT: never leaks the raw provider key (e.g. "openstack", "scalegrid")
+ * into the UI. Unknown keys fall back to the generic "Platform" label.
+ * Per the white-label rule: vendor names never appear in the SPA.
  */
 export function getProviderLabel(provider?: string | null): string {
   const key = (provider || "").toLowerCase();
-  return PROVIDER_CONFIGS[key]?.label || provider || "Platform";
+
+  return PROVIDER_CONFIGS[key]?.label || DEFAULT_CONFIG.label;
 }
 
 /**
- * Helper to get the provider short label.
+ * Helper to get the provider short label. Same vendor-key safety as
+ * {@see getProviderLabel}.
  */
 export function getProviderShortLabel(provider?: string | null): string {
   const key = (provider || "").toLowerCase();
-  return PROVIDER_CONFIGS[key]?.shortLabel || provider || "Platform";
+
+  return PROVIDER_CONFIGS[key]?.shortLabel || DEFAULT_CONFIG.shortLabel;
 }
 
 /**

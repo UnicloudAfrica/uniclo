@@ -403,6 +403,9 @@ const ClientProjectDetails: React.FC = () => {
       <ProjectTeamTab
         projectId={projectId}
         region={project?.region}
+        // INTERNAL: provider is used as a backend cloud-policies filter,
+        // never displayed in the UI. The child component MUST NOT render
+        // this string; it goes straight into a query param.
         provider={project?.provider}
         hierarchy="client"
         projectUsers={projectUsers as Parameters<typeof ProjectTeamTab>[0]["projectUsers"]}

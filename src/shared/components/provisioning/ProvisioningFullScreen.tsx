@@ -1,17 +1,27 @@
 import React, { useEffect, useRef } from "react";
-import { Loader2, ArrowRight, CheckCircle, RefreshCw } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle, Loader2, RefreshCw } from "lucide-react";
 import SetupProgressCard from "../projects/details/SetupProgressCard";
 
 interface SetupStep {
   status?: string;
+  label?: string;
+  context?: { error?: string } & Record<string, unknown>;
   [key: string]: unknown;
 }
 
 interface ProvisioningFullScreenProps {
-  project: { name?: string } | null;
+  project: { name?: string; status?: string } | null;
   setupSteps: SetupStep[];
   onRefresh?: () => void;
   onViewProject?: () => void;
+  /**
+   * Called when the user clicks "Retry Provisioning" on a failed project.
+   * Caller should fire `useRetryProjectProvisioning().mutate({ projectId })`
+   * and refetch project state. Button is hidden when not provided.
+   */
+  onRetry?: () => void;
+  /** True while the retry mutation is in flight; disables the button. */
+  isRetrying?: boolean;
 }
 
 const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
@@ -19,6 +29,8 @@ const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
   setupSteps,
   onRefresh,
   onViewProject,
+  onRetry,
+  isRetrying = false,
 }) => {
   const onRefreshRef = useRef(onRefresh);
   const hasRefreshHandler = Boolean(onRefresh);
@@ -26,6 +38,13 @@ const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
   useEffect(() => {
     onRefreshRef.current = onRefresh;
   }, [onRefresh]);
+
+  // Detect failure FIRST — failure terminates provisioning regardless of
+  // how many steps appear "completed". A single failed step is a project-
+  // level failure that must surface to the user with a real error message
+  // and a retry path.
+  const failedStep = setupSteps.find((s) => s.status === "failed");
+  const hasFailed = Boolean(failedStep) || project?.status === "failed";
 
   // Calculate progress percentage
   const totalSteps = setupSteps.length;
@@ -36,8 +55,10 @@ const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
   const currentStep = setupSteps.find((s) => s.status === "pending" || s.status === "in_progress");
 
   // Keep polling while provisioning is active, then do one final refresh after 100%.
+  // Stop polling on terminal failure — nothing more is going to happen until
+  // the user clicks Retry, and continued polling just hammers the API.
   useEffect(() => {
-    if (!hasRefreshHandler) return;
+    if (!hasRefreshHandler || hasFailed) return;
 
     let timer: ReturnType<typeof setTimeout> | null = null;
     let pollInterval: ReturnType<typeof setInterval> | null = null;
@@ -56,10 +77,10 @@ const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
       if (timer) clearTimeout(timer);
       if (pollInterval) clearInterval(pollInterval);
     };
-  }, [progress, hasRefreshHandler]);
+  }, [progress, hasRefreshHandler, hasFailed]);
 
-  // Show completion state when at 100%
-  const isComplete = progress >= 100;
+  // Show completion state when at 100% AND not failed
+  const isComplete = !hasFailed && progress >= 100;
 
   return (
     <div
@@ -97,29 +118,76 @@ const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
           >
             {isComplete ? (
               <CheckCircle className="w-12 h-12 text-green-500" />
+            ) : hasFailed ? (
+              <AlertTriangle className="w-12 h-12 text-red-500" />
             ) : (
               <Loader2 className="w-12 h-12 text-[--theme-color] animate-spin" />
             )}
-            {!isComplete && (
+            {!isComplete && !hasFailed && (
               <div className="absolute -inset-1 rounded-full border-2 border-[--theme-color-20] animate-pulse" />
             )}
             {isComplete && (
               <div className="absolute -inset-4 rounded-full bg-green-500/10 animate-ping duration-1000" />
             )}
+            {hasFailed && (
+              <div className="absolute -inset-2 rounded-full border-2 border-red-200" />
+            )}
           </div>
 
           <h1
-            className={`text-5xl font-black ${isComplete ? "text-green-600" : "text-gray-900"} mb-4 tracking-tighter`}
+            className={`text-5xl font-black mb-4 tracking-tighter ${
+              isComplete ? "text-green-600" : hasFailed ? "text-red-600" : "text-gray-900"
+            }`}
           >
-            {isComplete ? "Setup Complete!" : `Provisioning ${project?.name || "Project"}`}
+            {isComplete
+              ? "Setup Complete!"
+              : hasFailed
+                ? "Provisioning Failed"
+                : `Provisioning ${project?.name || "Project"}`}
           </h1>
           <p
-            className={`${isComplete ? "text-green-700/60" : "text-gray-500"} text-xl max-w-lg mx-auto leading-relaxed font-medium`}
+            className={`text-xl max-w-lg mx-auto leading-relaxed font-medium ${
+              isComplete ? "text-green-700/60" : hasFailed ? "text-red-700/70" : "text-gray-500"
+            }`}
           >
             {isComplete
               ? "Your infrastructure is ready. You can now start deploying resources."
-              : "Please wait while we set up your dedicated infrastructure."}
+              : hasFailed
+                ? `Stopped at: ${failedStep?.label || "an unknown step"}.`
+                : "Please wait while we set up your dedicated infrastructure."}
           </p>
+
+          {/* Failure detail panel — surfaces the real error message + retry CTA */}
+          {hasFailed && (
+            <div className="mt-6 mx-auto max-w-2xl rounded-2xl border border-red-200 bg-red-50/80 px-6 py-5 text-left">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-red-900">
+                    {failedStep?.label || "A provisioning step failed"}
+                  </p>
+                  {failedStep?.context?.error && (
+                    <p className="mt-1 text-sm text-red-700">
+                      {String(failedStep.context.error)}
+                    </p>
+                  )}
+                  {onRetry && (
+                    <button
+                      type="button"
+                      onClick={onRetry}
+                      disabled={isRetrying}
+                      className="mt-4 inline-flex items-center gap-2 rounded-full bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white text-sm font-semibold px-5 py-2 transition"
+                    >
+                      <RefreshCw
+                        className={`w-4 h-4 ${isRetrying ? "animate-spin" : ""}`}
+                      />
+                      {isRetrying ? "Retrying…" : "Retry Provisioning"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Progress Bar Container */}

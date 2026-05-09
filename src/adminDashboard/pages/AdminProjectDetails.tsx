@@ -19,6 +19,7 @@ import {
 import { useCloudPolicies } from "@/hooks/adminHooks/cloudPolicyHooks";
 import {
   useProjectInfrastructureStatus,
+  useRetryProjectProvisioning,
   useSyncProjectInfrastructure,
 } from "@/shared/hooks/resources/projectInfrastructureHooks";
 import { useFetchProjectEdgeConfigAdmin } from "@/hooks/adminHooks/edgeHooks";
@@ -156,8 +157,8 @@ export default function AdminProjectDetails() {
     isFetching: isProjectStatusFetching,
     refetch: refetchProjectStatus,
   } = useProjectStatus(projectId ?? "", {
-    refetchInterval: (query: unknown) => {
-      const data = query.state.data as ProjectStatusResponse | undefined;
+    refetchInterval: (query: { state: { data?: ProjectStatusResponse } }) => {
+      const data = query.state.data;
       const status = data?.["project"]?.["status"];
       return status === "provisioning" || status === "pending" ? 3000 : false;
     },
@@ -167,7 +168,7 @@ export default function AdminProjectDetails() {
     projectId as string,
     {
       enabled: Boolean(projectId),
-      refetchInterval: (query: unknown) => {
+      refetchInterval: (query: { state: { data?: { data?: { status?: string } } } }) => {
         const status = query?.state?.data?.data?.status;
         return status === "provisioning" || status === "pending" ? 3000 : false;
       },
@@ -205,8 +206,8 @@ export default function AdminProjectDetails() {
   });
 
   const { data: edgeConfig, refetch: refetchEdgeConfig } = useFetchProjectEdgeConfigAdmin(
-    resolvedProjectId,
-    project?.region,
+    String(resolvedProjectId ?? ""),
+    typeof project?.region === "string" ? project.region : "",
     {
       enabled: Boolean(resolvedProjectId && project?.region),
     }
@@ -250,7 +251,7 @@ export default function AdminProjectDetails() {
     if (!project?.identifier) return;
     try {
       await inviteProjectMember({
-        identifier: project.identifier,
+        identifier: String(project.identifier),
         name: inviteForm.name.trim(),
         email: inviteForm.email.trim(),
       });
@@ -273,6 +274,7 @@ export default function AdminProjectDetails() {
 
   const { mutateAsync: syncInfrastructure, isPending: isSyncingInfrastructure } =
     useSyncProjectInfrastructure();
+  const retryProvisioning = useRetryProjectProvisioning();
   const { mutateAsync: revokePolicy, isPending: isRevokingPolicy } = useRevokeProjectUserPolicy();
   const { mutateAsync: assignPolicy, isPending: isAssigningPolicy } = useAssignProjectUserPolicy();
 
@@ -293,31 +295,35 @@ export default function AdminProjectDetails() {
     [summary]
   );
 
-  const projectTenantId = useMemo(
-    () =>
-      project?.tenant_id ||
-      projectDetails?.tenant_id ||
-      project?.tenant?.id ||
-      projectDetails?.tenant?.id ||
-      null,
-    [project, projectDetails]
-  );
+  const projectTenantId = useMemo(() => {
+    const p = project as Record<string, unknown> | undefined;
+    const pd = projectDetails as Record<string, unknown> | undefined;
+    const pt = p?.tenant as { id?: string | number } | undefined;
+    const pdt = pd?.tenant as { id?: string | number } | undefined;
+    return p?.tenant_id || pd?.tenant_id || pt?.id || pdt?.id || null;
+  }, [project, projectDetails]);
 
   const projectClientId = useMemo(() => {
-    if (projectDetails?.client_id) return projectDetails.client_id;
-    if (project?.client_id) return project.client_id;
-    if (Array.isArray(projectDetails?.clients) && projectDetails.clients.length) {
-      return projectDetails.clients[0]?.id ?? null;
+    const p = project as Record<string, unknown> | undefined;
+    const pd = projectDetails as Record<string, unknown> | undefined;
+    if (pd?.client_id) return pd.client_id;
+    if (p?.client_id) return p.client_id;
+    const pdClients = pd?.clients as Array<{ id?: string | number }> | undefined;
+    const pClients = p?.clients as Array<{ id?: string | number }> | undefined;
+    if (Array.isArray(pdClients) && pdClients.length) {
+      return pdClients[0]?.id ?? null;
     }
-    if (Array.isArray(project?.clients) && project.clients.length) {
-      return project.clients[0]?.id ?? null;
+    if (Array.isArray(pClients) && pClients.length) {
+      return pClients[0]?.id ?? null;
     }
     return null;
   }, [project, projectDetails]);
 
   const assignmentScope = (() => {
-    if (projectDetails?.assignment_scope) return projectDetails.assignment_scope;
-    if (project?.assignment_scope) return project.assignment_scope;
+    const p = project as Record<string, unknown> | undefined;
+    const pd = projectDetails as Record<string, unknown> | undefined;
+    if (pd?.assignment_scope) return pd.assignment_scope;
+    if (p?.assignment_scope) return p.assignment_scope;
     if (projectClientId) return "client";
     if (projectTenantId) return "tenant";
     return "internal";
@@ -348,14 +354,21 @@ export default function AdminProjectDetails() {
   const normalizedMembershipOptions = useMemo(() => {
     const entries = Array.isArray(membershipSuggestions) ? membershipSuggestions : [];
     const map = new Map();
-    const upsertMember = (user: unknown, { isCurrent = false, isOwner = false } = {}) => {
+    type MemberUser = {
+      id?: string | number;
+      email?: string;
+      roles?: string[];
+      role?: string;
+      status?: { role?: string };
+    };
+    const upsertMember = (user: MemberUser, { isCurrent = false, isOwner = false } = {}) => {
       if (!user || user.id === undefined || user.id === null) return;
       const id = Number(user.id);
       if (!Number.isFinite(id)) return;
       const existing = map.get(id) || {};
       map.set(id, {
         id,
-        name: existing.name || formatMemberName(user),
+        name: existing.name || formatMemberName(user as never),
         email: existing.email || user.email || "",
         role:
           existing.role ||
@@ -367,11 +380,11 @@ export default function AdminProjectDetails() {
       });
     };
 
-    entries.forEach((user) => {
+    entries.forEach((user: MemberUser) => {
       const numericId = Number(user?.id);
       upsertMember(user, {
         isCurrent: infraStatus.projectUserIdSet.has(numericId),
-        isOwner: infraStatus.tenantAdminUsers.some((admin: unknown) => Number(admin.id) === numericId),
+        isOwner: infraStatus.tenantAdminUsers.some((admin: { id?: string | number }) => Number(admin.id) === numericId),
       });
     });
 
@@ -546,12 +559,13 @@ export default function AdminProjectDetails() {
   // Phase 8: Dedicated Provisioning Screen
   if (
     (provisioning.isInProvisioningMode ||
-      (project?.["status"] === "provisioning" && !provisioning.allStepsComplete)) &&
+      (project?.["status"] === "provisioning" && !provisioning.allStepsComplete) ||
+      project?.["status"] === "failed") &&
     !provisioning.forceHideProvisioning
   ) {
     return (
       <ProvisioningFullScreen
-        project={project as { name?: string } | null}
+        project={project as { name?: string; status?: string } | null}
         setupSteps={provisioning.setupSteps || []}
         onRefresh={() => {
           refetchProjectStatus();
@@ -561,6 +575,18 @@ export default function AdminProjectDetails() {
           provisioning.setForceHideProvisioning(true);
           globalThis.window.location.reload();
         }}
+        onRetry={() => {
+          retryProvisioning.mutate(
+            { projectId: project?.["identifier"] as string },
+            {
+              onSuccess: () => {
+                refetchProjectStatus();
+                refetchProjectDetails();
+              },
+            }
+          );
+        }}
+        isRetrying={retryProvisioning.isPending}
       />
     );
   }

@@ -206,6 +206,13 @@ export const convertBackendResponse = (backendData: Record<string, unknown>, con
     result.counts = counts;
   }
 
+  // Forward the cache-freshness envelope so the SPA can show "Updated 4
+  // minutes ago" / "Refreshing…" badges and pick a polling cadence that
+  // matches what the backend is doing. See ProjectInfrastructureCacheService.
+  if (backendData.freshness) {
+    result.freshness = backendData.freshness;
+  }
+
   return result;
 };
 
@@ -246,6 +253,18 @@ export const useProjectInfrastructureStatus = (projectId: string | number, optio
     enabled: !!projectId,
     staleTime: 30000,
     cacheTime: 300000,
+    // Adaptive polling driven by the backend cache freshness envelope:
+    //   - refresh_in_progress → poll fast (5s) while the queue worker runs
+    //   - stale               → poll moderately (15s) until the next refresh lands
+    //   - fresh               → no polling; lean on staleTime
+    refetchInterval: (query: { state: { data: unknown } }) => {
+      const freshness = ((query.state.data as AnyRecord)?.data as AnyRecord)?.freshness as
+        | { status?: string; refresh_in_progress?: boolean }
+        | undefined;
+      if (freshness?.refresh_in_progress) return 5000;
+      if (freshness?.status === "stale" || freshness?.status === "pending") return 15000;
+      return false;
+    },
     retry: (failureCount: number, error: unknown) => {
       const msg = error instanceof Error ? error.message : "";
       if (msg.includes("404") || msg.includes("403")) {
@@ -326,6 +345,51 @@ export const useProvisionVpc = () => {
     },
     onError: (error: unknown) => {
       logger.error("Failed to provision VPC:", error);
+    },
+  });
+};
+
+/**
+ * Retry a project's provisioning pipeline after it failed.
+ *
+ * Backend: `POST {prefix}/projects/{identifier}/retry-provisioning`. Resets
+ * `project.status = 'provisioning'` and re-dispatches the provision job.
+ * Surface this as a button only when `project.status === 'failed'` —
+ * the backend rejects retries on any other status with a 422.
+ */
+export const useRetryProjectProvisioning = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ projectId }: { projectId: string | number }) => {
+      if (!projectId) {
+        throw new Error("Project ID is required");
+      }
+
+      return entry.toastApi.post<AnyRecord>(
+        `${entry.urlPrefix}/projects/${projectId}/retry-provisioning`
+      );
+    },
+    onSuccess: (_data: unknown, variables: { projectId: string | number }) => {
+      // Force the SPA to refetch project state immediately so the user
+      // sees the new "provisioning" status and step progress on next poll.
+      queryClient.invalidateQueries({
+        queryKey: projectInfraKeys.status(context, variables.projectId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["project-details", variables.projectId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-project", variables.projectId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-projects"],
+      });
+    },
+    onError: (error: unknown) => {
+      logger.error("Failed to retry project provisioning:", error);
     },
   });
 };

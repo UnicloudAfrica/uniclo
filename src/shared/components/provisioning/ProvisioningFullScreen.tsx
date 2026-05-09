@@ -39,12 +39,26 @@ const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
     onRefreshRef.current = onRefresh;
   }, [onRefresh]);
 
-  // Detect failure FIRST — failure terminates provisioning regardless of
-  // how many steps appear "completed". A single failed step is a project-
-  // level failure that must surface to the user with a real error message
-  // and a retry path.
+  // Detect failure FIRST. The backend marks `project.status === "failed"`
+  // only after the worker has truly given up (retries exhausted). A failed
+  // *step* alongside an in-flight retry/in-progress step is mid-recovery,
+  // NOT terminal — flashing "Provisioning Failed" + Retry button at the
+  // user during an active backoff is a lie that scares them into a manual
+  // retry on top of the queue's automatic one.
+  //
+  // Rule: trust project.status as the source of truth. Only fall back to
+  // step-level inference when the backend hasn't shipped a status (very
+  // old payloads) AND the pipeline has visibly stopped.
   const failedStep = setupSteps.find((s) => s.status === "failed");
-  const hasFailed = Boolean(failedStep) || project?.status === "failed";
+  const hasActiveWork = setupSteps.some(
+    (s) =>
+      s.status === "in_progress" ||
+      s.status === "pending" ||
+      s.status === "retrying"
+  );
+  const hasFailed =
+    project?.status === "failed" ||
+    (project?.status == null && Boolean(failedStep) && !hasActiveWork);
 
   // Calculate progress percentage
   const totalSteps = setupSteps.length;

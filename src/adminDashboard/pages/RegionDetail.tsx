@@ -5,6 +5,8 @@ import {
   AlertCircle,
   Building2,
   CheckCircle,
+  ChevronDown,
+  ChevronRight,
   Clock,
   DollarSign,
   Edit,
@@ -28,6 +30,7 @@ import { designTokens } from "@/styles/designTokens";
 import logger from "@/utils/logger";
 import { useFetchAvailabilityZones } from "@/hooks/adminHooks/regionHooks";
 import type { AvailabilityZone } from "@/shared/types/resource";
+import { AZCredentialPanel } from "@/shared/domains/regions/components";
 
 const statusToneMap = {
   healthy: "success",
@@ -39,17 +42,22 @@ const statusLabelMap = {
   degraded: "Degraded",
   down: "Down",
 };
-const formatSegment = (value: string | undefined | null) => {
-  if (!value) return "";
-  return value
-    .toString()
+const formatSegment = (value: unknown): string => {
+  if (value === null || value === undefined || value === "") return "";
+  return String(value)
     .split(/[_-]/)
     .filter(Boolean)
     .map((segment: string) => segment.charAt(0).toUpperCase() + segment.slice(1))
     .join(" ");
 };
-const formatDateTime = (value: string | Date | undefined | null) =>
-  value ? new Date(value).toLocaleString() : "—";
+const formatDateTime = (value: unknown): string => {
+  if (value === null || value === undefined || value === "") return "—";
+  if (value instanceof Date) return value.toLocaleString();
+  if (typeof value === "string" || typeof value === "number") {
+    return new Date(value).toLocaleString();
+  }
+  return "—";
+};
 
 const AttributeTile = ({ label, value, hint, icon: Icon }: { label: React.ReactNode; value: React.ReactNode; hint?: React.ReactNode; icon: React.ComponentType<{ size?: number }> }) => {
   const resolvedValue = value !== null && value !== undefined && value !== "" ? value : "—";
@@ -75,8 +83,25 @@ const RegionDetail = () => {
   const [region, setRegion] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Track which AZ rows have their credential panel expanded. Each AZ stays
+  // collapsed by default so admins only render heavy schema/credential reads
+  // for the AZ they're actively configuring.
+  const [expandedAzCodes, setExpandedAzCodes] = useState<Set<string>>(new Set());
+
+  const toggleAzExpanded = (azCode: string): void => {
+    setExpandedAzCodes((prev) => {
+      const next = new Set(prev);
+      if (next.has(azCode)) {
+        next.delete(azCode);
+      } else {
+        next.add(azCode);
+      }
+      return next;
+    });
+  };
+
   const { data: availabilityZones = [], isLoading: azLoading } = useFetchAvailabilityZones(
-    region?.code
+    typeof region?.code === "string" ? region.code : ""
   );
 
   const fetchRegionDetail = useCallback(async () => {
@@ -296,7 +321,7 @@ const RegionDetail = () => {
     return <>{renderNotFoundShell()}</>;
   }
 
-  const ownershipTenant = region.owner_tenant;
+  const ownershipTenant = region.owner_tenant as { name?: string; email?: string; id?: string | number } | null | undefined;
   const platformFee =
     region.platform_fee_percentage !== null && region.platform_fee_percentage !== undefined
       ? `${region.platform_fee_percentage}%`
@@ -305,7 +330,7 @@ const RegionDetail = () => {
   return (
     <>
       <AdminPageShell
-        title={region.name || "Region"}
+        title={String(region.name || "Region")}
         description={
           locationLabel ? `${locationLabel} • ${region.code}` : `Region Code: ${region.code}`
         }
@@ -324,7 +349,7 @@ const RegionDetail = () => {
                   </div>
                   <div className="space-y-2">
                     <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                      {region.name}
+                      {String(region.name ?? "")}
                     </h2>
                     <p className="text-sm text-white/80 sm:text-base">
                       {locationLabel || "Location not specified"}
@@ -337,7 +362,7 @@ const RegionDetail = () => {
                     <p className="text-xs font-medium uppercase tracking-wide text-white/70">
                       Region Code
                     </p>
-                    <p className="mt-2 font-mono text-lg font-semibold text-white">{region.code}</p>
+                    <p className="mt-2 font-mono text-lg font-semibold text-white">{String(region.code ?? "")}</p>
                   </div>
 
                   <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
@@ -355,7 +380,14 @@ const RegionDetail = () => {
 
           {statsCards.length > 0 && (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {statsCards.map((card: unknown) => (
+              {(statsCards as Array<{
+                key: string;
+                title: string;
+                value: string | number;
+                icon: React.ReactElement;
+                color: "info" | "warning" | "error" | "success" | "primary";
+                description: string;
+              }>).map((card) => (
                 <ModernStatsCard
                   key={card.key}
                   title={card.title}
@@ -375,7 +407,7 @@ const RegionDetail = () => {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <AttributeTile
                     label="Region Code"
-                    value={<span className="font-mono">{region.code || "—"}</span>}
+                    value={<span className="font-mono">{String(region.code || "—")}</span>}
                     icon={KeyRound}
                   />
                   <AttributeTile
@@ -460,11 +492,12 @@ const RegionDetail = () => {
                     availabilityZones.map((az: AvailabilityZone) => {
                       const azStatus = az.status || "down";
                       const isVerified = az.is_verified;
+                      const isExpanded = expandedAzCodes.has(az.code);
 
                       return (
                         <div
                           key={az.code}
-                          className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${
+                          className={`rounded-xl border ${
                             azStatus === "healthy"
                               ? "border-green-200 bg-green-50"
                               : azStatus === "degraded"
@@ -474,49 +507,71 @@ const RegionDetail = () => {
                                   : "border-gray-200 bg-gray-50"
                           }`}
                         >
-                          <div
-                            className={`rounded-lg p-1.5 ${
-                              azStatus === "healthy"
-                                ? "bg-green-100 text-green-600"
-                                : azStatus === "degraded"
-                                  ? "bg-yellow-100 text-yellow-600"
-                                  : "bg-gray-100 text-gray-500"
-                            }`}
+                          <button
+                            type="button"
+                            onClick={() => toggleAzExpanded(az.code)}
+                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-white/40"
+                            aria-expanded={isExpanded}
+                            aria-controls={`az-credentials-${az.code}`}
                           >
-                            <Layers size={18} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-medium text-gray-900">
-                                {az.name || az.code}
-                              </p>
-                              {isVerified && (
-                                <span className="flex items-center gap-0.5 rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700">
-                                  <ShieldCheck size={10} />
-                                  Verified
-                                </span>
-                              )}
+                            <span className="text-gray-400">
+                              {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                            </span>
+                            <div
+                              className={`rounded-lg p-1.5 ${
+                                azStatus === "healthy"
+                                  ? "bg-green-100 text-green-600"
+                                  : azStatus === "degraded"
+                                    ? "bg-yellow-100 text-yellow-600"
+                                    : "bg-gray-100 text-gray-500"
+                              }`}
+                            >
+                              <Layers size={18} />
                             </div>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="font-mono text-xs text-gray-500">{az.code}</span>
-                              <ProviderBadge provider={az.provider} size="sm" />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-medium text-gray-900">
+                                  {az.name || az.code}
+                                </p>
+                                {isVerified && (
+                                  <span className="flex items-center gap-0.5 rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700">
+                                    <ShieldCheck size={10} />
+                                    Verified
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="font-mono text-xs text-gray-500">{az.code}</span>
+                                <ProviderBadge provider={az.provider} size="sm" />
+                              </div>
                             </div>
-                          </div>
-                          <StatusPill
-                            label={
-                              statusLabelMap[azStatus as keyof typeof statusLabelMap] ||
-                              formatSegment(azStatus)
-                            }
-                            tone={
-                              (statusToneMap[azStatus as keyof typeof statusToneMap] ||
-                                (azStatus === "maintenance" ? "info" : "neutral")) as
-                                | "success"
-                                | "warning"
-                                | "danger"
-                                | "info"
-                                | "neutral"
-                            }
-                          />
+                            <StatusPill
+                              label={
+                                statusLabelMap[azStatus as keyof typeof statusLabelMap] ||
+                                formatSegment(azStatus)
+                              }
+                              tone={
+                                (statusToneMap[azStatus as keyof typeof statusToneMap] ||
+                                  (azStatus === "maintenance" ? "info" : "neutral")) as
+                                  | "success"
+                                  | "warning"
+                                  | "danger"
+                                  | "info"
+                                  | "neutral"
+                              }
+                            />
+                          </button>
+                          {isExpanded && (
+                            <div
+                              id={`az-credentials-${az.code}`}
+                              className="border-t border-white/60 bg-white/60 px-4 py-4"
+                            >
+                              <AZCredentialPanel
+                                regionCode={String(region.code ?? "")}
+                                az={az}
+                              />
+                            </div>
+                          )}
                         </div>
                       );
                     })
@@ -532,7 +587,7 @@ const RegionDetail = () => {
 
           {region.admin_notes && (
             <ModernCard title="Admin Notes">
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{region.admin_notes}</p>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">{String(region.admin_notes)}</p>
             </ModernCard>
           )}
         </div>

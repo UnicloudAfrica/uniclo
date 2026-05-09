@@ -49,9 +49,13 @@ interface GettingStartedChecklistProps {
   dnsZoneCount?: number;
   /** Auto-scaling group count */
   asgCount?: number;
-  /** Cloud provider name — controls which steps are shown */
-  provider?: string;
-  /** Number of floating IPs (Nobus) */
+  /**
+   * Capability flags from `ProjectResource.provider_features` (vendor-neutral
+   * keys, booleans). Replaces the legacy `provider` string prop — we no
+   * longer expose vendor names on the wire. Pass `project.provider_features`.
+   */
+  providerFeatures?: Record<string, boolean>;
+  /** Number of floating IPs */
   floatingIpCount?: number;
   /** Navigate to a specific tab */
   onNavigateToTab: (tabId: string) => void;
@@ -66,15 +70,20 @@ const GettingStartedChecklist: React.FC<GettingStartedChecklistProps> = ({
   teamMemberCount,
   dnsZoneCount = 0,
   asgCount = 0,
-  provider,
+  providerFeatures,
   floatingIpCount = 0,
   onNavigateToTab,
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
-  const supportsVpc = isFeatureSupported(provider, "vpcs");
-  const supportsInternet = isFeatureSupported(provider, "internet_gateways");
-  const supportsDns = isFeatureSupported(provider, "dns");
-  const supportsAutoScaling = isFeatureSupported(provider, "autoscaling");
+  // Prefer the backend-supplied capability map; fall back to the legacy
+  // helper (which keys on a never-exposed-to-this-prop provider name) so the
+  // component still works in callers we haven't migrated yet.
+  const supportsVpc = providerFeatures?.vpc ?? isFeatureSupported(undefined, "vpcs");
+  const supportsInternet =
+    providerFeatures?.internet_gateway ?? isFeatureSupported(undefined, "internet_gateways");
+  const supportsDns = providerFeatures?.dns ?? isFeatureSupported(undefined, "dns");
+  const supportsAutoScaling =
+    providerFeatures?.autoscaling ?? isFeatureSupported(undefined, "autoscaling");
 
   // Build steps conditionally based on provider capabilities
   const steps: ChecklistStep[] = useMemo(() => {

@@ -42,7 +42,12 @@ import type { LucideIcon } from "lucide-react";
 import { RESOURCE_EXPLANATIONS } from "../resourceExplanations";
 import type { ResourceTypeId } from "../resourceExplanations";
 import type { ViewProps } from "../InfrastructureVisualization.types";
-import { isFeatureSupported } from "@/utils/featureGating";
+// Local helper: capability check from a vendor-neutral provider_features map.
+// Missing flags fail open (treated as supported).
+const supports = (
+  providerFeatures: Record<string, boolean> | undefined,
+  feature: string
+): boolean => providerFeatures?.[feature] ?? true;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -185,18 +190,18 @@ const BuildingMetaphorView: React.FC<ViewProps> = ({
   const isHighlighted = (typeId: ResourceTypeId) => highlightedTypes.includes(typeId);
   const isSelected = (typeId: ResourceTypeId) => selectedResource?.typeId === typeId;
 
-  // Provider feature flags
-  const provider = data.provider;
-  const showVpc = isFeatureSupported(provider, "vpcs");
-  const showSubnets = isFeatureSupported(provider, "subnets");
-  const showRt = isFeatureSupported(provider, "route_tables");
-  const showNat = isFeatureSupported(provider, "nat_gateways");
-  const showAcl = isFeatureSupported(provider, "network_acls");
-  const showPeering = isFeatureSupported(provider, "vpc_peering");
-  const showIgw = isFeatureSupported(provider, "internet_gateways");
-  const showLb = isFeatureSupported(provider, "load_balancers");
-  const showEip = isFeatureSupported(provider, "elastic_ips");
-  const showEni = isFeatureSupported(provider, "network_interfaces");
+  // Provider feature flags (sourced from backend `Project.provider_features`)
+  const features = data.providerFeatures;
+  const showVpc = supports(features, "vpcs");
+  const showSubnets = supports(features, "subnets");
+  const showRt = supports(features, "route_tables");
+  const showNat = supports(features, "nat_gateways");
+  const showAcl = supports(features, "network_acls");
+  const showPeering = supports(features, "vpc_peering");
+  const showIgw = supports(features, "internet_gateways");
+  const showLb = supports(features, "load_balancers");
+  const showEip = supports(features, "elastic_ips");
+  const showEni = supports(features, "network_interfaces");
 
   // Counts
   const vpcCount = getResourceCount(data, "vpcs");

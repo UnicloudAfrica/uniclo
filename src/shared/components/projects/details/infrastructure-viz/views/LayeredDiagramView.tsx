@@ -103,7 +103,7 @@ export default function LayeredDiagramView({
     // -- Nodes ---------------------------------------------------------------
 
     for (const layer of LAYER_ORDER) {
-      const resources = getResourcesByLayerForProvider(layer.id, data.provider);
+      const resources = getResourcesByLayerForProvider(layer.id, data.providerFeatures);
       const rowWidth = resources.length * NODE_X_SPACING;
       const xOffset = NODE_X_START + (4 * NODE_X_SPACING - rowWidth) / 2;
 

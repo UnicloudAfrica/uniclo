@@ -15,10 +15,20 @@ import {
   Zap,
   Users,
 } from "lucide-react";
-import { isFeatureSupported } from "@/utils/featureGating";
+// Local helper: capability check from a vendor-neutral provider_features map.
+// Missing flags fail open (treated as supported).
+const supports = (
+  providerFeatures: Record<string, boolean> | undefined,
+  feature: string
+): boolean => providerFeatures?.[feature] ?? true;
 
 interface ResourceSummaryCardProps {
-  provider?: string;
+  /**
+   * Vendor-neutral capability flags from `Project.provider_features`. Used to
+   * filter the resource list to only what the AZ supports. Missing flags
+   * fail open.
+   */
+  providerFeatures?: Record<string, boolean>;
   routeTables?: number;
   elasticIps?: number;
   networkInterfaces?: number;
@@ -47,7 +57,7 @@ interface ResourceSummaryCardProps {
 }
 
 const ResourceSummaryCard: React.FC<ResourceSummaryCardProps> = ({
-  provider,
+  providerFeatures,
   routeTables = 0,
   elasticIps = 0,
   networkInterfaces = 0,
@@ -204,7 +214,7 @@ const ResourceSummaryCard: React.FC<ResourceSummaryCardProps> = ({
   const filteredResources = resources.filter((r) => {
     const featureKey = RESOURCE_FEATURE_KEYS[r.label];
     if (!featureKey) return true;
-    return isFeatureSupported(provider, featureKey);
+    return supports(providerFeatures, featureKey);
   });
 
   return (

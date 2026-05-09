@@ -6,7 +6,7 @@ import AdvancedFilters from "../tables/AdvancedFilters";
 export interface ProjectFilters {
   status: string[];
   region: string[];
-  provider: string[];
+  availability_zone: string[];
   dateFrom: string | null;
   dateTo: string | null;
 }
@@ -14,7 +14,7 @@ export interface ProjectFilters {
 export interface ProjectFilterOptions {
   statuses: string[];
   regions: string[];
-  providers: string[];
+  availability_zones: string[];
 }
 
 export interface ProjectsFilterPanelProps {
@@ -58,12 +58,12 @@ const ProjectsFilterPanel: React.FC<ProjectsFilterPanelProps> = ({
         options: filterOptions.regions.map((r) => ({ label: r, value: r })),
       },
       {
-        key: "provider",
-        label: "Provider",
+        key: "availability_zone",
+        label: "Availability Zone",
         type: "multiselect" as const,
-        options: filterOptions.providers.map((p) => ({
-          label: p.charAt(0).toUpperCase() + p.slice(1),
-          value: p,
+        options: filterOptions.availability_zones.map((az) => ({
+          label: az.toUpperCase(),
+          value: az,
         })),
       },
       {
@@ -80,7 +80,7 @@ const ProjectsFilterPanel: React.FC<ProjectsFilterPanelProps> = ({
     () => ({
       status: filters.status,
       region: filters.region,
-      provider: filters.provider,
+      availability_zone: filters.availability_zone,
       dateRange: { start: filters.dateFrom, end: filters.dateTo },
     }),
     [filters]
@@ -92,7 +92,7 @@ const ProjectsFilterPanel: React.FC<ProjectsFilterPanelProps> = ({
       ...filters,
       status: (newValues.status as string[]) || [],
       region: (newValues.region as string[]) || [],
-      provider: (newValues.provider as string[]) || [],
+      availability_zone: (newValues.availability_zone as string[]) || [],
       dateFrom: newValues.dateRange?.start || null,
       dateTo: newValues.dateRange?.end || null,
     };
@@ -103,7 +103,7 @@ const ProjectsFilterPanel: React.FC<ProjectsFilterPanelProps> = ({
     searchQuery ||
     filters.status.length > 0 ||
     filters.region.length > 0 ||
-    filters.provider.length > 0 ||
+    filters.availability_zone.length > 0 ||
     filters.dateFrom ||
     filters.dateTo;
 
@@ -113,8 +113,11 @@ const ProjectsFilterPanel: React.FC<ProjectsFilterPanelProps> = ({
       onFilterChange({ ...filters, status: filters.status.filter((s) => s !== value) });
     } else if (key === "region") {
       onFilterChange({ ...filters, region: filters.region.filter((r) => r !== value) });
-    } else if (key === "provider") {
-      onFilterChange({ ...filters, provider: filters.provider.filter((p) => p !== value) });
+    } else if (key === "availability_zone") {
+      onFilterChange({
+        ...filters,
+        availability_zone: filters.availability_zone.filter((az) => az !== value),
+      });
     }
   };
 
@@ -192,14 +195,14 @@ const ProjectsFilterPanel: React.FC<ProjectsFilterPanelProps> = ({
               </button>
             </span>
           ))}
-          {filters.provider.map((provider) => (
+          {filters.availability_zone.map((az) => (
             <span
-              key={provider}
+              key={az}
               className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-700"
             >
-              Provider: {provider}
+              AZ: {az.toUpperCase()}
               <button
-                onClick={() => handleRemoveFilter("provider", provider)}
+                onClick={() => handleRemoveFilter("availability_zone", az)}
                 className="hover:text-purple-900"
               >
                 <X size={12} />

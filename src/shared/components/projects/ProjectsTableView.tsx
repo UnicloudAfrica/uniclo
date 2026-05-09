@@ -98,9 +98,9 @@ const ProjectsTableView: React.FC<ProjectsTableViewProps> = ({
         render: (value) => (value ? (value as string).toUpperCase() : "N/A"),
       },
       {
-        key: "provider",
-        header: "Provider",
-        render: (value) => <span className="capitalize">{(value as React.ReactNode) || "—"}</span>,
+        key: "availability_zone",
+        header: "Availability Zone",
+        render: (value) => (value ? (value as string).toUpperCase() : "—"),
       },
       {
         key: "created_at",

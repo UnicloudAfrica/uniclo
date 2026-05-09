@@ -10,7 +10,12 @@ import {
   Server,
   Wifi,
 } from "lucide-react";
-import { isFeatureSupported } from "@/utils/featureGating";
+// Local helper: capability check from a vendor-neutral provider_features map.
+// Missing flags fail open (treated as supported).
+const supports = (
+  providerFeatures: Record<string, boolean> | undefined,
+  feature: string
+): boolean => providerFeatures?.[feature] ?? true;
 
 interface IGWDetails {
   id?: string;
@@ -21,7 +26,12 @@ interface IGWDetails {
 }
 
 interface NetworkConfigurationCardProps {
-  provider?: string;
+  /**
+   * Vendor-neutral capability flags from `Project.provider_features`. Used to
+   * pick the correct layout (VPC-based vs. flat / floating-IP-based) without
+   * exposing vendor names to the UI. Missing flags fail open.
+   */
+  providerFeatures?: Record<string, boolean>;
   vpcCount: number;
   subnetCount: number;
   securityGroupCount: number;
@@ -39,7 +49,7 @@ interface NetworkConfigurationCardProps {
 }
 
 const NetworkConfigurationCard: React.FC<NetworkConfigurationCardProps> = ({
-  provider,
+  providerFeatures,
   vpcCount = 0,
   subnetCount = 0,
   securityGroupCount = 0,
@@ -52,12 +62,13 @@ const NetworkConfigurationCard: React.FC<NetworkConfigurationCardProps> = ({
   floatingIpCount = 0,
   onViewCompute,
 }) => {
-  const supportsVpc = isFeatureSupported(provider, "vpcs");
-  const _supportsInternetGateway = isFeatureSupported(provider, "internet_gateways");
+  const supportsVpc = supports(providerFeatures, "vpcs");
+  const _supportsInternetGateway = supports(providerFeatures, "internet_gateways");
 
   /* ------------------------------------------------------------------ */
-  /* Nobus Layout — "Security & Access"                                  */
-  /* Shows Instances / Security Groups / Floating IPs instead of VPC/IGW */
+  /* Flat / floating-IP layout — "Security & Access"                      */
+  /* For AZs without VPC support: shows Instances / Security Groups /     */
+  /* Floating IPs instead of VPC/IGW.                                     */
   /* ------------------------------------------------------------------ */
   if (!supportsVpc) {
     return (
@@ -130,7 +141,7 @@ const NetworkConfigurationCard: React.FC<NetworkConfigurationCardProps> = ({
   }
 
   /* ------------------------------------------------------------------ */
-  /* Zadara / Default Layout — "Network Configuration"                   */
+  /* VPC-based default layout — "Network Configuration"                  */
   /* Shows VPC / Subnet / Security Groups + Internet Gateway status      */
   /* ------------------------------------------------------------------ */
   return (

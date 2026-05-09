@@ -20,7 +20,7 @@ export interface ProjectExportRecord {
   identifier?: string | number;
   status?: string;
   region?: string;
-  provider?: string;
+  availability_zone?: string;
   created_at?: string;
   updated_at?: string;
   resources_count?: ProjectResourcesCount;
@@ -33,7 +33,7 @@ const DEFAULT_COLUMNS: ExportColumn[] = [
   { key: "description", label: "Description" },
   { key: "status", label: "Status" },
   { key: "region", label: "Region" },
-  { key: "provider", label: "Provider" },
+  { key: "availability_zone", label: "Availability Zone" },
   { key: "type", label: "Type" },
   { key: "created_at", label: "Created At" },
 ];
@@ -243,7 +243,7 @@ export const getDefaultExportColumns = (): ExportColumn[] => [
   { key: "description", label: "Description" },
   { key: "status", label: "Status" },
   { key: "region", label: "Region" },
-  { key: "provider", label: "Provider" },
+  { key: "availability_zone", label: "Availability Zone" },
   { key: "type", label: "Type" },
   { key: "resources_count.instances", label: "Instances" },
   { key: "resources_count.volumes", label: "Volumes" },
@@ -263,7 +263,7 @@ export const prepareProjectsForExport = (
     ...project,
     status: (project.status || "").toUpperCase(),
     region: (project.region || "").toUpperCase(),
-    provider: (project.provider || "").toUpperCase(),
+    availability_zone: (project.availability_zone || "").toUpperCase(),
     created_at: project.created_at ? new Date(project.created_at).toLocaleString() : "",
     updated_at: project.updated_at ? new Date(project.updated_at).toLocaleString() : "",
     instances_count: project.resources_count?.instances || 0,

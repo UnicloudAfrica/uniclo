@@ -90,13 +90,13 @@ const InfographicCardsView: React.FC<ViewProps> = ({
   const layersWithResources = useMemo(() => {
     let globalIndex = 0;
     return LAYER_ORDER.map((layer) => {
-      const resources = getResourcesByLayerForProvider(layer.id, data.provider).map((res) => ({
+      const resources = getResourcesByLayerForProvider(layer.id, data.providerFeatures).map((res) => ({
         ...res,
         globalIndex: globalIndex++,
       }));
       return { layer, resources };
     }).filter(({ resources }) => resources.length > 0);
-  }, [data.provider]);
+  }, [data.providerFeatures]);
 
   return (
     <div className="w-full h-full overflow-y-auto overflow-x-hidden p-2 sm:p-3 md:p-4 space-y-2 sm:space-y-2.5">

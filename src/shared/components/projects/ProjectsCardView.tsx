@@ -143,9 +143,9 @@ const ProjectsCardView: React.FC<ProjectsCardViewProps> = ({
                     </p>
                   </div>
                   <div className="rounded-lg bg-gray-50 p-2">
-                    <p className="text-xs text-gray-500">Provider</p>
-                    <p className="font-medium text-gray-900 capitalize">
-                      {project.provider || "—"}
+                    <p className="text-xs text-gray-500">Availability Zone</p>
+                    <p className="font-medium text-gray-900">
+                      {project.availability_zone ? project.availability_zone.toUpperCase() : "—"}
                     </p>
                   </div>
                   <div className="rounded-lg bg-gray-50 p-2">

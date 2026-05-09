@@ -61,7 +61,16 @@ interface Project {
   identifier: string;
   name: string;
   region: string;
-  provider: string;
+  /**
+   * Vendor-neutral availability zone identifier. Replaces the legacy
+   * `provider` field on the wire — never displayed to users.
+   */
+  availability_zone?: string;
+  /**
+   * Capability flags from the backend; used for feature gating.
+   * Vendor-neutral keys (e.g. `vpc_peering`, `nat_gateways`).
+   */
+  provider_features?: Record<string, boolean>;
   status: string;
   created_at: string;
   type: string;
@@ -432,7 +441,6 @@ const ProjectDetails: React.FC = () => {
       <ProjectTeamTab
         projectId={projectId}
         region={project?.region}
-        provider={project?.provider}
         hierarchy="tenant"
         projectUsers={projectUsers as import("@/types/project").ProjectUser[]}
         onRefresh={async () => {

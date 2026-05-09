@@ -4,10 +4,9 @@ import { designTokens } from "@/styles/designTokens";
 
 interface UnsupportedFeatureProps {
   feature: string;
-  provider: string;
 }
 
-const UnsupportedFeatureBase: React.FC<UnsupportedFeatureProps> = ({ feature, provider }) => {
+const UnsupportedFeatureBase: React.FC<UnsupportedFeatureProps> = ({ feature }) => {
   return (
     <div
       className="flex w-full flex-col items-center justify-center rounded-2xl border border-dashed px-6 py-16 text-center"
@@ -33,7 +32,7 @@ const UnsupportedFeatureBase: React.FC<UnsupportedFeatureProps> = ({ feature, pr
         className="mt-2 max-w-xl text-sm leading-relaxed"
         style={{ color: designTokens.colors.neutral[500] }}
       >
-        {feature} is not available for the {provider} provider.
+        {feature} is not available in this availability zone.
       </p>
     </div>
   );

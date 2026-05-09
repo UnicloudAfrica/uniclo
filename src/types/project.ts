@@ -14,7 +14,31 @@ export interface Project {
   status: string;
   tenant_id: number;
   region?: string;
+  /**
+   * Vendor-neutral availability zone identifier (e.g. `uni-ng-az-1`). Replaces
+   * the legacy `provider` field on the wire — see backend `ProjectResource`
+   * and `ProviderIdMapper`. Use this for display and filtering.
+   */
+  availability_zone?: string;
+  /**
+   * Opaque, deterministic UUID derived from the internal provider key.
+   * Use only for grouping / equality — never displayed to users.
+   */
+  provider_id?: string;
+  /**
+   * @deprecated The backend no longer ships this field. Reads will return
+   * undefined. Use `availability_zone` (display) or `provider_features`
+   * (capabilities) instead. Kept on the type only to ease incremental
+   * migration of existing call sites — schedule for removal once all
+   * frontend reads are gone.
+   */
   provider?: string;
+  /**
+   * Capability flags computed by the backend from the internal provider key.
+   * Vendor-neutral keys (`vpc`, `edge_network`, etc.) → booleans. Use this
+   * to gate UI features instead of looking up by provider name.
+   */
+  provider_features?: Record<string, boolean>;
   resources_count?: ProjectResourcesCount;
   created_at: string;
   updated_at: string;

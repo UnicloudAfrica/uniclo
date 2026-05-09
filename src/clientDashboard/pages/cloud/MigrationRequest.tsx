@@ -8,7 +8,7 @@ export default function MigrationRequestPage() {
   const create = migrationRequests.useCreate();
 
   const [form, setForm] = useState({
-    source_provider: "zadara",
+    source_availability_zone: "",
     source_region: "",
     target_region: "",
     customer_notes: "",
@@ -29,14 +29,12 @@ export default function MigrationRequestPage() {
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5">
         <div className="grid grid-cols-2 gap-3">
-          <select
-            value={form.source_provider}
-            onChange={(e) => setForm({ ...form, source_provider: e.target.value })}
+          <input
+            placeholder="Source availability zone (e.g. uni-ng-az-1)"
+            value={form.source_availability_zone}
+            onChange={(e) => setForm({ ...form, source_availability_zone: e.target.value })}
             className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-          >
-            <option value="zadara">zadara</option>
-            <option value="nobus">nobus</option>
-          </select>
+          />
           <input
             placeholder="Source region"
             value={form.source_region}
@@ -100,9 +98,9 @@ export default function MigrationRequestPage() {
               <li key={r.id} className="flex items-center justify-between px-5 py-3 text-sm">
                 <div>
                   <p className="font-medium">
-                    {r.source_provider} / {r.source_region} → {r.target_region}
+                    {String(r.source_availability_zone ?? "")} / {String(r.source_region ?? "")} → {String(r.target_region ?? "")}
                   </p>
-                  <p className="font-mono text-xs text-slate-400">{r.identifier}</p>
+                  <p className="font-mono text-xs text-slate-400">{String(r.identifier ?? "")}</p>
                 </div>
                 <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs">{r.status}</span>
               </li>

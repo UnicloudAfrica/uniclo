@@ -14,7 +14,6 @@ import {
 } from "@/shared/hooks/vpcInfraHooks";
 import type { Vpc } from "@/shared/components/infrastructure/types";
 import { useFetchProjectById } from "@/shared/hooks/resources/projectHooks";
-import { isFeatureSupported } from "@/utils/featureGating";
 import { UnsupportedFeature } from "@/shared/components/UnsupportedFeature";
 
 const TenantVpcPeering: React.FC = () => {
@@ -25,7 +24,8 @@ const TenantVpcPeering: React.FC = () => {
   const { data: projectData } = useFetchProjectById(projectId);
   const projectObj =
     projectData && typeof projectData === "object" ? (projectData as Record<string, unknown>) : null;
-  const provider = projectObj?.provider || searchParams.get("provider");
+  const providerFeatures = projectObj?.provider_features as Record<string, boolean> | undefined;
+  const supportsVpcPeering = providerFeatures?.vpc_peering ?? true;
 
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -43,10 +43,10 @@ const TenantVpcPeering: React.FC = () => {
   const rejectMutation = useRejectVpcPeering();
   const deleteMutation = useDeleteVpcPeering();
 
-  if (provider && !isFeatureSupported(provider, "vpc_peering")) {
+  if (!supportsVpcPeering) {
     return (
       <TenantPageShell title="VPC Peering" description="">
-        <UnsupportedFeature feature="VPC Peering" provider={provider} />
+        <UnsupportedFeature feature="VPC Peering" />
       </TenantPageShell>
     );
   }

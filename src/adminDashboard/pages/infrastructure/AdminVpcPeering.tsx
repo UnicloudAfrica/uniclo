@@ -13,7 +13,6 @@ import {
   useVpcs,
 } from "@/shared/hooks/vpcInfraHooks";
 import { useFetchProjectById } from "@/shared/hooks/resources/projectHooks";
-import { isFeatureSupported } from "@/utils/featureGating";
 import { UnsupportedFeature } from "@/shared/components/UnsupportedFeature";
 
 const AdminVpcPeering: React.FC = () => {
@@ -24,7 +23,8 @@ const AdminVpcPeering: React.FC = () => {
   const { data: projectData } = useFetchProjectById(projectId);
   const projectObj =
     projectData && typeof projectData === "object" ? (projectData as Record<string, unknown>) : null;
-  const provider = projectObj?.provider || searchParams.get("provider");
+  const providerFeatures = projectObj?.provider_features as Record<string, boolean> | undefined;
+  const supportsVpcPeering = providerFeatures?.vpc_peering ?? true;
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [vpcId, setVpcId] = useState("");
@@ -38,10 +38,10 @@ const AdminVpcPeering: React.FC = () => {
   const { mutate: rejectPeering } = useRejectVpcPeering();
   const { mutate: deletePeering } = useDeleteVpcPeering();
 
-  if (provider && !isFeatureSupported(provider, "vpc_peering")) {
+  if (!supportsVpcPeering) {
     return (
       <AdminPageShell title="VPC Peering" description="">
-        <UnsupportedFeature feature="VPC Peering" provider={provider} />
+        <UnsupportedFeature feature="VPC Peering" />
       </AdminPageShell>
     );
   }

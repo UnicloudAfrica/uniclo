@@ -222,7 +222,7 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
         />
 
         <NetworkConfigurationCard
-          provider={project.provider}
+          providerFeatures={project.provider_features}
           vpcCount={resourceCounts.vpcs}
           subnetCount={resourceCounts.subnets}
           securityGroupCount={resourceCounts.security_groups}
@@ -242,7 +242,7 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
           edgeNetworkConnected={edgeNetworkConnected}
           edgeNetworkName={edgeNetworkName}
           isSyncing={isSyncing}
-          provider={project.provider}
+          providerFeatures={project.provider_features}
         />
       </div>
 
@@ -254,13 +254,13 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
             progressPercent={setupProgressPercent}
             onCompleteSetup={onCompleteSetup}
             isLoading={isProvisioning}
-            provider={project.provider}
+            providerFeatures={project.provider_features}
           />
         </div>
 
         <div className="lg:col-span-2">
           <ResourceSummaryCard
-            provider={project.provider}
+            providerFeatures={project.provider_features}
             vpcs={resourceCounts.vpcs || 0}
             subnets={resourceCounts.subnets || 0}
             securityGroups={resourceCounts.security_groups || 0}
@@ -293,7 +293,7 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
       {/* Row 3 - Interactive Infrastructure Visualization (Wide) */}
       <div className="grid grid-cols-1 gap-6">
         <InfrastructureVisualization
-          provider={project.provider}
+          providerFeatures={project.provider_features}
           vpcs={vpcs}
           subnets={subnets}
           igws={igws}

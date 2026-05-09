@@ -62,8 +62,11 @@ export interface InfraVizProps {
   activeStepId?: string;
   isProvisioning?: boolean;
 
-  // Cloud provider (e.g. "zadara" or "nobus") – used to filter unsupported resources
-  provider?: string;
+  // Vendor-neutral capability flags (e.g. { vpcs: true, nat_gateways: false }).
+  // Sourced from the backend `Project.provider_features` map. Used to filter
+  // unsupported resources without exposing vendor names to the UI. Missing
+  // flags fail open (treated as supported).
+  providerFeatures?: Record<string, boolean>;
 
   // Callback when user clicks "Go to resource" in explanation panel
   onResourceClick?: (resourceType: ResourceTypeId) => void;

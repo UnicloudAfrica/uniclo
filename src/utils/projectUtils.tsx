@@ -85,7 +85,7 @@ export const getStatusDisplayConfig = (status: string | undefined): StatusDispla
 export interface ProjectFilters {
   status?: string[];
   region?: string[];
-  provider?: string[];
+  availability_zone?: string[];
   dateFrom?: string | null;
   dateTo?: string | null;
 }
@@ -130,11 +130,12 @@ export const filterProjects = (
       if (!matchesRegion) return false;
     }
 
-    // Provider filter
-    if (filters.provider && filters.provider.length > 0) {
-      const projectProvider = (project?.provider || "").toLowerCase();
-      const matchesProvider = filters.provider.some((p) => p.toLowerCase() === projectProvider);
-      if (!matchesProvider) return false;
+    // Availability zone filter (replaces legacy provider filter — see
+    // ProviderIdMapper / AvailabilityZoneResolver on the backend)
+    if (filters.availability_zone && filters.availability_zone.length > 0) {
+      const projectAz = (project?.availability_zone || "").toLowerCase();
+      const matchesAz = filters.availability_zone.some((az) => az.toLowerCase() === projectAz);
+      if (!matchesAz) return false;
     }
 
     // Date range filter

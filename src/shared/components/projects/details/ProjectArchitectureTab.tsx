@@ -86,7 +86,7 @@ const ProjectArchitectureTab: React.FC<ProjectArchitectureTabProps> = ({ unified
       </div>
 
       <InfrastructureVisualization
-        provider={project.provider}
+        providerFeatures={project.provider_features}
         vpcs={vpcs}
         subnets={subnets}
         igws={igws}

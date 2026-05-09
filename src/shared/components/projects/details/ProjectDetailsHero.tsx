@@ -83,7 +83,7 @@ const ProjectDetailsHero: React.FC<ProjectDetailsHeroProps> = ({
   infrastructureStepLabel,
 }) => {
   const heroProjectIdentifier = project?.identifier;
-  const heroProviderLabel = project?.provider || "Provider";
+  const heroAvailabilityZoneLabel = project?.availability_zone || "Availability Zone";
   const heroRegionLabel = (project?.region || "Region").toUpperCase();
   const heroDescription =
     project?.description ||
@@ -109,7 +109,7 @@ const ProjectDetailsHero: React.FC<ProjectDetailsHeroProps> = ({
                 showIcon
               />
               <NeutralPill icon={Shield} label={heroProjectIdentifier || "—"} />
-              <NeutralPill icon={Layers} label={heroProviderLabel} />
+              <NeutralPill icon={Layers} label={heroAvailabilityZoneLabel} />
               <NeutralPill icon={MapPin} label={heroRegionLabel} />
               <NeutralPill icon={Activity} label={infrastructureStepLabel || "—"} />
             </div>

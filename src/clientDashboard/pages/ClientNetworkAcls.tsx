@@ -13,7 +13,6 @@ import {
 } from "@/shared/hooks/vpcInfraHooks";
 import { NetworkAcl } from "@/shared/components/infrastructure/types";
 import { useFetchProjectById } from "@/shared/hooks/resources/projectHooks";
-import { isFeatureSupported } from "@/utils/featureGating";
 import { UnsupportedFeature } from "@/shared/components/UnsupportedFeature";
 
 const ClientNetworkAcls: React.FC = () => {
@@ -25,12 +24,13 @@ const ClientNetworkAcls: React.FC = () => {
   const { data: projectData } = useFetchProjectById(projectId);
   const project =
     projectData && typeof projectData === "object" ? (projectData as Record<string, unknown>) : null;
-  const provider = project?.provider || searchParams.get("provider");
+  const providerFeatures = project?.provider_features as Record<string, boolean> | undefined;
+  const supportsNetworkAcls = providerFeatures?.network_acls ?? true;
 
-  if (provider && !isFeatureSupported(provider, "network_acls")) {
+  if (!supportsNetworkAcls) {
     return (
       <ClientPageShell title="Network ACLs" description="">
-        <UnsupportedFeature feature="Network ACLs" provider={provider} />
+        <UnsupportedFeature feature="Network ACLs" />
       </ClientPageShell>
     );
   }

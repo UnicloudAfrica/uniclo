@@ -5,7 +5,6 @@ import ClientPageShell from "../components/ClientPageShell";
 import { VpcPeeringOverview } from "@/shared/components/infrastructure";
 import { useVpcPeering } from "@/shared/hooks/vpcInfraHooks";
 import { useFetchProjectById } from "@/shared/hooks/resources/projectHooks";
-import { isFeatureSupported } from "@/utils/featureGating";
 import { UnsupportedFeature } from "@/shared/components/UnsupportedFeature";
 
 const ClientVpcPeering: React.FC = () => {
@@ -16,14 +15,15 @@ const ClientVpcPeering: React.FC = () => {
   const { data: projectData } = useFetchProjectById(projectId);
   const project =
     projectData && typeof projectData === "object" ? (projectData as Record<string, unknown>) : null;
-  const provider = project?.provider || searchParams.get("provider");
+  const providerFeatures = project?.provider_features as Record<string, boolean> | undefined;
+  const supportsVpcPeering = providerFeatures?.vpc_peering ?? true;
 
   const { data: peeringConnections = [], isLoading } = useVpcPeering(projectId, region);
 
-  if (provider && !isFeatureSupported(provider, "vpc_peering")) {
+  if (!supportsVpcPeering) {
     return (
       <ClientPageShell title="VPC Peering" description="">
-        <UnsupportedFeature feature="VPC Peering" provider={provider} />
+        <UnsupportedFeature feature="VPC Peering" />
       </ClientPageShell>
     );
   }

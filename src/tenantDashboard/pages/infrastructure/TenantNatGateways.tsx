@@ -11,7 +11,6 @@ import {
   useDeleteNatGateway,
 } from "@/shared/hooks/vpcInfraHooks";
 import { useFetchProjectById } from "@/shared/hooks/resources/projectHooks";
-import { isFeatureSupported } from "@/utils/featureGating";
 import { UnsupportedFeature } from "@/shared/components/UnsupportedFeature";
 
 const TenantNatGateways: React.FC = () => {
@@ -22,12 +21,13 @@ const TenantNatGateways: React.FC = () => {
   const { data: projectData } = useFetchProjectById(projectId);
   const project =
     projectData && typeof projectData === "object" ? (projectData as Record<string, unknown>) : null;
-  const provider = (project?.provider as string | undefined) || searchParams.get("provider");
+  const providerFeatures = project?.provider_features as Record<string, boolean> | undefined;
+  const supportsNatGateways = providerFeatures?.nat_gateways ?? true;
 
-  if (provider && !isFeatureSupported(provider, "nat_gateways")) {
+  if (!supportsNatGateways) {
     return (
       <TenantPageShell title="NAT Gateways" description="">
-        <UnsupportedFeature feature="NAT Gateways" provider={provider} />
+        <UnsupportedFeature feature="NAT Gateways" />
       </TenantPageShell>
     );
   }

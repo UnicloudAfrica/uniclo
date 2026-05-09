@@ -33,7 +33,13 @@ import type {
 import type { Project as ProjectRecord } from "@/types/project";
 import type { KeyPairHooks } from "../../infrastructure/containers/KeyPairsContainer";
 import { DEFAULT_PRESETS } from "../../network/NetworkPresetSelector";
-import { isFeatureSupported } from "@/utils/featureGating";
+
+// Local helper: capability check from a vendor-neutral provider_features map.
+// Missing flags fail open (treated as supported).
+const supports = (
+  providerFeatures: Record<string, boolean> | undefined,
+  feature: string
+): boolean => providerFeatures?.[feature] ?? true;
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -283,12 +289,20 @@ export const useProjectDetailsAdapter = (
     created_at: projectCreatedAt,
     updated_at: projectUpdatedAt,
     ...(project?.region !== undefined ? { region: project.region } : {}),
-    ...(project?.provider !== undefined ? { provider: project.provider } : {}),
+    ...(project?.availability_zone !== undefined
+      ? { availability_zone: project.availability_zone }
+      : {}),
+    ...(project?.provider_id !== undefined ? { provider_id: project.provider_id } : {}),
+    ...(project?.provider_features !== undefined
+      ? { provider_features: project.provider_features }
+      : {}),
     ...(project?.description !== undefined ? { description: project.description } : {}),
     ...(project?.resources_count !== undefined ? { resources_count: project.resources_count } : {}),
   };
 
-  const projectProvider = project?.provider as string | undefined;
+  const projectProviderFeatures = project?.provider_features as
+    | Record<string, boolean>
+    | undefined;
 
   const unifiedProject: UnifiedProjectData = {
     ...projectForLayout,
@@ -450,8 +464,9 @@ export const useProjectDetailsAdapter = (
       : (config.infraStatusData?.data?.completion_percentage ?? 0);
 
   const networkingItems = useMemo(
-    () => config.networkingTab?.items ?? buildNetworkingItems(resourceCounts, projectProvider),
-    [config.networkingTab?.items, resourceCounts, projectProvider]
+    () =>
+      config.networkingTab?.items ?? buildNetworkingItems(resourceCounts, projectProviderFeatures),
+    [config.networkingTab?.items, resourceCounts, projectProviderFeatures]
   );
 
   const canCreateInstances = config.canCreateInstances ?? project?.status === "active";
@@ -621,7 +636,7 @@ export const useProjectDetailsAdapter = (
       icon: Network,
       tooltip: "Manage VPCs, subnets, security groups, and other network resources",
       content: networkingContent,
-      hidden: !isFeatureSupported(projectProvider, "vpcs"),
+      hidden: !supports(projectProviderFeatures, "vpcs"),
     });
   }
   const storageContent = config.renderStorageTab?.() ?? undefined;
@@ -652,7 +667,7 @@ export const useProjectDetailsAdapter = (
       icon: Globe,
       tooltip: "Map domain names (like myapp.com) to your server IP addresses",
       content: dnsContent,
-      hidden: !isFeatureSupported(projectProvider, "dns"),
+      hidden: !supports(projectProviderFeatures, "dns"),
     },
     {
       id: "autoscaling",
@@ -660,7 +675,7 @@ export const useProjectDetailsAdapter = (
       icon: Layers,
       tooltip: "Automatically add or remove servers based on demand",
       content: autoScalingContent,
-      hidden: !isFeatureSupported(projectProvider, "autoscaling"),
+      hidden: !supports(projectProviderFeatures, "autoscaling"),
     },
     {
       id: "team",

@@ -466,7 +466,7 @@ const ClientProjectDetails: React.FC = () => {
       title={project?.name || "Project Overview"}
       description={
         project?.identifier
-          ? `${project.identifier} • ${project.provider || "Provider"} • ${project.region || "Region"}`
+          ? `${project.identifier} • ${project.availability_zone || "Availability Zone"} • ${project.region || "Region"}`
           : "Loading..."
       }
       actions={

@@ -1,6 +1,12 @@
 import React from "react";
 import { Users, RefreshCw, Wifi, WifiOff } from "lucide-react";
-import { isFeatureSupported } from "@/utils/featureGating";
+
+// Local helper: capability check from a vendor-neutral provider_features map.
+// Missing flags fail open (treated as supported).
+const supports = (
+  providerFeatures: Record<string, boolean> | undefined,
+  feature: string
+): boolean => providerFeatures?.[feature] ?? true;
 
 interface AdvancedQuickActionsCardProps {
   onManageMembers: () => void;
@@ -8,7 +14,11 @@ interface AdvancedQuickActionsCardProps {
   edgeNetworkConnected: boolean;
   edgeNetworkName?: string;
   isSyncing?: boolean;
-  provider?: string;
+  /**
+   * Vendor-neutral capability flags from `Project.provider_features`.
+   * Used to gate the Edge Network section. Missing flags fail open.
+   */
+  providerFeatures?: Record<string, boolean>;
 }
 
 const AdvancedQuickActionsCard: React.FC<AdvancedQuickActionsCardProps> = ({
@@ -17,7 +27,7 @@ const AdvancedQuickActionsCard: React.FC<AdvancedQuickActionsCardProps> = ({
   edgeNetworkConnected = false,
   edgeNetworkName,
   isSyncing = false,
-  provider,
+  providerFeatures,
 }) => {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6 shadow-sm h-full">
@@ -47,7 +57,7 @@ const AdvancedQuickActionsCard: React.FC<AdvancedQuickActionsCardProps> = ({
       </div>
 
       {/* Edge Network Status */}
-      {isFeatureSupported(provider, "edge_network") && (
+      {supports(providerFeatures, "edge_network") && (
         <div className="mt-4 pt-4 border-t border-gray-100">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">

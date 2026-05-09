@@ -93,7 +93,8 @@ const ProjectsPageContainer: React.FC<ProjectsPageContainerProps> = ({
   const [filters, setFilters] = useState<ProjectFilters>(() => ({
     status: searchParams.get("status")?.split(",").filter(Boolean) || [],
     region: searchParams.get("region")?.split(",").filter(Boolean) || [],
-    provider: searchParams.get("provider")?.split(",").filter(Boolean) || [],
+    availability_zone:
+      searchParams.get("availability_zone")?.split(",").filter(Boolean) || [],
     dateFrom: searchParams.get("dateFrom") || null,
     dateTo: searchParams.get("dateTo") || null,
   }));
@@ -150,7 +151,7 @@ const ProjectsPageContainer: React.FC<ProjectsPageContainerProps> = ({
   const filterOptions = useMemo(
     () => ({
       regions: getUniqueValues(projects, "region").map((r: string) => r.toUpperCase()),
-      providers: getUniqueValues(projects, "provider"),
+      availability_zones: getUniqueValues(projects, "availability_zone"),
       statuses: ["active", "pending", "provisioning", "processing", "inactive", "error", "failed"],
     }),
     [projects]
@@ -198,7 +199,8 @@ const ProjectsPageContainer: React.FC<ProjectsPageContainerProps> = ({
       updateSearchParams({
         status: newFilters.status.length > 0 ? newFilters.status : undefined,
         region: newFilters.region.length > 0 ? newFilters.region : undefined,
-        provider: newFilters.provider.length > 0 ? newFilters.provider : undefined,
+        availability_zone:
+          newFilters.availability_zone.length > 0 ? newFilters.availability_zone : undefined,
         dateFrom: newFilters.dateFrom || undefined,
         dateTo: newFilters.dateTo || undefined,
         page: 1,
@@ -212,7 +214,7 @@ const ProjectsPageContainer: React.FC<ProjectsPageContainerProps> = ({
     setFilters({
       status: [],
       region: [],
-      provider: [],
+      availability_zone: [],
       dateFrom: null,
       dateTo: null,
     });
@@ -221,7 +223,7 @@ const ProjectsPageContainer: React.FC<ProjectsPageContainerProps> = ({
       search: undefined,
       status: undefined,
       region: undefined,
-      provider: undefined,
+      availability_zone: undefined,
       dateFrom: undefined,
       dateTo: undefined,
       page: 1,

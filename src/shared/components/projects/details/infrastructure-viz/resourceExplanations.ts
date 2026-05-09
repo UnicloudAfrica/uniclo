@@ -21,7 +21,12 @@ import {
   Server,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { isFeatureSupported } from "@/utils/featureGating";
+// Helper: check if a feature is supported given a provider_features map.
+// Missing keys fail open (true) for forward compatibility.
+const supports = (
+  providerFeatures: Record<string, boolean> | undefined,
+  feature: string
+): boolean => providerFeatures?.[feature] ?? true;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -416,19 +421,21 @@ const RESOURCE_FEATURE_KEY: Record<ResourceTypeId, string> = {
   instances: "compute",
 };
 
-/** Get resources for a specific layer, filtered by provider support */
+/** Get resources for a specific layer, filtered by provider feature flags */
 export function getResourcesByLayerForProvider(
   layer: InfraLayer,
-  provider?: string
+  providerFeatures?: Record<string, boolean>
 ): ResourceExplanation[] {
   return Object.values(RESOURCE_EXPLANATIONS).filter(
-    (r) => r.layer === layer && isFeatureSupported(provider, RESOURCE_FEATURE_KEY[r.id])
+    (r) => r.layer === layer && supports(providerFeatures, RESOURCE_FEATURE_KEY[r.id])
   );
 }
 
-/** Get all supported resource type IDs for a provider */
-export function getSupportedResourceIds(provider?: string): ResourceTypeId[] {
+/** Get all supported resource type IDs given a provider feature map */
+export function getSupportedResourceIds(
+  providerFeatures?: Record<string, boolean>
+): ResourceTypeId[] {
   return (Object.keys(RESOURCE_EXPLANATIONS) as ResourceTypeId[]).filter((id) =>
-    isFeatureSupported(provider, RESOURCE_FEATURE_KEY[id])
+    supports(providerFeatures, RESOURCE_FEATURE_KEY[id])
   );
 }

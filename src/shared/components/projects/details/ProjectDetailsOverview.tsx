@@ -3,7 +3,6 @@ import { Activity } from "lucide-react";
 import { ModernButton, ModernCard } from "../../ui";
 import ProjectUnifiedView, { ProjectUnifiedViewProps } from "./ProjectUnifiedView";
 import GettingStartedChecklist from "./GettingStartedChecklist";
-import { isFeatureSupported } from "@/utils/featureGating";
 
 interface RequiredActionPayload {
   method?: string;
@@ -36,10 +35,15 @@ const ProjectDetailsOverview: React.FC<ProjectDetailsOverviewProps> = ({
   onNavigateToTab,
   children,
 }) => {
-  const provider = unifiedViewProps.project?.provider;
+  // Use the backend-supplied capability map instead of the legacy provider key.
+  // `provider_features` ships on every Project resource and is keyed by ability,
+  // not by vendor name — see backend ProviderIdMapper / ProjectResource.
+  const providerFeatures = (
+    unifiedViewProps.project as { provider_features?: Record<string, boolean> } | undefined
+  )?.provider_features;
 
   const ACTION_FEATURE_MAP: Record<string, string> = {
-    vpc_enabled: "vpcs",
+    vpc_enabled: "vpc",
     user_auth: "user_authentication",
     authenticate_users: "user_authentication",
     edge_network: "edge_network",
@@ -50,7 +54,9 @@ const ProjectDetailsOverview: React.FC<ProjectDetailsOverviewProps> = ({
     .filter((item) => {
       const featureKey = ACTION_FEATURE_MAP[item.key ?? ""];
       if (!featureKey) return true;
-      return isFeatureSupported(provider, featureKey);
+      // Prefer backend-supplied flag; fall back to permissive default if the
+      // map hasn't been hydrated yet (item still shown until response lands).
+      return providerFeatures?.[featureKey] ?? true;
     });
 
   // Derive checklist data from props already flowing through the overview
@@ -67,7 +73,10 @@ const ProjectDetailsOverview: React.FC<ProjectDetailsOverviewProps> = ({
       {/* Getting Started Checklist — shows until all core steps are done */}
       {onNavigateToTab && (
         <GettingStartedChecklist
-          provider={unifiedViewProps.project?.provider}
+          providerFeatures={
+            (unifiedViewProps.project as { provider_features?: Record<string, boolean> } | undefined)
+              ?.provider_features
+          }
           instanceCount={instanceCount}
           vpcCount={rc.vpcs ?? 0}
           subnetCount={rc.subnets ?? 0}

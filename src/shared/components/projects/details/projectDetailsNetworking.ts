@@ -14,7 +14,13 @@ import {
 import type { LucideIcon } from "lucide-react";
 import type { ResourceNavItem } from "./ResourceLayout";
 import type { ResourceCounts } from "./ProjectUnifiedView";
-import { isFeatureSupported } from "@/utils/featureGating";
+
+// Local helper: capability check from a vendor-neutral provider_features map.
+// Missing flags fail open (treated as supported).
+const supports = (
+  providerFeatures: Record<string, boolean> | undefined,
+  feature: string
+): boolean => providerFeatures?.[feature] ?? true;
 
 export type NetworkingResourceId =
   | "vpcs"
@@ -151,10 +157,10 @@ export const getNetworkingResourceMeta = (id: string): NetworkingResourceDefinit
 
 export const buildNetworkingItems = (
   counts: ResourceCounts,
-  provider?: string
+  providerFeatures?: Record<string, boolean>
 ): ResourceNavItem[] => {
   return NETWORKING_RESOURCE_DEFS.filter((item) =>
-    isFeatureSupported(provider, RESOURCE_FEATURE_MAP[item.id])
+    supports(providerFeatures, RESOURCE_FEATURE_MAP[item.id])
   ).map((item) => ({
     ...item,
     count: counts[COUNT_KEY_MAP[item.id]] as number | undefined,

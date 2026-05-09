@@ -34,7 +34,7 @@ const ProjectDetailsHeader: React.FC<ProjectDetailsHeaderProps> = ({ project, re
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-mono text-gray-400 w-12">REGION</span>
               <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 uppercase">
-                {project?.provider} / {project?.region}
+                {project?.availability_zone || project?.region || "—"}
               </span>
             </div>
           </div>

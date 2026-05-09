@@ -1,6 +1,11 @@
 import React from "react";
 import { CheckCircle, Circle, ArrowRight, RefreshCw, XCircle } from "lucide-react";
-import { isFeatureSupported } from "@/utils/featureGating";
+// Local helper: capability check from a vendor-neutral provider_features map.
+// Missing flags fail open (treated as supported).
+const supports = (
+  providerFeatures: Record<string, boolean> | undefined,
+  feature: string
+): boolean => providerFeatures?.[feature] ?? true;
 
 interface SetupStep {
   id: string;
@@ -16,7 +21,11 @@ interface SetupProgressCardProps {
   progressPercent?: number;
   onCompleteSetup?: () => void;
   isLoading?: boolean;
-  provider?: string;
+  /**
+   * Vendor-neutral capability flags from `Project.provider_features`. Used to
+   * hide setup steps the AZ doesn't support. Missing flags fail open.
+   */
+  providerFeatures?: Record<string, boolean>;
 }
 
 const STEP_FEATURE_MAP: Record<string, string> = {
@@ -33,7 +42,7 @@ const SetupProgressCard: React.FC<SetupProgressCardProps> = ({
   progressPercent,
   onCompleteSetup,
   isLoading = false,
-  provider,
+  providerFeatures,
 }) => {
   const [expandedSteps, setExpandedSteps] = React.useState<Record<string, boolean>>({});
 
@@ -44,7 +53,7 @@ const SetupProgressCard: React.FC<SetupProgressCardProps> = ({
   const filteredSteps = steps.filter((s) => {
     const featureKey = STEP_FEATURE_MAP[s.id];
     if (!featureKey) return true;
-    return isFeatureSupported(provider, featureKey);
+    return supports(providerFeatures, featureKey);
   });
 
   const completedCount = filteredSteps.filter((s) => s.status === "completed").length;

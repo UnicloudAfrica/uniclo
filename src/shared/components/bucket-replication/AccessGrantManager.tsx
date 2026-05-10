@@ -300,15 +300,22 @@ export default function AccessGrantManager({
       <ModernCard>
         <div className="p-4 space-y-3">
           <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-            Existing grants
+            Who has access
           </h3>
           {isLoading ? (
-            <p className="text-xs text-gray-500 dark:text-gray-400">Loading…</p>
+            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+              <span aria-hidden="true">⏳</span> Looking up your grants…
+            </div>
           ) : grants.length === 0 ? (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              No grants issued. Use the form above to share a specific bucket
-              resource with a client.
-            </p>
+            <div className="flex flex-col items-center gap-2 py-8 text-center">
+              <span aria-hidden="true" className="text-4xl">🔐</span>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Nobody else can see this yet
+              </p>
+              <p className="max-w-sm text-xs text-gray-500 dark:text-gray-400">
+                Use the form above to give a specific client read-only access to one bucket resource — without giving them keys to anything else.
+              </p>
+            </div>
           ) : (
             <div className="overflow-x-auto -mx-4">
               <table className="min-w-full text-xs">

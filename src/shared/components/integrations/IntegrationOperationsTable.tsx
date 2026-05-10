@@ -4,7 +4,7 @@
  * Responsive: stacks to card layout on mobile, shows full table on desktop.
  */
 import React from "react";
-import { Clock, ArrowUpDown } from "lucide-react";
+import { Clock } from "lucide-react";
 import { ModernTable } from "../ui";
 import IntegrationStatusBadge from "./IntegrationStatusBadge";
 import type { IntegrationOperation } from "@/shared/hooks/resources/integrationHooks";
@@ -123,13 +123,13 @@ const IntegrationOperationsTable: React.FC<IntegrationOperationsTableProps> = ({
 
   if (!operations.length && !loading) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 px-4 py-8 text-center dark:border-gray-700 sm:py-12">
-        <ArrowUpDown className="mb-3 h-8 w-8 text-gray-400" />
-        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-          No operations yet
+      <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-10 text-center dark:border-gray-700 sm:py-12">
+        <span aria-hidden="true" className="text-4xl">🌱</span>
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          Quiet so far
         </p>
-        <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-          Operations will appear here once backup, replication, or migration tasks are started.
+        <p className="max-w-sm text-xs text-gray-500 dark:text-gray-400">
+          Backups, replications, and migrations show up here as they happen. Start one and watch this fill up.
         </p>
       </div>
     );

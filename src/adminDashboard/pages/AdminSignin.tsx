@@ -3,7 +3,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import logo from "./assets/logo.png";
 import { useNavigate } from "react-router-dom";
 
-import useAdminAuthStore from "@/stores/adminAuthStore";
+import useAuthStore from "@/stores/authStore";
 
 import useAuthRedirect from "@/utils/adminAuthRedirect";
 import { useLoginAdminAccount } from "@/hooks/adminHooks/authHooks";
@@ -30,7 +30,7 @@ export default function AdminLogin() {
   const [errors, setErrors] = useState<LoginErrors>({});
   const { mutate, isPending } = useLoginAdminAccount();
   const navigate = useNavigate();
-  const { setUserEmail, setTwoFactorRequired, clearTwoFactorRequirement } = useAdminAuthStore();
+  const { setUserEmail, setTwoFactorRequired, clearTwoFactorRequirement } = useAuthStore();
   const { isLoading } = useAuthRedirect();
   const { data: branding } = usePlatformBrandingTheme();
   useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });

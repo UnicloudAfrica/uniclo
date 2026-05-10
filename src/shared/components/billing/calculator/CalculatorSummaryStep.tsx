@@ -13,11 +13,12 @@ import {
   HardDrive,
 } from "lucide-react";
 import { ModernCard, ModernButton, ModernInput, StatusPill } from "../../ui";
+import { RESILIENCE } from "@/shared/branding";
 import ToastUtils from "@/utils/toastUtil";
 import { useSharedMultiQuotes } from "@/hooks/sharedCalculatorHooks";
 import { formatRegionName } from "@/utils/regionUtils";
 import { useFetchCountries } from "@/hooks/resource";
-import { CalculatorData } from "../types";
+import { CalculatorData, ShieldServiceLineItem } from "../types";
 
 const selectClass =
   "w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100";
@@ -58,6 +59,23 @@ interface PricingResult {
       lines?: PricingLine[];
       subtotal?: number;
     };
+    add_ons?: {
+      // Add-ons are returned in their source currencies (USD for
+      // Shield/AnyCloudFlow, NGN for SlimDeploy/metered) and are NOT
+      // rolled into the canonical compute total. The summary shows
+      // them in a dedicated section so the bill is honest about the
+      // currency split.
+      lines?: PricingLine[];
+      subtotal?: number;
+      currency?: string;
+      per_bucket?: {
+        flow_plans?: number;
+        shield?: number;
+        anycloudflow?: number;
+        pay_as_you_go?: number;
+      };
+      included_in_totals?: boolean;
+    };
     [key: string]: unknown;
   };
   summary?: {
@@ -65,6 +83,7 @@ interface PricingResult {
     total_instances?: number;
     regions?: string[];
     has_discount?: boolean;
+    has_add_ons?: boolean;
   };
   [key: string]: unknown;
 }
@@ -478,7 +497,12 @@ const CalculatorSummaryStep: React.FC<CalculatorSummaryStepProps> = ({
           ))}
         </div>
 
-        {(calculatorData.pricing_requests.length > 0 || storageItems.length > 0) && (
+        {(calculatorData.pricing_requests.length > 0 ||
+          storageItems.length > 0 ||
+          (calculatorData.flow_plan_items?.length ?? 0) > 0 ||
+          (calculatorData.shield_items?.length ?? 0) > 0 ||
+          (calculatorData.anycloudflow_items?.length ?? 0) > 0 ||
+          (calculatorData.metered_items?.length ?? 0) > 0) && (
           <div className="rounded-2xl border border-slate-200 bg-white p-4">
             <p className="text-xs uppercase tracking-wide text-slate-400">
               Included configurations
@@ -520,6 +544,104 @@ const CalculatorSummaryStep: React.FC<CalculatorSummaryStepProps> = ({
                   {item.months === 1 ? "" : "s"}
                 </div>
               ))}
+              {(calculatorData.flow_plan_items ?? []).map((row, idx) => (
+                <div
+                  key={`flow-${row.id}-${idx}`}
+                  className="rounded-xl bg-indigo-50 px-3 py-2 text-xs text-indigo-700"
+                >
+                  <span className="font-semibold">{row.plan_name}</span> • SlimDeploy plan •{" "}
+                  {row.quantity}× • {row.months} month{row.months === 1 ? "" : "s"}
+                </div>
+              ))}
+              {(calculatorData.shield_items ?? []).map((row, idx) => (
+                <div
+                  key={`shield-${row.id}-${idx}`}
+                  className="rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-700"
+                >
+                  <span className="font-semibold">{row.service_name}</span> • Shield • {row.quantity}{" "}
+                  {row.unit_label || "unit"}
+                  {row.billing_model === "monthly_flat"
+                    ? ` × ${row.months} month${row.months === 1 ? "" : "s"}`
+                    : ""}
+                </div>
+              ))}
+              {(calculatorData.anycloudflow_items ?? []).map((row, idx) => {
+                const bucketSize = (row as ShieldServiceLineItem & { bucket_size_gb?: number })
+                  .bucket_size_gb;
+                return (
+                  <div
+                    key={`acf-${row.id}-${idx}`}
+                    className="rounded-xl bg-sky-50 px-3 py-2 text-xs text-sky-700"
+                  >
+                    <span className="font-semibold">{row.service_name}</span> • {RESILIENCE} •{" "}
+                    {row.quantity} {row.unit_label || "unit"}
+                    {row.billing_model === "monthly_flat"
+                      ? ` × ${row.months} month${row.months === 1 ? "" : "s"}`
+                      : ""}
+                    {typeof bucketSize === "number" && bucketSize > 0
+                      ? ` • ${bucketSize} GB bucket`
+                      : ""}
+                  </div>
+                );
+              })}
+              {(calculatorData.metered_items ?? []).map((row, idx) => (
+                <div
+                  key={`metered-${row.id}-${idx}`}
+                  className="rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-700"
+                >
+                  <span className="font-semibold">{row.metric_label}</span> • Pay-as-you-go • ~
+                  {row.estimated_quantity} {row.unit}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {(pricingMeta.add_ons?.lines?.length ?? 0) > 0 && (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs uppercase tracking-wide text-slate-400">Add-ons subtotal</p>
+              <span className="text-xs text-slate-500">
+                Source-currency, not included in compute total
+              </span>
+            </div>
+            <p className="mt-1 text-base font-semibold text-slate-900">
+              {formatCurrency(
+                Number(pricingMeta.add_ons?.subtotal || 0),
+                pricingMeta.add_ons?.currency || primaryCurrency,
+              )}
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600 md:grid-cols-4">
+              <div>
+                <span className="text-slate-400">SlimDeploy</span>
+                <p className="font-medium text-slate-900">
+                  {formatCurrency(Number(pricingMeta.add_ons?.per_bucket?.flow_plans || 0), "NGN")}
+                </p>
+              </div>
+              <div>
+                <span className="text-slate-400">Shield</span>
+                <p className="font-medium text-slate-900">
+                  {formatCurrency(Number(pricingMeta.add_ons?.per_bucket?.shield || 0), "USD")}
+                </p>
+              </div>
+              <div>
+                <span className="text-slate-400">{RESILIENCE}</span>
+                <p className="font-medium text-slate-900">
+                  {formatCurrency(
+                    Number(pricingMeta.add_ons?.per_bucket?.anycloudflow || 0),
+                    "USD",
+                  )}
+                </p>
+              </div>
+              <div>
+                <span className="text-slate-400">Pay-as-you-go</span>
+                <p className="font-medium text-slate-900">
+                  {formatCurrency(
+                    Number(pricingMeta.add_ons?.per_bucket?.pay_as_you_go || 0),
+                    "NGN",
+                  )}
+                </p>
+              </div>
             </div>
           </div>
         )}

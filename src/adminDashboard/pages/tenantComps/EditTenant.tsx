@@ -10,10 +10,32 @@ import {
 import ToastUtils from "@/utils/toastUtil";
 import logger from "@/utils/logger";
 
+/** Loose tenant/partner shape consumed by the edit modal. */
+interface PartnerShape {
+  identifier?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  country_id?: string | number;
+  country?: string;
+  state_id?: string | number;
+  state?: string;
+  city_id?: string | number;
+  city?: string;
+  zip_code?: string;
+  company_type?: string;
+  industry?: string;
+  registration_number?: string;
+  tin_number?: string;
+  website?: string;
+  [extra: string]: unknown;
+}
+
 interface EditTenantModalProps {
   isOpen: boolean;
   onClose: () => void;
-  partnerDetails: unknown;
+  partnerDetails: PartnerShape | null | undefined;
 }
 
 const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, partnerDetails }) => {
@@ -36,7 +58,7 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
     website: "",
   });
 
-  const [errors, setErrors] = useState<unknown>({});
+  const [errors, setErrors] = useState<Record<string, string | null>>({});
 
   const { mutate: updateTenant, isPending } = useUpdateTenant();
   const { data: countries, isFetching: isCountriesFetching } = useFetchCountries();
@@ -74,8 +96,8 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
   // Update country name when ID changes
   useEffect(() => {
     if (formData.country_id && countries) {
-      const selectedCountry = (countries as Record<string, unknown>[]).find(
-        (c: Record<string, unknown>) => String(c.id) === String(formData.country_id)
+      const selectedCountry = countries.find(
+        (c) => String(c.id) === String(formData.country_id)
       );
       if (selectedCountry && selectedCountry.name !== formData.country) {
         setFormData((prev) => ({ ...prev, country: String(selectedCountry.name ?? "") }));
@@ -86,8 +108,8 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
   // Update state name when ID changes
   useEffect(() => {
     if (formData.state_id && states) {
-      const selectedState = (states as Record<string, unknown>[]).find(
-        (s: Record<string, unknown>) => String(s.id) === String(formData.state_id)
+      const selectedState = states.find(
+        (s) => String(s.id) === String(formData.state_id)
       );
       if (selectedState && selectedState.name !== formData.state) {
         setFormData((prev) => ({ ...prev, state: String(selectedState.name ?? "") }));
@@ -98,8 +120,8 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
   // Update city name when ID changes
   useEffect(() => {
     if (formData.city_id && cities) {
-      const selectedCity = (cities as Record<string, unknown>[]).find(
-        (c: Record<string, unknown>) => String(c.id) === String(formData.city_id)
+      const selectedCity = cities.find(
+        (c) => String(c.id) === String(formData.city_id)
       );
       if (selectedCity && selectedCity.name !== formData.city) {
         setFormData((prev) => ({ ...prev, city: String(selectedCity.name ?? "") }));
@@ -168,8 +190,7 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
 
   if (!isOpen) return null;
 
-  const showCityDropdown =
-    cities && (cities as Record<string, unknown>[]).length > 0 && !isCitiesFetching;
+  const showCityDropdown = cities && cities.length > 0 && !isCitiesFetching;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit overflow-y-auto py-10">
@@ -300,9 +321,9 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
                 }`}
               >
                 <option value="">Select Industry</option>
-                {(industries as Record<string, unknown>[])?.map((ind: Record<string, unknown>) => (
-                  <option key={(ind.id || ind.name) as string} value={ind.name as string}>
-                    {ind.name as string}
+                {industries?.map((ind) => (
+                  <option key={String(ind.id ?? ind.name ?? "")} value={String(ind.name ?? "")}>
+                    {ind.name}
                   </option>
                 ))}
               </select>
@@ -362,9 +383,9 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
               >
                 <option value="">Select Country</option>
-                {(countries as Record<string, unknown>[])?.map((c: Record<string, unknown>) => (
-                  <option key={c.id as string} value={c.id as string}>
-                    {c.name as string}
+                {countries?.map((c) => (
+                  <option key={String(c.id ?? "")} value={String(c.id ?? "")}>
+                    {c.name}
                   </option>
                 ))}
               </select>
@@ -380,9 +401,9 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white disabled:bg-gray-50 disabled:text-gray-400"
               >
                 <option value="">Select State</option>
-                {(states as Record<string, unknown>[])?.map((s: Record<string, unknown>) => (
-                  <option key={s.id as string} value={s.id as string}>
-                    {s.name as string}
+                {states?.map((s) => (
+                  <option key={String(s.id ?? "")} value={String(s.id ?? "")}>
+                    {s.name}
                   </option>
                 ))}
               </select>
@@ -399,9 +420,9 @@ const EditTenantModal: React.FC<EditTenantModalProps> = ({ isOpen, onClose, part
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white disabled:bg-gray-50 disabled:text-gray-400"
                 >
                   <option value="">Select City</option>
-                  {(cities as Record<string, unknown>[])?.map((c: Record<string, unknown>) => (
-                    <option key={c.id as string} value={c.id as string}>
-                      {c.name as string}
+                  {cities?.map((c) => (
+                    <option key={String(c.id ?? "")} value={String(c.id ?? "")}>
+                      {c.name}
                     </option>
                   ))}
                 </select>

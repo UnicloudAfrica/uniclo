@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Plus, ShieldCheck, Shield, ArrowUpDown, RefreshCw } from "lucide-react";
 import useCartStore from "@/stores/cartStore";
 import { useFetchAcfPublicServices } from "@/hooks/useCostExplorer";
+import { RESILIENCE } from "@/shared/branding";
 
 type ProtectionPlan = "none" | "backup_only" | "dr_standby" | "dr_replication";
 
@@ -55,7 +56,7 @@ export default function ProtectionConfigurator() {
     },
     {
       id: "dr_replication",
-      label: "DR + AnyCloudFlow Replication",
+      label: `DR + ${RESILIENCE} Replication`,
       description: "Continuous block-level replication, automated failover, sub-minute RPO.",
       icon: ShieldCheck,
       accent: "border-green-300 bg-green-50/30",
@@ -70,7 +71,7 @@ export default function ProtectionConfigurator() {
         </div>
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Configure Protection Plan</h3>
-          <p className="text-xs text-gray-500">Backup, DR standby, and AnyCloudFlow replication for instances and storage</p>
+          <p className="text-xs text-gray-500">Backup, DR standby, and {RESILIENCE} replication for instances and storage</p>
         </div>
       </div>
 
@@ -164,7 +165,7 @@ export default function ProtectionConfigurator() {
               <div className="flex justify-between">
                 <span>
                   <RefreshCw className="mr-1 inline h-3 w-3" />
-                  AnyCloudFlow Replication ({instanceCount} × {fmt(replicationPerVm)}/VM)
+                  {RESILIENCE} Replication ({instanceCount} × {fmt(replicationPerVm)}/VM)
                 </span>
                 <span>{fmt(replicationCost)}/mo</span>
               </div>

@@ -7,7 +7,7 @@
  * Responsive: full-width on mobile, centered modal on desktop.
  */
 import React, { useEffect, useState } from "react";
-import { X, ShieldCheck, AlertTriangle } from "lucide-react";
+import { X } from "lucide-react";
 import { ModernButton } from "../ui";
 import {
   useFetchDestinations,
@@ -103,15 +103,15 @@ const BackupConfigModal: React.FC<BackupConfigModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-gray-800 sm:px-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-900/30">
-              <ShieldCheck size={18} className="text-blue-600 dark:text-blue-400" />
-            </div>
+            <span aria-hidden="true" className="text-2xl">🛟</span>
             <div>
               <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                Enable Backup
+                Set up safety backups
               </h3>
-              {resourceName && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">{resourceName}</p>
+              {resourceName ? (
+                <p className="text-xs text-gray-500 dark:text-gray-400">For {resourceName}</p>
+              ) : (
+                <p className="text-xs text-gray-500 dark:text-gray-400">Pick where + when. We'll handle the rest.</p>
               )}
             </div>
           </div>
@@ -128,17 +128,16 @@ const BackupConfigModal: React.FC<BackupConfigModalProps> = ({
           {/* Destination */}
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Backup Destination
+              Where should backups land?
             </label>
             {loadingDestinations ? (
               <div className="h-10 animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800" />
             ) : noDestinations ? (
-              <div className="flex items-start gap-2 rounded-lg bg-amber-50 px-4 py-3 dark:bg-amber-900/20">
-                <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
-                <p className="text-xs text-amber-700 dark:text-amber-300">
-                  No backup destinations configured
-                  {resourceRegion ? ` for region "${resourceRegion}"` : ""}.
-                  Please create a destination first on the Destinations page.
+              <div className="flex items-start gap-2 rounded-lg bg-warning-50 px-4 py-3 dark:bg-warning-900/20">
+                <span aria-hidden="true" className="mt-0.5 shrink-0 text-base">📍</span>
+                <p className="text-xs text-warning-700 dark:text-warning-300">
+                  No destinations set up{resourceRegion ? ` in "${resourceRegion}"` : ""} yet.
+                  Add one on the Destinations page first — an S3 bucket, SFTP, NFS, or another VM all work.
                 </p>
               </div>
             ) : (
@@ -257,14 +256,14 @@ const BackupConfigModal: React.FC<BackupConfigModalProps> = ({
         {/* Footer */}
         <div className="flex flex-col-reverse gap-2 border-t border-gray-100 px-5 py-4 dark:border-gray-800 sm:flex-row sm:justify-end sm:gap-3 sm:px-6">
           <ModernButton variant="outline" onClick={onClose} disabled={isSubmitting}>
-            Cancel
+            Not yet
           </ModernButton>
           <ModernButton
             variant="primary"
             onClick={handleSubmit}
             disabled={isSubmitting || noDestinations || !selectedDestinationId}
           >
-            {isSubmitting ? "Enabling..." : "Enable Backup"}
+            {isSubmitting ? "Setting up backups…" : "Start backing up"}
           </ModernButton>
         </div>
       </div>

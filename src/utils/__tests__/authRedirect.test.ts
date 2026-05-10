@@ -4,7 +4,7 @@ vi.mock("../toastUtil", () => ({
   default: { error: vi.fn(), success: vi.fn(), info: vi.fn(), warning: vi.fn() },
 }));
 
-vi.mock("../../stores/tenantAuthStore", () => ({ default: () => ({}) }));
+vi.mock("../../stores/authStore", () => ({ default: () => ({}) }));
 
 vi.mock("../../stores/sessionUtils", () => ({
   resolveActivePersona: () => ({ key: "tenant" }),

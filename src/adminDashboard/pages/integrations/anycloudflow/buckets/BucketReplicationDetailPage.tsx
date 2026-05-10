@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminPageShell from "../../../../components/AdminPageShell";
@@ -16,6 +16,31 @@ import {
   type BucketReplicationHealth,
   type BucketReplicationStatus,
 } from "@/shared/components/bucket-replication";
+import { MoodIndicator } from "@/shared/components/orbit";
+
+/**
+ * Map AcF bucket-replication status → orbit mood for the at-a-glance row indicator.
+ * Active states pulse working/happy; degraded states warn; failover/error states alarm.
+ */
+function bucketReplicationMood(s: string): "happy" | "working" | "thinking" | "worried" | "alarmed" | "idle" {
+  switch (s) {
+    case "active":
+      return "happy";
+    case "draining":
+    case "fencing":
+      return "working";
+    case "paused":
+      return "thinking";
+    case "paused_error":
+    case "reconcile_required":
+      return "worried";
+    case "failed":
+    case "switched_over":
+      return "alarmed";
+    default:
+      return "thinking";
+  }
+}
 
 /**
  * Live detail page for a bucket replication. Mirrors the AcF native UI but
@@ -77,16 +102,55 @@ interface Conflict {
 // ACTIVE_STATUSES + STATUS_COLORS removed — BucketStatusBadge owns the
 // tone mapping; useBucketHealthPolling owns the active-vs-terminal cadence.
 
+// Reserved path segments that are NOT replication identifiers. These
+// are sibling wizard routes that previously fell through to this
+// detail page when Vite's dev-server HMR hadn't picked up a newly
+// added lazy `<Route path=".../new">` — producing scary "could not
+// be found" toasts because the API was hit with id="new". Keeping
+// the guard here so the page is robust regardless of route ordering
+// or HMR state.
+const RESERVED_ID_SEGMENTS = new Set(["new", "create"]);
+
 export default function BucketReplicationDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
   const qc = useQueryClient();
   const [failoverOpen, setFailoverOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const isReserved = RESERVED_ID_SEGMENTS.has(id);
+
+  // Belt-and-suspenders: if this page mounted with a reserved segment
+  // as `:id`, force a full-page reload so Vite re-evaluates the route
+  // table. The fresh bundle picks up the static wizard route and
+  // short-circuits before this component remounts.
+  //
+  // Loop guard: if we already reloaded once and this page still won
+  // the route match, route ranking is genuinely broken — fall back
+  // to the listing page so the user has a way out.
+  useEffect(() => {
+    if (!isReserved) return;
+    if (typeof window === "undefined") return;
+    const RELOAD_KEY = "bucket-replication-detail-reserved-reload";
+    const alreadyReloaded = sessionStorage.getItem(RELOAD_KEY) === window.location.pathname;
+    if (alreadyReloaded) {
+      sessionStorage.removeItem(RELOAD_KEY);
+      window.location.replace("/admin-dashboard/integrations/orbit/buckets/replications");
+      return;
+    }
+    sessionStorage.setItem(RELOAD_KEY, window.location.pathname);
+    window.location.replace(window.location.pathname + window.location.search);
+  }, [isReserved]);
+
+  // Clear the reload-loop marker on any successful detail mount so a
+  // future false-positive reload doesn't bounce the user out.
+  useEffect(() => {
+    if (isReserved || typeof window === "undefined") return;
+    sessionStorage.removeItem("bucket-replication-detail-reserved-reload");
+  }, [isReserved]);
 
   const { data: repData, isLoading } = useQuery({
     queryKey: ["acf-bucket-replication", id],
     queryFn: () => acfApi.getBucketReplication(id),
-    enabled: !!id,
+    enabled: !!id && !isReserved,
   });
   const rep: Replication | null = (repData as { data?: unknown })?.data ?? (repData as unknown) ?? null;
 
@@ -113,7 +177,7 @@ export default function BucketReplicationDetailPage() {
   const { data: feedData } = useQuery({
     queryKey: ["acf-bucket-replication-feed", id],
     queryFn: () => acfApi.getBucketReplicationChangeFeed(id, { per_page: 50 }),
-    enabled: !!id,
+    enabled: !!id && !isReserved,
     refetchInterval: 10_000,
   });
   const feed: ChangeFeedEvent[] = (feedData as { data?: unknown })?.data ?? [];
@@ -145,9 +209,23 @@ export default function BucketReplicationDetailPage() {
     onSuccess: () => {
       setConfirmDelete(false);
       ToastUtils.success("Replication deleted — billing ends at end of current calendar month");
-      window.location.href = "/admin-dashboard/integrations/anycloudflow/buckets/replications";
+      window.location.href = "/admin-dashboard/integrations/orbit/buckets/replications";
     },
   });
+
+  // Reserved-segment short-circuit: render a quiet shell while the
+  // useEffect above triggers a full reload. No "not found" message,
+  // no API noise, no toast spam.
+  if (isReserved) {
+    return (
+      <AdminPageShell title="">
+        <div className="flex flex-col items-center gap-3 p-12 text-center text-gray-500 dark:text-gray-400">
+          <span aria-hidden="true" className="text-3xl animate-pulse">🔁</span>
+          <p className="text-sm">One sec — taking you to the wizard…</p>
+        </div>
+      </AdminPageShell>
+    );
+  }
 
   if (!rep && !isLoading) {
     return (
@@ -177,21 +255,21 @@ export default function BucketReplicationDetailPage() {
           </Link>
           {rep.status === "active" && (
             <>
-              <ModernButton variant="secondary" onClick={() => pauseMut.mutate()}>Pause</ModernButton>
-              <ModernButton variant="danger" onClick={() => setFailoverOpen(true)}>Initiate failover</ModernButton>
+              <ModernButton variant="secondary" onClick={() => pauseMut.mutate()}>Pause mirroring</ModernButton>
+              <ModernButton variant="danger" onClick={() => setFailoverOpen(true)}>Switch to backup</ModernButton>
             </>
           )}
           {(rep.status === "paused" || rep.status === "paused_error") && (
-            <ModernButton onClick={() => resumeMut.mutate()}>Resume</ModernButton>
+            <ModernButton onClick={() => resumeMut.mutate()}>Continue mirroring</ModernButton>
           )}
           {rep.status === "reconcile_required" && (
-            <ModernButton onClick={() => reconcileMut.mutate()}>Run reconcile</ModernButton>
+            <ModernButton onClick={() => reconcileMut.mutate()}>Sync them up again</ModernButton>
           )}
           {(rep.status === "fencing" || rep.status === "draining") && (
-            <ModernButton onClick={() => setFailoverOpen(true)}>Resume failover</ModernButton>
+            <ModernButton onClick={() => setFailoverOpen(true)}>Finish switching over</ModernButton>
           )}
           {rep.status !== "active" && rep.status !== "fencing" && rep.status !== "draining" && (
-            <ModernButton variant="danger" onClick={() => setConfirmDelete(true)}>Delete</ModernButton>
+            <ModernButton variant="danger" onClick={() => setConfirmDelete(true)}>Delete this mirror</ModernButton>
           )}
           <Link
             to={`/admin-dashboard/integrations/anycloudflow/buckets/client-access?prefill_resource_type=replication&prefill_identifier=${encodeURIComponent(rep.identifier)}`}
@@ -208,7 +286,12 @@ export default function BucketReplicationDetailPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatCard
             label="Status"
-            value={<BucketStatusBadge variant="replication" status={rep.status} />}
+            value={
+              <div className="flex items-center gap-2">
+                <MoodIndicator mood={bucketReplicationMood(rep.status)} size="md" />
+                <BucketStatusBadge variant="replication" status={rep.status} />
+              </div>
+            }
           />
           <StatCard
             label="RPO"

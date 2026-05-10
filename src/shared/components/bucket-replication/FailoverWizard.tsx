@@ -187,19 +187,19 @@ export default function FailoverWizard({
     <ModernModal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Failover wizard${resourceLabel ? ` · ${resourceLabel}` : ""}`}
+      title={`Switch to backup${resourceLabel ? ` · ${resourceLabel}` : ""}`}
       aria-labelledby={titleId}
     >
       <div className="p-4 space-y-4">
         <ol
           className="flex items-center gap-2 text-xs"
-          aria-label="Failover progress"
+          aria-label="Switch-over progress"
         >
-          <StepPill n={1} label="Fence source" current={step === "fence"} done={step !== "fence"} />
+          <StepPill n={1} label="Lock the source" current={step === "fence"} done={step !== "fence"} />
           <span aria-hidden="true">→</span>
-          <StepPill n={2} label="Drain queue" current={step === "drain"} done={step === "promote"} />
+          <StepPill n={2} label="Wait for last bytes" current={step === "drain"} done={step === "promote"} />
           <span aria-hidden="true">→</span>
-          <StepPill n={3} label="Promote target" current={step === "promote"} done={false} />
+          <StepPill n={3} label="Hand over to backup" current={step === "promote"} done={false} />
         </ol>
 
         {error && (
@@ -215,26 +215,25 @@ export default function FailoverWizard({
           <section className="space-y-3" aria-labelledby={`${titleId}-step1`}>
             <div
               id={`${titleId}-step1`}
-              className="p-3 rounded bg-red-50 dark:bg-red-900/20 text-xs text-red-900 dark:text-red-200"
+              className="p-3 rounded bg-danger-50 dark:bg-danger-900/20 text-xs text-danger-900 dark:text-danger-200"
             >
-              <p className="font-semibold mb-1">Step 1 · Fence the source</p>
+              <p className="font-semibold mb-1">🔒 Step 1 · Lock the source bucket</p>
               <p>
-                This applies a deny-writes bucket policy to the source.
-                Existing client applications will fail. The action cannot be
-                automatically undone after the drain starts — you can only
-                cancel before drain completes.
+                We'll stop new writes to your source bucket so the backup can catch up.
+                Apps that try to write to the source will get errors. You can still cancel
+                until the next step finishes — after that, this becomes a one-way door.
               </p>
             </div>
             <div className="flex justify-end gap-2">
               <ModernButton variant="secondary" onClick={onClose}>
-                Not now
+                Not yet
               </ModernButton>
               <ModernButton
                 variant="danger"
                 disabled={pending !== null}
                 onClick={handleInitiate}
               >
-                {pending === "fence" ? "Fencing…" : "Fence source bucket"}
+                {pending === "fence" ? "Locking…" : "Lock the source"}
               </ModernButton>
             </div>
           </section>
@@ -244,17 +243,17 @@ export default function FailoverWizard({
           <section className="space-y-3" aria-labelledby={`${titleId}-step2`}>
             <div
               id={`${titleId}-step2`}
-              className="p-3 rounded bg-orange-50 dark:bg-orange-900/20 text-xs text-orange-900 dark:text-orange-200"
+              className="p-3 rounded bg-warning-50 dark:bg-warning-900/20 text-xs text-warning-900 dark:text-warning-200"
             >
-              <p className="font-semibold mb-1">Step 2 · Wait for drain</p>
+              <p className="font-semibold mb-1">⏳ Step 2 · Waiting for the last bytes to land</p>
               <p>
-                Queue depth:{" "}
+                Files still copying:{" "}
                 <strong className="font-mono tabular-nums">{state.queueDepth}</strong>
               </p>
               <p>
-                The promote button enables when queue depth reaches 0. If
-                you close this modal, the replication stays in the drain
-                state — re-open this wizard to resume.
+                We'll unlock the next button once the queue hits zero — that means the
+                backup is fully caught up. Closing this modal is fine; the source stays
+                locked and you can resume from this step anytime.
               </p>
             </div>
             <div className="flex justify-end gap-2">
@@ -263,15 +262,15 @@ export default function FailoverWizard({
                 onClick={handleCancel}
                 disabled={pending !== null}
               >
-                {pending === "cancel" ? "Cancelling…" : "Cancel failover"}
+                {pending === "cancel" ? "Cancelling…" : "Cancel and unlock source"}
               </ModernButton>
               <ModernButton
                 disabled={state.queueDepth > 0 || pending !== null}
                 onClick={handleProceedToPromote}
               >
                 {state.queueDepth > 0
-                  ? `Waiting (${state.queueDepth} pending)`
-                  : "Proceed to promote"}
+                  ? `Waiting (${state.queueDepth} files left)`
+                  : "Ready to switch over"}
               </ModernButton>
             </div>
           </section>
@@ -281,17 +280,21 @@ export default function FailoverWizard({
           <section className="space-y-3" aria-labelledby={`${titleId}-step3`}>
             <div
               id={`${titleId}-step3`}
-              className="p-3 rounded bg-red-50 dark:bg-red-900/20 text-xs text-red-900 dark:text-red-200"
+              className="p-3 rounded bg-danger-50 dark:bg-danger-900/20 text-xs text-danger-900 dark:text-danger-200"
             >
-              <p className="font-semibold mb-1">Step 3 · Promote target — IRREVERSIBLE</p>
+              <p className="font-semibold mb-1">⚠️ Step 3 · Hand over to backup — point of no return</p>
               <p>
-                Type the target bucket name{" "}
-                <code className="font-mono">{targetBucket}</code> to confirm.
-                Promoting unlocks writes on target and leaves the source fenced.
+                Type the backup bucket name{" "}
+                <code className="font-mono font-bold">{targetBucket}</code> below
+                to confirm. Once we hand over, your apps should write to the backup —
+                the source stays locked.
+              </p>
+              <p className="mt-2 italic opacity-80">
+                We need to make sure you mean it — that's why you have to type it.
               </p>
             </div>
             <ModernInput
-              label="Type target bucket name"
+              label={`Type "${targetBucket}" exactly to confirm`}
               value={typedName}
               onChange={(e) => setTypedName(e.target.value)}
               placeholder={targetBucket}
@@ -301,14 +304,14 @@ export default function FailoverWizard({
             />
             <div className="flex justify-end gap-2">
               <ModernButton variant="secondary" onClick={onClose}>
-                Close (stays in drain)
+                Not yet — close this
               </ModernButton>
               <ModernButton
                 variant="danger"
                 disabled={!canPromote || pending !== null}
                 onClick={handlePromote}
               >
-                {pending === "drain" ? "Promoting…" : "Promote target"}
+                {pending === "drain" ? "Switching over…" : "Yes, hand over to backup"}
               </ModernButton>
             </div>
           </section>
@@ -334,9 +337,9 @@ function StepPill({
       aria-current={current ? "step" : undefined}
       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
         done
-          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+          ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-300"
           : current
-            ? "bg-indigo-500 text-white"
+            ? "bg-primary-500 text-white"
             : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
       }`}
     >

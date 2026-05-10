@@ -2,9 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import config from "../../config";
 import { useApiContext, ApiContext } from "@/hooks/useApiContext";
-import useAdminAuthStore from "@/stores/adminAuthStore";
-import useTenantAuthStore from "@/stores/tenantAuthStore";
-import useClientAuthStore from "@/stores/clientAuthStore";
+import useAuthStore from "@/stores/authStore";
 
 export interface KeyPair {
   id: string;
@@ -68,10 +66,10 @@ const buildUrl = (apiBaseUrl: string, context: ApiContext, path: string) => {
 const getAuthHeadersForContext = (context: ApiContext) => {
   const store =
     context === "admin"
-      ? useAdminAuthStore
+      ? useAuthStore
       : context === "tenant"
-        ? useTenantAuthStore
-        : useClientAuthStore;
+        ? useAuthStore
+        : useAuthStore;
   const getHeaders = store?.getState?.().getAuthHeaders;
   if (typeof getHeaders === "function") {
     return getHeaders();

@@ -3,19 +3,46 @@ import { Loader2 } from "lucide-react";
 import { useVerifyBusiness } from "@/hooks/businessHooks";
 import ToastUtils from "@/utils/toastUtil";
 
+/** The `business` sub-shape carried inside the tenant form. */
+interface BusinessShape {
+  name?: string;
+  type?: string;
+  email?: string;
+  phone?: string;
+  industry?: string;
+  registration_number?: string;
+  tin_number?: string;
+  website?: string;
+  company_type?: string;
+  verified?: boolean;
+}
+
+/** The full tenant form payload. */
+interface TenantFormData {
+  business: BusinessShape;
+  verification_token?: string;
+  [extra: string]: unknown;
+}
+
+/** Shape of an industry row from the API. */
+interface IndustryRow {
+  name: string;
+  [extra: string]: unknown;
+}
+
 interface BusinessInfoProps {
-  formData: unknown;
-  setFormData: (data: unknown) => void;
-  errors: unknown;
-  setErrors: (errors: Record<string, string[]>) => void;
-  industries: unknown[] | null | undefined;
+  formData: TenantFormData;
+  setFormData: React.Dispatch<React.SetStateAction<TenantFormData>>;
+  errors: Record<string, string | undefined>;
+  setErrors: React.Dispatch<React.SetStateAction<Record<string, string | undefined>>>;
+  industries: IndustryRow[] | null | undefined;
   isIndustriesFetching: boolean;
 }
 
 const BusinessInfo: React.FC<BusinessInfoProps> & {
-  validate: (data: Record<string, unknown>) => Record<string, string>;
+  validate: (data: TenantFormData) => Record<string, string>;
 } = ({ formData, setFormData, errors, setErrors, industries, isIndustriesFetching }) => {
-  const [isBusinessVerified, setIsBusinessVerified] = useState(formData.business.verified);
+  const [isBusinessVerified, setIsBusinessVerified] = useState(Boolean(formData.business.verified));
   const [verificationType, setVerificationType] = useState(""); // Local state for CAC verification type
   const { mutate: verifyBusiness, isPending } = useVerifyBusiness();
 
@@ -41,7 +68,7 @@ const BusinessInfo: React.FC<BusinessInfoProps> & {
         ...(id === "verification_token" ? { verification_token: value } : {}),
       }));
     }
-    setErrors((prev) => ({ ...prev, [id]: null }));
+    setErrors((prev) => ({ ...prev, [id]: undefined }));
   };
 
   const handleVerifyBusiness = () => {
@@ -61,9 +88,13 @@ const BusinessInfo: React.FC<BusinessInfoProps> & {
     verifyBusiness(verificationData, {
       onSuccess: (data) => {
         setIsBusinessVerified(true);
+        const tokenFromApi =
+          data && typeof data === "object" && "verification_token" in data
+            ? (data as { verification_token?: string }).verification_token
+            : undefined;
         setFormData((prev) => ({
           ...prev,
-          verification_token: data?.verification_token || prev.verification_token,
+          verification_token: tokenFromApi || prev.verification_token,
           business: { ...prev.business, verified: true },
         }));
         ToastUtils.success("Business verified successfully!");

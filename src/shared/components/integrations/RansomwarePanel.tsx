@@ -1,14 +1,29 @@
 /**
- * RansomwarePanel — Displays ransomware scan dashboard and recent scan results.
+ * RansomwarePanel — friendly ransomware-detection dashboard.
  *
- * Shows threat summary cards (total scans, threats detected, critical count,
- * last scan time), color-coded threat level badges, threat level gauge,
- * recent scans list with policy name / threat level / score / timestamp,
- * and action buttons for high/critical threats (Acknowledge, Recover).
+ * Wow refactor:
+ *   - Threat tier replaces "None/Low/Medium/High/Critical" with plain English
+ *     ("All clear" / "Worth a look" / "Needs attention" / "Act fast" / "Drop everything")
+ *   - Each scan row leads with a MoodIndicator
+ *   - Status pills use orbit StatusBadge so they auto-theme
+ *   - Score bar gradient routes through platform success/warning/danger
+ *   - Recover (destructive) gated by ConfirmActionDialog with friendly verbs
+ *   - Acknowledge uses AsyncButton with success-state feedback
+ *   - Empty state via ResourceShell with 🛡️ illustration
+ *   - All inline `style={{ background: var(--theme-card-bg) }}` replaced
+ *     with `bg-surface-card` / `border-surface-alt` Tailwind tokens
  */
-import React from "react";
-import { ShieldAlert, Bug, CheckCircle2, RotateCcw } from "lucide-react";
-import { ModernButton } from "../ui";
+import React, { useState } from "react";
+import { ShieldAlert, Bug, CheckCircle2, RotateCcw, ShieldCheck } from "lucide-react";
+import {
+  MoodIndicator,
+  StatusBadge,
+  ResourceShell,
+  ConfirmActionDialog,
+  AsyncButton,
+  usePrefersReducedMotion,
+  orbitTransition,
+} from "@/shared/components/orbit";
 import {
   useRansomwareDashboard,
   useRansomwareScans,
@@ -22,61 +37,33 @@ interface RansomwarePanelProps {
   className?: string;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Threat-level style mapping                                        */
-/* ------------------------------------------------------------------ */
+// ─── Threat-tier mapping (friendly + theme-token-aware) ──────────────────────
 
-const THREAT_LEVEL_STYLES: Record<
-  string,
-  { bg: string; text: string; label: string; dot: string; bar: string; borderLeft: string }
-> = {
-  none: {
-    bg: "bg-green-50 dark:bg-green-900/20",
-    text: "text-green-700 dark:text-green-400",
-    label: "None",
-    dot: "bg-green-500",
-    bar: "bg-green-500",
-    borderLeft: "border-l-green-500",
-  },
-  low: {
-    bg: "bg-blue-50 dark:bg-blue-900/20",
-    text: "text-blue-700 dark:text-blue-400",
-    label: "Low",
-    dot: "bg-blue-500",
-    bar: "bg-blue-500",
-    borderLeft: "border-l-blue-500",
-  },
-  medium: {
-    bg: "bg-yellow-50 dark:bg-yellow-900/20",
-    text: "text-yellow-700 dark:text-yellow-400",
-    label: "Medium",
-    dot: "bg-yellow-500",
-    bar: "bg-yellow-500",
-    borderLeft: "border-l-yellow-500",
-  },
-  high: {
-    bg: "bg-orange-50 dark:bg-orange-900/20",
-    text: "text-orange-700 dark:text-orange-400",
-    label: "High",
-    dot: "bg-orange-500",
-    bar: "bg-orange-500",
-    borderLeft: "border-l-orange-500",
-  },
-  critical: {
-    bg: "bg-red-50 dark:bg-red-900/20",
-    text: "text-red-700 dark:text-red-400",
-    label: "Critical",
-    dot: "bg-red-500",
-    bar: "bg-red-500",
-    borderLeft: "border-l-red-500",
-  },
+interface ThreatTier {
+  /** Plain-English label for sighted users. */
+  friendly: string;
+  /** Canonical level for screen readers + analytics. */
+  technical: string;
+  /** StatusBadge tone. */
+  tone: "success" | "pending" | "warning" | "danger";
+  /** Theme-tinted progress-bar fill class. */
+  fill: string;
+  /** MoodIndicator mood. */
+  mood: "happy" | "thinking" | "worried" | "alarmed";
+}
+
+const TIER_MAP: Record<string, ThreatTier> = {
+  none: { friendly: "All clear", technical: "None", tone: "success", fill: "bg-success-500", mood: "happy" },
+  low: { friendly: "Worth a look", technical: "Low", tone: "pending", fill: "bg-warning-400", mood: "thinking" },
+  medium: { friendly: "Needs attention", technical: "Medium", tone: "warning", fill: "bg-warning-500", mood: "worried" },
+  high: { friendly: "Act fast", technical: "High", tone: "danger", fill: "bg-danger-500", mood: "alarmed" },
+  critical: { friendly: "Drop everything", technical: "Critical", tone: "danger", fill: "bg-danger-600", mood: "alarmed" },
 };
 
-/* ------------------------------------------------------------------ */
-/*  Helpers                                                           */
-/* ------------------------------------------------------------------ */
+function tier(level: string): ThreatTier {
+  return TIER_MAP[level] ?? TIER_MAP.none;
+}
 
-/** Convert an ISO timestamp to a human-friendly relative string. */
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const seconds = Math.floor(diff / 1000);
@@ -90,389 +77,265 @@ function relativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
-/** Map a threat level string to a 0-100 numeric value for the gauge. */
-function threatLevelToPercent(level: string): number {
-  const map: Record<string, number> = {
-    none: 0,
-    low: 25,
-    medium: 50,
-    high: 75,
-    critical: 100,
-  };
-  return map[level] ?? 0;
-}
-
-/** Derive an overall threat level from dashboard data. */
-function deriveOverallThreat(dashboard: {
-  critical_count?: number;
-  threats_detected?: number;
-  total_scans?: number;
-}): string {
-  if ((dashboard.critical_count ?? 0) > 0) return "critical";
-  if ((dashboard.threats_detected ?? 0) > 0) return "high";
-  if ((dashboard.total_scans ?? 0) > 0) return "none";
+function deriveOverallTier(d: { critical_count?: number; threats_detected?: number; total_scans?: number }): string {
+  if ((d.critical_count ?? 0) > 0) return "critical";
+  if ((d.threats_detected ?? 0) > 0) return "high";
   return "none";
 }
 
-/* ------------------------------------------------------------------ */
-/*  Sub-components                                                    */
-/* ------------------------------------------------------------------ */
+function levelToPercent(level: string): number {
+  return { none: 0, low: 25, medium: 50, high: 75, critical: 100 }[level] ?? 0;
+}
 
-const ThreatBadge: React.FC<{ level: string }> = ({ level }) => {
-  const style = THREAT_LEVEL_STYLES[level] ?? THREAT_LEVEL_STYLES.none;
+// ─── Sub-components ─────────────────────────────────────────────────────────
+
+const ThreatGauge: React.FC<{ level: string; reduced: boolean }> = ({ level, reduced }) => {
+  const t = tier(level);
+  const pct = levelToPercent(level);
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${style.bg} ${style.text}`}
+    <section
+      aria-labelledby="overall-threat-label"
+      className="rounded-2xl border border-gray-200 bg-surface-card p-4 shadow-sm dark:border-gray-800"
     >
-      <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
-      {style.label}
-    </span>
-  );
-};
-
-/** Colored progress bar showing a scan score (0-100). */
-const ScoreBar: React.FC<{ score: number; level: string }> = ({ score, level }) => {
-  const style = THREAT_LEVEL_STYLES[level] ?? THREAT_LEVEL_STYLES.none;
-  return (
-    <div className="flex items-center gap-2">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <span id="overall-threat-label" className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+          How are things looking?
+        </span>
+        <StatusBadge tone={t.tone} label={t.technical} friendlyLabel={t.friendly} size="md" />
+      </div>
       <div
-        className="h-1.5 w-20 overflow-hidden rounded-full"
-        style={{ background: "var(--theme-border-color, #e5e7eb)" }}
+        role="progressbar"
+        aria-valuenow={pct}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`Overall threat level: ${t.friendly}`}
+        className="relative h-2.5 w-full overflow-hidden rounded-full bg-gradient-to-r from-success-400 via-warning-400 to-danger-500"
       >
         <div
-          className={`h-full rounded-full transition-all ${style.bar}`}
-          style={{ width: `${Math.min(Math.max(score, 0), 100)}%` }}
+          aria-hidden="true"
+          className="absolute right-0 top-0 h-full rounded-r-full bg-gray-200/70 dark:bg-gray-700/70"
+          style={{
+            width: `${100 - pct}%`,
+            transition: orbitTransition(reduced, "width", "smooth", "decelerate"),
+          }}
         />
       </div>
-      <span
-        className="text-xs font-medium tabular-nums"
-        style={{ color: "var(--theme-muted-color, #6b7280)" }}
-      >
-        {score}
-      </span>
-    </div>
+      <div className="mt-1.5 flex justify-between text-[10px] text-gray-500 dark:text-gray-400">
+        <span>Calm seas</span>
+        <span>Storm warning</span>
+      </div>
+    </section>
   );
 };
 
-/** Horizontal threat gauge with a gradient bar from green to red. */
-const ThreatGauge: React.FC<{ level: string }> = ({ level }) => {
-  const percent = threatLevelToPercent(level);
-  const _style = THREAT_LEVEL_STYLES[level] ?? THREAT_LEVEL_STYLES.none;
+const StatCard: React.FC<{
+  label: string;
+  value: React.ReactNode;
+  icon: React.ReactNode;
+  tone: "primary" | "warning" | "danger" | "success";
+}> = ({ label, value, icon, tone }) => {
+  const toneClasses = {
+    primary: "bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400",
+    warning: "bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400",
+    danger: "bg-danger-100 text-danger-600 dark:bg-danger-900/30 dark:text-danger-400",
+    success: "bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400",
+  }[tone];
   return (
-    <div
-      className="rounded-xl p-4"
-      style={{
-        background: "var(--theme-card-bg, #ffffff)",
-        border: "1px solid var(--theme-border-color, #e5e7eb)",
-      }}
-    >
-      <div className="mb-2 flex items-center justify-between">
-        <span
-          className="text-xs font-medium uppercase tracking-wider"
-          style={{ color: "var(--theme-muted-color, #6b7280)" }}
-        >
-          Overall Threat Level
-        </span>
-        <ThreatBadge level={level} />
-      </div>
-      <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-gradient-to-r from-green-400 via-yellow-400 via-60% to-red-500">
-        {/* Overlay to dim past the indicator */}
-        <div
-          className="absolute right-0 top-0 h-full rounded-r-full bg-gray-200/60 dark:bg-gray-700/60 transition-all"
-          style={{ width: `${100 - percent}%` }}
-        />
-      </div>
-      <div className="mt-1.5 flex justify-between">
-        <span className="text-[10px]" style={{ color: "var(--theme-muted-color, #6b7280)" }}>
-          Safe
-        </span>
-        <span className="text-[10px]" style={{ color: "var(--theme-muted-color, #6b7280)" }}>
-          Critical
-        </span>
-      </div>
+    <div className="rounded-xl border border-gray-200 bg-surface-card p-4 shadow-sm transition-shadow hover:shadow-md dark:border-gray-800">
+      <div className={`mb-3 flex h-9 w-9 items-center justify-center rounded-full ${toneClasses}`}>{icon}</div>
+      <p className="text-2xl font-bold tabular-nums leading-none text-gray-900 dark:text-gray-100">{value}</p>
+      <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400">{label}</p>
     </div>
   );
 };
 
-/** Loading skeleton placeholder. */
-const SkeletonCard: React.FC = () => (
-  <div
-    className="animate-pulse rounded-xl p-5"
-    style={{
-      background: "var(--theme-card-bg, #ffffff)",
-      border: "1px solid var(--theme-border-color, #e5e7eb)",
-    }}
-  >
-    <div className="mb-3 h-4 w-24 rounded bg-gray-200 dark:bg-gray-700" />
-    <div className="h-8 w-16 rounded bg-gray-200 dark:bg-gray-700" />
-  </div>
-);
-
-/** Empty state when no scans exist. */
-const EmptyState: React.FC = () => (
-  <div className="flex flex-col items-center justify-center py-12">
-    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20">
-      <ShieldAlert size={28} className="text-blue-500" />
-    </div>
-    <p
-      className="mb-1 text-sm font-semibold"
-      style={{ color: "var(--theme-heading-color, #111827)" }}
-    >
-      No scans yet
-    </p>
-    <p className="max-w-xs text-center text-xs" style={{ color: "var(--theme-muted-color, #6b7280)" }}>
-      Ransomware scans will appear here once your protection policies start running.
-    </p>
-  </div>
-);
-
-/* ------------------------------------------------------------------ */
-/*  Main component                                                    */
-/* ------------------------------------------------------------------ */
+// ─── Main panel ─────────────────────────────────────────────────────────────
 
 const RansomwarePanel: React.FC<RansomwarePanelProps> = ({ integrationKey, className = "" }) => {
-  const { data: dashboard, isLoading: dashboardLoading } = useRansomwareDashboard(integrationKey);
-  const { data: scansResult, isLoading: scansLoading } = useRansomwareScans(integrationKey, { per_page: 10 });
+  const reduced = usePrefersReducedMotion();
+  const { data: dashboard, isLoading: dashboardLoading, error: dashboardError, refetch: refetchDashboard } =
+    useRansomwareDashboard(integrationKey);
+  const { data: scansResult, isLoading: scansLoading, error: scansError, refetch: refetchScans } =
+    useRansomwareScans(integrationKey, { per_page: 10 });
   const acknowledge = useAcknowledgeRansomware();
   const recover = useRecoverFromRansomware();
 
+  const [confirmRecover, setConfirmRecover] = useState<RansomwareScan | null>(null);
+
   const scans: RansomwareScan[] = scansResult?.data ?? [];
+  const overallLevel = dashboard ? deriveOverallTier(dashboard) : "none";
   const isActionable = (level: string) => level === "high" || level === "critical";
 
-  const overallThreat = dashboard ? deriveOverallThreat(dashboard) : "none";
-
-  const statCards = [
-    {
-      label: "Total Scans",
-      value: dashboard?.total_scans ?? 0,
-      icon: <ShieldAlert size={20} />,
-      iconBg: "bg-blue-100 dark:bg-blue-900/30",
-      iconColor: "text-blue-600 dark:text-blue-400",
-    },
-    {
-      label: "Threats Detected",
-      value: dashboard?.threats_detected ?? 0,
-      icon: <Bug size={20} />,
-      iconBg: "bg-orange-100 dark:bg-orange-900/30",
-      iconColor: "text-orange-600 dark:text-orange-400",
-    },
-    {
-      label: "Critical",
-      value: dashboard?.critical_count ?? 0,
-      icon: <ShieldAlert size={20} />,
-      iconBg: "bg-red-100 dark:bg-red-900/30",
-      iconColor: "text-red-600 dark:text-red-400",
-    },
-    {
-      label: "Last Scan",
-      value: dashboard?.last_scan_at ? relativeTime(dashboard.last_scan_at) : "N/A",
-      icon: <CheckCircle2 size={20} />,
-      iconBg: "bg-green-100 dark:bg-green-900/30",
-      iconColor: "text-green-600 dark:text-green-400",
-    },
-  ];
-
   return (
-    <div className={className}>
-      {/* ---- Header ---- */}
-      <div className="mb-5 flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-sm">
-          <ShieldAlert size={18} />
+    <div className={`space-y-6 ${className}`}>
+      {/* ─── Stat cards ─────────────────────────────────────────────── */}
+      <ResourceShell loading={dashboardLoading} error={dashboardError} onRetry={refetchDashboard}>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <StatCard
+            label="Scans run"
+            value={dashboard?.total_scans ?? 0}
+            icon={<ShieldCheck size={20} />}
+            tone="primary"
+          />
+          <StatCard
+            label="Things found"
+            value={dashboard?.threats_detected ?? 0}
+            icon={<Bug size={20} />}
+            tone="warning"
+          />
+          <StatCard
+            label="Critical"
+            value={dashboard?.critical_count ?? 0}
+            icon={<ShieldAlert size={20} />}
+            tone="danger"
+          />
+          <StatCard
+            label="Last check"
+            value={dashboard?.last_scan_at ? relativeTime(dashboard.last_scan_at) : "Not yet"}
+            icon={<CheckCircle2 size={20} />}
+            tone="success"
+          />
         </div>
+      </ResourceShell>
+
+      {/* ─── Overall threat gauge ──────────────────────────────────── */}
+      {!dashboardLoading && dashboard && <ThreatGauge level={overallLevel} reduced={reduced} />}
+
+      {/* ─── Recent scans list ─────────────────────────────────────── */}
+      <section aria-labelledby="recent-scans-heading">
         <h3
-          className="text-lg font-bold tracking-tight"
-          style={{ color: "var(--theme-heading-color, #111827)" }}
+          id="recent-scans-heading"
+          className="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
         >
-          Ransomware Detection
+          What we found recently
         </h3>
-      </div>
 
-      {/* ---- Hero Stat Cards ---- */}
-      {dashboardLoading ? (
-        <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <SkeletonCard key={i} />
-          ))}
-        </div>
-      ) : (
-        <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {statCards.map((card) => (
-            <div
-              key={card.label}
-              className="rounded-xl p-4 shadow-sm transition-shadow hover:shadow-md"
-              style={{
-                background: "var(--theme-card-bg, #ffffff)",
-                border: "1px solid var(--theme-border-color, #e5e7eb)",
-              }}
-            >
-              <div className={`mb-3 flex h-9 w-9 items-center justify-center rounded-full ${card.iconBg}`}>
-                <span className={card.iconColor}>{card.icon}</span>
-              </div>
-              <p
-                className="text-2xl font-bold tabular-nums leading-none"
-                style={{ color: "var(--theme-heading-color, #111827)" }}
-              >
-                {card.value}
-              </p>
-              <p
-                className="mt-1 text-xs font-medium"
-                style={{ color: "var(--theme-muted-color, #6b7280)" }}
-              >
-                {card.label}
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ---- Threat Gauge ---- */}
-      {!dashboardLoading && dashboard && (
-        <div className="mb-5">
-          <ThreatGauge level={overallThreat} />
-        </div>
-      )}
-
-      {/* ---- Recent Scans ---- */}
-      <div>
-        <h4
-          className="mb-3 text-sm font-semibold uppercase tracking-wider"
-          style={{ color: "var(--theme-muted-color, #6b7280)" }}
+        <ResourceShell
+          loading={scansLoading}
+          error={scansError}
+          onRetry={refetchScans}
+          empty={!scansLoading && scans.length === 0}
+          emptyTitle="Nothing's been scanned yet"
+          emptyDescription="Once your protection policies start running, you'll see every scan here — what was checked, what was found, and what we did about it."
+          emptyIcon={<span aria-hidden="true" className="text-5xl">🛡️</span>}
         >
-          Recent Scans
-        </h4>
-
-        {scansLoading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div
-                key={i}
-                className="animate-pulse rounded-xl p-4"
-                style={{
-                  background: "var(--theme-card-bg, #ffffff)",
-                  border: "1px solid var(--theme-border-color, #e5e7eb)",
-                }}
-              >
-                <div className="h-4 w-40 rounded bg-gray-200 dark:bg-gray-700" />
-                <div className="mt-2 h-3 w-24 rounded bg-gray-200 dark:bg-gray-700" />
-              </div>
-            ))}
-          </div>
-        ) : scans.length === 0 ? (
-          <EmptyState />
-        ) : (
           <div className="space-y-2">
             {scans.map((scan) => {
-              const lvl = THREAT_LEVEL_STYLES[scan.threat_level] ?? THREAT_LEVEL_STYLES.none;
+              const t = tier(scan.threat_level);
               return (
-                <div
+                <article
                   key={scan.id}
-                  className={`flex flex-col gap-3 rounded-xl border-l-4 p-4 transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between ${lvl.borderLeft}`}
-                  style={{
-                    background: "var(--theme-card-bg, #ffffff)",
-                    borderRight: "1px solid var(--theme-border-color, #e5e7eb)",
-                    borderTop: "1px solid var(--theme-border-color, #e5e7eb)",
-                    borderBottom: "1px solid var(--theme-border-color, #e5e7eb)",
-                  }}
+                  className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-surface-card p-4 shadow-sm transition-shadow hover:shadow-md dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  {/* Left content */}
-                  <div className="min-w-0 flex-1">
-                    <p
-                      className="truncate text-sm font-semibold"
-                      style={{ color: "var(--theme-heading-color, #111827)" }}
-                    >
-                      {scan.policy_name}
-                    </p>
-                    <div className="mt-2 flex flex-wrap items-center gap-3">
-                      <ThreatBadge level={scan.threat_level} />
-                      <ScoreBar score={scan.score} level={scan.threat_level} />
-                      <span
-                        className="text-xs"
-                        style={{ color: "var(--theme-muted-color, #6b7280)" }}
-                      >
-                        {relativeTime(scan.scanned_at)}
-                      </span>
+                  {/* Left — mood + policy + meta */}
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                    <MoodIndicator mood={t.mood} size="lg" />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        {scan.policy_name}
+                      </p>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                        <StatusBadge tone={t.tone} label={t.technical} friendlyLabel={t.friendly} size="sm" />
+                        <ScoreBar score={scan.score} fill={t.fill} reduced={reduced} />
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {relativeTime(scan.scanned_at)}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Right actions */}
+                  {/* Right — actions */}
                   <div className="flex shrink-0 items-center gap-2">
                     {isActionable(scan.threat_level) && !scan.acknowledged_at && (
-                      <>
-                        <ModernButton
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            acknowledge.mutate({
-                              integrationKey,
-                              scanId: scan.id,
-                            })
-                          }
-                          disabled={acknowledge.isPending}
-                          className="rounded-full px-3"
-                        >
-                          <CheckCircle2 size={14} />
-                          {acknowledge.isPending ? "..." : "Acknowledge"}
-                        </ModernButton>
-                        <ModernButton
-                          variant="primary"
-                          size="sm"
-                          onClick={() =>
-                            recover.mutate({
-                              integrationKey,
-                              scanId: scan.id,
-                            })
-                          }
-                          disabled={recover.isPending}
-                          className="rounded-full px-3"
-                        >
-                          <RotateCcw size={14} />
-                          {recover.isPending ? "..." : "Recover"}
-                        </ModernButton>
-                      </>
+                      <AsyncButton
+                        variant="secondary"
+                        size="sm"
+                        icon={<CheckCircle2 size={14} />}
+                        loadingLabel="Marking…"
+                        successLabel="Got it"
+                        onClick={async () => {
+                          await acknowledge.mutateAsync({ integrationKey, scanId: scan.id });
+                        }}
+                      >
+                        Acknowledge
+                      </AsyncButton>
                     )}
 
                     {scan.acknowledged_at && !scan.recovered_at && (
-                      <>
-                        <span
-                          className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium dark:bg-gray-800"
-                          style={{ color: "var(--theme-muted-color, #6b7280)" }}
-                        >
-                          <CheckCircle2 size={12} />
-                          Acknowledged
-                        </span>
-                        {isActionable(scan.threat_level) && (
-                          <ModernButton
-                            variant="primary"
-                            size="sm"
-                            onClick={() =>
-                              recover.mutate({
-                                integrationKey,
-                                scanId: scan.id,
-                              })
-                            }
-                            disabled={recover.isPending}
-                            className="rounded-full px-3"
-                          >
-                            <RotateCcw size={14} />
-                            {recover.isPending ? "..." : "Recover"}
-                          </ModernButton>
-                        )}
-                      </>
+                      <StatusBadge tone="neutral" label="Acknowledged" friendlyLabel="Reviewed by your team" size="sm" />
+                    )}
+
+                    {(isActionable(scan.threat_level) && !scan.recovered_at) && (
+                      <AsyncButton
+                        variant="primary"
+                        size="sm"
+                        icon={<RotateCcw size={14} />}
+                        onClick={() => {
+                          setConfirmRecover(scan);
+                        }}
+                      >
+                        Recover
+                      </AsyncButton>
                     )}
 
                     {scan.recovered_at && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-semibold text-green-700 dark:bg-green-900/20 dark:text-green-400">
-                        <CheckCircle2 size={12} />
-                        Recovered
-                      </span>
+                      <StatusBadge tone="success" label="Recovered" friendlyLabel="Back to safe ✨" size="sm" />
                     )}
                   </div>
-                </div>
+                </article>
               );
             })}
           </div>
-        )}
+        </ResourceShell>
+      </section>
+
+      {/* ─── Recovery confirmation ────────────────────────────────── */}
+      <ConfirmActionDialog
+        open={Boolean(confirmRecover)}
+        onClose={() => setConfirmRecover(null)}
+        onConfirm={async () => {
+          if (!confirmRecover) return;
+          await recover.mutateAsync({ integrationKey, scanId: confirmRecover.id });
+          setConfirmRecover(null);
+        }}
+        title="Restore from a clean snapshot?"
+        description={
+          confirmRecover
+            ? `We'll roll back the protected workload to the most recent clean snapshot — wiping anything written after the threat appeared. This usually takes a few minutes.`
+            : ""
+        }
+        severity="danger"
+        confirmLabel="Yes, restore now"
+        cancelLabel="Not yet"
+        requireTypeToConfirm="RESTORE"
+      />
+    </div>
+  );
+};
+
+// ─── Score bar ──────────────────────────────────────────────────────────────
+
+const ScoreBar: React.FC<{ score: number; fill: string; reduced: boolean }> = ({ score, fill, reduced }) => {
+  const safe = Math.max(0, Math.min(100, score));
+  return (
+    <div className="flex items-center gap-2" title={`Threat score: ${safe}/100`}>
+      <div
+        className="h-1.5 w-20 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"
+        role="progressbar"
+        aria-valuenow={safe}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`Threat score ${safe} out of 100`}
+      >
+        <div
+          className={`h-full rounded-full ${fill}`}
+          style={{
+            width: `${safe}%`,
+            transition: orbitTransition(reduced, "width", "smooth", "decelerate"),
+          }}
+        />
       </div>
+      <span className="text-xs font-medium tabular-nums text-gray-600 dark:text-gray-400">{safe}</span>
     </div>
   );
 };

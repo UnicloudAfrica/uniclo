@@ -90,7 +90,7 @@ const WorkloadCard = ({
 }: WorkloadCardProps) => {
   const [searchTerms, setSearchTerms] = useState(createInitialSearchState);
   const [isNetworkingOpen, setIsNetworkingOpen] = useState(false);
-  const [itemErrors, setItemErrors] = useState<Record<string, unknown>>(errors);
+  const [itemErrors, setItemErrors] = useState<Record<string, string | null>>(errors);
 
   useEffect(() => {
     setItemErrors(errors);
@@ -107,7 +107,7 @@ const WorkloadCard = ({
       countryCode,
     });
   const computerInstances: PricingProduct[] = Array.isArray(computerInstancesData)
-    ? computerInstancesData
+    ? (computerInstancesData as unknown as PricingProduct[])
     : [];
 
   const { data: osImagesData, isFetching: isOsImagesFetching } = useFetchProductPricing(
@@ -115,28 +115,28 @@ const WorkloadCard = ({
     "os_image",
     { enabled: !!data.region, countryCode }
   );
-  const osImages: PricingProduct[] = Array.isArray(osImagesData) ? osImagesData : [];
+  const osImages: PricingProduct[] = Array.isArray(osImagesData) ? (osImagesData as unknown as PricingProduct[]) : [];
 
   const { data: ebsVolumesData, isFetching: isEbsVolumesFetching } = useFetchProductPricing(
     data.region as string,
     "volume_type",
     { enabled: !!data.region, countryCode }
   );
-  const ebsVolumes: PricingProduct[] = Array.isArray(ebsVolumesData) ? ebsVolumesData : [];
+  const ebsVolumes: PricingProduct[] = Array.isArray(ebsVolumesData) ? (ebsVolumesData as unknown as PricingProduct[]) : [];
 
   const { data: bandwidthsData, isFetching: isBandwidthsFetching } = useFetchProductPricing(
     data.region as string,
     "bandwidth",
     { enabled: !!data.region, countryCode }
   );
-  const bandwidths: PricingProduct[] = Array.isArray(bandwidthsData) ? bandwidthsData : [];
+  const bandwidths: PricingProduct[] = Array.isArray(bandwidthsData) ? (bandwidthsData as unknown as PricingProduct[]) : [];
 
   const { data: floatingIpsData, isFetching: isFloatingIpsFetching } = useFetchProductPricing(
     data.region as string,
     "ip",
     { enabled: !!data.region, countryCode }
   );
-  const floatingIps: PricingProduct[] = Array.isArray(floatingIpsData) ? floatingIpsData : [];
+  const floatingIps: PricingProduct[] = Array.isArray(floatingIpsData) ? (floatingIpsData as unknown as PricingProduct[]) : [];
 
   const { data: crossConnectsData, isFetching: isCrossConnectsFetching } = useFetchProductPricing(
     data.region as string,
@@ -146,7 +146,7 @@ const WorkloadCard = ({
       countryCode,
     }
   );
-  const crossConnects: PricingProduct[] = Array.isArray(crossConnectsData) ? crossConnectsData : [];
+  const crossConnects: PricingProduct[] = Array.isArray(crossConnectsData) ? (crossConnectsData as unknown as PricingProduct[]) : [];
 
   const findSelectedItem = (collection: PricingProduct[], id: string | number) =>
     collection.find(({ product }) => String(product.productable_id) === String(id));
@@ -232,7 +232,7 @@ const WorkloadCard = ({
   };
 
   const validateVolumeInput = () => {
-    const newErrors: Record<string, unknown> = {};
+    const newErrors: Record<string, string> = {};
     const storageSize = Number(data.storage_size_gb);
     if (!data.volume_type_id) newErrors["volume_type_id"] = "Volume type is required.";
     if (!data.storage_size_gb || Number.isNaN(storageSize) || storageSize < 1)
@@ -305,9 +305,9 @@ const WorkloadCard = ({
           </div>
           <SelectableInput
             options={
-              regions.map((region: unknown) => ({
-                id: region.code,
-                name: region.name,
+              (regions as Array<Record<string, unknown>>).map((region) => ({
+                id: String(region.code ?? ""),
+                name: String(region.name ?? ""),
               })) || []
             }
             value={data.region ?? ""}
@@ -321,7 +321,7 @@ const WorkloadCard = ({
             emptyMessage="No regions found"
           />
           {itemErrors["region"] && (
-            <p className="text-xs font-medium text-red-600">{itemErrors["region"]}</p>
+            <p className="text-xs font-medium text-red-600">{String(itemErrors["region"] ?? "")}</p>
           )}
         </div>
 
@@ -344,7 +344,7 @@ const WorkloadCard = ({
             </div>
             <SelectableInput
               options={
-                computerInstances.map(({ product, pricing }: Record<string, unknown>) => ({
+                computerInstances.map(({ product, pricing }) => ({
                   id: product.productable_id,
                   name: `${product.name} • ${
                     formatCurrency(pricing?.effective?.price_local, pricing?.effective?.currency) ||
@@ -386,7 +386,7 @@ const WorkloadCard = ({
             </div>
             <SelectableInput
               options={
-                osImages.map(({ product, pricing }: Record<string, unknown>) => ({
+                osImages.map(({ product, pricing }) => ({
                   id: product.productable_id,
                   name: `${product.name} • ${
                     formatCurrency(pricing?.effective?.price_local, pricing?.effective?.currency) ||
@@ -488,7 +488,7 @@ const WorkloadCard = ({
                 </div>
                 <SelectableInput
                   options={
-                    ebsVolumes.map(({ product, pricing }: Record<string, unknown>) => ({
+                    ebsVolumes.map(({ product, pricing }) => ({
                       id: product.productable_id,
                       name: `${product.name} • ${
                         formatCurrency(
@@ -589,7 +589,7 @@ const WorkloadCard = ({
                   </div>
                   <SelectableInput
                     options={
-                      bandwidths.map(({ product, pricing }: Record<string, unknown>) => ({
+                      bandwidths.map(({ product, pricing }) => ({
                         id: product.productable_id,
                         name: `${product.name} • ${
                           formatCurrency(
@@ -635,7 +635,7 @@ const WorkloadCard = ({
                   </div>
                   <SelectableInput
                     options={
-                      floatingIps.map(({ product, pricing }: Record<string, unknown>) => ({
+                      floatingIps.map(({ product, pricing }) => ({
                         id: product.productable_id,
                         name: `${product.name} • ${
                           formatCurrency(
@@ -681,7 +681,7 @@ const WorkloadCard = ({
                   </div>
                   <SelectableInput
                     options={
-                      crossConnects.map(({ product, pricing }: Record<string, unknown>) => ({
+                      crossConnects.map(({ product, pricing }) => ({
                         id: product.productable_id,
                         name: `${product.name} • ${
                           formatCurrency(

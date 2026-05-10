@@ -64,7 +64,10 @@ const CreateDestinationModal: React.FC<CreateDestinationModalProps> = ({
     <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-          <h2 className="text-lg font-bold text-gray-900">Add Destination</h2>
+          <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900">
+            <span aria-hidden="true">📍</span>
+            Where should backups land?
+          </h2>
           <button onClick={handleClose} className="text-gray-400 hover:text-gray-600">
             <Plus className="w-5 h-5 rotate-45" />
           </button>
@@ -150,7 +153,7 @@ const CreateDestinationModal: React.FC<CreateDestinationModalProps> = ({
 
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
           <ModernButton variant="secondary" onClick={handleClose}>
-            Cancel
+            Not now
           </ModernButton>
           <ModernButton
             variant="primary"
@@ -160,10 +163,10 @@ const CreateDestinationModal: React.FC<CreateDestinationModalProps> = ({
             {isCreating ? (
               <>
                 <RefreshCw className="w-4 h-4 animate-spin" />
-                Creating...
+                Saving destination…
               </>
             ) : (
-              "Add Destination"
+              "Save destination"
             )}
           </ModernButton>
         </div>

@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { AdditionalVolume, Option } from "../types/InstanceConfiguration";
 import { useInstanceFormState } from "./useInstanceCreation";
 import { useFetchCountries, useFetchGeneralRegions } from "./resource";
-import useTenantAuthStore from "../stores/tenantAuthStore";
+import useAuthStore, { UnifiedAuthState } from "@/stores/authStore";
 import config from "../config";
 import tenantApi from "../index/tenant/tenantApi";
 import silentApi from "../index/silent";
@@ -27,8 +27,8 @@ export const useTenantProvisioningLogic = () => {
   // ─────────────────────────────────────────────────────────────────
   // Auth & Config
   // ─────────────────────────────────────────────────────────────────
-  const isAuthenticated = useTenantAuthStore((state: unknown) => state.isAuthenticated);
-  const profile = useTenantAuthStore((state: unknown) => state.profile);
+  const isAuthenticated = useAuthStore((state: UnifiedAuthState) => state.isAuthenticated);
+  const profile = useAuthStore((state: UnifiedAuthState) => state.user);
   const {
     contextType,
     setContextType,
@@ -90,12 +90,12 @@ export const useTenantProvisioningLogic = () => {
   // ─────────────────────────────────────────────────────────────────
   const { data: countriesData = [], isLoading: isCountriesLoading } = useFetchCountries();
 
-  const countries = countriesData as Array<Record<string, unknown>>;
+  const countries = countriesData as unknown as Array<Record<string, unknown>>;
   const countryOptions: Option[] = useMemo(
     () =>
       countries.map((c) => ({
         value: String(c.iso2 || c.code || c.id),
-        label: c.name,
+        label: typeof c.name === "string" ? c.name : String(c.name ?? ""),
       })),
     [countries]
   );
@@ -112,10 +112,10 @@ export const useTenantProvisioningLogic = () => {
 
     // 1. Resolve based on context selection (if acting as a Partner/Reseller)
     if (contextType === "tenant" && selectedTenantId) {
-      const selected = tenants.find((t: unknown) => String(t.id) === String(selectedTenantId));
+      const selected = tenants.find((t: { id?: string | number }) => String(t.id) === String(selectedTenantId));
       candidate = resolveCountryCodeFromEntity(selected, countryOptions as never);
     } else if (contextType === "user" && selectedUserId) {
-      const selected = userPool.find((u: unknown) => String(u.id) === String(selectedUserId));
+      const selected = userPool.find((u: { id?: string | number }) => String(u.id) === String(selectedUserId));
       candidate = resolveCountryCodeFromEntity(selected, countryOptions as never);
     }
 
@@ -169,9 +169,9 @@ export const useTenantProvisioningLogic = () => {
           "GET",
           `/product-pricing?${params.toString()}`
         )) as Record<string, unknown>;
-        setPricingData(response?.data || response || []);
+        setPricingData(((response?.data ?? response) as Record<string, unknown>) || null);
       } catch {
-        setPricingData([]);
+        setPricingData(null);
       } finally {
         setIsPricingLoading(false);
       }
@@ -187,12 +187,14 @@ export const useTenantProvisioningLogic = () => {
   // ─────────────────────────────────────────────────────────────────
   // Fast-Track Region Eligibility
   // ─────────────────────────────────────────────────────────────────
-  const fastTrackRegions = useMemo(
+  const fastTrackRegions = useMemo<string[]>(
     () =>
       generalRegions
         .filter((region) => region?.can_fast_track === true)
-        .map((region) => region?.code || region?.region || region?.slug || region?.id)
-        .filter(Boolean),
+        .map((region) =>
+          String(region?.code || region?.region || region?.slug || region?.id || "")
+        )
+        .filter((s): s is string => Boolean(s)),
     [generalRegions]
   );
 
@@ -205,10 +207,10 @@ export const useTenantProvisioningLogic = () => {
 
   const regionOptions: Option[] = useMemo(() => {
     const allRegions = generalRegions.map((r) => {
-      const value = r.code || r.region || r.id || r.slug;
+      const value = String(r.code || r.region || r.id || r.slug || "");
       return {
         value,
-        label: r.label || r.name || r.region || r.code,
+        label: String(r.label || r.name || r.region || r.code || ""),
         canFastTrack: fastTrackRegions.includes(value),
       };
     });
@@ -243,10 +245,10 @@ export const useTenantProvisioningLogic = () => {
   const allRegionOptions: Option[] = useMemo(
     () =>
       generalRegions.map((r): Option & { canFastTrack: boolean } => {
-        const value = r.code || r.region || r.id || r.slug;
+        const value = String(r.code || r.region || r.id || r.slug || "");
         return {
           value,
-          label: r.label || r.name || r.region || r.code,
+          label: String(r.label || r.name || r.region || r.code || ""),
           canFastTrack: fastTrackRegions.includes(value),
         };
       }),
@@ -353,8 +355,13 @@ export const useTenantProvisioningLogic = () => {
               ? cfg.security_group_ids
               : ((cfg.security_group_ids as string) || "").split(",")
           )
-            .map((v: unknown) => (v && (v as unknown).value ? (v as unknown).value : v))
-            .map((v: unknown) => (v || "").toString().trim())
+            .map((v: unknown) => {
+              if (v && typeof v === "object" && "value" in v) {
+                return (v as { value: unknown }).value;
+              }
+              return v;
+            })
+            .map((v: unknown) => (v ?? "").toString().trim())
             .filter(Boolean);
 
           const extraVolumes = (cfg.additional_volumes || [])
@@ -420,35 +427,39 @@ export const useTenantProvisioningLogic = () => {
         }
 
         const response = await tenantApi<{ data?: unknown }>("POST", "/admin/instances/create", payload);
-        const data = (response?.data || response) as Record<string, unknown>;
+        const data = ((response?.data || response) as Record<string, unknown>) || {};
+        const payment = data.payment as Record<string, unknown> | undefined;
+        const transaction = data.transaction as Record<string, unknown> | undefined;
+        const order = data.order as Record<string, unknown> | undefined;
+        const transactionMeta = transaction?.metadata as Record<string, unknown> | undefined;
 
         const normalizedGatewayOptions = normalizePaymentOptions(
-          data?.payment?.payment_gateway_options || data?.payment?.options || data?.payment_options
+          payment?.payment_gateway_options || payment?.options || data?.payment_options
         );
         const pricingBreakdownPayload =
           data?.pricing_breakdown ||
-          data?.transaction?.metadata?.pricing_breakdown ||
-          data?.order?.pricing_breakdown ||
+          transactionMeta?.pricing_breakdown ||
+          order?.pricing_breakdown ||
           null;
 
-        const mergedTransaction = data?.transaction
+        const mergedTransaction = transaction
           ? {
-              ...data.transaction,
+              ...transaction,
               metadata: {
-                ...(data.transaction.metadata || {}),
+                ...(transactionMeta || {}),
                 ...(pricingBreakdownPayload ? { pricing_breakdown: pricingBreakdownPayload } : {}),
               },
             }
           : null;
 
         const mergedResult: Record<string, unknown> = {
-          ...(data || {}),
+          ...data,
           transaction: mergedTransaction,
-          payment: data?.payment
-            ? { ...data.payment, payment_gateway_options: normalizedGatewayOptions }
+          payment: payment
+            ? { ...payment, payment_gateway_options: normalizedGatewayOptions }
             : normalizedGatewayOptions.length
               ? { payment_gateway_options: normalizedGatewayOptions }
-              : data?.payment,
+              : payment,
           pricing_breakdown: pricingBreakdownPayload || data?.pricing_breakdown || null,
         };
 
@@ -460,7 +471,8 @@ export const useTenantProvisioningLogic = () => {
           pricing_breakdown: mergedResult?.pricing_breakdown || null,
         });
 
-        const isPaymentRequired = mergedResult?.payment?.required;
+        const mergedPayment = mergedResult?.payment as { required?: boolean } | undefined;
+        const isPaymentRequired = mergedPayment?.required;
         if (isPaymentRequired) {
           if (paymentStepIndex >= 0) {
             setActiveStep(paymentStepIndex);
@@ -534,21 +546,24 @@ export const useTenantProvisioningLogic = () => {
         currency: billingCountry === "NG" ? "NGN" : "USD",
       };
     }
-    const breakdown = Array.isArray(orderReceipt?.pricing_breakdown)
-      ? orderReceipt?.pricing_breakdown
+    type Totals = { subtotal: number; tax: number; total: number; currency: string };
+    type BreakdownItem = { subtotal?: number; tax?: number; total?: number; currency?: string };
+    const breakdown: BreakdownItem[] = Array.isArray(orderReceipt?.pricing_breakdown)
+      ? (orderReceipt?.pricing_breakdown as BreakdownItem[])
       : [];
-    const totals = breakdown.reduce(
-      (acc: Record<string, unknown>, item: unknown) => {
+    const totals: Totals = breakdown.reduce<Totals>(
+      (acc, item) => {
         acc.subtotal += Number(item?.subtotal || 0);
         acc.tax += Number(item?.tax || 0);
         acc.total += Number(item?.total || 0);
-        acc.currency = acc.currency || item?.currency;
+        acc.currency = acc.currency || (item?.currency ?? "");
         return acc;
       },
       { subtotal: 0, tax: 0, total: 0, currency: "" }
     );
-    const receiptTotal =
-      Number(orderReceipt?.transaction?.amount || orderReceipt?.order?.total || 0) || 0;
+    const txn = orderReceipt?.transaction as { amount?: number; currency?: string } | undefined;
+    const ord = orderReceipt?.order as { total?: number } | undefined;
+    const receiptTotal = Number(txn?.amount || ord?.total || 0) || 0;
     return {
       subtotal: totals.subtotal || receiptTotal,
       tax: totals.tax || 0,
@@ -556,7 +571,7 @@ export const useTenantProvisioningLogic = () => {
       grandTotal: totals.total || receiptTotal,
       currency:
         totals.currency ||
-        orderReceipt?.transaction?.currency ||
+        txn?.currency ||
         (billingCountry === "NG" ? "NGN" : "USD"),
     };
   }, [orderReceipt, billingCountry, isFastTrack]);

@@ -4,8 +4,7 @@ import type { UseQueryOptions } from "@tanstack/react-query";
 import silentApi from "../index/silent";
 import clientSilentApi from "../index/client/silent";
 import adminSilentSettingsApi from "../index/admin/silentSettingsApi";
-import useClientAuthStore from "../stores/clientAuthStore";
-import useTenantAuthStore from "../stores/tenantAuthStore";
+import useAuthStore from "@/stores/authStore";
 import { BrandingTheme, BrandingCompany, BrandingPalette } from "../types/branding";
 
 // Default colors pulled from the platform marketing palette.
@@ -439,7 +438,7 @@ export const usePlatformBrandingTheme = (options: BrandingQueryOptions = {}) => 
 };
 
 export const useTenantBrandingTheme = (options: BrandingQueryOptions = {}) => {
-  const tenant = useTenantAuthStore((state) => state.tenant);
+  const tenant = useAuthStore((state) => state.tenant);
   const tenantId = resolveTenantId(tenant);
   const cacheKey = buildAuthBrandingCacheKey({ scope: "tenant", tenantId: tenantId ?? undefined });
   const cachedBranding = readAuthBrandingCache(cacheKey);
@@ -510,7 +509,7 @@ export const useAdminBrandingTheme = (options: BrandingQueryOptions = {}) => {
 };
 
 export const useClientBrandingTheme = (options: BrandingQueryOptions = {}) => {
-  const tenant = useClientAuthStore((state) => state.tenant);
+  const tenant = useAuthStore((state) => state.tenant);
   const tenantId = resolveTenantId(tenant);
   const cacheKey = buildAuthBrandingCacheKey({ scope: "client", tenantId: tenantId ?? undefined });
   const cachedBranding = readAuthBrandingCache(cacheKey);

@@ -17,41 +17,50 @@ interface ProtectionLandingProps {
   description: string;
 }
 
+/**
+ * Friendly workflow tiles — plain English, emoji as visual anchor, brand
+ * gradient on the icon chip so cards re-tint with the active theme.
+ */
 const WORKFLOWS = [
   {
-    title: "DR Drills",
-    description: "Schedule and review failover exercises without digging through the DR dashboard.",
+    title: "Practice for a bad day",
+    badge: "DR Drills",
+    emoji: "🚨",
+    description: "Run a fire-drill on your servers — make sure your recovery actually works before you need it.",
     path: "/dr-drills",
     icon: FlaskConical,
-    accent: "from-blue-500 to-indigo-500",
   },
   {
-    title: "Hypervisor",
-    description: "Detect hypervisors, manage guest VMs, and run migrations from a dedicated workspace.",
+    title: "Talk to your VM hosts",
+    badge: "Hypervisor",
+    emoji: "🖥️",
+    description: "Connect VMware, Hyper-V, or KVM hosts so we can move the VMs running on them.",
     path: "/hypervisor",
     icon: Monitor,
-    accent: "from-violet-500 to-fuchsia-500",
   },
   {
-    title: "Database Replication",
-    description: "Manage database-native replication groups as their own workflow.",
+    title: "Keep databases in sync",
+    badge: "Database Replication",
+    emoji: "🗄️",
+    description: "Continuous replication for PostgreSQL, MySQL, and MongoDB. We handle the change-data-capture.",
     path: "/database-replication",
     icon: Database,
-    accent: "from-emerald-500 to-teal-500",
   },
   {
-    title: "Ransomware",
-    description: "Review scans, acknowledge findings, and trigger recovery from a focused page.",
+    title: "Catch threats early",
+    badge: "Ransomware",
+    emoji: "🛡️",
+    description: "We watch your backups for ransomware patterns. If something looks wrong, we tell you fast.",
     path: "/ransomware",
     icon: ShieldAlert,
-    accent: "from-rose-500 to-orange-500",
   },
   {
-    title: "Serverless DR",
-    description: "Keep policy management separate from broader replication operations.",
+    title: "Always-ready, only-pays-on-use",
+    badge: "Serverless DR",
+    emoji: "💤",
+    description: "Backup server stays asleep — only the data stays awake. Boots in seconds when disaster strikes.",
     path: "/serverless-dr",
     icon: CloudOff,
-    accent: "from-sky-500 to-cyan-500",
   },
 ];
 
@@ -72,45 +81,40 @@ export default function ProtectionLanding({
       <section className="space-y-3">
         <div>
           <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-            Related Workflows
+            Other things you can do
           </h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            The detailed DR operations now live in dedicated pages instead of being stacked under
-            the old dashboard tab.
+            Each one's its own page now — pick the one that matches what you're trying to do.
           </p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {WORKFLOWS.map((workflow) => {
-            const Icon = workflow.icon;
-
-            return (
-              <Link
-                key={workflow.path}
-                to={`${basePath}${workflow.path}`}
-                className="group rounded-2xl border border-gray-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900 dark:hover:border-gray-700"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div
-                    className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${workflow.accent} text-white shadow-sm`}
-                  >
-                    <Icon size={20} />
-                  </div>
-                  <ArrowRight
-                    size={16}
-                    className="mt-1 text-gray-400 transition-transform group-hover:translate-x-0.5 dark:text-gray-500"
-                  />
+          {WORKFLOWS.map((workflow) => (
+            <Link
+              key={workflow.path}
+              to={`${basePath}${workflow.path}`}
+              className="group rounded-2xl border border-gray-200 bg-surface-card p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg dark:border-gray-800 motion-reduce:hover:translate-y-0"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 text-2xl text-white shadow-sm">
+                  <span aria-hidden="true">{workflow.emoji}</span>
                 </div>
-
-                <h3 className="mt-4 text-sm font-semibold text-gray-900 dark:text-gray-100">
-                  {workflow.title}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
-                  {workflow.description}
-                </p>
-              </Link>
-            );
-          })}
+                <ArrowRight
+                  size={16}
+                  className="mt-1 text-gray-400 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none dark:text-gray-500"
+                />
+              </div>
+              <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-400">
+                {workflow.badge}
+              </p>
+              <h3 className="mt-1 text-sm font-bold text-gray-900 dark:text-gray-100">
+                {workflow.title}
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
+                {workflow.description}
+              </p>
+            </Link>
+          ))}
         </div>
       </section>
     </PageShell>

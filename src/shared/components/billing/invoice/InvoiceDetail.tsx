@@ -27,6 +27,7 @@ import {
   useFetchInvoiceById,
   useMarkInvoicePaid,
   useSendInvoiceReminder,
+  useDownloadInvoicePdf,
   useVoidInvoice,
   useFinalizeInvoice,
   useConvertQuoteToInvoice,
@@ -75,6 +76,7 @@ const InvoiceDetail: React.FC<InvoiceDetailProps> = ({
   const markPaid = useMarkInvoicePaid();
   const sendReminder = useSendInvoiceReminder();
   const voidInvoice = useVoidInvoice();
+  const downloadPdf = useDownloadInvoicePdf();
   const finalizeInvoice = useFinalizeInvoice();
   const convertQuote = useConvertQuoteToInvoice();
 
@@ -289,16 +291,27 @@ const InvoiceDetail: React.FC<InvoiceDetailProps> = ({
           </ModernButton>
         )}
 
-        {invoice.pdf_path ? (
-          <a
-            href={invoice.pdf_path}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-[rgb(var(--theme-color-200))] bg-white px-3 py-2 text-sm font-medium text-[var(--theme-color)] transition hover:bg-[var(--theme-color-10)]"
-          >
-            <Download size={14} /> Download PDF
-          </a>
-        ) : null}
+        {/* Download / preview the PDF — works regardless of whether
+            the wizard persisted a `pdf_path`. The backend renders on
+            demand, then the hook streams the binary to a Blob. */}
+        <ModernButton
+          variant="secondary"
+          size="sm"
+          leftIcon={<Download size={14} />}
+          onClick={() => {
+            const docNumber =
+              invoice.status === "quote" || invoice.status === "accepted"
+                ? invoice.quote_number ?? invoice.invoice_number ?? invoice.uuid
+                : invoice.invoice_number ?? invoice.quote_number ?? invoice.uuid;
+            const isQuote =
+              invoice.status === "quote" || invoice.status === "accepted";
+            const filename = `${isQuote ? "Quote" : "Invoice"}-${docNumber}.pdf`;
+            downloadPdf.mutate({ id: invoice.uuid, filename });
+          }}
+          isLoading={downloadPdf.isPending}
+        >
+          Download PDF
+        </ModernButton>
 
         {canConvertQuote && (
           <ModernButton

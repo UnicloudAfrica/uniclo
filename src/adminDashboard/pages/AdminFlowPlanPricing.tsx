@@ -142,8 +142,8 @@ const AdminFlowPlanPricing = () => {
 
   return (
     <AdminPageShell
-      title="SimpleDeploy plan pricing"
-      description="Edit the monthly fee, included quotas, and feature flags for each SimpleDeploy plan. Prices are entered in ₦; the API stores them as kobo."
+      title="SlimDeploy plan pricing"
+      description="Edit the monthly fee, included quotas, and feature flags for each SlimDeploy plan. Prices are entered in ₦; the API stores them as kobo."
       contentClassName="space-y-6"
     >
       <div className="grid gap-4 md:grid-cols-3">
@@ -354,7 +354,7 @@ const AdminFlowPlanPricing = () => {
               {!drafts.length && !isLoading && (
                 <tr>
                   <td colSpan={10} className="py-6 text-center text-sm text-slate-500">
-                    No SimpleDeploy plans configured. Run{" "}
+                    No SlimDeploy plans configured. Run{" "}
                     <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">
                       php artisan db:seed --class=FlowPlanSeeder
                     </code>{" "}

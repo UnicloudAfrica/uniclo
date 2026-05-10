@@ -7,7 +7,7 @@ import { useFetchTenantById } from "../adminHooks/tenantHooks";
 import { useFetchClientProfile } from "../clientHooks/resources";
 import { useFetchTenantBillingSettings, useFetchTenantBusinessSettings } from "../settingsHooks";
 import { useFetchProfile } from "../resource";
-import useTenantAuthStore from "../../stores/tenantAuthStore";
+import useAuthStore from "@/stores/authStore";
 import type { ObjectStorageContext } from "./types";
 import { isRecord, resolveOptionValue, resolveString } from "./utils";
 
@@ -114,12 +114,12 @@ export const useCustomerSelection = (
     enabled: isAdminContext && !!selectedUserId,
   });
   // Tenant/user objects from auth store for country resolution
-  const selfTenant = useTenantAuthStore((state) => {
+  const selfTenant = useAuthStore((state) => {
     const s = state as unknown as { tenant?: unknown; profile?: unknown };
     return s?.tenant || s?.profile;
   });
-  const authProfile = useTenantAuthStore((state) => (state as unknown as { profile?: unknown })?.profile);
-  const authUser = useTenantAuthStore((state) => (state as unknown as { user?: unknown })?.user);
+  const authProfile = useAuthStore((state) => (state as unknown as { profile?: unknown })?.profile);
+  const authUser = useAuthStore((state) => (state as unknown as { user?: unknown })?.user);
 
   // Tenant/Client Options
   const tenantOptions = useMemo(() => {

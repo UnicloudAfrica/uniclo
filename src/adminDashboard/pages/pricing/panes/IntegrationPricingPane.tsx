@@ -2,11 +2,17 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Loader2, Save } from "lucide-react";
 
 import { ModernCard, ModernButton } from "@/shared/components/ui";
+import InlinePriceEditor from "@/shared/components/ui/InlinePriceEditor";
+import { compactInputClassName } from "./styles";
 import {
   useFetchIntegrationPricing,
   useUpdateIntegrationPricing,
+  useFetchTenantIntegrationOverride,
+  useUpsertTenantIntegrationOverride,
+  useDeleteTenantIntegrationOverride,
   type IntegrationPricingRow,
 } from "@/hooks/adminHooks/adminIntegrationPricingHooks";
+import { useFetchTenants } from "@/hooks/adminHooks/tenantHooks";
 import ToastUtils from "@/utils/toastUtil";
 import type { PricingRole } from "../PricingShell";
 
@@ -77,6 +83,17 @@ const IntegrationPricingPane: React.FC<IntegrationPricingPaneProps> = ({
   const { data: rows = [], isFetching } = useFetchIntegrationPricing(integrationKey);
   const { mutateAsync: update, isPending } = useUpdateIntegrationPricing(integrationKey);
 
+  // Tenant-role state: pick a tenant to apply overrides to.
+  const { data: tenants = [], isFetching: isTenantsFetching } = useFetchTenants({
+    enabled: role === "tenant",
+  });
+  const [selectedTenantId, setSelectedTenantId] = useState<string>("");
+  const { mutateAsync: upsertTenantOverride, isPending: isUpsertingTenant } =
+    useUpsertTenantIntegrationOverride(integrationKey);
+  const { mutateAsync: clearTenantOverride, isPending: isClearingTenant } =
+    useDeleteTenantIntegrationOverride(integrationKey);
+  const isTenantMutating = isUpsertingTenant || isClearingTenant;
+
   const [drafts, setDrafts] = useState<DraftRow[]>([]);
 
   useEffect(() => {
@@ -137,8 +154,7 @@ const IntegrationPricingPane: React.FC<IntegrationPricingPaneProps> = ({
     }
   };
 
-  const inputCls =
-    "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100";
+  const inputCls = compactInputClassName;
 
   return (
     <ModernCard padding="default" className="space-y-4">
@@ -161,6 +177,33 @@ const IntegrationPricingPane: React.FC<IntegrationPricingPaneProps> = ({
           </ModernButton>
         )}
       </div>
+
+      {role === "tenant" && (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <label className="mb-1 block text-xs font-medium text-slate-600">
+            Apply tenant overrides for
+          </label>
+          <select
+            value={selectedTenantId}
+            onChange={(e) => setSelectedTenantId(e.target.value)}
+            className={`${inputCls} max-w-md`}
+            disabled={isTenantsFetching}
+          >
+            <option value="">
+              {isTenantsFetching ? "Loading tenants…" : "Select a tenant"}
+            </option>
+            {tenants.map((t: { id: string; name?: string; subdomain?: string }) => (
+              <option key={t.id} value={t.id}>
+                {t.name || t.subdomain || t.id}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-[11px] text-slate-500">
+            Per-tenant prices must be at or above the platform default. Clear an override to fall
+            back to the admin price.
+          </p>
+        </div>
+      )}
 
       {(isFetching && rows.length === 0) && (
         <div className="flex items-center gap-2 text-sm text-slate-500">
@@ -255,10 +298,59 @@ const IntegrationPricingPane: React.FC<IntegrationPricingPaneProps> = ({
                         )}
                       </td>
                       {role === "tenant" && (
-                        <td className="py-2 pr-3 text-right text-xs text-slate-400">
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-500">
-                            same as platform
-                          </span>
+                        <td className="py-2 pr-3 text-right">
+                          <TenantOverrideCell
+                            integrationProductId={draft.id}
+                            tenantId={selectedTenantId}
+                            adminPrice={original?.price ?? null}
+                            adminCurrencyCode={original?.currency_code || draft.currency_code}
+                            disabled={isTenantMutating}
+                            onSave={async (price, currencyCode) => {
+                              if (!selectedTenantId) {
+                                ToastUtils.error("Pick a tenant first.");
+                                return;
+                              }
+                              try {
+                                await upsertTenantOverride({
+                                  integrationProductId: draft.id,
+                                  tenant_id: selectedTenantId,
+                                  price,
+                                  currency_code: currencyCode,
+                                });
+                                ToastUtils.success(`Override saved for ${draft.name}.`);
+                              } catch (error: unknown) {
+                                const err = error as {
+                                  response?: { data?: { message?: string } };
+                                  message?: string;
+                                };
+                                ToastUtils.error(
+                                  err?.response?.data?.message ||
+                                    err?.message ||
+                                    "Failed to save override.",
+                                );
+                              }
+                            }}
+                            onClear={async () => {
+                              if (!selectedTenantId) return;
+                              try {
+                                await clearTenantOverride({
+                                  integrationProductId: draft.id,
+                                  tenant_id: selectedTenantId,
+                                });
+                                ToastUtils.success(`Override cleared for ${draft.name}.`);
+                              } catch (error: unknown) {
+                                const err = error as {
+                                  response?: { data?: { message?: string } };
+                                  message?: string;
+                                };
+                                ToastUtils.error(
+                                  err?.response?.data?.message ||
+                                    err?.message ||
+                                    "Failed to clear override.",
+                                );
+                              }
+                            }}
+                          />
                         </td>
                       )}
                       <td className="py-2">
@@ -289,6 +381,80 @@ const IntegrationPricingPane: React.FC<IntegrationPricingPaneProps> = ({
         </p>
       )}
     </ModernCard>
+  );
+};
+
+/**
+ * Inline tenant override editor for a single integration-product row.
+ *
+ * Composes `InlinePriceEditor` for the input + save/revert + dirty
+ * tracking + a11y. This component's only job is to bridge the
+ * `useFetchTenantIntegrationOverride` query to the editor: pass the
+ * server value down, surface an "override active" status, hand
+ * `onSave` / `onClear` to the parent's mutation handlers.
+ */
+interface TenantOverrideCellProps {
+  integrationProductId: number;
+  tenantId: string;
+  adminPrice: number | null | undefined;
+  adminCurrencyCode: string;
+  disabled: boolean;
+  onSave: (price: number, currencyCode: string) => Promise<void>;
+  onClear: () => Promise<void>;
+}
+
+const TenantOverrideCell: React.FC<TenantOverrideCellProps> = ({
+  integrationProductId,
+  tenantId,
+  adminPrice,
+  adminCurrencyCode,
+  disabled,
+  onSave,
+  onClear,
+}) => {
+  const { data, isFetching } = useFetchTenantIntegrationOverride(
+    tenantId ? integrationProductId : null,
+    tenantId || null,
+  );
+
+  if (!tenantId) {
+    return (
+      <span className="text-[11px] text-slate-400">Select a tenant to set an override.</span>
+    );
+  }
+
+  const overrideActive = !!data?.override;
+  const resolvedAdminPrice =
+    data?.admin_price ?? (typeof adminPrice === "number" ? adminPrice : null);
+  const resolvedCurrency = data?.admin_currency_code || adminCurrencyCode || "USD";
+
+  return (
+    <InlinePriceEditor
+      value={data?.override?.price ?? null}
+      currency={resolvedCurrency}
+      minPrice={typeof resolvedAdminPrice === "number" ? resolvedAdminPrice : undefined}
+      ariaLabel={`Tenant override for integration product ${integrationProductId}`}
+      placeholder={
+        resolvedAdminPrice !== null && resolvedAdminPrice !== undefined
+          ? String(resolvedAdminPrice)
+          : "0.00"
+      }
+      baseline={{
+        amount: resolvedAdminPrice,
+        currency: resolvedCurrency,
+        label: "admin",
+      }}
+      status={
+        <span className={overrideActive ? "text-emerald-600" : "text-slate-400"}>
+          {overrideActive ? "Override active" : "No override · uses admin price"}
+        </span>
+      }
+      disabled={disabled}
+      isLoading={isFetching && !data}
+      onSave={(next) => onSave(next, resolvedCurrency)}
+      onClear={overrideActive ? onClear : undefined}
+      data-testid={`tenant-override-${integrationProductId}`}
+    />
   );
 };
 

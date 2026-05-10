@@ -1,8 +1,6 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAdminAuthStore } from "../../stores/adminAuthStore";
-import { useTenantAuthStore } from "../../stores/tenantAuthStore";
-import { useClientAuthStore } from "../../stores/clientAuthStore";
+import useAuthStore from "@/stores/authStore";
 
 interface RequireRoleProps {
   /** The role(s) allowed to access the children */
@@ -28,9 +26,9 @@ interface RequireRoleProps {
  */
 export const RequireRole: React.FC<RequireRoleProps> = ({ role, redirectTo, children }) => {
   const location = useLocation();
-  const adminAuth = useAdminAuthStore();
-  const tenantAuth = useTenantAuthStore();
-  const clientAuth = useClientAuthStore();
+  const adminAuth = useAuthStore();
+  const tenantAuth = useAuthStore();
+  const clientAuth = useAuthStore();
 
   const allowedRoles = Array.isArray(role) ? role : [role];
 

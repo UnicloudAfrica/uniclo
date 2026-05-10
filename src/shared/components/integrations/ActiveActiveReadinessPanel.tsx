@@ -90,9 +90,17 @@ const ActiveActiveReadinessPanel: React.FC<ActiveActiveReadinessPanelProps> = ({
 
       <div className="space-y-5 p-5">
         {isLoading ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading readiness assessment...</p>
+          <p className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+            <span aria-hidden="true">🩺</span> Checking readiness…
+          </p>
         ) : !data ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No readiness data available.</p>
+          <div className="flex flex-col items-center gap-2 py-6 text-center">
+            <span aria-hidden="true" className="text-3xl">🩺</span>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">No readiness check yet</p>
+            <p className="max-w-sm text-xs text-gray-500 dark:text-gray-400">
+              Once your replication has been running long enough, we'll grade how ready it is for active-active mode.
+            </p>
+          </div>
         ) : (
           <>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

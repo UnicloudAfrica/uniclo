@@ -247,13 +247,15 @@ const AdminMultiQuote = () => {
   };
   const addPricingRequest = () => {
     if (validateItem()) {
+      type ProductLike = { product?: { productable_id?: number; name?: string } };
       const computeName =
-        computerInstances.find(
-          (c: unknown) => c.product.productable_id === toInt(formData.compute_instance_id)
-        )?.product.name || "N/A";
+        (computerInstances as ProductLike[]).find(
+          (c) => c.product?.productable_id === toInt(formData.compute_instance_id)
+        )?.product?.name || "N/A";
       const osName =
-        osImages.find((o: unknown) => o.product.productable_id === toInt(formData.os_image_id))?.product
-          .name || "N/A";
+        (osImages as ProductLike[]).find(
+          (o) => o.product?.productable_id === toInt(formData.os_image_id)
+        )?.product?.name || "N/A";
 
       const newRequest = {
         region: formData.region,
@@ -306,10 +308,11 @@ const AdminMultiQuote = () => {
   };
   const addObjectStorageRequest = () => {
     if (validateObjectStorageItem()) {
+      type ProductLike = { product?: { productable_id?: number; name?: string } };
       const productName =
-        objectStorageProducts.find(
-          (p: unknown) => p.product.productable_id === toInt(formData.object_storage_product_id)
-        )?.product.name || "Silo Storage";
+        (objectStorageProducts as ProductLike[]).find(
+          (p) => p.product?.productable_id === toInt(formData.object_storage_product_id)
+        )?.product?.name || "Silo Storage";
 
       const newRequest = {
         region: formData.object_storage_region,
@@ -360,9 +363,9 @@ const AdminMultiQuote = () => {
       email: formData.email,
       emails: formData.emails.trim()
         ? formData.emails
-          .split(",")
-          .map((e: unknown) => e.trim())
-          .filter(Boolean)
+            .split(",")
+            .map((e) => String(e).trim())
+            .filter(Boolean)
         : [],
       notes: formData.notes,
       bill_to_name: formData.bill_to_name,
@@ -407,7 +410,7 @@ const AdminMultiQuote = () => {
     createMultiQuotes(payload, {
       onSuccess: (res) => {
         ToastUtils.success("Multi-quote created successfully!");
-        setApiResponse(res);
+        setApiResponse(res as Record<string, unknown>);
         setCurrentStep((prev) => prev + 1); // Move to confirmation step
       },
       onError: (err) => {
@@ -416,7 +419,7 @@ const AdminMultiQuote = () => {
     });
   };
   const selectedTenant = tenants?.find(
-    (tenant: unknown) => String(tenant.id) === String(selectedTenantId)
+    (tenant) => String((tenant as { id?: unknown }).id) === String(selectedTenantId)
   );
   // const userPool = selectedTenantId ? tenantClients : adminClients;
   const selectedUser = userPool?.find((user) => String(user.id) === String(selectedUserId));
@@ -437,35 +440,35 @@ const AdminMultiQuote = () => {
             formData={formData}
             errors={errors}
             updateFormData={updateFormData}
-            regions={regionOptions}
+            regions={regionOptions as unknown as Array<Record<string, unknown>>}
             isRegionsFetching={isRegionsFetching}
-            computerInstances={computerInstances}
+            computerInstances={computerInstances as unknown as Array<Record<string, unknown>>}
             isComputerInstancesFetching={isComputerInstancesFetching}
-            ebsVolumes={ebsVolumes}
+            ebsVolumes={ebsVolumes as unknown as Array<Record<string, unknown>>}
             isEbsVolumesFetching={isEbsVolumesFetching}
-            osImages={osImages}
+            osImages={osImages as unknown as Array<Record<string, unknown>>}
             isOsImagesFetching={isOsImagesFetching}
-            bandwidths={bandwidths as unknown[]}
+            bandwidths={bandwidths as unknown as Array<Record<string, unknown>>}
             isBandwidthsFetching={false}
-            floatingIps={floatingIps as unknown[]}
+            floatingIps={floatingIps as unknown as Array<Record<string, unknown>>}
             isFloatingIpsFetching={false}
-            crossConnects={crossConnects as unknown[]}
+            crossConnects={crossConnects as unknown as Array<Record<string, unknown>>}
             isCrossConnectsFetching={isCrossConnectsFetching}
             onAddRequest={addPricingRequest}
-            pricingRequests={pricingRequests}
+            pricingRequests={pricingRequests as unknown as Array<Record<string, unknown>>}
             onRemoveRequest={removePricingRequest}
             // Silo Storage Props
-            objectStorageProducts={objectStorageProducts}
+            objectStorageProducts={objectStorageProducts as unknown as Array<Record<string, unknown>>}
             isObjectStorageProductsFetching={isObjectStorageProductsFetching}
             onAddObjectStorageRequest={addObjectStorageRequest}
-            objectStorageRequests={objectStorageRequests}
+            objectStorageRequests={objectStorageRequests as unknown as Array<Record<string, unknown>>}
             onRemoveObjectStorageRequest={removeObjectStorageRequest}
           />
         );
       case 2:
         return (
           <ProductSummaryStep
-            pricingRequests={pricingRequests}
+            pricingRequests={pricingRequests as Array<Record<string, unknown>>}
             objectStorageRequests={objectStorageRequests as Array<Record<string, unknown>>}
             formData={formData}
           />
@@ -474,8 +477,8 @@ const AdminMultiQuote = () => {
         return (
           <QuoteFinalReviewStep
             formData={formData}
-            pricingRequests={pricingRequests}
-            objectStorageRequests={objectStorageRequests}
+            pricingRequests={pricingRequests as Array<Record<string, unknown>>}
+            objectStorageRequests={objectStorageRequests as Array<Record<string, unknown>>}
             tenants={tenants}
             assignmentDetails={assignmentDetails}
             updateFormData={updateFormData}

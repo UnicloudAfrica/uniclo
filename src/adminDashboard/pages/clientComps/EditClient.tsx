@@ -5,10 +5,26 @@ import ToastUtils from "@/utils/toastUtil";
 import { useFetchCountries } from "@/hooks/resource"; // Import the resource hook
 import FormLayout, { formAccent, getAccentRgba } from "../../components/FormLayout";
 
+/** Loose shape for the client object the parent passes in. */
+interface ClientShape {
+  identifier?: string;
+  first_name?: string;
+  middle_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  zip?: string;
+  country?: string;
+  city?: string;
+  state?: string;
+  [extra: string]: unknown;
+}
+
 interface EditClientModalProps {
-  client: unknown;
+  client: ClientShape | null | undefined;
   onClose: () => void;
-  onClientUpdated?: (client: unknown) => void;
+  onClientUpdated?: (client: ClientShape) => void;
   isOpen?: boolean; // Added for consistency, though not strictly used in the original component logic directly but good for modal patterns
 }
 
@@ -34,7 +50,7 @@ export const EditClientModal: React.FC<EditClientModalProps> = ({
     city: "",
     state: "",
   });
-  const [errors, setErrors] = useState<unknown>({});
+  const [errors, setErrors] = useState<Record<string, string | null>>({});
 
   const { mutate: updateClient, isPending } = useUpdateClient();
   const { data: countriesData, isFetching: isCountriesFetching } = useFetchCountries();
@@ -65,7 +81,7 @@ export const EditClientModal: React.FC<EditClientModalProps> = ({
   // Helper function to update form data and clear associated errors
   const updateFormData = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev: unknown) => ({ ...prev, [field]: null }));
+    setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
   // Validate form fields before submission
@@ -241,14 +257,14 @@ export const EditClientModal: React.FC<EditClientModalProps> = ({
         </p>
       </div>
 
-      {summarySections.map((section: unknown) => (
+      {summarySections.map((section: { title: string; items: { label: string; value?: string | null }[] }) => (
         <div
           key={section.title}
           className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
         >
           <h3 className="text-sm font-semibold text-slate-800">{section.title}</h3>
           <dl className="mt-3 space-y-3 text-sm">
-            {section.items.map((item: unknown) => (
+            {section.items.map((item) => (
               <div
                 key={`${section.title}-${item.label}`}
                 className="flex items-start justify-between gap-3"
@@ -266,7 +282,7 @@ export const EditClientModal: React.FC<EditClientModalProps> = ({
       <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-100 p-5 shadow-sm">
         <h3 className="text-sm font-semibold text-slate-800">Update checklist</h3>
         <ul className="mt-3 space-y-2 text-sm text-slate-600">
-          {guidanceItems.map((tip: unknown) => (
+          {guidanceItems.map((tip: string) => (
             <li key={tip} className="flex items-start gap-2">
               <span
                 className="mt-1 h-1.5 w-1.5 rounded-full"

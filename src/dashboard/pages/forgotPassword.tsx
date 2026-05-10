@@ -3,7 +3,7 @@ import { Loader2 } from "lucide-react";
 import logo from "./assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useForgotPassword } from "@/hooks/authHooks";
-import useTenantAuthStore from "@/stores/tenantAuthStore";
+import useAuthStore from "@/stores/authStore";
 import {
   resolveBrandLogo,
   useApplyBrandingTheme,
@@ -18,7 +18,7 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState<Record<string, unknown>>({});
   const { mutate: forgotPassword, isPending } = useForgotPassword();
-  const { setUserEmail } = useTenantAuthStore.getState();
+  const { setUserEmail } = useAuthStore.getState();
   const hostname = globalThis.window !== undefined ? globalThis.window.location.hostname : "";
   const subdomain = globalThis.window !== undefined ? getSubdomain() : null;
   const { data: branding } = usePublicBrandingTheme({

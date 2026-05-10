@@ -14,6 +14,7 @@ import {
 } from "@/hooks/tenantHooks/tenantMeteredPricingHooks";
 import ToastUtils from "@/utils/toastUtil";
 import type { PricingRole } from "../PricingShell";
+import { compactInputClassName } from "./styles";
 
 const formatPrice = (amount: number, currency = "NGN") => {
   try {
@@ -127,8 +128,7 @@ const AdminView: React.FC = () => {
     }
   };
 
-  const inputCls =
-    "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100";
+  const inputCls = compactInputClassName;
 
   return (
     <ModernCard padding="default" className="space-y-4">
@@ -328,8 +328,7 @@ const TenantView: React.FC = () => {
     }
   };
 
-  const inputCls =
-    "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100";
+  const inputCls = compactInputClassName;
 
   return (
     <ModernCard padding="default" className="space-y-4">

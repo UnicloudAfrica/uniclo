@@ -42,21 +42,29 @@ const QuoteFinalReviewStep = ({
 }: QuoteFinalReviewStepProps) => {
   const { data: countriesData, isLoading: isCountriesLoading } = useFetchCountries();
   const countries = Array.isArray(countriesData) ? countriesData : [];
+  type TenantShape = { id?: string | number; name?: string; company_name?: string };
+  type UserShape = {
+    id?: string | number;
+    business_name?: string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+  };
   const {
     assignType: assignmentMode = "",
     tenant: assignedTenant,
     user: assignedUser,
-  } = assignmentDetails || {};
-  const selectedTenant = assignedTenant || null;
-  const selectedUser = assignedUser || null;
+  } = (assignmentDetails || {}) as { assignType?: string; tenant?: TenantShape; user?: UserShape };
+  const selectedTenant: TenantShape | null = assignedTenant || null;
+  const selectedUser: UserShape | null = assignedUser || null;
   const tenantLabel = selectedTenant
     ? selectedTenant.name || selectedTenant.company_name || `Tenant ${selectedTenant.id}`
     : null;
   const userLabel = selectedUser
     ? selectedUser.business_name ||
-    [selectedUser.first_name, selectedUser.last_name].filter(Boolean).join(" ") ||
-    selectedUser.email ||
-    `User ${selectedUser.id}`
+      [selectedUser.first_name, selectedUser.last_name].filter(Boolean).join(" ") ||
+      selectedUser.email ||
+      `User ${selectedUser.id}`
     : null;
   const assignmentType = assignmentMode || (selectedUser ? "user" : selectedTenant ? "tenant" : "");
   const assignmentLabel =
@@ -74,12 +82,15 @@ const QuoteFinalReviewStep = ({
         ? "Tenant assignment"
         : "Quote remains unassigned until submission.";
 
-  const totalInstances = pricingRequests.reduce(
-    (sum, req) => sum + (req.number_of_instances || 1),
+  type PricingReqShape = { number_of_instances?: number; region?: string };
+  const totalInstances = (pricingRequests as PricingReqShape[]).reduce(
+    (sum, req) => sum + (Number(req.number_of_instances) || 1),
     0
   );
 
-  const regionCount = new Set(pricingRequests.map((req: unknown) => req.region).filter(Boolean)).size;
+  const regionCount = new Set(
+    (pricingRequests as PricingReqShape[]).map((req) => req.region).filter(Boolean),
+  ).size;
 
   return (
     <div className="space-y-8">

@@ -5,7 +5,25 @@ import { useUpdateClient } from "@/hooks/adminHooks/clientHooks";
 import ToastUtils from "@/utils/toastUtil";
 import logger from "@/utils/logger";
 
-const EditClientModal = ({ isOpen, onClose, clientData }: { isOpen: boolean; onClose: () => void; clientData: unknown }) => {
+/** Loose client shape consumed by the tenant-side edit modal. */
+interface EditClientShape {
+  identifier?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  verified?: boolean | number;
+  country_id?: string | number;
+  country?: string;
+  state_id?: string | number;
+  state?: string;
+  city?: string;
+  zip_code?: string;
+  force_password_reset?: boolean | number;
+  [extra: string]: unknown;
+}
+
+const EditClientModal = ({ isOpen, onClose, clientData }: { isOpen: boolean; onClose: () => void; clientData: EditClientShape | null | undefined }) => {
   const { data: profile, isFetching: isProfileFetching } = useFetchProfile();
   const { data: countries, isFetching: isCountriesFetching } = useFetchCountries();
 
@@ -66,8 +84,9 @@ const EditClientModal = ({ isOpen, onClose, clientData }: { isOpen: boolean; onC
   // Effect to set state_id if a matching state is found in the fetched states
   useEffect(() => {
     if (Array.isArray(states) && states.length > 0 && formData.country_id && clientData?.state) {
+      const stateName = clientData.state.toLowerCase();
       const matchedState = states.find(
-        (s) => s.name?.toLowerCase() === clientData.state.toLowerCase()
+        (s) => s.name?.toLowerCase() === stateName
       );
       if (matchedState && formData.state_id !== String(matchedState.id)) {
         // Prevent unnecessary updates

@@ -14,9 +14,10 @@ import {
 } from "@/hooks/tenantHooks/tenantFlowPlanPricingHooks";
 import ToastUtils from "@/utils/toastUtil";
 import type { PricingRole } from "../PricingShell";
+import { compactInputClassName } from "./styles";
 
 /**
- * SimpleDeployPane — pricing editor for SimpleDeploy plan tiers.
+ * SlimDeployPane — pricing editor for SlimDeploy plan tiers.
  *
  * Admin role — reads/writes `flow_plans` directly.
  * Tenant role — reads the platform default joined with the tenant's
@@ -65,7 +66,7 @@ const planToAdminDraft = (plan: FlowPlanRow): AdminDraft => ({
   dirty: false,
 });
 
-const SimpleDeployPane: React.FC<{ role: PricingRole }> = ({ role }) => {
+const SlimDeployPane: React.FC<{ role: PricingRole }> = ({ role }) => {
   if (role === "tenant") {
     return <TenantView />;
   }
@@ -124,14 +125,13 @@ const AdminView: React.FC = () => {
     }
   };
 
-  const inputCls =
-    "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100";
+  const inputCls = compactInputClassName;
 
   return (
     <ModernCard padding="default" className="space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">SimpleDeploy plans</h2>
+          <h2 className="text-lg font-semibold text-slate-900">SlimDeploy plans</h2>
           <p className="text-sm text-slate-500">
             Monthly subscription tiers. NGN displayed; API stores kobo.
           </p>
@@ -221,7 +221,7 @@ const AdminView: React.FC = () => {
             {!isFetching && drafts.length === 0 && (
               <tr>
                 <td colSpan={4} className="py-6 text-center text-sm text-slate-500">
-                  No SimpleDeploy plans configured. Run the FlowPlanSeeder to bootstrap.
+                  No SlimDeploy plans configured. Run the FlowPlanSeeder to bootstrap.
                 </td>
               </tr>
             )}
@@ -304,14 +304,13 @@ const TenantView: React.FC = () => {
     }
   };
 
-  const inputCls =
-    "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100";
+  const inputCls = compactInputClassName;
 
   return (
     <ModernCard padding="default" className="space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">SimpleDeploy plans — your prices</h2>
+          <h2 className="text-lg font-semibold text-slate-900">SlimDeploy plans — your prices</h2>
           <p className="text-sm text-slate-500">
             Set the price you bill your customers. Platform default shown alongside; revert to fall
             back to it.
@@ -420,7 +419,7 @@ const TenantView: React.FC = () => {
             {!isFetching && drafts.length === 0 && (
               <tr>
                 <td colSpan={5} className="py-6 text-center text-sm text-slate-500">
-                  No SimpleDeploy plans available.
+                  No SlimDeploy plans available.
                 </td>
               </tr>
             )}
@@ -431,4 +430,4 @@ const TenantView: React.FC = () => {
   );
 };
 
-export default SimpleDeployPane;
+export default SlimDeployPane;

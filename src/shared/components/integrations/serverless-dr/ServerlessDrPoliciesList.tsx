@@ -7,7 +7,44 @@ import {
 } from "@/shared/hooks/resources/serverlessDrHooks";
 import { SDR_STATUS_LABELS } from "@/types/serverlessDr";
 import type { ServerlessDrPolicy, ServerlessDrStatusType } from "@/types/serverlessDr";
-import { Shield, Play, Pause, ChevronRight, CloudOff, RefreshCw } from "lucide-react";
+import { Shield, Play, Pause, ChevronRight, RefreshCw } from "lucide-react";
+import { MoodIndicator, StatusBadge, ResourceShell } from "@/shared/components/orbit";
+
+/**
+ * Map ServerlessDR status → orbit mood + tone + friendly label.
+ * Single source so the badge, the row mood, and the audit log all match.
+ */
+function sdrFriendly(status: ServerlessDrStatusType): {
+  mood: "idle" | "working" | "happy" | "thinking" | "worried" | "alarmed";
+  tone: "success" | "running" | "pending" | "warning" | "danger" | "neutral";
+  friendly: string;
+  technical: string;
+} {
+  const tech = SDR_STATUS_LABELS[status] ?? status;
+  switch (status) {
+    case "active":
+    case "syncing":
+    case "completed":
+      return { mood: "happy", tone: "success", friendly: "All synced up", technical: tech };
+    case "dr_live":
+      return { mood: "alarmed", tone: "danger", friendly: "Failover is live", technical: tech };
+    case "failed":
+      return { mood: "alarmed", tone: "danger", friendly: "Hit a snag", technical: tech };
+    case "failover_started":
+    case "booting_dr":
+    case "applying_delta":
+    case "failback_started":
+      return { mood: "working", tone: "running", friendly: "Switching over now", technical: tech };
+    case "verifying":
+      return { mood: "working", tone: "warning", friendly: "Double-checking", technical: tech };
+    case "paused":
+      return { mood: "thinking", tone: "warning", friendly: "Paused", technical: tech };
+    case "draft":
+      return { mood: "thinking", tone: "neutral", friendly: "Just a draft", technical: tech };
+    default:
+      return { mood: "thinking", tone: "neutral", friendly: tech, technical: tech };
+  }
+}
 
 /* ------------------------------------------------------------------ */
 /*  Status helpers                                                     */
@@ -137,47 +174,22 @@ export default function ServerlessDrPoliciesList({ _context, detailBasePath, cre
     );
   }
 
-  /* ---- Empty state ---- */
+  /* ---- Empty state — friendly via ResourceShell ---- */
   if (policies.length === 0) {
     return (
-      <div
-        className="flex flex-col items-center justify-center py-20 px-6 rounded-xl border"
-        style={{
-          backgroundColor: "var(--theme-card-bg, #fff)",
-          borderColor: "var(--theme-border-color, #e5e7eb)",
-        }}
+      <ResourceShell
+        empty
+        emptyTitle="No serverless DR yet"
+        emptyDescription="Set up a policy and your backup server stays asleep — only the data stays awake. When disaster strikes, the server boots up in seconds."
+        emptyIcon={<span aria-hidden="true" className="text-5xl">💤</span>}
+        emptyAction={
+          createPath
+            ? { label: "Set up a policy", onClick: () => navigate(createPath) }
+            : undefined
+        }
       >
-        <div className="relative mb-6">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center">
-            <CloudOff className="h-9 w-9 text-blue-500 dark:text-blue-400" />
-          </div>
-          <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-lg">
-            <Shield className="h-3.5 w-3.5 text-white" />
-          </div>
-        </div>
-        <h3
-          className="text-lg font-semibold"
-          style={{ color: "var(--theme-heading-color, #111827)" }}
-        >
-          No Serverless DR Policies
-        </h3>
-        <p
-          className="mt-2 text-sm text-center max-w-sm leading-relaxed"
-          style={{ color: "var(--theme-muted-color, #6b7280)" }}
-        >
-          Create a policy to set up cost-effective disaster recovery with DR VMs that stay off until
-          needed.
-        </p>
-        {createPath && (
-          <button
-            onClick={() => navigate(createPath)}
-            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 hover:from-blue-700 hover:to-indigo-700 transition-all duration-200"
-          >
-            <Shield className="h-4 w-4" />
-            Create Policy
-          </button>
-        )}
-      </div>
+        {null}
+      </ResourceShell>
     );
   }
 
@@ -282,19 +294,18 @@ export default function ServerlessDrPoliciesList({ _context, detailBasePath, cre
           <tbody className="divide-y" style={{ borderColor: "var(--theme-border-color, #f3f4f6)" }}>
             {(policies as ServerlessDrPolicy[]).map((policy) => {
               const classes = statusClasses(policy.status);
+              const fs = sdrFriendly(policy.status);
               return (
                 <tr
                   key={policy.identifier}
                   className="group cursor-pointer transition-colors duration-150 hover:bg-gray-50/50 dark:hover:bg-gray-800/30"
                   onClick={() => navigate(`${detailBasePath}/${policy.identifier}`)}
                 >
-                  {/* Left color indicator + Policy name */}
+                  {/* Left color indicator + mood + Policy name */}
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
                       <div className={`w-1 h-10 rounded-full ${classes.leftBar} shrink-0`} />
-                      <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
-                        <Shield className="h-4 w-4 text-blue-500 dark:text-blue-400" />
-                      </div>
+                      <MoodIndicator mood={fs.mood} size="md" />
                       <div className="min-w-0">
                         <p
                           className="text-sm font-semibold truncate"
@@ -303,7 +314,7 @@ export default function ServerlessDrPoliciesList({ _context, detailBasePath, cre
                           {policy.name}
                         </p>
                         <p
-                          className="text-xs truncate mt-0.5"
+                          className="text-xs font-mono truncate mt-0.5"
                           style={{ color: "var(--theme-muted-color, #6b7280)" }}
                         >
                           {policy.identifier}
@@ -312,14 +323,9 @@ export default function ServerlessDrPoliciesList({ _context, detailBasePath, cre
                     </div>
                   </td>
 
-                  {/* Status badge */}
+                  {/* Status badge — friendly via orbit */}
                   <td className="px-5 py-4">
-                    <span
-                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${classes.badge}`}
-                    >
-                      <span className={`h-1.5 w-1.5 rounded-full ${classes.dot}`} />
-                      {SDR_STATUS_LABELS[policy.status]}
-                    </span>
+                    <StatusBadge tone={fs.tone} label={fs.technical} friendlyLabel={fs.friendly} size="sm" />
                   </td>
 
                   {/* VM Mapping */}

@@ -24,6 +24,30 @@ import { buildProvisioningSteps } from "../shared/components/instance-wizard/pro
 import useAuthStore from "../stores/authStore";
 import { resolveCountryCodeFromEntity } from "./objectStorageUtils";
 
+/**
+ * Loose record type for entities returned from the API where we only
+ * need to read a handful of optional string-ish fields. Avoids
+ * `unknown`'s "property doesn't exist" cascade in this file (62
+ * TS2339 errors as of the Week-3 audit).
+ */
+type LooseRecord = Record<string, unknown>;
+
+const isRecord = (value: unknown): value is LooseRecord =>
+  Boolean(value) && typeof value === "object";
+
+/**
+ * Coerce an unknown API value into a string when it's truthy and
+ * scalar-ish, else return undefined. Lets us write
+ * `pickString(item.name) ?? pickString(item.identifier)` without
+ * ts-ignoring `String(unknown)`.
+ */
+const pickString = (value: unknown): string | undefined => {
+  if (value === null || value === undefined) return undefined;
+  if (typeof value === "string") return value || undefined;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  return undefined;
+};
+
 const asPricingBreakdownEntries = (value: unknown): Record<string, unknown>[] => {
   if (Array.isArray(value)) {
     return value.filter(
@@ -119,13 +143,16 @@ export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOp
   });
 
   const isPaymentSuccessful = useMemo(() => {
+    type PayShape = { transaction?: { status?: string }; payment?: { status?: string } } | null | undefined;
+    const sr = submissionResult as PayShape;
+    const or = orderReceipt as PayShape;
     const status =
-      submissionResult?.transaction?.status ||
-      submissionResult?.payment?.status ||
-      orderReceipt?.transaction?.status ||
-      orderReceipt?.payment?.status ||
+      sr?.transaction?.status ||
+      sr?.payment?.status ||
+      or?.transaction?.status ||
+      or?.payment?.status ||
       "pending";
-    return ["paid", "successful", "completed"].includes(status.toLowerCase());
+    return ["paid", "successful", "completed"].includes(String(status).toLowerCase());
   }, [submissionResult, orderReceipt]);
 
   const steps = useMemo(
@@ -141,15 +168,21 @@ export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOp
     if (!Array.isArray(tenants)) return [];
     return tenants
       .map((tenant: unknown): Option | null => {
-        const value = tenant.id ?? tenant.identifier ?? tenant.code ?? tenant.slug ?? "";
+        if (!isRecord(tenant)) return null;
+        const value =
+          pickString(tenant.id) ??
+          pickString(tenant.identifier) ??
+          pickString(tenant.code) ??
+          pickString(tenant.slug) ??
+          "";
         if (!value) return null;
         const label =
-          tenant.name ||
-          tenant.company_name ||
-          tenant.identifier ||
-          tenant.code ||
+          pickString(tenant.name) ??
+          pickString(tenant.company_name) ??
+          pickString(tenant.identifier) ??
+          pickString(tenant.code) ??
           `Tenant ${value}`;
-        return { value: String(value), label: String(label), raw: tenant };
+        return { value, label, raw: tenant };
       })
       .filter((item: Option | null): item is Option => Boolean(item));
   }, [tenants]);
@@ -158,11 +191,21 @@ export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOp
     if (!Array.isArray(userPool)) return [];
     return userPool
       .map((client: unknown): Option | null => {
-        const value = client.id ?? client.identifier ?? client.code ?? client.slug ?? "";
+        if (!isRecord(client)) return null;
+        const value =
+          pickString(client.id) ??
+          pickString(client.identifier) ??
+          pickString(client.code) ??
+          pickString(client.slug) ??
+          "";
         if (!value) return null;
         const label =
-          client.name || client.full_name || client.email || client.identifier || `User ${value}`;
-        return { value: String(value), label: String(label), raw: client };
+          pickString(client.name) ??
+          pickString(client.full_name) ??
+          pickString(client.email) ??
+          pickString(client.identifier) ??
+          `User ${value}`;
+        return { value, label, raw: client };
       })
       .filter((item: Option | null): item is Option => Boolean(item));
   }, [userPool]);
@@ -174,15 +217,22 @@ export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOp
         : resources.regions || [];
     return primary
       .map((region: unknown): Option | null => {
+        if (!isRecord(region)) return null;
         const value =
-          region.code || region.region || region.slug || region.id || region.identifier || "";
+          pickString(region.code) ??
+          pickString(region.region) ??
+          pickString(region.slug) ??
+          pickString(region.id) ??
+          pickString(region.identifier) ??
+          "";
         if (!value) return null;
-        const label = region.name || region.display_name || region.label || `${value}`;
+        const name = pickString(region.name);
+        const label = name ?? pickString(region.display_name) ?? pickString(region.label) ?? value;
         return {
-          value: String(value),
+          value,
           label:
-            region.name && region.name.toLowerCase() !== value.toLowerCase()
-              ? `${region.name} (${value})`
+            name && name.toLowerCase() !== value.toLowerCase()
+              ? `${name} (${value})`
               : label,
         };
       })
@@ -194,25 +244,34 @@ export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOp
     if (apiCountries.length > 0) {
       const mapped = apiCountries
         .map((item: unknown): Option | null => {
+          if (!isRecord(item)) return null;
           const code =
             normalizeCountryCandidate(
-              item?.iso2 ||
-                item?.code ||
-                item?.country_code ||
-                item?.iso_code ||
-                item?.iso ||
-                item?.id ||
-                item?.country ||
+              pickString(item.iso2) ??
+                pickString(item.code) ??
+                pickString(item.country_code) ??
+                pickString(item.iso_code) ??
+                pickString(item.iso) ??
+                pickString(item.id) ??
+                pickString(item.country) ??
                 ""
             ) || "";
           if (!code) return null;
           const upper = code.toUpperCase();
-          const name = item?.name || item?.country_name || item?.country || upper;
+          const name =
+            pickString(item.name) ??
+            pickString(item.country_name) ??
+            pickString(item.country) ??
+            upper;
           return {
             value: upper,
             label:
               name && name.toLowerCase() !== upper.toLowerCase() ? `${name} (${upper})` : upper,
-            currency: item?.currency_code || item?.currency || item?.currencyCode || "USD",
+            currency:
+              pickString(item.currency_code) ??
+              pickString(item.currency) ??
+              pickString(item.currencyCode) ??
+              "USD",
           };
         })
         .filter((item: Option | null): item is Option => Boolean(item));
@@ -345,20 +404,48 @@ export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOp
   };
 
   // Pricing Logic
+  type PaymentShape = {
+    payment_gateway_options?: unknown;
+    gateway?: unknown;
+  };
+  type TxShape = {
+    identifier?: unknown;
+    amount?: unknown;
+    currency?: unknown;
+    third_party_fee?: unknown;
+    transaction_fee?: unknown;
+    metadata?: { pricing_breakdown?: unknown };
+  };
+  type ResultShape = {
+    payment?: PaymentShape;
+    transaction?: TxShape;
+    pricing_breakdown?: unknown;
+    order?: { total?: unknown };
+  };
+  const subResult = submissionResult as ResultShape | null;
+  const orderRcpt = orderReceipt as ResultShape | null;
+  const selectedPay = selectedPaymentOption as
+    | {
+        charge_breakdown?: { total_fees?: unknown };
+        total_fees?: unknown;
+        fees?: unknown;
+        currency?: unknown;
+      }
+    | null;
   const paymentOptionsList =
-    submissionResult?.payment?.payment_gateway_options ||
-    orderReceipt?.payment?.payment_gateway_options ||
+    subResult?.payment?.payment_gateway_options ||
+    orderRcpt?.payment?.payment_gateway_options ||
     [];
   const preferredPaymentOption = pickPreferredPaymentOption(
     paymentOptionsList as Array<Record<string, unknown>>
   );
   const effectivePaymentOption =
-    selectedPaymentOption || preferredPaymentOption || null;
+    selectedPay || preferredPaymentOption || null;
   const rawPricingBreakdown =
-    submissionResult?.pricing_breakdown ||
-    submissionResult?.transaction?.metadata?.pricing_breakdown ||
-    orderReceipt?.pricing_breakdown ||
-    orderReceipt?.transaction?.metadata?.pricing_breakdown ||
+    subResult?.pricing_breakdown ||
+    subResult?.transaction?.metadata?.pricing_breakdown ||
+    orderRcpt?.pricing_breakdown ||
+    orderRcpt?.transaction?.metadata?.pricing_breakdown ||
     null;
 
   const backendPricingData = useMemo(() => {
@@ -367,61 +454,72 @@ export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOp
       return null;
     }
 
-    return entries.reduce(
-      (acc, entry) => {
-        const lines = Array.isArray(entry.lines) ? entry.lines : [];
-        acc.lines.push(...lines);
-        acc.pre_discount_subtotal += toNumber(entry.pre_discount_subtotal);
-        acc.discount += toNumber(entry.discount);
-        acc.subtotal += toNumber(entry.subtotal);
-        acc.tax += toNumber(entry.tax);
-        acc.total += toNumber(entry.total);
-        acc.colocation_amount += toNumber(entry.colocation_amount);
-        acc.currency = acc.currency || entry.currency || "";
-        return acc;
-      },
-      {
-        lines: [] as Record<string, unknown>[],
-        pre_discount_subtotal: 0,
-        discount: 0,
-        subtotal: 0,
-        tax: 0,
-        total: 0,
-        colocation_amount: 0,
-        currency: "",
-      }
-    );
+    type PricingAccumulator = {
+      lines: Record<string, unknown>[];
+      pre_discount_subtotal: number;
+      discount: number;
+      subtotal: number;
+      tax: number;
+      total: number;
+      colocation_amount: number;
+      currency: string;
+    };
+    const initial: PricingAccumulator = {
+      lines: [],
+      pre_discount_subtotal: 0,
+      discount: 0,
+      subtotal: 0,
+      tax: 0,
+      total: 0,
+      colocation_amount: 0,
+      currency: "",
+    };
+    return entries.reduce<PricingAccumulator>((acc, entry) => {
+      const rawLines = entry.lines;
+      const lines = Array.isArray(rawLines) ? (rawLines as Record<string, unknown>[]) : [];
+      acc.lines.push(...lines);
+      acc.pre_discount_subtotal += toNumber(entry.pre_discount_subtotal);
+      acc.discount += toNumber(entry.discount);
+      acc.subtotal += toNumber(entry.subtotal);
+      acc.tax += toNumber(entry.tax);
+      acc.total += toNumber(entry.total);
+      acc.colocation_amount += toNumber(entry.colocation_amount);
+      acc.currency = acc.currency || (typeof entry.currency === "string" ? entry.currency : "");
+      return acc;
+    }, initial);
   }, [rawPricingBreakdown]);
 
-  const gatewayBreakdown = effectivePaymentOption?.charge_breakdown || {};
+  const gatewayBreakdown = (effectivePaymentOption?.charge_breakdown ?? {}) as {
+    total_fees?: unknown;
+  };
   const summaryGatewayFeesValue = toNumber(
     gatewayBreakdown?.total_fees ??
       effectivePaymentOption?.total_fees ??
       effectivePaymentOption?.fees ??
-      submissionResult?.transaction?.third_party_fee ??
-      orderReceipt?.transaction?.third_party_fee ??
-      submissionResult?.transaction?.transaction_fee ??
-      orderReceipt?.transaction?.transaction_fee ??
+      subResult?.transaction?.third_party_fee ??
+      orderRcpt?.transaction?.third_party_fee ??
+      subResult?.transaction?.transaction_fee ??
+      orderRcpt?.transaction?.transaction_fee ??
       0
   );
   const fallbackGrandTotal = toNumber(
-    submissionResult?.transaction?.amount ??
-      orderReceipt?.order?.total ??
-      orderReceipt?.transaction?.amount ??
+    subResult?.transaction?.amount ??
+      orderRcpt?.order?.total ??
+      orderRcpt?.transaction?.amount ??
       0
   );
-  const summaryGrandTotalValue = backendPricingData?.total || fallbackGrandTotal;
-  const summarySubtotalValue =
-    backendPricingData?.subtotal ||
+  const summaryGrandTotalValue: number = Number(backendPricingData?.total) || Number(fallbackGrandTotal) || 0;
+  const summarySubtotalValue: number =
+    Number(backendPricingData?.subtotal) ||
     (summaryGrandTotalValue > 0
-      ? Math.max(summaryGrandTotalValue - summaryGatewayFeesValue, 0)
+      ? Math.max(summaryGrandTotalValue - Number(summaryGatewayFeesValue || 0), 0)
       : 0);
-  const summaryTaxValue = backendPricingData?.tax || 0;
+  const summaryTaxValue: number = Number(backendPricingData?.tax) || 0;
   const summaryDisplayCurrency =
     backendPricingData?.currency ||
-    submissionResult?.transaction?.currency ||
-    orderReceipt?.transaction?.currency ||
-    effectivePaymentOption?.currency ||
+    (subResult?.transaction?.currency as string | undefined) ||
+    (orderRcpt?.transaction?.currency as string | undefined) ||
+    (effectivePaymentOption?.currency as string | undefined) ||
     (billingCountry === "NG" ? "NGN" : "USD");
 
   const summaryPlanLabel = useMemo(() => {
@@ -435,11 +533,16 @@ export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOp
     ? "Fast-Track Provisioning"
     : "Standard Request w/ Payment";
   const paymentTransactionLabel =
-    submissionResult?.transaction?.identifier || orderReceipt?.transaction?.identifier || "N/A";
+    (subResult?.transaction?.identifier as string | undefined) ||
+    (orderRcpt?.transaction?.identifier as string | undefined) ||
+    "N/A";
   const billingCountryLabel = useMemo(() => {
     if (!billingCountry) return "Not selected";
-    const c = countryOptionsFormatted.find((opt: unknown) => opt.value === billingCountry);
-    return c ? c.label : billingCountry;
+    const c = countryOptionsFormatted.find((opt: unknown) => {
+      const o = opt as { value?: unknown } | null;
+      return o?.value === billingCountry;
+    }) as { label?: string } | undefined;
+    return c ? c.label || billingCountry : billingCountry;
   }, [billingCountry, countryOptionsFormatted]);
 
   return {

@@ -393,11 +393,18 @@ const DrDashboard: React.FC<DrDashboardProps> = ({ className = "", activePairId 
         }}>
           {timelineLoading ? (
             <div style={{ padding: "24px", textAlign: "center", color: designTokens.colors.neutral[500] }}>
-              Loading operations...
+              <span aria-hidden="true" style={{ display: "block", fontSize: 28, marginBottom: 6 }}>⏳</span>
+              Pulling your DR timeline…
             </div>
           ) : !timeline || timeline.length === 0 ? (
-            <div style={{ padding: "24px", textAlign: "center", color: designTokens.colors.neutral[500] }}>
-              No recent DR operations
+            <div style={{ padding: "32px 24px", textAlign: "center", color: designTokens.colors.neutral[500] }}>
+              <span aria-hidden="true" style={{ display: "block", fontSize: 36, marginBottom: 8 }}>📭</span>
+              <p style={{ fontWeight: 600, fontSize: 14, color: designTokens.colors.neutral[700], margin: 0 }}>
+                Nothing's happened yet
+              </p>
+              <p style={{ fontSize: 12, marginTop: 6, maxWidth: 360, marginInline: "auto", lineHeight: 1.5 }}>
+                Once your replication, drills, or failovers start running, you'll see every event right here.
+              </p>
             </div>
           ) : (
             <table style={{ width: "100%", borderCollapse: "collapse" }}>

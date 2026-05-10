@@ -60,7 +60,9 @@ const QuorumPanel: React.FC<QuorumPanelProps> = ({ pairId, witnessConfigured, cl
 
       <div className="space-y-4 p-5">
         {isLoading ? (
-          <p className="text-sm text-gray-500">Loading quorum status...</p>
+          <p className="flex items-center gap-2 text-sm text-gray-500">
+            <span aria-hidden="true">🗳️</span> Counting votes…
+          </p>
         ) : (
           <>
             <div className="grid grid-cols-2 gap-4">

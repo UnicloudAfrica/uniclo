@@ -3,7 +3,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import logo from "./assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useLoginAccount } from "@/hooks/authHooks";
-import useTenantAuthStore from "@/stores/tenantAuthStore";
+import useAuthStore from "@/stores/authStore";
 import {
   resolveBrandLogo,
   useApplyBrandingTheme,
@@ -35,7 +35,7 @@ export default function DashboardLoginV2() {
   const { mutate, isPending } = useLoginAccount();
   const navigate = useNavigate();
   const { setUserEmail, setTwoFactorRequired, clearTwoFactorRequirement } =
-    useTenantAuthStore.getState();
+    useAuthStore.getState();
   const hostname = globalThis.window !== undefined ? globalThis.window.location.hostname : "";
   const subdomain = globalThis.window !== undefined ? getSubdomain() : null;
   const { data: branding } = usePublicBrandingTheme({

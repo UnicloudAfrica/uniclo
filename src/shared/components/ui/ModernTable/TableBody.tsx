@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown, ChevronRight, MoreVertical } from "lucide-react";
 import { designTokens } from "@/styles/designTokens";
 import { useResponsive } from "@/hooks/useResponsive";
@@ -95,6 +96,7 @@ function RowActionsMenu<T>({ actions, row }: { actions: Action<T>[]; row: T }) {
   return (
     <div ref={containerRef} className="relative inline-block text-left">
       <button
+        ref={buttonRef}
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
@@ -107,34 +109,45 @@ function RowActionsMenu<T>({ actions, row }: { actions: Action<T>[]; row: T }) {
       >
         <MoreVertical size={16} />
       </button>
-      {open && (
-        <div
-          role="menu"
-          className="absolute right-0 z-30 mt-1 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {actions.map((action, idx) => {
-            const tone = getActionToneStyles(action.tone);
-            return (
-              <button
-                key={idx}
-                type="button"
-                role="menuitem"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setOpen(false);
-                  action.onClick(row);
-                }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition hover:bg-slate-50"
-                style={{ color: tone.color }}
-              >
-                {action.icon && <span className="inline-flex">{action.icon}</span>}
-                <span className="truncate">{action.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
+      {open && coords && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              ref={menuRef}
+              role="menu"
+              style={{
+                position: "fixed",
+                top: coords.top,
+                left: coords.left,
+                width: 176,
+                zIndex: 9999,
+              }}
+              className="overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-900"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {actions.map((action, idx) => {
+                const tone = getActionToneStyles(action.tone);
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    role="menuitem"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpen(false);
+                      action.onClick(row);
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition hover:bg-slate-50 dark:hover:bg-neutral-800"
+                    style={{ color: tone.color }}
+                  >
+                    {action.icon && <span className="inline-flex">{action.icon}</span>}
+                    <span className="truncate">{action.label}</span>
+                  </button>
+                );
+              })}
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }

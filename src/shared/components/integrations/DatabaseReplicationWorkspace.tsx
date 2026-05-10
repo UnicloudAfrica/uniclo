@@ -22,6 +22,7 @@ import {
   useResumeDatabaseReplication,
 } from "@/shared/hooks/resources/integrationHooks";
 import { useFetchExternalEndpoints } from "@/shared/hooks/resources";
+import { MoodIndicator, StatusBadge } from "@/shared/components/orbit";
 
 interface ShellProps {
   title: string;
@@ -116,38 +117,64 @@ const INITIAL_FORM = {
   replica_password: "",
 };
 
-function statusMeta(status: string) {
+/**
+ * Maps DB-replication status to (mood, tone, friendly label, technical label)
+ * for use with orbit MoodIndicator + StatusBadge.
+ */
+function statusMeta(status: string): {
+  mood: "happy" | "thinking" | "worried" | "alarmed" | "working" | "idle";
+  tone: "success" | "warning" | "danger" | "neutral" | "running" | "pending";
+  friendly: string;
+  technical: string;
+  /** Legacy fields kept for the old inline-pill render (unused after refactor). */
+  label: string;
+  dot: string;
+  badge: string;
+} {
+  const tech = status || "unknown";
   switch (status) {
     case "healthy":
     case "active":
       return {
-        label: status,
-        dot: "bg-emerald-500",
-        badge:
-          "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 ring-emerald-600/20",
+        mood: "happy",
+        tone: "success",
+        friendly: "Healthy and in sync",
+        technical: tech,
+        label: tech,
+        dot: "bg-success-500",
+        badge: "bg-success-50 text-success-700 dark:bg-success-900/30 dark:text-success-400 ring-success-600/20",
       };
     case "degraded":
     case "lagging":
       return {
-        label: status,
-        dot: "bg-amber-500",
-        badge:
-          "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 ring-amber-600/20",
+        mood: "worried",
+        tone: "warning",
+        friendly: status === "lagging" ? "Falling behind" : "Not great right now",
+        technical: tech,
+        label: tech,
+        dot: "bg-warning-500",
+        badge: "bg-warning-50 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400 ring-warning-600/20",
       };
     case "error":
     case "failed":
       return {
-        label: status,
-        dot: "bg-red-500",
-        badge:
-          "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 ring-red-600/20",
+        mood: "alarmed",
+        tone: "danger",
+        friendly: "Replication broke",
+        technical: tech,
+        label: tech,
+        dot: "bg-danger-500",
+        badge: "bg-danger-50 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400 ring-danger-600/20",
       };
     default:
       return {
-        label: status || "unknown",
+        mood: "thinking",
+        tone: "neutral",
+        friendly: "Not sure yet",
+        technical: tech,
+        label: tech,
         dot: "bg-gray-400",
-        badge:
-          "bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400 ring-gray-600/20",
+        badge: "bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400 ring-gray-600/20",
       };
   }
 }
@@ -709,12 +736,10 @@ export default function DatabaseReplicationWorkspace({
                           : "\u2014"}
                       </td>
                       <td className="px-5 py-3.5">
-                        <span
-                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ring-1 ring-inset ${status.badge}`}
-                        >
-                          <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
-                          {status.label}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <MoodIndicator mood={status.mood} size="sm" />
+                          <StatusBadge tone={status.tone} label={status.technical} friendlyLabel={status.friendly} size="sm" />
+                        </div>
                       </td>
                       <td className="px-5 py-3.5">
                         {lagBadge(replication.replication_lag_seconds)}

@@ -87,9 +87,19 @@ const AuditLogPanel: React.FC<AuditLogPanelProps> = ({ pairId, className = "" })
         </div>
 
         {isLoading ? (
-          <p className="text-sm text-gray-500">Loading audit log...</p>
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <span aria-hidden="true">📜</span> Loading the audit trail…
+          </div>
         ) : entries.length === 0 ? (
-          <p className="text-sm text-gray-500">No audit entries found</p>
+          <div className="flex flex-col items-center gap-2 py-10 text-center">
+            <span aria-hidden="true" className="text-4xl">📜</span>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Nothing to log yet
+            </p>
+            <p className="max-w-sm text-xs text-gray-500 dark:text-gray-400">
+              Every approval, change, and event lands here as it happens. Once you've made a few moves, this will fill up.
+            </p>
+          </div>
         ) : (
           <>
             <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">

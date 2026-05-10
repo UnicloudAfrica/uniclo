@@ -82,3 +82,130 @@ export const useUpdateIntegrationPricing = (integrationKey: string) => {
     },
   });
 };
+
+// ── Per-tenant overrides for IntegrationProduct pricing ──────────────
+// Backed by AdminTenantIntegrationPricingController. Each call is keyed
+// by (integrationProductId, tenantId).
+
+export interface TenantIntegrationOverride {
+  tenant_id: string;
+  integration_product_id: number;
+  override: {
+    id: number;
+    price: number;
+    currency_code: string;
+    admin_price_snapshot: number | null;
+    updated_at: string;
+  } | null;
+  admin_price: number | null;
+  admin_currency_code: string;
+}
+
+const fetchTenantIntegrationOverride = async (
+  integrationProductId: number,
+  tenantId: string,
+): Promise<TenantIntegrationOverride> => {
+  const params = new URLSearchParams({ tenant_id: tenantId });
+  const res = await silentApi<ApiEnvelope<TenantIntegrationOverride>>(
+    "GET",
+    `/integration-pricing/${integrationProductId}/tenant-override?${params.toString()}`,
+  );
+  if (!res?.data) throw new Error("Failed to fetch tenant override.");
+  return res.data;
+};
+
+export const useFetchTenantIntegrationOverride = (
+  integrationProductId: number | null,
+  tenantId: string | null,
+) =>
+  useQuery({
+    queryKey: ["integration-pricing-tenant-override", integrationProductId, tenantId],
+    queryFn: () => fetchTenantIntegrationOverride(integrationProductId!, tenantId!),
+    enabled: !!integrationProductId && !!tenantId,
+    staleTime: 1000 * 60,
+    refetchOnWindowFocus: false,
+  });
+
+export interface UpsertTenantIntegrationOverridePayload {
+  integrationProductId: number;
+  tenant_id: string;
+  price: number;
+  currency_code?: string;
+}
+
+const upsertTenantIntegrationOverride = async ({
+  integrationProductId,
+  tenant_id,
+  price,
+  currency_code,
+}: UpsertTenantIntegrationOverridePayload) => {
+  const res = await api<ApiEnvelope<unknown>>(
+    "PATCH",
+    `/integration-pricing/${integrationProductId}/tenant-override`,
+    {
+      tenant_id,
+      price,
+      ...(currency_code ? { currency_code } : {}),
+    },
+  );
+  if (!res?.data) throw new Error("Failed to save tenant override.");
+  return res.data;
+};
+
+export const useUpsertTenantIntegrationOverride = (integrationKey: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: upsertTenantIntegrationOverride,
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: [
+          "integration-pricing-tenant-override",
+          variables.integrationProductId,
+          variables.tenant_id,
+        ],
+      });
+      queryClient.invalidateQueries({ queryKey: ["integration-pricing", integrationKey] });
+    },
+    onError: (error: unknown) => {
+      logger.error("Error saving tenant integration override:", error);
+    },
+  });
+};
+
+export interface DeleteTenantIntegrationOverridePayload {
+  integrationProductId: number;
+  tenant_id: string;
+}
+
+const deleteTenantIntegrationOverride = async ({
+  integrationProductId,
+  tenant_id,
+}: DeleteTenantIntegrationOverridePayload) => {
+  const res = await api<ApiEnvelope<unknown>>(
+    "DELETE",
+    `/integration-pricing/${integrationProductId}/tenant-override`,
+    { tenant_id },
+  );
+  if (!res?.data) throw new Error("Failed to clear tenant override.");
+  return res.data;
+};
+
+export const useDeleteTenantIntegrationOverride = (integrationKey: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteTenantIntegrationOverride,
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: [
+          "integration-pricing-tenant-override",
+          variables.integrationProductId,
+          variables.tenant_id,
+        ],
+      });
+      queryClient.invalidateQueries({ queryKey: ["integration-pricing", integrationKey] });
+    },
+    onError: (error: unknown) => {
+      logger.error("Error clearing tenant integration override:", error);
+    },
+  });
+};

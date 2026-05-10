@@ -27,7 +27,8 @@ import {
 import { matchesProductType, normalizeProductType } from "@/utils/productTypeUtils";
 import { resolveCountryCodeFromEntity } from "@/shared/utils/countryUtils";
 import ToastUtils from "@/utils/toastUtil";
-import useTenantAuthStore from "@/stores/tenantAuthStore";
+import useAuthStore from "@/stores/authStore";
+import { RESILIENCE } from "@/shared/branding";
 import type {
   PricingTabDefinition,
   TenantRegion,
@@ -105,8 +106,9 @@ const PRICING_TABS: PricingTabDefinition[] = [
     icon: Database,
   },
   {
+    // Internal id stays "anycloudflow" — backend product-type key.
     id: "anycloudflow",
-    name: "AnyCloudFlow",
+    name: RESILIENCE,
     caption: "Platform services",
     productType: "integration_product",
     icon: Shield,
@@ -138,8 +140,8 @@ const TenantPricingOverrides = () => {
   const [isApplyToRegionsOpen, setApplyToRegionsOpen] = useState(false);
   const [applyToRegionsItems, setApplyToRegionsItems] = useState<ApplyToRegionsItem[]>([]);
 
-  const tenant = useTenantAuthStore((state) => state?.tenant || null);
-  const tenantId = useTenantAuthStore((state) => {
+  const tenant = useAuthStore((state) => state?.tenant || null);
+  const tenantId = useAuthStore((state) => {
     const t = state?.tenant;
     const rawId = t?.id ?? t?.["identifier"] ?? t?.["uuid"] ?? null;
     return rawId === null || rawId === undefined ? null : String(rawId);
@@ -862,7 +864,7 @@ const TenantPricingOverrides = () => {
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div className="flex-1 space-y-2">
                 <h2 className="text-xl font-semibold text-slate-900">
-                  {isGlobalTab ? "AnyCloudFlow services" : "Pricing catalogue"}
+                  {isGlobalTab ? `${RESILIENCE} services` : "Pricing catalogue"}
                 </h2>
                 <p className="text-sm text-slate-500">
                   {isGlobalTab
@@ -911,7 +913,7 @@ const TenantPricingOverrides = () => {
                 emptyMessage={
                   <div className="py-16 text-center text-slate-500">
                     <Shield className="mx-auto mb-3 h-6 w-6 text-slate-400" />
-                    No AnyCloudFlow services available. Contact your platform admin.
+                    No {RESILIENCE} services available. Contact your platform admin.
                   </div>
                 }
               />

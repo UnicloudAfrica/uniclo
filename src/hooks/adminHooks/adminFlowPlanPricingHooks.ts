@@ -4,7 +4,7 @@ import api from "../../index/admin/api";
 import logger from "../../utils/logger";
 
 /**
- * Admin hooks for SimpleDeploy (legacy UniCloudFlow) plan pricing.
+ * Admin hooks for SlimDeploy (legacy UniCloudFlow) plan pricing.
  *
  * Plans live in `flow_plans` and store their monthly fee as
  * `price_monthly_kobo` (NGN minor units). The UI converts to ₦ for

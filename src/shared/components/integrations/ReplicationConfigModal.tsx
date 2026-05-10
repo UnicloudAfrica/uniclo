@@ -21,6 +21,7 @@ import {
 import { acfApi } from "../../../adminDashboard/pages/integrations/anycloudflow/api";
 import { useReplicationPricing, pickTierCents } from "@/hooks/replicationPricingHooks";
 import { formatPerVmMonthPrice } from "@/lib/replicationBillingTier";
+import { RESILIENCE } from "@/shared/branding";
 
 interface ReplicationConfigModalProps {
   isOpen: boolean;
@@ -125,7 +126,7 @@ const ReplicationConfigModal: React.FC<ReplicationConfigModalProps> = ({
   const datasetIsEncrypted = Boolean(selectedDataset?.encryption);
 
   // Auto-upgrade to raw-send when the selected dataset is encrypted so
-  // AnyCloudFlow never handles plaintext.
+  // the resilience engine never handles plaintext.
   useEffect(() => {
     if (transferMethod === "zfs_native" && datasetIsEncrypted) {
       setTransferMethod("zfs_native_raw");
@@ -302,7 +303,7 @@ const ReplicationConfigModal: React.FC<ReplicationConfigModalProps> = ({
                   <AlertTriangle size={14} className="mt-0.5 shrink-0 text-red-500" />
                   <p className="text-xs text-red-700 dark:text-red-400">
                     Database-backed workloads are not supported for bidirectional sync.
-                    AnyCloudFlow blocks this to prevent data corruption. Use active-passive
+                    {` ${RESILIENCE} `}blocks this to prevent data corruption. Use active-passive
                     with database-native replication instead.
                   </p>
                 </div>
@@ -517,7 +518,7 @@ const ReplicationConfigModal: React.FC<ReplicationConfigModalProps> = ({
                           label: "ZFS Native (encrypted raw send)",
                           tier: "zfs_raw" as const,
                           disabled: false,
-                          note: "AnyCloudFlow never decrypts — recommended for encrypted pools.",
+                          note: `${RESILIENCE} never decrypts — recommended for encrypted pools.`,
                         },
                       ] as const
                     ).map((opt) => {

@@ -10,7 +10,8 @@ import PricingCalculatorConfig from "./calculator/PricingCalculatorConfig";
 import CalculatorSummaryStep from "./calculator/CalculatorSummaryStep";
 import { CustomerContextSelector } from "../../components";
 import { ModernButton } from "../ui";
-import { CalculatorData, ObjectStorageRequest } from "./types";
+import { RESILIENCE } from "@/shared/branding";
+import { CalculatorData, ObjectStorageRequest, ShieldServiceLineItem } from "./types";
 import logger from "@/utils/logger";
 
 interface SharedPricingCalculatorProps {
@@ -125,11 +126,17 @@ const SharedPricingCalculator: React.FC<SharedPricingCalculatorProps> = ({
     let isValid = true;
     const newErrors: Record<string, string | null> = {};
 
-    if (
-      calculatorData.pricing_requests.length === 0 &&
-      calculatorData.object_storage_items.length === 0
-    ) {
-      newErrors.general = "Please add at least one workload or storage item.";
+    const hasAnyBucket =
+      calculatorData.pricing_requests.length > 0 ||
+      calculatorData.object_storage_items.length > 0 ||
+      (calculatorData.flow_plan_items?.length ?? 0) > 0 ||
+      (calculatorData.shield_items?.length ?? 0) > 0 ||
+      (calculatorData.anycloudflow_items?.length ?? 0) > 0 ||
+      (calculatorData.metered_items?.length ?? 0) > 0;
+
+    if (!hasAnyBucket) {
+      newErrors.general =
+        `Please add at least one item — compute, object storage, SlimDeploy plan, Shield service, ${RESILIENCE} service, or pay-as-you-go metric.`;
       isValid = false;
     }
 
@@ -165,6 +172,44 @@ const SharedPricingCalculator: React.FC<SharedPricingCalculatorProps> = ({
         object_storage_items: calculatorData.object_storage_items.map((item) => ({
           ...item,
           productable_id: item.tier_id,
+        })),
+        // ── Add-on buckets ───────────────────────────────────────────
+        // Each row in the FE carries display metadata (names, currency
+        // labels, computed totals) that the API ignores — we only ship
+        // the validated keys so the request matches the FormRequest's
+        // accepted shape: plan_id/service_id/metric_id, quantity,
+        // months, estimated_quantity, bucket_size_gb.
+        flow_plan_items: (calculatorData.flow_plan_items ?? []).map((row) => ({
+          plan_id: row.plan_id,
+          quantity: row.quantity,
+          months: row.months,
+        })),
+        shield_items: (calculatorData.shield_items ?? []).map((row) => ({
+          service_id: row.service_id,
+          quantity: row.quantity,
+          months: row.months,
+        })),
+        anycloudflow_items: (calculatorData.anycloudflow_items ?? []).map((row) => {
+          const base: Record<string, unknown> = {
+            service_id: row.service_id,
+            quantity: row.quantity,
+            months: row.months,
+          };
+          // Phase D bucket-size surcharge — only some AnyCloudFlow rows
+          // carry a bucket_size_gb (replication/migration with size-based
+          // surcharge). Forward it when present so the controller can
+          // apply the threshold math.
+          const bucketSize = (row as ShieldServiceLineItem & { bucket_size_gb?: number })
+            .bucket_size_gb;
+          if (typeof bucketSize === "number" && bucketSize > 0) {
+            base.bucket_size_gb = bucketSize;
+          }
+          return base;
+        }),
+        metered_items: (calculatorData.metered_items ?? []).map((row) => ({
+          metric_id: row.metric_id,
+          estimated_quantity: row.estimated_quantity,
+          months: row.months,
         })),
         apply_total_discount: calculatorData.apply_total_discount,
         total_discount_type: calculatorData.total_discount_type,

@@ -53,29 +53,43 @@ const RegionCreate = () => {
     const res = await adminRegionApi.getProviderServices(provider);
     if (!res.success || !res.data) return null;
 
-    const raw = res.data as unknown;
-    const servicesMap = raw?.services || raw || {};
+    type FieldShape = {
+      name?: string;
+      label?: string;
+      type?: string;
+      required?: boolean;
+      placeholder?: string;
+      description?: string;
+      help?: string;
+    };
+    type ServiceShape = {
+      fields?: FieldShape[] | Record<string, FieldShape>;
+    };
+    const raw = res.data as { services?: Record<string, ServiceShape> } | undefined;
+    const servicesMap: Record<string, ServiceShape> =
+      raw?.services || (raw as Record<string, ServiceShape> | undefined) || {};
 
     const services: Record<string, ServiceDefinition> = {};
-    for (const [serviceType, svcConfig] of Object.entries(servicesMap as Record<string, unknown>)) {
+    for (const [serviceType, svcConfig] of Object.entries(servicesMap)) {
       const fields: Record<string, FieldDefinition> = {};
       const rawFields = svcConfig?.fields || {};
 
       if (Array.isArray(rawFields)) {
-        rawFields.forEach((f: unknown) => {
+        rawFields.forEach((f) => {
+          if (!f.name) return;
           fields[f.name] = {
-            label: f.label,
-            type: f.type as unknown,
-            required: f.required,
+            label: f.label ?? f.name,
+            type: f.type as never,
+            required: f.required ?? false,
             ...(f.placeholder ? { placeholder: f.placeholder } : {}),
             ...(f.description || f.help ? { help: f.description || f.help } : {}),
           };
         });
       } else {
-        for (const [fieldName, fieldDef] of Object.entries(rawFields as Record<string, unknown>)) {
+        for (const [fieldName, fieldDef] of Object.entries(rawFields)) {
           fields[fieldName] = {
             label: fieldDef.label || fieldName,
-            type: fieldDef.type as unknown,
+            type: fieldDef.type as never,
             required: fieldDef.required ?? true,
             ...(fieldDef.placeholder ? { placeholder: fieldDef.placeholder } : {}),
             ...(fieldDef.help ? { help: fieldDef.help } : {}),

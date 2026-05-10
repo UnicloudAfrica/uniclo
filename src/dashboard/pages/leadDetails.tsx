@@ -46,7 +46,48 @@ const DetailItem = ({
   </div>
 );
 
-type LeadDocument = Record<string, unknown>;
+/** Lead document shape — populated by the leads API. */
+type LeadDocument = {
+  id?: string | number;
+  identifier?: string;
+  name?: string;
+  type?: string;
+  url?: string;
+  size?: number;
+  created_at?: string;
+  [extra: string]: unknown;
+};
+
+/** Lead shape — populated by useFetchLeadById. */
+type LeadShape = {
+  id?: string | number;
+  identifier?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  status?: string;
+  source?: string;
+  lead_type?: string;
+  country?: string;
+  notes?: string;
+  business_name?: string;
+  industry?: string;
+  region?: string;
+  created_at?: string;
+  follow_up_date?: string;
+  last_contacted_at?: string;
+  assigned_to?: { first_name?: string; last_name?: string; email?: string } | null;
+  pricing_summary?: {
+    total?: string | number;
+    currency?: string;
+    instances?: string | number;
+    months?: string | number;
+  } | null;
+  documents?: LeadDocument[];
+  stages?: Array<Record<string, unknown>>;
+  [extra: string]: unknown;
+};
 
 const DocumentItem = ({
   doc,
@@ -84,17 +125,21 @@ const DocumentItem = ({
     <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
       <div>
         <span className="font-medium">Status:</span>{" "}
-        <span className="capitalize">{formatStatusForDisplay(doc.status)}</span>
+        <span className="capitalize">{formatStatusForDisplay(doc.status as string | undefined)}</span>
       </div>
       <div>
         <span className="font-medium">Type:</span>{" "}
-        <span className="capitalize">{formatStatusForDisplay(doc.document_type)}</span>
+        <span className="capitalize">{formatStatusForDisplay(doc.document_type as string | undefined)}</span>
       </div>
       <div className="col-span-2">
         <span className="font-medium">Uploaded By:</span>{" "}
-        {doc.uploaded_by?.first_name && doc.uploaded_by?.last_name
-          ? `${doc.uploaded_by.first_name} ${doc.uploaded_by.last_name}`
-          : doc.uploaded_by || "N/A"}
+        {(() => {
+          const uploader = doc.uploaded_by as { first_name?: string; last_name?: string } | string | undefined;
+          if (uploader && typeof uploader === "object" && uploader.first_name && uploader.last_name) {
+            return `${uploader.first_name} ${uploader.last_name}`;
+          }
+          return typeof uploader === "string" ? uploader : "N/A";
+        })()}
       </div>
     </div>
   </div>
@@ -122,7 +167,7 @@ const StatusBadge = ({ status }: { status: string }) => {
 
 const DashboardLeadDetails = () => {
   const navigate = useNavigate();
-  const dropdownRef = useRef<unknown>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   const [uiState, setUiState] = useState({
     isActionsDropdownOpen: false,
@@ -181,7 +226,7 @@ const DashboardLeadDetails = () => {
   }, []);
 
   const { data: leadDetailsRaw, isFetching, isError } = useFetchLeadById(dataState.leadId);
-  const leadDetails = leadDetailsRaw as Record<string, unknown> | undefined;
+  const leadDetails = leadDetailsRaw as LeadShape | undefined;
   const { mutate: convertLead, isPending: isConverting } = useConvertLeadToUser();
 
   const updateUiState = (updates: Partial<typeof uiState>) =>
@@ -498,14 +543,23 @@ const DashboardLeadDetails = () => {
       <ModernCard title="Stages" className="mb-2">
         {stages && stages.length > 0 ? (
           <div className="space-y-4">
-            {stages.map((stage: unknown) => (
-              <div key={stage.id} className="border-l-4 border-blue-500 pl-4 py-2 space-y-4">
+            {(stages as Array<{
+              id?: string | number;
+              name?: string;
+              description?: string;
+              status?: string;
+              started_at?: string;
+              completed_at?: string;
+              assigned_to?: { first_name?: string; last_name?: string } | null;
+              documents?: LeadDocument[];
+            }>).map((stage) => (
+              <div key={String(stage.id ?? "")} className="border-l-4 border-blue-500 pl-4 py-2 space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-gray-800 capitalize">
                     {formatStatusForDisplay(stage.name)}
                   </h3>
                   <button
-                    onClick={() => handleEditStage(stage)}
+                    onClick={() => handleEditStage(stage as Record<string, unknown>)}
                     className="text-gray-400 hover:text-blue-500 transition-colors"
                     title="Edit Stage"
                   >
@@ -523,7 +577,7 @@ const DashboardLeadDetails = () => {
                     label="Assigned To"
                     value={
                       stage.assigned_to
-                        ? `${stage.assigned_to.first_name} ${stage.assigned_to.last_name}`
+                        ? `${stage.assigned_to.first_name ?? ""} ${stage.assigned_to.last_name ?? ""}`.trim()
                         : "N/A"
                     }
                   />
@@ -535,9 +589,9 @@ const DashboardLeadDetails = () => {
                   </h4>
                   {stage.documents && stage.documents.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {stage.documents.map((doc: unknown) => (
+                      {stage.documents.map((doc) => (
                         <DocumentItem
-                          key={doc.id}
+                          key={String(doc.id)}
                           doc={doc}
                           onUpdate={handleUpdateDoc}
                           onView={handleViewDoc}
@@ -588,9 +642,9 @@ const DashboardLeadDetails = () => {
       >
         {documents && documents.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {documents.map((doc: unknown) => (
+            {documents.map((doc) => (
               <DocumentItem
-                key={doc.id}
+                key={String(doc.id)}
                 doc={doc}
                 onUpdate={handleUpdateDoc}
                 onView={handleViewDoc}

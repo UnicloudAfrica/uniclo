@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import ClientPageShell from "../../../../components/ClientPageShell";
+import { ResilienceHero } from "@/shared/components/orbit";
 import {
   ModernCard,
   ModernTable,
@@ -72,20 +73,18 @@ export default function ClientBucketEndpointsPage() {
   ];
 
   return (
-    <ClientPageShell
-      title="Bucket Endpoints"
-      description="Registered object-storage buckets assigned to you. Read-only — contact your platform admin to register new endpoints."
-    >
+    <ClientPageShell title="" description="">
       <div className="space-y-4">
+        <ResilienceHero topic="bucket-endpoints" role="client" />
         {rows.length === 0 && !isLoading ? (
           <ModernCard>
-            <div className="p-8 text-center">
-              <p className="font-semibold text-gray-800 dark:text-gray-200">
-                No bucket endpoints assigned to you yet
+            <div className="flex flex-col items-center gap-3 p-12 text-center">
+              <span aria-hidden="true" className="text-5xl">🪣</span>
+              <p className="text-base font-semibold text-gray-800 dark:text-gray-200">
+                No buckets shared with you yet
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Your platform admin registers bucket endpoints on your behalf.
-                They will appear here once granted.
+              <p className="max-w-md text-sm text-gray-500 dark:text-gray-400">
+                Your provider registers buckets on your behalf. They'll show up here as soon as one's connected.
               </p>
             </div>
           </ModernCard>

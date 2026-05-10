@@ -4,7 +4,7 @@ import tenantApi from "../../index/tenant/tenantApi";
 import logger from "../../utils/logger";
 
 /**
- * Tenant-side hooks for SimpleDeploy plan pricing overrides.
+ * Tenant-side hooks for SlimDeploy plan pricing overrides.
  *
  * The list endpoint joins the platform default (`flow_plans`) with the
  * caller's optional override row (`tenant_flow_plan_pricing`) so the

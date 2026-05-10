@@ -1,11 +1,50 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useFetchRegions } from "@/hooks/adminHooks/regionHooks";
 import { useUpdateProduct } from "@/hooks/adminHooks/adminProductHooks";
 import logger from "@/utils/logger";
 
-const EditProduct = ({ isOpen, onClose, product, onUpdated }: { isOpen: boolean; onClose: () => void; product: unknown; onUpdated?: () => void }) => {
-  const [formData, setFormData] = useState({
+type ProductShape = {
+  id?: string | number;
+  name?: string;
+  region?: string;
+  productable_type?: string;
+  productable_id?: string;
+  provider?: string;
+  provider_resource_id?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+type RegionShape = {
+  code: string;
+  name?: string;
+  is_active?: boolean;
+};
+
+type ProductFormData = {
+  name: string;
+  region: string;
+  productable_type: string;
+  productable_id: string;
+  provider: string;
+  provider_resource_id?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+const EditProduct = ({
+  isOpen,
+  onClose,
+  product,
+  onUpdated,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  product: unknown;
+  onUpdated?: () => void;
+}) => {
+  const [formData, setFormData] = useState<ProductFormData>({
     name: "",
     region: "",
     productable_type: "",
@@ -15,27 +54,29 @@ const EditProduct = ({ isOpen, onClose, product, onUpdated }: { isOpen: boolean;
   const { mutate: updateProduct, isPending } = useUpdateProduct();
   const { data: regions, isFetching: isRegionsFetching } = useFetchRegions();
 
+  const productShape = product as ProductShape | null;
+
   // Initialize formData when product changes
   useEffect(() => {
-    if (product && typeof product === "object" && product.id) {
+    if (productShape?.id) {
       setFormData({
-        name: product.name || "",
-        region: product.region || "",
-        productable_type: product.productable_type || "",
-        productable_id: product.productable_id || "",
-        provider: product.provider || "",
-        provider_resource_id: product.provider_resource_id || null,
-        created_at: product.created_at || "",
-        updated_at: product.updated_at || "",
-      } as unknown);
+        name: productShape.name || "",
+        region: productShape.region || "",
+        productable_type: productShape.productable_type || "",
+        productable_id: productShape.productable_id || "",
+        provider: productShape.provider || "",
+        provider_resource_id: productShape.provider_resource_id || null,
+        created_at: productShape.created_at || "",
+        updated_at: productShape.updated_at || "",
+      });
     }
-  }, [product]);
+  }, [productShape]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!product || !product.id) return;
+    if (!productShape?.id) return;
     updateProduct(
-      { id: product.id, productData: formData },
+      { id: productShape.id, productData: formData } as never,
       {
         onSuccess: () => {
           onClose();
@@ -43,17 +84,20 @@ const EditProduct = ({ isOpen, onClose, product, onUpdated }: { isOpen: boolean;
             onUpdated();
           }
         },
-        onError: (error: unknown) => logger.error("Error updating product:", (error as Error)?.message ?? error),
+        onError: (error: unknown) =>
+          logger.error("Error updating product:", (error as Error)?.message ?? error),
       }
     );
   };
 
-  const handleChange = (e: unknown) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  if (!isOpen || !product || typeof product !== "object" || !product.id) return null;
+  if (!isOpen || !productShape?.id) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
@@ -96,9 +140,9 @@ const EditProduct = ({ isOpen, onClose, product, onUpdated }: { isOpen: boolean;
                   Loading regions...
                 </option>
               ) : (
-                regions
-                  ?.filter((r: unknown) => r.name && r.is_active !== false)
-                  .map((region: unknown) => (
+                ((regions as RegionShape[] | undefined) || [])
+                  .filter((r) => r.name && r.is_active !== false)
+                  .map((region) => (
                     <option key={region.code} value={region.code}>
                       {region.name || region.code}
                     </option>

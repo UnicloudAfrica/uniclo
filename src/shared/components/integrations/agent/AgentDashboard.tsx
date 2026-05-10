@@ -7,6 +7,7 @@ import {
   useRejectAgentDecision,
   useEvaluateAgentRules,
 } from "@/shared/hooks/resources/agentHooks";
+import { RESILIENCE } from "@/shared/branding";
 import {
   Bot,
   Shield,
@@ -99,11 +100,11 @@ export default function AgentDashboard({ context }: AgentDashboardProps) {
             <AlertTriangle className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
           </div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Integration Not Configured
+            Automation Not Configured
           </h3>
           <p className="max-w-md text-sm text-gray-500 dark:text-gray-400">
-            The Infrastructure Agent requires an active AnyCloudFlow integration.
-            Please configure the integration credentials in your account settings.
+            {RESILIENCE} Automation requires an active subscription.
+            Please configure your {RESILIENCE} credentials in account settings.
           </p>
         </div>
       </div>

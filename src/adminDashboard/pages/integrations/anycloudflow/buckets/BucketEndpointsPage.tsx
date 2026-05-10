@@ -15,6 +15,7 @@ import ToastUtils from "@/utils/toastUtil";
 import { acfApi } from "../api";
 import { translateBucketError } from "../bucketErrorTranslator";
 import { ValidationLockoutBadge } from "@/shared/components/bucket-replication";
+import { ResilienceHero } from "@/shared/components/orbit";
 
 /**
  * UniCloud admin UI for the AnyCloudFlow bucket-endpoint proxy.
@@ -145,20 +146,28 @@ export default function BucketEndpointsPage() {
 
   return (
     <AdminPageShell
-      title="Bucket Endpoints"
-      description="Registered object-storage buckets usable as migration sources or targets. Admin-only in Phase 1."
+      title=""
+      description=""
       actions={<ModernButton onClick={() => setCreating(true)}>+ Register Bucket</ModernButton>}
     >
       <div className="space-y-4">
+        <ResilienceHero
+          topic="bucket-endpoints"
+          role="admin"
+          primaryCta={{ label: "Connect a bucket", onClick: () => setCreating(true) }}
+        />
         {rows.length === 0 && !isLoading ? (
           <ModernCard>
-            <div className="p-8 text-center">
-              <p className="font-semibold text-gray-800 dark:text-gray-200">No bucket endpoints registered</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Register at least 2 endpoints (source + target) to run a migration.
+            <div className="flex flex-col items-center gap-3 p-12 text-center">
+              <span aria-hidden="true" className="text-5xl">🪣</span>
+              <p className="text-base font-semibold text-gray-800 dark:text-gray-200">
+                No buckets connected yet
               </p>
-              <div className="mt-4">
-                <ModernButton onClick={() => setCreating(true)}>Register first bucket</ModernButton>
+              <p className="max-w-md text-sm text-gray-500 dark:text-gray-400">
+                Connect your first storage bucket — S3, GCS, Azure Blob, anything S3-compatible — and we'll get it ready to migrate or replicate.
+              </p>
+              <div className="mt-2">
+                <ModernButton onClick={() => setCreating(true)}>Connect a bucket</ModernButton>
               </div>
             </div>
           </ModernCard>

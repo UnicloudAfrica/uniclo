@@ -143,7 +143,9 @@ const MigrationDashboard: React.FC<MigrationDashboardProps> = ({
       </div>
 
       {/* Tab Content */}
-      {activeTab === "migrations" && <MigrationsList context={context} />}
+      {activeTab === "migrations" && (
+        <MigrationsList context={context} wizardPath={wizardPath} />
+      )}
       {activeTab === "endpoints" && (
         <EndpointsList context={context} />
       )}

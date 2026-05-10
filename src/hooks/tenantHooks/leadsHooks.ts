@@ -1,8 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentTenant from "../../index/tenant/silentTenant";
 import tenantApi from "../../index/tenant/tenantApi";
-import config from "../../config";
-import useTenantAuthStore from "@/stores/tenantAuthStore";
+import { apiRegistry } from "@/shared/api/apiRegistry";
 import { ApiResponse } from "@/shared/types/resource";
 
 type QueryParams = Record<string, string | number | boolean | null | undefined>;
@@ -116,26 +115,11 @@ const downloadDoc = async (id: string) => {
     throw new Error("Document identifier is required");
   }
 
-  const tenantState = useTenantAuthStore.getState();
-  const baseHeaders = tenantState?.getAuthHeaders ? tenantState.getAuthHeaders() : {};
-  const response = await fetch(`${config.tenantURL}/lead-documents/${id}/download`, {
-    method: "GET",
-    headers: {
-      ...baseHeaders,
-      Accept: "application/octet-stream,application/pdf,image/*,*/*",
-    },
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    let message = "Failed to download document";
-    try {
-      message = await response.text();
-    } catch {
-      // Ignored: fallback to default message
-    }
-    throw new Error(message || "Failed to download document");
-  }
+  // Routed via the unified fileApi (Week-3 cleanup) — shares auth +
+  // CSRF + 401 redirect plumbing with every other registry call.
+  // `getRaw` returns the full Response so we can read the filename
+  // from `Content-Disposition` before consuming the body.
+  const response = await apiRegistry.tenant.fileApi.getRaw(`/lead-documents/${id}/download`);
 
   const blob = await response.blob();
   const contentType = response.headers.get("Content-Type") || "application/octet-stream";

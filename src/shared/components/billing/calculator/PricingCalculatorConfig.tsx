@@ -574,7 +574,7 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
           </ModernCard>
 
           {/* Tabbed builder — Compute, Object Storage, and the Add-on
-              services bundle (SimpleDeploy / AnyCloudFlow / Shield /
+              services bundle (SlimDeploy / Orbit / Shield /
               Pay-as-you-go). The add-on bundle has its own internal
               sub-tabs inside CalculatorAddOnsCard so quoting any of
               the four tracks lives behind a single top-level tab. */}

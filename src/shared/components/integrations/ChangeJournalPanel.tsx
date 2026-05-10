@@ -192,10 +192,18 @@ const ChangeJournalPanel: React.FC<ChangeJournalPanelProps> = ({ endpointId, cla
               </div>
 
               {entriesLoading ? (
-                <div className="px-4 py-6 text-sm text-gray-400">Loading entries...</div>
+                <div className="flex items-center gap-2 px-4 py-6 text-sm text-gray-500 dark:text-gray-400">
+                  <span aria-hidden="true">📓</span> Loading recent changes…
+                </div>
               ) : entries.length === 0 ? (
-                <div className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">
-                  No recent entries yet.
+                <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
+                  <span aria-hidden="true" className="text-3xl">📓</span>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    No changes recorded yet
+                  </p>
+                  <p className="max-w-xs text-xs text-gray-500 dark:text-gray-400">
+                    The journal records every file write on this VM. Make a change on the source — it'll show up here.
+                  </p>
                 </div>
               ) : (
                 <div className="max-h-72 overflow-auto">

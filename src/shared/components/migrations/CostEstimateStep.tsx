@@ -4,7 +4,10 @@
 import React, { useEffect } from "react";
 import { DollarSign, AlertCircle, Loader2 } from "lucide-react";
 import { useEstimateMigrationCost } from "@/shared/hooks/resources";
-import type { MigrationEstimate } from "@/shared/hooks/resources/externalMigrationHooks";
+import type {
+  AutoProvisionSpecs,
+  MigrationEstimate,
+} from "@/shared/hooks/resources/externalMigrationHooks";
 
 const TIER_LABELS: Record<string, string> = {
   same_cloud: "Same Cloud",
@@ -14,23 +17,33 @@ const TIER_LABELS: Record<string, string> = {
 
 interface CostEstimateStepProps {
   sourceEndpointId: string;
-  targetEndpointId: string;
+  targetEndpointId?: string;
+  autoProvisionDestination?: boolean;
+  provisionSpecs?: AutoProvisionSpecs;
   onEstimateReady?: (estimate: MigrationEstimate) => void;
 }
 
 const CostEstimateStep: React.FC<CostEstimateStepProps> = ({
   sourceEndpointId,
   targetEndpointId,
+  autoProvisionDestination = false,
+  provisionSpecs,
   onEstimateReady,
 }) => {
   const estimateMutation = useEstimateMigrationCost();
 
   useEffect(() => {
-    if (sourceEndpointId && targetEndpointId) {
+    if (sourceEndpointId && (targetEndpointId || autoProvisionDestination)) {
       estimateMutation.mutate(
         {
           source_endpoint_id: sourceEndpointId,
-          target_endpoint_id: targetEndpointId,
+          ...(targetEndpointId ? { target_endpoint_id: targetEndpointId } : {}),
+          ...(autoProvisionDestination
+            ? {
+                auto_provision_destination: true,
+                provision_specs: provisionSpecs,
+              }
+            : {}),
         },
         {
           onSuccess: (data) => {
@@ -40,7 +53,7 @@ const CostEstimateStep: React.FC<CostEstimateStepProps> = ({
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sourceEndpointId, targetEndpointId]);
+  }, [sourceEndpointId, targetEndpointId, autoProvisionDestination, provisionSpecs]);
 
   if (estimateMutation.isPending) {
     return (
@@ -71,7 +84,13 @@ const CostEstimateStep: React.FC<CostEstimateStepProps> = ({
           onClick={() =>
             estimateMutation.mutate({
               source_endpoint_id: sourceEndpointId,
-              target_endpoint_id: targetEndpointId,
+              ...(targetEndpointId ? { target_endpoint_id: targetEndpointId } : {}),
+              ...(autoProvisionDestination
+                ? {
+                    auto_provision_destination: true,
+                    provision_specs: provisionSpecs,
+                  }
+                : {}),
             })
           }
           className="mt-3 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
@@ -114,7 +133,7 @@ const CostEstimateStep: React.FC<CostEstimateStepProps> = ({
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-500 dark:text-gray-400">Route</span>
             <span className="font-medium capitalize text-gray-900 dark:text-gray-100">
-              {src?.provider ?? "Source"} → {tgt?.provider ?? "Target"}
+              {src?.provider ?? "Source"} → {tgt?.provider ?? "Auto"}
             </span>
           </div>
         </div>

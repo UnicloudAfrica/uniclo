@@ -71,8 +71,8 @@ const TenantAssignEdgeConfigModal = ({
     if (currentConfig && isOpen) {
       setFormData((prev) => ({
         ...prev,
-        edge_network_id: currentConfig.edge_network_id || "",
-        ip_pool_id: currentConfig.ip_pool_id || "",
+        edge_network_id: String(currentConfig.edge_network_id || ""),
+        ip_pool_id: String(currentConfig.ip_pool_id || ""),
         flowlogs_enabled: Boolean(currentConfig.flowlogs_enabled),
       }));
     }
@@ -165,8 +165,8 @@ const TenantAssignEdgeConfigModal = ({
             <div className="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-800 mb-4">
               <div className="font-medium mb-2">Current Configuration</div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <div>Edge Network ID: {currentConfig.edge_network_id || "-"}</div>
-                <div>IP Pool ID: {currentConfig.ip_pool_id || "-"}</div>
+                <div>Edge Network ID: {String(currentConfig.edge_network_id || "-")}</div>
+                <div>IP Pool ID: {String(currentConfig.ip_pool_id || "-")}</div>
                 <div>Flow Logs: {currentConfig.flowlogs_enabled ? "Enabled" : "Disabled"}</div>
               </div>
             </div>
@@ -194,9 +194,9 @@ const TenantAssignEdgeConfigModal = ({
                 <option value="">
                   {isFetchingRegions ? "Loading regions..." : "Select a region"}
                 </option>
-                {((regions as unknown[] | undefined) || []).map((r: unknown) => (
-                  <option key={r.region} value={r.code || r.region}>
-                    {r.name || r.label}
+                {((regions as Array<Record<string, unknown>> | undefined) || []).map((r) => (
+                  <option key={String(r.region ?? r.code ?? "")} value={String(r.code || r.region || "")}>
+                    {String(r.name || r.label || "")}
                   </option>
                 ))}
               </select>
@@ -242,12 +242,12 @@ const TenantAssignEdgeConfigModal = ({
                     <option value="">
                       {isFetchingNetworks ? "Loading networks..." : "Select an edge network"}
                     </option>
-                    {(edgeNetworks || []).map((n: unknown) => (
+                    {((edgeNetworks || []) as Array<Record<string, unknown>>).map((n) => (
                       <option
-                        key={n.id || n.uuid || n.identifier}
-                        value={n.id || n.uuid || n.identifier}
+                        key={String(n.id || n.uuid || n.identifier || "")}
+                        value={String(n.id || n.uuid || n.identifier || "")}
                       >
-                        {n.name || n.label || n.id}
+                        {String(n.name || n.label || n.id || "")}
                       </option>
                     ))}
                   </select>
@@ -292,12 +292,12 @@ const TenantAssignEdgeConfigModal = ({
                     <option value="">
                       {isFetchingPools ? "Loading IP pools..." : "Select an IP pool"}
                     </option>
-                    {(ipPools || []).map((p: unknown) => (
+                    {((ipPools || []) as Array<Record<string, unknown>>).map((p) => (
                       <option
-                        key={p.edge_network_ip_pool_id || p.id || p.uuid}
-                        value={p.edge_network_ip_pool_id || p.id || p.uuid}
+                        key={String(p.edge_network_ip_pool_id || p.id || p.uuid || "")}
+                        value={String(p.edge_network_ip_pool_id || p.id || p.uuid || "")}
                       >
-                        {p.label || p.name || p.edge_network_ip_pool_id || p.id}
+                        {String(p.label || p.name || p.edge_network_ip_pool_id || p.id || "")}
                       </option>
                     ))}
                   </select>

@@ -17,6 +17,19 @@ import { getCurrencySymbol } from "@/utils/resource";
 import ToastUtils from "@/utils/toastUtil";
 import useAuthRedirect from "@/utils/adminAuthRedirect";
 
+type RegionShape = { code: string; name?: string; provider?: string };
+type AZShape = { code: string; name?: string; provider?: string };
+type PricingRow = {
+  id: number;
+  product_name?: string;
+  name?: string;
+  productable_type?: string;
+  region?: string;
+  availability_zone?: string;
+  price_usd?: number | string;
+  currency_code?: string;
+};
+
 const AdminPricingEdit = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -59,7 +72,8 @@ const AdminPricingEdit = () => {
   // Auto-select first region when regions load
   useEffect(() => {
     if (!isRegionsFetching && regionsList.length && !selectedRegion) {
-      setSelectedRegion((regionsList[0] as unknown).code);
+      const first = regionsList[0] as RegionShape | undefined;
+      if (first?.code) setSelectedRegion(first.code);
     }
   }, [isRegionsFetching, regionsList, selectedRegion]);
 
@@ -72,10 +86,10 @@ const AdminPricingEdit = () => {
     setSearchParams(params, { replace: true });
   }, [selectedRegion, selectedAZ, selectedType, setSearchParams]);
 
-  const pricingRows = useMemo<unknown[]>(() => {
-    const payload: Record<string, unknown> = pricingData;
-    const rows = payload?.data ?? [];
-    return rows.map((item: unknown) => ({
+  const pricingRows = useMemo<PricingRow[]>(() => {
+    const payload = (pricingData ?? {}) as { data?: unknown };
+    const rows = (Array.isArray(payload?.data) ? payload.data : []) as PricingRow[];
+    return rows.map((item) => ({
       ...item,
       product_name: item.product_name || item.name || "Unnamed product",
     }));
@@ -133,53 +147,62 @@ const AdminPricingEdit = () => {
 
   const dirtyCount = dirtyPrices.size;
 
-  const columns = useMemo<unknown[]>(
+  const columns = useMemo(
     () => [
       {
         header: "Product",
         key: "product_name",
-        render: (_cellValue: unknown, row: unknown) => (
-          <div className="flex items-center gap-3">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500/10 text-primary-500">
-              <Package className="h-4 w-4" />
-            </span>
-            <div>
-              <p className="text-sm font-semibold text-slate-900">{row.product_name}</p>
-              <p className="text-xs text-slate-500">
-                {row.productable_type?.split("\\").pop() || "Product"}
-              </p>
+        render: (_cellValue: unknown, rowVal: unknown) => {
+          const row = rowVal as PricingRow;
+          return (
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500/10 text-primary-500">
+                <Package className="h-4 w-4" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-slate-900">{row.product_name}</p>
+                <p className="text-xs text-slate-500">
+                  {row.productable_type?.split("\\").pop() || "Product"}
+                </p>
+              </div>
             </div>
-          </div>
-        ),
+          );
+        },
       },
       {
         header: "Region",
         key: "region",
-        align: "center",
-        render: (_cellValue: unknown, row: unknown) => (
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-            {row.region || "Global"}
-          </span>
-        ),
+        align: "center" as const,
+        render: (_cellValue: unknown, rowVal: unknown) => {
+          const row = rowVal as PricingRow;
+          return (
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+              {row.region || "Global"}
+            </span>
+          );
+        },
       },
       {
         header: "AZ",
         key: "availability_zone",
-        align: "center",
-        render: (_cellValue: unknown, row: unknown) =>
-          row.availability_zone ? (
+        align: "center" as const,
+        render: (_cellValue: unknown, rowVal: unknown) => {
+          const row = rowVal as PricingRow;
+          return row.availability_zone ? (
             <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600">
               {row.availability_zone}
             </span>
           ) : (
             <span className="text-xs text-slate-400">All</span>
-          ),
+          );
+        },
       },
       {
         header: "Price",
         key: "price_usd",
-        align: "right",
-        render: (_cellValue: unknown, row: unknown) => {
+        align: "right" as const,
+        render: (_cellValue: unknown, rowVal: unknown) => {
+          const row = rowVal as PricingRow;
           const originalPrice = Number(row.price_usd ?? 0);
           const currentPrice = dirtyPrices.has(row.id)
             ? dirtyPrices.get(row.id)!
@@ -245,11 +268,14 @@ const AdminPricingEdit = () => {
                   Loading regions...
                 </option>
               ) : (
-                regionsList.map((region: unknown) => (
-                  <option key={region.code} value={region.code}>
-                    {getRegionOptionLabel(region)}
-                  </option>
-                ))
+                regionsList.map((regionVal: unknown) => {
+                  const region = regionVal as RegionShape;
+                  return (
+                    <option key={region.code} value={region.code}>
+                      {getRegionOptionLabel(region)}
+                    </option>
+                  );
+                })
               )}
             </select>
           </div>
@@ -268,11 +294,14 @@ const AdminPricingEdit = () => {
                   Loading availability zones...
                 </option>
               ) : (
-                azList.map((az: unknown) => (
-                  <option key={az.code} value={az.code}>
-                    {az.name || az.code} ({az.provider})
-                  </option>
-                ))
+                azList.map((azVal: unknown) => {
+                  const az = azVal as AZShape;
+                  return (
+                    <option key={az.code} value={az.code}>
+                      {az.name || az.code} ({az.provider})
+                    </option>
+                  );
+                })
               )}
             </select>
           </div>

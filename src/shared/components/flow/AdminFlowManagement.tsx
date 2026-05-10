@@ -177,7 +177,7 @@ const AdminFlowManagement: React.FC = () => {
   return (
     <div className="space-y-6">
       <ResourceHero
-        title="SimpleDeploy Management"
+        title="SlimDeploy Management"
         subtitle="Admin"
         description="Manage Flow plans, monitor subscriptions, and provision tenants behind the scenes — no payment required."
         metrics={heroMetrics}
@@ -404,7 +404,7 @@ const AdminFlowManagement: React.FC = () => {
             Enable Flow for a Tenant
           </h3>
           <p className="mt-1 text-sm text-slate-500">
-            Provision SimpleDeploy behind the scenes — no payment required. The tenant will be
+            Provision SlimDeploy behind the scenes — no payment required. The tenant will be
             automatically connected to LeanPloy.
           </p>
 

@@ -1,4 +1,4 @@
-import useTenantAuthStore from "../stores/tenantAuthStore";
+import useAuthStore from "@/stores/authStore";
 import { resolveActivePersona } from "../stores/sessionUtils";
 import ToastUtils from "./toastUtil";
 import { AuthState } from "../types/auth";
@@ -88,7 +88,7 @@ export const handleAuthRedirect = (
 
 // Lightweight hydration helper; routing is enforced by route guards (TenantRoute/ClientRoute/AdminRoute)
 const useAuthRedirect = () => {
-  const hasHydrated = useTenantAuthStore((state: AuthState) => state.hasHydrated);
+  const hasHydrated = useAuthStore((state: AuthState) => state.hasHydrated);
   return { isLoading: !hasHydrated };
 };
 

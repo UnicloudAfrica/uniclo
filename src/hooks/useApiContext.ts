@@ -1,17 +1,15 @@
 import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import config from "../config";
-import useAdminAuthStore from "../stores/adminAuthStore";
-import useTenantAuthStore from "../stores/tenantAuthStore";
-import useClientAuthStore from "../stores/clientAuthStore";
+import useAuthStore from "@/stores/authStore";
 import { AuthState } from "../types/auth";
 
 export type ApiContext = "admin" | "tenant" | "client";
 
 type AuthStoreHook =
-  | typeof useAdminAuthStore
-  | typeof useTenantAuthStore
-  | typeof useClientAuthStore;
+  | typeof useAuthStore
+  | typeof useAuthStore
+  | typeof useAuthStore;
 
 interface ApiContextResult {
   context: ApiContext;
@@ -29,14 +27,14 @@ export const useApiContext = (): ApiContextResult => {
   const location = useLocation();
 
   // Use separate selectors to prevent object creation on every render
-  const adminIsAuth = useAdminAuthStore((state: AuthState) => state.isAuthenticated);
-  const adminGetHeaders = useAdminAuthStore((state: AuthState) => state.getAuthHeaders);
+  const adminIsAuth = useAuthStore((state: AuthState) => state.isAuthenticated);
+  const adminGetHeaders = useAuthStore((state: AuthState) => state.getAuthHeaders);
 
-  const tenantIsAuth = useTenantAuthStore((state: AuthState) => state.isAuthenticated);
-  const tenantGetHeaders = useTenantAuthStore((state: AuthState) => state.getAuthHeaders);
+  const tenantIsAuth = useAuthStore((state: AuthState) => state.isAuthenticated);
+  const tenantGetHeaders = useAuthStore((state: AuthState) => state.getAuthHeaders);
 
-  const clientIsAuth = useClientAuthStore((state: AuthState) => state.isAuthenticated);
-  const clientGetHeaders = useClientAuthStore((state: AuthState) => state.getAuthHeaders);
+  const clientIsAuth = useAuthStore((state: AuthState) => state.isAuthenticated);
+  const clientGetHeaders = useAuthStore((state: AuthState) => state.getAuthHeaders);
 
   const buildHeaders = (getAuthHeaders?: () => Record<string, string>) => {
     if (typeof getAuthHeaders === "function") {
@@ -58,7 +56,7 @@ export const useApiContext = (): ApiContextResult => {
         apiBaseUrl: config.adminURL,
         authHeaders: buildHeaders(adminGetHeaders),
         isAuthenticated: adminIsAuth,
-        authStore: useAdminAuthStore,
+        authStore: useAuthStore,
       };
     } else if (
       path.startsWith("/tenant-dashboard") ||
@@ -70,7 +68,7 @@ export const useApiContext = (): ApiContextResult => {
         apiBaseUrl: config.tenantURL,
         authHeaders: buildHeaders(tenantGetHeaders),
         isAuthenticated: tenantIsAuth,
-        authStore: useTenantAuthStore,
+        authStore: useAuthStore,
       };
     } else {
       return {
@@ -78,7 +76,7 @@ export const useApiContext = (): ApiContextResult => {
         apiBaseUrl: config.baseURL,
         authHeaders: buildHeaders(clientGetHeaders),
         isAuthenticated: clientIsAuth,
-        authStore: useClientAuthStore,
+        authStore: useAuthStore,
       };
     }
   }, [

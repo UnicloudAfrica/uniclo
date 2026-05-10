@@ -273,9 +273,14 @@ export const acfApi = {
   getBucketMigrationManifest: (id: string) =>
     api.get(`${base}/bucket-migrations/${encodeURIComponent(id)}/manifest`),
 
-  // Pricing (not admin-gated — used by tenant cost preview in wizard)
+  // Pricing (not admin-gated — used by tenant cost preview in wizard).
+  // SILENT on failure: this call proxies to the AnyCloudFlow downstream
+  // service (`AnyCloudFlowClient::getBucketMigrationPricing`). When the
+  // AcF service is unreachable / not yet deployed the proxy returns 404
+  // — the wizard's pricing block just hides itself in that case, no
+  // need to slap the user with three identical error toasts.
   getBucketMigrationPricing: (gb: number) =>
-    api.get(`${base}/pricing/bucket-migration?gb=${Math.max(0, Math.floor(gb))}`),
+    api.get(`${base}/pricing/bucket-migration?gb=${Math.max(0, Math.floor(gb))}`, { silent: true }),
 
   // ─── Phase 2 — Bucket Replication (active-passive continuous) ───
   //

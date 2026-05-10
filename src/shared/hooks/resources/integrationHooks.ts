@@ -1718,15 +1718,16 @@ export const useExportSlaReport = () => {
       if (params.include_drills !== undefined) qs.set("include_drills", String(params.include_drills));
       if (params.include_replication !== undefined) qs.set("include_replication", String(params.include_replication));
       const uri = `${entry.urlPrefix}/integrations/reports/sla/export${qs.toString() ? `?${qs}` : ""}`;
-      const response = await fetch(uri, {
-        method: "GET",
-        headers: ((entry.silentApi as unknown as { defaults?: { headers?: Record<string, string> } }).defaults?.headers) ?? {},
-        credentials: "include",
-      });
-      if (!response.ok) {
-        throw new Error("Failed to export SLA report");
+
+      // Routed via the unified fileApi (Week-3 cleanup) — the previous
+      // raw `fetch` cast `entry.silentApi` to a non-existent `.defaults`
+      // shape and silently dropped auth headers.
+      const buffer = await entry.fileApi.get<ArrayBuffer>(uri);
+      if (!(buffer instanceof ArrayBuffer)) {
+        throw new Error("Failed to export SLA report — server did not return a binary PDF.");
       }
-      const blob = await response.blob();
+
+      const blob = new Blob([buffer], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

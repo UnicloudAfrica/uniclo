@@ -107,7 +107,7 @@ const RpoGauge = memo(function RpoGauge({
       <div
         className={`inline-flex flex-col items-center gap-1 ${className}`}
         aria-busy="true"
-        aria-label="RPO loading"
+        aria-label="Checking how in-sync we are…"
       >
         <div
           className="rounded-full bg-gray-100 dark:bg-gray-800 animate-pulse"

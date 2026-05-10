@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminPageShell from "../../../../components/AdminPageShell";
@@ -10,6 +10,33 @@ import {
   BucketStatusBadge,
   type BucketMigrationStatus,
 } from "@/shared/components/bucket-replication";
+import { MoodIndicator } from "@/shared/components/orbit";
+
+/**
+ * Map AcF bucket-migration status → orbit mood for the at-a-glance indicator.
+ * Falls back to thinking for in-progress phases AcF emits but UniCloud
+ * hasn't mapped yet (the StatusBadge underneath still shows the literal).
+ */
+function bucketMigrationMood(s: BucketMigrationStatus): "happy" | "working" | "thinking" | "worried" | "alarmed" | "idle" {
+  switch (s) {
+    case "completed":
+      return "happy";
+    case "scheduled":
+      return "thinking";
+    case "listing":
+    case "transferring":
+    case "verifying":
+      return "working";
+    case "paused_auth_failure":
+      return "worried";
+    case "failed":
+      return "alarmed";
+    case "cancelled":
+      return "idle";
+    default:
+      return "thinking";
+  }
+}
 
 /**
  * Live progress view for a bucket migration.
@@ -61,17 +88,42 @@ function formatBytes(b?: number | null): string {
 
 const ACTIVE_STATUSES = ["listing", "transferring", "verifying"];
 
+// Reserved sibling URL segments — see BucketReplicationDetailPage for
+// the full background. Same defensive guard so a stale Vite bundle
+// can't surface "Migration not found" + API 404 toasts when a user
+// hits /migrations/new.
+const RESERVED_ID_SEGMENTS = new Set(["new", "create"]);
+
 export default function BucketMigrationDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
   const qc = useQueryClient();
   const [cancelConfirming, setCancelConfirming] = useState(false);
   const [typedTarget, setTypedTarget] = useState("");
   const [failurePage, setFailurePage] = useState(1);
+  const isReserved = RESERVED_ID_SEGMENTS.has(id);
+
+  useEffect(() => {
+    if (!isReserved || typeof window === "undefined") return;
+    const RELOAD_KEY = "bucket-migration-detail-reserved-reload";
+    const alreadyReloaded = sessionStorage.getItem(RELOAD_KEY) === window.location.pathname;
+    if (alreadyReloaded) {
+      sessionStorage.removeItem(RELOAD_KEY);
+      window.location.replace("/admin-dashboard/integrations/orbit/buckets/migrations");
+      return;
+    }
+    sessionStorage.setItem(RELOAD_KEY, window.location.pathname);
+    window.location.replace(window.location.pathname + window.location.search);
+  }, [isReserved]);
+
+  useEffect(() => {
+    if (isReserved || typeof window === "undefined") return;
+    sessionStorage.removeItem("bucket-migration-detail-reserved-reload");
+  }, [isReserved]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["acf-bucket-migration", id],
     queryFn: () => acfApi.getBucketMigration(id),
-    enabled: !!id,
+    enabled: !!id && !isReserved,
     refetchInterval: (q) => {
       const m = (q.state.data as { data?: unknown })?.data ?? q.state.data;
       return m && ACTIVE_STATUSES.includes(m.status) ? 3_000 : 30_000;
@@ -82,7 +134,7 @@ export default function BucketMigrationDetailPage() {
   const { data: failureData } = useQuery({
     queryKey: ["acf-bucket-migration-failures", id, failurePage],
     queryFn: () => acfApi.getBucketMigrationFailures(id, failurePage),
-    enabled: !!id && !!migration && (migration.objects_failed ?? 0) > 0,
+    enabled: !!id && !isReserved && !!migration && (migration.objects_failed ?? 0) > 0,
   });
   const failures: Failure[] = (failureData as { data?: unknown })?.data ?? [];
 
@@ -126,11 +178,34 @@ export default function BucketMigrationDetailPage() {
     }
   };
 
+  // Reserved-segment short-circuit (matches the replication detail
+  // page) — the useEffect above is forcing a reload to pick up the
+  // wizard route. Render a quiet shell so the user doesn't see a
+  // "Can't find this migration" flash.
+  if (isReserved) {
+    return (
+      <AdminPageShell title="">
+        <div className="flex flex-col items-center gap-3 p-12 text-center text-gray-500 dark:text-gray-400">
+          <span aria-hidden="true" className="text-3xl animate-pulse">🚚</span>
+          <p className="text-sm">One sec — taking you to the wizard…</p>
+        </div>
+      </AdminPageShell>
+    );
+  }
+
   if (!migration && !isLoading) {
     return (
       <AdminPageShell title="Migration">
         <ModernCard>
-          <div className="p-6 text-center text-gray-500">Migration not found</div>
+          <div className="flex flex-col items-center gap-3 p-12 text-center">
+            <span aria-hidden="true" className="text-5xl">🔍</span>
+            <p className="text-base font-semibold text-gray-800 dark:text-gray-200">
+              Can't find this migration
+            </p>
+            <p className="max-w-md text-sm text-gray-500 dark:text-gray-400">
+              It may have been deleted, or the link's gone stale. Head back to the list and pick a fresh one.
+            </p>
+          </div>
         </ModernCard>
       </AdminPageShell>
     );
@@ -162,25 +237,25 @@ export default function BucketMigrationDetailPage() {
           </Link>
           {migration.status === "scheduled" && (
             <ModernButton onClick={() => start.mutate()} disabled={start.isPending}>
-              Start
+              Start moving
             </ModernButton>
           )}
           {isActive && (
             <>
               <ModernButton variant="secondary" onClick={() => pauseMut.mutate()}>
-                Pause
+                Pause this
               </ModernButton>
               <ModernButton variant="danger" onClick={() => setCancelConfirming(true)}>
-                Cancel
+                Stop migration
               </ModernButton>
             </>
           )}
           {migration.status === "paused_auth_failure" && (
-            <ModernButton onClick={() => resumeMut.mutate()}>Resume</ModernButton>
+            <ModernButton onClick={() => resumeMut.mutate()}>Continue</ModernButton>
           )}
           {migration.status === "completed" && (
             <ModernButton variant="secondary" onClick={downloadManifest}>
-              Download manifest (JSON)
+              Download what moved (JSON)
             </ModernButton>
           )}
           <Link
@@ -198,7 +273,12 @@ export default function BucketMigrationDetailPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatCard
             label="Status"
-            value={<BucketStatusBadge variant="migration" status={migration.status} />}
+            value={
+              <div className="flex items-center gap-2">
+                <MoodIndicator mood={bucketMigrationMood(migration.status)} size="md" />
+                <BucketStatusBadge variant="migration" status={migration.status} />
+              </div>
+            }
           />
           <StatCard
             label="Objects"

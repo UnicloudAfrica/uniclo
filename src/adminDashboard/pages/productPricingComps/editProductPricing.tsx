@@ -1,30 +1,51 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import ToastUtils from "@/utils/toastUtil";
 import { useUpdateProductPricing } from "@/hooks/adminHooks/adminProductPricingHooks";
 
-const EditProductPricingModal = ({ isOpen, onClose, pricing }: { isOpen: boolean; onClose: () => void; pricing: unknown }) => {
+type PricingShape = {
+  id?: string | number;
+  price_usd?: string | number;
+  product_id?: string | number;
+  product_name?: string;
+  provider?: string;
+  region?: string;
+  country_code?: string;
+  availability_zone?: string;
+};
+
+const EditProductPricingModal = ({
+  isOpen,
+  onClose,
+  pricing,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  pricing: unknown;
+}) => {
   const [priceUsd, setPriceUsd] = useState("");
-  const [errors, setErrors] = useState<Record<string, unknown>>({});
+  const [errors, setErrors] = useState<Record<string, string | null>>({});
   const { mutate: updatePricing, isPending } = useUpdateProductPricing();
 
+  const pricingShape = pricing as PricingShape | null;
+
   useEffect(() => {
-    if (isOpen && pricing) {
-      setPriceUsd(pricing.price_usd ?? "");
+    if (isOpen && pricingShape) {
+      setPriceUsd(String(pricingShape.price_usd ?? ""));
       setErrors({});
     }
     if (!isOpen) {
       setPriceUsd("");
       setErrors({});
     }
-  }, [isOpen, pricing]);
+  }, [isOpen, pricingShape]);
 
-  if (!isOpen || !pricing) {
+  if (!isOpen || !pricingShape) {
     return null;
   }
 
   const validate = () => {
-    const nextErrors: Record<string, unknown> = {};
+    const nextErrors: Record<string, string | null> = {};
     const numericPrice = Number(priceUsd);
     if (!priceUsd || Number.isNaN(numericPrice)) {
       nextErrors.price_usd = "Enter a valid price.";
@@ -32,25 +53,27 @@ const EditProductPricingModal = ({ isOpen, onClose, pricing }: { isOpen: boolean
       nextErrors.price_usd = "Price must be greater than zero.";
     }
     setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
+    return Object.keys(nextErrors).filter((k) => nextErrors[k]).length === 0;
   };
 
-  const handleSubmit = (event: unknown) => {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!validate()) return;
 
     updatePricing(
       {
-        id: pricing.id,
+        id: pricingShape.id,
         pricingData: {
           price_usd: Number(priceUsd),
-          product_id: pricing.product_id,
-          provider: pricing.provider,
-          region: pricing.region,
-          country_code: pricing.country_code,
-          ...(pricing.availability_zone ? { availability_zone: pricing.availability_zone } : {}),
+          product_id: pricingShape.product_id,
+          provider: pricingShape.provider,
+          region: pricingShape.region,
+          country_code: pricingShape.country_code,
+          ...(pricingShape.availability_zone
+            ? { availability_zone: pricingShape.availability_zone }
+            : {}),
         },
-      },
+      } as never,
       {
         onSuccess: () => {
           ToastUtils.success("Pricing updated successfully.");
@@ -83,20 +106,20 @@ const EditProductPricingModal = ({ isOpen, onClose, pricing }: { isOpen: boolean
 
         <form onSubmit={handleSubmit} className="space-y-6 px-6 py-6">
           <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-            <p className="font-semibold text-slate-900">{pricing.product_name}</p>
+            <p className="font-semibold text-slate-900">{pricingShape.product_name}</p>
             <p className="mt-1 flex flex-wrap gap-3 text-xs text-slate-500">
               <span className="rounded-full bg-white px-2.5 py-1 font-medium text-slate-500">
-                Region: {pricing.region || "—"}
+                Region: {pricingShape.region || "—"}
               </span>
               <span className="rounded-full bg-white px-2.5 py-1 font-medium text-slate-500">
-                Provider: {pricing.provider || "—"}
+                Provider: {pricingShape.provider || "—"}
               </span>
               <span className="rounded-full bg-white px-2.5 py-1 font-medium text-slate-500">
-                Country: {pricing.country_code || "—"}
+                Country: {pricingShape.country_code || "—"}
               </span>
-              {pricing.availability_zone && (
+              {pricingShape.availability_zone && (
                 <span className="rounded-full bg-white px-2.5 py-1 font-medium text-slate-500">
-                  AZ: {pricing.availability_zone}
+                  AZ: {pricingShape.availability_zone}
                 </span>
               )}
             </p>

@@ -14,6 +14,7 @@ import { usePollMigrationProgress, useMigrationPreflight } from "@/shared/hooks/
 import { ModernButton } from "../ui";
 import PreflightResultsCard from "./PreflightResultsCard";
 import KernelComparisonCard from "./KernelComparisonCard";
+import CutoverPanel from "./CutoverPanel";
 import type { PreflightResults, KernelCompatibilityResult } from "@/types/kernelCompatibility";
 
 interface MigrationProgressStepProps {
@@ -152,6 +153,16 @@ const MigrationProgressStep: React.FC<MigrationProgressStepProps> = ({
       {/* Preflight Results */}
       {preflightResults && (
         <PreflightResultsCard results={preflightResults} />
+      )}
+
+      {/* Cutover state machine — RES-163. Surfaces only after data
+          transfer completes (status='completed') so the operator
+          can drive traffic shift, drain, monitor, decommission. */}
+      {migrationIdentifier && (
+        <CutoverPanel
+          migrationIdentifier={migrationIdentifier}
+          isReadyForCutover={isComplete}
+        />
       )}
 
       {/* Done Button */}

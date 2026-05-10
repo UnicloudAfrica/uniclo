@@ -316,11 +316,16 @@ const SlaCompliancePanel: React.FC<SlaCompliancePanelProps> = ({ pairId, classNa
       {/* ---- Body ---- */}
       <div style={s.body}>
         {isLoading ? (
-          <div style={s.loading}>Loading SLA data...</div>
+          <div style={s.loading}>Checking your SLA…</div>
         ) : !sla ? (
           <div style={s.empty}>
-            <ShieldCheck size={32} color="var(--ds-text-subtle, #d1d5db)" style={{ marginBottom: 8 }} />
-            <p style={{ margin: 0 }}>No SLA data available</p>
+            <span aria-hidden="true" style={{ fontSize: 40, display: "block", marginBottom: 8 }}>
+              📊
+            </span>
+            <p style={{ margin: 0, fontWeight: 600 }}>No SLA data yet</p>
+            <p style={{ margin: "6px 0 0", fontSize: 13, opacity: 0.8 }}>
+              Once your replication has been running for a while, we'll start tracking how well it's hitting your recovery targets.
+            </p>
           </div>
         ) : (
           <>

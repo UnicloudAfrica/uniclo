@@ -13,6 +13,19 @@ interface NetworkSecurityCardProps {
   providerDetails: unknown;
 }
 
+type SecurityEntry = {
+  label: string;
+  value?: string | null;
+  chips?: unknown[];
+  volumes?: ResourceVolume[];
+};
+
+type ProviderEntry = {
+  label: string;
+  value?: string | number | null | undefined;
+  copyable?: boolean;
+};
+
 const NetworkSecurityCard: React.FC<NetworkSecurityCardProps> = ({
   displayInstance,
   effectiveMetadata,
@@ -229,12 +242,12 @@ const NetworkSecurityCard: React.FC<NetworkSecurityCardProps> = ({
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {networkTopologySummary?.publicIps?.length ? (
-                  networkTopologySummary.publicIps.map((ip: unknown) => (
+                  networkTopologySummary.publicIps.map((ip) => (
                     <span
-                      key={`public-${ip}`}
+                      key={`public-${String(ip)}`}
                       className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700"
                     >
-                      {ip}
+                      {String(ip)}
                     </span>
                   ))
                 ) : (
@@ -248,12 +261,12 @@ const NetworkSecurityCard: React.FC<NetworkSecurityCardProps> = ({
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {networkTopologySummary?.privateIps?.length ? (
-                  networkTopologySummary.privateIps.map((ip: unknown) => (
+                  networkTopologySummary.privateIps.map((ip) => (
                     <span
-                      key={`private-${ip}`}
+                      key={`private-${String(ip)}`}
                       className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700"
                     >
-                      {ip}
+                      {String(ip)}
                     </span>
                   ))
                 ) : (
@@ -270,7 +283,7 @@ const NetworkSecurityCard: React.FC<NetworkSecurityCardProps> = ({
 
         {hasSecurityDetails ? (
           <div className="space-y-3">
-            {securitySummaryEntries.map((entry: unknown) => (
+            {(securitySummaryEntries as SecurityEntry[]).map((entry) => (
               <div
                 key={entry.label}
                 className="rounded-xl border border-slate-200 bg-white px-4 py-3"
@@ -283,12 +296,12 @@ const NetworkSecurityCard: React.FC<NetworkSecurityCardProps> = ({
                 )}
                 {entry.chips?.length ? (
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {entry.chips.map((chip: unknown) => (
+                    {entry.chips.map((chip) => (
                       <span
-                        key={chip}
+                        key={String(chip)}
                         className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700"
                       >
-                        {chip}
+                        {String(chip)}
                       </span>
                     ))}
                   </div>
@@ -325,7 +338,7 @@ const NetworkSecurityCard: React.FC<NetworkSecurityCardProps> = ({
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            {providerSnapshotEntries.map((entry: unknown) => (
+            {(providerSnapshotEntries as ProviderEntry[]).map((entry) => (
               <div
                 key={entry.label}
                 className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
@@ -336,7 +349,7 @@ const NetworkSecurityCard: React.FC<NetworkSecurityCardProps> = ({
                   </p>
                   {entry.copyable && entry.value && entry.value !== "N/A" ? (
                     <button
-                      onClick={() => navigator.clipboard.writeText(entry.value)}
+                      onClick={() => navigator.clipboard.writeText(String(entry.value))}
                       className="rounded-full p-1 text-slate-400 transition hover:bg-white hover:text-slate-700"
                       title={`Copy ${entry.label}`}
                     >
@@ -344,7 +357,7 @@ const NetworkSecurityCard: React.FC<NetworkSecurityCardProps> = ({
                     </button>
                   ) : null}
                 </div>
-                <p className="mt-1 text-sm font-semibold text-slate-900">{entry.value}</p>
+                <p className="mt-1 text-sm font-semibold text-slate-900">{String(entry.value ?? "")}</p>
               </div>
             ))}
           </div>

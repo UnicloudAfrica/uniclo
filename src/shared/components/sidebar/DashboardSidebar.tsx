@@ -105,10 +105,16 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         onClick={onCloseMobileMenu}
       >
         <div
-          className={`fixed top-0 left-0 h-full w-[280px] bg-[--theme-color] text-white flex flex-col transform transition-transform duration-300 ease-in-out ${
+          className={`fixed top-0 left-0 h-full w-[280px] text-white flex flex-col transform transition-transform duration-300 ease-in-out ${
             isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
           }`}
-          style={themeColor ? { backgroundColor: themeColor } : undefined}
+          // Always read the live CSS variable so the TenantThemeSwitcher
+          // (which flips `data-tenant` on `<html>`) and the branding
+          // hook (which writes `--theme-color` on `:root`) both flow
+          // through. The previous inline `backgroundColor: themeColor`
+          // captured the value at hook-fetch time and ignored later
+          // theme switches.
+          style={{ backgroundColor: "var(--theme-color)" }}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex justify-between items-center p-6">

@@ -12,6 +12,7 @@ import {
 } from "@/hooks/adminHooks/regionHooks";
 import ToastUtils from "@/utils/toastUtil";
 import type { PricingRole } from "../PricingShell";
+import { compactInputClassName } from "./styles";
 
 /**
  * CatalogPane — single pane that renders the price table for any
@@ -274,10 +275,17 @@ const CatalogPane: React.FC<CatalogPaneProps> = ({
       return;
     }
     try {
-      await updatePricing({ id: row.pricingId as number, price_usd: value } as unknown as Record<
-        string,
-        unknown
-      >);
+      // The mutation expects `{ id, pricingData: { price_usd, ... } }`
+      // — sending a flat `{ id, price_usd }` makes the request body
+      // empty (pricingData is undefined) which is why the server kept
+      // returning "The price usd field is required" on every save.
+      await updatePricing({
+        id: row.pricingId as number,
+        pricingData: {
+          price_usd: value,
+          ...(row.currency ? { currency_code: row.currency } : {}),
+        },
+      } as unknown as Parameters<typeof updatePricing>[0]);
       ToastUtils.success(`Saved ${row.productName}.`);
       cancelEdit();
     } catch (error: unknown) {
@@ -286,8 +294,7 @@ const CatalogPane: React.FC<CatalogPaneProps> = ({
     }
   };
 
-  const inputCls =
-    "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100";
+  const inputCls = compactInputClassName;
 
   const colspan = role === "tenant" ? 6 : 5;
 
@@ -433,9 +440,19 @@ const CatalogPane: React.FC<CatalogPaneProps> = ({
                     )}
                   </td>
                   {role === "tenant" && (
-                    <td className="py-2 pr-3 text-right text-xs text-slate-400">
+                    <td className="py-2 pr-3 text-right text-xs">
+                      {/*
+                       * Region-qualified products (compute, OS, volumes,
+                       * etc.) carry per-(region, AZ, country) tenant
+                       * overrides on `tenant_product_pricings`. Editing
+                       * these inline would require region/AZ/country
+                       * context the catalog table doesn't surface yet,
+                       * so we route operators to the dedicated
+                       * tenant-pricing workflow instead of pretending
+                       * the override is "same as list".
+                       */}
                       <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-500">
-                        same as list
+                        {row.priceUsd === null ? "—" : "no override"}
                       </span>
                     </td>
                   )}

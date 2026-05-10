@@ -1,8 +1,9 @@
-import React, { type JSX } from "react";
+import React, { Suspense, type JSX } from "react";
 import { Navigate, useLocation, Outlet } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import useAuthStore from "../stores/authStore";
 import { useOnboardingState } from "../hooks/onboardingHooks";
+import ErrorBoundary from "../shared/components/ErrorBoundary";
 
 interface TenantRouteProps {
   children?: React.ReactNode;
@@ -41,8 +42,17 @@ export default function TenantRoute({ children }: TenantRouteProps): JSX.Element
     return <LoaderScreen />;
   }
 
+  // Per-route ErrorBoundary keyed by pathname so a render error in one
+  // route can't blank the whole tenant dashboard. Suspense covers the
+  // lazy-loaded infrastructure pages.
+  const renderGuarded = (node: React.ReactNode): JSX.Element => (
+    <ErrorBoundary key={location.pathname}>
+      <Suspense fallback={<LoaderScreen />}>{node as JSX.Element}</Suspense>
+    </ErrorBoundary>
+  );
+
   if (error) {
-    return (children || <Outlet />) as JSX.Element;
+    return renderGuarded(children || <Outlet />);
   }
 
   const status = (onboarding as { status?: string } | undefined)?.status ?? "pending";
@@ -55,5 +65,5 @@ export default function TenantRoute({ children }: TenantRouteProps): JSX.Element
     return <Navigate to="/dashboard" replace />;
   }
 
-  return (children || <Outlet />) as JSX.Element;
+  return renderGuarded(children || <Outlet />);
 }

@@ -2,109 +2,113 @@ import { lazy, Suspense, type JSX } from "react";
 import { Route, Outlet, Navigate } from "react-router-dom";
 import ObjectStorageProvider from "../contexts/ObjectStorageContext";
 import AdminRoute from "./AdminRoute";
-import AdminDashboard from "../adminDashboard/pages/AdminDashboard";
-import AdminPartners from "../adminDashboard/pages/AdminPartners";
-import AdminPartnerCreate from "../adminDashboard/pages/AdminPartnerCreate";
-import AdminPartnerDetails from "../adminDashboard/pages/AdminPartnerDetails";
-import AdminClients from "../adminDashboard/pages/AdminClients";
-import AdminClientCreate from "../adminDashboard/pages/AdminClientCreate";
-import AdminClientDetails from "../adminDashboard/pages/AdminClientDetails";
-import AdminPayment from "../adminDashboard/pages/adminPayment";
-import AdminPaymentDetails from "../adminDashboard/pages/adminPaymentDetails";
+const AdminDashboard = lazy(() => import("../adminDashboard/pages/AdminDashboard"));
+const AdminPartners = lazy(() => import("../adminDashboard/pages/AdminPartners"));
+const AdminPartnerCreate = lazy(() => import("../adminDashboard/pages/AdminPartnerCreate"));
+const AdminPartnerDetails = lazy(() => import("../adminDashboard/pages/AdminPartnerDetails"));
+const AdminClients = lazy(() => import("../adminDashboard/pages/AdminClients"));
+const AdminClientCreate = lazy(() => import("../adminDashboard/pages/AdminClientCreate"));
+const AdminClientDetails = lazy(() => import("../adminDashboard/pages/AdminClientDetails"));
+const AdminPayment = lazy(() => import("../adminDashboard/pages/adminPayment"));
+const AdminPaymentDetails = lazy(() => import("../adminDashboard/pages/adminPaymentDetails"));
 import VerifyAdminMail from "../adminDashboard/pages/AdminVerify";
 import AdminLogin from "../adminDashboard/pages/AdminSignin";
-import AdminPurchasedModules from "../adminDashboard/pages/adminPurchasedModules";
-import AdminInventory from "../adminDashboard/pages/adminInventory";
-import AdminTax from "../adminDashboard/pages/adminTax";
-import AdminUsers from "../adminDashboard/pages/AdminUsers";
-import AdminUserCreate from "../adminDashboard/pages/adminUserCreate";
-import AdminUserDetails from "../adminDashboard/pages/adminUserDetails";
-import AdminUserEdit from "../adminDashboard/pages/adminUserEdit";
-import AdminProjects from "../adminDashboard/pages/adminProjects";
-import AdminProjectCreate from "../adminDashboard/pages/adminProjectCreate";
-import AdminProjectDetails from "../adminDashboard/pages/AdminProjectDetails";
-
-import AdminOnboardingSettings from "../adminDashboard/pages/adminOnboardingSettings";
-import AdminLeads from "../adminDashboard/pages/adminLeads";
-import AdminLeadCreate from "../adminDashboard/pages/adminLeadCreate";
-import AdminLeadDetails from "../adminDashboard/pages/adminLeadDetails";
-import AdminRegion from "../adminDashboard/pages/adminRegion";
-import AdminPricing from "../adminDashboard/pages/adminPricing";
-import AdminProducts from "../adminDashboard/pages/AdminProducts";
-import AdminProductFamilies from "../adminDashboard/pages/AdminProductFamilies";
-import AdminCatalogCreate from "../adminDashboard/pages/AdminCatalogCreate";
+import AdminTwoFactorEnroll from "../adminDashboard/pages/AdminTwoFactorEnroll";
+const AdminTwoFactorSettings = lazy(() => import("../adminDashboard/pages/AdminTwoFactorSettings"));
+const AdminTwoFactorManage = lazy(() => import("../adminDashboard/pages/AdminTwoFactorManage"));
+const AdminPurchasedModules = lazy(() => import("../adminDashboard/pages/adminPurchasedModules"));
+const AdminInventory = lazy(() => import("../adminDashboard/pages/adminInventory"));
+const AdminTax = lazy(() => import("../adminDashboard/pages/adminTax"));
+const AdminUsers = lazy(() => import("../adminDashboard/pages/AdminUsers"));
+const AdminUserCreate = lazy(() => import("../adminDashboard/pages/adminUserCreate"));
+const AdminUserDetails = lazy(() => import("../adminDashboard/pages/adminUserDetails"));
+const AdminUserEdit = lazy(() => import("../adminDashboard/pages/adminUserEdit"));
+const AdminProjects = lazy(() => import("../adminDashboard/pages/adminProjects"));
+const AdminProjectCreate = lazy(() => import("../adminDashboard/pages/adminProjectCreate"));
+const AdminProjectDetails = lazy(() => import("../adminDashboard/pages/AdminProjectDetails"));
+const AdminOnboardingSettings = lazy(() => import("../adminDashboard/pages/adminOnboardingSettings"));
+const AdminLeads = lazy(() => import("../adminDashboard/pages/adminLeads"));
+const AdminLeadCreate = lazy(() => import("../adminDashboard/pages/adminLeadCreate"));
+const AdminLeadDetails = lazy(() => import("../adminDashboard/pages/adminLeadDetails"));
+const AdminRegion = lazy(() => import("../adminDashboard/pages/adminRegion"));
+const AdminPricing = lazy(() => import("../adminDashboard/pages/adminPricing"));
+const AdminProducts = lazy(() => import("../adminDashboard/pages/AdminProducts"));
+const AdminProductFamilies = lazy(() => import("../adminDashboard/pages/AdminProductFamilies"));
+const AdminCatalogCreate = lazy(() => import("../adminDashboard/pages/AdminCatalogCreate"));
 // Unified pricing shell — replaces the legacy hub + per-track screens
 // (AdminFlowPlanPricing / AdminShieldPricing / AdminMeteredPricing /
 // AdminPricingHub). The legacy URLs still resolve via redirects below
 // so deep links don't break.
-import PricingShell from "../adminDashboard/pages/pricing/PricingShell";
-import AdminPricingEdit from "../adminDashboard/pages/AdminPricingEdit";
-import AdminTemplates from "../adminDashboard/pages/AdminTemplates";
-import CreateInvoice from "../adminDashboard/pages/CreateInvoice";
-import AdminPricingCalculator from "../adminDashboard/pages/AdminPricingCalculator";
-import AdminProviderUnitCosts from "../adminDashboard/pages/AdminProviderUnitCosts";
-import AdminPublishedFxRates from "../adminDashboard/pages/AdminPublishedFxRates";
-import AdminPricingLocalizations from "../adminDashboard/pages/AdminPricingLocalizations";
-import AdminInfrastructureSetup from "../adminDashboard/pages/adminInfrastructureSetup";
-import AdminObjectStorage from "../adminDashboard/pages/adminObjectStorage";
-import AdminObjectStorageCreate from "../adminDashboard/pages/adminObjectStorageCreate";
-import AdminObjectStorageDetail from "../adminDashboard/pages/AdminObjectStorageDetail";
-import AdminCreateInstance from "../adminDashboard/pages/AdminCreateInstance";
-import EnhancedProfileSettings from "../adminDashboard/pages/EnhancedProfileSettings";
-import AdminInstances from "../adminDashboard/pages/AdminInstances";
-import AdminInstancesDetails from "../adminDashboard/pages/adminInstancesDetails";
-import RegionApprovals from "../adminDashboard/pages/RegionApprovals";
-import RegionApprovalDetail from "../adminDashboard/pages/RegionApprovalDetail";
-import RegionApprovalEdit from "../adminDashboard/pages/RegionApprovalEdit";
-import RegionApprovalCreate from "../adminDashboard/pages/RegionApprovalCreate";
-import RegionCreate from "../adminDashboard/pages/RegionCreate";
-import RegionDetail from "../adminDashboard/pages/RegionDetail";
-import RegionEdit from "../adminDashboard/pages/RegionEdit";
-import AdminOnboardingReview from "../adminDashboard/pages/AdminOnboardingReview";
-import AdminProviderDiscovery from "../adminDashboard/pages/AdminProviderDiscovery";
+const PricingShell = lazy(() => import("../adminDashboard/pages/pricing/PricingShell"));
+const AdminPricingEdit = lazy(() => import("../adminDashboard/pages/AdminPricingEdit"));
+const AdminTemplates = lazy(() => import("../adminDashboard/pages/AdminTemplates"));
+const CreateInvoice = lazy(() => import("../adminDashboard/pages/CreateInvoice"));
+const AdminPricingCalculator = lazy(() => import("../adminDashboard/pages/AdminPricingCalculator"));
+const AdminProviderUnitCosts = lazy(() => import("../adminDashboard/pages/AdminProviderUnitCosts"));
+const AdminPublishedFxRates = lazy(() => import("../adminDashboard/pages/AdminPublishedFxRates"));
+const AdminPricingLocalizations = lazy(() => import("../adminDashboard/pages/AdminPricingLocalizations"));
+const AdminInfrastructureSetup = lazy(() => import("../adminDashboard/pages/adminInfrastructureSetup"));
+const AdminObjectStorage = lazy(() => import("../adminDashboard/pages/adminObjectStorage"));
+const AdminObjectStorageCreate = lazy(() => import("../adminDashboard/pages/adminObjectStorageCreate"));
+const AdminObjectStorageDetail = lazy(() => import("../adminDashboard/pages/AdminObjectStorageDetail"));
+const AdminCreateInstance = lazy(() => import("../adminDashboard/pages/AdminCreateInstance"));
+const EnhancedProfileSettings = lazy(() => import("../adminDashboard/pages/EnhancedProfileSettings"));
+const AdminInstances = lazy(() => import("../adminDashboard/pages/AdminInstances"));
+const AdminInstancesDetails = lazy(() => import("../adminDashboard/pages/adminInstancesDetails"));
+const RegionApprovals = lazy(() => import("../adminDashboard/pages/RegionApprovals"));
+const RegionApprovalDetail = lazy(() => import("../adminDashboard/pages/RegionApprovalDetail"));
+const RegionApprovalEdit = lazy(() => import("../adminDashboard/pages/RegionApprovalEdit"));
+const RegionApprovalCreate = lazy(() => import("../adminDashboard/pages/RegionApprovalCreate"));
+const RegionCreate = lazy(() => import("../adminDashboard/pages/RegionCreate"));
+const RegionDetail = lazy(() => import("../adminDashboard/pages/RegionDetail"));
+const RegionEdit = lazy(() => import("../adminDashboard/pages/RegionEdit"));
+const AdminOnboardingReview = lazy(() => import("../adminDashboard/pages/AdminOnboardingReview"));
+const AdminProviderDiscovery = lazy(() => import("../adminDashboard/pages/AdminProviderDiscovery"));
 import AdminDocsLayout from "../adminDashboard/pages/docs/AdminDocsLayout";
-import AdminDocPage from "../adminDashboard/pages/docs/AdminDocPage";
+const AdminDocPage = lazy(() => import("../adminDashboard/pages/docs/AdminDocPage"));
 import DocEditor from "../docs/renderer/DocEditor";
-import AdminSubscriptionPlans from "../adminDashboard/pages/AdminSubscriptionPlans";
-import WalletDashboard from "../adminDashboard/pages/WalletDashboard";
-import SettlementsDashboard from "../adminDashboard/pages/SettlementsDashboard";
-import PayoutsDashboard from "../adminDashboard/pages/PayoutsDashboard";
-import AnalyticsDashboard from "../adminDashboard/pages/AnalyticsDashboard";
-import AdminDeveloperPortal from "../adminDashboard/pages/AdminDeveloperPortal";
-import AdminBridgeClients from "../adminDashboard/pages/AdminBridgeClients";
-import TicketsDashboard from "../adminDashboard/pages/TicketsDashboard";
-import AdminTicketDetail from "../adminDashboard/pages/AdminTicketDetail";
-import AdminManagedDatabases from "../adminDashboard/pages/AdminManagedDatabases";
-import AdminMonitoring from "../adminDashboard/pages/AdminMonitoring";
-import AdminNocDashboard from "../adminDashboard/pages/AdminNocDashboard";
-import AdminNocRegionDetail from "../adminDashboard/pages/AdminNocRegionDetail";
-import AdminNocTopology from "../adminDashboard/pages/AdminNocTopology";
-import AdminNocGrafanaDocs from "../adminDashboard/pages/AdminNocGrafanaDocs";
-import AdminUiPlayground from "../adminDashboard/pages/AdminUiPlayground";
-import AdminPaymentSplits from "../adminDashboard/pages/AdminPaymentSplits";
-import AdminMigrationCalculator from "../adminDashboard/pages/AdminMigrationCalculator";
-import AdminAcfFastTrack from "../adminDashboard/pages/AdminAcfFastTrack";
-import AdminAcfDirectProvision from "../adminDashboard/pages/AdminAcfDirectProvision";
-import AdminDatabaseCreate from "../adminDashboard/pages/AdminDatabaseCreate";
-import AdminDatabaseDetail from "../adminDashboard/pages/AdminDatabaseDetail";
-import AdminProtection from "../adminDashboard/pages/AdminProtection";
-import AdminMigrations from "../adminDashboard/pages/AdminMigrations";
-import AdminMigrationWizard from "../adminDashboard/pages/AdminMigrationWizard";
-import AdminBatchMigrations from "../adminDashboard/pages/AdminBatchMigrations";
-import AdminBatchMigrationWizard from "../adminDashboard/pages/AdminBatchMigrationWizard";
-import AdminBatchMigrationDetail from "../adminDashboard/pages/AdminBatchMigrationDetail";
-import AdminFailedJobs from "../adminDashboard/pages/AdminFailedJobs";
-import AdminImageRequests from "../adminDashboard/pages/AdminImageRequests";
-import AdminLoadBalancers from "../adminDashboard/pages/AdminLoadBalancers";
-import AdminDnsZones from "../adminDashboard/pages/AdminDnsZones";
-import AdminDestinations from "../adminDashboard/pages/AdminDestinations";
-import AdminServerlessDr from "../adminDashboard/pages/AdminServerlessDr";
-import AdminAgent from "../adminDashboard/pages/AdminAgent";
-import AdminPocTrials from "../adminDashboard/pages/AdminPocTrials";
-import AdminDrDrills from "../adminDashboard/pages/AdminDrDrills";
-import AdminHypervisor from "../adminDashboard/pages/AdminHypervisor";
-import AdminDatabaseReplication from "../adminDashboard/pages/AdminDatabaseReplication";
-import AdminRansomware from "../adminDashboard/pages/AdminRansomware";
+const AdminSubscriptionPlans = lazy(() => import("../adminDashboard/pages/AdminSubscriptionPlans"));
+const WalletDashboard = lazy(() => import("../adminDashboard/pages/WalletDashboard"));
+const SettlementsDashboard = lazy(() => import("../adminDashboard/pages/SettlementsDashboard"));
+const PayoutsDashboard = lazy(() => import("../adminDashboard/pages/PayoutsDashboard"));
+const AnalyticsDashboard = lazy(() => import("../adminDashboard/pages/AnalyticsDashboard"));
+const AdminDeveloperPortal = lazy(() => import("../adminDashboard/pages/AdminDeveloperPortal"));
+const AdminBridgeClients = lazy(() => import("../adminDashboard/pages/AdminBridgeClients"));
+const TicketsDashboard = lazy(() => import("../adminDashboard/pages/TicketsDashboard"));
+const AdminTicketDetail = lazy(() => import("../adminDashboard/pages/AdminTicketDetail"));
+const AdminManagedDatabases = lazy(() => import("../adminDashboard/pages/AdminManagedDatabases"));
+const AdminMonitoring = lazy(() => import("../adminDashboard/pages/AdminMonitoring"));
+const AdminNocDashboard = lazy(() => import("../adminDashboard/pages/AdminNocDashboard"));
+const AdminNocRegionDetail = lazy(() => import("../adminDashboard/pages/AdminNocRegionDetail"));
+const AdminNocTopology = lazy(() => import("../adminDashboard/pages/AdminNocTopology"));
+const AdminNocGrafanaDocs = lazy(() => import("../adminDashboard/pages/AdminNocGrafanaDocs"));
+const AdminUiPlayground = lazy(() => import("../adminDashboard/pages/AdminUiPlayground"));
+const AdminPaymentSplits = lazy(() => import("../adminDashboard/pages/AdminPaymentSplits"));
+const AdminMigrationCalculator = lazy(() => import("../adminDashboard/pages/AdminMigrationCalculator"));
+const AdminAcfFastTrack = lazy(() => import("../adminDashboard/pages/AdminAcfFastTrack"));
+const AdminAcfDirectProvision = lazy(() => import("../adminDashboard/pages/AdminAcfDirectProvision"));
+const AdminDatabaseCreate = lazy(() => import("../adminDashboard/pages/AdminDatabaseCreate"));
+const AdminDatabaseDetail = lazy(() => import("../adminDashboard/pages/AdminDatabaseDetail"));
+const AdminProtection = lazy(() => import("../adminDashboard/pages/AdminProtection"));
+const AdminMigrations = lazy(() => import("../adminDashboard/pages/AdminMigrations"));
+const AdminMigrationWizard = lazy(() => import("../adminDashboard/pages/AdminMigrationWizard"));
+const AdminBatchMigrations = lazy(() => import("../adminDashboard/pages/AdminBatchMigrations"));
+const AdminBatchMigrationWizard = lazy(() => import("../adminDashboard/pages/AdminBatchMigrationWizard"));
+const AdminBatchMigrationDetail = lazy(() => import("../adminDashboard/pages/AdminBatchMigrationDetail"));
+const AdminFailedJobs = lazy(() => import("../adminDashboard/pages/AdminFailedJobs"));
+const AdminImageRequests = lazy(() => import("../adminDashboard/pages/AdminImageRequests"));
+const AdminLoadBalancers = lazy(() => import("../adminDashboard/pages/AdminLoadBalancers"));
+const AdminDnsZones = lazy(() => import("../adminDashboard/pages/AdminDnsZones"));
+const AdminDestinations = lazy(() => import("../adminDashboard/pages/AdminDestinations"));
+const AdminDestinationNew = lazy(() => import("../adminDashboard/pages/AdminDestinationNew"));
+const AdminServerlessDr = lazy(() => import("../adminDashboard/pages/AdminServerlessDr"));
+const AdminServerlessDrNew = lazy(() => import("../adminDashboard/pages/AdminServerlessDrNew"));
+const AdminAgent = lazy(() => import("../adminDashboard/pages/AdminAgent"));
+const AdminPocTrials = lazy(() => import("../adminDashboard/pages/AdminPocTrials"));
+const AdminDrDrills = lazy(() => import("../adminDashboard/pages/AdminDrDrills"));
+const AdminHypervisor = lazy(() => import("../adminDashboard/pages/AdminHypervisor"));
+const AdminDatabaseReplication = lazy(() => import("../adminDashboard/pages/AdminDatabaseReplication"));
+const AdminRansomware = lazy(() => import("../adminDashboard/pages/AdminRansomware"));
 const AdminExchangeRates = lazy(() => import("../adminDashboard/pages/AdminExchangeRates"));
 const AdminAccounting = lazy(() => import("../adminDashboard/pages/AdminAccounting"));
 const AdminShieldDomains = lazy(() => import("../adminDashboard/pages/AdminShieldDomains"));
@@ -117,56 +121,62 @@ const AdminShieldFirewall = lazy(() => import("../adminDashboard/pages/AdminShie
 const AdminShieldAttacks = lazy(() => import("../adminDashboard/pages/AdminShieldAttacks"));
 const AdminShieldAnalytics = lazy(() => import("../adminDashboard/pages/AdminShieldAnalytics"));
 const AdminShieldSsl = lazy(() => import("../adminDashboard/pages/AdminShieldSsl"));
-import AdminCloudAccounts from "../adminDashboard/pages/AdminCloudAccounts";
-import AdminCloudAccountCreate from "../adminDashboard/pages/AdminCloudAccountCreate";
-import AdminCloudAccountDetail from "../adminDashboard/pages/AdminCloudAccountDetail";
-import IntegrationPartnerPayoutsDashboard from "../adminDashboard/pages/IntegrationPartnerPayoutsDashboard";
-import IntegrationPartnerLedgerDashboard from "../adminDashboard/pages/IntegrationPartnerLedgerDashboard";
+const AdminCloudAccounts = lazy(() => import("../adminDashboard/pages/AdminCloudAccounts"));
+const AdminCloudAccountCreate = lazy(() => import("../adminDashboard/pages/AdminCloudAccountCreate"));
+const AdminCloudAccountDetail = lazy(() => import("../adminDashboard/pages/AdminCloudAccountDetail"));
+const IntegrationPartnerPayoutsDashboard = lazy(() => import("../adminDashboard/pages/IntegrationPartnerPayoutsDashboard"));
+const IntegrationPartnerLedgerDashboard = lazy(() => import("../adminDashboard/pages/IntegrationPartnerLedgerDashboard"));
 // AnyCloudFlow admin pages — security, audit, notifications, advanced replication
-import AcfTwoFactorPage from "../adminDashboard/pages/integrations/anycloudflow/TwoFactorPage";
-import AcfIpAllowlistPage from "../adminDashboard/pages/integrations/anycloudflow/IpAllowlistPage";
-import AcfSshHostKeysPage from "../adminDashboard/pages/integrations/anycloudflow/SshHostKeysPage";
-import AcfApiKeyRotationPage from "../adminDashboard/pages/integrations/anycloudflow/ApiKeyRotationPage";
-import AcfAuditLogPage from "../adminDashboard/pages/integrations/anycloudflow/AuditLogPage";
-import AcfNotificationPreferencesPage from "../adminDashboard/pages/integrations/anycloudflow/NotificationPreferencesPage";
-import AcfWebhookDeadLettersPage from "../adminDashboard/pages/integrations/anycloudflow/WebhookDeadLettersPage";
-import AcfAdvancedReplicationPage from "../adminDashboard/pages/integrations/anycloudflow/AdvancedReplicationPage";
-import AcfJournalEntriesPage from "../adminDashboard/pages/integrations/anycloudflow/JournalEntriesPage";
-import AcfZfsReplicationPage from "../adminDashboard/pages/integrations/anycloudflow/ZfsReplicationPage";
-import AcfBucketEndpointsPage from "../adminDashboard/pages/integrations/anycloudflow/buckets/BucketEndpointsPage";
-import AcfBucketMigrationsPage from "../adminDashboard/pages/integrations/anycloudflow/buckets/BucketMigrationsPage";
-import AcfBucketMigrationDetailPage from "../adminDashboard/pages/integrations/anycloudflow/buckets/BucketMigrationDetailPage";
-import AcfBucketReplicationsPage from "../adminDashboard/pages/integrations/anycloudflow/buckets/BucketReplicationsPage";
-import AcfBucketReplicationDetailPage from "../adminDashboard/pages/integrations/anycloudflow/buckets/BucketReplicationDetailPage";
-import AcfBucketAccessGrantsPage from "../adminDashboard/pages/integrations/anycloudflow/buckets/AdminBucketAccessGrantsPage";
-import AdminFlow from "../adminDashboard/pages/AdminFlow";
-import AdminFlowDashboard from "../adminDashboard/pages/AdminFlowDashboard";
-
-// Infrastructure Pages
-import {
-  AdminNatGateways,
-  AdminElasticIps,
-  AdminSecurityGroups,
-  AdminSecurityGroupRules,
-  AdminSubnets,
-  AdminRouteTables,
-  AdminNetworkAcls,
-  AdminNetworkAclRules,
-  AdminVpcPeering,
-  AdminKeyPairs,
-  AdminNetworkInterfaces,
-  AdminVpcs,
-  AdminInternetGateways,
-  // Project-scoped LB view (per-project under /infrastructure/...) — aliased
-  // to avoid clashing with the top-level inventory `AdminLoadBalancers`
-  // page imported above (mounted under /inventory/...).
-  AdminLoadBalancers as AdminLoadBalancersProject,
-  AdminDnsManagement,
-  AdminSnapshots,
-  AdminImages,
-  AdminAutoScaling,
-} from "../adminDashboard/pages/infrastructure";
-import AdminKeyPairCreate from "../adminDashboard/pages/infrastructure/AdminKeyPairCreate";
+const AcfTwoFactorPage = lazy(() => import("../adminDashboard/pages/integrations/anycloudflow/TwoFactorPage"));
+const AcfIpAllowlistPage = lazy(() => import("../adminDashboard/pages/integrations/anycloudflow/IpAllowlistPage"));
+const AcfSshHostKeysPage = lazy(() => import("../adminDashboard/pages/integrations/anycloudflow/SshHostKeysPage"));
+const AcfApiKeyRotationPage = lazy(() => import("../adminDashboard/pages/integrations/anycloudflow/ApiKeyRotationPage"));
+const AcfAuditLogPage = lazy(() => import("../adminDashboard/pages/integrations/anycloudflow/AuditLogPage"));
+const AcfNotificationPreferencesPage = lazy(() => import("../adminDashboard/pages/integrations/anycloudflow/NotificationPreferencesPage"));
+const AcfWebhookDeadLettersPage = lazy(() => import("../adminDashboard/pages/integrations/anycloudflow/WebhookDeadLettersPage"));
+const AcfAdvancedReplicationPage = lazy(() => import("../adminDashboard/pages/integrations/anycloudflow/AdvancedReplicationPage"));
+const AcfJournalEntriesPage = lazy(() => import("../adminDashboard/pages/integrations/anycloudflow/JournalEntriesPage"));
+const AcfZfsReplicationPage = lazy(() => import("../adminDashboard/pages/integrations/anycloudflow/ZfsReplicationPage"));
+const AcfBucketEndpointsPage = lazy(() => import("../adminDashboard/pages/integrations/anycloudflow/buckets/BucketEndpointsPage"));
+const AcfBucketMigrationsPage = lazy(() => import("../adminDashboard/pages/integrations/anycloudflow/buckets/BucketMigrationsPage"));
+const AdminBucketMigrationNew = lazy(() => import("../adminDashboard/pages/integrations/anycloudflow/buckets/AdminBucketMigrationNew"));
+const AcfBucketMigrationDetailPage = lazy(() => import("../adminDashboard/pages/integrations/anycloudflow/buckets/BucketMigrationDetailPage"));
+const AcfBucketReplicationsPage = lazy(() => import("../adminDashboard/pages/integrations/anycloudflow/buckets/BucketReplicationsPage"));
+const AdminBucketReplicationNew = lazy(() => import("../adminDashboard/pages/integrations/anycloudflow/buckets/AdminBucketReplicationNew"));
+const AcfBucketReplicationDetailPage = lazy(() => import("../adminDashboard/pages/integrations/anycloudflow/buckets/BucketReplicationDetailPage"));
+const AcfBucketAccessGrantsPage = lazy(() => import("../adminDashboard/pages/integrations/anycloudflow/buckets/AdminBucketAccessGrantsPage"));
+const AdminFlow = lazy(() => import("../adminDashboard/pages/AdminFlow"));
+const AdminFlowDashboard = lazy(() => import("../adminDashboard/pages/AdminFlowDashboard"));
+// Infrastructure pages — lazy-loaded so the barrel doesn't pull every
+// VPC/route-table/load-balancer page into the initial admin bundle.
+// Each page is its own chunk; the existing `<Suspense>` wrapper at the
+// top of the routes tree handles the fallback.
+const AdminNatGateways = lazy(() => import("../adminDashboard/pages/infrastructure/AdminNatGateways"));
+const AdminElasticIps = lazy(() => import("../adminDashboard/pages/infrastructure/AdminElasticIps"));
+const AdminSecurityGroups = lazy(() => import("../adminDashboard/pages/infrastructure/AdminSecurityGroups"));
+const AdminSecurityGroupRules = lazy(() => import("../adminDashboard/pages/infrastructure/AdminSecurityGroupRules"));
+const AdminSubnets = lazy(() => import("../adminDashboard/pages/infrastructure/AdminSubnets"));
+const AdminRouteTables = lazy(() => import("../adminDashboard/pages/infrastructure/AdminRouteTables"));
+const AdminNetworkAcls = lazy(() => import("../adminDashboard/pages/infrastructure/AdminNetworkAcls"));
+const AdminNetworkAclRules = lazy(() => import("../adminDashboard/pages/infrastructure/AdminNetworkAclRules"));
+const AdminVpcPeering = lazy(() => import("../adminDashboard/pages/infrastructure/AdminVpcPeering"));
+const AdminKeyPairs = lazy(() => import("../adminDashboard/pages/infrastructure/AdminKeyPairs"));
+const AdminNetworkInterfaces = lazy(() => import("../adminDashboard/pages/infrastructure/AdminNetworkInterfaces"));
+const AdminVpcs = lazy(() => import("../adminDashboard/pages/infrastructure/AdminVpcs"));
+const AdminInternetGateways = lazy(() => import("../adminDashboard/pages/infrastructure/AdminInternetGateways"));
+// FR-043 — Orbit source-VM endpoints (admin variant)
+const AdminVmEndpoints = lazy(() => import("../adminDashboard/pages/integrations/orbit/AdminVmEndpoints"));
+const AdminVmEndpointNew = lazy(() => import("../adminDashboard/pages/integrations/orbit/AdminVmEndpointNew"));
+const AdminVmEndpointDetail = lazy(() => import("../adminDashboard/pages/integrations/orbit/AdminVmEndpointDetail"));
+// Project-scoped LB view (per-project under /infrastructure/...) — aliased
+// to avoid clashing with the top-level inventory `AdminLoadBalancers`
+// page imported above (mounted under /inventory/...).
+const AdminLoadBalancersProject = lazy(() => import("../adminDashboard/pages/infrastructure/AdminLoadBalancers"));
+const AdminDnsManagement = lazy(() => import("../adminDashboard/pages/infrastructure/AdminDnsManagement"));
+const AdminSnapshots = lazy(() => import("../adminDashboard/pages/infrastructure/AdminSnapshots"));
+const AdminImages = lazy(() => import("../adminDashboard/pages/infrastructure/AdminImages"));
+const AdminAutoScaling = lazy(() => import("../adminDashboard/pages/infrastructure/AdminAutoScaling"));
+const AdminKeyPairCreate = lazy(() => import("../adminDashboard/pages/infrastructure/AdminKeyPairCreate"));
 
 const ObjectStorageRouteProvider = (): JSX.Element => (
   <ObjectStorageProvider>
@@ -182,6 +192,12 @@ const AdminRoutes = (): JSX.Element => {
       {/* Public admin routes (no auth guard) */}
       <Route path="/admin-signin" element={<AdminLogin />} />
       <Route path="/verify-admin-mail" element={<VerifyAdminMail />} />
+      {/* 2FA enrollment — sits outside AdminRoute because the API
+          interceptor redirects authenticated-but-not-yet-enrolled
+          admins here. The page calls /api/v1/2fa-setup + /2fa-enable
+          which are gated by `auth:sanctum` only, not the `2fa`
+          middleware (chicken-and-egg). */}
+      <Route path="/admin-2fa-enroll" element={<AdminTwoFactorEnroll />} />
 
       {/* Protected admin routes */}
       <Route element={<AdminRoute />}>
@@ -283,6 +299,22 @@ const AdminRoutes = (): JSX.Element => {
         />
 
         <Route path="/admin-dashboard/account" element={<EnhancedProfileSettings />} />
+        <Route
+          path="/admin-dashboard/security/2fa-policy"
+          element={
+            <Suspense fallback={null}>
+              <AdminTwoFactorSettings />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/admin-dashboard/security/2fa"
+          element={
+            <Suspense fallback={null}>
+              <AdminTwoFactorManage />
+            </Suspense>
+          }
+        />
         <Route path="/admin-dashboard/cube-instances" element={<AdminInstances />} />
         <Route path="/admin-dashboard/cube-instances/details" element={<AdminInstancesDetails />} />
 
@@ -316,6 +348,8 @@ const AdminRoutes = (): JSX.Element => {
         <Route path="/admin-dashboard/inventory/load-balancers" element={<AdminLoadBalancers />} />
         <Route path="/admin-dashboard/inventory/dns-zones" element={<AdminDnsZones />} />
         <Route path="/admin-dashboard/destinations" element={<AdminDestinations />} />
+        {/* /new must precede /:id so the static segment wins (RES-162) */}
+        <Route path="/admin-dashboard/destinations/new" element={<AdminDestinationNew />} />
 
         <Route path="/admin-dashboard/shield/domains" element={<Suspense fallback={null}><AdminShieldDomains /></Suspense>} />
         <Route path="/admin-dashboard/shield/domains/:domainId" element={<Suspense fallback={null}><AdminShieldDomainDetail /></Suspense>} />
@@ -325,13 +359,24 @@ const AdminRoutes = (): JSX.Element => {
         <Route path="/admin-dashboard/shield/overview" element={<Suspense fallback={null}><AdminShieldOverview /></Suspense>} />
         <Route path="/admin-dashboard/shield/attack-map" element={<Suspense fallback={null}><AdminShieldAttackMap /></Suspense>} />
         <Route path="/admin-dashboard/shield/firewall" element={<Suspense fallback={null}><AdminShieldFirewall /></Suspense>} />
-        <Route path="/admin-dashboard/anycloudflow/calculator" element={<AdminMigrationCalculator />} />
-        <Route path="/admin-dashboard/anycloudflow/fast-track" element={<AdminAcfFastTrack />} />
-        <Route path="/admin-dashboard/anycloudflow/direct-provision" element={<AdminAcfDirectProvision />} />
+        {/* Orbit (white-label of resilience subsystem) — primary paths */}
+        <Route path="/admin-dashboard/orbit/calculator" element={<AdminMigrationCalculator />} />
+        {/* FR-043 — Source VM endpoints + assessment.
+            Order matters: list THEN /new (specific) THEN /:id (catch-all). */}
+        <Route path="/admin-dashboard/integrations/orbit/vms" element={<AdminVmEndpoints />} />
+        <Route path="/admin-dashboard/integrations/orbit/vms/new" element={<AdminVmEndpointNew />} />
+        <Route path="/admin-dashboard/integrations/orbit/vms/:id" element={<AdminVmEndpointDetail />} />
+        <Route path="/admin-dashboard/orbit/fast-track" element={<AdminAcfFastTrack />} />
+        <Route path="/admin-dashboard/orbit/direct-provision" element={<AdminAcfDirectProvision />} />
+        {/* Legacy /anycloudflow/ aliases — redirect to /orbit/ to keep old bookmarks working */}
+        <Route path="/admin-dashboard/anycloudflow/calculator" element={<Navigate to="/admin-dashboard/orbit/calculator" replace />} />
+        <Route path="/admin-dashboard/anycloudflow/fast-track" element={<Navigate to="/admin-dashboard/orbit/fast-track" replace />} />
+        <Route path="/admin-dashboard/anycloudflow/direct-provision" element={<Navigate to="/admin-dashboard/orbit/direct-provision" replace />} />
         <Route path="/admin-dashboard/shield/attacks" element={<Suspense fallback={null}><AdminShieldAttacks /></Suspense>} />
         <Route path="/admin-dashboard/shield/analytics" element={<Suspense fallback={null}><AdminShieldAnalytics /></Suspense>} />
         <Route path="/admin-dashboard/shield/ssl" element={<Suspense fallback={null}><AdminShieldSsl /></Suspense>} />
         <Route path="/admin-dashboard/serverless-dr" element={<AdminServerlessDr />} />
+        <Route path="/admin-dashboard/serverless-dr/new" element={<AdminServerlessDrNew />} />
         <Route path="/admin-dashboard/agent" element={<AdminAgent />} />
 
         <Route element={<ObjectStorageRouteProvider />}>
@@ -358,29 +403,42 @@ const AdminRoutes = (): JSX.Element => {
         <Route path="/admin-dashboard/integration-partner-payouts" element={<IntegrationPartnerPayoutsDashboard />} />
         <Route path="/admin-dashboard/integration-partner-payouts/ledger" element={<IntegrationPartnerLedgerDashboard />} />
 
-        {/* AnyCloudFlow integration — security, audit, notifications, advanced replication */}
-        <Route path="/admin-dashboard/integrations/anycloudflow/two-factor" element={<AcfTwoFactorPage />} />
-        <Route path="/admin-dashboard/integrations/anycloudflow/ip-allowlist" element={<AcfIpAllowlistPage />} />
-        <Route path="/admin-dashboard/integrations/anycloudflow/ssh-host-keys" element={<AcfSshHostKeysPage />} />
-        <Route path="/admin-dashboard/integrations/anycloudflow/api-keys/rotate" element={<AcfApiKeyRotationPage />} />
-        <Route path="/admin-dashboard/integrations/anycloudflow/audit-log" element={<AcfAuditLogPage />} />
-        <Route path="/admin-dashboard/integrations/anycloudflow/notifications" element={<AcfNotificationPreferencesPage />} />
-        <Route path="/admin-dashboard/integrations/anycloudflow/webhook-dlq" element={<AcfWebhookDeadLettersPage />} />
-        <Route path="/admin-dashboard/integrations/anycloudflow/replications/:id/advanced" element={<AcfAdvancedReplicationPage />} />
-        <Route path="/admin-dashboard/integrations/anycloudflow/replications/:id/journal" element={<AcfJournalEntriesPage />} />
-        <Route path="/admin-dashboard/integrations/anycloudflow/replications/:id/zfs" element={<AcfZfsReplicationPage />} />
+        {/* Orbit integration surface — security, audit, notifications, advanced replication */}
+        <Route path="/admin-dashboard/integrations/orbit/two-factor" element={<AcfTwoFactorPage />} />
+        <Route path="/admin-dashboard/integrations/orbit/ip-allowlist" element={<AcfIpAllowlistPage />} />
+        <Route path="/admin-dashboard/integrations/orbit/ssh-host-keys" element={<AcfSshHostKeysPage />} />
+        <Route path="/admin-dashboard/integrations/orbit/api-keys/rotate" element={<AcfApiKeyRotationPage />} />
+        <Route path="/admin-dashboard/integrations/orbit/audit-log" element={<AcfAuditLogPage />} />
+        <Route path="/admin-dashboard/integrations/orbit/notifications" element={<AcfNotificationPreferencesPage />} />
+        <Route path="/admin-dashboard/integrations/orbit/webhook-dlq" element={<AcfWebhookDeadLettersPage />} />
+        <Route path="/admin-dashboard/integrations/orbit/replications/:id/advanced" element={<AcfAdvancedReplicationPage />} />
+        <Route path="/admin-dashboard/integrations/orbit/replications/:id/journal" element={<AcfJournalEntriesPage />} />
+        <Route path="/admin-dashboard/integrations/orbit/replications/:id/zfs" element={<AcfZfsReplicationPage />} />
 
-        {/* AnyCloudFlow — Object Storage (Bucket) Replication Phase 1 MVP */}
-        <Route path="/admin-dashboard/integrations/anycloudflow/buckets/endpoints" element={<AcfBucketEndpointsPage />} />
-        <Route path="/admin-dashboard/integrations/anycloudflow/buckets/migrations" element={<AcfBucketMigrationsPage />} />
-        <Route path="/admin-dashboard/integrations/anycloudflow/buckets/migrations/:id" element={<AcfBucketMigrationDetailPage />} />
+        {/* Orbit — Object Storage (Bucket) sync */}
+        <Route path="/admin-dashboard/integrations/orbit/buckets/endpoints" element={<AcfBucketEndpointsPage />} />
+        <Route path="/admin-dashboard/integrations/orbit/buckets/migrations" element={<AcfBucketMigrationsPage />} />
+        {/* /new must precede /:id so the static segment wins (RES-162) */}
+        <Route path="/admin-dashboard/integrations/orbit/buckets/migrations/new" element={<AdminBucketMigrationNew />} />
+        <Route path="/admin-dashboard/integrations/orbit/buckets/migrations/:id" element={<AcfBucketMigrationDetailPage />} />
+        <Route path="/admin-dashboard/integrations/orbit/buckets/replications" element={<AcfBucketReplicationsPage />} />
+        {/* /new must precede /:id so the static segment wins */}
+        <Route path="/admin-dashboard/integrations/orbit/buckets/replications/new" element={<AdminBucketReplicationNew />} />
+        <Route path="/admin-dashboard/integrations/orbit/buckets/replications/:id" element={<AcfBucketReplicationDetailPage />} />
+        <Route path="/admin-dashboard/integrations/orbit/buckets/client-access" element={<AcfBucketAccessGrantsPage />} />
 
-        {/* AnyCloudFlow — Bucket Replication Phase 2 (active-passive continuous) */}
-        <Route path="/admin-dashboard/integrations/anycloudflow/buckets/replications" element={<AcfBucketReplicationsPage />} />
-        <Route path="/admin-dashboard/integrations/anycloudflow/buckets/replications/:id" element={<AcfBucketReplicationDetailPage />} />
-
-        {/* BG-15 Path B — Bucket access-grant management */}
-        <Route path="/admin-dashboard/integrations/anycloudflow/buckets/client-access" element={<AcfBucketAccessGrantsPage />} />
+        {/* Legacy /anycloudflow/ aliases — redirect each to its /orbit/ counterpart */}
+        <Route path="/admin-dashboard/integrations/anycloudflow/two-factor" element={<Navigate to="/admin-dashboard/integrations/orbit/two-factor" replace />} />
+        <Route path="/admin-dashboard/integrations/anycloudflow/ip-allowlist" element={<Navigate to="/admin-dashboard/integrations/orbit/ip-allowlist" replace />} />
+        <Route path="/admin-dashboard/integrations/anycloudflow/ssh-host-keys" element={<Navigate to="/admin-dashboard/integrations/orbit/ssh-host-keys" replace />} />
+        <Route path="/admin-dashboard/integrations/anycloudflow/api-keys/rotate" element={<Navigate to="/admin-dashboard/integrations/orbit/api-keys/rotate" replace />} />
+        <Route path="/admin-dashboard/integrations/anycloudflow/audit-log" element={<Navigate to="/admin-dashboard/integrations/orbit/audit-log" replace />} />
+        <Route path="/admin-dashboard/integrations/anycloudflow/notifications" element={<Navigate to="/admin-dashboard/integrations/orbit/notifications" replace />} />
+        <Route path="/admin-dashboard/integrations/anycloudflow/webhook-dlq" element={<Navigate to="/admin-dashboard/integrations/orbit/webhook-dlq" replace />} />
+        <Route path="/admin-dashboard/integrations/anycloudflow/buckets/endpoints" element={<Navigate to="/admin-dashboard/integrations/orbit/buckets/endpoints" replace />} />
+        <Route path="/admin-dashboard/integrations/anycloudflow/buckets/migrations" element={<Navigate to="/admin-dashboard/integrations/orbit/buckets/migrations" replace />} />
+        <Route path="/admin-dashboard/integrations/anycloudflow/buckets/replications" element={<Navigate to="/admin-dashboard/integrations/orbit/buckets/replications" replace />} />
+        <Route path="/admin-dashboard/integrations/anycloudflow/buckets/client-access" element={<Navigate to="/admin-dashboard/integrations/orbit/buckets/client-access" replace />} />
         <Route path="/admin-dashboard/poc-trials" element={<AdminPocTrials />} />
         <Route path="/admin-dashboard/analytics" element={<AnalyticsDashboard />} />
         <Route path="/admin-dashboard/developer/*" element={<AdminDeveloperPortal />} />

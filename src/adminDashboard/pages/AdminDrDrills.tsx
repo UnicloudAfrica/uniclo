@@ -4,7 +4,8 @@ import AdminPageShell from "../components/AdminPageShell";
 import DrillSchedulePanel from "@/shared/components/integrations/DrillSchedulePanel";
 import SlaCompliancePanel from "@/shared/components/integrations/SlaCompliancePanel";
 import { useReplicationPairs } from "@/shared/hooks/resources/integrationHooks";
-import { CalendarClock, ShieldCheck, ArrowRight, FlaskConical, Plus, Info } from "lucide-react";
+import { CalendarClock, ShieldCheck, ArrowRight, FlaskConical, Plus } from "lucide-react";
+import { ResilienceHero } from "@/shared/components/orbit";
 
 export default function AdminDrDrills() {
   const navigate = useNavigate();
@@ -18,26 +19,8 @@ export default function AdminDrDrills() {
   }, [selectedPairId, replicationPairs]);
 
   return (
-    <AdminPageShell
-      title="DR Drills"
-      description="Test your disaster recovery plan to make sure it actually works when you need it"
-      contentClassName="space-y-6"
-    >
-      {/* Plain English Explanation */}
-      <div className="rounded-xl border border-amber-100 bg-gradient-to-r from-amber-50 to-orange-50 p-5 dark:border-amber-900/40 dark:from-amber-950/30 dark:to-orange-950/30">
-        <div className="flex items-start gap-3">
-          <Info size={18} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
-          <div>
-            <h4 className="mb-1 text-sm font-semibold text-amber-900 dark:text-amber-200">What are DR Drills?</h4>
-            <p className="text-sm leading-relaxed text-amber-800 dark:text-amber-300">
-              A DR (Disaster Recovery) Drill is like a <strong>fire drill for your servers</strong>. It tests whether your
-              backup systems can actually take over if your main systems fail. During a drill, we simulate a failure and
-              check that your replica can handle traffic — without affecting your real production systems. This gives you
-              confidence that when a real disaster happens, your recovery plan will work.
-            </p>
-          </div>
-        </div>
-      </div>
+    <AdminPageShell title="" description="" contentClassName="space-y-6">
+      <ResilienceHero topic="dr-drills" role="admin" />
 
       {/* Loading state */}
       {isLoading && (

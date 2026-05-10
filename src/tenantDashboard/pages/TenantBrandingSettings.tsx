@@ -227,10 +227,12 @@ const DomainVerification: React.FC<{
               <p className="text-xs text-yellow-600 mt-1">Add a TXT record to your DNS settings:</p>
               <div className="mt-2 flex items-center gap-2 bg-white px-3 py-2 rounded border border-yellow-200">
                 <code className="text-xs flex-1 break-all">
-                  {verificationData.verification_token}
+                  {String(verificationData.verification_token ?? "")}
                 </code>
                 <button
-                  onClick={() => navigator.clipboard.writeText(verificationData.verification_token)}
+                  onClick={() =>
+                    navigator.clipboard.writeText(String(verificationData.verification_token ?? ""))
+                  }
                   className="p-1 hover:bg-yellow-100 rounded"
                 >
                   <Copy size={14} />
@@ -275,6 +277,41 @@ export const BrandingSettingsActions = ({
   </>
 );
 
+type BrandingFormData = {
+  primary_color: string;
+  secondary_color: string;
+  surface_alt: string;
+  company_name: string;
+  email: string;
+  support_email: string;
+  support_phone: string;
+  website: string;
+  custom_domain: string;
+};
+
+type BrandingDataShape = {
+  resolved?: { logo?: string; favicon?: string };
+  settings?: {
+    branding?: Record<string, unknown> & {
+      primary_color?: string;
+      secondary_color?: string;
+      surface_alt?: string;
+      custom_domain?: string;
+      custom_domain_verified?: boolean;
+      favicon_url?: string;
+      favicon_path?: string;
+    };
+    business?: Record<string, unknown> & {
+      company_name?: string;
+      email?: string;
+      support_email?: string;
+      support_phone?: string;
+      website?: string;
+    };
+  };
+  data?: BrandingDataShape;
+};
+
 export const BrandingSettingsSections = ({
   brandingData,
   formData,
@@ -283,8 +320,8 @@ export const BrandingSettingsSections = ({
   onFileChange,
   showDomain = true,
 }: {
-  brandingData: Record<string, unknown> | null | undefined;
-  formData: Record<string, unknown>;
+  brandingData: BrandingDataShape | null | undefined;
+  formData: BrandingFormData;
   palette: Record<string, string> | null;
   onChange: (field: string, value: string) => void;
   onFileChange: (field: string, file: File | null) => void;
@@ -441,7 +478,7 @@ const useTenantBrandingSettingsState = () => {
   const [files, setFiles] = useState<Record<string, File>>({});
 
   useEffect(() => {
-    const raw = brandingData as Record<string, unknown> | undefined;
+    const raw = brandingData as BrandingDataShape | undefined;
     // Handle both shapes: direct { settings: ... } or wrapped { data: { settings: ... } }
     const data = raw?.settings ? raw : raw?.data;
     if (data?.settings) {
@@ -477,7 +514,7 @@ const useTenantBrandingSettingsState = () => {
   };
 
   const handleSave = () => {
-    const data = brandingData as Record<string, unknown> | undefined;
+    const data = brandingData as BrandingDataShape | undefined;
     const hasExistingFavicon = Boolean(
       data?.resolved?.favicon ||
       data?.settings?.branding?.favicon_url ||
@@ -546,7 +583,7 @@ export const TenantBrandingSettingsPanel = ({
         </div>
       )}
       <BrandingSettingsSections
-        brandingData={state.brandingData}
+        brandingData={state.brandingData as unknown as BrandingDataShape}
         formData={state.formData}
         palette={state.palette}
         onChange={state.handleChange}
@@ -588,7 +625,7 @@ export default function TenantBrandingSettings() {
       contentClassName="space-y-6"
     >
       <BrandingSettingsSections
-        brandingData={state.brandingData}
+        brandingData={state.brandingData as unknown as BrandingDataShape}
         formData={state.formData}
         palette={state.palette}
         onChange={state.handleChange}

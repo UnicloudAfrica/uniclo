@@ -4,9 +4,7 @@ import logo from "./assets/logo.png";
 
 import { useNavigate } from "react-router-dom";
 import VerificationCodeInput from "@/utils/VerificationCodeInput";
-import useAdminAuthStore from "@/stores/adminAuthStore";
-import useTenantAuthStore from "@/stores/tenantAuthStore";
-import useClientAuthStore from "@/stores/clientAuthStore";
+import useAuthStore from "@/stores/authStore";
 
 import { clearAuthSessionsExcept } from "@/stores/sessionUtils";
 import { useVerifyAdminMail } from "@/hooks/adminHooks/authHooks";
@@ -36,9 +34,9 @@ export default function VerifyAdminMail() {
     clearTwoFactorRequirement,
     setTwoFactorRequired,
     setSession,
-  } = useAdminAuthStore();
-  const tenantAuth = useTenantAuthStore.getState();
-  const clientAuth = useClientAuthStore.getState();
+  } = useAuthStore();
+  const tenantAuth = useAuthStore.getState();
+  const clientAuth = useAuthStore.getState();
   const [errors, setErrors] = useState<VerifyErrors>({});
   const { mutate: verifyEmail, isPending: isVerifyPending } = useVerifyAdminMail();
   const navigate = useNavigate();
@@ -103,8 +101,8 @@ export default function VerifyAdminMail() {
   };
 
   // Handle form submission for email verification
-  const handleSubmit = (otpValue?: string) => {
-    if (otpValue?.preventDefault) {
+  const handleSubmit = (otpValue?: string | React.FormEvent) => {
+    if (typeof otpValue === "object" && otpValue && "preventDefault" in otpValue) {
       otpValue.preventDefault();
     }
 
@@ -115,7 +113,7 @@ export default function VerifyAdminMail() {
     if (isSubmittingRef.current || isVerifyPending) return;
 
     const email = userEmail;
-    const userData: unknown = {
+    const userData: Record<string, unknown> = {
       email,
     };
     if (!twoFactorRequired) {
@@ -134,23 +132,27 @@ export default function VerifyAdminMail() {
         clearUserEmail();
         clearTwoFactorRequirement();
 
-        const userRole = res?.data?.role ?? res?.role;
+        const data = res?.data as Record<string, unknown> | undefined;
+        const tenant = data?.tenant as Record<string, unknown> | undefined;
+        const domainAccount = data?.domain_account as Record<string, unknown> | undefined;
+
+        const userRole = (data?.role ?? res?.role) as string | undefined;
         const domainInfo =
-          res?.data?.domain ??
-          res?.data?.tenant?.domain ??
-          res?.data?.domain_account?.account_domain ??
-          null;
+          (data?.domain ??
+            tenant?.domain ??
+            domainAccount?.account_domain ??
+            null) as string | null;
 
         const availableTenants =
-          res?.data?.available_tenants ??
-          res?.data?.availableTenants ??
-          res?.data?.tenants ??
+          data?.available_tenants ??
+          data?.availableTenants ??
+          data?.tenants ??
           undefined;
 
         const sessionPayload = {
-          user: res?.data ?? null,
+          user: data ?? null,
           role: userRole ?? undefined,
-          tenant: res?.data?.tenant ?? null,
+          tenant: tenant ?? null,
           domain: domainInfo,
           // Cookie-based stateful Sanctum is the original intent, but most
           // fetch sites in the codebase don't opt into credentials:"include",
@@ -158,24 +160,24 @@ export default function VerifyAdminMail() {
           // payload. Without this, every API call after sign-in 401s.
           token:
             (res?.access_token as string | undefined) ??
-            (res?.data?.access_token as string | undefined) ??
+            (data?.access_token as string | undefined) ??
             (res?.token as string | undefined) ??
             null,
           availableTenants,
-          userEmail: res?.data?.email ?? email,
-          cloudRoles: res?.data?.cloud_roles ?? res?.data?.cloudRoles ?? undefined,
-          cloudAbilities: res?.data?.cloud_abilities ?? res?.data?.cloudAbilities ?? undefined,
+          userEmail: (data?.email as string | undefined) ?? email,
+          cloudRoles: data?.cloud_roles ?? data?.cloudRoles ?? undefined,
+          cloudAbilities: data?.cloud_abilities ?? data?.cloudAbilities ?? undefined,
           isAuthenticated: true,
         };
 
         const normalizedRole = (userRole || "admin").toLowerCase();
 
         if (normalizedRole === "client") {
-          clientAuth.setSession(sessionPayload);
+          clientAuth.setSession(sessionPayload as never);
         } else if (normalizedRole === "tenant") {
-          tenantAuth.setSession(sessionPayload);
+          tenantAuth.setSession(sessionPayload as never);
         } else {
-          setSession(sessionPayload);
+          setSession(sessionPayload as never);
         }
 
         clearAuthSessionsExcept(normalizedRole);
@@ -202,7 +204,7 @@ export default function VerifyAdminMail() {
         const intended = popIntendedPath(scope as "admin" | "tenant" | "client");
         navigate(intended || fallback);
       },
-      onError: (err: unknown) => {
+      onError: (err: { message?: string } | undefined) => {
         const message = err?.message || "Failed to verify email";
         setErrors({ general: message });
         if (/2fa|two[-\\s]?factor|authenticator/i.test(message)) {
@@ -229,9 +231,15 @@ export default function VerifyAdminMail() {
             {twoFactorRequired ? "Enter Authenticator Code" : "Verify Account"}
           </h1>
           {twoFactorRequired ? (
-            <p className="text-[var(--theme-text-color)] text-sm">
-              Open your authenticator app and enter the 6-digit code to continue.
-            </p>
+            <div className="space-y-1">
+              <p className="text-[var(--theme-text-color)] text-sm">
+                Open your authenticator app and enter the 6-digit code to continue.
+              </p>
+              <p className="text-xs text-[var(--theme-text-color)] opacity-70">
+                Lost your device? Enter one of your recovery codes (format <code>xxxx-xxxx</code>)
+                instead — each is single-use.
+              </p>
+            </div>
           ) : (
             <p className="text-[var(--theme-text-color)] text-sm">
               An authentication code has been sent to{" "}

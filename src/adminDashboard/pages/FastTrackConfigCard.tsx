@@ -6,6 +6,17 @@ import ToastUtils from "@/utils/toastUtil";
 import logger from "@/utils/logger";
 import type { FastTrackConfigCardProps } from "./regionEditTypes";
 
+type TenantShape = {
+  id: string | number;
+  name?: string;
+  email?: string;
+};
+
+type GrantShape = {
+  tenant_id?: string | number;
+  tenant?: TenantShape;
+};
+
 const FastTrackModeOption = ({
   region,
   setRegion,
@@ -47,10 +58,10 @@ const FastTrackModeOption = ({
         checked={isActive}
         onChange={async () => {
           try {
-            await adminRegionApi.updateFastTrackSettings(region.id, {
+            await adminRegionApi.updateFastTrackSettings(String(region.id ?? ""), {
               fast_track_mode: value,
             });
-            setRegion((prev: unknown) => ({ ...prev, fast_track_mode: value }));
+            setRegion((prev) => ({ ...(prev as Record<string, unknown>), fast_track_mode: value }));
             ToastUtils.success(
               value === "disabled"
                 ? "Fast Track disabled"
@@ -83,14 +94,16 @@ const TenantGrantList = ({
   fetchRegionDetail,
 }: Omit<FastTrackConfigCardProps, "setRegion">) => {
   const searchLower = tenantSearch.toLowerCase();
-  const filteredTenants = tenants.filter(
-    (t: unknown) =>
+  const tenantsList = tenants as TenantShape[];
+  const grants = (region.fast_track_grants ?? []) as GrantShape[];
+  const filteredTenants = tenantsList.filter(
+    (t) =>
       t.name?.toLowerCase().includes(searchLower) || t.email?.toLowerCase().includes(searchLower)
   );
 
-  const sortedTenants = [...filteredTenants].sort((a: unknown, b: unknown) => {
-    const aGranted = region.fast_track_grants?.some((g: unknown) => g.tenant_id === a.id);
-    const bGranted = region.fast_track_grants?.some((g: unknown) => g.tenant_id === b.id);
+  const sortedTenants = [...filteredTenants].sort((a, b) => {
+    const aGranted = grants.some((g) => g.tenant_id === a.id);
+    const bGranted = grants.some((g) => g.tenant_id === b.id);
     if (aGranted && !bGranted) return -1;
     if (!aGranted && bGranted) return 1;
     return 0;
@@ -116,11 +129,9 @@ const TenantGrantList = ({
           ) : sortedTenants.length === 0 ? (
             <p className="p-3 text-sm text-gray-500">No tenants match your search</p>
           ) : (
-            sortedTenants.map((t: unknown) => {
-              const isAlreadyGranted = region.fast_track_grants?.some(
-                (g: unknown) => g.tenant_id === t.id
-              );
-              const isSelected = selectedTenantsToGrant.includes(t.id);
+            sortedTenants.map((t) => {
+              const isAlreadyGranted = grants.some((g) => g.tenant_id === t.id);
+              const isSelected = selectedTenantsToGrant.includes(String(t.id));
 
               return (
                 <label
@@ -143,10 +154,10 @@ const TenantGrantList = ({
                       checked={isSelected}
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedTenantsToGrant((prev) => [...prev, t.id]);
+                          setSelectedTenantsToGrant((prev) => [...prev, String(t.id)]);
                         } else {
                           setSelectedTenantsToGrant((prev) =>
-                            prev.filter((id: string | number) => id !== t.id)
+                            prev.filter((id) => id !== String(t.id))
                           );
                         }
                       }}
@@ -181,7 +192,7 @@ const TenantGrantList = ({
               try {
                 for (const tenantId of selectedTenantsToGrant) {
                   await adminRegionApi.grantFastTrack(
-                    region.id,
+                    String(region.id ?? ""),
                     tenantId,
                     "Manual Grant via Admin UI"
                   );
@@ -200,11 +211,11 @@ const TenantGrantList = ({
         </div>
       </div>
 
-      {region.fast_track_grants && region.fast_track_grants.length > 0 ? (
+      {grants.length > 0 ? (
         <div className="bg-gray-50 rounded-lg p-3 space-y-2">
-          {region.fast_track_grants.map((grant: unknown) => (
+          {(grants as Array<GrantShape & { id?: string | number; created_at?: string }>).map((grant) => (
             <div
-              key={grant.id}
+              key={String(grant.id ?? grant.tenant_id ?? "")}
               className="flex justify-between items-center text-sm p-2 bg-white rounded border border-gray-200 shadow-sm"
             >
               <div className="flex flex-col">
@@ -212,7 +223,7 @@ const TenantGrantList = ({
                   {grant.tenant?.name || grant.tenant_id}
                 </span>
                 <span className="text-xs text-gray-500">
-                  Granted: {new Date(grant.created_at).toLocaleDateString()}
+                  Granted: {grant.created_at ? new Date(grant.created_at).toLocaleDateString() : ""}
                 </span>
               </div>
               <ModernButton
@@ -225,7 +236,7 @@ const TenantGrantList = ({
                       "Are you sure you want to revoke Fast Track access for this tenant?"
                     )
                   ) {
-                    onRevokeFastTrack(grant.tenant_id);
+                    onRevokeFastTrack(String(grant.tenant_id ?? ""));
                   }
                   fetchRegionDetail();
                 }}

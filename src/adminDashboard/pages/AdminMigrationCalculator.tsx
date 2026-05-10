@@ -1,8 +1,10 @@
 import AdminPageShell from "../components/AdminPageShell";
 import MigrationCalculator from "@/shared/components/anycloudflow/MigrationCalculator";
+import { ResilienceHero } from "@/shared/components/orbit";
 
 const AdminMigrationCalculator = () => (
-  <AdminPageShell title="Migration Calculator" description="Estimate costs for AnyCloudFlow migration, replication, and backup services.">
+  <AdminPageShell title="" description="" contentClassName="space-y-6">
+    <ResilienceHero topic="migration-calculator" role="admin" />
     <MigrationCalculator context="admin" />
   </AdminPageShell>
 );

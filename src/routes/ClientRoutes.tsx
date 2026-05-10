@@ -1,67 +1,72 @@
 import { lazy, Suspense, type JSX } from "react";
-import { Route, Outlet } from "react-router-dom";
+import { Route, Outlet, Navigate } from "react-router-dom";
 import ObjectStorageProvider from "../contexts/ObjectStorageContext";
 import ClientDashboardLayout from "../clientDashboard/components/ClientDashboardLayout";
 import ClientRoute from "./ClientRoute";
-import ClientDashboard from "../clientDashboard/pages/ClientDashboard";
-import ClientProject from "../clientDashboard/pages/ClientProjects";
-import ClientProjectCreate from "../clientDashboard/pages/ClientProjectCreate";
-import ClientProjectDetails from "../clientDashboard/pages/ClientProjectDetails";
-import ClientInstances from "../clientDashboard/pages/ClientInstances";
+import ClientTwoFactorEnroll from "../clientDashboard/pages/ClientTwoFactorEnroll";
+const ClientTwoFactorManage = lazy(() => import("../clientDashboard/pages/ClientTwoFactorManage"));
+const ClientDashboard = lazy(() => import("../clientDashboard/pages/ClientDashboard"));
+const ClientProject = lazy(() => import("../clientDashboard/pages/ClientProjects"));
+const ClientProjectCreate = lazy(() => import("../clientDashboard/pages/ClientProjectCreate"));
+const ClientProjectDetails = lazy(() => import("../clientDashboard/pages/ClientProjectDetails"));
+const ClientInstances = lazy(() => import("../clientDashboard/pages/ClientInstances"));
 import InstanceDetails from "../dashboard/pages/InstanceDetails";
-import ClientInstanceCreate from "../clientDashboard/pages/ClientInstanceCreate";
-import ClientProvisioningWizard from "../clientDashboard/pages/ClientProvisioningWizard";
-import ClientTemplates from "../clientDashboard/pages/ClientTemplates";
-
-import ClientLaunch from "../clientDashboard/pages/ClientLaunch";
-import ObjectStoragePage from "../clientDashboard/pages/ObjectStoragePage";
-import ClientObjectStoragePurchasePage from "../clientDashboard/pages/ObjectStoragePurchasePage";
-import ClientObjectStorageCreate from "../clientDashboard/pages/ObjectStorageCreate";
-import ClientObjectStorageDetail from "../clientDashboard/pages/ClientObjectStorageDetail";
-import ClientDeveloperPortal from "../clientDashboard/pages/ClientDeveloperPortal";
-import ClientPricingCalculator from "../clientDashboard/pages/ClientPricingCalculator";
-import ClientDomainPurchase from "../clientDashboard/pages/ClientDomainPurchase";
-import ClientLogViewer from "../clientDashboard/pages/ClientLogViewer";
-import ClientPaymentHistory from "../clientDashboard/pages/ClientTransaction";
-import ClientSettings from "../clientDashboard/pages/ClientAccountSettings";
-import ClientSupport from "../clientDashboard/pages/ClientSupport";
-import ClientBillingPage from "../clientDashboard/pages/ClientBillingPage";
-import ClientKeyPairs from "../clientDashboard/pages/ClientKeyPairs";
-import ClientNetworkInterfaces from "../clientDashboard/pages/ClientNetworkInterfaces";
-import ClientSubnets from "../clientDashboard/pages/ClientSubnets";
-import ClientSecurityGroups from "../clientDashboard/pages/ClientSecurityGroups";
-import ClientElasticIps from "../clientDashboard/pages/ClientElasticIps";
-import ClientNatGateways from "../clientDashboard/pages/ClientNatGateways";
-import ClientRouteTables from "../clientDashboard/pages/ClientRouteTables";
-import ClientNetworkAcls from "../clientDashboard/pages/ClientNetworkAcls";
-import ClientVpcPeering from "../clientDashboard/pages/ClientVpcPeering";
-import ClientSecurityGroupRules from "../clientDashboard/pages/ClientSecurityGroupRules";
-import ClientDnsManagement from "../clientDashboard/pages/ClientDnsManagement";
-import ClientSnapshots from "../clientDashboard/pages/ClientSnapshots";
-import ClientImages from "../clientDashboard/pages/ClientImages";
-import ClientAutoScaling from "../clientDashboard/pages/ClientAutoScaling";
-import ClientTicketDetail from "../clientDashboard/pages/ClientTicketDetail";
-import ClientManagedDatabases from "../clientDashboard/pages/ClientManagedDatabases";
-import ClientDatabaseCreate from "../clientDashboard/pages/ClientDatabaseCreate";
-import ClientDatabaseDetail from "../clientDashboard/pages/ClientDatabaseDetail";
-import ClientDatabaseReplication from "../clientDashboard/pages/ClientDatabaseReplication";
-import ClientTeam from "../clientDashboard/pages/ClientTeam";
-import ClientProtection from "../clientDashboard/pages/ClientProtection";
-import ClientServerlessDr from "../clientDashboard/pages/ClientServerlessDr";
-import ClientAgent from "../clientDashboard/pages/ClientAgent";
-import ClientMigrations from "../clientDashboard/pages/ClientMigrations";
-import ClientMigrationWizard from "../clientDashboard/pages/ClientMigrationWizard";
-import ClientBatchMigrations from "../clientDashboard/pages/ClientBatchMigrations";
-import ClientBatchMigrationWizard from "../clientDashboard/pages/ClientBatchMigrationWizard";
-import ClientBatchMigrationDetail from "../clientDashboard/pages/ClientBatchMigrationDetail";
-import ClientMigrationRequests from "../clientDashboard/pages/ClientMigrationRequests";
-import ClientMigrationRequestDetail from "../clientDashboard/pages/ClientMigrationRequestDetail";
-import ClientImageRequests from "../clientDashboard/pages/ClientImageRequests";
-import ClientDrDrills from "../clientDashboard/pages/ClientDrDrills";
-import ClientHypervisor from "../clientDashboard/pages/ClientHypervisor";
-import ClientRansomware from "../clientDashboard/pages/ClientRansomware";
-import ClientFlow from "../clientDashboard/pages/ClientFlow";
-import ClientFlowBilling from "../clientDashboard/pages/ClientFlowBilling";
+const ClientInstanceCreate = lazy(() => import("../clientDashboard/pages/ClientInstanceCreate"));
+const ClientProvisioningWizard = lazy(() => import("../clientDashboard/pages/ClientProvisioningWizard"));
+const ClientTemplates = lazy(() => import("../clientDashboard/pages/ClientTemplates"));
+const ClientLaunch = lazy(() => import("../clientDashboard/pages/ClientLaunch"));
+const ObjectStoragePage = lazy(() => import("../clientDashboard/pages/ObjectStoragePage"));
+const ClientObjectStoragePurchasePage = lazy(() => import("../clientDashboard/pages/ObjectStoragePurchasePage"));
+const ClientObjectStorageCreate = lazy(() => import("../clientDashboard/pages/ObjectStorageCreate"));
+const ClientObjectStorageDetail = lazy(() => import("../clientDashboard/pages/ClientObjectStorageDetail"));
+const ClientDeveloperPortal = lazy(() => import("../clientDashboard/pages/ClientDeveloperPortal"));
+const ClientPricingCalculator = lazy(() => import("../clientDashboard/pages/ClientPricingCalculator"));
+const ClientDomainPurchase = lazy(() => import("../clientDashboard/pages/ClientDomainPurchase"));
+const ClientLogViewer = lazy(() => import("../clientDashboard/pages/ClientLogViewer"));
+const ClientPaymentHistory = lazy(() => import("../clientDashboard/pages/ClientTransaction"));
+const ClientSettings = lazy(() => import("../clientDashboard/pages/ClientAccountSettings"));
+const ClientSupport = lazy(() => import("../clientDashboard/pages/ClientSupport"));
+const ClientBillingPage = lazy(() => import("../clientDashboard/pages/ClientBillingPage"));
+// Infrastructure pages — lazy-loaded so the client bundle doesn't pay
+// to download the network ACL, route table, auto-scaling, etc. pages
+// up front. Each page is its own webpack/Vite chunk; the existing
+// `<Suspense>` wrapper handles the fallback.
+const ClientKeyPairs = lazy(() => import("../clientDashboard/pages/ClientKeyPairs"));
+const ClientNetworkInterfaces = lazy(() => import("../clientDashboard/pages/ClientNetworkInterfaces"));
+const ClientSubnets = lazy(() => import("../clientDashboard/pages/ClientSubnets"));
+const ClientSecurityGroups = lazy(() => import("../clientDashboard/pages/ClientSecurityGroups"));
+const ClientElasticIps = lazy(() => import("../clientDashboard/pages/ClientElasticIps"));
+const ClientNatGateways = lazy(() => import("../clientDashboard/pages/ClientNatGateways"));
+const ClientRouteTables = lazy(() => import("../clientDashboard/pages/ClientRouteTables"));
+const ClientNetworkAcls = lazy(() => import("../clientDashboard/pages/ClientNetworkAcls"));
+const ClientVpcPeering = lazy(() => import("../clientDashboard/pages/ClientVpcPeering"));
+const ClientSecurityGroupRules = lazy(() => import("../clientDashboard/pages/ClientSecurityGroupRules"));
+const ClientDnsManagement = lazy(() => import("../clientDashboard/pages/ClientDnsManagement"));
+const ClientSnapshots = lazy(() => import("../clientDashboard/pages/ClientSnapshots"));
+const ClientImages = lazy(() => import("../clientDashboard/pages/ClientImages"));
+const ClientAutoScaling = lazy(() => import("../clientDashboard/pages/ClientAutoScaling"));
+const ClientTicketDetail = lazy(() => import("../clientDashboard/pages/ClientTicketDetail"));
+const ClientManagedDatabases = lazy(() => import("../clientDashboard/pages/ClientManagedDatabases"));
+const ClientDatabaseCreate = lazy(() => import("../clientDashboard/pages/ClientDatabaseCreate"));
+const ClientDatabaseDetail = lazy(() => import("../clientDashboard/pages/ClientDatabaseDetail"));
+const ClientDatabaseReplication = lazy(() => import("../clientDashboard/pages/ClientDatabaseReplication"));
+const ClientTeam = lazy(() => import("../clientDashboard/pages/ClientTeam"));
+const ClientProtection = lazy(() => import("../clientDashboard/pages/ClientProtection"));
+const ClientServerlessDr = lazy(() => import("../clientDashboard/pages/ClientServerlessDr"));
+const ClientAgent = lazy(() => import("../clientDashboard/pages/ClientAgent"));
+const ClientMigrations = lazy(() => import("../clientDashboard/pages/ClientMigrations"));
+const ClientMigrationWizard = lazy(() => import("../clientDashboard/pages/ClientMigrationWizard"));
+const ClientBatchMigrations = lazy(() => import("../clientDashboard/pages/ClientBatchMigrations"));
+const ClientBatchMigrationWizard = lazy(() => import("../clientDashboard/pages/ClientBatchMigrationWizard"));
+const ClientBatchMigrationDetail = lazy(() => import("../clientDashboard/pages/ClientBatchMigrationDetail"));
+const ClientMigrationRequests = lazy(() => import("../clientDashboard/pages/ClientMigrationRequests"));
+const ClientMigrationRequestDetail = lazy(() => import("../clientDashboard/pages/ClientMigrationRequestDetail"));
+const ClientImageRequests = lazy(() => import("../clientDashboard/pages/ClientImageRequests"));
+const ClientDrDrills = lazy(() => import("../clientDashboard/pages/ClientDrDrills"));
+const ClientHypervisor = lazy(() => import("../clientDashboard/pages/ClientHypervisor"));
+const ClientRansomware = lazy(() => import("../clientDashboard/pages/ClientRansomware"));
+const ClientFlow = lazy(() => import("../clientDashboard/pages/ClientFlow"));
+const ClientFlowBilling = lazy(() => import("../clientDashboard/pages/ClientFlowBilling"));
 const ClientShieldDomains = lazy(() => import("../clientDashboard/pages/ClientShieldDomains"));
 const ClientShieldDomainDetail = lazy(() => import("../clientDashboard/pages/ClientShieldDomainDetail"));
 const ClientInvoices = lazy(() => import("../clientDashboard/pages/ClientInvoices"));
@@ -72,18 +77,18 @@ const ClientShieldFirewall = lazy(() => import("../clientDashboard/pages/ClientS
 const ClientShieldAttacks = lazy(() => import("../clientDashboard/pages/ClientShieldAttacks"));
 const ClientShieldAnalytics = lazy(() => import("../clientDashboard/pages/ClientShieldAnalytics"));
 const ClientShieldSsl = lazy(() => import("../clientDashboard/pages/ClientShieldSsl"));
-import ClientCloudAccounts from "../clientDashboard/pages/ClientCloudAccounts";
-import ClientCloudAccountCreate from "../clientDashboard/pages/ClientCloudAccountCreate";
-import ClientCloudAccountDetail from "../clientDashboard/pages/ClientCloudAccountDetail";
-
+const ClientCloudAccounts = lazy(() => import("../clientDashboard/pages/ClientCloudAccounts"));
+const ClientCloudAccountCreate = lazy(() => import("../clientDashboard/pages/ClientCloudAccountCreate"));
+const ClientCloudAccountDetail = lazy(() => import("../clientDashboard/pages/ClientCloudAccountDetail"));
 // Path C — client-facing AnyCloudFlow bucket subsystem (read-only).
-import ClientBucketEndpointsPage from "../clientDashboard/pages/integrations/anycloudflow/buckets/ClientBucketEndpointsPage";
-import ClientBucketMigrationsPage from "../clientDashboard/pages/integrations/anycloudflow/buckets/ClientBucketMigrationsPage";
-import ClientBucketReplicationsPage from "../clientDashboard/pages/integrations/anycloudflow/buckets/ClientBucketReplicationsPage";
-
+const ClientBucketEndpointsPage = lazy(() => import("../clientDashboard/pages/integrations/anycloudflow/buckets/ClientBucketEndpointsPage"));
+// FR-043 — Orbit source-VM endpoints (client variant; read-only)
+const ClientVmEndpoints = lazy(() => import("../clientDashboard/pages/integrations/orbit/ClientVmEndpoints"));
+const ClientVmEndpointDetail = lazy(() => import("../clientDashboard/pages/integrations/orbit/ClientVmEndpointDetail"));
+const ClientBucketMigrationsPage = lazy(() => import("../clientDashboard/pages/integrations/anycloudflow/buckets/ClientBucketMigrationsPage"));
+const ClientBucketReplicationsPage = lazy(() => import("../clientDashboard/pages/integrations/anycloudflow/buckets/ClientBucketReplicationsPage"));
 import ClientDocsLayout from "../clientDashboard/pages/docs/ClientDocsLayout";
-import ClientDocPage from "../clientDashboard/pages/docs/ClientDocPage";
-
+const ClientDocPage = lazy(() => import("../clientDashboard/pages/docs/ClientDocPage"));
 const ObjectStorageRouteProvider = (): JSX.Element => (
   <ObjectStorageProvider>
     <div className="object-storage-theme">
@@ -93,7 +98,13 @@ const ObjectStorageRouteProvider = (): JSX.Element => (
 );
 
 const ClientRoutes = (): JSX.Element => (
-  <Route
+  <>
+    {/* 2FA enrollment — sits outside the ClientRoute guard since the
+        api interceptor redirects authenticated-but-not-yet-enrolled
+        clients here when their tenant has force_client_2fa enabled
+        (or the platform has force_tenantless_client_2fa enabled). */}
+    <Route path="/client-2fa-enroll" element={<ClientTwoFactorEnroll />} />
+    <Route
     element={
       <ClientRoute>
         <ClientDashboardLayout />
@@ -101,6 +112,14 @@ const ClientRoutes = (): JSX.Element => (
     }
   >
     <Route path="/client-dashboard" element={<ClientDashboard />} />
+    <Route
+      path="/client-dashboard/security/2fa"
+      element={
+        <Suspense fallback={null}>
+          <ClientTwoFactorManage />
+        </Suspense>
+      }
+    />
     <Route path="/client-dashboard/projects" element={<ClientProject />} />
     <Route path="/client-dashboard/projects/create" element={<ClientProjectCreate />} />
     <Route path="/client-dashboard/projects/details" element={<ClientProjectDetails />} />
@@ -188,19 +207,20 @@ const ClientRoutes = (): JSX.Element => (
     <Route path="/client-dashboard/infrastructure/images" element={<ClientImages />} />
     <Route path="/client-dashboard/infrastructure/autoscaling" element={<ClientAutoScaling />} />
 
-    {/* Path C — AnyCloudFlow Bucket (Object Storage) read-only client views */}
-    <Route
-      path="/client-dashboard/integrations/anycloudflow/buckets/endpoints"
-      element={<ClientBucketEndpointsPage />}
-    />
-    <Route
-      path="/client-dashboard/integrations/anycloudflow/buckets/migrations"
-      element={<ClientBucketMigrationsPage />}
-    />
-    <Route
-      path="/client-dashboard/integrations/anycloudflow/buckets/replications"
-      element={<ClientBucketReplicationsPage />}
-    />
+    {/* FR-043 — source-VM endpoints (client read-only).
+        Detail-only — clients cannot register or edit. */}
+    <Route path="/client-dashboard/integrations/orbit/vms" element={<ClientVmEndpoints />} />
+    <Route path="/client-dashboard/integrations/orbit/vms/:id" element={<ClientVmEndpointDetail />} />
+
+    {/* Path C — Orbit Bucket (Object Storage) read-only client views */}
+    <Route path="/client-dashboard/integrations/orbit/buckets/endpoints" element={<ClientBucketEndpointsPage />} />
+    <Route path="/client-dashboard/integrations/orbit/buckets/migrations" element={<ClientBucketMigrationsPage />} />
+    <Route path="/client-dashboard/integrations/orbit/buckets/replications" element={<ClientBucketReplicationsPage />} />
+
+    {/* Legacy /anycloudflow/ aliases — redirect to /orbit/ counterparts */}
+    <Route path="/client-dashboard/integrations/anycloudflow/buckets/endpoints" element={<Navigate to="/client-dashboard/integrations/orbit/buckets/endpoints" replace />} />
+    <Route path="/client-dashboard/integrations/anycloudflow/buckets/migrations" element={<Navigate to="/client-dashboard/integrations/orbit/buckets/migrations" replace />} />
+    <Route path="/client-dashboard/integrations/anycloudflow/buckets/replications" element={<Navigate to="/client-dashboard/integrations/orbit/buckets/replications" replace />} />
 
     <Route path="/client-dashboard/pricing-calculator" element={<ClientPricingCalculator />} />
     {/* GAP-034 — buy a domain */}
@@ -223,6 +243,7 @@ const ClientRoutes = (): JSX.Element => (
       <Route path=":slug" element={<ClientDocPage />} />
     </Route>
   </Route>
+  </>
 );
 
 export default ClientRoutes;

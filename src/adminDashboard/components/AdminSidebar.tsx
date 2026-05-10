@@ -1,5 +1,4 @@
 import React from "react";
-import useAdminAuthStore from "@/stores/adminAuthStore";
 import useAuthStore from "@/stores/authStore";
 import { logoutActiveSession } from "@/stores/sessionUtils";
 import { DashboardSidebar } from "@/shared/components/sidebar";
@@ -18,7 +17,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ forceRender = false }) => {
   const { isActive } = useAdminShellContext();
   const shouldRender = forceRender || !isActive;
   const navigate = useNavigate();
-  const clearUserEmail = useAdminAuthStore((state) => state.clearUserEmail);
+  const clearUserEmail = useAuthStore((state) => state.clearUserEmail);
   const { isMobileOpen, closeMobile } = useSidebarStore();
   const permissions = useAuthStore((s) => s.permissions);
   const { data: branding } = useAdminBrandingTheme({ enabled: shouldRender });

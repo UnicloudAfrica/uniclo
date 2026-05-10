@@ -5,7 +5,7 @@
     "cta": "Mettre à jour le moyen de paiement"
   },
   "billing": {
-    "page_title": "Facturation SimpleDeploy",
+    "page_title": "Facturation SlimDeploy",
     "page_description": "Gérez votre moyen de paiement, renouvelez votre abonnement ou résolvez un paiement bloqué.",
     "section_subscription": "Détails de l'abonnement",
     "stat_plan": "Forfait",
@@ -19,6 +19,6 @@
     "footer_help": "Besoin de changer de carte ou de résoudre un paiement bloqué ? Ouvrez le flux Paystack.",
     "success_updated": "Moyen de paiement mis à jour — votre abonnement est actif.",
     "no_subscription_title": "Aucun abonnement actif",
-    "no_subscription_body": "Vous n'avez pas d'abonnement SimpleDeploy actif. Souscrivez depuis le tableau de bord SimpleDeploy pour gérer la facturation ici."
+    "no_subscription_body": "Vous n'avez pas d'abonnement SlimDeploy actif. Souscrivez depuis le tableau de bord SlimDeploy pour gérer la facturation ici."
   }
 }

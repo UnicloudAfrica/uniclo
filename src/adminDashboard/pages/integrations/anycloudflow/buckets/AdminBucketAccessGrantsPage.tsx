@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import AdminPageShell from "../../../../components/AdminPageShell";
+import { ResilienceHero } from "@/shared/components/orbit";
 import { ModernCard, ModernSelect } from "@/shared/components/ui";
 import ToastUtils from "@/utils/toastUtil";
 import { acfApi } from "../api";
@@ -144,11 +145,9 @@ export default function AdminBucketAccessGrantsPage() {
   });
 
   return (
-    <AdminPageShell
-      title="Bucket Client Access Grants"
-      description="Tenant-admin curated read access for client users to specific bucket resources (BG-15 Path B). Grants compose with Path C automatic ownership scoping — see docs/code-audit/09-bucket-replication/integration-gaps.md."
-    >
+    <AdminPageShell title="" description="">
       <div className="space-y-4">
+        <ResilienceHero topic="client-access-grants" role="admin" />
         {/* Brutal-honesty banner */}
         <div className="p-3 rounded bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 text-xs text-blue-900 dark:text-blue-200">
           <strong>What this is:</strong> a tenant-admin override that gives a

@@ -6,6 +6,7 @@
  */
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { RESILIENCE } from "@/shared/branding";
 import {
   ShieldCheck,
   HardDrive,
@@ -88,7 +89,7 @@ const ProtectionOverview: React.FC<ProtectionOverviewProps> = ({
             </div>
             <div>
               <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 sm:text-lg">
-                {config?.label ?? "AnyCloudFlow"}
+                {config?.label ?? RESILIENCE}
               </h2>
               <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 sm:text-sm">
                 Backup, Replication, Migration &amp; Disaster Recovery
@@ -214,27 +215,26 @@ const ProtectionOverview: React.FC<ProtectionOverviewProps> = ({
         </ModernCard>
       )}
 
-      {/* Empty state when disabled */}
+      {/* Empty state when disabled — friendly invite to turn on protection */}
       {!config?.enabled && (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 px-6 py-12 text-center dark:border-gray-700 sm:py-16">
-          <ShieldCheck className="mb-4 h-12 w-12 text-gray-300 dark:text-gray-600" />
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-surface-card px-6 py-12 text-center dark:border-gray-700 sm:py-16">
+          <span aria-hidden="true" className="mb-4 text-5xl">
+            🛡️
+          </span>
           <h3 className="text-base font-semibold text-gray-700 dark:text-gray-300 sm:text-lg">
-            Protection Services Disabled
+            {RESILIENCE} isn't on yet
           </h3>
           <p className="mt-2 max-w-md text-sm text-gray-500 dark:text-gray-400">
-            Enable AnyCloudFlow to access backup, replication, migration, and disaster
-            recovery services for your resources.
+            Turn it on and your servers gain backup, replication, migration, and disaster recovery — all from one place. Nothing changes on your live workloads until you ask it to.
           </p>
           <ModernButton
             variant="primary"
             className="mt-6"
-            onClick={() =>
-              enableIntegration.mutate({ integrationKey })
-            }
+            onClick={() => enableIntegration.mutate({ integrationKey })}
             disabled={enableIntegration.isPending}
           >
             <ShieldCheck size={16} className="mr-2" />
-            Enable Protection Services
+            {enableIntegration.isPending ? "Turning it on…" : `Turn on ${RESILIENCE}`}
           </ModernButton>
         </div>
       )}

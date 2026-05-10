@@ -473,6 +473,62 @@ export function useFinalizeInvoice() {
   });
 }
 
+// ─── Download PDF ──────────────────────────────────────────────
+
+/**
+ * Download (or open inline) the rendered PDF for an invoice / quote.
+ *
+ * Routes through `entry.fileApi` (added to apiRegistry in the Week-3
+ * cleanup) so the shared `parseJsonSafely` doesn't reject
+ * `application/pdf` responses. Pass `inline: true` to open in a new
+ * tab instead of triggering a browser download.
+ */
+export function useDownloadInvoicePdf() {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+
+  return useMutation<
+    void,
+    Error,
+    {
+      id: string | number;
+      filename?: string;
+      inline?: boolean;
+    }
+  >({
+    mutationFn: async ({ id, filename, inline }) => {
+      const qs = inline ? "?inline=1" : "";
+      const buffer = await entry.fileApi.get<ArrayBuffer>(
+        `${invoicesPath(context)}/${id}/download${qs}`
+      );
+
+      if (!(buffer instanceof ArrayBuffer)) {
+        throw new Error("Download failed — server did not return a binary PDF.");
+      }
+
+      const blob = new Blob([buffer], { type: "application/pdf" });
+      const objectUrl = URL.createObjectURL(blob);
+
+      if (inline) {
+        // Open in a new tab. We still revoke the object URL after a
+        // grace period so memory isn't leaked when the tab is closed.
+        window.open(objectUrl, "_blank", "noopener,noreferrer");
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+
+        return;
+      }
+
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = filename ?? `invoice-${id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(objectUrl);
+    },
+  });
+}
+
 // ─── Helpers ───────────────────────────────────────────────────
 
 const STATUS_TONE: Record<

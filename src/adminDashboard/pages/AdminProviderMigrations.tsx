@@ -133,7 +133,25 @@ const DetailDrawer = ({
 
   if (!identifier) return null;
 
-  const m = migration as unknown;
+  type MigrationItem = {
+    id: string | number;
+    resource_type?: string;
+    source_resource_id?: string;
+    status?: string;
+  };
+  type MigrationShape = {
+    identifier: string;
+    status: string;
+    strategy?: string;
+    source_provider?: string;
+    source_region?: string;
+    target_provider?: string;
+    target_region?: string;
+    resource_summary?: Record<string, unknown> | null;
+    progress?: { plan_delta?: unknown } | null;
+    items?: MigrationItem[];
+  };
+  const m = migration as MigrationShape | null | undefined;
 
   return (
     <div className="fixed inset-y-0 right-0 z-40 w-[480px] overflow-auto border-l border-slate-200 bg-white shadow-xl">

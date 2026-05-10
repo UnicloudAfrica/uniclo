@@ -4,7 +4,7 @@
  * Shows header with actions, overview stats, N+1 consolidation card,
  * wave timeline, and detail card. Auto-refreshes every 15s.
  */
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -27,7 +27,12 @@ import {
   FileWarning,
   RefreshCw,
 } from "lucide-react";
-import IntegrationStatusBadge from "../integrations/IntegrationStatusBadge";
+import {
+  MoodIndicator,
+  StatusBadge,
+  ConfirmActionDialog,
+  friendlyStatus,
+} from "@/shared/components/orbit";
 import {
   useBatchMigration,
   useStartBatchMigration,
@@ -55,6 +60,7 @@ const BatchMigrationDetail: React.FC<BatchMigrationDetailProps> = ({
   const startMutation = useStartBatchMigration();
   const pauseMutation = usePauseBatchMigration();
   const resumeMutation = useResumeBatchMigration();
+  const [confirmStart, setConfirmStart] = useState(false);
   const cancelMutation = useCancelBatchMigration();
   const revalidateMutation = useRevalidateBatchMigration();
 
@@ -106,32 +112,32 @@ const BatchMigrationDetail: React.FC<BatchMigrationDetailProps> = ({
           >
             <ArrowLeft size={16} />
           </button>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-              {name}
-            </h1>
-            <div className="mt-1 flex items-center gap-2">
-              <IntegrationStatusBadge status={status} />
-              <span className="text-xs text-gray-400 dark:text-gray-500">
-                {identifier}
-              </span>
-            </div>
-          </div>
+          {(() => {
+            const fs = friendlyStatus("batch-migration", status);
+            return (
+              <div className="flex items-center gap-3">
+                <MoodIndicator mood={fs.mood} size="lg" />
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{name}</h1>
+                  <div className="mt-1 flex items-center gap-2">
+                    <StatusBadge tone={fs.tone} label={fs.technical} friendlyLabel={fs.friendly} size="sm" />
+                    <span className="text-xs font-mono text-gray-400 dark:text-gray-500">{identifier}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         <div className="flex gap-2">
           {isDraft && (
             <button
-              onClick={() => {
-                if (confirm(`Start batch migration "${name}"? This will begin executing the migration waves.`)) {
-                  startMutation.mutate({ identifier });
-                }
-              }}
+              onClick={() => setConfirmStart(true)}
               disabled={startMutation.isPending}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 transition hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-primary-200 bg-primary-50 px-3 py-1.5 text-sm font-medium text-primary-700 transition hover:bg-primary-100 dark:border-primary-800 dark:bg-primary-900/20 dark:text-primary-400 dark:hover:bg-primary-900/40"
             >
               <Play size={14} />
-              Start Migration
+              Start migration
             </button>
           )}
           {isActive && (
@@ -278,6 +284,21 @@ const BatchMigrationDetail: React.FC<BatchMigrationDetailProps> = ({
           />
         </div>
       </div>
+
+      {/* Friendly start-confirmation dialog */}
+      <ConfirmActionDialog
+        open={confirmStart}
+        onClose={() => setConfirmStart(false)}
+        onConfirm={async () => {
+          await startMutation.mutateAsync({ identifier });
+          setConfirmStart(false);
+        }}
+        title={`Start "${name}"?`}
+        description="We'll begin moving every server in this batch through its waves. You can pause at any time, but in-flight migrations will keep going."
+        severity="warning"
+        confirmLabel="Yes, start moving"
+        cancelLabel="Not yet"
+      />
     </div>
   );
 };
@@ -582,7 +603,15 @@ const WaveCard: React.FC<{ wave: AnyRecord; index: number }> = ({
             Wave {index + 1}
           </span>
         </div>
-        <IntegrationStatusBadge status={waveStatus} />
+        {(() => {
+          const fs = friendlyStatus("batch-migration", waveStatus);
+          return (
+            <div className="flex items-center gap-2">
+              <MoodIndicator mood={fs.mood} size="sm" />
+              <StatusBadge tone={fs.tone} label={fs.technical} friendlyLabel={fs.friendly} size="sm" />
+            </div>
+          );
+        })()}
       </div>
 
       {migrations.length > 0 ? (
@@ -605,7 +634,12 @@ const WaveCard: React.FC<{ wave: AnyRecord; index: number }> = ({
                   </span>
                 </div>
 
-                <IntegrationStatusBadge status={migStatus} size="sm" />
+                {(() => {
+                  const fs = friendlyStatus("workload-migration", migStatus);
+                  return (
+                    <StatusBadge tone={fs.tone} label={fs.technical} friendlyLabel={fs.friendly} size="sm" />
+                  );
+                })()}
 
                 {["in_progress", "paused"].includes(migStatus) && (
                   <div className="flex items-center gap-1.5">

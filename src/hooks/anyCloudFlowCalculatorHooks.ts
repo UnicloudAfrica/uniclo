@@ -6,6 +6,14 @@ type AnyRecord = Record<string, unknown>;
 const asEnvelope = <T = AnyRecord>(res: unknown): { success?: boolean; data?: T } & AnyRecord =>
   (res ?? {}) as { success?: boolean; data?: T } & AnyRecord;
 
+export type AcfServiceCategory =
+  | "subscription"
+  | "migration"
+  | "replication"
+  | "backup"
+  | "bucket"
+  | "other";
+
 export interface AcfService {
   service_type: string;
   name: string;
@@ -13,6 +21,18 @@ export interface AcfService {
   billing_model: "one_time" | "monthly_flat";
   unit_label: string;
   unit_price: number;
+  /**
+   * Currency of `unit_price` as resolved by the backend for the
+   * caller's country. Defaults to "NGN" if absent — older API
+   * responses pre-dating the rebranding patch don't include it.
+   */
+  currency?: string;
+  /** Friendly group key — UI uses this to bucket cards. */
+  category?: AcfServiceCategory;
+  /** Plain-English label rendered on cards (e.g. "Move a server"). */
+  friendly_name?: string;
+  /** Plain-English one-line description for the card body. */
+  friendly_description?: string;
   pricing_tiers: { min_units: number; max_units: number | null; price_usd: number; label: string }[] | null;
   is_one_time: boolean;
   is_recurring: boolean;
@@ -65,13 +85,20 @@ export interface QuotaStatus {
   };
 }
 
-export const useFetchAcfServices = () => {
+export const useFetchAcfServices = (params: { tenantId?: string; countryCode?: string } = {}) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
+  const { tenantId, countryCode } = params;
   return useQuery({
-    queryKey: ["acf-services", context],
+    queryKey: ["acf-services", context, tenantId ?? "self", countryCode ?? "default"],
     queryFn: async () => {
-      const res = asEnvelope<AcfService[]>(await entry.silentApi.get<AnyRecord>(`${entry.urlPrefix}/anycloudflow/calculator/services`));
+      const search = new URLSearchParams();
+      if (tenantId) search.set("tenant_id", tenantId);
+      if (countryCode) search.set("country_code", countryCode);
+      const qs = search.toString() ? `?${search.toString()}` : "";
+      const res = asEnvelope<AcfService[]>(
+        await entry.silentApi.get<AnyRecord>(`${entry.urlPrefix}/anycloudflow/calculator/services${qs}`),
+      );
       return (res.data ?? []) as AcfService[];
     },
     staleTime: 60_000 * 5,
@@ -81,9 +108,14 @@ export const useFetchAcfServices = () => {
 export const useCalculateMigration = () => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
+  // Use `toastApi` here (not `silentApi`): if the estimate call fails
+  // we MUST surface the error. Silent failures on the calculate flow
+  // make the "Show me the total" button look broken — historically a
+  // backend `pricing_tiers` shape mismatch produced a 500 that the
+  // user never saw, leaving them guessing what went wrong.
   return useMutation({
     mutationFn: async (payload: { items: CalculatorItem[]; tenant_id?: string; country_code?: string }) => {
-      const res = asEnvelope<CalculatorResult>(await entry.silentApi.post<AnyRecord>(`${entry.urlPrefix}/anycloudflow/calculator/estimate`, payload));
+      const res = asEnvelope<CalculatorResult>(await entry.toastApi.post<AnyRecord>(`${entry.urlPrefix}/anycloudflow/calculator/estimate`, payload));
       return (res.data ?? res) as CalculatorResult;
     },
   });

@@ -154,14 +154,14 @@ export default function NewMigrationRequestModal({
     <ModernModal
       isOpen={open}
       onClose={handleClose}
-      title="New migration request"
+      title="🚚 Tell us about your move"
       size="lg"
     >
       <div className="space-y-5">
         <p className="text-sm text-slate-600 dark:text-slate-300">
-          Describe the move. Our team plans + executes during your preferred
-          window. Source data stays untouched; we only spin up the new region
-          and cut over once you approve.
+          Tell us where it's coming from and where it's going. Our team handles the rest —
+          we set everything up in the new region, you check it over, and only when you say
+          "go" do we flip the switch. Your live workload stays untouched the whole time.
         </p>
 
         <div className="grid gap-3">

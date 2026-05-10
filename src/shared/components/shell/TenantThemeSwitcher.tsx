@@ -19,7 +19,7 @@ import ToastUtils from "@/utils/toastUtil";
 const OPTIONS: { value: TenantTheme; label: string }[] = [
   { value: "default", label: "UniCloud" },
   { value: "emerald", label: "Verdant Cloud" },
-  { value: "indigo", label: "AnyCloud Flow" },
+  { value: "indigo", label: "Orbit" },
   { value: "sunset", label: "Sahara Stack" },
 ];
 

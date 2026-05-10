@@ -421,14 +421,42 @@ export const createMultipartApiClient = ({
 };
 
 /**
- * Factory for file API clients that handle binary responses
+ * Factory for file API clients that handle binary responses.
+ *
+ * Returned client mirrors `createApiClient`'s shape (`.get/.post/.put/
+ * .patch/.delete`) so call sites can treat it as a drop-in alongside
+ * `entry.silentApi`/`entry.toastApi`. Difference: this one routes
+ * `application/pdf`, `image/*`, and `text/csv` responses through
+ * dedicated decoders instead of `parseJsonSafely`, which previously
+ * threw "Received unsupported response format" for every binary
+ * download.
  */
+export type FileApiClient = {
+  <T = unknown>(method: HttpMethod, uri: string, body?: ApiClientBody): Promise<T>;
+  get: <T = unknown>(uri: string) => Promise<T>;
+  post: <T = unknown>(uri: string, body?: ApiClientBody) => Promise<T>;
+  put: <T = unknown>(uri: string, body?: ApiClientBody) => Promise<T>;
+  patch: <T = unknown>(uri: string, body?: ApiClientBody) => Promise<T>;
+  delete: <T = unknown>(uri: string, body?: ApiClientBody) => Promise<T>;
+  /**
+   * Issue a request and return the full `Response` so the caller can
+   * read `Content-Disposition`, `Content-Type`, etc. before consuming
+   * the body. Use this for downloads where the filename comes from
+   * the response headers rather than the call site.
+   *
+   * Auth, CSRF, and credentials still flow through the same plumbing
+   * as the other methods — callers no longer need to roll their own
+   * `fetch()` just to peek at headers.
+   */
+  getRaw: (uri: string) => Promise<Response>;
+};
+
 export const createFileApiClient = ({
   baseURL,
   authStore,
   redirectPath = "/sign-in",
-}: FileApiClientConfig) => {
-  return async <T = unknown>(
+}: FileApiClientConfig): FileApiClient => {
+  const requester = (async <T = unknown>(
     method: HttpMethod,
     uri: string,
     body: ApiClientBody = null
@@ -526,5 +554,43 @@ export const createFileApiClient = ({
       logger.error("API error:", err);
       throw err;
     }
+  }) as FileApiClient;
+
+  requester.get = <T = unknown>(uri: string) => requester<T>("GET", uri);
+  requester.post = <T = unknown>(uri: string, body?: ApiClientBody) =>
+    requester<T>("POST", uri, body ?? null);
+  requester.put = <T = unknown>(uri: string, body?: ApiClientBody) =>
+    requester<T>("PUT", uri, body ?? null);
+  requester.patch = <T = unknown>(uri: string, body?: ApiClientBody) =>
+    requester<T>("PATCH", uri, body ?? null);
+  requester.delete = <T = unknown>(uri: string, body?: ApiClientBody) =>
+    requester<T>("DELETE", uri, body ?? null);
+
+  // Raw GET — returns the full Response so the caller can inspect
+  // `Content-Disposition`, `Content-Type`, etc. before consuming the
+  // body. Auth headers + credentials flow through the same plumbing.
+  requester.getRaw = async (uri: string): Promise<Response> => {
+    const url = baseURL + uri;
+    const authState = authStore?.getState ? authStore.getState() : undefined;
+    const headers = (authState?.getAuthHeaders?.() as Record<string, string>) || {
+      Accept: "application/octet-stream,application/pdf,image/*,*/*",
+    };
+    const response = await fetch(url, {
+      method: "GET",
+      headers,
+      credentials: "include",
+    });
+    if (!response.ok) {
+      // Mirror the auth-redirect handling the JSON path does so a 401
+      // on a download still kicks the user back to sign-in.
+      if (response.status === 401) {
+        authState?.clearSession?.();
+      }
+      const errorText = await response.text().catch(() => "");
+      throw new Error(errorText || `Request failed: ${response.status}`);
+    }
+    return response;
   };
+
+  return requester;
 };

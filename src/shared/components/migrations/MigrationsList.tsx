@@ -1,13 +1,33 @@
 /**
- * MigrationsList — Shared table listing external migrations for MaaS.
+ * MigrationsList — friendly list of workload migrations.
  *
- * Used across admin, tenant, and client dashboards.
+ * Wow refactor:
+ *   - Each row leads with a MoodIndicator (😴/🚀/✨/😬/🚨) for at-a-glance scanning
+ *   - Status uses orbit StatusBadge with friendly labels ("On its way!" not
+ *     "In Progress"); SR-users still hear the canonical state via aria-label
+ *   - Source → Target column rendered with an animated arrow that pulses when
+ *     migration is in flight
+ *   - Progress bar uses the platform theme gradient + smooth width transition
+ *   - Empty state via orbit ResourceShell with a friendly illustration + CTA
+ *   - Destructive cancel uses orbit ConfirmActionDialog (focus trap, ESC,
+ *     friendly verbs) instead of the native window.confirm() prompt
+ *   - Refresh button uses platform tokens; row hover lifts subtly
  */
-import React, { useMemo } from "react";
-import { RefreshCw, ArrowRight, Search, XCircle } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { RefreshCw, ArrowRight, XCircle } from "lucide-react";
 import ModernTable from "@/shared/components/ui/ModernTable/ModernTable";
 import type { Column, Action } from "@/shared/components/ui/ModernTable/types";
-import MigrationStatusBadge from "./MigrationStatusBadge";
+import {
+  MoodIndicator,
+  StatusBadge,
+  ResourceShell,
+  ConfirmActionDialog,
+  AsyncButton,
+  friendlyStatus,
+  usePrefersReducedMotion,
+  orbitTransition,
+} from "@/shared/components/orbit";
 import {
   useFetchExternalMigrations,
   useCancelExternalMigration,
@@ -17,20 +37,31 @@ import type { ExternalMigration } from "@/shared/hooks/resources/externalMigrati
 interface MigrationsListProps {
   context: "admin" | "tenant" | "client";
   onViewDetails?: (migration: ExternalMigration) => void;
+  /** Optional path to the wizard for the empty-state CTA. */
+  wizardPath?: string;
 }
 
 const TIER_LABELS: Record<string, string> = {
-  same_cloud: "Same Cloud",
-  cross_cloud: "Cross Cloud",
-  on_prem: "On-Prem",
+  same_cloud: "Same cloud",
+  cross_cloud: "Cross cloud",
+  on_prem: "From on-prem",
 };
+
+const ACTIVE_STATUSES = ["in_progress", "confirmed", "estimated", "estimating"];
 
 const MigrationsList: React.FC<MigrationsListProps> = ({
   context: _context,
   onViewDetails,
+  wizardPath,
 }) => {
-  const { data: migrations, isLoading, refetch } = useFetchExternalMigrations();
+  const navigate = useNavigate();
+  const reduced = usePrefersReducedMotion();
+
+  const { data: migrations, isLoading, error, refetch } =
+    useFetchExternalMigrations();
   const cancelMutation = useCancelExternalMigration();
+
+  const [confirmCancel, setConfirmCancel] = useState<ExternalMigration | null>(null);
 
   const dataList = useMemo(() => {
     if (!migrations) return [];
@@ -39,42 +70,63 @@ const MigrationsList: React.FC<MigrationsListProps> = ({
 
   const columns: Column<ExternalMigration>[] = useMemo(
     () => [
+      // ── Mood column — first thing your eye lands on ─────────────────
+      {
+        key: "mood",
+        header: "",
+        render: (_, row) => {
+          const fs = friendlyStatus("workload-migration", row.status);
+          return (
+            <div className="flex items-center justify-center">
+              <MoodIndicator mood={fs.mood} size="md" />
+            </div>
+          );
+        },
+      },
+      // ── ID — small mono code, less visual weight ────────────────────
       {
         key: "identifier",
         header: "ID",
         sortable: true,
         render: (_, row) => (
-          <span className="font-mono text-xs text-gray-700 dark:text-gray-300">
-            {row.identifier}
+          <span className="font-mono text-xs text-gray-500 dark:text-gray-400">
+            {row.identifier.slice(0, 12)}
           </span>
         ),
       },
+      // ── Source → Target — the journey ───────────────────────────────
       {
         key: "source_endpoint",
-        header: "Source → Target",
+        header: "Where it's going",
         render: (_, row) => {
-          const src = row.source_endpoint as
-            | { name?: string; provider?: string }
-            | undefined;
-          const tgt = row.target_endpoint as
-            | { name?: string; provider?: string }
-            | undefined;
+          const src = row.source_endpoint as { name?: string; provider?: string } | undefined;
+          const tgt = row.target_endpoint as { name?: string; provider?: string } | undefined;
+          const inFlight = row.status === "in_progress";
           return (
-            <div className="flex items-center gap-1.5 text-sm">
-              <span className="text-gray-700 dark:text-gray-300">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="font-medium text-gray-900 dark:text-gray-100">
                 {src?.name ?? src?.provider ?? "Source"}
               </span>
-              <ArrowRight size={12} className="text-gray-400" />
-              <span className="text-gray-700 dark:text-gray-300">
+              <span aria-hidden="true" className="flex items-center">
+                <ArrowRight
+                  size={14}
+                  className={[
+                    "text-primary-500",
+                    inFlight && !reduced ? "animate-pulse" : "",
+                  ].join(" ")}
+                />
+              </span>
+              <span className="font-medium text-gray-900 dark:text-gray-100">
                 {tgt?.name ?? tgt?.provider ?? "Target"}
               </span>
             </div>
           );
         },
       },
+      // ── Resource type ───────────────────────────────────────────────
       {
         key: "resource_type",
-        header: "Type",
+        header: "What",
         sortable: true,
         render: (_, row) => (
           <span className="text-sm capitalize text-gray-700 dark:text-gray-300">
@@ -82,81 +134,107 @@ const MigrationsList: React.FC<MigrationsListProps> = ({
           </span>
         ),
       },
+      // ── Tier ────────────────────────────────────────────────────────
       {
         key: "migration_tier",
-        header: "Tier",
+        header: "Style",
         render: (_, row) => (
-          <span className="text-xs text-gray-600 dark:text-gray-400">
+          <span className="text-xs text-gray-500 dark:text-gray-400">
             {TIER_LABELS[row.migration_tier ?? ""] ?? row.migration_tier ?? "—"}
           </span>
         ),
       },
+      // ── Status (friendly via orbit StatusBadge) ────────────────────
       {
         key: "status",
         header: "Status",
         sortable: true,
-        render: (_, row) => <MigrationStatusBadge status={row.status} />,
+        render: (_, row) => {
+          const fs = friendlyStatus("workload-migration", row.status);
+          return (
+            <StatusBadge
+              tone={fs.tone}
+              label={fs.technical}
+              friendlyLabel={fs.friendly}
+              size="sm"
+            />
+          );
+        },
       },
+      // ── Progress (animated, themed) ────────────────────────────────
       {
         key: "progress_percent",
         header: "Progress",
         render: (_, row) => {
           if (row.status !== "in_progress") {
-            return (
-              <span className="text-xs text-gray-400 dark:text-gray-500">
-                —
-              </span>
-            );
+            if (row.status === "completed") {
+              return (
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-success-700 dark:text-success-400">
+                  ✨ All done
+                </span>
+              );
+            }
+            return <span className="text-xs text-gray-400 dark:text-gray-500">—</span>;
           }
+          const pct = Math.max(0, Math.min(100, row.progress_percent ?? 0));
           return (
             <div className="flex items-center gap-2">
-              <div className="h-1.5 w-16 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+              <div
+                className="h-2 w-20 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"
+                role="progressbar"
+                aria-valuenow={pct}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={`Migration progress ${pct}%`}
+              >
                 <div
-                  className="h-full rounded-full bg-blue-500 transition-all"
-                  style={{ width: `${row.progress_percent}%` }}
+                  className="h-full rounded-full bg-gradient-to-r from-primary-500 to-secondary-500"
+                  style={{
+                    width: `${pct}%`,
+                    transition: orbitTransition(reduced, "width", "smooth", "decelerate"),
+                  }}
                 />
               </div>
-              <span className="text-xs text-gray-600 dark:text-gray-400">
-                {row.progress_percent}%
+              <span className="text-xs font-medium tabular-nums text-gray-700 dark:text-gray-300">
+                {pct}%
               </span>
             </div>
           );
         },
       },
+      // ── Cost ───────────────────────────────────────────────────────
       {
         key: "estimated_cost_usd",
         header: "Cost",
         render: (_, row) => {
           const cost = row.actual_cost_usd ?? row.estimated_cost_usd;
-          if (!cost) {
-            return (
-              <span className="text-xs text-gray-400 dark:text-gray-500">
-                —
-              </span>
-            );
-          }
+          if (!cost) return <span className="text-xs text-gray-400 dark:text-gray-500">—</span>;
           return (
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <span className="text-sm font-semibold tabular-nums text-gray-900 dark:text-gray-100">
               ${Number(cost).toFixed(2)}
             </span>
           );
         },
       },
+      // ── Date — relative + tooltip with absolute ────────────────────
       {
         key: "created_at",
-        header: "Date",
+        header: "Started",
         sortable: true,
         render: (_, row) => {
           const date = new Date(row.created_at);
           return (
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {date.toLocaleDateString()}
+            <span
+              className="text-xs text-gray-500 dark:text-gray-400"
+              title={date.toLocaleString()}
+            >
+              {formatRelative(date)}
             </span>
           );
         },
       },
     ],
-    [],
+    [reduced],
   );
 
   const actions: Action<ExternalMigration>[] = useMemo(
@@ -164,67 +242,108 @@ const MigrationsList: React.FC<MigrationsListProps> = ({
       ...(onViewDetails
         ? [
             {
-              label: "View",
+              label: "Open",
               onClick: (row: ExternalMigration) => onViewDetails(row),
             },
           ]
         : []),
       {
-        label: "Cancel",
+        label: "Stop migration",
         icon: <XCircle size={14} />,
         tone: "danger" as const,
         onClick: (row: ExternalMigration) => {
-          if (
-            ["in_progress", "confirmed", "estimated"].includes(row.status) &&
-            confirm(`Cancel migration ${row.identifier}?`)
-          ) {
-            cancelMutation.mutate({ migrationId: row.identifier });
+          if (ACTIVE_STATUSES.includes(row.status)) {
+            setConfirmCancel(row);
           }
         },
       },
     ],
-    [onViewDetails, cancelMutation],
+    [onViewDetails],
   );
+
+  const showEmpty = !isLoading && !error && dataList.length === 0;
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-end">
-        <button
-          onClick={() => refetch()}
-          className="rounded-lg border border-gray-200 p-2 text-gray-500 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
-          title="Refresh"
+      {/* Header — friendly refresh */}
+      <div className="flex items-center justify-end gap-2">
+        <AsyncButton
+          variant="ghost"
+          size="sm"
+          icon={<RefreshCw size={14} />}
+          loadingLabel="Refreshing…"
+          successLabel="Up to date"
+          onClick={async () => {
+            await refetch();
+          }}
         >
-          <RefreshCw size={16} />
-        </button>
+          Refresh
+        </AsyncButton>
       </div>
 
-      <ModernTable<ExternalMigration>
-        data={dataList}
-        columns={columns}
+      <ResourceShell
         loading={isLoading}
-        searchable
-        searchKeys={["identifier", "resource_type", "status"]}
-        searchPlaceholder="Search migrations..."
-        paginated
-        pageSize={10}
-        actions={actions}
-        emptyMessage={
-          <div className="flex flex-col items-center py-12 text-center">
-            <Search
-              size={40}
-              className="mb-3 text-gray-300 dark:text-gray-600"
-            />
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              No migrations yet
-            </p>
-            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-              Start a new migration to transfer data between servers.
-            </p>
-          </div>
+        error={error}
+        onRetry={refetch}
+        empty={showEmpty}
+        emptyTitle="No migrations yet"
+        emptyDescription="Start your first migration and we'll show every step here — pause, resume, retry, all from this page."
+        emptyIcon={<span aria-hidden="true" className="text-5xl">🚚</span>}
+        emptyAction={
+          wizardPath
+            ? { label: "Start a migration", onClick: () => navigate(wizardPath) }
+            : undefined
         }
+      >
+        <ModernTable<ExternalMigration>
+          data={dataList}
+          columns={columns}
+          loading={false}
+          searchable
+          searchKeys={["identifier", "resource_type", "status"]}
+          searchPlaceholder="Find a migration by ID, type, or status…"
+          paginated
+          pageSize={10}
+          actions={actions}
+          emptyMessage={null}
+        />
+      </ResourceShell>
+
+      {/* Friendly cancel confirmation — replaces native window.confirm() */}
+      <ConfirmActionDialog
+        open={Boolean(confirmCancel)}
+        onClose={() => setConfirmCancel(null)}
+        onConfirm={async () => {
+          if (!confirmCancel) return;
+          await cancelMutation.mutateAsync({ migrationId: confirmCancel.identifier });
+          setConfirmCancel(null);
+        }}
+        title="Stop this migration?"
+        description={
+          confirmCancel
+            ? `We'll stop migration ${confirmCancel.identifier} where it is. The target won't be cleaned up — you can keep what's already moved or cancel and restart later.`
+            : ""
+        }
+        severity="danger"
+        confirmLabel="Yes, stop it"
+        cancelLabel="No, let it finish"
       />
     </div>
   );
 };
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function formatRelative(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return "Just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return date.toLocaleDateString();
+}
 
 export default MigrationsList;

@@ -146,9 +146,9 @@ export const useInstanceOrderCreation = ({
         body: body ? JSON.stringify(body) : undefined,
       });
 
-      let data: unknown;
+      let data: Record<string, unknown> | null = null;
       try {
-        data = await response.json();
+        data = (await response.json()) as Record<string, unknown> | null;
       } catch {
         if (!response.ok) {
           throw new Error(`Server error (${response.status}). Please try again.`);
@@ -157,10 +157,11 @@ export const useInstanceOrderCreation = ({
       }
 
       if (!response.ok) {
+        const errors = data?.errors as Record<string, unknown> | undefined;
         const message =
-          data?.message ||
-          data?.error ||
-          (data?.errors ? Object.values(data.errors).flat().join(", ") : null) ||
+          (data?.message as string | undefined) ||
+          (data?.error as string | undefined) ||
+          (errors ? Object.values(errors).flat().join(", ") : null) ||
           `Request failed with status ${response.status}`;
         throw new Error(message);
       }
@@ -205,10 +206,13 @@ export const useInstanceOrderCreation = ({
       const sanitizedSgIds = (
         Array.isArray(cfg.security_group_ids)
           ? cfg.security_group_ids
-          : ((cfg.security_group_ids as unknown) || "").split(",")
+          : ((cfg.security_group_ids as unknown as string) || "").split(",")
       )
-        .map((v: unknown) => (v && v.value ? v.value : v))
-        .map((v: unknown) => (v || "").toString().trim())
+        .map((v: unknown) => {
+          const obj = v as { value?: unknown } | null;
+          return obj && obj.value ? obj.value : v;
+        })
+        .map((v: unknown) => (v ? String(v).trim() : ""))
         .filter(Boolean);
 
       const extraVolumes = (cfg.additional_volumes || [])
@@ -331,8 +335,27 @@ export const useInstanceOrderCreation = ({
         const payload = buildPayload();
         const idempotencyKey = crypto.randomUUID();
 
-        const res = await apiCall("POST", "/instances/create", payload, idempotencyKey);
-        const data = res?.data || res;
+        const res = (await apiCall("POST", "/instances/create", payload, idempotencyKey)) as
+          | Record<string, unknown>
+          | null;
+        const rawData = (res?.data ?? res) as Record<string, unknown> | null;
+        const data = (rawData ?? {}) as {
+          payment?: {
+            payment_gateway_options?: unknown;
+            options?: unknown;
+            gateway?: unknown;
+            required?: unknown;
+          };
+          payment_options?: unknown;
+          pricing_breakdown?: unknown;
+          transaction?: {
+            metadata?: Record<string, unknown> & { pricing_breakdown?: unknown };
+            identifier?: unknown;
+            reference?: unknown;
+          } | null;
+          order?: { pricing_breakdown?: unknown } | null;
+          message?: string;
+        };
 
         const normalizedGatewayOptions = normalizePaymentOptions(
           data?.payment?.payment_gateway_options || data?.payment?.options || data?.payment_options
@@ -365,6 +388,9 @@ export const useInstanceOrderCreation = ({
               ? { payment_gateway_options: normalizedGatewayOptions }
               : data?.payment,
           pricing_breakdown: pricingBreakdownPayload || data?.pricing_breakdown || null,
+        } as Record<string, unknown> & {
+          payment?: { required?: unknown } & Record<string, unknown>;
+          message?: string;
         };
 
         setSubmissionResult(mergedResult);
@@ -417,14 +443,36 @@ export const useInstanceOrderCreation = ({
 
   const handlePaymentCompleted = useCallback(
     async (payload?: unknown) => {
+      type PaymentOptionShape = { transaction_reference?: unknown };
+      type PaymentShape = {
+        payment_gateway_options?: PaymentOptionShape[];
+        gateway?: unknown;
+      };
+      type TxShape = {
+        identifier?: unknown;
+        reference?: unknown;
+        payment_reference?: unknown;
+      };
+      type ResultShape = {
+        payment?: PaymentShape;
+        transaction?: TxShape;
+      };
+      type PayloadShape = { gateway?: unknown; reference?: unknown };
+      type SelectedPaymentShape = { transaction_reference?: unknown; name?: unknown };
+
+      const subResult = submissionResult as ResultShape | null;
+      const orderRcpt = orderReceipt as ResultShape | null;
+      const payloadShape = payload as PayloadShape | undefined;
+      const selectedPay = selectedPaymentOption as SelectedPaymentShape | null;
+
       const identifier =
-        selectedPaymentOption?.transaction_reference ||
-        submissionResult?.payment?.payment_gateway_options?.[0]?.transaction_reference ||
-        orderReceipt?.payment?.payment_gateway_options?.[0]?.transaction_reference ||
-        submissionResult?.transaction?.identifier ||
-        submissionResult?.transaction?.reference ||
-        orderReceipt?.transaction?.identifier ||
-        orderReceipt?.transaction?.reference ||
+        selectedPay?.transaction_reference ||
+        subResult?.payment?.payment_gateway_options?.[0]?.transaction_reference ||
+        orderRcpt?.payment?.payment_gateway_options?.[0]?.transaction_reference ||
+        subResult?.transaction?.identifier ||
+        subResult?.transaction?.reference ||
+        orderRcpt?.transaction?.identifier ||
+        orderRcpt?.transaction?.reference ||
         null;
 
       if (!identifier) {
@@ -433,14 +481,15 @@ export const useInstanceOrderCreation = ({
       }
 
       const rawGateway =
-        payload?.gateway ||
-        submissionResult?.payment?.gateway ||
-        orderReceipt?.payment?.gateway ||
-        selectedPaymentOption?.name ||
+        payloadShape?.gateway ||
+        subResult?.payment?.gateway ||
+        orderRcpt?.payment?.gateway ||
+        selectedPay?.name ||
         "";
 
-      const normalizedGateway = (() => {
-        const lower = String(rawGateway).toLowerCase();
+      const normalizedGateway: string = (() => {
+        const rawString = String(rawGateway || "");
+        const lower = rawString.toLowerCase();
         if (lower.includes("paystack") && lower.includes("card")) {
           return "Paystack_Card";
         }
@@ -449,7 +498,7 @@ export const useInstanceOrderCreation = ({
         if (lower.includes("wallet")) return "Wallet";
         if (lower.includes("fincra")) return "Fincra";
         if (lower.includes("virtual")) return "Virtual_Account";
-        return rawGateway || "Paystack";
+        return rawString || "Paystack";
       })();
 
       await verifyPaymentAction.run(
@@ -461,13 +510,23 @@ export const useInstanceOrderCreation = ({
             apiPayload.save_card_details = false;
           }
 
-          const res = await apiCall("PUT", `/transactions/${identifier}`, apiPayload);
-          const responseData = res?.data || res;
+          const res = (await apiCall("PUT", `/transactions/${identifier}`, apiPayload)) as
+            | Record<string, unknown>
+            | null;
+          const responseData = ((res?.data ?? res) ?? {}) as {
+            status?: unknown;
+            transaction?: {
+              status?: unknown;
+              metadata?: { keypair_materials?: unknown };
+              payment_reference?: unknown;
+            };
+            keypair_materials?: unknown;
+            metadata?: { keypair_materials?: unknown };
+            payment_reference?: unknown;
+          };
 
-          const normalizedStatus = (
-            responseData?.status ||
-            responseData?.transaction?.status ||
-            "pending"
+          const normalizedStatus = String(
+            responseData?.status || responseData?.transaction?.status || "pending"
           ).toLowerCase();
           const keypairMaterials =
             responseData?.keypair_materials ||
@@ -475,22 +534,26 @@ export const useInstanceOrderCreation = ({
             responseData?.transaction?.metadata?.keypair_materials ||
             null;
 
-          const updateState = (prev: unknown) => {
+          const updateState = (prev: Record<string, unknown> | null) => {
             if (!prev) return prev;
+            const prevShape = prev as {
+              transaction?: { payment_reference?: unknown } & Record<string, unknown>;
+              payment?: Record<string, unknown>;
+            };
             return {
               ...prev,
               ...(keypairMaterials ? { keypair_materials: keypairMaterials } : {}),
               transaction: {
-                ...prev.transaction,
+                ...(prevShape.transaction || {}),
                 status: normalizedStatus,
                 payment_reference:
                   responseData?.payment_reference ||
                   responseData?.transaction?.payment_reference ||
-                  payload?.reference ||
-                  prev.transaction?.payment_reference,
+                  payloadShape?.reference ||
+                  prevShape.transaction?.payment_reference,
               },
               payment: {
-                ...(prev.payment || {}),
+                ...(prevShape.payment || {}),
                 status: normalizedStatus,
                 gateway: normalizedGateway,
               },

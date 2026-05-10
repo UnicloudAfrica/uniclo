@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import logo from "./assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
-import useTenantAuthStore from "@/stores/tenantAuthStore";
+import useAuthStore from "@/stores/authStore";
 import { useResetPassword } from "@/hooks/authHooks";
 import { useResendOTP } from "@/hooks/authHooks";
 import {
@@ -16,7 +16,7 @@ import AuthShell from "../../components/auth/AuthShell";
 import logger from "@/utils/logger";
 
 export default function ResetPassword() {
-  const { userEmail, clearUserEmail } = useTenantAuthStore.getState();
+  const { userEmail, clearUserEmail } = useAuthStore.getState();
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [showPassword, setShowPassword] = useState(false);

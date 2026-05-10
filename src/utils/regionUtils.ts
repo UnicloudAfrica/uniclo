@@ -7,7 +7,7 @@
  * with a safety-net strip for any legacy data that still carries a provider name.
  */
 
-import useAdminAuthStore from "../stores/adminAuthStore";
+import useAuthStore from "@/stores/authStore";
 
 export interface RegionLike {
   name?: string;
@@ -25,7 +25,7 @@ export interface RegionDisplay extends RegionLike {
  * @returns {boolean} True if user is admin, false otherwise
  */
 export const isAdminUser = (): boolean => {
-  const { isAuthenticated, role } = useAdminAuthStore.getState();
+  const { isAuthenticated, role } = useAuthStore.getState();
   return isAuthenticated && role === "admin";
 };
 

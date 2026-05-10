@@ -106,7 +106,10 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({
           {isActive && !isNested && (
             <div
               className="absolute left-[-14px] w-1 h-4 rounded-[3px]"
-              style={{ backgroundColor: themeColor || "var(--theme-color)" }}
+              // Read the CSS var directly so theme switches (TenantThemeSwitcher
+              // flips `data-tenant`, branding hook writes `--theme-color`) take
+              // effect immediately. The captured `themeColor` prop went stale.
+              style={{ backgroundColor: "var(--theme-color)" }}
             />
           )}
           {isLucide ? (

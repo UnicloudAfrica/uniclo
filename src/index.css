@@ -5,6 +5,10 @@
 @import "./styles/responsive.css";
 @import "./shared/styles/object-storage-wizard.css";
 
+/* Orbit (resilience) primitive keyframes — bounce, mood, pop, shimmer.
+   All keyframes inside honor prefers-reduced-motion. */
+@import "./shared/components/orbit/orbit.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

@@ -1,0 +1,98 @@
+/**
+ * Orbit keyframes — imported once at the app root via `index.css`.
+ *
+ * Every keyframe here is wrapped so that `prefers-reduced-motion: reduce`
+ * users get a no-op. Components ALSO guard with the `usePrefersReducedMotion`
+ * hook before applying these classes; this CSS layer is defense-in-depth
+ * for users who toggle the OS preference mid-session.
+ */
+
+/* ─── orbit-pop — used for badges/counters appearing on screen ───────────── */
+@keyframes orbit-pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ─── orbit-bounce — gentle idle bounce for mascots / hero illustrations ── */
+@keyframes orbit-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-orbit-bounce {
+  animation: orbit-bounce 3.2s ease-in-out infinite;
+}
+
+/* ─── orbit-mood-bounce — micro-bounce specifically for emoji mood ──────── */
+@keyframes orbit-mood-bounce {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-2px) rotate(-4deg);
+  }
+  75% {
+    transform: translateY(-2px) rotate(4deg);
+  }
+}
+
+.orbit-mood-bounce {
+  animation: orbit-mood-bounce 2.4s ease-in-out infinite;
+  display: inline-block;
+  transform-origin: center bottom;
+}
+
+/* ─── orbit-shimmer — subtle background sweep for skeleton/loading rows ── */
+@keyframes orbit-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.orbit-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(229, 231, 235, 0) 0%,
+    rgba(229, 231, 235, 0.6) 50%,
+    rgba(229, 231, 235, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: orbit-shimmer 1.6s ease-in-out infinite;
+}
+.dark .orbit-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(55, 65, 81, 0) 0%,
+    rgba(55, 65, 81, 0.6) 50%,
+    rgba(55, 65, 81, 0) 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* ─── reduced-motion: collapse everything ───────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .animate-orbit-bounce,
+  .orbit-mood-bounce,
+  .orbit-shimmer {
+    animation: none !important;
+  }
+}

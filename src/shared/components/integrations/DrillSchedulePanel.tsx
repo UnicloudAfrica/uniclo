@@ -524,10 +524,12 @@ const DrillSchedulePanel: React.FC<DrillSchedulePanelProps> = ({
           </div>
         ) : (
           <div style={styles.emptyState}>
-            <CalendarClock size={32} color="var(--ds-text-subtle, #d1d5db)" style={{ marginBottom: 8 }} />
-            <p style={{ margin: 0 }}>
-              No automatic drill schedule configured.<br />
-              Enable scheduling to run DR drills on a recurring basis.
+            <span aria-hidden="true" style={{ fontSize: 40, display: "block", marginBottom: 8 }}>
+              📅
+            </span>
+            <p style={{ margin: 0, fontWeight: 600 }}>No drill schedule yet</p>
+            <p style={{ margin: "6px 0 0", fontSize: 13, opacity: 0.8 }}>
+              Set one up and we'll run a fire-drill on your servers automatically — so you know your recovery plan still works without lifting a finger.
             </p>
           </div>
         )}

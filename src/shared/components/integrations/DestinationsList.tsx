@@ -1,19 +1,16 @@
-import React, { useState } from "react";
+import React from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Plus, Wifi, Trash2 } from "lucide-react";
 import ModernTable, { type Column } from "../ui/ModernTable";
 import ModernButton from "../ui/ModernButton";
-import CreateDestinationModal from "./CreateDestinationModal";
 import {
   DESTINATION_TYPE_LABELS,
   useFetchDestinations,
-  useCreateDestination,
   useDeleteDestination,
   useTestDestination,
   type IntegrationDestination,
   type DestinationType,
 } from "@/shared/hooks/resources/integrationHooks";
-
-type AnyRecord = Record<string, unknown>;
 
 interface DestinationsListProps {
   integrationKey?: string;
@@ -78,21 +75,21 @@ const columns: Column<IntegrationDestination>[] = [
 const DestinationsList: React.FC<DestinationsListProps> = ({
   integrationKey = "anycloudflow",
 }) => {
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  // Resolve the role-correct "new" URL from the current path so this
+  // shared component works under /admin-dashboard, /dashboard, and
+  // /client-dashboard without the page wrapper having to pass it in.
+  const role = location.pathname.startsWith("/admin-dashboard")
+    ? "admin-dashboard"
+    : location.pathname.startsWith("/client-dashboard")
+      ? "client-dashboard"
+      : "dashboard";
+  const goNew = () => navigate(`/${role}/destinations/new`);
 
   const { data: destinations = [], isLoading } = useFetchDestinations(integrationKey);
-  const createMutation = useCreateDestination();
   const deleteMutation = useDeleteDestination();
   const testMutation = useTestDestination();
-
-  const handleCreate = (data: AnyRecord) => {
-    createMutation.mutate(
-      { integrationKey, data },
-      {
-        onSuccess: () => setShowCreateModal(false),
-      },
-    );
-  };
 
   const handleDelete = (destination: IntegrationDestination) => {
     if (!window.confirm(`Delete destination "${destination.name}"?`)) return;
@@ -133,20 +130,32 @@ const DestinationsList: React.FC<DestinationsListProps> = ({
           <ModernButton
             variant="primary"
             size="sm"
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => goNew()}
           >
             <Plus className="w-4 h-4" />
-            Add Destination
+            Add a destination
           </ModernButton>
+        }
+        emptyMessage={
+          <div className="flex flex-col items-center gap-2 px-4 py-12 text-center">
+            <span aria-hidden="true" className="text-5xl">📍</span>
+            <p className="text-base font-semibold text-gray-700 dark:text-gray-300">
+              No destinations yet
+            </p>
+            <p className="max-w-md text-sm text-gray-500 dark:text-gray-400">
+              Tell us where backups should land — an S3 bucket, an SFTP server, an NFS share, or another VM. You can add as many as you like.
+            </p>
+            <div className="mt-3">
+              <ModernButton variant="primary" size="sm" onClick={() => goNew()}>
+                <Plus className="w-4 h-4" />
+                Add your first destination
+              </ModernButton>
+            </div>
+          </div>
         }
       />
 
-      <CreateDestinationModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onCreate={handleCreate}
-        isCreating={createMutation.isPending}
-      />
+      {/* Create flow now lives at /{role}/destinations/new (RES-162) */}
     </>
   );
 };

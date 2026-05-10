@@ -18,8 +18,21 @@ const toTitleCase = (value = "") =>
     .map((segment: string) => segment.charAt(0).toUpperCase() + segment.slice(1))
     .join(" ");
 
-const getOsDescriptor = (image: unknown) =>
-  (image?.os_family || image?.platform || image?.distribution || image?.name || "").toLowerCase();
+type OsImageShape = {
+  id?: string | number;
+  identifier?: string;
+  name?: string;
+  os_family?: string;
+  platform?: string;
+  distribution?: string;
+  version?: string;
+  architecture?: string;
+  virtualization_type?: string;
+  visibility?: string;
+};
+
+const getOsDescriptor = (image: OsImageShape) =>
+  String(image?.os_family || image?.platform || image?.distribution || image?.name || "").toLowerCase();
 
 const stringHash = (value = "") => {
   let hash = 0;
@@ -79,9 +92,9 @@ const buildInitials = (value = "") => {
   return `${first}${second}`.toUpperCase();
 };
 
-const getAvatarVisuals = (image: unknown) => {
+const getAvatarVisuals = (image: OsImageShape) => {
   const descriptor = getOsDescriptor(image);
-  const seed = descriptor || image?.identifier || image?.name || image?.id?.toString() || "os";
+  const seed = String(descriptor || image?.identifier || image?.name || image?.id?.toString() || "os");
   const palette = avatarPaletteForSeed(seed);
 
   return {
@@ -96,13 +109,13 @@ const getAvatarVisuals = (image: unknown) => {
   };
 };
 
-const buildDetailChips = (image: unknown) => {
+const buildDetailChips = (image: OsImageShape) => {
   const values = [
     image?.version,
     image?.architecture ? image.architecture.toUpperCase() : null,
     image?.virtualization_type ? toTitleCase(image.virtualization_type) : null,
     image?.visibility ? toTitleCase(image.visibility) : null,
-  ].filter(Boolean);
+  ].filter(Boolean) as string[];
 
   return Array.from(new Set(values));
 };
@@ -138,7 +151,7 @@ const OSImages = ({
   const [activeSubTab, setActiveSubTab] = useState<"catalog" | "discovery" | "requests">("catalog");
   const { data: regionsData } = useFetchRegions();
   const allRegionCodes = useMemo(
-    () => (Array.isArray(regionsData) ? regionsData.map((r: unknown) => r.code as string) : []),
+    () => (Array.isArray(regionsData) ? regionsData.map((r: { code?: string }) => String(r.code ?? "")) : []),
     [regionsData]
   );
 
@@ -165,12 +178,12 @@ const OSImages = ({
     setIsAddOSImageModalOpen(true);
   };
 
-  const handleEditOSImage = (image: unknown) => {
+  const handleEditOSImage = (image: Record<string, unknown>) => {
     setSelectedOSImage(image);
     setIsEditOSImageModalOpen(true);
   };
 
-  const handleDeleteOSImage = (image: unknown) => {
+  const handleDeleteOSImage = (image: Record<string, unknown>) => {
     setSelectedOSImage(image);
     setIsDeleteOSImageModalOpen(true);
   };
@@ -228,7 +241,7 @@ const OSImages = ({
     {
       key: "name",
       header: "Image",
-      render: (image: unknown) => {
+      render: (image: OsImageShape) => {
         const { label, className, style } = getAvatarVisuals(image);
         const chips = buildDetailChips(image);
         const platform = image?.platform || image?.os_family;
@@ -244,12 +257,12 @@ const OSImages = ({
               <p className="text-xs text-slate-500">{platform ? toTitleCase(platform) : "—"}</p>
               {chips.length > 0 && (
                 <div className="flex flex-wrap gap-1">
-                  {chips.map((chip: unknown) => (
+                  {chips.map((chip) => (
                     <span
-                      key={chip}
+                      key={String(chip)}
                       className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500"
                     >
-                      {chip}
+                      {String(chip)}
                     </span>
                   ))}
                 </div>
@@ -263,7 +276,7 @@ const OSImages = ({
       key: "region",
       header: "Region",
       align: "center",
-      render: (image: unknown) => (
+      render: (image: { region?: string }) => (
         <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
           {image.region || "—"}
         </span>
@@ -273,13 +286,13 @@ const OSImages = ({
       key: "is_licenced",
       header: "License",
       align: "center",
-      render: (image: unknown) => formatLicenseStatus(image.is_licenced),
+      render: (image: { is_licenced?: boolean }) => formatLicenseStatus(Boolean(image.is_licenced)),
     },
     {
       key: "actions",
       header: "",
       align: "right",
-      render: (image: unknown) => (
+      render: (image: Record<string, unknown>) => (
         <div className="flex items-center justify-end gap-2">
           <button
             type="button"

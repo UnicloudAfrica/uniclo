@@ -2,9 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import logo from "./assets/logo.png";
 import VerificationCodeInput from "@/utils/VerificationCodeInput";
-import useTenantAuthStore from "@/stores/tenantAuthStore";
-import useClientAuthStore from "@/stores/clientAuthStore";
-import useAdminAuthStore from "@/stores/adminAuthStore";
+import useAuthStore from "@/stores/authStore";
 import { clearAuthSessionsExcept } from "@/stores/sessionUtils";
 import { useVerifyMail } from "@/hooks/authHooks";
 import { useNavigate } from "react-router-dom";
@@ -52,14 +50,14 @@ interface AuthVerifyResponse {
 export default function VerifyMail() {
   const [code, setCode] = useState(Array(6).fill("")); // Six-digit OTP input
   const isSubmittingRef = useRef(false);
-  const tenantAuth = useTenantAuthStore.getState();
-  const clientAuth = useClientAuthStore.getState();
-  const adminAuth = useAdminAuthStore.getState();
-  const userEmail = useTenantAuthStore((state) => state.userEmail);
-  const clearUserEmail = useTenantAuthStore((state) => state.clearUserEmail);
-  const twoFactorRequired = useTenantAuthStore((state) => state.twoFactorRequired);
-  const setTwoFactorRequired = useTenantAuthStore((state) => state.setTwoFactorRequired);
-  const clearTwoFactorRequirement = useTenantAuthStore((state) => state.clearTwoFactorRequirement);
+  const tenantAuth = useAuthStore.getState();
+  const clientAuth = useAuthStore.getState();
+  const adminAuth = useAuthStore.getState();
+  const userEmail = useAuthStore((state) => state.userEmail);
+  const clearUserEmail = useAuthStore((state) => state.clearUserEmail);
+  const twoFactorRequired = useAuthStore((state) => state.twoFactorRequired);
+  const setTwoFactorRequired = useAuthStore((state) => state.setTwoFactorRequired);
+  const clearTwoFactorRequirement = useAuthStore((state) => state.clearTwoFactorRequirement);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { mutate: verifyEmail, isPending: isVerifyPending } = useVerifyMail();
   const navigate = useNavigate();

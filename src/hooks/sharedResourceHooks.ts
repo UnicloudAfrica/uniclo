@@ -7,7 +7,7 @@ import tenantApi from "../index/tenant/tenantApi";
 import silentTenantApi from "../index/tenant/silentTenant";
 import { type HttpMethod } from "../index/api";
 import config from "../config";
-import useAdminAuthStore from "../stores/adminAuthStore";
+import useAuthStore from "@/stores/authStore";
 import logger from "../utils/logger";
 
 // --- Interfaces ---
@@ -185,7 +185,7 @@ const fetchAdminInstanceConsoleById = async (
   consoleType: string = "novnc"
 ): Promise<ApiResponse<{ url: string }>> => {
   const typeParam = consoleType ? `?type=${encodeURIComponent(consoleType)}` : "";
-  const authState = useAdminAuthStore?.getState?.();
+  const authState = useAuthStore?.getState?.();
   const headers = authState?.getAuthHeaders?.() || {
     "Content-Type": "application/json",
     Accept: "application/json",

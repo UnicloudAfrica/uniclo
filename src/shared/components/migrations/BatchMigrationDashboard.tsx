@@ -130,7 +130,7 @@ const BatchMigrationDashboard: React.FC<BatchMigrationDashboardProps> = ({
 
       {/* Tab Content */}
       {activeTab === "batch-migrations" && (
-        <BatchMigrationsList context={context} />
+        <BatchMigrationsList context={context} wizardPath={wizardPath} />
       )}
     </div>
   );

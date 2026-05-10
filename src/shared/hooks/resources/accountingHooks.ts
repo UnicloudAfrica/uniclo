@@ -1,3 +1,5 @@
+import { RESILIENCE } from "@/shared/branding";
+
 /**
  * Accounting Hooks — Context-aware hooks for the read-only accounting
  * reports shipped in Phase A of the accounting plan.
@@ -350,7 +352,7 @@ export const STANDARD_ACCOUNT_OPTIONS: Array<{
   { code: "4100", name: "Object Storage Revenue", type: "revenue" },
   { code: "4200", name: "Managed Database Revenue", type: "revenue" },
   { code: "4300", name: "Shield Revenue", type: "revenue" },
-  { code: "4400", name: "AnyCloudFlow Revenue", type: "revenue" },
+  { code: "4400", name: `${RESILIENCE} Revenue`, type: "revenue" },
   { code: "4900", name: "Other Revenue", type: "revenue" },
   { code: "5000", name: "Provider A COGS", type: "expense" },
   { code: "5100", name: "Provider B COGS", type: "expense" },

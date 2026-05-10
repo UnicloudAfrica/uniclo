@@ -5,7 +5,7 @@ import ClientPageShell from "../components/ClientPageShell";
 import { useObjectStorage } from "../../contexts/ObjectStorageContext";
 import ObjectStorageDashboardContent from "@/shared/components/object-storage/ObjectStorageDashboardContent";
 import { objectStoragePresets } from "@/shared/config/objectStoragePresets";
-import useClientAuthStore from "@/stores/clientAuthStore";
+import useAuthStore from "@/stores/authStore";
 
 interface StorageAccount {
   id: string | number;
@@ -15,7 +15,7 @@ interface StorageAccount {
 
 const ClientObjectStoragePage: React.FC = () => {
   const navigate = useNavigate();
-  const clientTenant = useClientAuthStore((state) => state?.tenant);
+  const clientTenant = useAuthStore((state) => state?.tenant);
   const {
     accounts,
     accountsLoading,

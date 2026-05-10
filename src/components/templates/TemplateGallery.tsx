@@ -3,9 +3,30 @@ import React, { useState } from "react";
 import { useInstanceTemplates } from "@/hooks/useInstanceTemplates";
 import { LayoutTemplate, Loader2 } from "lucide-react";
 
+interface TemplateShape {
+  id: string | number;
+  name?: string;
+  category?: string;
+  description?: string;
+  configuration?: {
+    compute?: { vcpu?: number; ram_mb?: number };
+    volumes?: Array<{ size_gb?: number }>;
+  };
+  pricing_cache?: {
+    monthly_price?: number;
+    monthly_total?: number;
+    monthly_total_usd?: number;
+    yearly_total?: number;
+    yearly_total_usd?: number;
+    currency?: string;
+    region?: string;
+  };
+  tags?: string[];
+}
+
 interface TemplateGalleryProps {
-  onSelectTemplate?: (template: unknown) => void;
-  onCustomize?: (template: unknown) => void;
+  onSelectTemplate?: (template: TemplateShape) => void;
+  onCustomize?: (template: TemplateShape) => void;
 }
 
 const TemplateGallery: React.FC<TemplateGalleryProps> = ({ onSelectTemplate, onCustomize }) => {
@@ -38,14 +59,15 @@ const TemplateGallery: React.FC<TemplateGalleryProps> = ({ onSelectTemplate, onC
     );
   }
 
-  const categories = [
+  const typedTemplates = templates as TemplateShape[];
+  const categories: string[] = [
     "all",
-    ...Array.from(new Set(templates.map((t: unknown) => t.category).filter(Boolean))),
+    ...Array.from(new Set(typedTemplates.map((t) => t.category).filter((c): c is string => Boolean(c)))),
   ];
-  const filteredTemplates =
+  const filteredTemplates: TemplateShape[] =
     selectedCategory === "all"
-      ? templates
-      : templates.filter((t: unknown) => t.category === selectedCategory);
+      ? typedTemplates
+      : typedTemplates.filter((t) => t.category === selectedCategory);
 
   return (
     <div className="space-y-6">
@@ -68,7 +90,7 @@ const TemplateGallery: React.FC<TemplateGalleryProps> = ({ onSelectTemplate, onC
 
       {/* Template Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredTemplates.map((template: unknown) => (
+        {filteredTemplates.map((template) => (
           <div
             key={template.id}
             className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow"

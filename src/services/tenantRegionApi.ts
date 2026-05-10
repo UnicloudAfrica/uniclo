@@ -6,8 +6,7 @@
  */
 
 import config from "../config";
-import useAdminAuthStore from "../stores/adminAuthStore";
-import useTenantAuthStore from "../stores/tenantAuthStore";
+import useAuthStore from "@/stores/authStore";
 import ToastUtils from "../utils/toastUtil";
 import logger from "../utils/logger";
 
@@ -47,8 +46,8 @@ class TenantRegionApiService {
    * Get the authorization headers
    */
   getAuthHeaders() {
-    const adminState = useAdminAuthStore.getState();
-    const tenantState = useTenantAuthStore.getState();
+    const adminState = useAuthStore.getState();
+    const tenantState = useAuthStore.getState();
     if (adminState?.getAuthHeaders) {
       return adminState.getAuthHeaders();
     }

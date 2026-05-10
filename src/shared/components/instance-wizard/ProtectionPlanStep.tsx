@@ -18,6 +18,7 @@ import { SearchableSelect } from "../ui";
 import { useFetchAcfPublicServices } from "@/hooks/useCostExplorer";
 import { useFetchProductPricing } from "@/hooks/resource";
 import { useFetchAvailabilityZones } from "@/shared/hooks/resources/regionHooks";
+import { RESILIENCE } from "@/shared/branding";
 
 export type ProtectionPlan = "none" | "backup_only" | "dr_standby" | "dr_replication";
 export type RedundancyPattern = "n_plus_1" | "one_plus_1" | "one_plus_n";
@@ -111,15 +112,14 @@ const PLANS: {
   },
   {
     id: "dr_standby",
-    label: "AnyCloudFlow DR Standby",
-    description:
-      "A spare copy of your server sits ready in another location. If your main server fails, you can switch to the spare one. AnyCloudFlow keeps them in sync.",
+    label: `${RESILIENCE} DR Standby`,
+    description: `A spare copy of your server sits ready in another location. If your main server fails, you can switch to the spare one. ${RESILIENCE} keeps them in sync.`,
     features: [
       "A ready-to-go spare server in a different location",
-      "AnyCloudFlow syncs your data to the spare periodically",
+      `${RESILIENCE} syncs your data to the spare periodically`,
       "You can manually switch to the spare if your main server fails",
       "Daily backups are also included",
-      "AnyCloudFlow agent watches your server health",
+      `${RESILIENCE} agent watches your server health`,
     ],
     icon: ArrowUpDown,
     accentBorder: "border-blue-300",
@@ -129,17 +129,16 @@ const PLANS: {
   },
   {
     id: "dr_replication",
-    label: "AnyCloudFlow DR Replication",
-    description:
-      "Your server is copied in real-time to a spare, every second. If your main server fails, AnyCloudFlow automatically switches to the spare — almost no data is lost.",
+    label: `${RESILIENCE} DR Replication`,
+    description: `Your server is copied in real-time to a spare, every second. If your main server fails, ${RESILIENCE} automatically switches to the spare — almost no data is lost.`,
     features: [
       "Real-time copying of every change to the spare server",
-      "AnyCloudFlow automatically switches if your main server fails",
+      `${RESILIENCE} automatically switches if your main server fails`,
       "Almost zero data loss (less than a minute behind)",
       "Recovery happens in minutes, not hours",
-      "AnyCloudFlow monitors replication health 24/7",
+      `${RESILIENCE} monitors replication health 24/7`,
       "Daily backups and a spare server are also included",
-      "AnyCloudFlow agent runs on both your main and spare servers",
+      `${RESILIENCE} agent runs on both your main and spare servers`,
     ],
     icon: ShieldCheck,
     accentBorder: "border-green-300",
@@ -516,7 +515,7 @@ const ProtectionPlanStep: React.FC<ProtectionPlanStepProps> = ({
             cost: drStandbyCost,
           },
           {
-            label: "AnyCloudFlow Replication",
+            label: `${RESILIENCE} Replication`,
             detail: `${drVmCount} VM × ${formatPrice(replicationPerVm, currency)}/VM`,
             cost: replicationCost,
           },
@@ -722,14 +721,14 @@ const ProtectionPlanStep: React.FC<ProtectionPlanStepProps> = ({
                   </div>
                 )}
 
-                {/* AnyCloudFlow powered note */}
+                {/* Resilience product call-out (Orbit / white-label) */}
                 {isSelected &&
                   (plan.id === "dr_standby" ||
                     plan.id === "dr_replication") && (
                     <div className="mt-3 flex items-center gap-2 rounded-lg bg-white/80 border border-green-200 px-3 py-2">
                       <RefreshCw className="h-3.5 w-3.5 text-green-600 shrink-0" />
                       <span className="text-[11px] text-green-700">
-                        Powered by <strong>AnyCloudFlow</strong> —{" "}
+                        <strong>{RESILIENCE}</strong> —{" "}
                         {plan.id === "dr_standby"
                           ? "keeps your spare server updated with periodic copies. You switch manually when needed."
                           : "copies every change to your spare in real-time. Switches automatically if something goes wrong."}
@@ -982,7 +981,7 @@ const ProtectionPlanStep: React.FC<ProtectionPlanStepProps> = ({
               How many spare servers?
             </h3>
             <p className="mt-0.5 text-xs text-gray-500">
-              Choose how AnyCloudFlow sets up spare servers for your{" "}
+              Choose how {RESILIENCE} sets up spare servers for your{" "}
               {instanceCount}{" "}
               {instanceCount > 1 ? `${resourceLabel}s` : resourceLabel}.
               More spares = more safety, but costs more.

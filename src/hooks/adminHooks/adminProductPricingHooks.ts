@@ -291,8 +291,79 @@ export const useUpdateProductPricing = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateProductPricing,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["product-pricing-admin"] });
+    onSuccess: (response, variables) => {
+      // Pull the fresh ProductPricing out of the controller's
+      // `respondSuccess([...'data' => $fresh])` envelope. Older
+      // callers may pass it back as either `response.data` or directly.
+      const envelope = response as
+        | { data?: ProductPricing | { data?: ProductPricing } }
+        | undefined;
+      const inner = envelope?.data as ProductPricing | { data?: ProductPricing } | undefined;
+      const freshRow: ProductPricing | undefined =
+        (inner && (inner as { data?: ProductPricing }).data) ||
+        (inner as ProductPricing | undefined);
+
+      const targetId = String(
+        (variables as { id?: number | string } | undefined)?.id ?? freshRow?.id ?? "",
+      );
+
+      // Splice the updated row into every cached `product-pricing-admin`
+      // page so the table re-renders with the new price IMMEDIATELY,
+      // without waiting for a refetch round-trip. The cache shape is
+      // `{ data: ProductPricing[], meta: { … } }` after the hook
+      // normaliser, OR an `{ data: { product, pricing } }` array when
+      // the request carried `availability_zone` (enriched shape).
+      if (freshRow && targetId) {
+        queryClient.setQueriesData(
+          { queryKey: ["product-pricing-admin"] },
+          (old: unknown) => {
+            if (!old || typeof old !== "object") return old;
+            const cache = old as { data?: unknown[] };
+            const list = Array.isArray(cache.data) ? cache.data : null;
+            if (!list) return old;
+
+            const next = list.map((row) => {
+              const flatId = (row as { id?: number | string })?.id;
+              const enrichedId = (row as { pricing?: { id?: number | string } })?.pricing?.id;
+              if (String(flatId ?? "") === targetId) {
+                // Flat shape — replace with the fresh row but keep any
+                // join columns the server didn't echo back.
+                return { ...(row as Record<string, unknown>), ...freshRow };
+              }
+              if (String(enrichedId ?? "") === targetId) {
+                // Enriched shape — only the nested `pricing` block
+                // moved; merge so `product` stays intact.
+                const r = row as Record<string, unknown>;
+                return {
+                  ...r,
+                  pricing: {
+                    ...((r.pricing as Record<string, unknown>) ?? {}),
+                    price_usd: freshRow.price_usd,
+                    currency_code: freshRow.currency_code,
+                    effective: {
+                      ...(((r.pricing as { effective?: Record<string, unknown> })?.effective) ??
+                        {}),
+                      price_usd: freshRow.price_usd,
+                      price_local: freshRow.price_usd,
+                      currency: freshRow.currency_code,
+                    },
+                  },
+                };
+              }
+              return row;
+            });
+            return { ...cache, data: next };
+          },
+        );
+      }
+
+      // Refetch in the background regardless — picks up server-side
+      // side-effects we don't model here (FX recompute, tenant
+      // pricing snapshot bumps).
+      queryClient.invalidateQueries({
+        queryKey: ["product-pricing-admin"],
+        refetchType: "active",
+      });
     },
     onError: (error: unknown) => {
       logger.error("Error updating product pricing:", error);

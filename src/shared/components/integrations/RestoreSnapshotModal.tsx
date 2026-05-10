@@ -5,7 +5,7 @@
  * Responsive: full-width on mobile, centered modal on desktop.
  */
 import React, { useState, useEffect } from "react";
-import { X, RotateCcw, AlertTriangle, Monitor, Server } from "lucide-react";
+import { X, AlertTriangle, Monitor, Server } from "lucide-react";
 import { ModernButton } from "../ui";
 import { useRestoreBackup } from "@/shared/hooks/resources/integrationHooks";
 
@@ -43,12 +43,20 @@ const RestoreSnapshotModal: React.FC<RestoreSnapshotModalProps> = ({
 }) => {
   const [restoreMethod, setRestoreMethod] = useState("in_place");
   const [confirmed, setConfirmed] = useState(false);
+  // Top-rung destructive action — replaces live data and there's no
+  // undo. Per the destructive-action ladder we gate it on a typed
+  // "RESTORE" token in addition to the acknowledgement checkbox. A
+  // single mis-click can't trigger this; it requires deliberate
+  // engagement that survives muscle-memory.
+  const [confirmText, setConfirmText] = useState("");
+  const REQUIRED_CONFIRM = "RESTORE";
   const restoreBackup = useRestoreBackup();
 
   useEffect(() => {
     if (isOpen) {
       setRestoreMethod("in_place");
       setConfirmed(false);
+      setConfirmText("");
     }
   }, [isOpen]);
 
@@ -76,15 +84,15 @@ const RestoreSnapshotModal: React.FC<RestoreSnapshotModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-gray-800 sm:px-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-900/30">
-              <RotateCcw size={18} className="text-amber-600 dark:text-amber-400" />
-            </div>
+            <span aria-hidden="true" className="text-2xl">⏮️</span>
             <div>
               <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                Restore Backup
+                Roll back to this snapshot
               </h3>
-              {resourceName && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">{resourceName}</p>
+              {resourceName ? (
+                <p className="text-xs text-gray-500 dark:text-gray-400">For {resourceName}</p>
+              ) : (
+                <p className="text-xs text-gray-500 dark:text-gray-400">Brings everything back to how it was at the snapshot.</p>
               )}
             </div>
           </div>
@@ -165,11 +173,11 @@ const RestoreSnapshotModal: React.FC<RestoreSnapshotModalProps> = ({
           </div>
 
           {/* Warning */}
-          <div className="flex items-start gap-2 rounded-lg bg-amber-50 px-4 py-3 dark:bg-amber-900/20">
-            <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
-            <p className="text-xs text-amber-700 dark:text-amber-300">
-              This will overwrite the current resource data with the selected backup snapshot.
-              This action cannot be undone.
+          <div className="flex items-start gap-2 rounded-lg bg-warning-50 px-4 py-3 dark:bg-warning-900/20">
+            <AlertTriangle size={16} className="mt-0.5 shrink-0 text-warning-600 dark:text-warning-400" />
+            <p className="text-xs text-warning-700 dark:text-warning-300">
+              <strong>Heads up:</strong> this replaces what's there now with what was in the snapshot.
+              Anything written since the snapshot was taken will be gone — and we can't undo this once it starts.
             </p>
           </div>
 
@@ -179,25 +187,54 @@ const RestoreSnapshotModal: React.FC<RestoreSnapshotModalProps> = ({
               type="checkbox"
               checked={confirmed}
               onChange={(e) => setConfirmed(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-800"
+              className="mt-0.5 h-4 w-4 rounded border-gray-300 text-warning-600 focus:ring-warning-500 dark:border-gray-600 dark:bg-gray-800"
             />
             <span className="text-sm text-gray-700 dark:text-gray-300">
-              I understand this will replace the current data and cannot be reversed.
+              I get it — this replaces what's there now and there's no going back.
             </span>
           </label>
+
+          {/* Type-to-confirm gate */}
+          {confirmed && (
+            <div className="rounded-lg border border-warning-200 bg-warning-50 p-3 dark:border-warning-700/50 dark:bg-warning-900/20">
+              <label
+                htmlFor="restore-confirm-input"
+                className="block text-xs font-medium text-warning-800 dark:text-warning-200"
+              >
+                One last step — type{" "}
+                <span className="font-mono font-bold">{REQUIRED_CONFIRM}</span> to unlock the
+                button.
+              </label>
+              <input
+                id="restore-confirm-input"
+                type="text"
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder={REQUIRED_CONFIRM}
+                autoComplete="off"
+                spellCheck={false}
+                className="mt-1 w-full rounded border border-warning-300 bg-white px-2 py-1.5 font-mono text-sm text-gray-900 focus:border-warning-500 focus:ring-1 focus:ring-warning-500 dark:border-warning-700 dark:bg-gray-900 dark:text-gray-100"
+              />
+              {confirmText && confirmText !== REQUIRED_CONFIRM && (
+                <p className="mt-1 text-[11px] text-warning-700 dark:text-warning-300">
+                  Doesn't match — type it exactly as shown.
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Footer */}
         <div className="flex flex-col-reverse gap-2 border-t border-gray-100 px-5 py-4 dark:border-gray-800 sm:flex-row sm:justify-end sm:gap-3 sm:px-6">
           <ModernButton variant="outline" onClick={onClose} disabled={restoreBackup.isPending}>
-            Cancel
+            Not yet
           </ModernButton>
           <ModernButton
             variant="primary"
             onClick={handleRestore}
-            disabled={!confirmed || restoreBackup.isPending}
+            disabled={!confirmed || confirmText !== REQUIRED_CONFIRM || restoreBackup.isPending}
           >
-            {restoreBackup.isPending ? "Restoring..." : "Start Restore"}
+            {restoreBackup.isPending ? "Rolling back…" : "Yes, roll back now"}
           </ModernButton>
         </div>
       </div>

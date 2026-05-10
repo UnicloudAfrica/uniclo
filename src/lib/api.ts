@@ -133,7 +133,35 @@ const handleAuthError = (
     bodyRecord["prevent_redirect"] === true || dataRecord["prevent_redirect"] === true;
   if (preventHeader.toLowerCase() === "true" || preventBody) return false;
 
-  // Handle 2FA requirement
+  // Handle 2FA enrollment requirement (no secret yet, policy forces it).
+  // Backend returns 403 with two_factor_enrollment_required:true and an
+  // optional `scope` ("admin" | "tenant") so we route to the correct page.
+  const twoFactorEnrollmentRequired =
+    status === 403 &&
+    (response.headers.get("X-Auth-Status") === "two-factor-enrollment-required" ||
+      Boolean(bodyRecord["two_factor_enrollment_required"]) ||
+      Boolean(dataRecord["two_factor_enrollment_required"]));
+
+  if (twoFactorEnrollmentRequired) {
+    const scope =
+      (bodyRecord["scope"] as string | undefined) ||
+      (dataRecord["scope"] as string | undefined) ||
+      role;
+    const targetPath =
+      scope === "admin"
+        ? "/admin-2fa-enroll"
+        : scope === "tenant"
+          ? "/tenant-2fa-enroll"
+          : scope === "client"
+            ? "/client-2fa-enroll"
+            : "/2fa-enroll";
+    if (typeof window !== "undefined" && globalThis.window.location.pathname !== targetPath) {
+      globalThis.window.location.assign(targetPath);
+    }
+    return true;
+  }
+
+  // Handle 2FA token-verification requirement (secret exists, token not yet verified)
   const twoFactorRequired =
     status === 403 &&
     (response.headers.get("X-Auth-Status") === "two-factor-required" ||

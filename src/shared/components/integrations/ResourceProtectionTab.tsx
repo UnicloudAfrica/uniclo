@@ -22,7 +22,11 @@ import {
 import { ModernButton, ModernCard } from "../ui";
 import IntegrationStatusBadge from "./IntegrationStatusBadge";
 import IntegrationOperationsTable from "./IntegrationOperationsTable";
-import BackupConfigModal from "./BackupConfigModal";
+// BackupConfigWizard replaces BackupConfigModal per RES-162 (4 fields
+// + destination dependency = wizard, not modal). It renders inline
+// inside the protection tab so the user stays in their resource
+// context — no separate page navigation required to keep the rule.
+import BackupConfigWizard from "./BackupConfigWizard";
 import ReplicationConfigModal from "./ReplicationConfigModal";
 import BackupSnapshotsList from "./BackupSnapshotsList";
 import RestoreSnapshotModal from "./RestoreSnapshotModal";
@@ -455,16 +459,23 @@ const ResourceProtectionTab: React.FC<ResourceProtectionTabProps> = ({
         />
       </ModernCard>
 
+      {/* Backup setup: renders inline as a wizard panel rather than a
+          modal overlay — fields/dependent validation per RES-162. The
+          wizard's own internal SuccessMoment closes on success. */}
+      {showBackupModal && (
+        <ModernCard>
+          <BackupConfigWizard
+            resourceName={resourceName}
+            resourceRegion={resourceRegion}
+            integrationKey={integrationKey}
+            isSubmitting={enableBackup.isPending}
+            onSubmit={handleEnableBackup}
+            onCancel={() => setShowBackupModal(false)}
+          />
+        </ModernCard>
+      )}
+
       {/* Modals */}
-      <BackupConfigModal
-        isOpen={showBackupModal}
-        onClose={() => setShowBackupModal(false)}
-        onSubmit={handleEnableBackup}
-        isSubmitting={enableBackup.isPending}
-        resourceName={resourceName}
-        integrationKey={integrationKey}
-        resourceRegion={resourceRegion}
-      />
       <ReplicationConfigModal
         isOpen={showReplicationModal}
         onClose={() => setShowReplicationModal(false)}

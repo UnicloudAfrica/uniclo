@@ -17,6 +17,9 @@ import {
   CheckCircle2,
   Copy,
   Info,
+  ChevronDown,
+  ChevronRight,
+  Search,
 } from "lucide-react";
 import ProvisioningWizardLayout from "@/shared/components/instance-wizard/ProvisioningWizardLayout";
 import PaymentModal from "@/shared/components/ui/payment/PaymentModal";
@@ -267,91 +270,237 @@ const EngineStep: React.FC<{
       />
     </div>
 
-    {/* ── Engine Selection (categorized) ── */}
-    <div className="border-t border-gray-200 dark:border-gray-700 pt-6 space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-          Select Database Engine
-        </h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Choose the database engine that best fits your application needs.
-        </p>
+    {/* ── Engine Selection (search + collapsible categories) ──
+        Previously every category was expanded by default — with 12
+        categories and ~50 engines the list ran several screens long.
+        Now we render a search box at the top and collapse every
+        category by default; click a header to expand. The category
+        of the currently-selected engine auto-expands so the user
+        sees their pick. Typing in search overrides collapsed state
+        and shows every matching engine flat. */}
+    <EngineSelector
+      engines={engines}
+      selectedEngine={selectedEngine}
+      onSelect={onSelect}
+    />
+  </div>
+);
+
+interface EngineSelectorProps {
+  engines: typeof ENGINE_METADATA;
+  selectedEngine: string;
+  onSelect: (engine: DatabaseEngine) => void;
+}
+
+const CATEGORY_ACCENT_COLORS: Record<string, string> = {
+  relational: "border-l-blue-500",
+  document: "border-l-emerald-500",
+  key_value: "border-l-red-500",
+  timeseries: "border-l-amber-500",
+  wide_column: "border-l-violet-500",
+  search: "border-l-cyan-500",
+  vector: "border-l-fuchsia-500",
+  graph: "border-l-rose-500",
+  messaging: "border-l-orange-500",
+  analytics: "border-l-teal-500",
+  infrastructure: "border-l-slate-500",
+  object_storage: "border-l-lime-500",
+};
+
+const EngineSelector: React.FC<EngineSelectorProps> = ({
+  engines,
+  selectedEngine,
+  onSelect,
+}) => {
+  const [searchInput, setSearchInput] = React.useState("");
+  const [expandedCategories, setExpandedCategories] = React.useState<Record<string, boolean>>(
+    () => {
+      // Auto-expand whichever category contains the currently-selected
+      // engine so the user lands looking at their pick. Everything
+      // else stays collapsed by default.
+      const selectedMeta = selectedEngine ? engines[selectedEngine as DatabaseEngine] : undefined;
+      if (selectedMeta?.category) return { [selectedMeta.category]: true };
+      // No selection yet — open Relational so the page isn't a wall
+      // of collapsed headers.
+      return { relational: true };
+    },
+  );
+
+  const search = searchInput.trim().toLowerCase();
+  const isSearching = search.length > 0;
+
+  const toggleCategory = (key: string) =>
+    setExpandedCategories((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  // Pre-group engines by category once so each render doesn't re-walk
+  // the metadata.
+  const enginesByCategory = React.useMemo(() => {
+    const grouped: Record<string, Array<[string, (typeof engines)[DatabaseEngine]]>> = {};
+    Object.entries(engines).forEach(([engine, meta]) => {
+      const cat = meta.category || "other";
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push([engine, meta]);
+    });
+    return grouped;
+  }, [engines]);
+
+  // When searching we ignore collapsed state and just filter every
+  // category in the same order as ENGINE_CATEGORIES.
+  const matchesSearch = (
+    engine: string,
+    meta: (typeof engines)[DatabaseEngine],
+  ): boolean => {
+    if (!isSearching) return true;
+    const haystack = `${meta.label} ${engine} ${meta.description ?? ""} ${(meta.versions ?? []).join(" ")}`.toLowerCase();
+    return haystack.includes(search);
+  };
+
+  const totalEngines = Object.values(enginesByCategory).reduce((n, list) => n + list.length, 0);
+  const totalMatches = isSearching
+    ? Object.values(enginesByCategory).reduce(
+        (n, list) => n + list.filter(([engine, meta]) => matchesSearch(engine, meta)).length,
+        0,
+      )
+    : totalEngines;
+
+  return (
+    <div className="border-t border-gray-200 dark:border-gray-700 pt-6 space-y-4">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Select Database Engine
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {isSearching
+              ? `${totalMatches} of ${totalEngines} engines match "${search}"`
+              : `Pick a category to expand — or search across all ${totalEngines} engines.`}
+          </p>
+        </div>
+        <div className="relative w-full sm:w-72">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <input
+            type="search"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search Postgres, Redis, kafka…"
+            className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm text-gray-700 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+          />
+        </div>
       </div>
+
       {ENGINE_CATEGORIES.map((cat) => {
-        const categoryEngines = Object.entries(engines).filter(
-          ([, meta]) => meta.category === cat.key
-        );
-        if (categoryEngines.length === 0) return null;
-        const categoryAccentColors: Record<string, string> = {
-          relational: "border-l-blue-500",
-          document: "border-l-emerald-500",
-          key_value: "border-l-red-500",
-          timeseries: "border-l-amber-500",
-          wide_column: "border-l-violet-500",
-          search: "border-l-cyan-500",
-          vector: "border-l-fuchsia-500",
-          graph: "border-l-rose-500",
-          messaging: "border-l-orange-500",
-          analytics: "border-l-teal-500",
-          infrastructure: "border-l-slate-500",
-          object_storage: "border-l-lime-500",
-        };
+        const all = enginesByCategory[cat.key] ?? [];
+        if (all.length === 0) return null;
+        const filtered = all.filter(([engine, meta]) => matchesSearch(engine, meta));
+        if (isSearching && filtered.length === 0) return null;
+
+        const accent = CATEGORY_ACCENT_COLORS[cat.key] || "border-l-gray-400";
+        // While searching, force-expand every category that has matches
+        // so the user can see all results at once. Otherwise honour the
+        // local toggle state.
+        const isExpanded = isSearching ? true : !!expandedCategories[cat.key];
+
         return (
-          <div key={cat.key} className="space-y-3">
-            <div className={`border-l-[3px] pl-3 ${categoryAccentColors[cat.key] || "border-l-gray-400"}`}>
-              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{cat.label}</h4>
-              <p className="text-xs italic text-gray-400/80 dark:text-gray-500/80">{cat.description}</p>
-            </div>
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
-              {categoryEngines.map(([engine, meta]) => {
-                const isSelected = selectedEngine === engine;
-                return (
-                  <button
-                    key={engine}
-                    onClick={() => onSelect(engine as DatabaseEngine)}
-                    className={`group relative flex items-start gap-3 rounded-xl border-2 p-3 text-left transition-all duration-200 ${
-                      isSelected
-                        ? "border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50/50 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-md shadow-blue-500/10"
-                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 hover:bg-gradient-to-br hover:from-gray-50 hover:to-slate-50/50 dark:hover:from-gray-800/50 dark:hover:to-slate-800/30 hover:shadow-sm"
-                    }`}
-                  >
-                    {/* Pulse ring animation for selected card */}
-                    {isSelected && (
-                      <span className="pointer-events-none absolute inset-0 rounded-xl animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] border-2 border-blue-400/30" />
-                    )}
-                    <div className="shrink-0 mt-0.5 transition-transform duration-200 group-hover:scale-110">
-                      <EngineIcon engine={engine} iconUrl={meta.iconUrl} size={24} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">{meta.label}</span>
-                        {meta.license === "free_edition" && (
-                          <span className="inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">Free</span>
-                        )}
-                        {meta.license === "commercial" && (
-                          <span className="inline-flex items-center rounded-md bg-purple-50 px-1.5 py-0.5 text-[10px] font-medium text-purple-700 ring-1 ring-inset ring-purple-600/20">BYOL</span>
-                        )}
+          <div
+            key={cat.key}
+            className="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900/50"
+          >
+            <button
+              type="button"
+              onClick={() => !isSearching && toggleCategory(cat.key)}
+              className={`flex w-full items-center justify-between gap-3 border-l-[3px] px-3 py-2.5 text-left ${accent} ${
+                isSearching ? "cursor-default" : "hover:bg-gray-50 dark:hover:bg-gray-800/40"
+              }`}
+            >
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    {cat.label}
+                  </h4>
+                  <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                    {isSearching ? `${filtered.length}/${all.length}` : all.length}
+                  </span>
+                </div>
+                <p className="text-xs italic text-gray-400/80 dark:text-gray-500/80">
+                  {cat.description}
+                </p>
+              </div>
+              {!isSearching &&
+                (isExpanded ? (
+                  <ChevronDown className="h-4 w-4 shrink-0 text-gray-400" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 shrink-0 text-gray-400" />
+                ))}
+            </button>
+
+            {isExpanded && (
+              <div className="grid grid-cols-1 gap-3 border-t border-gray-100 p-3 dark:border-gray-800 lg:grid-cols-2 xl:grid-cols-3">
+                {filtered.map(([engine, meta]) => {
+                  const isSelected = selectedEngine === engine;
+                  return (
+                    <button
+                      key={engine}
+                      onClick={() => onSelect(engine as DatabaseEngine)}
+                      className={`group relative flex items-start gap-3 rounded-xl border-2 p-3 text-left transition-all duration-200 ${
+                        isSelected
+                          ? "border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50/50 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-md shadow-blue-500/10"
+                          : "border-gray-200 dark:border-gray-700 hover:border-gray-300 hover:bg-gradient-to-br hover:from-gray-50 hover:to-slate-50/50 dark:hover:from-gray-800/50 dark:hover:to-slate-800/30 hover:shadow-sm"
+                      }`}
+                    >
+                      {isSelected && (
+                        <span className="pointer-events-none absolute inset-0 rounded-xl animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] border-2 border-blue-400/30" />
+                      )}
+                      <div className="shrink-0 mt-0.5 transition-transform duration-200 group-hover:scale-110">
+                        <EngineIcon engine={engine} iconUrl={meta.iconUrl} size={24} />
                       </div>
-                      <div className="text-[11px] text-gray-500/90 dark:text-gray-400/90 mt-0.5 line-clamp-2 leading-relaxed">
-                        {meta.description}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                            {meta.label}
+                          </span>
+                          {meta.license === "free_edition" && (
+                            <span className="inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
+                              Free
+                            </span>
+                          )}
+                          {meta.license === "commercial" && (
+                            <span className="inline-flex items-center rounded-md bg-purple-50 px-1.5 py-0.5 text-[10px] font-medium text-purple-700 ring-1 ring-inset ring-purple-600/20">
+                              BYOL
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-gray-500/90 dark:text-gray-400/90 mt-0.5 line-clamp-2 leading-relaxed">
+                          {meta.description}
+                        </div>
+                        <div className="text-[10px] text-gray-400 mt-1">
+                          {meta.versions.slice(0, 3).join(", ")}
+                          {meta.versions.length > 3 ? ` +${meta.versions.length - 3}` : ""}
+                        </div>
                       </div>
-                      <div className="text-[10px] text-gray-400 mt-1">
-                        {meta.versions.slice(0, 3).join(", ")}{meta.versions.length > 3 ? ` +${meta.versions.length - 3}` : ""}
-                      </div>
-                    </div>
-                    {isSelected && (
-                      <CheckCircle2 className="absolute top-2 right-2 text-blue-500" size={16} />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+                      {isSelected && (
+                        <CheckCircle2
+                          className="absolute top-2 right-2 text-blue-500"
+                          size={16}
+                        />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         );
       })}
+
+      {isSearching && totalMatches === 0 && (
+        <p className="rounded-lg border border-dashed border-gray-300 px-4 py-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+          No engines match "{search}". Try "postgres", "redis", "kafka", or clear the search to
+          browse by category.
+        </p>
+      )}
     </div>
-  </div>
-);
+  );
+};
 
 // ─── Version Selector ─────────────────────────────────────────────
 

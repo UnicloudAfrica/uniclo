@@ -5,6 +5,7 @@ import { ModernCard, ModernButton, ModernInput } from "../../ui";
 import { useFetchFlowPlans } from "@/hooks/adminHooks/adminFlowPlanPricingHooks";
 import { useFetchIntegrationPricing } from "@/hooks/adminHooks/adminIntegrationPricingHooks";
 import { useFetchMeteredPrices } from "@/hooks/adminHooks/adminMeteredPricingHooks";
+import { RESILIENCE } from "@/shared/branding";
 import type {
   CalculatorData,
   FlowPlanLineItem,
@@ -13,7 +14,7 @@ import type {
 } from "../types";
 
 /**
- * Calculator add-ons — surfaces SimpleDeploy plans, Shield packages, and
+ * Calculator add-ons — surfaces SlimDeploy plans, Shield packages, and
  * usage-based metrics in the pricing calculator. Each track has its own
  * mini-builder (pick item → enter qty + months → Add). The selected
  * line items live on `calculatorData.flow_plan_items`,
@@ -59,7 +60,7 @@ const CalculatorAddOnsCard: React.FC<AddOnsCardProps> = ({
   const anycloudflowItems = calculatorData.anycloudflow_items ?? [];
   const meteredItems = calculatorData.metered_items ?? [];
 
-  // ── SimpleDeploy plan picker ──────────────────────
+  // ── SlimDeploy plan picker ──────────────────────
   const [flowDraft, setFlowDraft] = useState({ plan_id: "", quantity: "1", months: "1" });
 
   const addFlowPlan = () => {
@@ -137,11 +138,33 @@ const CalculatorAddOnsCard: React.FC<AddOnsCardProps> = ({
   // Same data shape as Shield (both are IntegrationProduct rows) so we
   // reuse the line-item type + add logic. The only difference is the
   // catalog source and the bucket the items land in.
-  const [acfDraft, setAcfDraft] = useState({ id: "", quantity: "1", months: "1" });
+  const [acfDraft, setAcfDraft] = useState({
+    id: "",
+    quantity: "1",
+    months: "1",
+    bucket_size_gb: "",
+  });
   const selectedAcfService = useMemo(() => {
     if (!acfDraft.id) return undefined;
     return anycloudflowServices.find((s) => String(s.id) === String(acfDraft.id));
   }, [anycloudflowServices, acfDraft.id]);
+
+  // Phase D surcharge metadata: `pricing_tiers.surcharge_threshold_gb`
+  // and `pricing_tiers.size_surcharge_per_gb_month_cents` are published
+  // by AnyCloudFlow replication services (1 TB / 1024 GB free, then
+  // per-GB-month surcharge). When both are present we render the
+  // bucket-size input and price the overage locally so the summary
+  // matches the server's AddOnPricingService output.
+  const acfTiers = useMemo(() => {
+    const raw = selectedAcfService?.pricing_tiers;
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+    const tiers = raw as Record<string, unknown>;
+    const threshold = Number(tiers.surcharge_threshold_gb);
+    const perGbCents = Number(tiers.size_surcharge_per_gb_month_cents);
+    if (!Number.isFinite(threshold) || !Number.isFinite(perGbCents)) return null;
+    if (threshold <= 0 && perGbCents <= 0) return null;
+    return { threshold, perGbCents };
+  }, [selectedAcfService]);
 
   const addAcfItem = () => {
     const svc = selectedAcfService;
@@ -149,7 +172,34 @@ const CalculatorAddOnsCard: React.FC<AddOnsCardProps> = ({
     const quantity = Math.max(1, Number(acfDraft.quantity) || 1);
     const months = Math.max(1, Number(acfDraft.months) || 1);
     const monthsForBilling = svc.billing_model === "monthly_flat" ? months : 1;
-    const total = Number(svc.price) * quantity * monthsForBilling;
+    const baseTotal = Number(svc.price) * quantity * monthsForBilling;
+
+    // Compute optional surcharge so the displayed total includes the
+    // bucket-size overage even before the calculator hits the API.
+    let surcharge = 0;
+    let bucketSize: number | undefined;
+    if (acfTiers && acfDraft.bucket_size_gb) {
+      const sizeGb = Math.max(0, Number(acfDraft.bucket_size_gb) || 0);
+      if (sizeGb > 0) {
+        bucketSize = sizeGb;
+        const billable = Math.max(0, sizeGb - acfTiers.threshold);
+        if (billable > 0 && acfTiers.perGbCents > 0) {
+          surcharge =
+            Math.round(billable * (acfTiers.perGbCents / 100) * monthsForBilling * quantity * 100) /
+            100;
+        }
+      }
+    }
+
+    const total = baseTotal + surcharge;
+    const summaryParts = [
+      `${formatMoney(Number(svc.price), svc.currency_code)} × ${quantity}`,
+      svc.billing_model === "monthly_flat" ? `× ${monthsForBilling} mo` : null,
+      surcharge > 0
+        ? `+ ${formatMoney(surcharge, svc.currency_code || "USD")} bucket surcharge`
+        : null,
+    ].filter(Boolean);
+
     const item: ShieldServiceLineItem = {
       id: newId(),
       service_id: svc.id,
@@ -162,12 +212,18 @@ const CalculatorAddOnsCard: React.FC<AddOnsCardProps> = ({
       months: monthsForBilling,
       billing_model: svc.billing_model,
       total_price: total,
-      unit_summary: `${formatMoney(Number(svc.price), svc.currency_code)} × ${quantity}${
-        svc.billing_model === "monthly_flat" ? ` × ${monthsForBilling} mo` : ""
-      }`,
+      unit_summary: summaryParts.join(" "),
+      ...(bucketSize !== undefined ? { bucket_size_gb: bucketSize } : {}),
+      ...(surcharge > 0
+        ? {
+            surcharge_amount: surcharge,
+            surcharge_threshold_gb: acfTiers?.threshold,
+            surcharge_per_gb_month_cents: acfTiers?.perGbCents,
+          }
+        : {}),
     };
     updateCalculatorData("anycloudflow_items", [...anycloudflowItems, item]);
-    setAcfDraft({ id: "", quantity: "1", months: "1" });
+    setAcfDraft({ id: "", quantity: "1", months: "1", bucket_size_gb: "" });
   };
 
   const removeAcfItem = (id: string) => {
@@ -225,13 +281,13 @@ const CalculatorAddOnsCard: React.FC<AddOnsCardProps> = ({
     () => [
       {
         id: "flow" as const,
-        label: "SimpleDeploy",
+        label: "SlimDeploy",
         icon: Server,
         count: flowItems.length,
       },
       {
         id: "anycloudflow" as const,
-        label: "AnyCloudFlow",
+        label: RESILIENCE,
         icon: Inbox,
         count: anycloudflowItems.length,
       },
@@ -259,7 +315,7 @@ const CalculatorAddOnsCard: React.FC<AddOnsCardProps> = ({
       <div>
         <h3 className="text-lg font-semibold text-slate-900">Add-on services</h3>
         <p className="text-sm text-slate-500">
-          Include SimpleDeploy plans, Shield packages, and usage-based metrics in the quote.
+          Include SlimDeploy plans, Shield packages, and usage-based metrics in the quote.
         </p>
       </div>
 
@@ -354,7 +410,7 @@ const CalculatorAddOnsCard: React.FC<AddOnsCardProps> = ({
               summary: item.unit_summary,
             }))}
             onRemove={removeFlowItem}
-            emptyLabel="No SimpleDeploy plans added yet."
+            emptyLabel="No SlimDeploy plans added yet."
           />
         </div>
       )}
@@ -461,7 +517,7 @@ const CalculatorAddOnsCard: React.FC<AddOnsCardProps> = ({
                   {isAcfFetching
                     ? "Loading services…"
                     : anycloudflowServices.length
-                      ? "Select an AnyCloudFlow service"
+                      ? `Select an ${RESILIENCE} service`
                       : "No services configured"}
                 </option>
                 {anycloudflowServices.map((s) => {
@@ -509,6 +565,30 @@ const CalculatorAddOnsCard: React.FC<AddOnsCardProps> = ({
             </div>
           </div>
 
+          {acfTiers && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
+              <p className="font-medium">Bucket-size surcharge applies</p>
+              <p className="mt-0.5 text-amber-700">
+                First {acfTiers.threshold.toLocaleString()} GB included; overage billed at{" "}
+                {formatMoney(acfTiers.perGbCents / 100, selectedAcfService?.currency_code || "USD")}
+                /GB-month. Enter the bucket size below to include it in the quote.
+              </p>
+              <div className="mt-3 max-w-xs">
+                <ModernInput
+                  label="Bucket size (GB)"
+                  type="number"
+                  min="0"
+                  step="1"
+                  placeholder="e.g. 1500"
+                  value={acfDraft.bucket_size_gb}
+                  onChange={(e) =>
+                    setAcfDraft((d) => ({ ...d, bucket_size_gb: e.target.value }))
+                  }
+                />
+              </div>
+            </div>
+          )}
+
           {selectedAcfService?.description && (
             <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
               {selectedAcfService.description}
@@ -519,15 +599,21 @@ const CalculatorAddOnsCard: React.FC<AddOnsCardProps> = ({
             items={anycloudflowItems.map((item) => ({
               id: item.id,
               title: item.service_name,
-              meta: `${item.quantity} ${item.unit_label ?? "unit"}${
-                item.billing_model === "monthly_flat" ? ` · ${item.months} mo` : ""
-              }`,
+              meta: [
+                `${item.quantity} ${item.unit_label ?? "unit"}`,
+                item.billing_model === "monthly_flat" ? `${item.months} mo` : null,
+                typeof item.bucket_size_gb === "number" && item.bucket_size_gb > 0
+                  ? `${item.bucket_size_gb.toLocaleString()} GB bucket`
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(" · "),
               price: item.total_price ?? 0,
               currency: item.currency,
               summary: item.unit_summary,
             }))}
             onRemove={removeAcfItem}
-            emptyLabel="No AnyCloudFlow services added yet."
+            emptyLabel={`No ${RESILIENCE} services added yet.`}
           />
         </div>
       )}

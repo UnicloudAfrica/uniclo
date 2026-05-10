@@ -10,6 +10,7 @@ import {
   Activity,
   Loader2,
 } from "lucide-react";
+import { RESILIENCE } from "@/shared/branding";
 import {
   useBackupStatus,
   useReplicationStatus,
@@ -321,18 +322,18 @@ const ObjectStorageProtection: React.FC<ObjectStorageProtectionProps> = ({
         </div>
       </div>
 
-      {/* AnyCloudFlow integration info */}
+      {/* Resilience product call-out (Orbit / white-label) */}
       <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
         <div className="flex items-center gap-2 mb-2">
           <RefreshCw className="h-4 w-4 text-gray-500" />
-          <h4 className="text-sm font-semibold text-gray-700">Powered by AnyCloudFlow</h4>
+          <h4 className="text-sm font-semibold text-gray-700">{RESILIENCE}</h4>
         </div>
         <p className="text-xs text-gray-500">
           {replicationEnabled
-            ? "Cross-region replication is managed by AnyCloudFlow with continuous data synchronization."
+            ? `Cross-region replication is managed by ${RESILIENCE} with continuous data synchronization.`
             : backupEnabled
-              ? "Scheduled backups are managed by AnyCloudFlow with configurable retention policies."
-              : "AnyCloudFlow provides backup, replication, and disaster recovery services for your storage. Enable a protection plan above to get started."}
+              ? `Scheduled backups are managed by ${RESILIENCE} with configurable retention policies.`
+              : `${RESILIENCE} provides backup, replication, and disaster recovery services for your storage. Enable a protection plan above to get started.`}
         </p>
       </div>
     </div>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import ClientPageShell from "../../../../components/ClientPageShell";
 import { ModernCard, ModernSelect, ModernTable } from "@/shared/components/ui";
+import { ResilienceHero } from "@/shared/components/orbit";
 import { acfApi } from "../../../../../adminDashboard/pages/integrations/anycloudflow/api";
 import {
   BucketStatusBadge,
@@ -97,11 +98,9 @@ export default function ClientBucketMigrationsPage() {
   ];
 
   return (
-    <ClientPageShell
-      title="Bucket Migrations"
-      description="One-time object-storage migrations associated with your account. Read-only view."
-    >
+    <ClientPageShell title="" description="">
       <div className="space-y-4">
+        <ResilienceHero topic="bucket-migrations" role="client" />
         <div className="flex gap-2 items-end">
           <div className="w-48">
             <ModernSelect
@@ -124,12 +123,13 @@ export default function ClientBucketMigrationsPage() {
 
         {rows.length === 0 && !isLoading ? (
           <ModernCard>
-            <div className="p-8 text-center">
-              <p className="font-semibold text-gray-800 dark:text-gray-200">
-                No migrations visible
+            <div className="flex flex-col items-center gap-3 p-12 text-center">
+              <span aria-hidden="true" className="text-5xl">📂</span>
+              <p className="text-base font-semibold text-gray-800 dark:text-gray-200">
+                No bucket migrations to show
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Migrations created on your behalf by the platform will appear here.
+              <p className="max-w-md text-sm text-gray-500 dark:text-gray-400">
+                When your provider runs a migration on your behalf, it'll show up here with full progress tracking.
               </p>
             </div>
           </ModernCard>

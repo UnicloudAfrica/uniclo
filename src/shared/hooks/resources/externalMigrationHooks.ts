@@ -18,9 +18,6 @@ import { useApiContext } from "@/hooks/useApiContext";
 import { apiRegistry } from "../../api/apiRegistry";
 
 type AnyRecord = Record<string, unknown>;
-type QueryOptions = Partial<
-  Omit<UseQueryOptions<unknown, Error>, "queryKey" | "queryFn">
->;
 
 const asEnvelope = <T = AnyRecord>(
   res: unknown,
@@ -46,6 +43,8 @@ export interface ExternalMigration {
   estimated_data_gb?: number;
   actual_data_gb?: number;
   cost_breakdown?: AnyRecord;
+  auto_provision_destination?: boolean;
+  provision_specs?: AnyRecord;
   hold_status?: string;
   error_message?: string;
   estimated_at?: string;
@@ -55,6 +54,22 @@ export interface ExternalMigration {
   created_at: string;
   source_endpoint?: AnyRecord;
   target_endpoint?: AnyRecord;
+}
+
+export interface AutoProvisionSpecs {
+  provider_id: number | string;
+  provider?: string;
+  name?: string;
+  type?: "app" | "database" | "cache" | "load-balancer";
+  region: string;
+  size: string;
+  image_id?: string;
+  offer_id?: string;
+  ssh_key_ids?: number[];
+  ssh_user?: string;
+  auth_method?: "key" | "password";
+  ssh_private_key?: string;
+  ssh_password?: string;
 }
 
 export interface MigrationEstimate {
@@ -83,10 +98,16 @@ export interface MigrationProgress {
   actual_data_gb?: number;
   estimated_cost_usd?: number;
   actual_cost_usd?: number;
+  auto_provision_destination?: boolean;
+  provision_specs?: AnyRecord;
   started_at?: string;
   completed_at?: string;
   error_message?: string;
 }
+
+type ProgressQueryOptions = Partial<
+  Omit<UseQueryOptions<MigrationProgress, Error>, "queryKey" | "queryFn">
+>;
 
 // ─── Query Keys ─────────────────────────────────────────────────
 
@@ -126,7 +147,12 @@ export const useEstimateMigrationCost = () => {
   return useMutation<
     MigrationEstimate,
     Error,
-    { source_endpoint_id: string; target_endpoint_id: string }
+    {
+      source_endpoint_id: string;
+      target_endpoint_id?: string;
+      auto_provision_destination?: boolean;
+      provision_specs?: AutoProvisionSpecs;
+    }
   >({
     mutationFn: async (payload) => {
       const uri = `${entry.urlPrefix}/integrations/external-migrations/estimate`;
@@ -158,9 +184,38 @@ export const useInitiateExternalMigration = () => {
     Error,
     {
       source_endpoint_id: string;
-      target_endpoint_id: string;
+      target_endpoint_id?: string;
+      auto_provision_destination?: boolean;
+      provision_specs?: AutoProvisionSpecs;
       transfer_method?: string;
       config?: AnyRecord;
+      /**
+       * Target VM network reconfiguration. AcF's
+       * ConfigAdapterService consumes this to write fresh
+       * /etc/netplan or /etc/network/interfaces on the target
+       * after data transfer. Without it, the migrated VM boots
+       * with the source's IP/hostname — networking won't come up.
+       */
+      adapt_config?: {
+        hostname?: string;
+        ip?: string;
+        mask?: string;
+        gateway?: string;
+        dns?: string[];
+      };
+      /**
+       * Cutover plan. Persisted at create time; consumed when
+       * POST /external-migrations/{id}/cutover/start fires.
+       */
+      cutover_plan?: {
+        destination_host?: string;
+        drain_seconds?: number;
+        grace_period_seconds?: number;
+        monitoring_window_seconds?: number;
+        dependency_checks?: string[];
+      };
+      /** Shell commands run on source right before delta-sync. */
+      source_quiesce_commands?: string[];
     }
   >({
     mutationFn: async (payload) => {
@@ -254,7 +309,7 @@ export const useCancelExternalMigration = () => {
  */
 export const usePollMigrationProgress = (
   migrationId: string | undefined,
-  options: QueryOptions = {},
+  options: ProgressQueryOptions = {},
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
@@ -280,5 +335,141 @@ export const usePollMigrationProgress = (
       return false;
     },
     ...options,
+  });
+};
+
+// ─── Cutover state machine (RES-163) ────────────────────────────
+//
+// Thin proxies to AcF's CutoverController. The state shape is
+// canonical — every endpoint returns the same `{ state, can_rollback,
+// timestamps, plan, error_code, error_translation }` blob so the
+// frontend can re-render from any response.
+
+export interface CutoverState {
+  identifier: string;
+  state: string;
+  is_in_progress: boolean;
+  is_terminal: boolean;
+  can_rollback: boolean;
+  error_code: string | null;
+  error_translation: string | null;
+  rollback_reason: string | null;
+  plan: Record<string, unknown>;
+  timestamps: {
+    started_at: string | null;
+    tls_verified_at: string | null;
+    drain_started_at: string | null;
+    traffic_shifted_at: string | null;
+    grace_period_ends_at: string | null;
+    completed_at: string | null;
+    last_check_at: string | null;
+  };
+}
+
+export const useFetchMigrationCutover = (
+  migrationId: string | undefined,
+  options: Partial<UseQueryOptions<CutoverState | null, Error>> = {},
+) => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  return useQuery<CutoverState | null, Error>({
+    queryKey: ["external-migration-cutover", context, migrationId],
+    queryFn: async () => {
+      if (!migrationId) return null;
+      const uri = `${entry.urlPrefix}/integrations/external-migrations/${migrationId}/cutover`;
+      const envelope = asEnvelope<CutoverState>(
+        await entry.silentApi.get<AnyRecord>(uri),
+      );
+      return (envelope.data ?? null) as CutoverState | null;
+    },
+    enabled: !!migrationId,
+    // Watch the cutover state machine — 5 s while in progress,
+    // 30 s once terminal so we still pick up timestamp updates.
+    refetchInterval: (q) => {
+      const state = (q.state.data as CutoverState | null)?.state;
+      const inProgress = state && state !== "completed" && state !== "failed" && state !== "rolled_back" && state !== "none";
+      return inProgress ? 5_000 : 30_000;
+    },
+    ...options,
+  });
+};
+
+export const useStartMigrationCutover = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    CutoverState,
+    Error,
+    { migrationId: string; plan?: Record<string, unknown> }
+  >({
+    mutationFn: async ({ migrationId, plan }) => {
+      const uri = `${entry.urlPrefix}/integrations/external-migrations/${migrationId}/cutover/start`;
+      const envelope = asEnvelope<CutoverState>(
+        await entry.toastApi.post<AnyRecord>(uri, plan ? { plan } : {}),
+      );
+      if (!envelope.success) {
+        throw new Error((envelope.message as string) || "Failed to start cutover");
+      }
+      return envelope.data as CutoverState;
+    },
+    onSuccess: (_data, { migrationId }) => {
+      queryClient.invalidateQueries({
+        queryKey: ["external-migration-cutover", context, migrationId],
+      });
+    },
+  });
+};
+
+export const useAdvanceMigrationCutover = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation<CutoverState, Error, { migrationId: string }>({
+    mutationFn: async ({ migrationId }) => {
+      const uri = `${entry.urlPrefix}/integrations/external-migrations/${migrationId}/cutover/advance`;
+      const envelope = asEnvelope<CutoverState>(
+        await entry.toastApi.post<AnyRecord>(uri),
+      );
+      if (!envelope.success) {
+        throw new Error((envelope.message as string) || "Failed to advance cutover");
+      }
+      return envelope.data as CutoverState;
+    },
+    onSuccess: (_data, { migrationId }) => {
+      queryClient.invalidateQueries({
+        queryKey: ["external-migration-cutover", context, migrationId],
+      });
+    },
+  });
+};
+
+export const useRollbackMigrationCutover = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    CutoverState,
+    Error,
+    { migrationId: string; reason: string }
+  >({
+    mutationFn: async ({ migrationId, reason }) => {
+      const uri = `${entry.urlPrefix}/integrations/external-migrations/${migrationId}/cutover/rollback`;
+      const envelope = asEnvelope<CutoverState>(
+        await entry.toastApi.post<AnyRecord>(uri, { reason }),
+      );
+      if (!envelope.success) {
+        throw new Error((envelope.message as string) || "Cutover rollback failed");
+      }
+      return envelope.data as CutoverState;
+    },
+    onSuccess: (_data, { migrationId }) => {
+      queryClient.invalidateQueries({
+        queryKey: ["external-migration-cutover", context, migrationId],
+      });
+    },
   });
 };

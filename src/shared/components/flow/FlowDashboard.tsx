@@ -188,7 +188,7 @@ const FlowDashboard: React.FC<FlowDashboardProps> = ({ basePath }) => {
   };
 
   const handleCancel = async () => {
-    if (!window.confirm("Are you sure you want to cancel your SimpleDeploy subscription?")) return;
+    if (!window.confirm("Are you sure you want to cancel your SlimDeploy subscription?")) return;
     try {
       await api.cancel();
       await fetchData();
@@ -268,7 +268,7 @@ const FlowDashboard: React.FC<FlowDashboardProps> = ({ basePath }) => {
     return (
       <div className="space-y-6">
         <ResourceHero
-          title="SimpleDeploy"
+          title="SlimDeploy"
           subtitle="Deployment Platform"
           description="Automated server provisioning, site deployments, and SSL management — powered by LeanPloy. Start with a free 30-day trial."
           metrics={heroMetrics}
@@ -352,7 +352,7 @@ const FlowDashboard: React.FC<FlowDashboardProps> = ({ basePath }) => {
   return (
     <div className="space-y-6">
       <ResourceHero
-        title="SimpleDeploy"
+        title="SlimDeploy"
         subtitle={sub?.plan?.name || "Deployment Platform"}
         description="Manage your servers, deploy sites, and configure SSL — all from one dashboard."
         metrics={heroMetrics}
@@ -393,7 +393,7 @@ const FlowDashboard: React.FC<FlowDashboardProps> = ({ basePath }) => {
         <ModernCard className="border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
-              Your free trial has expired. Upgrade to continue using SimpleDeploy.
+              Your free trial has expired. Upgrade to continue using SlimDeploy.
             </p>
             <ModernButton
               onClick={() => navigate(`${basePath}/upgrade`)}
@@ -678,7 +678,7 @@ const ServersTab: React.FC<{
         <div>
           <h3 className="text-base font-semibold text-slate-900 dark:text-white">Servers</h3>
           <p className="mt-0.5 text-sm text-slate-500">
-            Manage servers linked to your SimpleDeploy subscription.
+            Manage servers linked to your SlimDeploy subscription.
           </p>
         </div>
       </div>

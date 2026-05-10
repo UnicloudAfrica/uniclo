@@ -1,13 +1,13 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import useAdminAuthStore from "../stores/adminAuthStore";
+import useAuthStore from "@/stores/authStore";
 
 const AUTH_PAGES = new Set(["/admin-signin", "/admin-signup"]);
 
 const useAuthRedirect = (): { isLoading: boolean } => {
   const navigate = useNavigate();
-  const isAuthenticated = useAdminAuthStore((state) => state.isAuthenticated);
-  const hasHydrated = useAdminAuthStore((state) => state.hasHydrated);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const hasHydrated = useAuthStore((state) => state.hasHydrated);
 
   useEffect(() => {
     if (!hasHydrated) return;

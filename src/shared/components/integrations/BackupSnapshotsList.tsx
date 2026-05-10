@@ -10,7 +10,6 @@ import {
   ChevronRight,
   RotateCcw,
   HardDrive,
-  Clock,
   CheckCircle2,
 } from "lucide-react";
 import { ModernButton } from "../ui";
@@ -80,10 +79,13 @@ const BackupSnapshotsList: React.FC<BackupSnapshotsListProps> = ({
               ))}
             </div>
           ) : snapshotsList.length === 0 ? (
-            <div className="flex flex-col items-center px-4 py-8 text-center">
-              <Clock size={24} className="mb-2 text-gray-300 dark:text-gray-600" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                No snapshots yet — backups run on schedule.
+            <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
+              <span aria-hidden="true" className="text-4xl">📸</span>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                No snapshots yet
+              </p>
+              <p className="max-w-xs text-xs text-gray-500 dark:text-gray-400">
+                Your backups run on schedule. The first snapshot will appear here once it's done.
               </p>
             </div>
           ) : (

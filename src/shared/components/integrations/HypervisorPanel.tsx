@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { ModernButton } from "../ui";
+import { MoodIndicator, StatusBadge, friendlyStatus } from "@/shared/components/orbit";
 import {
   useDetectHypervisor,
   useHypervisorVMs,
@@ -751,9 +752,9 @@ const HypervisorPanel: React.FC<HypervisorPanelProps> = ({ endpoints, className 
               <Server size={18} color="#fff" />
             </div>
             <div>
-              <h3 style={S.headerTitle}>Hypervisor Management</h3>
+              <h3 style={S.headerTitle}>Your VM hosts</h3>
               <p style={S.headerSubtitle}>
-                Manage endpoints, VMs, and migrations
+                Connect a hypervisor, see what's running, move things around.
               </p>
             </div>
           </div>
@@ -839,13 +840,12 @@ const HypervisorPanel: React.FC<HypervisorPanelProps> = ({ endpoints, className 
                 </div>
               ) : vms.length === 0 ? (
                 <div style={S.emptyState}>
-                  <div style={S.emptyIcon}>
-                    <Server size={26} color="#6366f1" />
-                  </div>
-                  <div style={S.emptyTitle}>No Virtual Machines</div>
+                  <span aria-hidden="true" style={{ fontSize: 44, display: "block", marginBottom: 8 }}>
+                    🪟
+                  </span>
+                  <div style={S.emptyTitle}>No VMs on this host</div>
                   <div style={S.emptyDesc}>
-                    No VMs were found on this endpoint. Check your hypervisor
-                    configuration or select a different endpoint.
+                    We couldn't see any virtual machines here. Double-check the connection, or pick a different hypervisor.
                   </div>
                 </div>
               ) : (
@@ -898,13 +898,12 @@ const HypervisorPanel: React.FC<HypervisorPanelProps> = ({ endpoints, className 
           {/* ── No endpoint selected empty state ──────────────── */}
           {!selectedEndpointId && (
             <div style={S.emptyState}>
-              <div style={S.emptyIcon}>
-                <Activity size={26} color="#6366f1" />
-              </div>
-              <div style={S.emptyTitle}>Select an Endpoint</div>
+              <span aria-hidden="true" style={{ fontSize: 44, display: "block", marginBottom: 8 }}>
+                🖥️
+              </span>
+              <div style={S.emptyTitle}>Pick a host to peek inside</div>
               <div style={S.emptyDesc}>
-                Choose a hypervisor endpoint above to view and manage virtual
-                machines.
+                Choose one of your hypervisor hosts above and we'll show you every VM living on it.
               </div>
             </div>
           )}
@@ -1082,40 +1081,26 @@ const VMRow: React.FC<VMRowProps> = ({
 
   return (
     <tr className="hp-table-row">
-      {/* Name */}
+      {/* Name + mood — at-a-glance scan */}
       <td style={{ ...cellBase, fontWeight: 600, color: "var(--theme-heading-color, #111827)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Server size={14} color="#6366f1" />
+          {(() => {
+            const fs = friendlyStatus("hypervisor-vm", vm.status);
+            return <MoodIndicator mood={fs.mood} size="sm" />;
+          })()}
+          <Server size={14} color="var(--theme-color-500, #6366f1)" />
           {vm.name}
         </div>
       </td>
 
-      {/* Status badge */}
+      {/* Status badge — themed + friendly via orbit StatusBadge */}
       <td style={cellBase}>
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "3px 10px",
-            borderRadius: 999,
-            background: statusBg,
-            fontSize: 12,
-            fontWeight: 600,
-            color: statusColor,
-          }}
-        >
-          <span
-            style={{
-              width: 7,
-              height: 7,
-              borderRadius: "50%",
-              background: statusColor,
-              boxShadow: isRunning ? `0 0 6px ${statusColor}` : "none",
-            }}
-          />
-          {vm.status.charAt(0).toUpperCase() + vm.status.slice(1)}
-        </span>
+        {(() => {
+          const fs = friendlyStatus("hypervisor-vm", vm.status);
+          return (
+            <StatusBadge tone={fs.tone} label={fs.technical} friendlyLabel={fs.friendly} size="sm" />
+          );
+        })()}
       </td>
 
       {/* Memory */}
@@ -1185,26 +1170,29 @@ const VMRow: React.FC<VMRowProps> = ({
                 className="hp-icon-btn"
                 onClick={() => onAction(vm.name, "stop")}
                 disabled={actionPending}
+                aria-label="Power off this VM"
               >
                 <Square size={13} />
-                <span className="hp-tooltip">Stop VM</span>
+                <span className="hp-tooltip">Power off</span>
               </button>
             ) : (
               <button
                 className="hp-icon-btn"
                 onClick={() => onAction(vm.name, "start")}
                 disabled={actionPending}
+                aria-label="Power on this VM"
               >
                 <Play size={13} />
-                <span className="hp-tooltip">Start VM</span>
+                <span className="hp-tooltip">Power on</span>
               </button>
             )}
             <button
               className="hp-icon-btn"
               onClick={onMigrate}
+              aria-label="Move this VM to another host"
             >
               <ArrowRightLeft size={13} />
-              <span className="hp-tooltip">Migrate VM</span>
+              <span className="hp-tooltip">Move to another host</span>
             </button>
           </div>
         )}

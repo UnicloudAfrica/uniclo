@@ -3,7 +3,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import logo from "./assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useLoginAccount } from "@/hooks/authHooks";
-import useTenantAuthStore from "@/stores/tenantAuthStore";
+import useAuthStore from "@/stores/authStore";
 import useAuthRedirect from "@/utils/authRedirect";
 import {
   resolveBrandLogo,
@@ -40,7 +40,7 @@ const TenantLogin: React.FC<TenantLoginProps> = ({ tenant = "Tenant" }) => {
   const { mutate, isPending } = useLoginAccount();
   const navigate = useNavigate();
   const { setUserEmail, setTwoFactorRequired, clearTwoFactorRequirement } =
-    useTenantAuthStore.getState();
+    useAuthStore.getState();
   const { isLoading } = useAuthRedirect();
   const fallbackBrand = {
     name: tenant,

@@ -54,7 +54,7 @@ export const tenantDocSections: DocSection[] = [
   {
     heading: "Platform Services",
     links: [
-      { label: "Infrastructure Agent", slug: "agent", icon: Bot },
+      { label: "Orbit Automation", slug: "agent", icon: Bot },
       { label: "Shield Protection", slug: "shield", icon: ShieldCheck },
     ],
   },

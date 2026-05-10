@@ -211,6 +211,15 @@ export interface ShieldServiceLineItem {
   billing_model: string; // monthly_flat | one_time | per_usage | …
   total_price?: number;
   unit_summary?: string;
+  // ── AnyCloudFlow bucket surcharge (Phase D) ──────────────────
+  // Only AnyCloudFlow replication services with a published
+  // `pricing_tiers.surcharge_threshold_gb` carry these. The base
+  // shape is identical to Shield so we keep the override fields
+  // optional rather than fork the type.
+  bucket_size_gb?: number;
+  surcharge_amount?: number;
+  surcharge_threshold_gb?: number;
+  surcharge_per_gb_month_cents?: number;
 }
 
 export interface MeteredLineItem {
@@ -231,7 +240,7 @@ export interface CalculatorData {
   pricing_requests: PricingRequest[];
   object_storage_items: ObjectStorageRequest[];
   // Track-3 add-ons surfaced through dedicated admin pricing pages
-  // (SimpleDeploy plans, Shield/StormWall packages, AnyCloudFlow
+  // (SlimDeploy plans, Shield/StormWall packages, AnyCloudFlow
   // services, usage-based metrics). Each is a separate bucket on the
   // calculator so the totals can be grouped by track in the summary.
   // AnyCloudFlow shares the same line-item shape as Shield because

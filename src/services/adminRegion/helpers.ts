@@ -4,13 +4,13 @@
  * Common utilities used across all admin region API modules.
  */
 
-import useAdminAuthStore from "../../stores/adminAuthStore";
+import useAuthStore from "@/stores/authStore";
 
 /**
  * Build authorization headers from the admin auth store.
  */
 export function getAuthHeaders(): Record<string, string> {
-  const adminState = useAdminAuthStore.getState();
+  const adminState = useAuthStore.getState();
   if (adminState?.getAuthHeaders) {
     return adminState.getAuthHeaders();
   }

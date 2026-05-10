@@ -1,14 +1,26 @@
 /**
- * EndpointsList — Shared table listing external endpoints for Migration-as-a-Service.
+ * EndpointsList — friendly list of registered external endpoints.
  *
- * Used across admin, tenant, and client dashboards via page wrappers.
+ * Wow refactor matches MigrationsList:
+ *   - MoodIndicator per row (happy when connected, alarmed when failed)
+ *   - StatusBadge with friendly labels via orbit `friendlyStatus("hypervisor-connection", ...)`
+ *   - ResourceShell empty state with 🛰️ illustration + "Register an endpoint" CTA
+ *   - AsyncButton refresh + Test connection
+ *   - ConfirmActionDialog for destructive delete (replaces window.confirm())
  */
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, RefreshCw, Trash2, Wifi, Search } from "lucide-react";
+import { Plus, RefreshCw, Trash2, Wifi } from "lucide-react";
 import ModernTable from "@/shared/components/ui/ModernTable/ModernTable";
 import type { Column, Action } from "@/shared/components/ui/ModernTable/types";
-import MigrationStatusBadge from "./MigrationStatusBadge";
+import {
+  MoodIndicator,
+  StatusBadge,
+  ResourceShell,
+  ConfirmActionDialog,
+  AsyncButton,
+  friendlyStatus,
+} from "@/shared/components/orbit";
 import {
   useFetchExternalEndpoints,
   useDeleteExternalEndpoint,
@@ -23,19 +35,29 @@ interface EndpointsListProps {
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  vm: "Virtual Machine",
+  vm: "Virtual machine",
   database: "Database",
   storage: "Storage",
 };
+
+// Map MaaS connection_status to the hypervisor-connection domain
+// (untested → pending mood, connected → happy, failed → alarmed).
+function mapConnStatus(s: string | undefined): string {
+  if (s === "connected") return "detected";
+  if (s === "failed") return "failed";
+  return "pending";
+}
 
 const EndpointsList: React.FC<EndpointsListProps> = ({
   context: _context,
   onRegisterNew,
 }) => {
   const _navigate = useNavigate();
-  const { data: endpoints, isLoading, refetch } = useFetchExternalEndpoints();
+  const { data: endpoints, isLoading, error, refetch } = useFetchExternalEndpoints();
   const deleteMutation = useDeleteExternalEndpoint();
   const testConnection = useTestEndpointConnection();
+
+  const [confirmDelete, setConfirmDelete] = useState<ExternalEndpoint | null>(null);
 
   const dataList = useMemo(() => {
     if (!endpoints) return [];
@@ -45,23 +67,31 @@ const EndpointsList: React.FC<EndpointsListProps> = ({
   const columns: Column<ExternalEndpoint>[] = useMemo(
     () => [
       {
+        key: "mood",
+        header: "",
+        render: (_, row) => {
+          const fs = friendlyStatus("hypervisor-connection", mapConnStatus(row.connection_status));
+          return (
+            <div className="flex items-center justify-center">
+              <MoodIndicator mood={fs.mood} size="md" />
+            </div>
+          );
+        },
+      },
+      {
         key: "name",
         header: "Name",
         sortable: true,
         render: (_, row) => (
           <div>
-            <div className="font-medium text-gray-900 dark:text-gray-100">
-              {row.name}
-            </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              {row.identifier}
-            </div>
+            <div className="font-semibold text-gray-900 dark:text-gray-100">{row.name}</div>
+            <div className="text-xs font-mono text-gray-400 dark:text-gray-500">{row.identifier}</div>
           </div>
         ),
       },
       {
         key: "resource_type",
-        header: "Type",
+        header: "What",
         sortable: true,
         render: (_, row) => (
           <span className="text-sm text-gray-700 dark:text-gray-300">
@@ -71,16 +101,12 @@ const EndpointsList: React.FC<EndpointsListProps> = ({
       },
       {
         key: "host",
-        header: "Host",
+        header: "Address",
         render: (_, row) => (
-          <div className="text-sm">
-            <span className="text-gray-700 dark:text-gray-300">{row.host}</span>
-            {row.port && (
-              <span className="text-gray-400 dark:text-gray-500">
-                :{row.port}
-              </span>
-            )}
-          </div>
+          <span className="text-sm font-mono text-gray-700 dark:text-gray-300">
+            {row.host}
+            {row.port && <span className="text-gray-400 dark:text-gray-500">:{row.port}</span>}
+          </span>
         ),
       },
       {
@@ -97,27 +123,28 @@ const EndpointsList: React.FC<EndpointsListProps> = ({
         key: "connection_status",
         header: "Status",
         sortable: true,
-        render: (_, row) => (
-          <MigrationStatusBadge
-            status={row.connection_status ?? "untested"}
-            variant="connection"
-          />
-        ),
+        render: (_, row) => {
+          const fs = friendlyStatus("hypervisor-connection", mapConnStatus(row.connection_status));
+          return (
+            <StatusBadge
+              tone={fs.tone}
+              label={fs.technical}
+              friendlyLabel={fs.friendly}
+              size="sm"
+            />
+          );
+        },
       },
       {
         key: "estimated_size_bytes",
         header: "Size",
         render: (_, row) => {
           if (!row.estimated_size_bytes) {
-            return (
-              <span className="text-xs text-gray-400 dark:text-gray-500">
-                Unknown
-              </span>
-            );
+            return <span className="text-xs text-gray-400 dark:text-gray-500">—</span>;
           }
           const gb = row.estimated_size_bytes / 1073741824;
           return (
-            <span className="text-sm text-gray-700 dark:text-gray-300">
+            <span className="text-sm tabular-nums text-gray-700 dark:text-gray-300">
               {gb.toFixed(1)} GB
             </span>
           );
@@ -130,73 +157,88 @@ const EndpointsList: React.FC<EndpointsListProps> = ({
   const actions: Action<ExternalEndpoint>[] = useMemo(
     () => [
       {
-        label: "Test",
+        label: "Test connection",
         icon: <Wifi size={14} />,
         onClick: (row) => {
           testConnection.mutate({ endpointId: row.identifier });
         },
       },
       {
-        label: "Delete",
+        label: "Forget this endpoint",
         icon: <Trash2 size={14} />,
         tone: "danger" as const,
-        onClick: (row) => {
-          if (confirm(`Delete endpoint "${row.name}"?`)) {
-            deleteMutation.mutate({ id: row.identifier });
-          }
-        },
+        onClick: (row) => setConfirmDelete(row),
       },
     ],
-    [testConnection, deleteMutation],
+    [testConnection],
   );
+
+  const showEmpty = !isLoading && !error && dataList.length === 0;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => refetch()}
-            className="rounded-lg border border-gray-200 p-2 text-gray-500 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
-            title="Refresh"
-          >
-            <RefreshCw size={16} />
-          </button>
-        </div>
+        <AsyncButton
+          variant="ghost"
+          size="sm"
+          icon={<RefreshCw size={14} />}
+          loadingLabel="Refreshing…"
+          successLabel="Up to date"
+          onClick={async () => {
+            await refetch();
+          }}
+        >
+          Refresh
+        </AsyncButton>
         {onRegisterNew && (
-          <button
-            onClick={onRegisterNew}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+          <AsyncButton
+            variant="primary"
+            size="md"
+            icon={<Plus size={14} />}
+            onClick={() => onRegisterNew()}
           >
-            <Plus size={16} />
-            Register Endpoint
-          </button>
+            Connect a server
+          </AsyncButton>
         )}
       </div>
 
-      <ModernTable<ExternalEndpoint>
-        data={dataList}
-        columns={columns}
+      <ResourceShell
         loading={isLoading}
-        searchable
-        searchKeys={["name", "identifier", "host", "provider", "resource_type"]}
-        searchPlaceholder="Search endpoints..."
-        paginated
-        pageSize={10}
-        actions={actions}
-        emptyMessage={
-          <div className="flex flex-col items-center py-12 text-center">
-            <Search
-              size={40}
-              className="mb-3 text-gray-300 dark:text-gray-600"
-            />
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              No endpoints registered yet
-            </p>
-            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-              Register an external server to get started with migrations.
-            </p>
-          </div>
-        }
+        error={error}
+        onRetry={refetch}
+        empty={showEmpty}
+        emptyTitle="No servers connected yet"
+        emptyDescription="Tell us about a server — physical, virtual, on-prem, or in the cloud — and we'll get it ready to migrate or replicate."
+        emptyIcon={<span aria-hidden="true" className="text-5xl">🛰️</span>}
+        emptyAction={onRegisterNew ? { label: "Connect a server", onClick: onRegisterNew } : undefined}
+      >
+        <ModernTable<ExternalEndpoint>
+          data={dataList}
+          columns={columns}
+          loading={false}
+          searchable
+          searchKeys={["name", "identifier", "host", "provider", "resource_type"]}
+          searchPlaceholder="Find a server by name, host, or provider…"
+          paginated
+          pageSize={10}
+          actions={actions}
+          emptyMessage={null}
+        />
+      </ResourceShell>
+
+      <ConfirmActionDialog
+        open={Boolean(confirmDelete)}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={async () => {
+          if (!confirmDelete) return;
+          await deleteMutation.mutateAsync({ id: confirmDelete.identifier });
+          setConfirmDelete(null);
+        }}
+        title={`Forget "${confirmDelete?.name ?? "this server"}"?`}
+        description="We'll remove this server from your list. Active migrations or replications using it will block this — finish or cancel those first."
+        severity="danger"
+        confirmLabel="Yes, forget it"
+        cancelLabel="No, keep it"
       />
     </div>
   );

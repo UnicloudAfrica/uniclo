@@ -1,13 +1,52 @@
 import { Download, CheckCircle, FileText } from "lucide-react";
 import ModernCard from "@/shared/components/ui/ModernCard";
 import { ModernButton } from "@/shared/components/ui";
-import ModernTable from "@/shared/components/ui/ModernTable";
+import ModernTable, { type Column } from "@/shared/components/ui/ModernTable";
 
-const formatCurrency = (amount: number, currency = "USD") => {
+type AmountsShape = {
+  pre_discount_subtotal?: number;
+  subtotal?: number;
+  discount?: number;
+  discount_label?: string;
+  tax?: number;
+  total?: number;
+  currency?: string;
+};
+
+type LineItemShape = {
+  name?: string;
+  description?: string;
+  quantity?: number | string;
+  unit_amount?: number;
+  total?: number;
+  currency?: string;
+};
+
+type InvoicePayloadShape = {
+  invoice_number?: string;
+  subject?: string;
+  bill_to?: { name?: string; email?: string };
+  issued_at?: string;
+  due_at?: string;
+  line_items?: LineItemShape[];
+  amounts?: AmountsShape;
+};
+
+type InvoiceDataShape = {
+  payload: InvoicePayloadShape;
+  pdf?: string;
+  filename?: string;
+};
+
+type ApiResponseShape = {
+  invoices?: InvoiceDataShape[];
+};
+
+const formatCurrency = (amount: number | undefined, currency: string | undefined = "USD") => {
   if (amount === null || amount === undefined) return "—";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency,
+    currency: currency || "USD",
   }).format(amount);
 };
 
@@ -29,7 +68,7 @@ const downloadPdf = (base64String: string, filename: string) => {
   URL.revokeObjectURL(url);
 };
 
-const TotalsCard = ({ amounts }: { amounts: Record<string, number> }) => (
+const TotalsCard = ({ amounts }: { amounts: AmountsShape }) => (
   <div className="w-full max-w-xs space-y-2">
     {amounts.pre_discount_subtotal && amounts.pre_discount_subtotal !== amounts.subtotal && (
       <div className="flex items-center justify-between text-sm text-slate-500">
@@ -39,7 +78,7 @@ const TotalsCard = ({ amounts }: { amounts: Record<string, number> }) => (
         </span>
       </div>
     )}
-    {amounts.discount > 0 && (
+    {(amounts.discount ?? 0) > 0 && (
       <div className="flex items-center justify-between text-sm text-amber-600">
         <span>{amounts.discount_label || "Discount"}</span>
         <span className="font-semibold">-{formatCurrency(amounts.discount, amounts.currency)}</span>
@@ -61,7 +100,8 @@ const TotalsCard = ({ amounts }: { amounts: Record<string, number> }) => (
 );
 
 const QuoteBreakdownStep = ({ apiResponse }: { apiResponse: unknown }) => {
-  if (!apiResponse?.invoices?.length) {
+  const response = apiResponse as ApiResponseShape | null;
+  if (!response?.invoices?.length) {
     return (
       <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-8 text-center text-sm text-slate-500">
         No quote details available yet.
@@ -82,14 +122,14 @@ const QuoteBreakdownStep = ({ apiResponse }: { apiResponse: unknown }) => {
       </div>
 
       <div className="space-y-6">
-        {apiResponse.invoices.map((invoiceData: unknown) => {
+        {response.invoices.map((invoiceData) => {
           const invoice = invoiceData.payload;
 
-          const lineItemColumns = [
+          const lineItemColumns: Column<LineItemShape & { id: string }>[] = [
             {
               key: "name",
               header: "ITEM",
-              render: (_: unknown, item: unknown) => (
+              render: (_: unknown, item: LineItemShape & { id: string }) => (
                 <div>
                   <p className="font-medium text-slate-900">{item.name}</p>
                   {item.description && <p className="text-xs text-slate-500">{item.description}</p>}
@@ -99,30 +139,32 @@ const QuoteBreakdownStep = ({ apiResponse }: { apiResponse: unknown }) => {
             {
               key: "quantity",
               header: "QTY",
-              align: "right",
-              render: (val: unknown) => <span className="text-slate-600">{val}</span>,
+              align: "right" as const,
+              render: (val: unknown) => <span className="text-slate-600">{String(val ?? "")}</span>,
             },
             {
               key: "unit_amount",
               header: "UNIT PRICE",
-              align: "right",
-              render: (val: unknown, item: unknown) => (
-                <span className="text-slate-600">{formatCurrency(val, item.currency)}</span>
+              align: "right" as const,
+              render: (val: unknown, item: LineItemShape & { id: string }) => (
+                <span className="text-slate-600">
+                  {formatCurrency(val as number | undefined, item.currency)}
+                </span>
               ),
             },
             {
               key: "total",
               header: "TOTAL",
-              align: "right",
-              render: (val: unknown, item: unknown) => (
+              align: "right" as const,
+              render: (val: unknown, item: LineItemShape & { id: string }) => (
                 <span className="font-medium text-slate-900">
-                  {formatCurrency(val, item.currency)}
+                  {formatCurrency(val as number | undefined, item.currency)}
                 </span>
               ),
             },
           ];
 
-          const lineItemsData = (invoice.line_items || []).map((item: unknown, idx: number) => ({
+          const lineItemsData = (invoice.line_items || []).map((item, idx) => ({
             ...item,
             id: `line-${idx}`,
           }));
@@ -143,7 +185,7 @@ const QuoteBreakdownStep = ({ apiResponse }: { apiResponse: unknown }) => {
                     size="sm"
                     leftIcon={<Download className="h-4 w-4" />}
                     onClick={() =>
-                      downloadPdf(invoiceData.pdf, invoiceData.filename || "quote.pdf")
+                      downloadPdf(invoiceData.pdf!, invoiceData.filename || "quote.pdf")
                     }
                   >
                     Download PDF
@@ -155,22 +197,24 @@ const QuoteBreakdownStep = ({ apiResponse }: { apiResponse: unknown }) => {
                 <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                   <p className="text-xs uppercase tracking-wide text-slate-400">Bill to</p>
                   <p className="mt-1 text-sm font-semibold text-slate-900">
-                    {invoice.bill_to.name}
+                    {invoice.bill_to?.name}
                   </p>
-                  <p className="text-xs text-slate-500">{invoice.bill_to.email}</p>
+                  <p className="text-xs text-slate-500">{invoice.bill_to?.email}</p>
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                   <p className="text-xs uppercase tracking-wide text-slate-400">Timeline</p>
                   <p className="mt-1 text-sm text-slate-600">
                     Issued{" "}
                     <span className="font-medium text-slate-900">
-                      {new Date(invoice.issued_at).toLocaleDateString()}
+                      {invoice.issued_at
+                        ? new Date(invoice.issued_at).toLocaleDateString()
+                        : "—"}
                     </span>
                   </p>
                   <p className="text-sm text-slate-600">
                     Due{" "}
                     <span className="font-medium text-slate-900">
-                      {new Date(invoice.due_at).toLocaleDateString()}
+                      {invoice.due_at ? new Date(invoice.due_at).toLocaleDateString() : "—"}
                     </span>
                   </p>
                 </div>
@@ -178,7 +222,7 @@ const QuoteBreakdownStep = ({ apiResponse }: { apiResponse: unknown }) => {
 
               <ModernTable
                 data={lineItemsData}
-                columns={lineItemColumns as unknown}
+                columns={lineItemColumns}
                 searchable={false}
                 filterable={false}
                 exportable={false}
@@ -191,7 +235,7 @@ const QuoteBreakdownStep = ({ apiResponse }: { apiResponse: unknown }) => {
                   <FileText className="h-4 w-4 text-slate-400" />
                   Generated via multi-quote workflow
                 </div>
-                <TotalsCard amounts={invoice.amounts} />
+                <TotalsCard amounts={invoice.amounts || {}} />
               </div>
             </ModernCard>
           );

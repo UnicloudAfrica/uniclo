@@ -108,13 +108,36 @@ export default function AdminPaymentDetails() {
   const { mutate: downloadReceipt, isPending: isDownloadingReceipt } =
     useDownloadAdminTransactionReceipt();
 
-  const paymentData = data as Record<string, unknown>;
-  const transaction = paymentData?.transaction ?? {};
-  const payment = paymentData?.payment ?? {};
-  const lineItems = paymentData?.line_items ?? paymentData?.order?.items ?? [];
-  const totals = paymentData?.totals ?? {};
-  const currency = paymentData?.currency ?? transaction.currency ?? "NGN";
-  const user = paymentData?.user ?? {};
+  // Loose payload shape — the admin payment endpoint returns a
+  // grab-bag of nested objects. Narrow each branch to a known shape so
+  // the rest of the component can read fields without TS2339.
+  type LooseObj = Record<string, unknown>;
+  const paymentData = (data ?? {}) as LooseObj;
+  const transaction = (paymentData.transaction ?? {}) as LooseObj & {
+    amount?: number | string;
+    currency?: string;
+    status?: string;
+    identifier?: string;
+    created_at?: string;
+    updated_at?: string;
+  };
+  const payment = (paymentData.payment ?? {}) as LooseObj & {
+    reference?: string;
+    status?: string;
+  };
+  const order = (paymentData.order ?? {}) as LooseObj & { items?: LooseObj[] };
+  const lineItems = (paymentData.line_items ?? order.items ?? []) as LooseObj[];
+  const totals = (paymentData.totals ?? {}) as LooseObj & {
+    total?: number | string;
+    subtotal?: number | string;
+    tax?: number | string;
+  };
+  const currency = (paymentData.currency as string | undefined) ?? transaction.currency ?? "NGN";
+  const user = (paymentData.user ?? {}) as LooseObj & {
+    name?: string;
+    email?: string;
+    identifier?: string;
+  };
 
   const metrics = useMemo(() => {
     return [

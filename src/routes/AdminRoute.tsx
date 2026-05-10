@@ -1,9 +1,10 @@
-import React, { type JSX } from "react";
+import React, { Suspense, type JSX } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import useAuthStore from "../stores/authStore";
 import AcfRealtimeStatusPortal from "../adminDashboard/pages/integrations/anycloudflow/realtime/AcfRealtimeStatusPortal";
 import { stashIntendedPath } from "../utils/intendedPath";
+import ErrorBoundary from "../shared/components/ErrorBoundary";
 
 interface AdminRouteProps {
   children?: React.ReactNode;
@@ -37,10 +38,19 @@ export default function AdminRoute({ children }: AdminRouteProps): JSX.Element {
   // Mount the AnyCloudFlow realtime status pill in the shared admin header
   // via a portal — no edits required to DashboardHeadbar. See
   // AcfRealtimeStatusPortal for the DOM attachment strategy.
+  //
+  // Per-route ErrorBoundary keyed by pathname so a render error in any
+  // single route can't blank the entire dashboard — navigating away
+  // resets the boundary because the key changes. Suspense covers the
+  // lazy-loaded chunks (admin pages converted in the Week-3 sweep).
   return (
     <>
       <AcfRealtimeStatusPortal />
-      {(children || <Outlet />) as JSX.Element}
+      <ErrorBoundary key={location.pathname}>
+        <Suspense fallback={<LoaderScreen />}>
+          {(children || <Outlet />) as JSX.Element}
+        </Suspense>
+      </ErrorBoundary>
     </>
   );
 }

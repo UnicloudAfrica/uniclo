@@ -43,9 +43,9 @@ const HUB_CARDS: HubCard[] = [
     textAccent: "text-violet-600",
   },
   {
-    title: "SimpleDeploy plans",
+    title: "SlimDeploy plans",
     description:
-      "Monthly subscription tiers for SimpleDeploy. Edit fee, included quotas (servers / sites / databases) and feature flags.",
+      "Monthly subscription tiers for SlimDeploy. Edit fee, included quotas (servers / sites / databases) and feature flags.",
     href: "/admin-dashboard/pricing/flow-plans",
     icon: Server,
     accent: "bg-emerald-50",
@@ -151,7 +151,7 @@ const AdminPricingHub = () => {
           </li>
           <li>
             <span className="font-medium text-slate-900">Subscription plans / packages</span> —
-            monthly tiers (SimpleDeploy plans, Shield packages). Customers subscribe to a tier; the
+            monthly tiers (SlimDeploy plans, Shield packages). Customers subscribe to a tier; the
             tier's flat fee + included quota lives here.
           </li>
           <li>

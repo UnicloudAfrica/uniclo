@@ -182,8 +182,8 @@ const AdminCreateInstance = () => {
   const selectedProject = useMemo(() => {
     if (!selectedProjectId || !Array.isArray(resources.projects)) return null;
     return (
-      resources.projects.find(
-        (project: unknown) =>
+      (resources.projects as Array<{ id?: string | number; identifier?: string }>).find(
+        (project) =>
           String(project.id) === String(selectedProjectId) ||
           String(project.identifier) === String(selectedProjectId)
       ) || null
@@ -204,18 +204,26 @@ const AdminCreateInstance = () => {
   const isProtectionStep = currentStepId === "protection";
   const isPaymentStep = currentStepId === "payment";
 
+  type OrderShape = { identifier?: string; id?: string | number };
+  type TxShape = { identifier?: string; reference?: string };
+  const orderReceiptOrder = orderReceipt?.order as OrderShape | undefined;
+  const orderReceiptTx = orderReceipt?.transaction as TxShape | undefined;
+  const submissionOrder = submissionResult?.order as OrderShape | undefined;
+  const submissionTx = submissionResult?.transaction as TxShape | undefined;
+  const submissionData = submissionResult?.data as { id?: string | number } | undefined;
+
   const orderId =
-    orderReceipt?.order?.identifier ||
-    orderReceipt?.order?.id ||
+    orderReceiptOrder?.identifier ||
+    orderReceiptOrder?.id ||
     orderReceipt?.order_id ||
-    submissionResult?.order?.identifier ||
-    submissionResult?.order?.id ||
-    submissionResult?.data?.id;
+    submissionOrder?.identifier ||
+    submissionOrder?.id ||
+    submissionData?.id;
   const transactionId =
-    orderReceipt?.transaction?.identifier ||
-    submissionResult?.transaction?.identifier ||
-    orderReceipt?.transaction?.reference ||
-    submissionResult?.transaction?.reference;
+    orderReceiptTx?.identifier ||
+    submissionTx?.identifier ||
+    orderReceiptTx?.reference ||
+    submissionTx?.reference;
   const successInstances =
     submissionResult?.instances ||
     orderReceipt?.instances ||

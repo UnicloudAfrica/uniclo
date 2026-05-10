@@ -3,6 +3,7 @@ import AdminPageShell from "../components/AdminPageShell";
 import HypervisorPanel from "@/shared/components/integrations/HypervisorPanel";
 import { useFetchExternalEndpoints } from "@/shared/hooks/resources/externalEndpointHooks";
 import { Server, Monitor, Cpu, ArrowRightLeft, HardDrive } from "lucide-react";
+import { ResilienceHero } from "@/shared/components/orbit";
 
 interface ExternalEndpointItem {
   id: string;
@@ -16,11 +17,9 @@ export default function AdminHypervisor() {
   const { data: externalEndpoints = [], isLoading } = useFetchExternalEndpoints({ extra: { per_page: 100 } });
 
   return (
-    <AdminPageShell
-      title="Hypervisor Management"
-      description="Detect hypervisors, manage VMs, run live migrations, and track changed blocks"
-      contentClassName="space-y-6"
-    >
+    <AdminPageShell title="" description="" contentClassName="space-y-6">
+      <ResilienceHero topic="hypervisor" role="admin" />
+
       {/* Loading state */}
       {isLoading && (
         <div className="space-y-4">

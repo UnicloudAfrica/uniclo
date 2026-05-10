@@ -11,14 +11,26 @@ interface InstanceOverviewCardProps {
   effectiveMetadata: GenericRecord;
 }
 
+type RelatedResource = {
+  key: string;
+  label: string;
+  value?: string;
+  href?: string | null;
+  icon?: React.ComponentType<{ className?: string }>;
+  copyable?: boolean;
+  chips?: string[];
+  volumes?: ResourceVolume[];
+  extraCount?: number;
+};
+
 const InstanceOverviewCard: React.FC<InstanceOverviewCardProps> = ({
   displayInstance,
   effectiveMetadata,
 }) => {
-  const relatedResources = useMemo(() => {
+  const relatedResources = useMemo<RelatedResource[]>(() => {
     if (!displayInstance) return [];
 
-    const resources: unknown[] = [];
+    const resources: RelatedResource[] = [];
 
     if (displayInstance.project?.name) {
       const projectIdentifier =
@@ -142,76 +154,79 @@ const InstanceOverviewCard: React.FC<InstanceOverviewCardProps> = ({
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-slate-900">Related Resources</h3>
           <div className="grid gap-3 md:grid-cols-2">
-            {relatedResources.map((resource: unknown) => (
-              <div
-                key={resource.key}
-                className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
-              >
-                <div className="flex items-center gap-2 text-sm font-medium text-slate-900">
-                  {resource.icon && <resource.icon className="h-4 w-4 text-slate-400" />}
-                  {resource.label}
-                </div>
-                {resource.value ? (
-                  resource.href ? (
-                    <a
-                      href={resource.href}
-                      className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-[var(--theme-color)] transition hover:text-[var(--theme-color)]"
+            {relatedResources.map((resource) => {
+              const ResourceIcon = resource.icon;
+              return (
+                <div
+                  key={resource.key}
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                >
+                  <div className="flex items-center gap-2 text-sm font-medium text-slate-900">
+                    {ResourceIcon && <ResourceIcon className="h-4 w-4 text-slate-400" />}
+                    {resource.label}
+                  </div>
+                  {resource.value ? (
+                    resource.href ? (
+                      <a
+                        href={resource.href}
+                        className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-[var(--theme-color)] transition hover:text-[var(--theme-color)]"
+                      >
+                        {resource.value}
+                        <ArrowLeft className="h-4 w-4 rotate-180" />
+                      </a>
+                    ) : (
+                      <p className="mt-2 text-sm text-slate-700">{resource.value}</p>
+                    )
+                  ) : null}
+                  {resource.copyable && resource.value && (
+                    <button
+                      onClick={() => navigator.clipboard.writeText(resource.value!)}
+                      className="mt-2 inline-flex items-center gap-1 text-xs text-slate-500 transition hover:text-slate-700"
                     >
-                      {resource.value}
-                      <ArrowLeft className="h-4 w-4 rotate-180" />
-                    </a>
-                  ) : (
-                    <p className="mt-2 text-sm text-slate-700">{resource.value}</p>
-                  )
-                ) : null}
-                {resource.copyable && resource.value && (
-                  <button
-                    onClick={() => navigator.clipboard.writeText(resource.value)}
-                    className="mt-2 inline-flex items-center gap-1 text-xs text-slate-500 transition hover:text-slate-700"
-                  >
-                    <Copy className="h-3 w-3" />
-                    Copy value
-                  </button>
-                )}
-                {resource.chips?.length ? (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {resource.chips.map((chip: unknown) => (
-                      <span
-                        key={chip}
-                        className="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600"
-                      >
-                        {chip}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-                {resource.volumes?.length ? (
-                  <div className="mt-3 space-y-2 text-sm text-slate-600">
-                    {resource.volumes.map((vol: ResourceVolume) => (
-                      <div
-                        key={vol.id || vol.name}
-                        className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-3 py-2"
-                      >
-                        <span className="font-medium text-slate-800">{vol.name}</span>
-                        <span className="text-xs uppercase tracking-wide text-slate-500">
-                          {vol.size !== undefined && vol.size !== null
-                            ? typeof vol.size === "string"
-                              ? vol.size
-                              : `${vol.size} GiB`
-                            : "\u2014"}
+                      <Copy className="h-3 w-3" />
+                      Copy value
+                    </button>
+                  )}
+                  {resource.chips?.length ? (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {resource.chips.map((chip) => (
+                        <span
+                          key={chip}
+                          className="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600"
+                        >
+                          {chip}
                         </span>
-                      </div>
-                    ))}
-                    {resource.extraCount ? (
-                      <p className="text-xs text-slate-500">
-                        +{resource.extraCount} more volume
-                        {resource.extraCount > 1 ? "s" : ""}
-                      </p>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
-            ))}
+                      ))}
+                    </div>
+                  ) : null}
+                  {resource.volumes?.length ? (
+                    <div className="mt-3 space-y-2 text-sm text-slate-600">
+                      {resource.volumes.map((vol: ResourceVolume) => (
+                        <div
+                          key={vol.id || vol.name}
+                          className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-3 py-2"
+                        >
+                          <span className="font-medium text-slate-800">{vol.name}</span>
+                          <span className="text-xs uppercase tracking-wide text-slate-500">
+                            {vol.size !== undefined && vol.size !== null
+                              ? typeof vol.size === "string"
+                                ? vol.size
+                                : `${vol.size} GiB`
+                              : "\u2014"}
+                          </span>
+                        </div>
+                      ))}
+                      {resource.extraCount ? (
+                        <p className="text-xs text-slate-500">
+                          +{resource.extraCount} more volume
+                          {resource.extraCount > 1 ? "s" : ""}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

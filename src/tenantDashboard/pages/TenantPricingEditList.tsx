@@ -21,7 +21,7 @@ import {
 } from "@/hooks/tenantHooks/tenantPricingHooks";
 import { matchesProductType, normalizeProductType } from "@/utils/productTypeUtils";
 import ToastUtils from "@/utils/toastUtil";
-import useTenantAuthStore from "@/stores/tenantAuthStore";
+import useAuthStore from "@/stores/authStore";
 import { resolveCountryCodeFromEntity } from "@/shared/utils/countryUtils";
 
 interface TenantRegion {
@@ -139,8 +139,8 @@ const TenantPricingEditList = () => {
   const [searchValue, setSearchValue] = useState("");
   const [draftPrices, setDraftPrices] = useState<Record<string, string>>({});
 
-  const tenant = useTenantAuthStore((state) => state?.tenant || null);
-  const tenantId = useTenantAuthStore((state) => {
+  const tenant = useAuthStore((state) => state?.tenant || null);
+  const tenantId = useAuthStore((state) => {
     const rawId = state?.tenant?.id ?? state?.tenant?.identifier ?? state?.tenant?.uuid ?? null;
     return rawId === null || rawId === undefined ? null : String(rawId);
   });

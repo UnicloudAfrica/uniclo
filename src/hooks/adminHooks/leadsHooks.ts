@@ -7,8 +7,7 @@ import {
 } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
-import config from "../../config";
-import useAdminAuthStore from "@/stores/adminAuthStore";
+import { apiRegistry } from "@/shared/api/apiRegistry";
 import { ApiResponse } from "@/shared/types/resource";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -173,26 +172,11 @@ const downloadDoc = async (
     throw new Error("Document identifier is required");
   }
 
-  const adminState = useAdminAuthStore.getState();
-  const baseHeaders = adminState?.getAuthHeaders ? adminState.getAuthHeaders() : {};
-  const response = await fetch(`${config.adminURL}/lead-documents/${id}/download`, {
-    method: "GET",
-    headers: {
-      ...baseHeaders,
-      Accept: "application/octet-stream,application/pdf,image/*,*/*",
-    },
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    let message = "Failed to download document";
-    try {
-      message = await response.text();
-    } catch {
-      // Ignored: fallback to default message
-    }
-    throw new Error(message || "Failed to download document");
-  }
+  // Routed via the unified fileApi (Week-3 cleanup) — shares auth +
+  // CSRF + 401 redirect plumbing with every other registry call. We
+  // need the full Response here because the filename comes from the
+  // server's Content-Disposition header, so we use `getRaw`.
+  const response = await apiRegistry.admin.fileApi.getRaw(`/lead-documents/${id}/download`);
 
   const blob = await response.blob();
   const contentType = response.headers.get("Content-Type") || "application/octet-stream";

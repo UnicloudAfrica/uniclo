@@ -1,10 +1,10 @@
 import TenantPageShell from "../components/TenantPageShell";
 import { ObjectStorageCreateContent } from "@/shared/components/object-storage";
-import useTenantAuthStore from "@/stores/tenantAuthStore";
+import useAuthStore from "@/stores/authStore";
 import objectStorageApi from "@/services/objectStorageApi";
 
 const ObjectStorageCreate = () => {
-  const tenant = useTenantAuthStore((state) => state?.tenant);
+  const tenant = useAuthStore((state) => state?.tenant);
   const tenantId = String(tenant?.id || tenant?.identifier || "");
 
   return (

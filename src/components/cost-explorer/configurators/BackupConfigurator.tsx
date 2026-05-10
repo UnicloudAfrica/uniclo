@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Plus, Archive, Info } from "lucide-react";
 import useCartStore from "@/stores/cartStore";
 import { useFetchAcfPublicServices } from "@/hooks/useCostExplorer";
+import { RESILIENCE } from "@/shared/branding";
 
 /**
  * Backup Configurator — flat per-VM/month pricing.
@@ -40,7 +41,7 @@ export default function BackupConfigurator() {
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
           <div className="text-xs text-blue-700">
             <p className="font-semibold">How it works</p>
-            <p className="mt-0.5">AnyCloudFlow orchestrates backups via SSH on your servers. You provide the backup destination (S3, SFTP, NFS, or another VM). No per-GB charges — data volume is your cost, not ours.</p>
+            <p className="mt-0.5">{RESILIENCE} orchestrates backups via SSH on your servers. You provide the backup destination (S3, SFTP, NFS, or another VM). No per-GB charges — data volume is your cost, not ours.</p>
           </div>
         </div>
       </div>

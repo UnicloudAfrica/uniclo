@@ -1,32 +1,40 @@
 /**
- * API Registry — Centralized role → API client mapping
+ * API Registry — Centralized role → API client mapping.
  *
  * Maps each dashboard role ("admin" | "tenant" | "client") to its
- * pre-configured API clients, base URL, resource URL prefix, and auth store.
+ * pre-configured API clients, base URL, resource URL prefix, and the
+ * unified auth store.
  *
- * Used by the `createResourceHooks` factory (Phase 4) so that a single
- * hook implementation can serve all three dashboards.
+ * Used by the `createResourceHooks` factory so a single hook
+ * implementation can serve all three dashboards.
+ *
+ * Auth: every entry shares the same `useAuthStore` (the 3 legacy
+ * per-role shims were removed in the Week-3 cleanup). Role-aware
+ * behaviour comes from `urlPrefix` + `redirectPath`, NOT from a
+ * separate auth store per role.
  */
 import config from "../../config";
-import useAdminAuthStore from "@/stores/adminAuthStore";
-import useTenantAuthStore from "@/stores/tenantAuthStore";
-import useClientAuthStore from "@/stores/clientAuthStore";
-import { createApiClient } from "@/utils/createApiClient";
+import useAuthStore from "@/stores/authStore";
+import { createApiClient, createFileApiClient } from "@/utils/createApiClient";
 import type { ApiContext } from "@/hooks/useApiContext";
 
 // Re-export ApiContext for convenience
 export type { ApiContext };
 
-type AuthStoreHook =
-  | typeof useAdminAuthStore
-  | typeof useTenantAuthStore
-  | typeof useClientAuthStore;
+type AuthStoreHook = typeof useAuthStore;
 
 export interface ApiRegistryEntry {
   /** API client that suppresses toast notifications (for background fetches) */
   silentApi: ReturnType<typeof createApiClient>;
   /** API client that shows toast notifications (for user-initiated mutations) */
   toastApi: ReturnType<typeof createApiClient>;
+  /**
+   * Binary-aware client — handles `application/pdf`, `image/*`,
+   * `text/csv`, and JSON without falling foul of `parseJsonSafely`.
+   * Use this for downloads/uploads that previously rolled their own
+   * `fetch()`.
+   */
+  fileApi: ReturnType<typeof createFileApiClient>;
   /** The base URL for this role's API (e.g. config.adminURL) */
   baseUrl: string;
   /**
@@ -38,7 +46,7 @@ export interface ApiRegistryEntry {
   urlPrefix: string;
   /** The path to redirect to on auth failure */
   redirectPath: string;
-  /** The Zustand auth store for this role */
+  /** The unified Zustand auth store (same instance across all 3 roles) */
   authStore: AuthStoreHook;
 }
 
@@ -46,66 +54,81 @@ export interface ApiRegistryEntry {
 const adminEntry: ApiRegistryEntry = {
   silentApi: createApiClient({
     baseURL: config.adminURL,
-    authStore: useAdminAuthStore,
+    authStore: useAuthStore,
     showToasts: false,
     redirectPath: "/admin-signin",
     useSafeJsonParsing: true,
   }),
   toastApi: createApiClient({
     baseURL: config.adminURL,
-    authStore: useAdminAuthStore,
+    authStore: useAuthStore,
     showToasts: true,
     redirectPath: "/admin-signin",
     useSafeJsonParsing: true,
   }),
+  fileApi: createFileApiClient({
+    baseURL: config.adminURL,
+    authStore: useAuthStore,
+    redirectPath: "/admin-signin",
+  }),
   baseUrl: config.adminURL,
   urlPrefix: "",
   redirectPath: "/admin-signin",
-  authStore: useAdminAuthStore,
+  authStore: useAuthStore,
 };
 
 // ── Tenant ───────────────────────────────────────────────────────
 const tenantEntry: ApiRegistryEntry = {
   silentApi: createApiClient({
     baseURL: config.tenantURL,
-    authStore: useTenantAuthStore,
+    authStore: useAuthStore,
     showToasts: false,
     redirectPath: "/sign-in",
     useSafeJsonParsing: true,
   }),
   toastApi: createApiClient({
     baseURL: config.tenantURL,
-    authStore: useTenantAuthStore,
+    authStore: useAuthStore,
     showToasts: true,
     redirectPath: "/sign-in",
     useSafeJsonParsing: true,
   }),
+  fileApi: createFileApiClient({
+    baseURL: config.tenantURL,
+    authStore: useAuthStore,
+    redirectPath: "/sign-in",
+  }),
   baseUrl: config.tenantURL,
   urlPrefix: "/admin",
   redirectPath: "/sign-in",
-  authStore: useTenantAuthStore,
+  authStore: useAuthStore,
 };
 
 // ── Client ───────────────────────────────────────────────────────
 const clientEntry: ApiRegistryEntry = {
   silentApi: createApiClient({
     baseURL: config.baseURL,
-    authStore: useClientAuthStore,
+    authStore: useAuthStore,
     showToasts: false,
     redirectPath: "/sign-in",
     useSafeJsonParsing: true,
   }),
   toastApi: createApiClient({
     baseURL: config.baseURL,
-    authStore: useClientAuthStore,
+    authStore: useAuthStore,
     showToasts: true,
     redirectPath: "/sign-in",
     useSafeJsonParsing: true,
   }),
+  fileApi: createFileApiClient({
+    baseURL: config.baseURL,
+    authStore: useAuthStore,
+    redirectPath: "/sign-in",
+  }),
   baseUrl: config.baseURL,
   urlPrefix: "/business",
   redirectPath: "/sign-in",
-  authStore: useClientAuthStore,
+  authStore: useAuthStore,
 };
 
 // ── Registry ─────────────────────────────────────────────────────

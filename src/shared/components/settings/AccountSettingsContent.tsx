@@ -214,6 +214,15 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
           if (!tab.categories?.length) {
             return true;
           }
+          // Security tab (2FA + password) is core for every role —
+          // always show it even if the user's available_categories
+          // payload from the API doesn't list it. Tenant + client
+          // users were silently missing the 2FA panel before this
+          // override because their profile-settings response omitted
+          // the `security` category.
+          if (tab.id === "security") {
+            return true;
+          }
           return tab.categories.some((category) => availableCategories.includes(category));
         });
 

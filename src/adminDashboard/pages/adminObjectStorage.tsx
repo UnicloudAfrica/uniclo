@@ -2,7 +2,7 @@ import { useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import AdminPageShell from "../components/AdminPageShell";
 import { useObjectStorage } from "../../contexts/ObjectStorageContext";
-import useAdminAuthStore from "@/stores/adminAuthStore";
+import useAuthStore from "@/stores/authStore";
 import ObjectStorageDashboardContent from "@/shared/components/object-storage/ObjectStorageDashboardContent";
 import type {
   Account as ObjectStorageAccount,
@@ -19,8 +19,8 @@ const parseCreatedAt = (value: unknown): number => {
 const AdminObjectStorage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const adminTenant = useAdminAuthStore((state) => state?.tenant);
-  const currentTenant = useAdminAuthStore((state) => state?.currentTenant);
+  const adminTenant = useAuthStore((state) => state?.tenant);
+  const currentTenant = useAuthStore((state) => state?.currentTenant);
   const {
     accounts,
     accountsLoading,

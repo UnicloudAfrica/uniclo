@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { AdditionalVolume, Option } from "../types/InstanceConfiguration";
 import { useInstanceFormState } from "./useInstanceCreation";
 import { useFetchCountries, useFetchGeneralRegions } from "./resource";
-import useClientAuthStore from "../stores/clientAuthStore";
+import useAuthStore from "@/stores/authStore";
 import config from "../config";
 import clientApi from "../index/client/api";
 import silentClientApi from "../index/client/silent";
@@ -23,11 +23,11 @@ export const useClientProvisioningLogic = () => {
   // ─────────────────────────────────────────────────────────────────
   // Auth & Config
   // ─────────────────────────────────────────────────────────────────
-  const isAuthenticated = useClientAuthStore(
+  const isAuthenticated = useAuthStore(
     (state: { isAuthenticated: boolean; user: Record<string, unknown> | null }) =>
       state.isAuthenticated
   );
-  const profile = useClientAuthStore(
+  const profile = useAuthStore(
     (state: { user: Record<string, unknown> | null }) => state.user
   );
   const apiBaseUrl = config.baseURL;
@@ -68,9 +68,9 @@ export const useClientProvisioningLogic = () => {
   // Ensure value is string to match resolveCountryCodeFromEntity expectation
   const countryOptions: Option[] = useMemo(
     () =>
-      (countriesData as Record<string, unknown>[]).map((c: Record<string, unknown>) => ({
+      (countriesData as unknown as Array<Record<string, unknown>>).map((c) => ({
         value: String(c.iso2 || c.code || c.id),
-        label: c.name,
+        label: typeof c.name === "string" ? c.name : String(c.name ?? ""),
       })),
     [countriesData]
   );
@@ -113,9 +113,9 @@ export const useClientProvisioningLogic = () => {
           "GET",
           `/product-pricing?${params.toString()}`
         )) as Record<string, unknown>;
-        setPricingData(response?.data || response || []);
+        setPricingData((response?.data as Record<string, unknown>) || (response as Record<string, unknown>) || null);
       } catch {
-        setPricingData([]);
+        setPricingData(null);
       } finally {
         setIsPricingLoading(false);
       }
@@ -129,9 +129,9 @@ export const useClientProvisioningLogic = () => {
 
   const regionOptions: Option[] = useMemo(
     () =>
-      (generalRegions as Record<string, unknown>[]).map((r: Record<string, unknown>) => ({
-        value: r.code || r.region || r.id || r.slug,
-        label: r.label || r.name || r.region || r.code,
+      (generalRegions as Array<Record<string, unknown>>).map((r) => ({
+        value: String(r.code || r.region || r.id || r.slug || ""),
+        label: String(r.label || r.name || r.region || r.code || ""),
       })),
     [generalRegions]
   );
@@ -218,8 +218,13 @@ export const useClientProvisioningLogic = () => {
               ? cfg.security_group_ids
               : ((cfg.security_group_ids as string) || "").split(",")
           )
-            .map((v: unknown) => (v && (v as unknown).value ? (v as unknown).value : v))
-            .map((v: unknown) => (v || "").toString().trim())
+            .map((v: unknown) => {
+              if (v && typeof v === "object" && "value" in v) {
+                return (v as { value: unknown }).value;
+              }
+              return v;
+            })
+            .map((v: unknown) => (v ?? "").toString().trim())
             .filter(Boolean);
 
           const extraVolumes = (cfg.additional_volumes || [])
@@ -281,47 +286,52 @@ export const useClientProvisioningLogic = () => {
           "/business/instances/create",
           payload as never
         )) as Record<string, unknown>;
-        const data = response?.data || response;
+        const data = ((response?.data ?? response) as Record<string, unknown>) || {};
+        const payment = data.payment as Record<string, unknown> | undefined;
+        const transaction = data.transaction as Record<string, unknown> | undefined;
+        const order = data.order as Record<string, unknown> | undefined;
+        const transactionMeta = transaction?.metadata as Record<string, unknown> | undefined;
 
         const normalizedGatewayOptions = normalizePaymentOptions(
-          data?.payment?.payment_gateway_options || data?.payment?.options || data?.payment_options
+          payment?.payment_gateway_options || payment?.options || data?.payment_options
         );
         const pricingBreakdownPayload =
           data?.pricing_breakdown ||
-          data?.transaction?.metadata?.pricing_breakdown ||
-          data?.order?.pricing_breakdown ||
+          transactionMeta?.pricing_breakdown ||
+          order?.pricing_breakdown ||
           null;
 
-        const mergedTransaction = data?.transaction
+        const mergedTransaction = transaction
           ? {
-              ...data.transaction,
+              ...transaction,
               metadata: {
-                ...(data.transaction.metadata || {}),
+                ...(transactionMeta || {}),
                 ...(pricingBreakdownPayload ? { pricing_breakdown: pricingBreakdownPayload } : {}),
               },
             }
           : null;
 
-        const mergedResult = {
+        const mergedResult: Record<string, unknown> = {
           ...data,
           transaction: mergedTransaction,
-          payment: data?.payment
-            ? { ...data.payment, payment_gateway_options: normalizedGatewayOptions }
+          payment: payment
+            ? { ...payment, payment_gateway_options: normalizedGatewayOptions }
             : normalizedGatewayOptions.length
               ? { payment_gateway_options: normalizedGatewayOptions }
-              : data?.payment,
+              : payment,
           pricing_breakdown: pricingBreakdownPayload || data?.pricing_breakdown || null,
         };
 
         setSubmissionResult(mergedResult);
         setOrderReceipt({
           transaction: mergedResult?.transaction || null,
-          order: mergedResult?.order || null,
+          order: (mergedResult?.order as Record<string, unknown> | undefined) || null,
           payment: mergedResult?.payment || null,
           pricing_breakdown: mergedResult?.pricing_breakdown || null,
         });
 
-        const isPaymentRequired = mergedResult?.payment?.required;
+        const mergedPayment = mergedResult?.payment as Record<string, unknown> | undefined;
+        const isPaymentRequired = mergedPayment?.required;
         if (isPaymentRequired) {
           setActiveStep(paymentStepIndex);
         } else {
@@ -360,21 +370,24 @@ export const useClientProvisioningLogic = () => {
   // Pricing Calculations
   // ─────────────────────────────────────────────────────────────────
   const pricingSummary = useMemo(() => {
-    const breakdown = Array.isArray(orderReceipt?.pricing_breakdown)
-      ? orderReceipt?.pricing_breakdown
+    type Totals = { subtotal: number; tax: number; total: number; currency: string };
+    type BreakdownItem = { subtotal?: number; tax?: number; total?: number; currency?: string };
+    const breakdown: BreakdownItem[] = Array.isArray(orderReceipt?.pricing_breakdown)
+      ? (orderReceipt?.pricing_breakdown as BreakdownItem[])
       : [];
-    const totals = breakdown.reduce(
-      (acc: Record<string, unknown>, item: Record<string, unknown>) => {
+    const totals: Totals = breakdown.reduce<Totals>(
+      (acc, item) => {
         acc.subtotal += Number(item?.subtotal || 0);
         acc.tax += Number(item?.tax || 0);
         acc.total += Number(item?.total || 0);
-        acc.currency = acc.currency || item?.currency;
+        acc.currency = acc.currency || (item?.currency ?? "");
         return acc;
       },
       { subtotal: 0, tax: 0, total: 0, currency: "" }
     );
-    const receiptTotal =
-      Number(orderReceipt?.transaction?.amount || orderReceipt?.order?.total || 0) || 0;
+    const txn = orderReceipt?.transaction as { amount?: number; currency?: string } | undefined;
+    const ord = orderReceipt?.order as { total?: number } | undefined;
+    const receiptTotal = Number(txn?.amount || ord?.total || 0) || 0;
     return {
       subtotal: totals.subtotal || receiptTotal,
       tax: totals.tax || 0,
@@ -382,7 +395,7 @@ export const useClientProvisioningLogic = () => {
       grandTotal: totals.total || receiptTotal,
       currency:
         totals.currency ||
-        orderReceipt?.transaction?.currency ||
+        txn?.currency ||
         (billingCountry === "NG" ? "NGN" : "USD"),
     };
   }, [orderReceipt, billingCountry]);

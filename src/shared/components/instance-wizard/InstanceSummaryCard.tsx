@@ -13,6 +13,7 @@ import {
   Layers,
   Globe,
 } from "lucide-react";
+import { RESILIENCE } from "@/shared/branding";
 import { Configuration } from "@/types/InstanceConfiguration";
 import { ModernCard } from "../ui";
 import { DEFAULT_PRESETS } from "../network/NetworkPresetSelector";
@@ -397,8 +398,8 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
                       <ShieldCheck className="h-3.5 w-3.5 text-blue-600 shrink-0" />
                       <span className="font-semibold text-gray-800">
                         {protectionPlan === "backup_only" && "Backup Only"}
-                        {protectionPlan === "dr_standby" && "AnyCloudFlow DR Standby"}
-                        {protectionPlan === "dr_replication" && "AnyCloudFlow DR Replication"}
+                        {protectionPlan === "dr_standby" && `${RESILIENCE} DR Standby`}
+                        {protectionPlan === "dr_replication" && `${RESILIENCE} DR Replication`}
                       </span>
                     </div>
                     {redundancyPattern && (protectionPlan === "dr_standby" || protectionPlan === "dr_replication") && (

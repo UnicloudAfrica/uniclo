@@ -21,7 +21,7 @@ import AdminPageShell from "../../components/AdminPageShell";
 import { ModernCard } from "@/shared/components/ui";
 
 import CatalogPane from "./panes/CatalogPane";
-import SimpleDeployPane from "./panes/SimpleDeployPane";
+import SlimDeployPane from "./panes/SlimDeployPane";
 import AnyCloudFlowPane from "./panes/AnyCloudFlowPane";
 import ShieldPane from "./panes/ShieldPane";
 import PayAsYouGoPane from "./panes/PayAsYouGoPane";
@@ -70,13 +70,17 @@ const MENU: MenuGroup[] = [
       { id: "bandwidth", label: "Bandwidth", caption: "Throughput tiers", icon: Wifi },
       { id: "floating_ip", label: "Floating IPs", caption: "Public connectivity", icon: Network },
       { id: "cross_connect", label: "Cross Connect", caption: "Partner links", icon: Boxes },
-      { id: "lattice", label: "Lattice / StaqDB", caption: "Managed databases", icon: Database },
     ],
   },
   {
     label: "Third-party",
     items: [
-      { id: "simpledeploy", label: "SimpleDeploy", caption: "Deploy plans", icon: Server },
+      // Lattice / StaqDB is a managed-database product the platform
+      // resells from a partner, not infrastructure we operate, so it
+      // sits with SlimDeploy / AnyCloudFlow / Shield rather than
+      // with the Products group.
+      { id: "lattice", label: "Lattice / StaqDB", caption: "Managed databases", icon: Database },
+      { id: "simpledeploy", label: "SlimDeploy", caption: "Deploy plans", icon: Server },
       { id: "anycloudflow", label: "AnyCloudFlow", caption: "Migration & DR", icon: Inbox },
       { id: "shield", label: "Shield", caption: "DDoS / WAF / SSL", icon: ShieldIcon },
       { id: "pay_as_you_go", label: "Pay-as-you-go", caption: "Per-VM, per-GB rates", icon: Activity },
@@ -300,7 +304,7 @@ const PaneFor: React.FC<{ productId: string; role: PricingRole }> = ({ productId
       );
 
     case "simpledeploy":
-      return <SimpleDeployPane role={role} />;
+      return <SlimDeployPane role={role} />;
     case "anycloudflow":
       return <AnyCloudFlowPane role={role} />;
     case "shield":

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import useTenantAuthStore from "@/stores/tenantAuthStore";
+import useAuthStore from "@/stores/authStore";
 import { useFetchTenantPartners, useFetchTenantPartnerClients } from "./partnerHooks";
 import { useSharedClients } from "../sharedCalculatorHooks";
 
@@ -33,7 +33,7 @@ type TenantAuthShape = {
 
 export const useTenantCustomerContext = (options: { enabled?: boolean } = {}) => {
   const { enabled = true } = options;
-  const tenantAuth = useTenantAuthStore((state) => state) as unknown as TenantAuthShape | null;
+  const tenantAuth = useAuthStore((state) => state) as unknown as TenantAuthShape | null;
 
   const selfTenant = tenantAuth?.tenant || tenantAuth?.profile || null;
   const selfTenantId = selfTenant?.id || tenantAuth?.user?.tenant_id || "";

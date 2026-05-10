@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import useClientAuthStore from "@/stores/clientAuthStore";
+import useAuthStore from "@/stores/authStore";
 import { AuthState } from "@/types/auth";
 import {
   getTenantId,
@@ -32,7 +32,7 @@ interface UseClientThemeOptions {
 }
 
 const useClientTheme = (options: UseClientThemeOptions = {}) => {
-  const tenant = useClientAuthStore((state: AuthState) => state.tenant);
+  const tenant = useAuthStore((state: AuthState) => state.tenant);
   const tenantId = getTenantId(tenant);
   const { enabled = true, ...restOptions } = options;
   const tenantQuery = useClientBrandingTheme({

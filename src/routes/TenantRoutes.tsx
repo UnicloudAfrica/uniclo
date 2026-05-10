@@ -4,6 +4,9 @@ import ObjectStorageProvider from "../contexts/ObjectStorageContext";
 import TenantRoute from "./TenantRoute";
 import TenantDashboardLayout from "../tenantDashboard/components/TenantDashboardLayout";
 import Dashboard from "../dashboard/pages/dashboard";
+import TenantTwoFactorEnroll from "../dashboard/pages/TenantTwoFactorEnroll";
+const TenantTwoFactorSettings = lazy(() => import("../dashboard/pages/TenantTwoFactorSettings"));
+const TenantTwoFactorManage = lazy(() => import("../dashboard/pages/TenantTwoFactorManage"));
 
 import PurchasedModules from "../dashboard/pages/purchasedModules";
 import PaymentHistory from "../dashboard/pages/paymentHistory";
@@ -16,14 +19,15 @@ import ProjectDetails from "../dashboard/pages/ProjectDetails";
 import TenantAccountSettings from "../dashboard/pages/AccountSettings";
 import DashboardTaxConfigurations from "../dashboard/pages/taxConfiguration";
 import Products from "../dashboard/pages/products";
-import TenantDeveloperPortal from "../tenantDashboard/pages/DeveloperPortal";
-import TenantPricingCalculator from "../tenantDashboard/pages/TenantPricingCalculator";
-import TenantPricingOverrides from "../tenantDashboard/pages/TenantPricingOverrides";
-import TenantPricingEditList from "../tenantDashboard/pages/TenantPricingEditList";
+const TenantDeveloperPortal = lazy(() => import("../tenantDashboard/pages/DeveloperPortal"));
+const TenantPricingCalculator = lazy(() => import("../tenantDashboard/pages/TenantPricingCalculator"));
+// `TenantPricingOverrides` + `TenantPricingEditList` retired — the
+// unified PricingShell at /dashboard/pricing replaces both. Legacy
+// routes redirect to the new home (see Routes block below).
 // Unified tenant pricing shell — same single-page layout the admin
 // uses, with role="tenant" so each pane shows the override column.
 import PricingShell from "../adminDashboard/pages/pricing/PricingShell";
-import TenantCreateInvoice from "../tenantDashboard/pages/TenantCreateInvoice";
+const TenantCreateInvoice = lazy(() => import("../tenantDashboard/pages/TenantCreateInvoice"));
 import DashboardInstances from "../dashboard/pages/Instances";
 import InstanceDetails from "../dashboard/pages/InstanceDetails";
 import TenantTicketDetail from "../dashboard/pages/TenantTicketDetail";
@@ -32,7 +36,7 @@ import TenantQuoteCalculator from "../dashboard/pages/TenantQuoteCalculator";
 import DashboardObjectStorage from "../dashboard/pages/objectStorage";
 import TenantObjectStorageCreate from "../dashboard/pages/objectStorageCreate";
 import TenantObjectStoragePurchase from "../dashboard/pages/objectStoragePurchase";
-import TenantObjectStorageDetail from "../tenantDashboard/pages/TenantObjectStorageDetail";
+const TenantObjectStorageDetail = lazy(() => import("../tenantDashboard/pages/TenantObjectStorageDetail"));
 import DashboardLeads from "../dashboard/pages/leads";
 import DashboardLeadCreate from "../dashboard/pages/leadCreate";
 import DashboardLeadDetails from "../dashboard/pages/leadDetails";
@@ -46,27 +50,31 @@ import EditClientPage from "../dashboard/pages/clients/EditClient";
 import InviteTenantUserPage from "../dashboard/pages/tenantUsers/NewTenantUser";
 import TenantUserDetailsPage from "../dashboard/pages/tenantUsers/TenantUserDetails";
 import EditTenantUserPage from "../dashboard/pages/tenantUsers/EditTenantUser";
-import TenantOnboardingOverview from "../tenantDashboard/pages/TenantOnboardingOverview";
-import RegionRequests from "../tenantDashboard/pages/RegionRequests";
-import RegionRequestDetail from "../tenantDashboard/pages/RegionRequestDetail";
-import NewRegionRequest from "../tenantDashboard/pages/NewRegionRequest";
-import RevenueDashboard from "../tenantDashboard/pages/RevenueDashboard";
-import TenantProvisioningWizard from "../tenantDashboard/pages/TenantProvisioningWizard";
-import TenantTemplates from "../tenantDashboard/pages/TenantTemplates";
+const TenantOnboardingOverview = lazy(() => import("../tenantDashboard/pages/TenantOnboardingOverview"));
+const RegionRequests = lazy(() => import("../tenantDashboard/pages/RegionRequests"));
+const RegionRequestDetail = lazy(() => import("../tenantDashboard/pages/RegionRequestDetail"));
+const NewRegionRequest = lazy(() => import("../tenantDashboard/pages/NewRegionRequest"));
+const RevenueDashboard = lazy(() => import("../tenantDashboard/pages/RevenueDashboard"));
+const TenantProvisioningWizard = lazy(() => import("../tenantDashboard/pages/TenantProvisioningWizard"));
+const TenantTemplates = lazy(() => import("../tenantDashboard/pages/TenantTemplates"));
 import TenantManagedDatabases from "../dashboard/pages/TenantManagedDatabases";
 import TenantCloudAccounts from "../dashboard/pages/TenantCloudAccounts";
 import TenantCloudAccountCreate from "../dashboard/pages/TenantCloudAccountCreate";
 import TenantCloudAccountDetail from "../dashboard/pages/TenantCloudAccountDetail";
-import TenantMonitoring from "../tenantDashboard/pages/TenantMonitoring";
-import TenantFlow from "../tenantDashboard/pages/TenantFlow";
-import TenantFlowBilling from "../tenantDashboard/pages/TenantFlowBilling";
-import TenantMigrationCalculator from "../tenantDashboard/pages/TenantMigrationCalculator";
+const TenantMonitoring = lazy(() => import("../tenantDashboard/pages/TenantMonitoring"));
+const TenantFlow = lazy(() => import("../tenantDashboard/pages/TenantFlow"));
+const TenantFlowBilling = lazy(() => import("../tenantDashboard/pages/TenantFlowBilling"));
+const TenantMigrationCalculator = lazy(() => import("../tenantDashboard/pages/TenantMigrationCalculator"));
+// FR-043 — Orbit source-VM endpoints (tenant variant)
+const TenantVmEndpoints = lazy(() => import("../dashboard/pages/integrations/orbit/TenantVmEndpoints"));
+const TenantVmEndpointNew = lazy(() => import("../dashboard/pages/integrations/orbit/TenantVmEndpointNew"));
+const TenantVmEndpointDetail = lazy(() => import("../dashboard/pages/integrations/orbit/TenantVmEndpointDetail"));
 import TenantDatabaseCreate from "../dashboard/pages/TenantDatabaseCreate";
 import TenantDatabaseDetail from "../dashboard/pages/TenantDatabaseDetail";
-import TenantDiscountManager from "../tenantDashboard/pages/TenantDiscountManager";
-import TenantPayoutsPage from "../tenantDashboard/pages/TenantPayoutsPage";
-import TenantBillingSettings from "../tenantDashboard/pages/TenantBillingSettings";
-import TenantPocTrials from "../tenantDashboard/pages/TenantPocTrials";
+const TenantDiscountManager = lazy(() => import("../tenantDashboard/pages/TenantDiscountManager"));
+const TenantPayoutsPage = lazy(() => import("../tenantDashboard/pages/TenantPayoutsPage"));
+const TenantBillingSettings = lazy(() => import("../tenantDashboard/pages/TenantBillingSettings"));
+const TenantPocTrials = lazy(() => import("../tenantDashboard/pages/TenantPocTrials"));
 import TenantProtection from "../dashboard/pages/TenantProtection";
 import TenantMigrations from "../dashboard/pages/TenantMigrations";
 import TenantMigrationWizard from "../dashboard/pages/TenantMigrationWizard";
@@ -74,7 +82,9 @@ import TenantBatchMigrations from "../dashboard/pages/TenantBatchMigrations";
 import TenantBatchMigrationWizard from "../dashboard/pages/TenantBatchMigrationWizard";
 import TenantBatchMigrationDetail from "../dashboard/pages/TenantBatchMigrationDetail";
 import TenantDestinations from "../dashboard/pages/TenantDestinations";
+const TenantDestinationNew = lazy(() => import("../dashboard/pages/TenantDestinationNew"));
 import TenantServerlessDr from "../dashboard/pages/TenantServerlessDr";
+const TenantServerlessDrNew = lazy(() => import("../dashboard/pages/TenantServerlessDrNew"));
 import TenantAgent from "../dashboard/pages/TenantAgent";
 import TenantDrDrills from "../dashboard/pages/TenantDrDrills";
 import TenantHypervisor from "../dashboard/pages/TenantHypervisor";
@@ -91,32 +101,31 @@ const TenantShieldFirewall = lazy(() => import("../dashboard/pages/TenantShieldF
 const TenantShieldAttacks = lazy(() => import("../dashboard/pages/TenantShieldAttacks"));
 const TenantShieldAnalytics = lazy(() => import("../dashboard/pages/TenantShieldAnalytics"));
 const TenantShieldSsl = lazy(() => import("../dashboard/pages/TenantShieldSsl"));
-import {
-  TenantKeyPairs,
-  TenantNetworkInterfaces,
-  TenantSubnets,
-  TenantSecurityGroups,
-  TenantElasticIps,
-  TenantNatGateways,
-  TenantRouteTables,
-  TenantNetworkAcls,
-  TenantVpcPeering,
-  TenantSecurityGroupRules,
-  TenantNetworkAclRules,
-  TenantLoadBalancers,
-  LoadBalancerWizard,
-  TenantLoadBalancerDetail,
-  TenantDnsManagement,
-  TenantSnapshots,
-  TenantImages,
-  TenantAutoScaling,
-  LaunchConfigurationWizard,
-  AutoScalingGroupWizard,
-} from "../tenantDashboard/pages/infrastructure";
+// Infrastructure pages — lazy-loaded so the barrel doesn't pull every
+// VPC/ACL/load-balancer page into the initial tenant bundle.
+const TenantKeyPairs = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantKeyPairs"));
+const TenantNetworkInterfaces = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantNetworkInterfaces"));
+const TenantSubnets = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantSubnets"));
+const TenantSecurityGroups = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantSecurityGroups"));
+const TenantElasticIps = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantElasticIps"));
+const TenantNatGateways = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantNatGateways"));
+const TenantRouteTables = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantRouteTables"));
+const TenantNetworkAcls = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantNetworkAcls"));
+const TenantVpcPeering = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantVpcPeering"));
+const TenantSecurityGroupRules = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantSecurityGroupRules"));
+const TenantNetworkAclRules = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantNetworkAclRules"));
+const TenantLoadBalancers = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantLoadBalancers"));
+const LoadBalancerWizard = lazy(() => import("../tenantDashboard/pages/infrastructure/LoadBalancerWizard"));
+const TenantLoadBalancerDetail = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantLoadBalancerDetail"));
+const TenantDnsManagement = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantDnsManagement"));
+const TenantSnapshots = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantSnapshots"));
+const TenantImages = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantImages"));
+const TenantAutoScaling = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantAutoScaling"));
+const LaunchConfigurationWizard = lazy(() => import("../tenantDashboard/pages/infrastructure/LaunchConfigurationWizard"));
+const AutoScalingGroupWizard = lazy(() => import("../tenantDashboard/pages/infrastructure/AutoScalingGroupWizard"));
 
 import TenantDocsLayout from "../tenantDashboard/pages/docs/TenantDocsLayout";
-import TenantDocPage from "../tenantDashboard/pages/docs/TenantDocPage";
-
+const TenantDocPage = lazy(() => import("../tenantDashboard/pages/docs/TenantDocPage"));
 const ObjectStorageRouteProvider = (): JSX.Element => (
   <ObjectStorageProvider>
     <div className="object-storage-theme">
@@ -127,6 +136,10 @@ const ObjectStorageRouteProvider = (): JSX.Element => (
 
 const TenantRoutes = (): JSX.Element => (
   <>
+    {/* 2FA enrollment — sits OUTSIDE TenantRoute because the api
+        interceptor redirects authenticated-but-not-yet-enrolled tenant
+        users here when their tenant has force_2fa enabled. */}
+    <Route path="/tenant-2fa-enroll" element={<TenantTwoFactorEnroll />} />
     <Route element={<TenantRoute />}>
       <Route element={<TenantDashboardLayout />}>
         {/* Home */}
@@ -174,7 +187,13 @@ const TenantRoutes = (): JSX.Element => (
         <Route path="/dashboard/cloud-accounts/create" element={<TenantCloudAccountCreate />} />
         <Route path="/dashboard/cloud-accounts/:accountId" element={<TenantCloudAccountDetail />} />
 
-        <Route path="/dashboard/anycloudflow/calculator" element={<TenantMigrationCalculator />} />
+        <Route path="/dashboard/orbit/calculator" element={<TenantMigrationCalculator />} />
+        <Route path="/dashboard/anycloudflow/calculator" element={<Navigate to="/dashboard/orbit/calculator" replace />} />
+        {/* FR-043 — source-VM endpoints + assessment.
+            Order: list → /new → /:id (specific routes before catch-all). */}
+        <Route path="/dashboard/integrations/orbit/vms" element={<TenantVmEndpoints />} />
+        <Route path="/dashboard/integrations/orbit/vms/new" element={<TenantVmEndpointNew />} />
+        <Route path="/dashboard/integrations/orbit/vms/:id" element={<TenantVmEndpointDetail />} />
         <Route path="/dashboard/protection" element={<TenantProtection />} />
         <Route path="/dashboard/dr-drills" element={<TenantDrDrills />} />
         <Route path="/dashboard/hypervisor" element={<TenantHypervisor />} />
@@ -187,7 +206,10 @@ const TenantRoutes = (): JSX.Element => (
         <Route path="/dashboard/batch-migrations/new" element={<TenantBatchMigrationWizard />} />
         <Route path="/dashboard/batch-migrations/:identifier" element={<TenantBatchMigrationDetail />} />
         <Route path="/dashboard/destinations" element={<TenantDestinations />} />
+        {/* /new must precede any /:id sibling — RES-162 wizard route */}
+        <Route path="/dashboard/destinations/new" element={<TenantDestinationNew />} />
         <Route path="/dashboard/serverless-dr" element={<TenantServerlessDr />} />
+        <Route path="/dashboard/serverless-dr/new" element={<TenantServerlessDrNew />} />
 
         <Route path="/dashboard/shield/domains" element={<Suspense fallback={null}><TenantShieldDomains /></Suspense>} />
         <Route path="/dashboard/shield/domains/:domainId" element={<Suspense fallback={null}><TenantShieldDomainDetail /></Suspense>} />
@@ -281,8 +303,21 @@ const TenantRoutes = (): JSX.Element => (
           inline. Same component the admin uses, with role="tenant".
         */}
         <Route path="/dashboard/pricing" element={<PricingShell role="tenant" />} />
-        <Route path="/dashboard/pricing-overrides" element={<TenantPricingOverrides />} />
-        <Route path="/dashboard/pricing-overrides/edit-list" element={<TenantPricingEditList />} />
+        {/*
+         * Legacy /dashboard/pricing-overrides UI is superseded by the
+         * unified pricing shell above. Redirect any deep links so old
+         * bookmarks/email-CTAs land on the new home instead of 404'ing.
+         * The legacy lazy imports are intentionally removed to keep the
+         * initial bundle lean.
+         */}
+        <Route
+          path="/dashboard/pricing-overrides"
+          element={<Navigate to="/dashboard/pricing" replace />}
+        />
+        <Route
+          path="/dashboard/pricing-overrides/edit-list"
+          element={<Navigate to="/dashboard/pricing" replace />}
+        />
         <Route path="/dashboard/pricing-calculator" element={<TenantPricingCalculator />} />
         <Route path="/dashboard/create-invoice" element={<TenantCreateInvoice />} />
         {/* Quote+Invoice convergence — alias path for the unified wizard. */}
@@ -304,6 +339,22 @@ const TenantRoutes = (): JSX.Element => (
         <Route path="/dashboard/support" element={<SupportTicket />} />
         <Route path="/dashboard/support/:id" element={<TenantTicketDetail />} />
         <Route path="/dashboard/account" element={<TenantAccountSettings />} />
+        <Route
+          path="/dashboard/security/2fa-policy"
+          element={
+            <Suspense fallback={null}>
+              <TenantTwoFactorSettings />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/dashboard/security/2fa"
+          element={
+            <Suspense fallback={null}>
+              <TenantTwoFactorManage />
+            </Suspense>
+          }
+        />
         {/* Legacy redirects */}
         <Route path="/tenant-dashboard/*" element={<Navigate to="/dashboard" replace />} />
         <Route

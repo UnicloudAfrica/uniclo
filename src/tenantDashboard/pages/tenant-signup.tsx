@@ -4,7 +4,7 @@ import logo from "./assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useCreateAccount } from "@/hooks/authHooks";
 import { useFetchCountries } from "@/hooks/resource";
-import useTenantAuthStore from "@/stores/tenantAuthStore";
+import useAuthStore from "@/stores/authStore";
 import useAuthRedirect from "@/utils/authRedirect";
 import {
   resolveBrandLogo,
@@ -29,7 +29,7 @@ interface TenantRegisterProps {
 
 const TenantRegister = ({ tenant = "Tenant" }: TenantRegisterProps) => {
   const navigate = useNavigate();
-  const { setUserEmail } = useTenantAuthStore.getState();
+  const { setUserEmail } = useAuthStore.getState();
   const { mutate, isPending } = useCreateAccount();
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string | null>>({});

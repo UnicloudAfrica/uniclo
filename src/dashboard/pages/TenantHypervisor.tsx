@@ -3,6 +3,7 @@ import TenantPageShell from "../../tenantDashboard/components/TenantPageShell";
 import HypervisorPanel from "@/shared/components/integrations/HypervisorPanel";
 import { useFetchExternalEndpoints } from "@/shared/hooks/resources/externalEndpointHooks";
 import { Server, Monitor, Cpu, ArrowRightLeft, HardDrive } from "lucide-react";
+import { ResilienceHero } from "@/shared/components/orbit";
 
 interface ExternalEndpointItem {
   id: string;
@@ -16,11 +17,9 @@ export default function TenantHypervisor() {
   const { data: externalEndpoints = [], isLoading } = useFetchExternalEndpoints({ extra: { per_page: 100 } });
 
   return (
-    <TenantPageShell
-      title="Hypervisor Management"
-      description="Detect hypervisors, manage VMs, run live migrations, and track changed blocks"
-      contentClassName="space-y-6"
-    >
+    <TenantPageShell title="" description="" contentClassName="space-y-6">
+      <ResilienceHero topic="hypervisor" role="tenant" />
+
       {/* Loading state */}
       {isLoading && (
         <div className="space-y-4">

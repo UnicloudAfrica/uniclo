@@ -14,6 +14,7 @@ import {
   GitMerge,
 } from "lucide-react";
 
+import { useProjectCapabilities } from "@/shared/hooks/resources/projectCapabilitiesHooks";
 import VpcsContainer from "@/shared/components/infrastructure/containers/VpcsContainer";
 import SubnetsContainer from "@/shared/components/infrastructure/containers/SubnetsContainer";
 import SecurityGroupsContainer from "@/shared/components/infrastructure/containers/SecurityGroupsContainer";
@@ -272,7 +273,12 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
     }
   }, [initialResource, activeResource]);
 
-  const resources = useMemo(
+  // Resource catalog. The `capability` key maps each resource to the
+  // backend capability flag (see ProjectCapabilitiesController). Items
+  // whose capability is false for the current project's provider are
+  // filtered out below — that's how Nobus projects don't see VPC Peering,
+  // NAT Gateway, Network ACL, Load Balancer tabs (Nobus has no equivalent).
+  const allResources = useMemo(
     () => [
       {
         id: "vpcs",
@@ -281,6 +287,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
         category: "Core",
         description: "Your isolated virtual network",
         count: resourceCounts?.vpcs ?? 0,
+        capability: "supportsVpc",
       },
       {
         id: "subnets",
@@ -289,6 +296,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
         category: "Core",
         description: "Network segments within your VPC",
         count: resourceCounts?.subnets ?? 0,
+        capability: "supportsSubnets",
       },
       {
         id: "routes",
@@ -297,6 +305,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
         category: "Core",
         description: "Traffic routing rules between networks",
         count: resourceCounts?.route_tables ?? 0,
+        capability: "supportsRouteTables",
       },
       {
         id: "sgs",
@@ -305,6 +314,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
         category: "Core",
         description: "Firewall rules for your servers",
         count: resourceCounts?.security_groups ?? 0,
+        capability: "supportsSecurityGroups",
       },
       {
         id: "igw",
@@ -313,6 +323,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
         category: "Connectivity",
         description: "Connect your VPC to the internet",
         count: resourceCounts?.internet_gateways ?? 0,
+        capability: "supportsInternetGateway",
       },
       {
         id: "nat",
@@ -321,6 +332,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
         category: "Connectivity",
         description: "Let private servers access the internet",
         count: resourceCounts?.nat_gateways ?? 0,
+        capability: "supportsNatGateway",
       },
       {
         id: "eips",
@@ -329,6 +341,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
         category: "Connectivity",
         description: "Static public IP addresses for your resources",
         count: resourceCounts?.elastic_ips ?? 0,
+        capability: "supportsElasticIp",
       },
       {
         id: "enis",
@@ -337,6 +350,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
         category: "Connectivity",
         description: "Virtual network cards attached to instances",
         count: resourceCounts?.network_interfaces ?? 0,
+        capability: "supportsNetworkInterfaces",
       },
       {
         id: "peering",
@@ -345,6 +359,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
         category: "Connectivity",
         description: "Connect two VPCs together privately",
         count: resourceCounts?.vpc_peering ?? 0,
+        capability: "supportsVpcPeering",
       },
       {
         id: "lbs",
@@ -353,6 +368,7 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
         category: "Connectivity",
         description: "Distribute traffic across multiple servers",
         count: resourceCounts?.load_balancers ?? 0,
+        capability: "supportsLoadBalancer",
       },
       {
         id: "acls",
@@ -361,10 +377,20 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
         category: "Security",
         description: "Subnet-level firewall rules",
         count: resourceCounts?.network_acls ?? 0,
+        capability: "supportsNetworkAcl",
       },
     ],
     [resourceCounts]
   );
+
+  // Filter out resources unsupported by this project's provider.
+  // While capabilities are loading, show everything (better UX than a
+  // flash of partial nav). Once loaded, hide the unsupported ones.
+  const { data: capabilities } = useProjectCapabilities(projectId);
+  const resources = useMemo(() => {
+    if (!capabilities) return allResources;
+    return allResources.filter((r) => capabilities.features?.[r.capability] !== false);
+  }, [allResources, capabilities]);
 
   const activeResourceConfig = resources.find((resource) => resource.id === activeResource);
 
@@ -475,10 +501,10 @@ const NetworkingTab: React.FC<NetworkingTabProps> = ({
               useList: useFetchNetworkInterfacesAdapter as AdaptedListHook2Args<NetworkInterface>,
               onSync: projectId
                 ? () =>
-                  syncNetworkInterfacesFromProvider({
-                    project_id: projectId,
-                    region,
-                  })
+                    syncNetworkInterfacesFromProvider({
+                      project_id: projectId,
+                      region,
+                    })
                 : undefined,
             }}
           />

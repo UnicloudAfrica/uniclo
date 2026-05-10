@@ -25,7 +25,7 @@
  */
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useApiContext } from "@/hooks/useApiContext";
+import adminApi from "../../../index/admin/api";
 
 export interface ProjectCapabilities {
   /** Provider key, e.g. "zadara", "nobus", "openstack" */
@@ -63,17 +63,15 @@ interface ApiEnvelope<T> {
  * don't change at runtime. Stale time is effectively forever.
  */
 export const useProjectCapabilities = (projectIdentifier: string | null | undefined) => {
-  const { adminApi } = useApiContext();
-
   return useQuery({
     queryKey: ["project-capabilities", projectIdentifier],
     queryFn: async () => {
       if (!projectIdentifier) {
         return null;
       }
-      const res = (await adminApi.get(
+      const res = await adminApi.get<ApiEnvelope<ProjectCapabilities>>(
         `/projects/${projectIdentifier}/capabilities`
-      )) as ApiEnvelope<ProjectCapabilities>;
+      );
       return res.data;
     },
     enabled: Boolean(projectIdentifier),

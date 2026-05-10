@@ -11,12 +11,10 @@ import React from "react";
 
 const adminApiGet = vi.fn();
 
-vi.mock("@/hooks/useApiContext", () => ({
-  useApiContext: () => ({
-    adminApi: { get: (path: string) => adminApiGet(path) },
-    tenantApi: {},
-    clientApi: {},
-  }),
+vi.mock("../../../../index/admin/api", () => ({
+  default: {
+    get: (path: string) => adminApiGet(path),
+  },
 }));
 
 const wrapper = ({ children }: { children: React.ReactNode }) => {

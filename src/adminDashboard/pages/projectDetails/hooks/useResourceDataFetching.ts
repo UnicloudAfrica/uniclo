@@ -113,10 +113,29 @@ export function useResourceDataFetching({
     },
     { enabled: Boolean(project?.identifier && project?.region) }
   );
-  const { data: natGatewaysData } = useNatGateways(project?.identifier);
-  const { data: networkAclsData } = useNetworkAcls(project?.identifier);
-  const { data: vpcPeeringData } = useVpcPeering(project?.identifier);
-  const { data: loadBalancersData } = useLoadBalancers(project?.identifier);
+  // Gate provider-unsupported fetches by capability flags. Without this,
+  // every project page mount fires the LB / NAT / Peering / ACL endpoints
+  // even on Nobus where they don't exist — the backend returns a "not
+  // available" envelope and the SPA's API client surfaces the response
+  // `message` as a green toast on every load. Reading `provider_features`
+  // (singular keys may exist in older payloads — fall back to true so we
+  // don't accidentally hide on Zadara if the field is briefly missing).
+  const features = (project as { provider_features?: Record<string, boolean> } | undefined)
+    ?.provider_features;
+  const supports = (key: string): boolean => features?.[key] ?? true;
+
+  const { data: natGatewaysData } = useNatGateways(project?.identifier, undefined, {
+    enabled: Boolean(project?.identifier) && supports("nat_gateways"),
+  });
+  const { data: networkAclsData } = useNetworkAcls(project?.identifier, undefined, {
+    enabled: Boolean(project?.identifier) && supports("network_acls"),
+  });
+  const { data: vpcPeeringData } = useVpcPeering(project?.identifier, undefined, {
+    enabled: Boolean(project?.identifier) && supports("vpc_peering"),
+  });
+  const { data: loadBalancersData } = useLoadBalancers(project?.identifier, {
+    enabled: Boolean(project?.identifier) && supports("load_balancers"),
+  });
 
   useEffect(() => {
     if (Array.isArray(networksData)) {

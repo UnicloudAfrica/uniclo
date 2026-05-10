@@ -5,7 +5,7 @@ import type { LoadBalancer } from "@/shared/components/infrastructure/types";
 
 // ==================== Load Balancers ====================
 
-export const useLoadBalancers = (projectId: string) => {
+export const useLoadBalancers = (projectId: string, options?: { enabled?: boolean }) => {
   return useQuery<LoadBalancer[], Error>({
     queryKey: ["load-balancers", projectId],
     queryFn: async () => {
@@ -14,7 +14,7 @@ export const useLoadBalancers = (projectId: string) => {
       );
       return result.data || [];
     },
-    enabled: !!projectId,
+    enabled: (options?.enabled ?? true) && !!projectId,
   });
 };
 

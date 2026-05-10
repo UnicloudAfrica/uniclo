@@ -23,7 +23,7 @@ const ProjectDetailsLayout: React.FC<ProjectDetailsLayoutProps> = ({
       <h3 className="text-lg font-medium text-gray-900">{label || "Module"}</h3>
       <p className="text-gray-500 text-sm max-w-md text-center">
         We're currently refactoring this module into the unified view. Check back soon for
-        Zadara-style management controls!
+        full management controls.
       </p>
     </div>
   );

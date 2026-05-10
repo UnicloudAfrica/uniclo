@@ -49,8 +49,8 @@
     "zustand": "^5.0.11"
   },
   "scripts": {
-    "dev": "vite",
-    "start": "vite",
+    "dev": "NODE_OPTIONS='--max-http-header-size=65536' vite",
+    "start": "NODE_OPTIONS='--max-http-header-size=65536' vite",
     "build": "NODE_OPTIONS='--max-old-space-size=4096' vite build",
     "build:client": "NODE_OPTIONS='--max-old-space-size=4096' vite build",
     "build:ssr": "NODE_OPTIONS='--max-old-space-size=4096' vite build --ssr src/entry-server.tsx --outDir dist-ssr",

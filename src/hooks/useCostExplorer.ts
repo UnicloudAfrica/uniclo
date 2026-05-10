@@ -1,8 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-const publicApi = axios.create({ baseURL: `${API_BASE}/api/v1`, headers: { Accept: "application/json" } });
+// Empty default → relative URLs that hit Vite's proxy in dev (see vite.config.ts).
+// Production should set VITE_API_BASE_URL to the API origin.
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+const publicApi = axios.create({
+  baseURL: `${API_BASE}/api/v1`,
+  headers: { Accept: "application/json" },
+});
 
 export interface Region {
   id: number;
@@ -28,7 +33,9 @@ export interface AcfService {
   billing_model: "one_time" | "monthly_flat";
   unit_label: string;
   unit_price: number;
-  pricing_tiers: { min_units: number; max_units: number | null; price_usd: number; label: string }[] | null;
+  pricing_tiers:
+    | { min_units: number; max_units: number | null; price_usd: number; label: string }[]
+    | null;
   is_one_time: boolean;
   is_recurring: boolean;
 }
@@ -76,7 +83,9 @@ export const useFetchPublicBranding = () =>
   useQuery({
     queryKey: ["public-branding", typeof window !== "undefined" ? window.location.hostname : ""],
     queryFn: async () => {
-      const res = await publicApi.get("/branding", { params: { domain: window.location.hostname } });
+      const res = await publicApi.get("/branding", {
+        params: { domain: window.location.hostname },
+      });
       return (res.data?.data ?? null) as BrandingData | null;
     },
     staleTime: 60_000 * 30,

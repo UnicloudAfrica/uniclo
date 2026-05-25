@@ -78,6 +78,8 @@ const TicketsDashboard = lazy(() => import("../adminDashboard/pages/TicketsDashb
 const AdminTicketDetail = lazy(() => import("../adminDashboard/pages/AdminTicketDetail"));
 const AdminManagedDatabases = lazy(() => import("../adminDashboard/pages/AdminManagedDatabases"));
 const AdminMonitoring = lazy(() => import("../adminDashboard/pages/AdminMonitoring"));
+const AdminTenantMonitoring = lazy(() => import("../adminDashboard/pages/AdminTenantMonitoring"));
+const AdminTenantReportSubscriptions = lazy(() => import("../adminDashboard/pages/AdminTenantReportSubscriptions"));
 const AdminNocDashboard = lazy(() => import("../adminDashboard/pages/AdminNocDashboard"));
 const AdminNocRegionDetail = lazy(() => import("../adminDashboard/pages/AdminNocRegionDetail"));
 const AdminNocTopology = lazy(() => import("../adminDashboard/pages/AdminNocTopology"));
@@ -319,6 +321,8 @@ const AdminRoutes = (): JSX.Element => {
         <Route path="/admin-dashboard/cube-instances/details" element={<AdminInstancesDetails />} />
 
         <Route path="/admin-dashboard/monitoring" element={<AdminMonitoring />} />
+        <Route path="/admin-dashboard/partners/monitoring" element={<AdminTenantMonitoring />} />
+        <Route path="/admin-dashboard/partners/report-subscriptions" element={<AdminTenantReportSubscriptions />} />
         <Route path="/admin-dashboard/noc" element={<AdminNocDashboard />} />
         <Route path="/admin-dashboard/noc/regions/:code" element={<AdminNocRegionDetail />} />
         <Route path="/admin-dashboard/noc/regions/:code/topology/:vpcId" element={<AdminNocTopology />} />

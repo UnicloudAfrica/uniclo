@@ -4,6 +4,7 @@ import OverviewPartner from "../components/partnersComponent/OverviewPartner";
 import PartnerModules from "../components/partnersComponent/PartnerModules";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
+  Activity,
   AlertTriangle,
   ArrowLeft,
   Boxes,
@@ -269,13 +270,26 @@ export default function AdminPartnerDetails() {
         title={`${tenantName} Details`}
         description="Review partner account activity and compliance documents."
         actions={
-          <button
-            onClick={() => navigate("/admin-dashboard/partners")}
-            className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-[var(--theme-color)] hover:text-[var(--theme-color)]"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Partners
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() =>
+                navigate(
+                  `/admin-dashboard/partners/monitoring?id=${encodeURIComponent(btoa(tenantId!))}`,
+                )
+              }
+              className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-[var(--theme-color)] hover:text-[var(--theme-color)]"
+            >
+              <Activity className="w-4 h-4" />
+              Monitoring
+            </button>
+            <button
+              onClick={() => navigate("/admin-dashboard/partners")}
+              className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-[var(--theme-color)] hover:text-[var(--theme-color)]"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Partners
+            </button>
+          </div>
         }
         contentClassName="space-y-8"
       >

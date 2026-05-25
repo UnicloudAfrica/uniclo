@@ -16,6 +16,7 @@ import { Area, AreaChart, ResponsiveContainer, Tooltip } from "recharts";
 import {
   AlertCircle,
   ArrowLeft,
+  Calendar,
   Cpu,
   Download,
   HardDrive,
@@ -585,6 +586,18 @@ const AdminTenantMonitoring = () => {
       >
         <Download className="mr-1 h-3.5 w-3.5" />
         Generate Report
+      </ModernButton>
+      <ModernButton
+        variant="secondary"
+        size="sm"
+        onClick={() =>
+          navigate(
+            `/admin-dashboard/partners/report-subscriptions?id=${encodeURIComponent(btoa(tenantId))}`,
+          )
+        }
+      >
+        <Calendar className="mr-1 h-3.5 w-3.5" />
+        Scheduled reports
       </ModernButton>
     </div>
   );

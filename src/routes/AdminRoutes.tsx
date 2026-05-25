@@ -80,6 +80,9 @@ const AdminManagedDatabases = lazy(() => import("../adminDashboard/pages/AdminMa
 const AdminMonitoring = lazy(() => import("../adminDashboard/pages/AdminMonitoring"));
 const AdminTenantMonitoring = lazy(() => import("../adminDashboard/pages/AdminTenantMonitoring"));
 const AdminTenantReportSubscriptions = lazy(() => import("../adminDashboard/pages/AdminTenantReportSubscriptions"));
+const AdminMonitoringPricing = lazy(() => import("../adminDashboard/pages/AdminMonitoringPricing"));
+const AdminMonitoringSubscriptions = lazy(() => import("../adminDashboard/pages/AdminMonitoringSubscriptions"));
+const AdminMonitoringSubscriptionDetail = lazy(() => import("../adminDashboard/pages/AdminMonitoringSubscriptionDetail"));
 const AdminNocDashboard = lazy(() => import("../adminDashboard/pages/AdminNocDashboard"));
 const AdminNocRegionDetail = lazy(() => import("../adminDashboard/pages/AdminNocRegionDetail"));
 const AdminNocTopology = lazy(() => import("../adminDashboard/pages/AdminNocTopology"));
@@ -321,6 +324,9 @@ const AdminRoutes = (): JSX.Element => {
         <Route path="/admin-dashboard/cube-instances/details" element={<AdminInstancesDetails />} />
 
         <Route path="/admin-dashboard/monitoring" element={<AdminMonitoring />} />
+        <Route path="/admin-dashboard/monitoring/pricing" element={<AdminMonitoringPricing />} />
+        <Route path="/admin-dashboard/monitoring/subscriptions" element={<AdminMonitoringSubscriptions />} />
+        <Route path="/admin-dashboard/monitoring/subscriptions/:id" element={<AdminMonitoringSubscriptionDetail />} />
         <Route path="/admin-dashboard/partners/monitoring" element={<AdminTenantMonitoring />} />
         <Route path="/admin-dashboard/partners/report-subscriptions" element={<AdminTenantReportSubscriptions />} />
         <Route path="/admin-dashboard/noc" element={<AdminNocDashboard />} />

@@ -28,6 +28,7 @@ import {
   StatusPill,
 } from "@/shared/components/ui";
 import ToastUtils from "@/utils/toastUtil";
+import { useAsyncAction } from "@/shared/hooks/useAsyncAction";
 import { useFetchTenantById } from "@/hooks/adminHooks/tenantHooks";
 
 import ReportSubscriptionForm from "../components/ReportSubscriptionForm";
@@ -101,10 +102,18 @@ const SubscriptionRow: React.FC<SubscriptionRowProps> = ({
   const deleteMutation = useDeleteReportSubscription(tenantId, subscription.id);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
+  // Re-entrancy guards. React's onClick batching can fire two handlers in the
+  // same frame before `mutation.isPending` (re-render driven) flips to true.
+  const toggleAction = useAsyncAction();
+  const deleteAction = useAsyncAction();
+
   const handleToggle = async (next: boolean) => {
-    if (updateMutation.isPending) return;
+    if (toggleAction.isPending || updateMutation.isPending) return;
     try {
-      await updateMutation.mutateAsync({ enabled: next });
+      await toggleAction.run(
+        () => updateMutation.mutateAsync({ enabled: next }),
+        { rethrow: true }
+      );
       ToastUtils.success(
         next ? "Subscription enabled." : "Subscription paused."
       );
@@ -116,9 +125,11 @@ const SubscriptionRow: React.FC<SubscriptionRowProps> = ({
   };
 
   const handleDelete = async () => {
-    if (deleteMutation.isPending) return;
+    if (deleteAction.isPending || deleteMutation.isPending) return;
     try {
-      await deleteMutation.mutateAsync();
+      await deleteAction.run(() => deleteMutation.mutateAsync(), {
+        rethrow: true,
+      });
       ToastUtils.success("Subscription deleted.");
       setConfirmingDelete(false);
     } catch (err) {
@@ -158,7 +169,7 @@ const SubscriptionRow: React.FC<SubscriptionRowProps> = ({
           <input
             type="checkbox"
             checked={subscription.enabled}
-            disabled={updateMutation.isPending}
+            disabled={toggleAction.isPending || updateMutation.isPending}
             onChange={(e) => handleToggle(e.target.checked)}
             aria-label={
               subscription.enabled
@@ -219,7 +230,7 @@ const SubscriptionRow: React.FC<SubscriptionRowProps> = ({
           confirmLabel="Delete"
           onConfirm={handleDelete}
           onCancel={() => setConfirmingDelete(false)}
-          isLoading={deleteMutation.isPending}
+          isLoading={deleteAction.isPending || deleteMutation.isPending}
           variant="danger"
         />
       </td>
@@ -253,6 +264,11 @@ const AdminTenantReportSubscriptions = () => {
     tenantId ?? undefined,
     editing?.id,
   );
+
+  // Re-entrancy guard for the create/update submit. The mutation's own
+  // `isPending` flag only flips on the next render after `mutateAsync`
+  // is called, so React batched onClicks can squeeze two submissions in.
+  const submitAction = useAsyncAction();
 
   const tenantName = (tenantQuery.data as { name?: string } | undefined)?.name;
 
@@ -312,15 +328,25 @@ const AdminTenantReportSubscriptions = () => {
   };
 
   const handleSubmit = async (payload: CreateReportSubscriptionPayload) => {
+    if (
+      submitAction.isPending ||
+      createMutation.isPending ||
+      updateMutation.isPending
+    ) {
+      return;
+    }
     setServerError(null);
     try {
-      if (editing) {
-        await updateMutation.mutateAsync(payload);
-        ToastUtils.success("Subscription updated.");
-      } else {
-        await createMutation.mutateAsync(payload);
-        ToastUtils.success("Subscription created.");
-      }
+      await submitAction.run(
+        () =>
+          editing
+            ? updateMutation.mutateAsync(payload)
+            : createMutation.mutateAsync(payload),
+        { rethrow: true }
+      );
+      ToastUtils.success(
+        editing ? "Subscription updated." : "Subscription created."
+      );
       closeForm();
     } catch (err) {
       const message =
@@ -434,7 +460,10 @@ const AdminTenantReportSubscriptions = () => {
         onClose={closeForm}
         subscription={editing}
         onSubmit={handleSubmit}
-        isSubmitting={editing ? updateMutation.isPending : createMutation.isPending}
+        isSubmitting={
+          submitAction.isPending ||
+          (editing ? updateMutation.isPending : createMutation.isPending)
+        }
         serverError={serverError}
       />
     </AdminPageShell>

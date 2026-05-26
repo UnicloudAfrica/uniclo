@@ -40,6 +40,7 @@ import {
 } from "@/shared/components/ui";
 import ToastUtils from "@/utils/toastUtil";
 import { sanitizeProviderLabel } from "@/utils/sanitizeProviderLabel";
+import { useAsyncAction } from "@/shared/hooks/useAsyncAction";
 import { useFetchTenantById } from "@/hooks/adminHooks/tenantHooks";
 
 import {
@@ -397,6 +398,10 @@ const ReportModal: React.FC<ReportModalProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const mutation = useGenerateUtilizationReport(tenantId);
+  // Re-entrancy guard against React batched onClick replays — the
+  // `mutation.isPending` flag only flips on the next render, so two
+  // clicks landing in the same frame can both pass the check.
+  const submitAction = useAsyncAction();
 
   useEffect(() => {
     if (isOpen) {
@@ -407,7 +412,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
   }, [isOpen, defaultStart, defaultEnd]);
 
   const handleSubmit = async () => {
-    if (mutation.isPending) return;
+    if (submitAction.isPending || mutation.isPending) return;
 
     if (!start || !end) {
       setError("Start and end dates are required.");
@@ -433,7 +438,9 @@ const ReportModal: React.FC<ReportModalProps> = ({
     };
 
     try {
-      await mutation.mutateAsync(payload);
+      await submitAction.run(() => mutation.mutateAsync(payload), {
+        rethrow: true,
+      });
       ToastUtils.success("Utilization report downloaded.");
       onClose();
     } catch (err) {
@@ -455,13 +462,16 @@ const ReportModal: React.FC<ReportModalProps> = ({
           label: "Cancel",
           variant: "ghost",
           onClick: onClose,
-          disabled: mutation.isPending,
+          disabled: submitAction.isPending || mutation.isPending,
         },
         {
-          label: mutation.isPending ? "Generating..." : "Generate",
+          label:
+            submitAction.isPending || mutation.isPending
+              ? "Generating..."
+              : "Generate",
           variant: "primary",
           onClick: handleSubmit,
-          disabled: mutation.isPending,
+          disabled: submitAction.isPending || mutation.isPending,
         },
       ]}
     >

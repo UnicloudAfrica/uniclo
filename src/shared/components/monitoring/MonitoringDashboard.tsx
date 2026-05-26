@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Activity,
   Server,
@@ -23,6 +23,7 @@ import {
   ResourceEmptyState,
   ModernButton,
 } from "@/shared/components/ui";
+import { useAsyncAction } from "@/shared/hooks/useAsyncAction";
 import {
   useFetchMonitoringStatus,
   useFetchMonitoringTiers,
@@ -48,6 +49,14 @@ const MonitoringDashboard = ({ context: _context }: MonitoringDashboardProps) =>
   const cancelMutation = useCancelMonitoring();
   const unassignMutation = useUnassignMonitoringHost();
 
+  // Re-entrancy guards. React's event batching can dispatch multiple
+  // `onClick` handlers within a single render frame; the disabled-button
+  // prop only updates on the next render, which is too late. Short-circuit
+  // at the top of each handler on `action.isPending`.
+  const subscribeAction = useAsyncAction();
+  const cancelAction = useAsyncAction();
+  const unassignAction = useAsyncAction();
+
   const hosts = (hostsData as unknown as Record<string, unknown>)?.hosts as Record<string, unknown>[] ?? [];
   const currentTier = (status as unknown as Record<string, unknown>)?.tier as string ?? "basic";
   const maxHosts = (status as unknown as Record<string, unknown>)?.max_hosts as number ?? 0;
@@ -58,14 +67,42 @@ const MonitoringDashboard = ({ context: _context }: MonitoringDashboardProps) =>
 
   const usagePercent = maxHosts > 0 ? Math.round((usedHosts / maxHosts) * 100) : 0;
 
-  const handleSubscribe = (serviceType: string) => {
-    if (currentTier === "basic") {
-      subscribeMutation.mutate({ service_type: serviceType });
-    } else {
-      upgradeMutation.mutate({ service_type: serviceType });
+  const handleSubscribe = useCallback(
+    async (serviceType: string) => {
+      if (subscribeAction.isPending) return;
+      await subscribeAction.run(
+        () =>
+          currentTier === "basic"
+            ? subscribeMutation.mutateAsync({ service_type: serviceType })
+            : upgradeMutation.mutateAsync({ service_type: serviceType }),
+        { rethrow: false }
+      );
+      setShowTiers(false);
+    },
+    [subscribeAction, currentTier, subscribeMutation, upgradeMutation]
+  );
+
+  const handleCancel = useCallback(async () => {
+    if (cancelAction.isPending) return;
+    if (
+      !window.confirm(
+        "Cancel monitoring subscription? Basic free monitoring will remain."
+      )
+    ) {
+      return;
     }
-    setShowTiers(false);
-  };
+    await cancelAction.run(() => cancelMutation.mutateAsync(), { rethrow: false });
+  }, [cancelAction, cancelMutation]);
+
+  const handleUnassign = useCallback(
+    async (instanceId: number) => {
+      if (unassignAction.isPending) return;
+      await unassignAction.run(() => unassignMutation.mutateAsync(instanceId), {
+        rethrow: false,
+      });
+    },
+    [unassignAction, unassignMutation]
+  );
 
   if (statusLoading) {
     return <LoadingState message="Loading monitoring status…" />;
@@ -170,11 +207,9 @@ const MonitoringDashboard = ({ context: _context }: MonitoringDashboardProps) =>
         {subscription && (
           <ModernButton
             variant="outlineDanger"
-            onClick={() => {
-              if (window.confirm("Cancel monitoring subscription? Basic free monitoring will remain.")) {
-                cancelMutation.mutate();
-              }
-            }}
+            onClick={handleCancel}
+            isLoading={cancelAction.isPending}
+            disabled={cancelAction.isPending}
           >
             Cancel Subscription
           </ModernButton>
@@ -271,7 +306,12 @@ const MonitoringDashboard = ({ context: _context }: MonitoringDashboardProps) =>
                     size="sm"
                     className="mt-4 w-full"
                     onClick={() => handleSubscribe(tier.service_type)}
-                    isLoading={subscribeMutation.isPending || upgradeMutation.isPending}
+                    isLoading={
+                      subscribeAction.isPending ||
+                      subscribeMutation.isPending ||
+                      upgradeMutation.isPending
+                    }
+                    disabled={subscribeAction.isPending}
                     leftIcon={<Plus className="h-3.5 w-3.5" />}
                   >
                     {currentTier === "basic" ? "Subscribe" : "Switch to this plan"}
@@ -332,8 +372,9 @@ const MonitoringDashboard = ({ context: _context }: MonitoringDashboardProps) =>
                   </div>
                   <button
                     type="button"
-                    onClick={() => unassignMutation.mutate(Number(host.id))}
-                    className="rounded p-1 text-gray-400 hover:bg-danger-500/10 hover:text-danger-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger-500/40"
+                    onClick={() => handleUnassign(Number(host.id))}
+                    disabled={unassignAction.isPending}
+                    className="rounded p-1 text-gray-400 hover:bg-danger-500/10 hover:text-danger-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger-500/40 disabled:cursor-not-allowed disabled:opacity-50"
                     aria-label={`Remove ${String(host.name)} from monitoring`}
                   >
                     <Trash2 className="h-4 w-4" aria-hidden="true" />

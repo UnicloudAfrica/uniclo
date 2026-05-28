@@ -54,6 +54,7 @@ const ClientTeam = lazy(() => import("../clientDashboard/pages/ClientTeam"));
 const ClientProtection = lazy(() => import("../clientDashboard/pages/ClientProtection"));
 const ClientServerlessDr = lazy(() => import("../clientDashboard/pages/ClientServerlessDr"));
 const ClientAgent = lazy(() => import("../clientDashboard/pages/ClientAgent"));
+const ClientMonitoring = lazy(() => import("../clientDashboard/pages/ClientMonitoring"));
 const ClientMigrations = lazy(() => import("../clientDashboard/pages/ClientMigrations"));
 const ClientMigrationWizard = lazy(() => import("../clientDashboard/pages/ClientMigrationWizard"));
 const ClientBatchMigrations = lazy(() => import("../clientDashboard/pages/ClientBatchMigrations"));
@@ -144,6 +145,7 @@ const ClientRoutes = (): JSX.Element => (
     <Route path="/client-dashboard/ransomware" element={<ClientRansomware />} />
     <Route path="/client-dashboard/serverless-dr" element={<ClientServerlessDr />} />
     <Route path="/client-dashboard/agent" element={<ClientAgent />} />
+    <Route path="/client-dashboard/monitoring" element={<ClientMonitoring />} />
 
     <Route path="/client-dashboard/migrations" element={<ClientMigrations />} />
     <Route path="/client-dashboard/migrations/new" element={<ClientMigrationWizard />} />

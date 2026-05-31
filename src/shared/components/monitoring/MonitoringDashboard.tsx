@@ -39,6 +39,29 @@ interface MonitoringDashboardProps {
   context: "admin" | "tenant" | "client";
 }
 
+/**
+ * Derive the data-retention label for a tier from its feature list, rather
+ * than hardcoding a tier→value map. The tiers API (`/monitoring/tiers`,
+ * written by `MonitoringSubscriptionController@tiers`, consumed via
+ * `useFetchMonitoringTiers`) carries no numeric `retention_days` field —
+ * retention is only surfaced as a feature string such as "30-day retention"
+ * / "24-hour retention" / "1-year retention". We parse that into a compact
+ * label ("30d" / "24h" / "1yr"). Returns "—" when no retention feature is
+ * present (e.g. an unknown/future tier, or a tier with no matching record).
+ */
+export const retentionLabelFromTier = (
+  tier: { features?: string[] } | undefined
+): string => {
+  const match = (tier?.features ?? [])
+    .map((f) => /(\d+)[-\s]?(hour|day|year)/i.exec(f))
+    .find((m): m is RegExpExecArray => m !== null);
+  if (!match) return "—";
+
+  const unit = match[2].toLowerCase();
+  const suffix = unit === "hour" ? "h" : unit === "day" ? "d" : "yr";
+  return `${match[1]}${suffix}`;
+};
+
 const MonitoringDashboard = ({ context: _context }: MonitoringDashboardProps) => {
   const [showTiers, setShowTiers] = useState(false);
   const { data: status, isLoading: statusLoading } = useFetchMonitoringStatus();
@@ -66,6 +89,11 @@ const MonitoringDashboard = ({ context: _context }: MonitoringDashboardProps) =>
   const tiersList = Array.isArray(tiers) ? tiers : [];
 
   const usagePercent = maxHosts > 0 ? Math.round((usedHosts / maxHosts) * 100) : 0;
+
+  const activeTier = tiersList.find(
+    (t: MonitoringTier) => t.service_type.replace("monitoring_", "") === currentTier
+  );
+  const retentionLabel = retentionLabelFromTier(activeTier);
 
   const handleSubscribe = useCallback(
     async (serviceType: string) => {
@@ -181,15 +209,7 @@ const MonitoringDashboard = ({ context: _context }: MonitoringDashboardProps) =>
 
         <StatTile
           label="Data retention"
-          value={
-            currentTier === "basic"
-              ? "24h"
-              : currentTier === "standard"
-                ? "30d"
-                : currentTier === "professional"
-                  ? "90d"
-                  : "1yr"
-          }
+          value={retentionLabel}
           icon={<AlertTriangle className="h-3 w-3" />}
           tone="warning"
         />

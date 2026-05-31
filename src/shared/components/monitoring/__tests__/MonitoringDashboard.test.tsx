@@ -73,7 +73,9 @@ vi.mock("@/utils/toastUtil", () => ({
 
 // ─── SUT ─────────────────────────────────────────────────────────────
 
-import MonitoringDashboard from "../MonitoringDashboard";
+import MonitoringDashboard, {
+  retentionLabelFromTier,
+} from "../MonitoringDashboard";
 
 // ─── Test scaffolding ────────────────────────────────────────────────
 
@@ -248,6 +250,28 @@ describe("MonitoringDashboard — cancel-subscription re-entrancy guard", () => 
     await waitFor(() => {
       expect(cancelMutationState.current.mutateAsync).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+describe("retentionLabelFromTier — data-driven retention label", () => {
+  // Feature strings below mirror the literals emitted by the backend
+  // `MonitoringSubscriptionController@tiers` (the producer).
+  it.each([
+    [["CPU/RAM/disk/network metrics", "24-hour retention"], "24h"],
+    [["Everything in Basic", "30-day retention"], "30d"],
+    [["Everything in Standard", "90-day retention"], "90d"],
+    [["Everything in Professional", "1-year retention"], "1yr"],
+  ])("parses %j → %s", (features, expected) => {
+    expect(retentionLabelFromTier({ features })).toBe(expected);
+  });
+
+  it("falls back to an em dash when no retention feature is present", () => {
+    expect(retentionLabelFromTier({ features: ["Free"] })).toBe("—");
+  });
+
+  it("falls back to an em dash for an unknown / missing tier", () => {
+    expect(retentionLabelFromTier(undefined)).toBe("—");
+    expect(retentionLabelFromTier({})).toBe("—");
   });
 });
 

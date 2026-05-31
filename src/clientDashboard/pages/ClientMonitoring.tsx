@@ -20,6 +20,7 @@ import {
   ModernModal,
   InfoCallout,
 } from "@/shared/components/ui";
+import InstanceLiveMetricsPanel from "@/shared/components/monitoring/InstanceLiveMetricsPanel";
 import {
   useClientMonitoring,
   type ClientMonitoringInstance,
@@ -37,9 +38,7 @@ const statusTone = (status: string | null | undefined): Tone => {
 
 const friendlyStatus = (status: string | null | undefined): string => {
   if (!status) return "Unknown";
-  return status
-    .replace(/[_-]+/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  return status.replace(/[_-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 };
 
 const formatRelative = (iso: string | null): string => {
@@ -53,9 +52,6 @@ const formatRelative = (iso: string | null): string => {
   return `${Math.round(diffSec / 86_400)}d ago`;
 };
 
-const formatPct = (n: number | null | undefined): string =>
-  n === null || n === undefined || Number.isNaN(n) ? "—" : `${Math.round(n)}%`;
-
 const ClientMonitoring = () => {
   const navigate = useNavigate();
   const { data, isLoading } = useClientMonitoring();
@@ -63,7 +59,8 @@ const ClientMonitoring = () => {
   const [copied, setCopied] = useState(false);
 
   const monitoredInstances = useMemo(
-    () => (data?.instances ?? []).filter((i): i is ClientMonitoringInstance => i.monitoring !== null),
+    () =>
+      (data?.instances ?? []).filter((i): i is ClientMonitoringInstance => i.monitoring !== null),
     [data]
   );
 
@@ -97,12 +94,9 @@ const ClientMonitoring = () => {
         <div className="grid gap-4 lg:grid-cols-2">
           {monitoredInstances.map((instance) => {
             const m = instance.monitoring!; // non-null by filter above
-            const metrics = m.latest_metrics;
             const pending = m.requires_operator_install;
 
-            const statuses = [
-              { label: friendlyStatus(m.status), tone: statusTone(m.status) },
-            ];
+            const statuses = [{ label: friendlyStatus(m.status), tone: statusTone(m.status) }];
             if (pending) {
               statuses.push({ label: "Install pending", tone: "warning" as Tone });
             }
@@ -110,9 +104,6 @@ const ClientMonitoring = () => {
             const metadata = [
               { label: "IP Address", value: instance.ip_address || "—" },
               { label: "Last seen", value: formatRelative(m.last_seen_at) },
-              { label: "CPU", value: formatPct(metrics?.cpu_pct ?? null) },
-              { label: "Memory", value: formatPct(metrics?.memory_pct ?? null) },
-              { label: "Disk", value: formatPct(metrics?.disk_pct ?? null) },
             ];
 
             type ActionVariant = "primary" | "outline";
@@ -147,6 +138,7 @@ const ClientMonitoring = () => {
                 statuses={statuses}
                 metadata={metadata}
                 actions={actions}
+                footer={<InstanceLiveMetricsPanel instanceId={instance.id} size="sm" />}
               />
             );
           })}
@@ -165,9 +157,10 @@ const ClientMonitoring = () => {
           size="lg"
         >
           <InfoCallout tone="warning" title="Run this on your VM as root">
-            Open an SSH session to <strong>{activeInstance.ip_address || activeInstance.name}</strong>{" "}
-            and paste the command below. The agent will register itself and start
-            reporting metrics within a minute.
+            Open an SSH session to{" "}
+            <strong>{activeInstance.ip_address || activeInstance.name}</strong> and paste the
+            command below. The agent will register itself and start reporting metrics within a
+            minute.
           </InfoCallout>
 
           <div className="mt-4">
@@ -179,7 +172,13 @@ const ClientMonitoring = () => {
               <ModernButton
                 variant="outline"
                 size="sm"
-                leftIcon={copied ? <CheckCircle className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                leftIcon={
+                  copied ? (
+                    <CheckCircle className="h-3.5 w-3.5" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )
+                }
                 onClick={() => handleCopy(activeInstance.monitoring?.install_command ?? null)}
               >
                 {copied ? "Copied" : "Copy"}

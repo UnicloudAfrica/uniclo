@@ -12,15 +12,7 @@
  * /monitoring/tiers, /monitoring/hosts under the tenant prefix).
  */
 import { useCallback, useMemo, useState } from "react";
-import {
-  Activity,
-  AlertTriangle,
-  Check,
-  Copy,
-  RefreshCw,
-  Server,
-  Terminal,
-} from "lucide-react";
+import { Activity, AlertTriangle, Check, Copy, RefreshCw, Server, Terminal } from "lucide-react";
 
 import TenantPageShell from "@/shared/layouts/TenantPageShell";
 import {
@@ -39,6 +31,7 @@ import {
   type Column,
 } from "@/shared/components/ui";
 import { PriceLabel } from "@/shared/components/ui/PriceLabel";
+import InstanceLiveMetricsPanel from "@/shared/components/monitoring/InstanceLiveMetricsPanel";
 import ToastUtils from "@/utils/toastUtil";
 
 import {
@@ -85,10 +78,7 @@ interface InstallCommandModalProps {
   onClose: () => void;
 }
 
-const InstallCommandModal = ({
-  host,
-  onClose,
-}: InstallCommandModalProps) => {
+const InstallCommandModal = ({ host, onClose }: InstallCommandModalProps) => {
   const [copied, setCopied] = useState(false);
 
   const command = host?.install_command ?? "";
@@ -112,9 +102,7 @@ const InstallCommandModal = ({
       title={host ? `Install monitoring agent on ${host.name}` : "Install command"}
       subtitle="Run this command on the VM as root (or via sudo) to install the CuberWatch agent."
       size="lg"
-      actions={[
-        { label: "Close", variant: "ghost", onClick: onClose },
-      ]}
+      actions={[{ label: "Close", variant: "ghost", onClick: onClose }]}
     >
       <div className="space-y-4">
         <div
@@ -125,9 +113,9 @@ const InstallCommandModal = ({
           <div className="space-y-1">
             <p className="font-semibold">Run on the target VM only.</p>
             <p>
-              The command contains a one-time enrollment token tied to this host.
-              Copying it elsewhere will leak credentials — keep it on the box where
-              the agent should report from.
+              The command contains a one-time enrollment token tied to this host. Copying it
+              elsewhere will leak credentials — keep it on the box where the agent should report
+              from.
             </p>
           </div>
         </div>
@@ -176,19 +164,14 @@ const InstallCommandModal = ({
 
 const TenantMonitoring = () => {
   const { data, isLoading, isError, error, refetch } = useTenantMonitoring();
-  const [activeHost, setActiveHost] = useState<TenantMonitoringHost | null>(
-    null,
-  );
+  const [activeHost, setActiveHost] = useState<TenantMonitoringHost | null>(null);
 
   const subscription = data?.subscription ?? null;
   const hosts = data?.hosts ?? [];
 
   const slotUsagePercent =
     subscription && subscription.host_limit > 0
-      ? Math.min(
-          100,
-          Math.round((subscription.host_count / subscription.host_limit) * 100),
-        )
+      ? Math.min(100, Math.round((subscription.host_count / subscription.host_limit) * 100))
       : 0;
 
   const columns: Column<TenantMonitoringHost>[] = useMemo(
@@ -198,14 +181,8 @@ const TenantMonitoring = () => {
         header: "Instance",
         render: (_value, row) => (
           <div className="flex items-center gap-2">
-            <IconTile
-              icon={<Server className="h-3.5 w-3.5" />}
-              tone="neutral"
-              size="sm"
-            />
-            <span className="text-sm font-medium text-gray-900 font-outfit">
-              {row.name}
-            </span>
+            <IconTile icon={<Server className="h-3.5 w-3.5" />} tone="neutral" size="sm" />
+            <span className="text-sm font-medium text-gray-900 font-outfit">{row.name}</span>
           </div>
         ),
       },
@@ -213,28 +190,21 @@ const TenantMonitoring = () => {
         key: "ip",
         header: "IP address",
         render: (_value, row) => (
-          <span className="text-xs font-mono text-gray-500">
-            {row.ip ?? "—"}
-          </span>
+          <span className="text-xs font-mono text-gray-500">{row.ip ?? "—"}</span>
         ),
       },
       {
         key: "status",
         header: "Status",
         render: (_value, row) => (
-          <StatusPill
-            label={STATUS_LABELS[row.status]}
-            tone={STATUS_TONES[row.status]}
-          />
+          <StatusPill label={STATUS_LABELS[row.status]} tone={STATUS_TONES[row.status]} />
         ),
       },
       {
         key: "last_seen_at",
         header: "Last seen",
         render: (_value, row) => (
-          <span className="text-xs text-gray-500">
-            {formatLastSeen(row.last_seen_at)}
-          </span>
+          <span className="text-xs text-gray-500">{formatLastSeen(row.last_seen_at)}</span>
         ),
       },
       {
@@ -254,7 +224,7 @@ const TenantMonitoring = () => {
           ) : null,
       },
     ],
-    [],
+    []
   );
 
   return (
@@ -267,7 +237,9 @@ const TenantMonitoring = () => {
       ) : isError ? (
         <ErrorState
           title="Unable to load monitoring"
-          message={error?.message ?? "Try refreshing — if the problem persists, check your network."}
+          message={
+            error?.message ?? "Try refreshing — if the problem persists, check your network."
+          }
           onRetry={() => refetch()}
           retryLabel="Retry"
         />
@@ -316,11 +288,7 @@ const TenantMonitoring = () => {
           <div className="grid gap-4 sm:grid-cols-3">
             <SurfaceCard variant="card" padding="md" radius="lg">
               <div className="flex items-center gap-3">
-                <IconTile
-                  icon={<Server className="h-5 w-5" />}
-                  tone="primary"
-                  size="lg"
-                />
+                <IconTile icon={<Server className="h-5 w-5" />} tone="primary" size="lg" />
                 <div>
                   <p className="text-2xl font-semibold text-gray-900 font-outfit">
                     {subscription
@@ -332,17 +300,9 @@ const TenantMonitoring = () => {
               </div>
               {subscription && subscription.host_limit > 0 && (
                 <div className="mt-3">
-                  <ProgressBar
-                    value={slotUsagePercent}
-                    label="Slot usage"
-                    showLabel={false}
-                  />
+                  <ProgressBar value={slotUsagePercent} label="Slot usage" showLabel={false} />
                   <p className="mt-1 text-[11px] text-gray-400 font-outfit">
-                    {Math.max(
-                      0,
-                      subscription.host_limit - subscription.host_count,
-                    )}{" "}
-                    slots available
+                    {Math.max(0, subscription.host_limit - subscription.host_count)} slots available
                   </p>
                 </div>
               )}
@@ -398,16 +358,22 @@ const TenantMonitoring = () => {
                 paginated={hosts.length > 10}
                 pageSize={10}
                 sortable
+                expandable
+                renderExpandedRow={(row) => (
+                  <div className="px-4 py-4">
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 font-outfit">
+                      Live metrics
+                    </p>
+                    <InstanceLiveMetricsPanel instanceId={row.id} />
+                  </div>
+                )}
               />
             )}
           </SurfaceCard>
         </div>
       )}
 
-      <InstallCommandModal
-        host={activeHost}
-        onClose={() => setActiveHost(null)}
-      />
+      <InstallCommandModal host={activeHost} onClose={() => setActiveHost(null)} />
     </TenantPageShell>
   );
 };

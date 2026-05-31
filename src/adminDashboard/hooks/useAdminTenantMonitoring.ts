@@ -64,6 +64,10 @@ export interface InstanceDiskRecord {
   used_bytes: number;
   free_bytes: number;
   recorded_at: string;
+  // Present when the source is a percent-only series (CuberWatch/Prometheus
+  // node_filesystem ratio) that carries no absolute byte capacity. The BE
+  // sends this so the gauge can render a real % without fabricated bytes.
+  disk_percent?: number;
 }
 
 export interface InstanceMetricsParams {

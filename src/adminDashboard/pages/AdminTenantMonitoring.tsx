@@ -269,9 +269,12 @@ const DiskPanel: React.FC<DiskPanelProps> = ({ tenantId, instanceId }) => {
   }
 
   const primary = rows[0];
+  // Prefer byte-derived percent when absolute capacity is known; otherwise
+  // use the percent-only series (CuberWatch/Prometheus) so the gauge shows
+  // real data instead of 0% for hosts that report a ratio without bytes.
   const pct = primary.total_bytes > 0
     ? Math.round((primary.used_bytes / primary.total_bytes) * 100)
-    : 0;
+    : Math.round(primary.disk_percent ?? 0);
 
   return (
     <div className="flex h-full flex-col rounded-xl border border-slate-200 bg-white p-3">
@@ -283,7 +286,9 @@ const DiskPanel: React.FC<DiskPanelProps> = ({ tenantId, instanceId }) => {
         <Gauge value={pct} label="Disk used" size="sm" />
       </div>
       <p className="mt-2 text-center text-[11px] text-slate-500">
-        {formatBytes(primary.used_bytes)} of {formatBytes(primary.total_bytes)}
+        {primary.total_bytes > 0
+          ? `${formatBytes(primary.used_bytes)} of ${formatBytes(primary.total_bytes)}`
+          : 'Usage %'}
       </p>
     </div>
   );

@@ -65,10 +65,13 @@ const usePayouts = (params: Record<string, unknown>) => {
     queryKey: ["payouts", params],
     queryFn: async () => {
       const qs = new URLSearchParams(
-        Object.entries(params).reduce((acc, [k, v]) => {
-          if (v !== undefined && v !== null && v !== "") acc[k] = String(v);
-          return acc;
-        }, {} as Record<string, string>)
+        Object.entries(params).reduce(
+          (acc, [k, v]) => {
+            if (v !== undefined && v !== null && v !== "") acc[k] = String(v);
+            return acc;
+          },
+          {} as Record<string, string>
+        )
       ).toString();
       const path = qs ? `/payouts?${qs}` : "/payouts";
       const response = await adminApi.get<{ data: PayoutsResponse }>(path);
@@ -83,7 +86,7 @@ const usePayoutSummary = () => {
     queryFn: async () => {
       const response = await adminApi.get<Record<string, unknown>>("/payouts/summary");
       const record = response as Record<string, unknown>;
-      return ((record.data as PayoutSummary) ?? (record as unknown as PayoutSummary));
+      return (record.data as PayoutSummary) ?? (record as unknown as PayoutSummary);
     },
   });
 };
@@ -229,7 +232,9 @@ const PayoutsDashboard: React.FC = () => {
         period_end: generateForm.period_end,
         tenant_id: generateForm.tenant_id ? parseInt(generateForm.tenant_id) : undefined,
       });
-      ToastUtils.success((result as { message?: string }).message || "Payouts generated successfully!");
+      ToastUtils.success(
+        (result as { message?: string }).message || "Payouts generated successfully!"
+      );
       setShowGenerateModal(false);
       setGenerateForm({ period_start: "", period_end: "", tenant_id: "" });
     } catch (error: unknown) {

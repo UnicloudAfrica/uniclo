@@ -13,12 +13,9 @@ import { useApiContext } from "@/hooks/useApiContext";
 import { apiRegistry } from "../../api/apiRegistry";
 
 type AnyRecord = Record<string, unknown>;
-type QueryOptions<T = unknown> = Partial<
-  Omit<UseQueryOptions<T, Error>, "queryKey" | "queryFn">
->;
+type QueryOptions<T = unknown> = Partial<Omit<UseQueryOptions<T, Error>, "queryKey" | "queryFn">>;
 
-const asEnvelope = <T = AnyRecord>(res: unknown): { data?: T } =>
-  (res ?? {}) as { data?: T };
+const asEnvelope = <T = AnyRecord>(res: unknown): { data?: T } => (res ?? {}) as { data?: T };
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -56,9 +53,7 @@ const DUNNING_PATH = "/admin/dunning-policy";
 
 // ─── Fetch Policy ──────────────────────────────────────────────
 
-export function useFetchDunningPolicy(
-  options?: QueryOptions<DunningPolicy | undefined>
-) {
+export function useFetchDunningPolicy(options?: QueryOptions<DunningPolicy | undefined>) {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
 
@@ -79,11 +74,7 @@ export function useUpdateDunningPolicy() {
   const entry = apiRegistry[context];
   const queryClient = useQueryClient();
 
-  return useMutation<
-    { message?: string; data?: DunningPolicy },
-    Error,
-    DunningPolicyPayload
-  >({
+  return useMutation<{ message?: string; data?: DunningPolicy }, Error, DunningPolicyPayload>({
     mutationFn: async (payload) => {
       const res = await entry.toastApi.put<AnyRecord>(
         DUNNING_PATH,

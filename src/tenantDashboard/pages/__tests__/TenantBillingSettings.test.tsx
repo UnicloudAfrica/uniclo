@@ -55,7 +55,7 @@ function renderWithClient(ui: ReactElement) {
   return render(
     <MemoryRouter>
       <QueryClientProvider client={client}>{ui}</QueryClientProvider>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 }
 
@@ -128,7 +128,7 @@ describe("TenantBillingSettings — money rendering", () => {
 
   it("renders the formatted string returned by useFormatPrice for wallet balance", () => {
     mockUseFormatPrice
-      .mockReturnValueOnce(makeFormatResult("₦5,000.00"))  // wallet
+      .mockReturnValueOnce(makeFormatResult("₦5,000.00")) // wallet
       .mockReturnValueOnce(makeFormatResult("₦1,500.00")); // outstanding
 
     renderWithClient(<TenantBillingSettings />);
@@ -138,7 +138,7 @@ describe("TenantBillingSettings — money rendering", () => {
 
   it("renders the formatted string returned by useFormatPrice for outstanding balance", () => {
     mockUseFormatPrice
-      .mockReturnValueOnce(makeFormatResult("₦5,000.00"))  // wallet
+      .mockReturnValueOnce(makeFormatResult("₦5,000.00")) // wallet
       .mockReturnValueOnce(makeFormatResult("₦1,500.00")); // outstanding
 
     renderWithClient(<TenantBillingSettings />);

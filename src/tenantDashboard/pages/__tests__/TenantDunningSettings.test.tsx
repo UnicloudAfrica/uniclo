@@ -34,9 +34,7 @@ vi.mock("@/shared/hooks/resources/dunningHooks", () => ({
 // TenantPageShell pulls in routing + branding context. Stub it to a
 // pass-through so tests stay focused on the dunning form itself.
 vi.mock("../../../dashboard/components/TenantPageShell", () => ({
-  default: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
+  default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 import TenantDunningSettings from "../TenantDunningSettings";
@@ -84,9 +82,7 @@ describe("TenantDunningSettings", () => {
   it("renders an error message when the fetch fails", () => {
     fetchState.isError = true;
     renderPage(<TenantDunningSettings />);
-    expect(
-      screen.getByText(/Failed to load dunning policy/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Failed to load dunning policy/i)).toBeInTheDocument();
     expect(screen.queryByLabelText(/grace days/i)).not.toBeInTheDocument();
   });
 
@@ -97,9 +93,7 @@ describe("TenantDunningSettings", () => {
     const graceInput = screen.getByLabelText(/grace days/i) as HTMLInputElement;
     expect(graceInput.value).toBe("5");
 
-    const retryInput = screen.getByLabelText(
-      /retry days/i
-    ) as HTMLInputElement;
+    const retryInput = screen.getByLabelText(/retry days/i) as HTMLInputElement;
     expect(retryInput.value).toBe("3, 7, 14");
 
     // auto_suspend is false → suspend_after_days field should be hidden.
@@ -116,9 +110,7 @@ describe("TenantDunningSettings", () => {
     expect(checkbox.checked).toBe(false);
 
     fireEvent.click(checkbox);
-    expect(
-      screen.getByLabelText(/suspend after/i)
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/suspend after/i)).toBeInTheDocument();
   });
 
   it("calls mutate with the correct payload on submit", async () => {

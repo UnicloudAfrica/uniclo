@@ -257,7 +257,9 @@ const IntegrationPartnerPayoutsDashboard: React.FC = () => {
   };
 
   const handleBulkApprove = async () => {
-    const pendingIds = selected.filter((id) => payouts.find((p) => p.id === id)?.status === "pending");
+    const pendingIds = selected.filter(
+      (id) => payouts.find((p) => p.id === id)?.status === "pending"
+    );
     if (pendingIds.length === 0) {
       ToastUtils.error("No pending payouts selected.");
       return;
@@ -373,18 +375,12 @@ const IntegrationPartnerPayoutsDashboard: React.FC = () => {
               <ModernButton
                 variant="outline"
                 size="sm"
-                onClick={() =>
-                  navigate("/admin-dashboard/integration-partner-payouts/ledger")
-                }
+                onClick={() => navigate("/admin-dashboard/integration-partner-payouts/ledger")}
               >
                 <FileText className="w-4 h-4 mr-2" />
                 View Ledger
               </ModernButton>
-              <ModernButton
-                variant="primary"
-                size="sm"
-                onClick={() => setShowGenerateModal(true)}
-              >
+              <ModernButton variant="primary" size="sm" onClick={() => setShowGenerateModal(true)}>
                 <Calendar className="w-4 h-4 mr-2" />
                 Generate Payouts
               </ModernButton>
@@ -399,9 +395,7 @@ const IntegrationPartnerPayoutsDashboard: React.FC = () => {
                   <div>
                     <p className="text-sm text-gray-500">{card.title}</p>
                     <p className="text-2xl font-semibold mt-1">{card.value}</p>
-                    {card.subtitle && (
-                      <p className="text-sm text-gray-500 mt-1">{card.subtitle}</p>
-                    )}
+                    {card.subtitle && <p className="text-sm text-gray-500 mt-1">{card.subtitle}</p>}
                   </div>
                   <div className={card.bgColor + " p-3 rounded-lg"}>
                     <card.icon className={"w-6 h-6 " + card.color} />
@@ -427,9 +421,7 @@ const IntegrationPartnerPayoutsDashboard: React.FC = () => {
                         <p className="text-sm font-medium capitalize">
                           {partner.integration_key.replace(/_/g, " ")}
                         </p>
-                        <p className="text-xs text-gray-500">
-                          {partner.unsettled_count} entries
-                        </p>
+                        <p className="text-xs text-gray-500">{partner.unsettled_count} entries</p>
                       </div>
                     </div>
                     <span className="text-sm font-semibold text-yellow-700">
@@ -692,7 +684,10 @@ const IntegrationPartnerPayoutsDashboard: React.FC = () => {
                               </>
                             )}
                             {payout.status === "failed" && payout.failure_reason && (
-                              <span className="text-xs text-red-500 max-w-[150px] truncate" title={payout.failure_reason}>
+                              <span
+                                className="text-xs text-red-500 max-w-[150px] truncate"
+                                title={payout.failure_reason}
+                              >
                                 {payout.failure_reason}
                               </span>
                             )}
@@ -753,9 +748,7 @@ const IntegrationPartnerPayoutsDashboard: React.FC = () => {
             </p>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Period Start
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Period Start</label>
                 <input
                   type="date"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2"
@@ -771,9 +764,7 @@ const IntegrationPartnerPayoutsDashboard: React.FC = () => {
                   type="date"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2"
                   value={generateForm.period_end}
-                  onChange={(e) =>
-                    setGenerateForm({ ...generateForm, period_end: e.target.value })
-                  }
+                  onChange={(e) => setGenerateForm({ ...generateForm, period_end: e.target.value })}
                 />
               </div>
               <div>
@@ -833,7 +824,8 @@ const IntegrationPartnerPayoutsDashboard: React.FC = () => {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">Period</span>
                 <span className="text-sm">
-                  {formatDate(showDetailModal.period_start)} <ArrowRight className="w-3 h-3 inline mx-1" />{" "}
+                  {formatDate(showDetailModal.period_start)}{" "}
+                  <ArrowRight className="w-3 h-3 inline mx-1" />{" "}
                   {formatDate(showDetailModal.period_end)}
                 </span>
               </div>
@@ -861,11 +853,7 @@ const IntegrationPartnerPayoutsDashboard: React.FC = () => {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Platform Fee</span>
                   <span className="text-red-600">
-                    -
-                    {formatCurrency(
-                      showDetailModal.platform_fee_cents,
-                      showDetailModal.currency
-                    )}
+                    -{formatCurrency(showDetailModal.platform_fee_cents, showDetailModal.currency)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm font-semibold border-t border-gray-200 pt-2">

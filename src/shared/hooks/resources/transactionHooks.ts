@@ -19,9 +19,7 @@ import { useApiContext } from "@/hooks/useApiContext";
 import { apiRegistry } from "../../api/apiRegistry";
 
 type AnyRecord = Record<string, unknown>;
-type QueryOptions<T = unknown> = Partial<
-  Omit<UseQueryOptions<T, Error>, "queryKey" | "queryFn">
->;
+type QueryOptions<T = unknown> = Partial<Omit<UseQueryOptions<T, Error>, "queryKey" | "queryFn">>;
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -86,15 +84,13 @@ const TYPE_LABELS: Record<TransactionType, string> = {
 export const getTransactionTypeLabel = (type: string): string =>
   TYPE_LABELS[type as TransactionType] ?? type;
 
-export const isDebitType = (type: string): boolean =>
-  type === "debit" || type === "transfer_out";
+export const isDebitType = (type: string): boolean => type === "debit" || type === "transfer_out";
 
 // ─── Query Keys ─────────────────────────────────────────────────
 
 export const transactionKeys = {
   all: ["transactions"] as const,
-  list: (params?: TransactionListParams) =>
-    ["transactions", "list", params ?? {}] as const,
+  list: (params?: TransactionListParams) => ["transactions", "list", params ?? {}] as const,
 };
 
 // ─── Helpers ────────────────────────────────────────────────────
@@ -123,9 +119,7 @@ export function useFetchTransactions(
     queryKey: transactionKeys.list(params),
     queryFn: async () => {
       const qs = buildQueryString(params as Record<string, unknown> | undefined);
-      const res = await entry.silentApi.get<AnyRecord>(
-        `/wallet/transactions${qs}`
-      );
+      const res = await entry.silentApi.get<AnyRecord>(`/wallet/transactions${qs}`);
       const envelope = (res ?? {}) as Partial<TransactionListResponse>;
       const data = Array.isArray(envelope?.data) ? envelope.data : [];
       const meta: PaginationMeta = envelope?.meta ?? {

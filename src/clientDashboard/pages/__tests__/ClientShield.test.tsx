@@ -30,8 +30,7 @@ import ClientShieldAnalytics from "../ClientShieldAnalytics";
 import ClientShieldAttacks from "../ClientShieldAttacks";
 import ClientShieldSsl from "../ClientShieldSsl";
 
-const renderInRouter = (ui: React.ReactElement) =>
-  render(<MemoryRouter>{ui}</MemoryRouter>);
+const renderInRouter = (ui: React.ReactElement) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
 // ── Tests ─────────────────────────────────────────────────────────────
 

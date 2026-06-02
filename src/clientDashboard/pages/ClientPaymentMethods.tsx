@@ -24,7 +24,8 @@ const CardRow: React.FC<{
         </div>
         <div>
           <p className="font-medium text-gray-900">
-            {(card.card_type || "Card").toUpperCase()} &bull;&bull;&bull;&bull; {card.last4 || "----"}
+            {(card.card_type || "Card").toUpperCase()} &bull;&bull;&bull;&bull;{" "}
+            {card.last4 || "----"}
           </p>
           <p className="text-sm text-gray-500 mt-0.5">
             Expires {card.exp_month}/{card.exp_year}

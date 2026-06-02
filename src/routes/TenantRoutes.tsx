@@ -20,7 +20,9 @@ import TenantAccountSettings from "../dashboard/pages/AccountSettings";
 import DashboardTaxConfigurations from "../dashboard/pages/taxConfiguration";
 import Products from "../dashboard/pages/products";
 const TenantDeveloperPortal = lazy(() => import("../tenantDashboard/pages/DeveloperPortal"));
-const TenantPricingCalculator = lazy(() => import("../tenantDashboard/pages/TenantPricingCalculator"));
+const TenantPricingCalculator = lazy(
+  () => import("../tenantDashboard/pages/TenantPricingCalculator")
+);
 // `TenantPricingOverrides` + `TenantPricingEditList` retired — the
 // unified PricingShell at /dashboard/pricing replaces both. Legacy
 // routes redirect to the new home (see Routes block below).
@@ -36,7 +38,9 @@ import TenantQuoteCalculator from "../dashboard/pages/TenantQuoteCalculator";
 import DashboardObjectStorage from "../dashboard/pages/objectStorage";
 import TenantObjectStorageCreate from "../dashboard/pages/objectStorageCreate";
 import TenantObjectStoragePurchase from "../dashboard/pages/objectStoragePurchase";
-const TenantObjectStorageDetail = lazy(() => import("../tenantDashboard/pages/TenantObjectStorageDetail"));
+const TenantObjectStorageDetail = lazy(
+  () => import("../tenantDashboard/pages/TenantObjectStorageDetail")
+);
 import DashboardLeads from "../dashboard/pages/leads";
 import DashboardLeadCreate from "../dashboard/pages/leadCreate";
 import DashboardLeadDetails from "../dashboard/pages/leadDetails";
@@ -50,12 +54,16 @@ import EditClientPage from "../dashboard/pages/clients/EditClient";
 import InviteTenantUserPage from "../dashboard/pages/tenantUsers/NewTenantUser";
 import TenantUserDetailsPage from "../dashboard/pages/tenantUsers/TenantUserDetails";
 import EditTenantUserPage from "../dashboard/pages/tenantUsers/EditTenantUser";
-const TenantOnboardingOverview = lazy(() => import("../tenantDashboard/pages/TenantOnboardingOverview"));
+const TenantOnboardingOverview = lazy(
+  () => import("../tenantDashboard/pages/TenantOnboardingOverview")
+);
 const RegionRequests = lazy(() => import("../tenantDashboard/pages/RegionRequests"));
 const RegionRequestDetail = lazy(() => import("../tenantDashboard/pages/RegionRequestDetail"));
 const NewRegionRequest = lazy(() => import("../tenantDashboard/pages/NewRegionRequest"));
 const RevenueDashboard = lazy(() => import("../tenantDashboard/pages/RevenueDashboard"));
-const TenantProvisioningWizard = lazy(() => import("../tenantDashboard/pages/TenantProvisioningWizard"));
+const TenantProvisioningWizard = lazy(
+  () => import("../tenantDashboard/pages/TenantProvisioningWizard")
+);
 const TenantTemplates = lazy(() => import("../tenantDashboard/pages/TenantTemplates"));
 import TenantManagedDatabases from "../dashboard/pages/TenantManagedDatabases";
 import TenantCloudAccounts from "../dashboard/pages/TenantCloudAccounts";
@@ -64,11 +72,19 @@ import TenantCloudAccountDetail from "../dashboard/pages/TenantCloudAccountDetai
 const TenantMonitoring = lazy(() => import("../tenantDashboard/pages/TenantMonitoring"));
 const TenantFlow = lazy(() => import("../tenantDashboard/pages/TenantFlow"));
 const TenantFlowBilling = lazy(() => import("../tenantDashboard/pages/TenantFlowBilling"));
-const TenantMigrationCalculator = lazy(() => import("../tenantDashboard/pages/TenantMigrationCalculator"));
+const TenantMigrationCalculator = lazy(
+  () => import("../tenantDashboard/pages/TenantMigrationCalculator")
+);
 // FR-043 — Orbit source-VM endpoints (tenant variant)
-const TenantVmEndpoints = lazy(() => import("../dashboard/pages/integrations/orbit/TenantVmEndpoints"));
-const TenantVmEndpointNew = lazy(() => import("../dashboard/pages/integrations/orbit/TenantVmEndpointNew"));
-const TenantVmEndpointDetail = lazy(() => import("../dashboard/pages/integrations/orbit/TenantVmEndpointDetail"));
+const TenantVmEndpoints = lazy(
+  () => import("../dashboard/pages/integrations/orbit/TenantVmEndpoints")
+);
+const TenantVmEndpointNew = lazy(
+  () => import("../dashboard/pages/integrations/orbit/TenantVmEndpointNew")
+);
+const TenantVmEndpointDetail = lazy(
+  () => import("../dashboard/pages/integrations/orbit/TenantVmEndpointDetail")
+);
 import TenantDatabaseCreate from "../dashboard/pages/TenantDatabaseCreate";
 import TenantDatabaseDetail from "../dashboard/pages/TenantDatabaseDetail";
 const TenantDiscountManager = lazy(() => import("../tenantDashboard/pages/TenantDiscountManager"));
@@ -106,25 +122,59 @@ const TenantShieldSsl = lazy(() => import("../dashboard/pages/TenantShieldSsl"))
 // Infrastructure pages — lazy-loaded so the barrel doesn't pull every
 // VPC/ACL/load-balancer page into the initial tenant bundle.
 const TenantKeyPairs = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantKeyPairs"));
-const TenantNetworkInterfaces = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantNetworkInterfaces"));
+const TenantNetworkInterfaces = lazy(
+  () => import("../tenantDashboard/pages/infrastructure/TenantNetworkInterfaces")
+);
 const TenantSubnets = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantSubnets"));
-const TenantSecurityGroups = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantSecurityGroups"));
-const TenantElasticIps = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantElasticIps"));
-const TenantNatGateways = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantNatGateways"));
-const TenantRouteTables = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantRouteTables"));
-const TenantNetworkAcls = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantNetworkAcls"));
-const TenantVpcPeering = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantVpcPeering"));
-const TenantSecurityGroupRules = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantSecurityGroupRules"));
-const TenantNetworkAclRules = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantNetworkAclRules"));
-const TenantLoadBalancers = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantLoadBalancers"));
-const LoadBalancerWizard = lazy(() => import("../tenantDashboard/pages/infrastructure/LoadBalancerWizard"));
-const TenantLoadBalancerDetail = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantLoadBalancerDetail"));
-const TenantDnsManagement = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantDnsManagement"));
-const TenantSnapshots = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantSnapshots"));
+const TenantSecurityGroups = lazy(
+  () => import("../tenantDashboard/pages/infrastructure/TenantSecurityGroups")
+);
+const TenantElasticIps = lazy(
+  () => import("../tenantDashboard/pages/infrastructure/TenantElasticIps")
+);
+const TenantNatGateways = lazy(
+  () => import("../tenantDashboard/pages/infrastructure/TenantNatGateways")
+);
+const TenantRouteTables = lazy(
+  () => import("../tenantDashboard/pages/infrastructure/TenantRouteTables")
+);
+const TenantNetworkAcls = lazy(
+  () => import("../tenantDashboard/pages/infrastructure/TenantNetworkAcls")
+);
+const TenantVpcPeering = lazy(
+  () => import("../tenantDashboard/pages/infrastructure/TenantVpcPeering")
+);
+const TenantSecurityGroupRules = lazy(
+  () => import("../tenantDashboard/pages/infrastructure/TenantSecurityGroupRules")
+);
+const TenantNetworkAclRules = lazy(
+  () => import("../tenantDashboard/pages/infrastructure/TenantNetworkAclRules")
+);
+const TenantLoadBalancers = lazy(
+  () => import("../tenantDashboard/pages/infrastructure/TenantLoadBalancers")
+);
+const LoadBalancerWizard = lazy(
+  () => import("../tenantDashboard/pages/infrastructure/LoadBalancerWizard")
+);
+const TenantLoadBalancerDetail = lazy(
+  () => import("../tenantDashboard/pages/infrastructure/TenantLoadBalancerDetail")
+);
+const TenantDnsManagement = lazy(
+  () => import("../tenantDashboard/pages/infrastructure/TenantDnsManagement")
+);
+const TenantSnapshots = lazy(
+  () => import("../tenantDashboard/pages/infrastructure/TenantSnapshots")
+);
 const TenantImages = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantImages"));
-const TenantAutoScaling = lazy(() => import("../tenantDashboard/pages/infrastructure/TenantAutoScaling"));
-const LaunchConfigurationWizard = lazy(() => import("../tenantDashboard/pages/infrastructure/LaunchConfigurationWizard"));
-const AutoScalingGroupWizard = lazy(() => import("../tenantDashboard/pages/infrastructure/AutoScalingGroupWizard"));
+const TenantAutoScaling = lazy(
+  () => import("../tenantDashboard/pages/infrastructure/TenantAutoScaling")
+);
+const LaunchConfigurationWizard = lazy(
+  () => import("../tenantDashboard/pages/infrastructure/LaunchConfigurationWizard")
+);
+const AutoScalingGroupWizard = lazy(
+  () => import("../tenantDashboard/pages/infrastructure/AutoScalingGroupWizard")
+);
 
 import TenantDocsLayout from "../tenantDashboard/pages/docs/TenantDocsLayout";
 const TenantDocPage = lazy(() => import("../tenantDashboard/pages/docs/TenantDocPage"));
@@ -190,7 +240,10 @@ const TenantRoutes = (): JSX.Element => (
         <Route path="/dashboard/cloud-accounts/:accountId" element={<TenantCloudAccountDetail />} />
 
         <Route path="/dashboard/orbit/calculator" element={<TenantMigrationCalculator />} />
-        <Route path="/dashboard/anycloudflow/calculator" element={<Navigate to="/dashboard/orbit/calculator" replace />} />
+        <Route
+          path="/dashboard/anycloudflow/calculator"
+          element={<Navigate to="/dashboard/orbit/calculator" replace />}
+        />
         {/* FR-043 — source-VM endpoints + assessment.
             Order: list → /new → /:id (specific routes before catch-all). */}
         <Route path="/dashboard/integrations/orbit/vms" element={<TenantVmEndpoints />} />
@@ -206,24 +259,104 @@ const TenantRoutes = (): JSX.Element => (
         <Route path="/dashboard/migrations/new" element={<TenantMigrationWizard />} />
         <Route path="/dashboard/batch-migrations" element={<TenantBatchMigrations />} />
         <Route path="/dashboard/batch-migrations/new" element={<TenantBatchMigrationWizard />} />
-        <Route path="/dashboard/batch-migrations/:identifier" element={<TenantBatchMigrationDetail />} />
+        <Route
+          path="/dashboard/batch-migrations/:identifier"
+          element={<TenantBatchMigrationDetail />}
+        />
         <Route path="/dashboard/destinations" element={<TenantDestinations />} />
         {/* /new must precede any /:id sibling — RES-162 wizard route */}
         <Route path="/dashboard/destinations/new" element={<TenantDestinationNew />} />
         <Route path="/dashboard/serverless-dr" element={<TenantServerlessDr />} />
         <Route path="/dashboard/serverless-dr/new" element={<TenantServerlessDrNew />} />
 
-        <Route path="/dashboard/shield/domains" element={<Suspense fallback={null}><TenantShieldDomains /></Suspense>} />
-        <Route path="/dashboard/shield/domains/:domainId" element={<Suspense fallback={null}><TenantShieldDomainDetail /></Suspense>} />
-        <Route path="/dashboard/invoices" element={<Suspense fallback={null}><TenantInvoices /></Suspense>} />
-        <Route path="/dashboard/invoices/:invoiceId" element={<Suspense fallback={null}><TenantInvoiceDetail /></Suspense>} />
-        <Route path="/dashboard/accounting" element={<Suspense fallback={null}><TenantAccounting /></Suspense>} />
-        <Route path="/dashboard/shield/overview" element={<Suspense fallback={null}><TenantShieldOverview /></Suspense>} />
-        <Route path="/dashboard/shield/attack-map" element={<Suspense fallback={null}><TenantShieldAttackMap /></Suspense>} />
-        <Route path="/dashboard/shield/firewall" element={<Suspense fallback={null}><TenantShieldFirewall /></Suspense>} />
-        <Route path="/dashboard/shield/attacks" element={<Suspense fallback={null}><TenantShieldAttacks /></Suspense>} />
-        <Route path="/dashboard/shield/analytics" element={<Suspense fallback={null}><TenantShieldAnalytics /></Suspense>} />
-        <Route path="/dashboard/shield/ssl" element={<Suspense fallback={null}><TenantShieldSsl /></Suspense>} />
+        <Route
+          path="/dashboard/shield/domains"
+          element={
+            <Suspense fallback={null}>
+              <TenantShieldDomains />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/dashboard/shield/domains/:domainId"
+          element={
+            <Suspense fallback={null}>
+              <TenantShieldDomainDetail />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/dashboard/invoices"
+          element={
+            <Suspense fallback={null}>
+              <TenantInvoices />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/dashboard/invoices/:invoiceId"
+          element={
+            <Suspense fallback={null}>
+              <TenantInvoiceDetail />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/dashboard/accounting"
+          element={
+            <Suspense fallback={null}>
+              <TenantAccounting />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/dashboard/shield/overview"
+          element={
+            <Suspense fallback={null}>
+              <TenantShieldOverview />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/dashboard/shield/attack-map"
+          element={
+            <Suspense fallback={null}>
+              <TenantShieldAttackMap />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/dashboard/shield/firewall"
+          element={
+            <Suspense fallback={null}>
+              <TenantShieldFirewall />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/dashboard/shield/attacks"
+          element={
+            <Suspense fallback={null}>
+              <TenantShieldAttacks />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/dashboard/shield/analytics"
+          element={
+            <Suspense fallback={null}>
+              <TenantShieldAnalytics />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/dashboard/shield/ssl"
+          element={
+            <Suspense fallback={null}>
+              <TenantShieldSsl />
+            </Suspense>
+          }
+        />
         <Route path="/dashboard/agent" element={<TenantAgent />} />
 
         <Route element={<ObjectStorageRouteProvider />}>

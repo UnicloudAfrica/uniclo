@@ -22,11 +22,7 @@ const STATUS_CLASSES: Record<string, string> = {
 function StatusBadge({ status }: { status: string }) {
   const cls = STATUS_CLASSES[status] ?? "bg-gray-100 text-gray-500";
   const label = status.charAt(0).toUpperCase() + status.slice(1);
-  return (
-    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${cls}`}>
-      {label}
-    </span>
-  );
+  return <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${cls}`}>{label}</span>;
 }
 
 // ─── Loading skeleton ────────────────────────────────────────────
@@ -102,9 +98,7 @@ function TransactionRow({ tx }: { tx: WalletTransaction }) {
       <td className="px-4 py-3 text-sm text-gray-800">
         <div>{getTransactionTypeLabel(tx.type)}</div>
         {tx.description && (
-          <div className="text-xs text-gray-400 truncate max-w-xs">
-            {tx.description}
-          </div>
+          <div className="text-xs text-gray-400 truncate max-w-xs">{tx.description}</div>
         )}
       </td>
       <td className="px-4 py-3 text-sm font-medium whitespace-nowrap">
@@ -150,23 +144,19 @@ export default function ClientPaymentHistory() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  {["Date", "Description", "Amount", "Status", ""].map(
-                    (h) => (
-                      <th
-                        key={h}
-                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        {h}
-                      </th>
-                    )
-                  )}
+                  {["Date", "Description", "Amount", "Status", ""].map((h) => (
+                    <th
+                      key={h}
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <SkeletonRow key={i} />
-                  ))
+                  Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
                 ) : transactions.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="py-16 text-center">
@@ -178,9 +168,7 @@ export default function ClientPaymentHistory() {
                     </td>
                   </tr>
                 ) : (
-                  transactions.map((tx) => (
-                    <TransactionRow key={tx.id} tx={tx} />
-                  ))
+                  transactions.map((tx) => <TransactionRow key={tx.id} tx={tx} />)
                 )}
               </tbody>
             </table>
@@ -191,8 +179,8 @@ export default function ClientPaymentHistory() {
             <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
               <p className="text-sm text-gray-500">
                 {(meta.current_page - 1) * meta.per_page + 1}–
-                {Math.min(meta.current_page * meta.per_page, meta.total)} of{" "}
-                {meta.total} transactions
+                {Math.min(meta.current_page * meta.per_page, meta.total)} of {meta.total}{" "}
+                transactions
               </p>
               <div className="flex items-center gap-2">
                 <button
@@ -206,9 +194,7 @@ export default function ClientPaymentHistory() {
                   {meta.current_page} / {meta.last_page}
                 </span>
                 <button
-                  onClick={() =>
-                    setPage((p) => Math.min(meta.last_page, p + 1))
-                  }
+                  onClick={() => setPage((p) => Math.min(meta.last_page, p + 1))}
                   disabled={meta.current_page === meta.last_page}
                   className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50"
                 >

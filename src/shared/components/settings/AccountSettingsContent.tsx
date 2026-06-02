@@ -180,7 +180,9 @@ export const ChangeEmailPanel: React.FC = () => {
       {step === "request" ? (
         <form onSubmit={handleRequest} className="space-y-4 max-w-lg">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">New email address</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              New email address
+            </label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
@@ -225,7 +227,9 @@ export const ChangeEmailPanel: React.FC = () => {
             change.
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Verification code</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Verification code
+            </label>
             <input
               type="text"
               inputMode="numeric"

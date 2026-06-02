@@ -108,9 +108,7 @@ describe("ClientPaymentMethods", () => {
 
     renderPage(<ClientPaymentMethods />);
 
-    await waitFor(() =>
-      expect(screen.getByText(/VISA •••• 4242/)).toBeTruthy()
-    );
+    await waitFor(() => expect(screen.getByText(/VISA •••• 4242/)).toBeTruthy());
     expect(screen.getByText(/Expires 08\/2027/)).toBeTruthy();
     expect(screen.getByText(/GTBank/)).toBeTruthy();
   });
@@ -138,12 +136,8 @@ describe("ClientPaymentMethods", () => {
 
     fireEvent.click(screen.getAllByText("Add card")[0]);
 
-    await waitFor(() =>
-      expect(mockPost).toHaveBeenCalledWith("/business/payment-methods", {})
-    );
-    await waitFor(() =>
-      expect(window.location.href).toBe("https://checkout.paystack.com/abc123")
-    );
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith("/business/payment-methods", {}));
+    await waitFor(() => expect(window.location.href).toBe("https://checkout.paystack.com/abc123"));
 
     Object.defineProperty(window, "location", {
       writable: true,
@@ -167,9 +161,7 @@ describe("ClientPaymentMethods", () => {
 
   it("removes a saved card by id and refetches the list", async () => {
     // First load: one card. After delete + invalidation: empty.
-    mockGet
-      .mockResolvedValueOnce({ data: [SAMPLE_CARD] })
-      .mockResolvedValue({ data: [] });
+    mockGet.mockResolvedValueOnce({ data: [SAMPLE_CARD] }).mockResolvedValue({ data: [] });
     mockDelete.mockResolvedValue({ success: true, message: "Card deleted successfully." });
 
     renderPage(<ClientPaymentMethods />);
@@ -177,9 +169,7 @@ describe("ClientPaymentMethods", () => {
 
     fireEvent.click(screen.getByText("Remove"));
 
-    await waitFor(() =>
-      expect(mockDelete).toHaveBeenCalledWith("/business/payment-methods/42")
-    );
+    await waitFor(() => expect(mockDelete).toHaveBeenCalledWith("/business/payment-methods/42"));
     await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith("Card removed"));
     // List re-queried after invalidation → empty state now visible.
     await waitFor(() => expect(screen.getByText("No saved cards")).toBeTruthy());

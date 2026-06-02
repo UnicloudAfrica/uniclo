@@ -32,9 +32,7 @@ const TenantDunningSettings: React.FC = () => {
 
   // Local form state mirrors the policy fields.
   const [graceDays, setGraceDays] = useState<number>(3);
-  const [retryRaw, setRetryRaw] = useState<string>(
-    formatRetrySchedule(DEFAULT_RETRY_DAYS)
-  );
+  const [retryRaw, setRetryRaw] = useState<string>(formatRetrySchedule(DEFAULT_RETRY_DAYS));
   const [autoSuspend, setAutoSuspend] = useState<boolean>(false);
   const [suspendAfterDays, setSuspendAfterDays] = useState<number>(30);
 
@@ -73,9 +71,7 @@ const TenantDunningSettings: React.FC = () => {
       {isError && !isLoading && (
         <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
           <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-          <p className="text-sm">
-            Failed to load dunning policy. Please refresh and try again.
-          </p>
+          <p className="text-sm">Failed to load dunning policy. Please refresh and try again.</p>
         </div>
       )}
 
@@ -88,9 +84,7 @@ const TenantDunningSettings: React.FC = () => {
                 <Clock className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-gray-900">
-                  Grace Period
-                </h2>
+                <h2 className="text-base font-semibold text-gray-900">Grace Period</h2>
                 <p className="text-sm text-gray-500">
                   Days after an invoice due-date before dunning begins.
                 </p>
@@ -98,10 +92,7 @@ const TenantDunningSettings: React.FC = () => {
             </div>
 
             <div className="max-w-xs">
-              <label
-                htmlFor="grace_days"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="grace_days" className="block text-sm font-medium text-gray-700 mb-1">
                 Grace days
               </label>
               <input
@@ -123,12 +114,9 @@ const TenantDunningSettings: React.FC = () => {
                 <Bell className="w-5 h-5 text-amber-600" />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-gray-900">
-                  Retry Schedule
-                </h2>
+                <h2 className="text-base font-semibold text-gray-900">Retry Schedule</h2>
                 <p className="text-sm text-gray-500">
-                  Days after the grace window at which payment reminders are
-                  sent (comma-separated).
+                  Days after the grace window at which payment reminders are sent (comma-separated).
                 </p>
               </div>
             </div>
@@ -149,8 +137,7 @@ const TenantDunningSettings: React.FC = () => {
                 className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               <p className="mt-1 text-xs text-gray-400">
-                Parsed as:{" "}
-                {parseRetrySchedule(retryRaw).join(", ") || "none"}
+                Parsed as: {parseRetrySchedule(retryRaw).join(", ") || "none"}
               </p>
             </div>
           </div>
@@ -162,12 +149,9 @@ const TenantDunningSettings: React.FC = () => {
                 <ShieldOff className="w-5 h-5 text-red-600" />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-gray-900">
-                  Auto-Suspension
-                </h2>
+                <h2 className="text-base font-semibold text-gray-900">Auto-Suspension</h2>
                 <p className="text-sm text-gray-500">
-                  Automatically suspend accounts that remain overdue beyond the
-                  threshold.
+                  Automatically suspend accounts that remain overdue beyond the threshold.
                 </p>
               </div>
             </div>
@@ -181,9 +165,7 @@ const TenantDunningSettings: React.FC = () => {
                   onChange={(e) => setAutoSuspend(e.target.checked)}
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
-                <span className="text-sm text-gray-700">
-                  Enable automatic account suspension
-                </span>
+                <span className="text-sm text-gray-700">Enable automatic account suspension</span>
               </label>
 
               {autoSuspend && (
@@ -200,9 +182,7 @@ const TenantDunningSettings: React.FC = () => {
                     min={1}
                     max={365}
                     value={suspendAfterDays}
-                    onChange={(e) =>
-                      setSuspendAfterDays(Math.max(1, Number(e.target.value)))
-                    }
+                    onChange={(e) => setSuspendAfterDays(Math.max(1, Number(e.target.value)))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>

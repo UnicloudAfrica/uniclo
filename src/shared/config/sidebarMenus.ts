@@ -819,18 +819,58 @@ interface AccountItem {
 
 const ACCOUNT_ITEMS_BY_ROLE: Record<InfraRole, AccountItem[]> = {
   admin: [
-    { label: "Profile", icon: User, path: "/admin-dashboard/account", requiredPermission: "settings.view" },
-    { label: "Two-Factor Auth", icon: ShieldCheck, path: "/admin-dashboard/security/2fa", requiredPermission: "settings.view" },
-    { label: "2FA Policy", icon: Shield, path: "/admin-dashboard/security/2fa-policy", requiredPermission: "settings.view" },
+    {
+      label: "Profile",
+      icon: User,
+      path: "/admin-dashboard/account",
+      requiredPermission: "settings.view",
+    },
+    {
+      label: "Two-Factor Auth",
+      icon: ShieldCheck,
+      path: "/admin-dashboard/security/2fa",
+      requiredPermission: "settings.view",
+    },
+    {
+      label: "2FA Policy",
+      icon: Shield,
+      path: "/admin-dashboard/security/2fa-policy",
+      requiredPermission: "settings.view",
+    },
   ],
   tenant: [
-    { label: "Profile", icon: User, path: "/dashboard/account", requiredPermission: "settings.view" },
-    { label: "Two-Factor Auth", icon: ShieldCheck, path: "/dashboard/security/2fa", requiredPermission: "settings.view" },
-    { label: "2FA Policy", icon: Shield, path: "/dashboard/security/2fa-policy", requiredPermission: "settings.view" },
+    {
+      label: "Profile",
+      icon: User,
+      path: "/dashboard/account",
+      requiredPermission: "settings.view",
+    },
+    {
+      label: "Two-Factor Auth",
+      icon: ShieldCheck,
+      path: "/dashboard/security/2fa",
+      requiredPermission: "settings.view",
+    },
+    {
+      label: "2FA Policy",
+      icon: Shield,
+      path: "/dashboard/security/2fa-policy",
+      requiredPermission: "settings.view",
+    },
   ],
   client: [
-    { label: "Profile", icon: Settings, path: "/client-dashboard/account-settings", requiredPermission: "settings.view" },
-    { label: "Two-Factor Auth", icon: ShieldCheck, path: "/client-dashboard/security/2fa", requiredPermission: "settings.view" },
+    {
+      label: "Profile",
+      icon: Settings,
+      path: "/client-dashboard/account-settings",
+      requiredPermission: "settings.view",
+    },
+    {
+      label: "Two-Factor Auth",
+      icon: ShieldCheck,
+      path: "/client-dashboard/security/2fa",
+      requiredPermission: "settings.view",
+    },
   ],
 };
 
@@ -843,13 +883,17 @@ const buildGroup = (
   icon: LucideIcon,
   items: RoleAwareItem[],
   basePath: string,
-  role: InfraRole,
+  role: InfraRole
 ): MenuEntry => {
   const normalizedBase = basePath.replace(/\/+$/, "");
   const toPath = (suffix: string) => {
     // Absolute admin/dashboard/client-dashboard paths pass through unchanged
     // (some items intentionally cross dashboards — e.g. Bridge Clients).
-    if (suffix.startsWith("/admin-dashboard") || suffix.startsWith("/dashboard") || suffix.startsWith("/client-dashboard")) {
+    if (
+      suffix.startsWith("/admin-dashboard") ||
+      suffix.startsWith("/dashboard") ||
+      suffix.startsWith("/client-dashboard")
+    ) {
       return suffix;
     }
     return `${normalizedBase}${suffix.startsWith("/") ? suffix : `/${suffix}`}`;
@@ -873,7 +917,9 @@ const buildDeployGroup = (basePath: string, role: InfraRole): MenuEntry => {
   const children = DEPLOY_ITEMS.filter((item) => item.roles.includes(role)).map((item) => {
     const rawPath = item.pathByRole?.[role] ?? item.path;
     // Admin SlimDeploy paths are already absolute (/flow-dashboard...).
-    const path = rawPath.startsWith("/flow-dashboard") ? rawPath : `${normalizedBase}${rawPath.startsWith("/") ? rawPath : `/${rawPath}`}`;
+    const path = rawPath.startsWith("/flow-dashboard")
+      ? rawPath
+      : `${normalizedBase}${rawPath.startsWith("/") ? rawPath : `/${rawPath}`}`;
     return {
       name: item.label,
       icon: item.icon,
@@ -913,8 +959,20 @@ export const adminMenuItems: MenuEntry[] = [
     icon: Home,
     isLucide: true,
     children: [
-      { name: "Home", icon: Home, isLucide: true, requiredPermission: "dashboard.view", path: "/admin-dashboard" },
-      { name: "Analytics", icon: BarChart3, isLucide: true, requiredPermission: "analytics.view", path: "/admin-dashboard/analytics" },
+      {
+        name: "Home",
+        icon: Home,
+        isLucide: true,
+        requiredPermission: "dashboard.view",
+        path: "/admin-dashboard",
+      },
+      {
+        name: "Analytics",
+        icon: BarChart3,
+        isLucide: true,
+        requiredPermission: "analytics.view",
+        path: "/admin-dashboard/analytics",
+      },
       { name: "NOC", icon: Radio, isLucide: true, path: "/admin-dashboard/noc" },
     ],
   },
@@ -924,11 +982,13 @@ export const adminMenuItems: MenuEntry[] = [
   buildGroup("Networking & Edge", Network, NETWORKING_EDGE_ITEMS, "/admin-dashboard", "admin"),
   // 4. Resilience (Orbit)
   buildGroup(
-    BRANDING.resilienceProduct === "Orbit" ? "Resilience" : `Resilience (${BRANDING.resilienceProduct})`,
+    BRANDING.resilienceProduct === "Orbit"
+      ? "Resilience"
+      : `Resilience (${BRANDING.resilienceProduct})`,
     OrbitIcon,
     RESILIENCE_ITEMS,
     "/admin-dashboard",
-    "admin",
+    "admin"
   ),
   // 5. Deploy (SlimDeploy)
   buildDeployGroup("/admin-dashboard", "admin"),
@@ -940,7 +1000,13 @@ export const adminMenuItems: MenuEntry[] = [
   buildGroup("Developer", Code2, DEVELOPER_ITEMS, "/admin-dashboard", "admin"),
   // ─── Bottom-pinned ───
   { name: "Documentation", icon: BookOpen, isLucide: true, path: "/admin-dashboard/docs" },
-  { name: "Support", icon: HelpCircle, isLucide: true, requiredPermission: "support.view", path: "/admin-dashboard/tickets" },
+  {
+    name: "Support",
+    icon: HelpCircle,
+    isLucide: true,
+    requiredPermission: "support.view",
+    path: "/admin-dashboard/tickets",
+  },
   buildAccountGroup("admin"),
 ];
 
@@ -951,7 +1017,13 @@ export const tenantMenuItems: MenuEntry[] = [
     icon: Home,
     isLucide: true,
     children: [
-      { name: "Home", icon: Home, isLucide: true, requiredPermission: "dashboard.view", path: "/dashboard" },
+      {
+        name: "Home",
+        icon: Home,
+        isLucide: true,
+        requiredPermission: "dashboard.view",
+        path: "/dashboard",
+      },
     ],
   },
   // 2. Compute & Storage
@@ -960,11 +1032,13 @@ export const tenantMenuItems: MenuEntry[] = [
   buildGroup("Networking & Edge", Network, NETWORKING_EDGE_ITEMS, "/dashboard", "tenant"),
   // 4. Resilience (Orbit)
   buildGroup(
-    BRANDING.resilienceProduct === "Orbit" ? "Resilience" : `Resilience (${BRANDING.resilienceProduct})`,
+    BRANDING.resilienceProduct === "Orbit"
+      ? "Resilience"
+      : `Resilience (${BRANDING.resilienceProduct})`,
     OrbitIcon,
     RESILIENCE_ITEMS,
     "/dashboard",
-    "tenant",
+    "tenant"
   ),
   // 5. Deploy (SlimDeploy)
   buildDeployGroup("/dashboard", "tenant"),
@@ -976,10 +1050,22 @@ export const tenantMenuItems: MenuEntry[] = [
   buildGroup("Developer", Code2, DEVELOPER_ITEMS, "/dashboard", "tenant"),
   // Products entry (tenant-only standalone — sits with Developer because
   // tenants self-serve their own product catalog).
-  { name: "Products", icon: Package, isLucide: true, requiredPermission: "products.view", path: "/dashboard/products" },
+  {
+    name: "Products",
+    icon: Package,
+    isLucide: true,
+    requiredPermission: "products.view",
+    path: "/dashboard/products",
+  },
   // ─── Bottom-pinned ───
   { name: "Documentation", icon: BookOpen, isLucide: true, path: "/dashboard/docs" },
-  { name: "Support", icon: HelpCircle, isLucide: true, requiredPermission: "support.view", path: "/dashboard/support" },
+  {
+    name: "Support",
+    icon: HelpCircle,
+    isLucide: true,
+    requiredPermission: "support.view",
+    path: "/dashboard/support",
+  },
   buildAccountGroup("tenant"),
 ];
 
@@ -991,7 +1077,13 @@ export const buildClientMenuItems = (_hasProjects: boolean): MenuEntry[] => {
       icon: LayoutDashboard,
       isLucide: true,
       children: [
-        { name: "Home", icon: LayoutDashboard, isLucide: true, requiredPermission: "dashboard.view", path: "/client-dashboard" },
+        {
+          name: "Home",
+          icon: LayoutDashboard,
+          isLucide: true,
+          requiredPermission: "dashboard.view",
+          path: "/client-dashboard",
+        },
       ],
     },
     // 2. Compute & Storage
@@ -1000,11 +1092,13 @@ export const buildClientMenuItems = (_hasProjects: boolean): MenuEntry[] => {
     buildGroup("Networking & Edge", Network, NETWORKING_EDGE_ITEMS, "/client-dashboard", "client"),
     // 4. Resilience (Orbit)
     buildGroup(
-      BRANDING.resilienceProduct === "Orbit" ? "Resilience" : `Resilience (${BRANDING.resilienceProduct})`,
+      BRANDING.resilienceProduct === "Orbit"
+        ? "Resilience"
+        : `Resilience (${BRANDING.resilienceProduct})`,
       OrbitIcon,
       RESILIENCE_ITEMS,
       "/client-dashboard",
-      "client",
+      "client"
     ),
     // 5. Deploy (SlimDeploy)
     buildDeployGroup("/client-dashboard", "client"),
@@ -1014,7 +1108,13 @@ export const buildClientMenuItems = (_hasProjects: boolean): MenuEntry[] => {
     buildGroup("Developer", Code2, DEVELOPER_ITEMS, "/client-dashboard", "client"),
     // ─── Bottom-pinned ───
     { name: "Documentation", icon: BookOpen, isLucide: true, path: "/client-dashboard/docs" },
-    { name: "Support", icon: LifeBuoy, isLucide: true, requiredPermission: "support.view", path: "/client-dashboard/support" },
+    {
+      name: "Support",
+      icon: LifeBuoy,
+      isLucide: true,
+      requiredPermission: "support.view",
+      path: "/client-dashboard/support",
+    },
     buildAccountGroup("client"),
   ];
 };
@@ -1027,10 +1127,7 @@ export const buildClientMenuItems = (_hasProjects: boolean): MenuEntry[] => {
  * Safety: if permissions is empty (e.g. not yet loaded), all items are shown
  * to prevent an empty sidebar that locks the user out.
  */
-export function filterMenuByPermissions(
-  items: MenuEntry[],
-  permissions: string[]
-): MenuEntry[] {
+export function filterMenuByPermissions(items: MenuEntry[], permissions: string[]): MenuEntry[] {
   // If permissions haven't been loaded yet, show everything to avoid lockout
   if (!permissions || permissions.length === 0) {
     return items;
@@ -1042,8 +1139,7 @@ export function filterMenuByPermissions(
       if ("children" in item && item.children) {
         // Filter children first
         const filteredChildren = item.children.filter(
-          (child) =>
-            !child.requiredPermission || permissions.includes(child.requiredPermission)
+          (child) => !child.requiredPermission || permissions.includes(child.requiredPermission)
         );
 
         // If group itself requires a permission, check it

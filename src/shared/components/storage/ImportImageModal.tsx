@@ -189,18 +189,16 @@ export default function ImportImageModal({
     fileUpload.isPending;
 
   return (
-    <ModernModal
-      isOpen={open}
-      onClose={handleClose}
-      title="Import an image"
-      size="md"
-    >
+    <ModernModal isOpen={open} onClose={handleClose} title="Import an image" size="md">
       <div className="space-y-5">
-        <InfoCallout tone="info" icon={<Cloud className="h-4 w-4" />} title="Two ways to bring an image">
-          <strong>From URL</strong> is faster + cheaper if the image is already
-          hosted somewhere accessible (your S3, public mirror, etc.). The
-          provider pulls it directly. <strong>Upload file</strong> works when
-          the image is only on your machine.
+        <InfoCallout
+          tone="info"
+          icon={<Cloud className="h-4 w-4" />}
+          title="Two ways to bring an image"
+        >
+          <strong>From URL</strong> is faster + cheaper if the image is already hosted somewhere
+          accessible (your S3, public mirror, etc.). The provider pulls it directly.{" "}
+          <strong>Upload file</strong> works when the image is only on your machine.
         </InfoCallout>
 
         <ModernInput

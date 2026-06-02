@@ -5,10 +5,7 @@ import TenantPageShell from "@/shared/layouts/TenantPageShell";
 import { InvoiceDetail } from "@/shared/components/billing/invoice";
 import ModernButton from "@/shared/components/ui/ModernButton";
 import RefundModal from "@/shared/components/billing/RefundModal";
-import {
-  useFetchInvoiceById,
-  type Invoice,
-} from "@/shared/hooks/resources/invoiceHooks";
+import { useFetchInvoiceById, type Invoice } from "@/shared/hooks/resources/invoiceHooks";
 
 const toNumber = (value: string | number | null | undefined): number => {
   if (value === null || value === undefined) return 0;
@@ -50,11 +47,7 @@ const TenantInvoiceDetail: React.FC = () => {
         </div>
       ) : null}
 
-      <InvoiceDetail
-        identifier={invoiceId || ""}
-        backPath="/dashboard/invoices"
-        context="tenant"
-      />
+      <InvoiceDetail identifier={invoiceId || ""} backPath="/dashboard/invoices" context="tenant" />
 
       {invoice ? (
         <RefundModal

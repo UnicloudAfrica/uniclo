@@ -167,9 +167,7 @@ describe("AdminProjects — archive handler", () => {
     await userEvent.click(screen.getByRole("button", { name: /archive alpha project/i }));
 
     await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalledWith(
-        expect.stringContaining("Alpha Project")
-      );
+      expect(toastSuccess).toHaveBeenCalledWith(expect.stringContaining("Alpha Project"));
       expect(refetch).toHaveBeenCalled();
     });
   });
@@ -211,9 +209,7 @@ describe("AdminProjects — activate handler", () => {
     await userEvent.click(screen.getByRole("button", { name: /activate alpha project/i }));
 
     await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalledWith(
-        expect.stringContaining("Alpha Project")
-      );
+      expect(toastSuccess).toHaveBeenCalledWith(expect.stringContaining("Alpha Project"));
       expect(refetch).toHaveBeenCalled();
     });
   });

@@ -52,13 +52,10 @@ export function useRefundInvoice() {
 
   return useMutation<RefundResponse, Error, RefundPayload>({
     mutationFn: async ({ id, amount, reason }) => {
-      const res = await entry.toastApi.post<AnyRecord>(
-        `${invoicesPath(context)}/${id}/refunds`,
-        {
-          amount,
-          ...(reason ? { reason } : {}),
-        }
-      );
+      const res = await entry.toastApi.post<AnyRecord>(`${invoicesPath(context)}/${id}/refunds`, {
+        amount,
+        ...(reason ? { reason } : {}),
+      });
       return res as RefundResponse;
     },
     onSuccess: (_data, { id }) => {

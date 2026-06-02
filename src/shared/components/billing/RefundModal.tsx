@@ -29,18 +29,10 @@ const toNumber = (value: string | number | null | undefined): number => {
   return Number.isFinite(n) ? n : 0;
 };
 
-const RefundModal: React.FC<RefundModalProps> = ({
-  invoice,
-  isOpen,
-  onClose,
-  onRefunded,
-}) => {
+const RefundModal: React.FC<RefundModalProps> = ({ invoice, isOpen, onClose, onRefunded }) => {
   const refund = useRefundInvoice();
 
-  const refundable = useMemo(
-    () => toNumber(invoice.amount_paid),
-    [invoice.amount_paid]
-  );
+  const refundable = useMemo(() => toNumber(invoice.amount_paid), [invoice.amount_paid]);
 
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
@@ -48,18 +40,13 @@ const RefundModal: React.FC<RefundModalProps> = ({
   const amountNum = amount.trim() === "" ? NaN : Number(amount);
   const amountError = (() => {
     if (amount.trim() === "") return "";
-    if (!Number.isFinite(amountNum) || amountNum <= 0)
-      return "Enter an amount greater than zero.";
-    if (amountNum > refundable)
-      return "Amount cannot exceed the amount paid.";
+    if (!Number.isFinite(amountNum) || amountNum <= 0) return "Enter an amount greater than zero.";
+    if (amountNum > refundable) return "Amount cannot exceed the amount paid.";
     return "";
   })();
 
   const canSubmit =
-    Number.isFinite(amountNum) &&
-    amountNum > 0 &&
-    amountNum <= refundable &&
-    !refund.isPending;
+    Number.isFinite(amountNum) && amountNum > 0 && amountNum <= refundable && !refund.isPending;
 
   const close = () => {
     setAmount("");

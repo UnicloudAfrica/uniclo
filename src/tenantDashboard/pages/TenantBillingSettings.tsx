@@ -89,9 +89,13 @@ const TenantBillingSettings: React.FC = () => {
   const { data: balanceData, isLoading: isLoadingBalance } = useTenantBillingBalance();
 
   // Currency comes from the API response; fall back to NGN while loading.
-  const balanceCurrency = (balanceData as (typeof balanceData & { currency?: string }) | undefined)?.currency ?? "NGN";
+  const balanceCurrency =
+    (balanceData as (typeof balanceData & { currency?: string }) | undefined)?.currency ?? "NGN";
   const walletFormatted = useFormatPrice(balanceData?.wallet_balance_cents ?? 0, balanceCurrency);
-  const outstandingFormatted = useFormatPrice(balanceData?.total_outstanding_cents ?? 0, balanceCurrency);
+  const outstandingFormatted = useFormatPrice(
+    balanceData?.total_outstanding_cents ?? 0,
+    balanceCurrency
+  );
   const { data: gatewayData, isLoading: isLoadingGateways } = useTenantPaymentGateways({
     enabled: Boolean(config?.allow_client_gateway),
   });

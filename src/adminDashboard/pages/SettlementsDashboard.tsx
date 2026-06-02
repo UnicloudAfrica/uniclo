@@ -53,10 +53,13 @@ const useSettlements = (params: Record<string, unknown>) => {
     queryKey: ["settlements", params],
     queryFn: async () => {
       const qs = new URLSearchParams(
-        Object.entries(params).reduce((acc, [k, v]) => {
-          if (v !== undefined && v !== null && v !== "") acc[k] = String(v);
-          return acc;
-        }, {} as Record<string, string>)
+        Object.entries(params).reduce(
+          (acc, [k, v]) => {
+            if (v !== undefined && v !== null && v !== "") acc[k] = String(v);
+            return acc;
+          },
+          {} as Record<string, string>
+        )
       ).toString();
       const path = qs ? `/settlements?${qs}` : "/settlements";
       const response = await adminApi.get<{ data: Settlement[] }>(path);
@@ -71,7 +74,7 @@ const useSettlementSummary = () => {
     queryFn: async () => {
       const response = await adminApi.get<Record<string, unknown>>("/settlements/summary");
       const record = response as Record<string, unknown>;
-      return ((record.data as SettlementSummary) ?? (record as unknown as SettlementSummary));
+      return (record.data as SettlementSummary) ?? (record as unknown as SettlementSummary);
     },
   });
 };
@@ -208,7 +211,8 @@ const SettlementsDashboard: React.FC = () => {
     if (filters.payer_type) params.append("payer_type", filters.payer_type);
 
     // Open export URL in new tab (will download CSV)
-    const baseUrl = ((adminApi as unknown as { defaults?: { baseURL?: string } }).defaults?.baseURL) || "";
+    const baseUrl =
+      (adminApi as unknown as { defaults?: { baseURL?: string } }).defaults?.baseURL || "";
     globalThis.window.open(`${baseUrl}/settlements/export?${params.toString()}`, "_blank");
   };
 

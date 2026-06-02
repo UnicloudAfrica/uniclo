@@ -128,9 +128,7 @@ describe("ClientBillingPage — pay invoice", () => {
     // Mutation called with the invoice id.
     await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith(7));
     // Customer is handed off to the hosted checkout URL.
-    await waitFor(() =>
-      expect(assign).toHaveBeenCalledWith("https://checkout.paystack.com/inv7")
-    );
+    await waitFor(() => expect(assign).toHaveBeenCalledWith("https://checkout.paystack.com/inv7"));
     // No error/info toast on the happy path.
     expect(toastError).not.toHaveBeenCalled();
     expect(toastInfo).not.toHaveBeenCalled();

@@ -11,9 +11,7 @@ import type { WalletTransaction } from "@/shared/hooks/resources/transactionHook
 
 // Mock the transaction hook (keep the real label/debit helpers).
 vi.mock("@/shared/hooks/resources/transactionHooks", async (importActual) => {
-  const actual = await importActual<
-    typeof import("@/shared/hooks/resources/transactionHooks")
-  >();
+  const actual = await importActual<typeof import("@/shared/hooks/resources/transactionHooks")>();
   return { ...actual, useFetchTransactions: vi.fn() };
 });
 

@@ -6,6 +6,12 @@ import {
   useDeleteProject,
   useBulkSyncProjectStatus,
 } from "@/hooks/adminHooks/projectHooks";
+import {
+  useArchiveProject,
+  useActivateProject,
+  useBulkArchiveProjects,
+  useBulkActivateProjects,
+} from "@/shared/hooks/resources/projectHooks";
 import ToastUtils from "@/utils/toastUtil";
 import { Project } from "@/types/project";
 import logger from "@/utils/logger";
@@ -48,6 +54,10 @@ const AdminProjects = () => {
 
   const deleteProjectMutation = useDeleteProject();
   const bulkSyncStatusMutation = useBulkSyncProjectStatus();
+  const archiveProjectMutation = useArchiveProject();
+  const activateProjectMutation = useActivateProject();
+  const bulkArchiveMutation = useBulkArchiveProjects();
+  const bulkActivateMutation = useBulkActivateProjects();
 
   // Extract projects array from response
   const typedResponse = projectsResponse as ProjectsResponse | undefined;
@@ -75,13 +85,25 @@ const AdminProjects = () => {
 
     // Single project operations
   };
-  const handleArchiveProject = async (_project: Project) => {
-    // TODO: Implement archive functionality when backend endpoint is ready
-    ToastUtils.info("Archive functionality coming soon");
+  const handleArchiveProject = async (project: Project) => {
+    try {
+      await archiveProjectMutation.mutateAsync(project.identifier);
+      ToastUtils.success(`Project "${project.name}" archived successfully`);
+      await refetch();
+    } catch (err: unknown) {
+      logger.error("Failed to archive project:", err);
+      ToastUtils.error(getErrorMessage(err, "Failed to archive project"));
+    }
   };
-  const handleActivateProject = async (_project: Project) => {
-    // TODO: Implement activate functionality when backend endpoint is ready
-    ToastUtils.info("Activate functionality coming soon");
+  const handleActivateProject = async (project: Project) => {
+    try {
+      await activateProjectMutation.mutateAsync(project.identifier);
+      ToastUtils.success(`Project "${project.name}" activated successfully`);
+      await refetch();
+    } catch (err: unknown) {
+      logger.error("Failed to activate project:", err);
+      ToastUtils.error(getErrorMessage(err, "Failed to activate project"));
+    }
   };
   const handleDeleteProject = async (project: Project) => {
     if (
@@ -103,10 +125,24 @@ const AdminProjects = () => {
     // Bulk operations
   };
   const handleBulkArchive = async (selectedIds: string[]) => {
-    ToastUtils.info(`Bulk archive for ${selectedIds.length} projects coming soon`);
+    try {
+      await bulkArchiveMutation.mutateAsync(selectedIds);
+      ToastUtils.success(`${selectedIds.length} project(s) archived successfully`);
+      await refetch();
+    } catch (err: unknown) {
+      logger.error("Failed to bulk archive projects:", err);
+      ToastUtils.error(getErrorMessage(err, "Failed to archive projects"));
+    }
   };
   const handleBulkActivate = async (selectedIds: string[]) => {
-    ToastUtils.info(`Bulk activate for ${selectedIds.length} projects coming soon`);
+    try {
+      await bulkActivateMutation.mutateAsync(selectedIds);
+      ToastUtils.success(`${selectedIds.length} project(s) activated successfully`);
+      await refetch();
+    } catch (err: unknown) {
+      logger.error("Failed to bulk activate projects:", err);
+      ToastUtils.error(getErrorMessage(err, "Failed to activate projects"));
+    }
   };
   const handleBulkDelete = async (selectedIds: string[]) => {
     if (

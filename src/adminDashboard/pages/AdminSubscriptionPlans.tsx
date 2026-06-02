@@ -16,8 +16,10 @@ import {
 } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
 import ModernStatsCard from "@/shared/components/ui/ModernStatsCard";
-import { ModernButton } from "@/shared/components/ui";
+import { ModernButton, ConfirmDialog } from "@/shared/components/ui";
 import { useFetchSubscriptionPlans, useDeleteSubscriptionPlan } from "@/hooks/subscriptionHooks";
+import SubscriptionPlanModal from "../components/SubscriptionPlanModal";
+import ToastUtils from "@/utils/toastUtil";
 
 // ═══════════════════════════════════════════════════════════════════
 // TYPES
@@ -198,13 +200,14 @@ const PlanCard: React.FC<{
 
 export default function AdminSubscriptionPlans() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [, setShowCreateModal] = useState(false);
-  const [, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
+  const [planToDelete, setPlanToDelete] = useState<SubscriptionPlan | null>(null);
 
   const { data: plansData, isLoading } = useFetchSubscriptionPlans();
-  const { mutate: deletePlan } = useDeleteSubscriptionPlan();
+  const { mutate: deletePlan, isPending: isDeleting } = useDeleteSubscriptionPlan();
 
-  const plans: SubscriptionPlan[] = (plansData as Record<string, unknown>)?.data || [];
+  const plans: SubscriptionPlan[] = (plansData?.data ?? []) as unknown as SubscriptionPlan[];
 
   // Filter plans
   const filteredPlans = plans.filter(
@@ -221,6 +224,11 @@ export default function AdminSubscriptionPlans() {
     withTrial: plans.filter((p: SubscriptionPlan) => p.trial_days > 0).length,
   };
 
+  const handleCreate = () => {
+    setSelectedPlan(null);
+    setShowCreateModal(true);
+  };
+
   const handleEdit = (plan: SubscriptionPlan) => {
     setSelectedPlan(plan);
     setShowCreateModal(true);
@@ -228,12 +236,25 @@ export default function AdminSubscriptionPlans() {
 
   const handleDelete = (plan: SubscriptionPlan) => {
     if ((plan.subscriptions_count || 0) > 0) {
-      alert("Cannot delete plan with active subscribers");
+      ToastUtils.error("Cannot delete plan with active subscribers", {
+        description: "Deactivate the plan instead so existing subscribers keep their billing.",
+      });
       return;
     }
-    if (globalThis.window.confirm(`Delete plan "${plan.name}"?`)) {
-      deletePlan(String(plan.id));
-    }
+    setPlanToDelete(plan);
+  };
+
+  const confirmDelete = () => {
+    if (!planToDelete) return;
+    deletePlan(String(planToDelete.id), {
+      onSuccess: () => {
+        ToastUtils.success("Plan deleted");
+        setPlanToDelete(null);
+      },
+      onError: () => {
+        ToastUtils.error("Could not delete plan");
+      },
+    });
   };
 
   const handleView = (plan: SubscriptionPlan) => {
@@ -247,10 +268,7 @@ export default function AdminSubscriptionPlans() {
         title="Subscription Plans"
         description="Create and manage billing plans for your customers"
         actions={
-          <ModernButton
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2"
-          >
+          <ModernButton onClick={handleCreate} className="flex items-center gap-2">
             <Plus size={16} />
             Create Plan
           </ModernButton>
@@ -318,7 +336,7 @@ export default function AdminSubscriptionPlans() {
               {searchQuery ? "Try a different search term" : "Create your first subscription plan"}
             </p>
             {!searchQuery && (
-              <ModernButton onClick={() => setShowCreateModal(true)}>
+              <ModernButton onClick={handleCreate}>
                 <Plus size={16} /> Create Plan
               </ModernButton>
             )}
@@ -338,7 +356,26 @@ export default function AdminSubscriptionPlans() {
         )}
       </AdminPageShell>
 
-      {/* TODO: Create/Edit Modal */}
+      <SubscriptionPlanModal
+        isOpen={showCreateModal}
+        plan={selectedPlan}
+        onClose={() => setShowCreateModal(false)}
+      />
+
+      <ConfirmDialog
+        isOpen={!!planToDelete}
+        title="Delete subscription plan?"
+        message={
+          planToDelete
+            ? `"${planToDelete.name}" will be permanently removed. This action cannot be undone.`
+            : ""
+        }
+        confirmLabel="Delete plan"
+        onConfirm={confirmDelete}
+        onCancel={() => setPlanToDelete(null)}
+        isLoading={isDeleting}
+        variant="danger"
+      />
     </>
   );
 }

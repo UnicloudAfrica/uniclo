@@ -12,6 +12,7 @@ import {
 import AdminPageShell from "../components/AdminPageShell";
 import { ModernButton } from "@/shared/components/ui";
 import adminApi from "../../index/admin/api";
+import ToastUtils from "@/utils/toastUtil";
 
 // Types
 interface Settlement {
@@ -193,10 +194,10 @@ const SettlementsDashboard: React.FC = () => {
     if (globalThis.window.confirm("Send payment reminder to the payer?")) {
       try {
         await sendReminder.mutateAsync(id);
-        alert("Reminder sent successfully!");
+        ToastUtils.success("Reminder sent successfully!");
       } catch (error: unknown) {
         const err = error as { response?: { data?: { error?: string } } };
-        alert(err.response?.data?.error || "Failed to send reminder");
+        ToastUtils.error(err.response?.data?.error || "Failed to send reminder");
       }
     }
   };

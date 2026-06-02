@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import AdminPageShell from "../components/AdminPageShell";
 import { ModernButton } from "@/shared/components/ui";
 import api from "../../lib/api";
+import ToastUtils from "@/utils/toastUtil";
 
 // Types
 interface IntegrationPayout {
@@ -258,7 +259,7 @@ const IntegrationPartnerPayoutsDashboard: React.FC = () => {
   const handleBulkApprove = async () => {
     const pendingIds = selected.filter((id) => payouts.find((p) => p.id === id)?.status === "pending");
     if (pendingIds.length === 0) {
-      alert("No pending payouts selected.");
+      ToastUtils.error("No pending payouts selected.");
       return;
     }
     if (!globalThis.window.confirm(`Approve ${pendingIds.length} payout(s)?`)) return;
@@ -275,7 +276,7 @@ const IntegrationPartnerPayoutsDashboard: React.FC = () => {
       (id) => payouts.find((p) => p.id === id)?.status === "approved"
     );
     if (approvedIds.length === 0) {
-      alert("No approved payouts selected.");
+      ToastUtils.error("No approved payouts selected.");
       return;
     }
     if (
@@ -294,7 +295,7 @@ const IntegrationPartnerPayoutsDashboard: React.FC = () => {
 
   const handleGenerate = async () => {
     if (!generateForm.period_start || !generateForm.period_end) {
-      alert("Please select a date range.");
+      ToastUtils.error("Please select a date range.");
       return;
     }
     try {

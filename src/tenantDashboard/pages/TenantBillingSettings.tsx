@@ -25,6 +25,7 @@ import {
   useDeletePaymentGateway,
   type Settlement,
 } from "@/hooks/useTenantBilling";
+import { useFormatPrice } from "@/hooks/useFormatPrice";
 
 const BILLING_MODEL_INFO = {
   direct: {
@@ -73,14 +74,6 @@ interface GatewayFormState {
 const toBillingModel = (value: string): BillingModel | null =>
   value in BILLING_MODEL_INFO ? (value as BillingModel) : null;
 
-const formatCurrency = (cents: number, currency = "NGN") => {
-  return new Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-  }).format(cents / 100);
-};
-
 const TenantBillingSettings: React.FC = () => {
   const [isGatewayModalOpen, setIsGatewayModalOpen] = useState(false);
   const [showSecretKey, setShowSecretKey] = useState(false);
@@ -94,6 +87,11 @@ const TenantBillingSettings: React.FC = () => {
 
   const { data: config, isLoading: isLoadingConfig } = useTenantBillingConfig();
   const { data: balanceData, isLoading: isLoadingBalance } = useTenantBillingBalance();
+
+  // Currency comes from the API response; fall back to NGN while loading.
+  const balanceCurrency = (balanceData as (typeof balanceData & { currency?: string }) | undefined)?.currency ?? "NGN";
+  const walletFormatted = useFormatPrice(balanceData?.wallet_balance_cents ?? 0, balanceCurrency);
+  const outstandingFormatted = useFormatPrice(balanceData?.total_outstanding_cents ?? 0, balanceCurrency);
   const { data: gatewayData, isLoading: isLoadingGateways } = useTenantPaymentGateways({
     enabled: Boolean(config?.allow_client_gateway),
   });
@@ -138,7 +136,7 @@ const TenantBillingSettings: React.FC = () => {
             <div>
               <p className="text-sm text-gray-500">Wallet Balance</p>
               <p className="text-2xl font-bold text-green-600 mt-1">
-                {isLoadingBalance ? "..." : formatCurrency(balanceData?.wallet_balance_cents || 0)}
+                {isLoadingBalance ? "..." : walletFormatted.formatted}
               </p>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
@@ -152,9 +150,7 @@ const TenantBillingSettings: React.FC = () => {
             <div>
               <p className="text-sm text-gray-500">Outstanding Balance</p>
               <p className="text-2xl font-bold text-red-600 mt-1">
-                {isLoadingBalance
-                  ? "..."
-                  : formatCurrency(balanceData?.total_outstanding_cents || 0)}
+                {isLoadingBalance ? "..." : outstandingFormatted.formatted}
               </p>
             </div>
             <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">

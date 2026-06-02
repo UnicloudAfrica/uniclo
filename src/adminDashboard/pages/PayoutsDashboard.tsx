@@ -13,6 +13,7 @@ import {
 import AdminPageShell from "../components/AdminPageShell";
 import { ModernButton } from "@/shared/components/ui";
 import adminApi from "../../index/admin/api";
+import ToastUtils from "@/utils/toastUtil";
 
 // Types
 interface Payout {
@@ -197,10 +198,10 @@ const PayoutsDashboard: React.FC = () => {
     ) {
       try {
         await processPayout.mutateAsync(id);
-        alert("Payout processed successfully!");
+        ToastUtils.success("Payout processed successfully!");
       } catch (error: unknown) {
         const err = error as { response?: { data?: { error?: string } } };
-        alert(err.response?.data?.error || "Failed to process payout");
+        ToastUtils.error(err.response?.data?.error || "Failed to process payout");
       }
     }
   };
@@ -209,17 +210,17 @@ const PayoutsDashboard: React.FC = () => {
     if (globalThis.window.confirm("Are you sure you want to cancel this payout?")) {
       try {
         await cancelPayout.mutateAsync(id);
-        alert("Payout cancelled");
+        ToastUtils.success("Payout cancelled");
       } catch (error: unknown) {
         const err = error as { response?: { data?: { error?: string } } };
-        alert(err.response?.data?.error || "Failed to cancel payout");
+        ToastUtils.error(err.response?.data?.error || "Failed to cancel payout");
       }
     }
   };
 
   const handleGeneratePayouts = async () => {
     if (!generateForm.period_start || !generateForm.period_end) {
-      alert("Please select a date range");
+      ToastUtils.error("Please select a date range");
       return;
     }
     try {
@@ -228,12 +229,12 @@ const PayoutsDashboard: React.FC = () => {
         period_end: generateForm.period_end,
         tenant_id: generateForm.tenant_id ? parseInt(generateForm.tenant_id) : undefined,
       });
-      alert((result as { message?: string }).message || "Payouts generated successfully!");
+      ToastUtils.success((result as { message?: string }).message || "Payouts generated successfully!");
       setShowGenerateModal(false);
       setGenerateForm({ period_start: "", period_end: "", tenant_id: "" });
     } catch (error: unknown) {
       const err = error as { response?: { data?: { error?: string } } };
-      alert(err.response?.data?.error || "Failed to generate payouts");
+      ToastUtils.error(err.response?.data?.error || "Failed to generate payouts");
     }
   };
 

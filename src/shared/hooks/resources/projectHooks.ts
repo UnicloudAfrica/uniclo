@@ -558,7 +558,7 @@ export const useArchiveProject = () => {
   });
 };
 
-/** Activate a project — tenant only */
+/** Activate a project — admin + tenant */
 export const useActivateProject = () => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
@@ -576,6 +576,52 @@ export const useActivateProject = () => {
     },
     onError: (error: unknown) => {
       logger.error("Error activating project:", error);
+    },
+  });
+};
+
+/** Bulk archive projects — admin only */
+export const useBulkArchiveProjects = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (identifiers: (string | number)[]) => {
+      return entry.toastApi.post<AnyRecord>(`${entry.urlPrefix}/projects/bulk-archive`, {
+        identifiers,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: projectExtendedKeys.all(context),
+      });
+    },
+    onError: (error: unknown) => {
+      logger.error("Error bulk archiving projects:", error);
+    },
+  });
+};
+
+/** Bulk activate projects — admin only */
+export const useBulkActivateProjects = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (identifiers: (string | number)[]) => {
+      return entry.toastApi.post<AnyRecord>(`${entry.urlPrefix}/projects/bulk-activate`, {
+        identifiers,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: projectExtendedKeys.all(context),
+      });
+    },
+    onError: (error: unknown) => {
+      logger.error("Error bulk activating projects:", error);
     },
   });
 };

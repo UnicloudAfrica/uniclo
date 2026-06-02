@@ -34,6 +34,8 @@ interface ImportImageModalProps {
   open: boolean;
   onClose: () => void;
   projectIdentifier: string;
+  /** The project's region slug (e.g. "lagos-1"). Used as target_region on import. */
+  region: string;
 }
 
 const FORMAT_OPTIONS = [
@@ -62,6 +64,7 @@ export default function ImportImageModal({
   open,
   onClose,
   projectIdentifier,
+  region,
 }: ImportImageModalProps) {
   const [tab, setTab] = useState("url");
   const [imageName, setImageName] = useState("");
@@ -93,7 +96,7 @@ export default function ImportImageModal({
         type: "import",
         source_url: sourceUrl,
         source_cloud: "url",
-        target_region: "lagos-1", // TODO: pull from project
+        target_region: region,
         image_name: imageName,
         guest_os: guestOs,
         firmware,
@@ -158,8 +161,24 @@ export default function ImportImageModal({
   });
 
   const tabs: TabItem[] = [
-    { id: "url", label: "Import from URL", icon: <LinkIcon className="h-3.5 w-3.5" /> },
-    { id: "upload", label: "Upload file", icon: <FileUp className="h-3.5 w-3.5" /> },
+    {
+      value: "url",
+      label: (
+        <span className="flex items-center gap-1.5">
+          <LinkIcon className="h-3.5 w-3.5" />
+          Import from URL
+        </span>
+      ),
+    },
+    {
+      value: "upload",
+      label: (
+        <span className="flex items-center gap-1.5">
+          <FileUp className="h-3.5 w-3.5" />
+          Upload file
+        </span>
+      ),
+    },
   ];
 
   const submitDisabled =
@@ -184,8 +203,6 @@ export default function ImportImageModal({
           the image is only on your machine.
         </InfoCallout>
 
-        <Tabs items={tabs} activeId={tab} onChange={setTab} />
-
         <ModernInput
           label="Image name"
           value={imageName}
@@ -198,74 +215,82 @@ export default function ImportImageModal({
           <ModernSelect
             label="Format"
             value={diskFormat}
-            onChange={setDiskFormat}
+            onChange={(e) => setDiskFormat(e.target.value)}
             options={FORMAT_OPTIONS}
           />
           <ModernSelect
             label="Guest OS"
             value={guestOs}
-            onChange={setGuestOs}
+            onChange={(e) => setGuestOs(e.target.value)}
             options={GUEST_OS_OPTIONS}
           />
           <ModernSelect
             label="Firmware"
             value={firmware}
-            onChange={setFirmware}
+            onChange={(e) => setFirmware(e.target.value)}
             options={FIRMWARE_OPTIONS}
           />
         </div>
 
-        {tab === "url" ? (
-          <ModernInput
-            label="Image URL"
-            value={sourceUrl}
-            onChange={(e) => setSourceUrl(e.target.value)}
-            placeholder="https://my-bucket.s3.amazonaws.com/server.qcow2"
-            type="url"
-            required
-          />
-        ) : (
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              File
-            </label>
-            <div
-              className="flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center hover:border-blue-400 hover:bg-blue-50/30 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-600"
-              onClick={() => fileInput.current?.click()}
-              onDrop={(e) => {
-                e.preventDefault();
-                if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
-              }}
-              onDragOver={(e) => e.preventDefault()}
-            >
-              <input
-                ref={fileInput}
-                type="file"
-                className="hidden"
-                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                accept=".qcow2,.raw,.vmdk,.vhd,.vhdx,.iso,.img"
+        <Tabs
+          items={tabs}
+          value={tab}
+          onChange={setTab}
+          ariaLabel="Image source"
+          renderPanel={(active) =>
+            active === "url" ? (
+              <ModernInput
+                label="Image URL"
+                value={sourceUrl}
+                onChange={(e) => setSourceUrl(e.target.value)}
+                placeholder="https://my-bucket.s3.amazonaws.com/server.qcow2"
+                type="url"
+                required
               />
-              <div>
-                <Upload className="mx-auto h-6 w-6 text-slate-400" />
-                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                  {file ? file.name : "Click to choose a file or drag it here"}
-                </p>
-                {file && (
-                  <p className="mt-1 text-xs text-slate-500">
-                    {(file.size / 1024 / 1024 / 1024).toFixed(2)} GB
-                  </p>
+            ) : (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  File
+                </label>
+                <div
+                  className="flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center hover:border-blue-400 hover:bg-blue-50/30 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-600"
+                  onClick={() => fileInput.current?.click()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+                  }}
+                  onDragOver={(e) => e.preventDefault()}
+                >
+                  <input
+                    ref={fileInput}
+                    type="file"
+                    className="hidden"
+                    onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                    accept=".qcow2,.raw,.vmdk,.vhd,.vhdx,.iso,.img"
+                  />
+                  <div>
+                    <Upload className="mx-auto h-6 w-6 text-slate-400" />
+                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                      {file ? file.name : "Click to choose a file or drag it here"}
+                    </p>
+                    {file && (
+                      <p className="mt-1 text-xs text-slate-500">
+                        {(file.size / 1024 / 1024 / 1024).toFixed(2)} GB
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {uploadPct !== null && (
+                  <div className="space-y-1">
+                    <ProgressBar value={uploadPct} label="Upload progress" />
+                    <p className="text-xs text-slate-500">{uploadPct}% uploaded</p>
+                  </div>
                 )}
               </div>
-            </div>
-
-            {uploadPct !== null && (
-              <div className="space-y-1">
-                <ProgressBar value={uploadPct} />
-                <p className="text-xs text-slate-500">{uploadPct}% uploaded</p>
-              </div>
-            )}
-          </div>
-        )}
+            )
+          }
+        />
 
         <div className="flex justify-end gap-2">
           <ModernButton variant="ghost" onClick={handleClose}>

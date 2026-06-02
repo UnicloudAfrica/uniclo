@@ -1,9 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Bell,
+  Check,
   Cloud,
   Download,
   Loader2,
+  Mail,
+  Monitor,
   Palette,
   RefreshCw,
   Save,
@@ -12,10 +15,12 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
 import { ModernCard, ModernButton, ResourceHero } from "../ui";
 import ToastUtils from "@/utils/toastUtil";
 import { useSetupTwoFactor, useEnableTwoFactor, useDisableTwoFactor } from "@/hooks/authHooks";
 import { useContextAwareSettings } from "@/hooks/useContextAwareSettings";
+import { detectApiContext } from "@/hooks/settingsHooks";
 import config from "../../../config";
 import { getTabsForContext } from "../../constants/profileTabs";
 import type { FieldConfig, GroupConfig, TabConfig } from "@/shared/types/settings";
@@ -73,6 +78,220 @@ interface TwoFactorModalState {
   qrCodeUrl: string;
   secret: string;
 }
+
+const sanitizeOtp = (value: string) => value.replace(/\D/g, "").slice(0, 6);
+
+const getErrorText = (error: unknown, fallback: string) =>
+  error instanceof Error && error.message ? error.message : fallback;
+
+/**
+ * Self-service email change for the signed-in user.
+ *
+ * Two-step OTP flow (mirrors the codebase's verify-everywhere pattern):
+ *   1. POST profile/email           { email, current_password } -> sends a code to the new address
+ *   2. POST profile/email/verify    { otp/code/google2fa_code } -> commits the change
+ *
+ * NOTE: no logged-in email-change endpoint shipped at time of writing — these
+ * paths follow the existing `profile/password` convention used by
+ * useContextAwareSettings.useUpdatePassword and call the same context-aware
+ * client via detectApiContext(). Adjust the two paths if the API differs.
+ */
+export const ChangeEmailPanel: React.FC = () => {
+  const { api } = detectApiContext();
+  const [step, setStep] = useState<"request" | "verify">("request");
+  const [newEmail, setNewEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [otp, setOtp] = useState("");
+
+  const requestChange = useMutation({
+    mutationFn: (payload: { email: string; current_password: string }) =>
+      api("POST", "profile/email", payload),
+  });
+
+  const verifyChange = useMutation({
+    mutationFn: (code: string) =>
+      api("POST", "profile/email/verify", {
+        otp: code,
+        code,
+        google2fa_code: code,
+      }),
+  });
+
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail.trim());
+
+  const resetPanel = () => {
+    setStep("request");
+    setNewEmail("");
+    setCurrentPassword("");
+    setOtp("");
+  };
+
+  const handleRequest = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (requestChange.isPending) return;
+    if (!isEmailValid) {
+      ToastUtils.warning("Enter a valid email address.");
+      return;
+    }
+    if (!currentPassword) {
+      ToastUtils.warning("Enter your current password to confirm this change.");
+      return;
+    }
+    try {
+      await requestChange.mutateAsync({
+        email: newEmail.trim(),
+        current_password: currentPassword,
+      });
+      ToastUtils.success("Verification code sent to your new email address.");
+      setStep("verify");
+      setOtp("");
+    } catch (error) {
+      ToastUtils.error(getErrorText(error, "Unable to start the email change. Please try again."));
+    }
+  };
+
+  const handleVerify = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (verifyChange.isPending) return;
+    const sanitized = sanitizeOtp(otp);
+    if (sanitized.length !== 6) {
+      ToastUtils.warning("Enter the 6-digit code sent to your new email.");
+      return;
+    }
+    try {
+      await verifyChange.mutateAsync(sanitized);
+      ToastUtils.success("Email address updated.");
+      resetPanel();
+    } catch (error) {
+      ToastUtils.error(getErrorText(error, "We could not verify that code. Please try again."));
+    }
+  };
+
+  return (
+    <ModernCard className="space-y-6 border border-slate-200/80 bg-white/95 shadow-sm" padding="lg">
+      <div className="space-y-1">
+        <h3 className="text-base font-semibold text-slate-900">Change Email</h3>
+        <p className="text-sm text-slate-500">
+          Update the email address associated with this account. We will send a verification code to
+          the new address before it takes effect.
+        </p>
+      </div>
+
+      {step === "request" ? (
+        <form onSubmit={handleRequest} className="space-y-4 max-w-lg">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">New email address</label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                placeholder="mail@company.com"
+                autoComplete="email"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Current password</label>
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+              placeholder="••••••••"
+              autoComplete="current-password"
+            />
+          </div>
+
+          <div className="pt-2">
+            <ModernButton
+              type="submit"
+              disabled={!isEmailValid || !currentPassword || requestChange.isPending}
+              isLoading={requestChange.isPending}
+              leftIcon={<Mail size={16} />}
+            >
+              {requestChange.isPending ? "Sending code..." : "Send verification code"}
+            </ModernButton>
+          </div>
+        </form>
+      ) : (
+        <form onSubmit={handleVerify} className="space-y-4 max-w-lg">
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-4 text-sm text-slate-600">
+            Enter the 6-digit code sent to{" "}
+            <span className="font-medium text-slate-800">{newEmail.trim()}</span> to confirm the
+            change.
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Verification code</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={otp}
+              onChange={(e) => setOtp(sanitizeOtp(e.target.value))}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm tracking-[0.3em]"
+              placeholder="Enter 6-digit code"
+            />
+          </div>
+          <div className="flex flex-wrap gap-2 pt-2">
+            <ModernButton
+              type="submit"
+              disabled={sanitizeOtp(otp).length !== 6 || verifyChange.isPending}
+              isLoading={verifyChange.isPending}
+              leftIcon={<Check size={16} />}
+            >
+              {verifyChange.isPending ? "Verifying..." : "Verify & update email"}
+            </ModernButton>
+            <ModernButton
+              type="button"
+              variant="outline"
+              onClick={resetPanel}
+              disabled={verifyChange.isPending}
+            >
+              Cancel
+            </ModernButton>
+          </div>
+        </form>
+      )}
+    </ModernCard>
+  );
+};
+
+/**
+ * Active sessions list with per-device revoke.
+ *
+ * NOTE: no active-sessions endpoint/hook exists in the frontend or backend
+ * routes at time of writing, so this renders a disabled "coming soon" state.
+ * When the API ships (suggested: GET profile/sessions + DELETE
+ * profile/sessions/{id}), wire it through detectApiContext() like ChangeEmailPanel.
+ */
+const ActiveSessionsPanel: React.FC = () => (
+  <ModernCard className="space-y-6 border border-slate-200/80 bg-white/95 shadow-sm" padding="lg">
+    <div className="space-y-1">
+      <h3 className="text-base font-semibold text-slate-900">Active Sessions</h3>
+      <p className="text-sm text-slate-500">
+        Review the devices currently signed in to your account and revoke any you don&apos;t
+        recognise.
+      </p>
+    </div>
+
+    <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-8 text-center">
+      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-200 text-slate-500">
+        <Monitor className="h-5 w-5" />
+      </span>
+      <p className="text-sm font-semibold text-slate-700">Session management is coming soon</p>
+      <p className="max-w-md text-xs text-slate-500">
+        You&apos;ll soon be able to see every active sign-in and sign out individual devices from
+        here.
+      </p>
+      <ModernButton variant="outline" size="sm" disabled>
+        Revoke all other sessions
+      </ModernButton>
+    </div>
+  </ModernCard>
+);
 
 const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context }) => {
   const [activeTab, setActiveTab] = useState(getTabsForContext(context)[0]?.id || "profile");
@@ -770,6 +989,7 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
                         ) : activeTabConfig.id === "security" ? (
                           <div className="space-y-6">
                             <SecurityPasswordPanel />
+                            <ChangeEmailPanel />
                             <SecurityTwoFactorPanel
                               enabled={twoFactorEnabled}
                               onEnable={startEnableTwoFactor}
@@ -777,6 +997,7 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
                               isBusy={isTwoFactorProcessing}
                               isFetching={isFetchingTwoFactor}
                             />
+                            <ActiveSessionsPanel />
                           </div>
                         ) : null}
 

@@ -14,6 +14,7 @@ import {
   Map,
   MapPin,
   Calculator,
+  Mail,
   FileText,
   Settings,
   HelpCircle,
@@ -60,6 +61,8 @@ import {
   Flame,
   Rocket,
   GitBranch,
+  Ticket,
+  Bell,
   Orbit as OrbitIcon,
 } from "lucide-react";
 
@@ -147,6 +150,13 @@ const COMPUTE_STORAGE_ITEMS: RoleAwareItem[] = [
     icon: Activity,
     path: "/monitoring",
     roles: ["admin", "tenant", "client"],
+    requiredPermission: "instances.view",
+  },
+  {
+    label: "Logs",
+    icon: FileText,
+    path: "/logs",
+    roles: ["client"],
     requiredPermission: "instances.view",
   },
   {
@@ -279,6 +289,13 @@ const RESILIENCE_ITEMS: RoleAwareItem[] = [
     icon: Calculator,
     path: `/${BRANDING.resilienceSlug}/calculator`,
     roles: ["admin", "tenant", "client"],
+  },
+  {
+    label: "Move My Email",
+    icon: Mail,
+    path: "/move-my-email",
+    roles: ["client"],
+    requiredPermission: "migrations.view",
   },
   // ── Bucket sync (was "Object Storage" top-level) ──────────────────────────
   {
@@ -681,6 +698,20 @@ const BILLING_ITEMS_TENANT: RoleAwareItem[] = [
     requiredPermission: "billing.manage",
   },
   {
+    label: "Coupons",
+    icon: Ticket,
+    path: "/dashboard/coupons",
+    roles: ["tenant"],
+    requiredPermission: "billing.manage",
+  },
+  {
+    label: "Dunning",
+    icon: Bell,
+    path: "/dashboard/dunning",
+    roles: ["tenant"],
+    requiredPermission: "billing.manage",
+  },
+  {
     label: "Payment History",
     icon: CreditCard,
     path: "/dashboard/payment-history",
@@ -726,9 +757,23 @@ const BILLING_ITEMS_CLIENT: RoleAwareItem[] = [
     requiredPermission: "billing.view",
   },
   {
+    label: "Payment Methods",
+    icon: CreditCard,
+    path: "/client-dashboard/payment-methods",
+    roles: ["client"],
+    requiredPermission: "billing.view",
+  },
+  {
     label: "Invoices",
     icon: Receipt,
     path: "/client-dashboard/invoices",
+    roles: ["client"],
+    requiredPermission: "billing.view",
+  },
+  {
+    label: "Buy Domain",
+    icon: Globe,
+    path: "/client-dashboard/domains",
     roles: ["client"],
     requiredPermission: "billing.view",
   },

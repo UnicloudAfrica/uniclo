@@ -24,6 +24,7 @@ const ClientPricingCalculator = lazy(() => import("../clientDashboard/pages/Clie
 const ClientDomainPurchase = lazy(() => import("../clientDashboard/pages/ClientDomainPurchase"));
 const ClientLogViewer = lazy(() => import("../clientDashboard/pages/ClientLogViewer"));
 const ClientPaymentHistory = lazy(() => import("../clientDashboard/pages/ClientTransaction"));
+const ClientPaymentMethods = lazy(() => import("../clientDashboard/pages/ClientPaymentMethods"));
 const ClientSettings = lazy(() => import("../clientDashboard/pages/ClientAccountSettings"));
 const ClientSupport = lazy(() => import("../clientDashboard/pages/ClientSupport"));
 const ClientBillingPage = lazy(() => import("../clientDashboard/pages/ClientBillingPage"));
@@ -60,6 +61,7 @@ const ClientMigrationWizard = lazy(() => import("../clientDashboard/pages/Client
 const ClientBatchMigrations = lazy(() => import("../clientDashboard/pages/ClientBatchMigrations"));
 const ClientBatchMigrationWizard = lazy(() => import("../clientDashboard/pages/ClientBatchMigrationWizard"));
 const ClientBatchMigrationDetail = lazy(() => import("../clientDashboard/pages/ClientBatchMigrationDetail"));
+const ClientMoveMyEmail = lazy(() => import("../clientDashboard/pages/ClientMoveMyEmail"));
 const ClientMigrationRequests = lazy(() => import("../clientDashboard/pages/ClientMigrationRequests"));
 const ClientMigrationRequestDetail = lazy(() => import("../clientDashboard/pages/ClientMigrationRequestDetail"));
 const ClientImageRequests = lazy(() => import("../clientDashboard/pages/ClientImageRequests"));
@@ -152,6 +154,7 @@ const ClientRoutes = (): JSX.Element => (
     <Route path="/client-dashboard/batch-migrations" element={<ClientBatchMigrations />} />
     <Route path="/client-dashboard/batch-migrations/new" element={<ClientBatchMigrationWizard />} />
     <Route path="/client-dashboard/batch-migrations/:identifier" element={<ClientBatchMigrationDetail />} />
+    <Route path="/client-dashboard/move-my-email" element={<ClientMoveMyEmail />} />
     <Route path="/client-dashboard/migration-requests" element={<ClientMigrationRequests />} />
     <Route path="/client-dashboard/migration-requests/:identifier" element={<ClientMigrationRequestDetail />} />
     <Route path="/client-dashboard/image-requests" element={<ClientImageRequests />} />
@@ -232,6 +235,7 @@ const ClientRoutes = (): JSX.Element => (
     <Route path="/client-dashboard/developer/*" element={<ClientDeveloperPortal />} />
     <Route path="/client-dashboard/orders-payments" element={<ClientPaymentHistory />} />
     <Route path="/client-dashboard/billing" element={<ClientBillingPage />} />
+    <Route path="/client-dashboard/payment-methods" element={<ClientPaymentMethods />} />
     <Route path="/client-dashboard/account-settings" element={<ClientSettings />} />
     <Route path="/client-dashboard/team" element={<ClientTeam />} />
     <Route path="/client-dashboard/flow" element={<ClientFlow />} />

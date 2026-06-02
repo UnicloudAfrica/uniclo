@@ -74,6 +74,8 @@ import TenantDatabaseDetail from "../dashboard/pages/TenantDatabaseDetail";
 const TenantDiscountManager = lazy(() => import("../tenantDashboard/pages/TenantDiscountManager"));
 const TenantPayoutsPage = lazy(() => import("../tenantDashboard/pages/TenantPayoutsPage"));
 const TenantBillingSettings = lazy(() => import("../tenantDashboard/pages/TenantBillingSettings"));
+const TenantCoupons = lazy(() => import("../tenantDashboard/pages/TenantCoupons"));
+const TenantDunningSettings = lazy(() => import("../tenantDashboard/pages/TenantDunningSettings"));
 const TenantPocTrials = lazy(() => import("../tenantDashboard/pages/TenantPocTrials"));
 import TenantProtection from "../dashboard/pages/TenantProtection";
 import TenantMigrations from "../dashboard/pages/TenantMigrations";
@@ -329,6 +331,8 @@ const TenantRoutes = (): JSX.Element => (
         <Route path="/dashboard/payment-history" element={<PaymentHistory />} />
         <Route path="/dashboard/tax-configurations" element={<DashboardTaxConfigurations />} />
         <Route path="/dashboard/discounts" element={<TenantDiscountManager />} />
+        <Route path="/dashboard/coupons" element={<TenantCoupons />} />
+        <Route path="/dashboard/dunning" element={<TenantDunningSettings />} />
         <Route path="/dashboard/payouts" element={<TenantPayoutsPage />} />
         <Route path="/dashboard/billing" element={<TenantBillingSettings />} />
         <Route path="/dashboard/poc-trials" element={<TenantPocTrials />} />

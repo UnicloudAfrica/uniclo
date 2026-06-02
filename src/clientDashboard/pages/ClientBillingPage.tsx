@@ -20,7 +20,33 @@ import {
   formatCurrency,
 } from "@/hooks/useClientInvoices";
 import { PriceLabel } from "@/shared/components/ui/PriceLabel";
+import PaymentModal from "@/shared/components/ui/PaymentModal";
+import ToastUtils from "@/utils/toastUtil";
 import logger from "@/utils/logger";
+
+/**
+ * Shape returned by the pay-invoice endpoint when the
+ * `invoice_generic_payment` feature flag is ON. Written by
+ * `ClientInvoiceController::pay` — it initialises a Paystack hosted
+ * checkout and hands back the `authorization_url` to redirect to.
+ * The hook's declared return type predates this capability, so we
+ * read these fields off the result via this narrower view.
+ */
+type PayInvoiceResult = {
+  authorization_url?: string;
+};
+
+/**
+ * The flag-off branch responds 501 with a neutral, customer-safe
+ * `message` ("Generic invoice payment is not yet available…"). The
+ * shared API client rethrows that message verbatim as an Error, so we
+ * detect the feature-off case by that phrase to show an informative
+ * (not alarming) toast.
+ */
+const isFeatureOffError = (error: unknown): boolean => {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return /not yet available/i.test(message);
+};
 
 /**
  * Build a pre-baked `PriceDTO` envelope from a legacy (amount, currency)
@@ -161,6 +187,7 @@ const InvoiceRow: React.FC<{
 const ClientBillingPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [payingInvoice, setPayingInvoice] = useState<Invoice | null>(null);
 
   const {
     data: invoicesData,
@@ -176,16 +203,26 @@ const ClientBillingPage: React.FC = () => {
   const payInvoice = usePayInvoice();
 
   const handlePayInvoice = async (invoiceId: number) => {
+    if (payInvoice.isPending) return;
+    const invoice = invoices.find((entry: Invoice) => entry.id === invoiceId) ?? null;
+    setPayingInvoice(invoice);
     try {
       const result = await payInvoice.mutateAsync(invoiceId);
-      // Handle payment initialization - could redirect to payment gateway
-      logger.log("Payment initialized:", result);
-      // TODO: Integrate with payment gateway (Paystack/Stripe)
-      alert(
-        `Payment of ${formatCurrency(result.data.amount, result.data.currency)} initiated. ${result.data.message}`
-      );
+      const { authorization_url } = result.data as PayInvoiceResult;
+      if (authorization_url) {
+        // Hand off to Paystack's hosted checkout. Payment completes
+        // there; we refetch on return when the customer lands back.
+        globalThis.window.location.assign(authorization_url);
+        return;
+      }
+      setPayingInvoice(null);
+      ToastUtils.error("Could not start payment. Please try again.");
     } catch (error) {
+      setPayingInvoice(null);
       logger.error("Payment failed:", error);
+      if (isFeatureOffError(error)) {
+        ToastUtils.info("Invoice payment isn't available yet. Please try again later.");
+      }
     }
   };
 
@@ -314,6 +351,23 @@ const ClientBillingPage: React.FC = () => {
             </button>
           </div>
         </div>
+      )}
+
+      {payingInvoice && (
+        <PaymentModal
+          isOpen={true}
+          onClose={() => setPayingInvoice(null)}
+          mode="modal"
+          amount={payingInvoice.amount_due}
+          currency={payingInvoice.currency}
+          email={payingInvoice.owner_email}
+          transactionReference={payingInvoice.invoice_number}
+          onPaymentComplete={() => {
+            setPayingInvoice(null);
+            refetch();
+            ToastUtils.success("Payment received. Your invoice is being updated.");
+          }}
+        />
       )}
     </ClientPageShell>
   );

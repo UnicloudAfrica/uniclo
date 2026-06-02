@@ -141,8 +141,12 @@ describe("AdminMonitoringPricing — tier list", () => {
     expect(screen.getByText("Professional")).toBeInTheDocument();
     expect(screen.getByText("Enterprise")).toBeInTheDocument();
 
-    // retention day labels — find at least the unique one
+    // retention rendered from the numeric `retention_days` field the BE
+    // now returns — the "undefined days" regression must not reappear.
+    expect(screen.getByText(/7 days/i)).toBeInTheDocument();
+    expect(screen.getByText(/30 days/i)).toBeInTheDocument();
     expect(screen.getByText(/90 days/i)).toBeInTheDocument();
+    expect(screen.queryByText(/undefined/i)).toBeNull();
 
     // feature chips — "alerts" only appears in pro + enterprise
     expect(screen.getAllByText(/alerts/i).length).toBeGreaterThan(0);

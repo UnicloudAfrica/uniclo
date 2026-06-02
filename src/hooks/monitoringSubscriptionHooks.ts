@@ -18,6 +18,10 @@ export interface MonitoringTier {
   name: string;
   description: string;
   price_per_host: number;
+  // Numeric metric-retention window in days, written by
+  // `MonitoringSubscriptionController@tiers` from
+  // `MonitoringPricingSeeder::RETENTION_DAYS`. Null for unknown/future tiers.
+  retention_days: number | null;
   pricing_tiers?: { min_units: number; max_units: number | null; price_usd: number; label: string }[];
   features: string[];
 }

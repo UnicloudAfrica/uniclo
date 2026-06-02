@@ -131,6 +131,7 @@ beforeEach(() => {
         name: "Basic",
         description: "",
         price_per_host: 0,
+        retention_days: 1,
         features: ["Free"],
       },
       {
@@ -138,6 +139,7 @@ beforeEach(() => {
         name: "Standard",
         description: "",
         price_per_host: 5,
+        retention_days: 30,
         features: ["30-day retention"],
       },
       {
@@ -145,6 +147,7 @@ beforeEach(() => {
         name: "Professional",
         description: "",
         price_per_host: 10,
+        retention_days: 90,
         features: ["90-day retention"],
       },
     ],
@@ -253,25 +256,27 @@ describe("MonitoringDashboard — cancel-subscription re-entrancy guard", () => 
   });
 });
 
-describe("retentionLabelFromTier — data-driven retention label", () => {
-  // Feature strings below mirror the literals emitted by the backend
-  // `MonitoringSubscriptionController@tiers` (the producer).
+describe("retentionLabelFromTier — numeric retention_days label", () => {
+  // retention_days values mirror `MonitoringPricingSeeder::RETENTION_DAYS`
+  // (the backend producer): basic 1 / standard 30 / professional 90 /
+  // enterprise 365.
   it.each([
-    [["CPU/RAM/disk/network metrics", "24-hour retention"], "24h"],
-    [["Everything in Basic", "30-day retention"], "30d"],
-    [["Everything in Standard", "90-day retention"], "90d"],
-    [["Everything in Professional", "1-year retention"], "1yr"],
-  ])("parses %j → %s", (features, expected) => {
-    expect(retentionLabelFromTier({ features })).toBe(expected);
+    [1, "1 day"],
+    [30, "30 days"],
+    [90, "90 days"],
+    [365, "1 year"],
+  ])("renders retention_days %i → %s", (retention_days, expected) => {
+    expect(retentionLabelFromTier({ retention_days })).toBe(expected);
   });
 
-  it("falls back to an em dash when no retention feature is present", () => {
-    expect(retentionLabelFromTier({ features: ["Free"] })).toBe("—");
+  it("falls back to an em dash when retention_days is absent", () => {
+    expect(retentionLabelFromTier({})).toBe("—");
+    expect(retentionLabelFromTier({ retention_days: null })).toBe("—");
   });
 
   it("falls back to an em dash for an unknown / missing tier", () => {
     expect(retentionLabelFromTier(undefined)).toBe("—");
-    expect(retentionLabelFromTier({})).toBe("—");
+    expect(retentionLabelFromTier({ retention_days: 0 })).toBe("—");
   });
 });
 

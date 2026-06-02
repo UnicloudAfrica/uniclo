@@ -40,26 +40,24 @@ interface MonitoringDashboardProps {
 }
 
 /**
- * Derive the data-retention label for a tier from its feature list, rather
- * than hardcoding a tier→value map. The tiers API (`/monitoring/tiers`,
- * written by `MonitoringSubscriptionController@tiers`, consumed via
- * `useFetchMonitoringTiers`) carries no numeric `retention_days` field —
- * retention is only surfaced as a feature string such as "30-day retention"
- * / "24-hour retention" / "1-year retention". We parse that into a compact
- * label ("30d" / "24h" / "1yr"). Returns "—" when no retention feature is
- * present (e.g. an unknown/future tier, or a tier with no matching record).
+ * Render the data-retention label for a tier from the numeric `retention_days`
+ * field the tiers API now returns (`/monitoring/tiers`, written by
+ * `MonitoringSubscriptionController@tiers`, consumed via
+ * `useFetchMonitoringTiers`). The backend is the single source of truth —
+ * `retention_days` is sourced from `MonitoringPricingSeeder::RETENTION_DAYS`
+ * (basic 1 / standard 30 / professional 90 / enterprise 365), so we no longer
+ * parse free text out of the feature list. Returns "—" when the tier carries
+ * no numeric retention (an unknown/future tier, or no matching record).
  */
 export const retentionLabelFromTier = (
-  tier: { features?: string[] } | undefined
+  tier: { retention_days?: number | null } | undefined
 ): string => {
-  const match = (tier?.features ?? [])
-    .map((f) => /(\d+)[-\s]?(hour|day|year)/i.exec(f))
-    .find((m): m is RegExpExecArray => m !== null);
-  if (!match) return "—";
-
-  const unit = match[2].toLowerCase();
-  const suffix = unit === "hour" ? "h" : unit === "day" ? "d" : "yr";
-  return `${match[1]}${suffix}`;
+  const days = tier?.retention_days;
+  if (typeof days !== "number" || !Number.isFinite(days) || days <= 0) {
+    return "—";
+  }
+  if (days === 365) return "1 year";
+  return `${days} day${days === 1 ? "" : "s"}`;
 };
 
 const MonitoringDashboard = ({ context: _context }: MonitoringDashboardProps) => {

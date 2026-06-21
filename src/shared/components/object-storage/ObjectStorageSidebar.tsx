@@ -232,6 +232,10 @@ SECRET_ACCESS_KEY=${secretKey || ""}
 
   const [showExtendModal, setShowExtendModal] = useState(false);
 
+  // Guard divide-by-zero: a freshly-provisioned account has quotaGb === 0, so
+  // usedGb / quotaGb would be NaN and the "over 80%" branch would render wrong.
+  const overThreshold = quotaGb > 0 && usedGb / quotaGb > 0.8;
+
   const renderBucketList = () => {
     if (buckets.length === 0) {
       return (
@@ -289,9 +293,7 @@ SECRET_ACCESS_KEY=${secretKey || ""}
     <div className="h-full overflow-y-auto bg-white">
       {/* Storage Overview Section */}
       <div className="p-4 border-b border-gray-200">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-4">
-          Storage Overview
-        </h3>
+        <h3 className="t-eyebrow mb-4">Storage Overview</h3>
 
         {/* 3D Gauge */}
         <div className="flex justify-center mb-4">
@@ -300,37 +302,62 @@ SECRET_ACCESS_KEY=${secretKey || ""}
 
         {/* Quick Stats */}
         <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="bg-gray-50 rounded-lg p-3 text-center">
-            <div className="flex items-center justify-center gap-1.5 text-gray-500 mb-1">
+          <div className="rounded-lg p-3 text-center" style={{ background: "var(--theme-color-10)" }}>
+            <div
+              className="flex items-center justify-center gap-1.5 mb-1"
+              style={{ color: "rgb(var(--theme-color-600))" }}
+            >
               <HardDrive className="h-3.5 w-3.5" />
               <span className="text-xs">Objects</span>
             </div>
-            <p className="text-lg font-bold text-gray-900">{objectCount}</p>
+            <p
+              className="text-lg font-bold"
+              style={{
+                color:
+                  objectCount === 0 && buckets.length === 0
+                    ? "var(--theme-muted-color)"
+                    : "var(--theme-heading-color)",
+              }}
+            >
+              {objectCount}
+            </p>
           </div>
-          <div className="bg-gray-50 rounded-lg p-3 text-center">
-            <div className="flex items-center justify-center gap-1.5 text-gray-500 mb-1">
+          <div className="rounded-lg p-3 text-center" style={{ background: "var(--theme-color-10)" }}>
+            <div
+              className="flex items-center justify-center gap-1.5 mb-1"
+              style={{ color: "rgb(var(--theme-color-600))" }}
+            >
               <BarChart3 className="h-3.5 w-3.5" />
               <span className="text-xs">Silos</span>
             </div>
-            <p className="text-lg font-bold text-gray-900">{buckets.length}</p>
+            <p
+              className="text-lg font-bold"
+              style={{
+                color: buckets.length === 0 ? "var(--theme-muted-color)" : "var(--theme-heading-color)",
+              }}
+            >
+              {buckets.length}
+            </p>
           </div>
         </div>
 
         {/* Region & Created */}
         <div className="mt-4 space-y-2 text-sm">
           <div className="flex items-center justify-between">
-            <span className="text-gray-500 flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5" style={{ color: "var(--theme-muted-color)" }}>
               <Globe className="h-3.5 w-3.5" />
               Region
             </span>
-            <span className="font-medium text-gray-700">{account?.region || "—"}</span>
+            <span className="font-medium" style={{ color: "var(--theme-heading-color)" }}>
+              {account?.region || "—"}
+            </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-gray-500 flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5" style={{ color: "var(--theme-muted-color)" }}>
               <Calendar className="h-3.5 w-3.5" />
               Created
             </span>
-            <span className="font-medium text-gray-700">
+            <span className="font-medium" style={{ color: "var(--theme-heading-color)" }}>
               {account?.created_at ? new Date(account.created_at).toLocaleDateString() : "—"}
             </span>
           </div>
@@ -340,18 +367,18 @@ SECRET_ACCESS_KEY=${secretKey || ""}
         <button
           onClick={() => setShowExtendModal(true)}
           className={`w-full mt-4 flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-            usedGb / quotaGb > 0.8
-              ? "bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:from-primary-600 hover:to-primary-700 shadow-sm"
-              : "border border-primary-200 text-primary-600 hover:bg-primary-50"
+            overThreshold
+              ? "bg-[var(--theme-color)] text-white hover:opacity-90 shadow-sm"
+              : "border border-[rgb(var(--theme-color-200))] text-[rgb(var(--theme-color-600))] hover:bg-[rgb(var(--theme-color-50))]"
           }`}
         >
           <CreditCard className="h-4 w-4" />
-          {usedGb / quotaGb > 0.8 ? "Extend Storage" : "Add More Storage"}
+          {overThreshold ? "Extend Storage" : "Add More Storage"}
         </button>
       </div>
 
       {/* Credentials Section (Collapsible) */}
-      <div className="border-b border-gray-200">
+      <div id="s3-credentials-section" className="border-b border-gray-200">
         <button
           onClick={() => setShowCredentials(!showCredentials)}
           className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"

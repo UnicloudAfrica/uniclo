@@ -195,6 +195,20 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
     }
   };
 
+  const handleShowCredentials = () => {
+    document
+      .getElementById("s3-credentials-section")
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  // Mirror the backend's gate: bucket creation is blocked until S3 access keys
+  // exist, so the account is "ready" once at least one key is present.
+  const accountReady = Boolean(
+    (Array.isArray(account?.accessKeys) && account.accessKeys.length) ||
+      (Array.isArray(account?.access_keys) && account.access_keys.length),
+  );
+  const provisioningFailed = account?.status === "provision_failed";
+
   const handleDeleteBucket = async (bucket: Bucket) => {
     if (
       !globalThis.window.confirm(
@@ -426,6 +440,12 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
               bucketName={selectedBucket}
               buckets={buckets}
               onSelectBucket={setSelectedBucket}
+              onCreateBucket={handleCreateBucket}
+              onAddStorage={() => setShowExtendModal(true)}
+              onShowCredentials={handleShowCredentials}
+              accountReady={accountReady}
+              onRefresh={handleRefresh}
+              provisioningFailed={provisioningFailed}
             />
           ) : activeTab === "analytics" ? (
             <ObjectStorageAnalytics

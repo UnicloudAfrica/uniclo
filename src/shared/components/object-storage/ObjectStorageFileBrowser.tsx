@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Folder,
   File as FileIcon,
@@ -20,10 +20,13 @@ import {
   Grid3X3,
   List,
   Database,
-  Rocket,
-  Zap,
-  Shield,
-  ArrowRight,
+  Boxes,
+  Plus,
+  KeyRound,
+  HardDriveDownload,
+  BookOpen,
+  AlertTriangle,
+  type LucideIcon,
 } from "lucide-react";
 import objectStorageApi from "@/services/objectStorageApi";
 import DropzoneUploader from "./DropzoneUploader";
@@ -47,6 +50,25 @@ interface ObjectStorageFileBrowserProps {
   bucketName: string | null;
   buckets: Bucket[];
   onSelectBucket?: (name: string) => void;
+  /** First-run focal CTA — create a silo inline from the welcome state. */
+  onCreateBucket?: (name: string) => Promise<void>;
+  /** "Connect via S3" card — surface the credentials panel. */
+  onShowCredentials?: () => void;
+  /** "Add more storage" card — open the extend-quota flow. */
+  onAddStorage?: () => void;
+  /** Optional docs link; the docs card only renders when this is set. */
+  docsUrl?: string;
+  /**
+   * Whether the account finished provisioning (i.e. has S3 access keys — the
+   * same gate the backend enforces before allowing bucket creation). When
+   * explicitly false, the welcome state shows a provisioning notice instead of
+   * the create form, and polls onRefresh until it flips true.
+   */
+  accountReady?: boolean;
+  /** Re-fetch account + silos — used by the provisioning notice + auto-poll. */
+  onRefresh?: () => void;
+  /** True when provisioning permanently failed (status === 'provision_failed'). */
+  provisioningFailed?: boolean;
 }
 
 const getFileIcon = (name: string) => {
@@ -87,11 +109,69 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   return fallback;
 };
 
+/**
+ * A themed shortcut card for the welcome state. Renders as a <button> when given
+ * onClick, or an external <a> when given href. Every surface uses theme tokens so
+ * the card restains per tenant brand.
+ */
+const WelcomeActionCard: React.FC<{
+  icon: LucideIcon;
+  title: string;
+  subtitle: string;
+  onClick?: () => void;
+  href?: string;
+}> = ({ icon: Icon, title, subtitle, onClick, href }) => {
+  const cardClass =
+    "group flex items-start gap-3 rounded-xl border p-4 text-left transition motion-safe:hover:-translate-y-0.5 hover:shadow-[var(--shadow-brand)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--theme-color-300))]";
+  const cardStyle: React.CSSProperties = {
+    borderColor: "var(--theme-border-color)",
+    background: "var(--theme-card-bg)",
+  };
+  const inner = (
+    <>
+      <span
+        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg transition motion-safe:group-hover:scale-105"
+        style={{ background: "var(--theme-color-10)" }}
+      >
+        <Icon className="h-5 w-5" style={{ color: "var(--theme-color)" }} />
+      </span>
+      <span>
+        <p className="text-sm font-semibold" style={{ color: "var(--theme-heading-color)" }}>
+          {title}
+        </p>
+        <p className="mt-0.5 text-xs" style={{ color: "var(--theme-muted-color)" }}>
+          {subtitle}
+        </p>
+      </span>
+    </>
+  );
+
+  if (href) {
+    return (
+      <a href={href} target="_blank" rel="noreferrer" className={cardClass} style={cardStyle}>
+        {inner}
+      </a>
+    );
+  }
+  return (
+    <button type="button" onClick={onClick} className={cardClass} style={cardStyle}>
+      {inner}
+    </button>
+  );
+};
+
 const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
   accountId,
   bucketName,
   buckets = [],
   onSelectBucket,
+  onCreateBucket,
+  onShowCredentials,
+  onAddStorage,
+  docsUrl,
+  accountReady,
+  onRefresh,
+  provisioningFailed,
 }) => {
   const [currentPrefix, setCurrentPrefix] = useState("");
   const [folders, setFolders] = useState<FileItem[]>([]);
@@ -104,6 +184,8 @@ const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
   const [newFolderName, setNewFolderName] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [creatingFolder, setCreatingFolder] = useState(false);
+  const [welcomeName, setWelcomeName] = useState("");
+  const [creatingSilo, setCreatingSilo] = useState(false);
 
   const fetchObjects = useCallback(async () => {
     if (!bucketName) return;
@@ -140,6 +222,20 @@ const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
       fetchObjects();
     }
   }, [currentPrefix, fetchObjects, bucketName]);
+
+  // Keep onRefresh in a ref so the provisioning poll interval stays stable
+  // across re-renders (parents redefine the handler each render).
+  const onRefreshRef = useRef(onRefresh);
+  onRefreshRef.current = onRefresh;
+
+  useEffect(() => {
+    // While the account is still provisioning (no S3 keys yet) and we're on the
+    // welcome screen, poll so the create form unlocks automatically once ready.
+    // Don't poll a permanently-failed account — that state won't change itself.
+    if (bucketName || accountReady !== false || provisioningFailed) return;
+    const id = setInterval(() => onRefreshRef.current?.(), 6000);
+    return () => clearInterval(id);
+  }, [bucketName, accountReady, provisioningFailed]);
 
   const navigateToFolder = (prefix: string) => {
     if (prefix.includes('..')) return;
@@ -209,6 +305,24 @@ const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
     }
   };
 
+  const handleWelcomeCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = welcomeName.trim();
+    // Re-entrancy guard: React batching can collapse rapid double-clicks before
+    // the disabled button prop updates (see web/CLAUDE.md).
+    if (!name || creatingSilo || !onCreateBucket) return;
+    try {
+      setCreatingSilo(true);
+      await onCreateBucket(name); // parent toasts + refetches buckets
+      setWelcomeName("");
+      onSelectBucket?.(name); // land straight in the new silo — the payoff
+    } catch {
+      // Parent already surfaced the error toast; keep the typed name for retry.
+    } finally {
+      setCreatingSilo(false);
+    }
+  };
+
   const isPreviewable = (name: string) => {
     const ext = name.split(".").pop()?.toLowerCase() || "";
     return ["jpg", "jpeg", "png", "gif", "svg", "webp", "pdf"].includes(ext);
@@ -223,107 +337,260 @@ const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
       prefix: arr.slice(0, index + 1).join("/") + "/",
     }));
 
-  // Welcome state when no silo is selected
+  // Welcome state when no silo is selected — a focal "create your first silo"
+  // flow plus only-when-real shortcut cards. Everything restains per tenant.
   if (!bucketName) {
+    const hasSilos = buckets.length > 0;
+    const failed = provisioningFailed === true;
+    const provisioning = accountReady === false && !failed;
     return (
-      <div className="h-full flex flex-col">
-        {/* Welcome Header */}
-        <div className="brand-hero p-8 text-white">
-          <h1 className="text-2xl font-bold mb-2">Welcome to Silo Storage</h1>
-          <p className="text-white/70">
-            Select a Silo from the sidebar to browse files, or create a new Silo to get started.
-          </p>
-        </div>
+      <div className="h-full overflow-y-auto" style={{ background: "var(--theme-card-bg)" }}>
+        <div className="mx-auto w-full max-w-3xl px-6 py-10 md:py-14">
+          {/* Hero */}
+          <div className="text-center">
+            <div
+              className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl"
+              style={{
+                background: failed ? "rgb(var(--theme-danger-500) / 0.12)" : "var(--theme-color-10)",
+                boxShadow: "var(--shadow-brand)",
+              }}
+            >
+              {failed ? (
+                <AlertTriangle className="h-8 w-8" style={{ color: "rgb(var(--theme-danger-500))" }} />
+              ) : provisioning ? (
+                <Loader2 className="h-8 w-8 animate-spin" style={{ color: "var(--theme-color)" }} />
+              ) : (
+                <Boxes className="h-8 w-8" style={{ color: "var(--theme-color)" }} />
+              )}
+            </div>
+            <p className="t-eyebrow" style={{ color: "rgb(var(--theme-color-600))" }}>
+              Object Storage
+            </p>
+            <h1
+              className="mt-2 text-2xl font-bold md:text-3xl"
+              style={{ color: "var(--theme-heading-color)" }}
+            >
+              {failed
+                ? "Provisioning failed"
+                : provisioning
+                  ? "Setting up your storage"
+                  : hasSilos
+                    ? "Pick a Silo to get started"
+                    : "Create your first Silo"}
+            </h1>
+            <p
+              className="mx-auto mt-2 max-w-md text-sm"
+              style={{ color: "var(--theme-muted-color)" }}
+            >
+              {failed
+                ? "This storage account couldn't be provisioned. Delete it and create a new one, or contact support if it keeps happening."
+                : provisioning
+                  ? "We're provisioning your storage account. You'll be able to create Silos the moment it's ready."
+                  : "A Silo is a private, S3-compatible bucket for your files. Name one below and you'll be uploading in seconds."}
+            </p>
+          </div>
 
-        {/* Quick Actions */}
-        <div className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {buckets.slice(0, 3).map((bucket, index) => {
-              const bucketNameValue = typeof bucket.name === "string" ? bucket.name : "";
-              const displayName = bucketNameValue || "Unnamed silo";
-              const bucketKey = bucket.id ?? bucketNameValue ?? index;
-              return (
-                <button
-                  key={String(bucketKey)}
-                  onClick={() => {
-                    if (bucketNameValue) {
-                      onSelectBucket?.(bucketNameValue);
-                    }
+          {failed ? (
+            /* Permanently failed — recovery guidance, no polling */
+            <div
+              className="mt-7 rounded-2xl border p-6 text-center"
+              style={{
+                background: "var(--theme-card-bg)",
+                borderColor: "var(--theme-border-color)",
+                boxShadow: "var(--shadow-brand)",
+              }}
+            >
+              <div className="mx-auto flex max-w-md flex-col items-center gap-3">
+                <span
+                  className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold"
+                  style={{
+                    background: "rgb(var(--theme-danger-500) / 0.12)",
+                    color: "rgb(var(--theme-danger-500))",
                   }}
-                  className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 hover:border-[rgb(var(--theme-color-300))] hover:bg-[rgb(var(--theme-color-50))] transition-all text-left group"
                 >
-                  <div className="rounded-lg bg-[rgb(var(--theme-color-100))] p-3 group-hover:bg-[rgb(var(--theme-color-200))] transition-colors">
-                    <Database className="h-6 w-6 text-[var(--theme-color)]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">{displayName}</p>
-                    <p className="text-sm text-gray-500">Click to browse</p>
-                  </div>
-                  <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-primary-500 transition-colors" />
+                  <AlertTriangle className="h-3.5 w-3.5" /> Provisioning failed
+                </span>
+                <p className="text-sm" style={{ color: "var(--theme-muted-color)" }}>
+                  We couldn&rsquo;t finish setting up this account. Use{" "}
+                  <span className="font-semibold" style={{ color: "var(--theme-heading-color)" }}>
+                    Delete
+                  </span>{" "}
+                  above to remove it, then create a new one.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => onRefresh?.()}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition hover:bg-[rgb(var(--theme-color-50))]"
+                  style={{
+                    borderColor: "rgb(var(--theme-color-200))",
+                    color: "rgb(var(--theme-color-600))",
+                  }}
+                >
+                  <RefreshCw className="h-4 w-4" /> Refresh status
                 </button>
-              );
-            })}
-          </div>
-        </div>
+              </div>
+            </div>
+          ) : provisioning ? (
+            /* Provisioning notice — auto-refreshes until S3 keys exist */
+            <div
+              className="mt-7 rounded-2xl border p-6 text-center"
+              style={{
+                background: "var(--theme-card-bg)",
+                borderColor: "var(--theme-border-color)",
+                boxShadow: "var(--shadow-brand)",
+              }}
+            >
+              <div className="mx-auto flex max-w-sm flex-col items-center gap-3">
+                <span
+                  className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold"
+                  style={{ background: "var(--theme-color-10)", color: "rgb(var(--theme-color-700))" }}
+                >
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Provisioning in progress
+                </span>
+                <p className="text-sm" style={{ color: "var(--theme-muted-color)" }}>
+                  This usually takes a moment. Your S3 credentials and the option to create Silos
+                  unlock automatically once provisioning finishes.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => onRefresh?.()}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition hover:bg-[rgb(var(--theme-color-50))]"
+                  style={{ borderColor: "rgb(var(--theme-color-200))", color: "rgb(var(--theme-color-600))" }}
+                >
+                  <RefreshCw className="h-4 w-4" /> Refresh status
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+          {/* Focal CTA — inline create form */}
+          <form
+            onSubmit={handleWelcomeCreate}
+            className="mt-7 rounded-2xl border p-5 md:p-6"
+            style={{
+              background: "var(--theme-card-bg)",
+              borderColor: "var(--theme-border-color)",
+              boxShadow: "var(--shadow-brand)",
+            }}
+          >
+            <label
+              htmlFor="welcome-silo-name"
+              className="mb-2 block text-sm font-medium"
+              style={{ color: "var(--theme-heading-color)" }}
+            >
+              Silo name
+            </label>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="relative flex-1">
+                <Database
+                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+                  style={{ color: "rgb(var(--theme-color-400))" }}
+                />
+                <input
+                  id="welcome-silo-name"
+                  type="text"
+                  value={welcomeName}
+                  onChange={(e) =>
+                    setWelcomeName(e.target.value.toLowerCase().replaceAll(/[^a-z0-9-]/g, ""))
+                  }
+                  placeholder="my-first-silo"
+                  aria-label="Silo name"
+                  autoFocus
+                  disabled={creatingSilo}
+                  className="w-full rounded-xl border py-2.5 pl-9 pr-3 text-sm font-mono outline-none transition focus:ring-2 focus:ring-[rgb(var(--theme-color-200))] focus:border-[rgb(var(--theme-color-400))]"
+                  style={{ borderColor: "var(--theme-border-color)", color: "var(--theme-text-color)" }}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={creatingSilo || !welcomeName.trim() || !onCreateBucket}
+                className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition motion-safe:active:scale-[0.98] disabled:opacity-50"
+                style={{ background: "var(--theme-color)" }}
+              >
+                {creatingSilo ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Creating&hellip;
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4" /> Create Silo
+                  </>
+                )}
+              </button>
+            </div>
+            <p className="mt-2 text-xs" style={{ color: "var(--theme-muted-color)" }}>
+              Lowercase letters, numbers and hyphens only. You can add more Silos anytime.
+            </p>
+          </form>
 
-        {/* Getting Started */}
-        <div className="p-6 pt-0">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Getting Started</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
-              <div className="flex items-start gap-3">
-                <div className="rounded-lg bg-blue-100 p-2">
-                  <Rocket className="h-5 w-5 text-blue-600" />
+          {/* How it works */}
+          <ol className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {[
+              { n: 1, t: "Name your Silo", d: "Pick a unique, URL-safe name." },
+              { n: 2, t: "Upload files", d: "Drag & drop or use the S3 API." },
+              { n: 3, t: "Share & manage", d: "Organize in folders, control access." },
+            ].map((s) => (
+              <li
+                key={s.n}
+                className="rounded-xl border p-3.5"
+                style={{ borderColor: "var(--theme-border-color)", background: "var(--theme-card-bg)" }}
+              >
+                <div
+                  className="mb-2 flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold"
+                  style={{ background: "var(--theme-color-10)", color: "rgb(var(--theme-color-700))" }}
+                >
+                  {s.n}
                 </div>
-                <div>
-                  <h3 className="font-medium text-blue-900">Upload Files</h3>
-                  <p className="text-sm text-blue-700 mt-1">
-                    Drag and drop files directly into any Silo, or use the upload button.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100">
-              <div className="flex items-start gap-3">
-                <div className="rounded-lg bg-emerald-100 p-2">
-                  <FolderPlus className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-emerald-900">Organize with Folders</h3>
-                  <p className="text-sm text-emerald-700 mt-1">
-                    Create folders to organize your files and keep everything tidy.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="p-4 rounded-xl bg-amber-50 border border-amber-100">
-              <div className="flex items-start gap-3">
-                <div className="rounded-lg bg-amber-100 p-2">
-                  <Zap className="h-5 w-5 text-amber-600" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-amber-900">S3-Compatible API</h3>
-                  <p className="text-sm text-amber-700 mt-1">
-                    Use your credentials to connect via any S3-compatible tool or SDK.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="p-4 rounded-xl bg-violet-50 border border-violet-100">
-              <div className="flex items-start gap-3">
-                <div className="rounded-lg bg-violet-100 p-2">
-                  <Shield className="h-5 w-5 text-violet-600" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-violet-900">Secure by Default</h3>
-                  <p className="text-sm text-violet-700 mt-1">
-                    All data is encrypted at rest and in transit for maximum security.
-                  </p>
-                </div>
-              </div>
-            </div>
+                <p className="text-sm font-semibold" style={{ color: "var(--theme-heading-color)" }}>
+                  {s.t}
+                </p>
+                <p className="mt-0.5 text-xs" style={{ color: "var(--theme-muted-color)" }}>
+                  {s.d}
+                </p>
+              </li>
+            ))}
+          </ol>
+
+          {/* Real shortcut cards — each renders only when its action is wired */}
+          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {hasSilos && (
+              <WelcomeActionCard
+                icon={FolderPlus}
+                title="Open an existing Silo"
+                subtitle={`${buckets.length} ${buckets.length === 1 ? "silo" : "silos"} available`}
+                onClick={() => {
+                  const n = buckets[0]?.name;
+                  if (typeof n === "string" && n) onSelectBucket?.(n);
+                }}
+              />
+            )}
+            {onShowCredentials && (
+              <WelcomeActionCard
+                icon={KeyRound}
+                title="View S3 credentials"
+                subtitle="Endpoint, access key & secret"
+                onClick={onShowCredentials}
+              />
+            )}
+            {onAddStorage && (
+              <WelcomeActionCard
+                icon={HardDriveDownload}
+                title="Add more storage"
+                subtitle="Extend your quota"
+                onClick={onAddStorage}
+              />
+            )}
+            {docsUrl && (
+              <WelcomeActionCard
+                icon={BookOpen}
+                title="Read the S3 docs"
+                subtitle="Connect any S3 SDK or tool"
+                href={docsUrl}
+              />
+            )}
           </div>
+            </>
+          )}
         </div>
       </div>
     );

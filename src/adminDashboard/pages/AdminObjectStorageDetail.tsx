@@ -122,6 +122,12 @@ const AdminObjectStorageDetail: React.FC = () => {
     fetchBuckets();
   };
 
+  const handleShowCredentials = () => {
+    document
+      .getElementById("s3-credentials-section")
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
   const handleDeleteAccount = async () => {
     try {
       await objectStorageApi.deleteAccount(accountId!);
@@ -206,6 +212,16 @@ const AdminObjectStorageDetail: React.FC = () => {
     </div>
   );
 
+  // The backend rejects bucket creation until the account has S3 access keys,
+  // so mirror that gate: the account is "ready" once at least one key exists.
+  const acct = account as {
+    access_keys?: unknown[];
+    accessKeys?: unknown[];
+    status?: string;
+  } | null;
+  const accountReady = Boolean(acct?.access_keys?.length || acct?.accessKeys?.length);
+  const provisioningFailed = acct?.status === "provision_failed";
+
   const renderTabContent = (isMobile: boolean = false) => {
     const paddingClass = isMobile ? "p-4" : "p-6";
 
@@ -217,6 +233,12 @@ const AdminObjectStorageDetail: React.FC = () => {
             bucketName={selectedBucket}
             buckets={buckets}
             onSelectBucket={setSelectedBucket}
+            onCreateBucket={handleCreateBucket}
+            onAddStorage={() => setShowExtendModal(true)}
+            onShowCredentials={handleShowCredentials}
+            accountReady={accountReady}
+            onRefresh={handleRefresh}
+            provisioningFailed={provisioningFailed}
           />
         );
       case "analytics":

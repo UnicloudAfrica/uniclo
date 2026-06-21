@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { LogOut, type LucideIcon } from "lucide-react";
 import type { MenuEntry, MenuGroup, MenuItem } from "./CollapsibleMenu";
@@ -9,16 +9,10 @@ import RegionStatusFooter, { type RegionStatus } from "./RegionStatusFooter";
  * 60px icon strip + 200px label column (260px total) — VS Code-style nav.
  *
  * The left strip shows every top-level entry (groups + items) as an icon.
- * Hovering or clicking a group icon promotes that group into the right
- * column, where its children are listed with full labels. Direct items
- * (no children) navigate immediately on click.
- *
- * The right column also shows the active group's name as an eyebrow at
- * the top, so the user always knows which set of links they're looking
- * at. Ungrouped items appear in a "Quick links" section.
- *
- * Keeps the shell narrow (260px) while still giving full label legibility
- * — a good middle-ground between Pinned and Rail.
+ * The right column lists ALL groups' children at once (each under its group
+ * name), so nothing is hidden behind the strip. Clicking a group icon scrolls
+ * that group's section into view; clicking a direct item navigates. Ungrouped
+ * items appear in a "Quick links" section at the end.
  */
 
 export interface NavTwoTierProps {
@@ -62,41 +56,16 @@ const NavTwoTier: React.FC<NavTwoTierProps> = ({
     [menuItems],
   );
 
-  // The "active" group = the one whose child matches the current route.
-  // Falls back to the first group, otherwise null.
-  const routeActiveGroup = useMemo(() => {
-    return (
-      groups.find((g) =>
-        g.children.some(
-          (child) => activePath === child.path || activePath.startsWith(child.path + "/"),
-        ),
-      ) ?? groups[0]
-    );
-  }, [groups, activePath]);
+  // Refs per group so the icon strip can scroll a group's section into view
+  // (all groups are listed in the right column simultaneously).
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  const [selectedGroupName, setSelectedGroupName] = useState<string | null>(
-    routeActiveGroup?.name ?? null,
-  );
-
-  // Re-sync the selected group when the route changes (so navigating from
-  // Quick Links back into a group surfaces that group on the right).
-  React.useEffect(() => {
-    if (routeActiveGroup && routeActiveGroup.name !== selectedGroupName) {
-      setSelectedGroupName(routeActiveGroup.name);
-    }
-  }, [routeActiveGroup, selectedGroupName]);
-
-  const selectedGroup = groups.find((g) => g.name === selectedGroupName) ?? routeActiveGroup;
+  const isItemActive = (path: string) =>
+    activePath === path || activePath.startsWith(path + "/");
 
   const handleStripClick = (entry: MenuEntry) => {
     if (isMenuGroup(entry)) {
-      setSelectedGroupName(entry.name);
-      // Navigate to the first child so the right column has live state.
-      const firstChild = entry.children[0];
-      if (firstChild) {
-        navigate(firstChild.path);
-        onItemClick?.();
-      }
+      sectionRefs.current[entry.name]?.scrollIntoView({ behavior: "smooth", block: "start" });
     } else {
       navigate(entry.path);
       onItemClick?.();
@@ -108,8 +77,36 @@ const NavTwoTier: React.FC<NavTwoTierProps> = ({
     onItemClick?.();
   };
 
-  const isItemActive = (path: string) =>
-    activePath === path || activePath.startsWith(path + "/");
+  const renderItemButton = (item: MenuItem) => {
+    const active = isItemActive(item.path);
+    return (
+      <li key={item.name}>
+        <button
+          type="button"
+          onClick={() => handleChildClick(item)}
+          className="relative flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition"
+          style={{
+            background: active ? "var(--theme-color-10)" : "transparent",
+            color: active ? "var(--theme-heading-color)" : "var(--theme-muted-color)",
+          }}
+          onMouseEnter={(e) => {
+            if (!active) {
+              e.currentTarget.style.background = "var(--theme-color-10)";
+              e.currentTarget.style.color = "var(--theme-heading-color)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!active) {
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.color = "var(--theme-muted-color)";
+            }
+          }}
+        >
+          <span className="text-sm font-medium">{item.name}</span>
+        </button>
+      </li>
+    );
+  };
 
   return (
     <aside
@@ -126,8 +123,7 @@ const NavTwoTier: React.FC<NavTwoTierProps> = ({
       >
         {menuItems.map((entry) => {
           const isActive = isMenuGroup(entry)
-            ? selectedGroupName === entry.name ||
-              entry.children.some((child) => isItemActive(child.path))
+            ? entry.children.some((child) => isItemActive(child.path))
             : isItemActive(entry.path);
 
           return (
@@ -177,78 +173,33 @@ const NavTwoTier: React.FC<NavTwoTierProps> = ({
         ) : null}
       </div>
 
-      {/* Right label column (200px) */}
+      {/* Right label column (200px) — every group, listed in full */}
       <div className="flex w-[200px] flex-col">
         <div
           className="border-b px-4 py-4"
           style={{ borderColor: "var(--theme-border-color)" }}
         >
-          <div className="t-eyebrow">{selectedGroup?.name ?? "Menu"}</div>
+          <div className="t-eyebrow">Menu</div>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-2 py-2">
-          {selectedGroup ? (
-            <ul className="space-y-0.5">
-              {selectedGroup.children.map((child) => {
-                const active = isItemActive(child.path);
-                return (
-                  <li key={child.name}>
-                    <button
-                      type="button"
-                      onClick={() => handleChildClick(child)}
-                      className="relative flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition"
-                      style={{
-                        background: active ? "var(--theme-color-10)" : "transparent",
-                        color: active
-                          ? "var(--theme-heading-color)"
-                          : "var(--theme-muted-color)",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!active) {
-                          e.currentTarget.style.background = "var(--theme-color-10)";
-                          e.currentTarget.style.color = "var(--theme-heading-color)";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!active) {
-                          e.currentTarget.style.background = "transparent";
-                          e.currentTarget.style.color = "var(--theme-muted-color)";
-                        }
-                      }}
-                    >
-                      <span className="text-sm font-medium">{child.name}</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : null}
+          {groups.map((group) => (
+            <div
+              key={group.name}
+              ref={(el) => {
+                sectionRefs.current[group.name] = el;
+              }}
+              className="mb-3"
+            >
+              <div className="t-eyebrow mb-1 px-3">{group.name}</div>
+              <ul className="space-y-0.5">{group.children.map(renderItemButton)}</ul>
+            </div>
+          ))}
 
           {ungrouped.length > 0 ? (
-            <div className="mt-4">
+            <div className="mb-2">
               <div className="t-eyebrow mb-1 px-3">Quick links</div>
-              <ul className="space-y-0.5">
-                {ungrouped.map((item) => {
-                  const active = isItemActive(item.path);
-                  return (
-                    <li key={item.name}>
-                      <button
-                        type="button"
-                        onClick={() => handleChildClick(item)}
-                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition"
-                        style={{
-                          background: active ? "var(--theme-color-10)" : "transparent",
-                          color: active
-                            ? "var(--theme-heading-color)"
-                            : "var(--theme-muted-color)",
-                        }}
-                      >
-                        <span className="text-sm font-medium">{item.name}</span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+              <ul className="space-y-0.5">{ungrouped.map(renderItemButton)}</ul>
             </div>
           ) : null}
         </nav>

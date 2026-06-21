@@ -8,6 +8,12 @@ import {
   normalizePaymentOptions,
   pickPreferredPaymentOption,
 } from "../utils/instanceCreationUtils";
+import {
+  buildPreviewPricingPayload,
+  composeExpectedTotal,
+  extractPreviewPricingEstimate,
+  PREVIEW_PRICING_DEBOUNCE_MS,
+} from "../utils/instancePreviewPricing";
 
 interface DrSpecConfig {
   mode: "match" | "custom";
@@ -26,6 +32,21 @@ interface ProtectionPlanConfig {
   plan: string; // "none" | "backup_only" | "dr_standby" | "dr_replication"
   redundancyPattern?: string; // "n_plus_1" | "one_plus_1" | "one_plus_n"
   drSpec?: DrSpecConfig;
+  /**
+   * FE-computed monthly cost of the selected plan, taken from
+   * `ProtectionPlanStep.pricing[selectedPlan].monthly`. Used by the
+   * backend to add a "Protection plan" line item to the order so the
+   * user is actually charged for the plan they picked.
+   *
+   * Bug this guards against: previously only DR plans sent
+   * `dr_monthly_cost` and the backend only added the fee for DR. A
+   * `backup_only` selection at ₦240k/mo showed up as a "Plan fee" line
+   * in the right-rail summary but was silently DROPPED from the order
+   * grand total — operators paid the compute bill and were quietly
+   * granted free backup. Including `monthly_cost` here for every
+   * non-"none" plan closes that revenue leak.
+   */
+  monthlyCost?: number;
 }
 
 interface UseInstanceOrderCreationProps {
@@ -37,12 +58,51 @@ interface UseInstanceOrderCreationProps {
   selectedUserId: string;
   setActiveStep: (step: number) => void;
   protectionPlan?: ProtectionPlanConfig;
+  /**
+   * Actual indices of the `payment` and `review` steps in the wizard's
+   * `steps` array — required so this hook navigates to the correct step
+   * after `POST /instances/create`. Earlier these were hardcoded
+   * (`isFastTrack ? null : 2` for payment, `isFastTrack ? 2 : 3` for
+   * review) which silently misaligned once `protection` was inserted
+   * between `services` and `payment` in `provisioningSteps.ts`. The
+   * symptom: in standard mode, clicking Continue on the Protection step
+   * jumped the user *backwards* to Protection (the slot the hook thinks
+   * is "payment") instead of forward to the real Payment step — making
+   * payment effectively unreachable.
+   */
+  paymentStepIndex: number | null;
+  reviewStepIndex: number;
 }
 
 const getContextPrefix = (context: ApiContext) => {
   if (context === "tenant") return "/admin";
   if (context === "client") return "/business";
   return "";
+};
+
+/**
+ * Pre-tax subtotal and tax-inclusive grand total of a backend
+ * `pricing_breakdown` array — the same sums the wizard's payment step
+ * renders (see `pricingSummary` in useClientProvisioningLogic). Exported
+ * at module scope so it's unit-testable without spinning up the hook.
+ */
+export const summarizePricingBreakdownTotals = (
+  breakdown: unknown
+): { subtotal: number; total: number } => {
+  if (!Array.isArray(breakdown)) return { subtotal: 0, total: 0 };
+  const sums = breakdown.reduce<{ subtotal: number; total: number }>(
+    (acc, item) => {
+      const row = (item || {}) as { subtotal?: unknown; total?: unknown };
+      acc.subtotal += Number(row.subtotal) || 0;
+      acc.total += Number(row.total) || 0;
+      return acc;
+    },
+    { subtotal: 0, total: 0 }
+  );
+  return {
+    subtotal: Number(sums.subtotal.toFixed(2)),
+    total: Number(sums.total.toFixed(2)),
+  };
 };
 
 export const useInstanceOrderCreation = ({
@@ -54,17 +114,34 @@ export const useInstanceOrderCreation = ({
   selectedUserId,
   setActiveStep,
   protectionPlan,
+  paymentStepIndex,
+  reviewStepIndex,
 }: UseInstanceOrderCreationProps) => {
-  const paymentStepIndex = isFastTrack ? null : 2;
-  const reviewStepIndex = isFastTrack ? 2 : 3;
   const { apiBaseUrl, authHeaders, context } = useApiContext();
   const apiPrefix = getContextPrefix(context);
   const createOrderAction = useAsyncAction();
   const verifyPaymentAction = useAsyncAction();
   const [submissionResult, setSubmissionResult] = useState<Record<string, unknown> | null>(null);
   const [orderReceipt, setOrderReceipt] = useState<Record<string, unknown> | null>(null);
-  const [selectedPaymentOption, setSelectedPaymentOption] = useState<Record<string, unknown> | null>(null);
+  const [selectedPaymentOption, setSelectedPaymentOption] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
   const submittedFingerprintRef = useRef<string | null>(null);
+  // Price lock: the figures the user last reviewed (the payment step
+  // renders the breakdown returned by POST /instances/create). When the
+  // exact same order is re-submitted, these ride along as
+  // expected_subtotal / expected_total so the backend can 409 on drift
+  // instead of silently re-quoting (root CLAUDE.md convention). Keyed on
+  // the configuration fingerprint + protection plan so any
+  // price-affecting change disarms the lock instead of producing a
+  // false 409.
+  const reviewedPriceRef = useRef<{
+    fingerprint: string;
+    protectionKey: string;
+    subtotal: number;
+    total: number;
+  } | null>(null);
 
   const clearOrderState = useCallback(() => {
     setSubmissionResult(null);
@@ -101,7 +178,10 @@ export const useInstanceOrderCreation = ({
           keypair_name: cfg.keypair_name || "",
           assignment_scope: cfg.assignment_scope || "",
           member_user_ids: Array.isArray(cfg.member_user_ids)
-            ? [...cfg.member_user_ids].map((id) => Number(id)).filter(Boolean).sort((a, b) => a - b)
+            ? [...cfg.member_user_ids]
+                .map((id) => Number(id))
+                .filter(Boolean)
+                .sort((a, b) => a - b)
             : [],
           security_group_ids: Array.isArray(cfg.security_group_ids)
             ? [...cfg.security_group_ids].map((id) => String(id)).sort()
@@ -112,14 +192,7 @@ export const useInstanceOrderCreation = ({
           })),
         })),
       }),
-    [
-      isFastTrack,
-      billingCountry,
-      contextType,
-      selectedTenantId,
-      selectedUserId,
-      configurations,
-    ]
+    [isFastTrack, billingCountry, contextType, selectedTenantId, selectedUserId, configurations]
   );
 
   useEffect(() => {
@@ -171,6 +244,80 @@ export const useInstanceOrderCreation = ({
     [apiBaseUrl, apiPrefix, authHeaders]
   );
 
+  // ─── Live pre-order pricing estimate ───────────────────────────────
+  // Quote the configured order via POST /instances/preview-pricing (same
+  // engine the create endpoint bills with) so the summary shows a running
+  // price WHILE the operator configures — before any order exists. The
+  // preview endpoint prices compute only; the protection-plan fee is folded
+  // in client-side via composeExpectedTotal. Best-effort: any failure leaves
+  // the estimate blank. Mirrors the client/tenant provisioning hooks.
+  const [pricingEstimate, setPricingEstimate] = useState<{
+    key: string;
+    total: number;
+    currency: string;
+  } | null>(null);
+
+  const previewPayloadKey = useMemo(() => {
+    const payload = buildPreviewPricingPayload(
+      configurations,
+      billingCountry,
+      selectedTenantId || undefined
+    );
+    return payload ? JSON.stringify(payload) : "";
+  }, [configurations, billingCountry, selectedTenantId]);
+
+  useEffect(() => {
+    if (!previewPayloadKey) {
+      setPricingEstimate(null);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const response = await apiCall(
+          "POST",
+          "/instances/preview-pricing",
+          JSON.parse(previewPayloadKey) as Record<string, unknown>
+        );
+        const estimate = extractPreviewPricingEstimate(response);
+        if (!cancelled) {
+          setPricingEstimate(estimate ? { key: previewPayloadKey, ...estimate } : null);
+        }
+      } catch {
+        if (!cancelled) setPricingEstimate(null);
+      }
+    }, PREVIEW_PRICING_DEBOUNCE_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [previewPayloadKey, apiCall]);
+
+  // Displayed estimate = previewed compute total + the protection-plan fee
+  // for the FULL TERM (fee × months), because the order is prepaid upfront for
+  // its term — the backend bills the protection line the same way at submit
+  // (see InitiateMultiInstancesAction). `orderTermMonths` is the longest config
+  // term the plan protects, matching the backend's per-order resolution.
+  const protectionMonthlyCost = Number(protectionPlan?.monthlyCost) || 0;
+  const orderTermMonths = useMemo(
+    () => configurations.reduce((max, cfg) => Math.max(max, Number(cfg.months) || 1), 1),
+    [configurations]
+  );
+  const priceEstimate = useMemo(
+    () =>
+      pricingEstimate
+        ? {
+            total: composeExpectedTotal(
+              pricingEstimate.total,
+              protectionMonthlyCost,
+              orderTermMonths
+            ),
+            currency: pricingEstimate.currency,
+          }
+        : null,
+    [pricingEstimate, protectionMonthlyCost, orderTermMonths]
+  );
+
   const buildPayload = useCallback(() => {
     const pricing_requests = configurations.map((cfg, index) => {
       const isNewProject = cfg.project_mode === "new" || Boolean(cfg.template_locked);
@@ -201,7 +348,10 @@ export const useInstanceOrderCreation = ({
       // const instanceDescription = (cfg.description || "").trim() || null; // Unused in payload
       const networkId = isNewProject ? undefined : cfg.network_id || undefined;
       const subnetId = isNewProject ? undefined : cfg.subnet_id || undefined;
-      const tags = (cfg.tags || "").split(",").map((t: string) => t.trim()).filter(Boolean);
+      const tags = (cfg.tags || "")
+        .split(",")
+        .map((t: string) => t.trim())
+        .filter(Boolean);
 
       const sanitizedSgIds = (
         Array.isArray(cfg.security_group_ids)
@@ -289,11 +439,16 @@ export const useInstanceOrderCreation = ({
       }
     }
 
-    // Attach protection plan & DR config if DR is selected
+    // Attach protection plan & DR config for any non-"none" plan. The
+    // backend's order-creation action expects `monthly_cost` here (for
+    // all plan types) and adds it as a line item on the order grand
+    // total. Without this `backup_only` fees were dropped silently —
+    // see ProtectionPlanConfig.monthlyCost docblock.
     if (protectionPlan && protectionPlan.plan !== "none") {
       const isDr = protectionPlan.plan === "dr_standby" || protectionPlan.plan === "dr_replication";
       payload.protection_plan = {
         plan: protectionPlan.plan,
+        monthly_cost: protectionPlan.monthlyCost || 0,
         ...(isDr && protectionPlan.redundancyPattern
           ? { redundancy_pattern: protectionPlan.redundancyPattern }
           : {}),
@@ -305,7 +460,10 @@ export const useInstanceOrderCreation = ({
                 protectionPlan.drSpec.mode === "custom"
                   ? protectionPlan.drSpec.computeInstanceId || undefined
                   : undefined,
-              // DR pricing — computed by ProtectionPlanStep, included so backend adds to order total
+              // DR pricing — computed by ProtectionPlanStep, included so
+              // backend adds to order total. `dr_monthly_cost` is kept
+              // here for compatibility with existing backend code; the
+              // generic `monthly_cost` above is the new path.
               dr_monthly_cost: protectionPlan.drSpec.drMonthlyCost || 0,
               dr_vm_count: protectionPlan.drSpec.drVmCount || 0,
               dr_vm_full_price: protectionPlan.drSpec.drVmFullPrice || 0,
@@ -315,7 +473,15 @@ export const useInstanceOrderCreation = ({
     }
 
     return payload;
-  }, [configurations, isFastTrack, billingCountry, contextType, selectedTenantId, selectedUserId, protectionPlan]);
+  }, [
+    configurations,
+    isFastTrack,
+    billingCountry,
+    contextType,
+    selectedTenantId,
+    selectedUserId,
+    protectionPlan,
+  ]);
 
   const handleCreateOrder = useCallback(async () => {
     // Guard against double-submit (rapid clicks before pending state propagates)
@@ -333,11 +499,25 @@ export const useInstanceOrderCreation = ({
           throw new Error(`Complete Configuration #${incompleteIndex + 1} before pricing.`);
         }
         const payload = buildPayload();
+        const protectionKey = JSON.stringify(payload.protection_plan ?? null);
+        const reviewed = reviewedPriceRef.current;
+        // One-shot: consume the lock so a 409 here re-quotes fresh on the
+        // next attempt — the 409 toast already shows the new figures.
+        reviewedPriceRef.current = null;
+        if (
+          reviewed &&
+          reviewed.fingerprint === orderStateFingerprint &&
+          reviewed.protectionKey === protectionKey
+        ) {
+          if (reviewed.subtotal > 0) payload.expected_subtotal = reviewed.subtotal;
+          if (reviewed.total > 0) payload.expected_total = reviewed.total;
+        }
         const idempotencyKey = crypto.randomUUID();
 
-        const res = (await apiCall("POST", "/instances/create", payload, idempotencyKey)) as
-          | Record<string, unknown>
-          | null;
+        const res = (await apiCall("POST", "/instances/create", payload, idempotencyKey)) as Record<
+          string,
+          unknown
+        > | null;
         const rawData = (res?.data ?? res) as Record<string, unknown> | null;
         const data = (rawData ?? {}) as {
           payment?: {
@@ -402,6 +582,16 @@ export const useInstanceOrderCreation = ({
         });
         setSelectedPaymentOption(preferredPaymentOption || null);
         submittedFingerprintRef.current = orderStateFingerprint;
+
+        const reviewedTotals = summarizePricingBreakdownTotals(pricingBreakdownPayload);
+        if (reviewedTotals.subtotal > 0 || reviewedTotals.total > 0) {
+          reviewedPriceRef.current = {
+            fingerprint: orderStateFingerprint,
+            protectionKey,
+            subtotal: reviewedTotals.subtotal,
+            total: reviewedTotals.total,
+          };
+        }
 
         const isPaymentRequired = mergedResult?.payment?.required;
         if (isPaymentRequired) {
@@ -510,10 +700,11 @@ export const useInstanceOrderCreation = ({
             apiPayload.save_card_details = false;
           }
 
-          const res = (await apiCall("PUT", `/transactions/${identifier}`, apiPayload)) as
-            | Record<string, unknown>
-            | null;
-          const responseData = ((res?.data ?? res) ?? {}) as {
+          const res = (await apiCall("PUT", `/transactions/${identifier}`, apiPayload)) as Record<
+            string,
+            unknown
+          > | null;
+          const responseData = (res?.data ?? res ?? {}) as {
             status?: unknown;
             transaction?: {
               status?: unknown;
@@ -601,6 +792,8 @@ export const useInstanceOrderCreation = ({
     submissionResult,
     setSubmissionResult, // Export setter if needed
     orderReceipt,
+    // Live pre-order estimate (compute + protection), null until configs complete.
+    priceEstimate,
     submissionErrorMessage: createOrderAction.errorMessage,
     paymentErrorMessage: verifyPaymentAction.errorMessage,
     selectedPaymentOption,

@@ -86,9 +86,28 @@ export const extractLeads = (payload: unknown): Lead[] => {
 };
 
 export const getErrorMessage = (error: unknown, fallback: string): string => {
-  if (typeof error === "string" && error.trim() !== "") return error;
+  // API/provider errors often arrive as a raw string like
+  // `HTTP request returned status code 400: { "description": "...", "title": "..." }`.
+  // Pull a human-readable line out of any embedded JSON body instead of dumping
+  // the whole object into a toast.
+  const clean = (raw: string): string => {
+    const trimmed = raw.trim();
+    if (trimmed === "") return fallback;
+    const brace = trimmed.indexOf("{");
+    if (brace !== -1) {
+      try {
+        const body = JSON.parse(trimmed.slice(brace)) as Record<string, unknown>;
+        const msg = body.description ?? body.message ?? body.title ?? body.error;
+        if (typeof msg === "string" && msg.trim() !== "") return msg;
+      } catch {
+        // Not JSON — fall through and return the original string.
+      }
+    }
+    return trimmed;
+  };
+  if (typeof error === "string" && error.trim() !== "") return clean(error);
   if (isRecord(error) && typeof error.message === "string" && error.message.trim() !== "") {
-    return error.message;
+    return clean(error.message);
   }
   return fallback;
 };

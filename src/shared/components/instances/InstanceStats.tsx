@@ -1,30 +1,20 @@
 import React from "react";
 import { Server, Play, Square, Network } from "lucide-react";
 import { ModernStatsCard } from "../ui";
-
-interface InstanceSummary {
-  status?: string;
-  bandwidth_count?: number | string;
-  [key: string]: unknown;
-}
+import { summarizeInstances, type InstanceLike } from "./instanceStatus";
 
 interface InstanceStatsProps {
-  instances: InstanceSummary[];
+  instances: InstanceLike[];
 }
 
 const InstanceStats = ({ instances }: InstanceStatsProps) => {
-  const totalInstancesCount = instances.length;
-  const runningCount = instances.filter((instance) =>
-    ["running", "active"].includes((instance.status || "").toLowerCase())
-  ).length;
-  const stoppedCount = instances.filter((instance) =>
-    ["stopped", "shutoff", "paused", "suspended"].includes((instance.status || "").toLowerCase())
-  ).length;
-  const provisioningCount = instances.filter((instance) =>
-    ["provisioning", "building", "reboot", "hard_reboot"].includes(
-      (instance.status || "").toLowerCase()
-    )
-  ).length;
+  const {
+    total: totalInstancesCount,
+    running: runningCount,
+    provisioning: provisioningCount,
+    stopped: stoppedCount,
+    bandwidthReady: bandwidthReadyCount,
+  } = summarizeInstances(instances);
 
   const fleetStats: Array<{
     key: string;
@@ -64,9 +54,7 @@ const InstanceStats = ({ instances }: InstanceStatsProps) => {
     {
       key: "bandwidth",
       title: "Bandwidth Ready",
-      value: instances
-        .filter((instance) => Number(instance.bandwidth_count || 0) > 0)
-        .length.toLocaleString(),
+      value: bandwidthReadyCount.toLocaleString(),
       description: "Floating IP or dedicated bandwidth attached",
       icon: <Network size={24} />,
       color: "info",

@@ -2,7 +2,13 @@ import { DollarSign } from "lucide-react";
 import { designTokens } from "@/styles/designTokens";
 import { formatCurrencyValue } from "@/utils/instanceCreationUtils";
 import PricingBreakdown from "./PricingBreakdown";
-import type { PaymentGatewayOption, PaymentModeId, PaymentModeOption } from "./types";
+import type {
+  PaymentGatewayOption,
+  PaymentModeId,
+  PaymentModeOption,
+  PricingLineItem,
+  GatewayFeeDetail,
+} from "./types";
 
 interface AmountDetails {
   resolvedSubtotal: number;
@@ -34,6 +40,10 @@ interface PaymentMethodSelectorProps {
   isPaystackCardOption: boolean;
   shouldSaveCard: boolean;
   onShouldSaveCardChange: (checked: boolean) => void;
+  /** Forwarded to PricingBreakdown — itemised lines (one per backend pricing line). */
+  lineItems?: PricingLineItem[];
+  /** Forwarded to PricingBreakdown — real gateway fee descriptor with rate string. */
+  gatewayFee?: GatewayFeeDetail;
 }
 
 const PaymentMethodSelector = ({
@@ -54,6 +64,8 @@ const PaymentMethodSelector = ({
   isPaystackCardOption,
   shouldSaveCard,
   onShouldSaveCardChange,
+  lineItems,
+  gatewayFee,
 }: PaymentMethodSelectorProps) => {
   return (
     <div className="space-y-4">
@@ -116,15 +128,16 @@ const PaymentMethodSelector = ({
             amountDetails={amountDetails}
             displayPayableTotal={displayPayableTotal}
             hasAdjustment={hasAdjustment}
+            lineItems={lineItems}
+            gatewayFee={gatewayFee}
           />
         )}
-        {showPricingBreakdown && hasAdjustment && (
-          <p className="text-[11px]" style={{ color: designTokens.colors.neutral[500] }}>
-            Gateway total is {amountDetails.adjustment > 0 ? "higher" : "lower"} than the estimate
-            by {amountDetails.displayCurrency}{" "}
-            {formatCurrencyValue(Math.abs(amountDetails.adjustment))}.
-          </p>
-        )}
+        {/* Note: the legacy "Gateway total is higher than the estimate"
+            blurb has been replaced by the warning banner rendered
+            inside `PricingBreakdown` itself when an unexplained delta
+            is detected. That branch should never fire — if it does,
+            the customer should NOT pay and should refresh / contact
+            support. See PricingBreakdown's `data-testid="pricing-mismatch-warning"`. */}
         <div className="flex items-center justify-between">
           <span style={{ color: designTokens.colors.neutral[600] }}>Gateway:</span>
           <span

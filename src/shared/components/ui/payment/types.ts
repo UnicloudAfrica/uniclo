@@ -143,12 +143,51 @@ export type ApiResponse<T = unknown> = {
   cards?: SavedCard[];
 } & Record<string, unknown>;
 
+/**
+ * Per-line item shape mirrored from the backend's pricing breakdown.
+ * Surfaced on the payment page so the customer sees the SAME line
+ * items they saw in the wizard — never a synthesised "estimated
+ * total" that hides what they're actually paying for.
+ */
+export interface PricingLineItem {
+  name: string;
+  total: number;
+  /** Optional — shown in muted text if present (e.g. "1 vCPU, 1GB RAM, 10GB SSD"). */
+  hint?: string;
+  /** Optional per-item meta from backend pricing — useful for unit tests. */
+  meta?: Record<string, unknown>;
+}
+
+/**
+ * Resolved gateway fee descriptor. When present, the payment page
+ * renders this as a labelled line ("Paystack processing fee — 1.5% +
+ * ₦100") rather than an opaque "Gateway fees" number. When the
+ * gateway charges nothing, omit this field — don't render a zero line.
+ */
+export interface GatewayFeeDetail {
+  amount: number;
+  /** Display label, e.g. "Paystack processing fee". */
+  label: string;
+  /** Optional human-readable rate, e.g. "1.5% + ₦100 (capped at ₦2,000)". */
+  rate?: string;
+}
+
 export interface PricingSummaryData {
   subtotal?: number;
   tax?: number;
+  /** @deprecated Use `gatewayFee` for transparent labelling. */
   gatewayFees?: number;
   grandTotal?: number;
   currency?: string;
+  /**
+   * Itemised lines from the backend pricing breakdown. When present,
+   * the payment page renders these instead of just "Subtotal" — same
+   * shape as the wizard, so the customer never sees a different
+   * decomposition between quote and payment.
+   */
+  lineItems?: PricingLineItem[];
+  /** Real gateway fee with a real label (not a magic "adjustment"). */
+  gatewayFee?: GatewayFeeDetail;
 }
 
 export interface PaymentModalProps {

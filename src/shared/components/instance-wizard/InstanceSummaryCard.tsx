@@ -52,6 +52,24 @@ interface InstanceSummaryCardProps {
   backendPricingData?: unknown;
   protectionPlan?: string;
   redundancyPattern?: string;
+  /**
+   * FE-computed monthly cost of the currently-selected protection plan,
+   * bubbled up from `ProtectionPlanStep.onMonthlyCostChange`. Surfaced
+   * inside the Protection block as "₦X / mo" so operators see the
+   * fee they're about to commit to BEFORE the order POST returns a
+   * backend-priced breakdown. Without this, the summary would name
+   * the plan ("Backup Only") but hide its cost — operators would pick
+   * a plan more expensive than the compute and not realise until the
+   * Review step.
+   */
+  protectionPlanMonthlyCost?: number;
+  /**
+   * True while the totals come from the pre-order preview-pricing quote
+   * (pricingSummary.isEstimate in the client/tenant provisioning hooks)
+   * rather than a created order's receipt. Relabels the breakdown so
+   * customers know the figure is an estimate pending checkout.
+   */
+  isPriceEstimate?: boolean;
 }
 
 const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
@@ -73,6 +91,8 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
   backendPricingData,
   protectionPlan,
   redundancyPattern,
+  protectionPlanMonthlyCost = 0,
+  isPriceEstimate = false,
 }) => {
   const { data: networkPresets = DEFAULT_PRESETS } = useNetworkPresets();
   const presetCatalog = useMemo(
@@ -427,6 +447,15 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
                         )}
                       </>
                     )}
+                    {protectionPlanMonthlyCost > 0 && (
+                      <div className="flex items-center justify-between border-t border-blue-100 pt-1.5 mt-0.5 text-xs">
+                        <span className="text-gray-600">Plan fee</span>
+                        <span className="font-semibold text-gray-900">
+                          {displayCurrency} {formatCurrencyValue(protectionPlanMonthlyCost)}
+                          <span className="ml-0.5 text-[10px] font-normal text-gray-500">/mo</span>
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -436,7 +465,9 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
 
         {showPricingBreakdown && (
           <div className="pt-4 border-t border-gray-200 space-y-3">
-            <h4 className="text-sm font-semibold text-gray-700">Pricing breakdown</h4>
+            <h4 className="text-sm font-semibold text-gray-700">
+              {isPriceEstimate ? "Pricing estimate" : "Pricing breakdown"}
+            </h4>
             <div className="space-y-2 text-xs text-gray-600">
               {resolvedSubtotal > 0 && (
                 <div className="flex items-center justify-between">
@@ -479,11 +510,19 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
                 </div>
               )}
               <div className="flex items-center justify-between border-t border-gray-200 pt-2 text-sm">
-                <span className="font-semibold text-gray-700">Total payable</span>
+                <span className="font-semibold text-gray-700">
+                  {isPriceEstimate ? "Estimated total" : "Total payable"}
+                </span>
                 <span className="font-bold text-gray-900">
                   {displayCurrency} {formatCurrencyValue(payableTotal)}
                 </span>
               </div>
+              {isPriceEstimate && (
+                <p className="text-[11px] text-gray-500">
+                  Estimate based on your current configuration. The final price is confirmed when
+                  you create the order.
+                </p>
+              )}
             </div>
             {difference > 0.01 && hasGatewayVariance && (
               <p className="text-[11px] text-gray-500">

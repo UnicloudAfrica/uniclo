@@ -11,10 +11,14 @@ import {
   RotateCcw,
   HardDrive,
   CheckCircle2,
+  FolderOpen,
 } from "lucide-react";
 import { ModernButton } from "../ui";
 import IntegrationStatusBadge from "./IntegrationStatusBadge";
-import { useBackupSnapshots } from "@/shared/hooks/resources/integrationHooks";
+import {
+  useBackupSnapshots,
+  useBrowseBackupSnapshot,
+} from "@/shared/hooks/resources/integrationHooks";
 
 interface BackupSnapshotsListProps {
   integrationKey: string;
@@ -30,15 +34,22 @@ const BackupSnapshotsList: React.FC<BackupSnapshotsListProps> = ({
   onRestore,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [browseSnapshotId, setBrowseSnapshotId] = useState<string | null>(null);
 
   const { data: snapshots = [], isLoading } = useBackupSnapshots(
     integrationKey,
     resourceType,
     resourceId,
-    { enabled: isExpanded },
+    { enabled: isExpanded }
   );
 
   const snapshotsList = snapshots as Record<string, unknown>[];
+  const { data: browsedFiles = [], isLoading: browsing } = useBrowseBackupSnapshot(
+    integrationKey,
+    browseSnapshotId,
+    "/",
+    { enabled: Boolean(browseSnapshotId) }
+  );
 
   return (
     <div className="overflow-hidden rounded-lg border border-gray-100 dark:border-gray-800">
@@ -80,7 +91,9 @@ const BackupSnapshotsList: React.FC<BackupSnapshotsListProps> = ({
             </div>
           ) : snapshotsList.length === 0 ? (
             <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
-              <span aria-hidden="true" className="text-4xl">📸</span>
+              <span aria-hidden="true" className="text-4xl">
+                📸
+              </span>
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 No snapshots yet
               </p>
@@ -107,16 +120,12 @@ const BackupSnapshotsList: React.FC<BackupSnapshotsListProps> = ({
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                            {completedAt
-                              ? new Date(completedAt).toLocaleString()
-                              : "Unknown date"}
+                            {completedAt ? new Date(completedAt).toLocaleString() : "Unknown date"}
                           </span>
                           <IntegrationStatusBadge status="completed" />
                         </div>
                         <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                          {identifier && (
-                            <span className="font-mono">{identifier}</span>
-                          )}
+                          {identifier && <span className="font-mono">{identifier}</span>}
                           <span className="capitalize">{backupType}</span>
                           {sizeBytes !== undefined && sizeBytes > 0 && (
                             <span>{formatBytes(sizeBytes)}</span>
@@ -125,17 +134,67 @@ const BackupSnapshotsList: React.FC<BackupSnapshotsListProps> = ({
                       </div>
                     </div>
 
-                    <ModernButton
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onRestore(snapshot)}
-                    >
-                      <RotateCcw size={14} className="mr-1" />
-                      Restore
-                    </ModernButton>
+                    <div className="flex flex-wrap gap-2">
+                      <ModernButton
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setBrowseSnapshotId(
+                            String(snapshot.external_operation_id ?? identifier ?? snapshot.id)
+                          )
+                        }
+                      >
+                        <FolderOpen size={14} className="mr-1" />
+                        Browse
+                      </ModernButton>
+                      <ModernButton variant="outline" size="sm" onClick={() => onRestore(snapshot)}>
+                        <RotateCcw size={14} className="mr-1" />
+                        Restore
+                      </ModernButton>
+                    </div>
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {browseSnapshotId && (
+            <div className="border-t border-gray-100 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900/60">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  Snapshot Files
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setBrowseSnapshotId(null)}
+                  className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                >
+                  Close
+                </button>
+              </div>
+              {browsing ? (
+                <div className="h-10 animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800" />
+              ) : browsedFiles.length === 0 ? (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  No files returned for this snapshot path.
+                </p>
+              ) : (
+                <div className="max-h-56 overflow-auto rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-950">
+                  {browsedFiles.map((file, index) => (
+                    <div
+                      key={`${String(file.name ?? index)}-${index}`}
+                      className="flex items-center justify-between border-b border-gray-100 px-3 py-2 text-xs last:border-b-0 dark:border-gray-800"
+                    >
+                      <span className="font-mono text-gray-700 dark:text-gray-300">
+                        {String(file.name ?? "unknown")}
+                      </span>
+                      <span className="text-gray-500 dark:text-gray-400">
+                        {String(file.type ?? "file")}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

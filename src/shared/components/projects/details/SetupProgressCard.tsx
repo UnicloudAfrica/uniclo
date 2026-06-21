@@ -10,7 +10,9 @@ const supports = (
 interface SetupStep {
   id: string;
   label: string;
-  status: "completed" | "pending" | "not_started" | "failed";
+  // Backend can also emit "in_progress" and "retrying"; the type is
+  // open-ended so we don't break on payloads that introduce new states.
+  status: "completed" | "pending" | "in_progress" | "not_started" | "failed" | "retrying" | string;
   description?: string;
   updated_at?: string;
   context?: Record<string, unknown>;
@@ -26,6 +28,20 @@ interface SetupProgressCardProps {
    * hide setup steps the AZ doesn't support. Missing flags fail open.
    */
   providerFeatures?: Record<string, boolean>;
+  /**
+   * True when the parent has determined the pipeline is mid-recovery
+   * (a step transiently failed but the worker is still retrying or
+   * later steps are still running). When set, individual steps with
+   * status === "failed" are rendered as "Retrying…" — yellow spinner,
+   * not the red X — because flashing FAILED at the user during a
+   * normal retry-and-continue cycle is what makes them give up and
+   * close the tab.
+   *
+   * The parent flips this off only when the project itself is
+   * terminally failed (project.status === "failed"); at that point
+   * the red X reappears and the per-step FAILED badge is honest.
+   */
+  pipelineActive?: boolean;
 }
 
 const STEP_FEATURE_MAP: Record<string, string> = {
@@ -43,7 +59,27 @@ const SetupProgressCard: React.FC<SetupProgressCardProps> = ({
   onCompleteSetup,
   isLoading = false,
   providerFeatures,
+  pipelineActive,
 }) => {
+  // If the parent didn't explicitly tell us, infer it: the pipeline
+  // is "active" (still trying to make progress) when there's at
+  // least one step we'd expect a worker to be touching — pending,
+  // in_progress, or an explicit retrying step. This keeps the
+  // component safe to render standalone (storybook, tests) without
+  // the parent having to wire the prop.
+  const inferredActive = steps.some((s) =>
+    ["pending", "in_progress", "retrying"].includes(s.status as string)
+  );
+  const isPipelineActive = pipelineActive ?? inferredActive;
+
+  // Treat a step's status as "retrying" (not "failed") when the
+  // pipeline is still actively making progress. Mirrors the
+  // parent's title-level rule: per-step FAILED is only true when
+  // the whole pipeline has stopped.
+  const effectiveStatus = (s: SetupStep): string => {
+    if (s.status === "failed" && isPipelineActive) return "retrying";
+    return s.status;
+  };
   const [expandedSteps, setExpandedSteps] = React.useState<Record<string, boolean>>({});
 
   const toggleStep = (id: string) => {
@@ -121,6 +157,7 @@ const SetupProgressCard: React.FC<SetupProgressCardProps> = ({
         {filteredSteps.map((step) => {
           const hasContext = step.context && Object.keys(step.context).length > 0;
           const isExpanded = expandedSteps[step.id];
+          const display = effectiveStatus(step);
 
           return (
             <div key={step.id} className="flex flex-col gap-2">
@@ -130,13 +167,17 @@ const SetupProgressCard: React.FC<SetupProgressCardProps> = ({
               >
                 <div className="flex items-center gap-4">
                   <div className="flex-shrink-0">
-                    {step.status === "completed" ? (
+                    {display === "completed" ? (
                       <div className="w-5 h-5 bg-green-50 rounded-full flex items-center justify-center">
                         <CheckCircle className="w-4 h-4 text-green-500" />
                       </div>
-                    ) : step.status === "pending" ? (
+                    ) : display === "pending" || display === "in_progress" ? (
                       <RefreshCw className="w-5 h-5 text-blue-400 animate-spin" />
-                    ) : step.status === "failed" ? (
+                    ) : display === "retrying" ? (
+                      // Yellow spinner during retry — "we're still
+                      // working on it", not "we've given up".
+                      <RefreshCw className="w-5 h-5 text-amber-500 animate-spin" />
+                    ) : display === "failed" ? (
                       <XCircle className="w-5 h-5 text-red-500" />
                     ) : (
                       <Circle className="w-5 h-5 text-gray-200" />
@@ -145,7 +186,7 @@ const SetupProgressCard: React.FC<SetupProgressCardProps> = ({
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2">
                       <span
-                        className={`text-sm font-medium ${step.status === "completed" ? "text-gray-900" : "text-gray-600"}`}
+                        className={`text-sm font-medium ${display === "completed" ? "text-gray-900" : "text-gray-600"}`}
                       >
                         {step.label}
                       </span>
@@ -167,14 +208,18 @@ const SetupProgressCard: React.FC<SetupProgressCardProps> = ({
                 </div>
                 <span
                   className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${
-                    step.status === "completed"
+                    display === "completed"
                       ? "bg-green-50 text-green-600"
-                      : step.status === "pending"
+                      : display === "pending" || display === "in_progress"
                         ? "bg-blue-50 text-blue-600"
-                        : "bg-gray-50 text-gray-400"
+                        : display === "retrying"
+                          ? "bg-amber-50 text-amber-600"
+                          : display === "failed"
+                            ? "bg-red-50 text-red-600"
+                            : "bg-gray-50 text-gray-400"
                   }`}
                 >
-                  {step.status.toUpperCase()}
+                  {display.toUpperCase()}
                 </span>
               </div>
 

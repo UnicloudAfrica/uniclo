@@ -13,10 +13,16 @@
         crossorigin="anonymous"></script>
     <script type="text/javascript">
         document.addEventListener("DOMContentLoaded", function () {
-            // Vite replaces `%VITE_CONVEYTHIS_KEY%` at build time. Empty
-            // string means the env var was unset — skip initialisation.
+            // Vite substitutes the `%VITE_CONVEYTHIS_KEY%` token below at build
+            // time. When the env var is unset it leaves the token verbatim, so
+            // we skip init if the value is empty OR still the raw placeholder.
+            // The sentinel is assembled at runtime ("%VITE" + "...") so Vite
+            // does NOT substitute it too — otherwise, when the key IS set, both
+            // occurrences would become the key and the guard would always match,
+            // silently disabling ConveyThis. See GAP-035.
             var conveyKey = "%VITE_CONVEYTHIS_KEY%";
-            if (!conveyKey || conveyKey === "%VITE_CONVEYTHIS_KEY%") {
+            var unresolvedPlaceholder = "%VITE" + "_CONVEYTHIS_KEY%";
+            if (!conveyKey || conveyKey === unresolvedPlaceholder) {
                 return;
             }
             if (typeof globalThis.window.ConveyThis_Initializer === "object" && globalThis.window.ConveyThis_Initializer?.init) {

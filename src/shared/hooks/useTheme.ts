@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect } from "react";
+import { create } from "zustand";
 
 type Theme = "light" | "dark";
 
@@ -65,7 +66,18 @@ function getStoredTheme(): Theme | null {
   return null;
 }
 
+function persistTheme(theme: Theme): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, theme);
+  } catch {
+    // localStorage unavailable
+  }
+}
+
 function applyTheme(theme: Theme): void {
+  if (typeof document === "undefined") {
+    return;
+  }
   const root = document.documentElement;
 
   if (theme === "dark") {
@@ -98,60 +110,77 @@ function applyTheme(theme: Theme): void {
   }
 }
 
+interface ThemeStore {
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
+  toggleTheme: () => void;
+}
+
 /**
- * useTheme — manages dark/light mode with localStorage persistence.
+ * Single shared source of truth for the theme. Every `useTheme()` consumer
+ * (admin/tenant/client headers, settings drawer, NOC map, …) reads and writes
+ * this ONE store, so the whole app flips in a single update.
  *
- * Overrides inline CSS variables set by the branding system (useBrandingTheme)
- * so that dark mode actually takes effect. Saves/restores light-mode values
- * when toggling.
+ * Previously each consumer held its own `useState`, synced only loosely via the
+ * DOM class + localStorage — they re-rendered at slightly different times, which
+ * is what produced the brief light-header/dark-content mismatch on toggle.
+ */
+export const useThemeStore = create<ThemeStore>((set, get) => ({
+  theme: getStoredTheme() ?? "light",
+  setTheme: (theme) => {
+    applyTheme(theme);
+    persistTheme(theme);
+    set({ theme });
+  },
+  toggleTheme: () => get().setTheme(get().theme === "dark" ? "light" : "dark"),
+}));
+
+/**
+ * One-time DOM bootstrap, installed by the first consumer to mount:
+ *   1. apply the stored theme so the DOM matches on load, and
+ *   2. install a single MutationObserver that re-applies the dark overrides if
+ *      the branding system (useBrandingTheme) overwrites them while in dark mode.
+ * Guarded so it runs exactly once for the app's lifetime.
+ */
+let bootstrapped = false;
+function bootstrapThemeOnce(): void {
+  if (bootstrapped || typeof document === "undefined") {
+    return;
+  }
+  bootstrapped = true;
+
+  applyTheme(useThemeStore.getState().theme);
+
+  const root = document.documentElement;
+  const observer = new MutationObserver(() => {
+    if (useThemeStore.getState().theme !== "dark") {
+      return;
+    }
+    const currentCardBg = root.style.getPropertyValue("--theme-card-bg");
+    if (currentCardBg && currentCardBg !== DARK_OVERRIDES["--theme-card-bg"]) {
+      for (const [prop, darkVal] of Object.entries(DARK_OVERRIDES)) {
+        const current = root.style.getPropertyValue(prop);
+        if (current && current !== darkVal) {
+          root.style.setProperty(SAVED_LIGHT_PREFIX + prop, current);
+        }
+        root.style.setProperty(prop, darkVal);
+      }
+    }
+  });
+  observer.observe(root, { attributes: true, attributeFilter: ["style"] });
+}
+
+/**
+ * useTheme — dark/light mode backed by the shared {@link useThemeStore}.
+ * Public API is unchanged, so existing callers need no changes.
  */
 export function useTheme() {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    return getStoredTheme() ?? "light";
-  });
+  const theme = useThemeStore((s) => s.theme);
+  const setTheme = useThemeStore((s) => s.setTheme);
+  const toggleTheme = useThemeStore((s) => s.toggleTheme);
 
-  // Apply on mount and when theme changes
   useEffect(() => {
-    applyTheme(theme);
-    try {
-      localStorage.setItem(STORAGE_KEY, theme);
-    } catch {
-      // localStorage unavailable
-    }
-  }, [theme]);
-
-  // Re-apply dark overrides whenever branding might re-run
-  // (branding hooks run on mount and when theme data loads)
-  useEffect(() => {
-    if (theme !== "dark") return;
-
-    // MutationObserver: if branding resets inline styles, re-apply dark overrides
-    const root = document.documentElement;
-    const observer = new MutationObserver(() => {
-      const currentCardBg = root.style.getPropertyValue("--theme-card-bg");
-      // If branding overwrote our dark value, re-apply
-      if (currentCardBg && currentCardBg !== DARK_OVERRIDES["--theme-card-bg"]) {
-        // Save the new light value first
-        for (const [prop, darkVal] of Object.entries(DARK_OVERRIDES)) {
-          const current = root.style.getPropertyValue(prop);
-          if (current && current !== darkVal) {
-            root.style.setProperty(SAVED_LIGHT_PREFIX + prop, current);
-          }
-          root.style.setProperty(prop, darkVal);
-        }
-      }
-    });
-
-    observer.observe(root, { attributes: true, attributeFilter: ["style"] });
-    return () => observer.disconnect();
-  }, [theme]);
-
-  const toggleTheme = useCallback(() => {
-    setThemeState((prev) => (prev === "dark" ? "light" : "dark"));
-  }, []);
-
-  const setTheme = useCallback((t: Theme) => {
-    setThemeState(t);
+    bootstrapThemeOnce();
   }, []);
 
   return { theme, toggleTheme, setTheme, isDark: theme === "dark" };

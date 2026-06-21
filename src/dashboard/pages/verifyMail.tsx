@@ -98,17 +98,18 @@ export default function VerifyMail() {
     });
   };
 
-  // Validation function for OTP and email
-  const validateForm = () => {
+  // Validation function for OTP and email.
+  // Takes the resolved OTP explicitly so it can't drift from the
+  // typed value when `handleSubmit` is invoked via `onComplete`.
+  const validateForm = (resolvedOtp: string): boolean => {
     const newErrors: Record<string, string> = {};
-    const joinedCode = code.join("");
-    if (!joinedCode || joinedCode.length !== 6) {
+    if (!resolvedOtp || resolvedOtp.length !== 6) {
       if (twoFactorRequired) {
         newErrors.twoFactor = "Authenticator code is required";
       } else {
         newErrors.otp = "Please enter a 6-digit code";
       }
-    } else if (!/^\d{6}$/.test(joinedCode)) {
+    } else if (!/^\d{6}$/.test(resolvedOtp)) {
       if (twoFactorRequired) {
         newErrors.twoFactor = "Authenticator code must be 6 digits";
       } else {
@@ -127,19 +128,24 @@ export default function VerifyMail() {
   // Handle form submission for email verification
   const handleSubmit = (enteredCode = code.join("")) => {
     // No e.preventDefault needed since we're not relying on form events directly
-    if (!validateForm()) return;
+    const resolvedCode = typeof enteredCode === "string" ? enteredCode : code.join("");
+    if (!validateForm(resolvedCode)) return;
     if (isSubmittingRef.current || isVerifyPending) return;
 
     const email = userEmail;
-    const resolvedCode = typeof enteredCode === "string" ? enteredCode : code.join("");
-    const userData: VerifyEmailPayload = { email };
-    if (twoFactorRequired) {
-      userData.google2fa_code = resolvedCode;
-      userData.two_factor_code = resolvedCode;
-      userData.code = resolvedCode;
-    } else {
-      userData.otp = resolvedCode;
-    }
+    // Send under every recognised field name. The backend picks the
+    // right one based on whether the user has 2FA enabled on their
+    // account — not based on our FE flag. This avoids the "first
+    // submit fails with 2FA-required, second submit with same code
+    // works" round-trip when the FE's `twoFactorRequired` is out of
+    // sync with the user's actual enrolment state.
+    const userData: VerifyEmailPayload = {
+      email,
+      otp: resolvedCode,
+      code: resolvedCode,
+      google2fa_code: resolvedCode,
+      two_factor_code: resolvedCode,
+    };
 
     isSubmittingRef.current = true;
 
@@ -223,6 +229,12 @@ export default function VerifyMail() {
         if (/2fa|two[-\s]?factor|authenticator/i.test(message)) {
           setTwoFactorRequired?.(true);
         }
+        // Always reset the code on error. The `[twoFactorRequired]`
+        // effect only fires when the flag CHANGES — a wrong-code
+        // submission when 2FA is already required wouldn't clear the
+        // inputs without this. The first-input focus reset lives in
+        // VerificationCodeInput and watches for the empty transition.
+        setCode(Array(6).fill(""));
       },
       onSettled: () => {
         isSubmittingRef.current = false;

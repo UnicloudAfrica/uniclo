@@ -37,10 +37,19 @@ const WizardStepper: React.FC<WizardStepperProps> = ({
         return (
           <React.Fragment key={step.id}>
             <div
+              role={isClickable ? "button" : undefined}
+              tabIndex={isClickable ? 0 : undefined}
+              aria-current={isActive ? "step" : undefined}
               onClick={() => {
                 if (isClickable) onStepChange?.(idx);
               }}
-              className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-all whitespace-nowrap ${
+              onKeyDown={(event) => {
+                if (isClickable && (event.key === "Enter" || event.key === " ")) {
+                  event.preventDefault();
+                  onStepChange?.(idx);
+                }
+              }}
+              className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-all whitespace-nowrap focus-visible:outline-2 focus-visible:outline-primary-500 ${
                 isActive
                   ? "bg-primary-50"
                   : isCompleted && onStepChange

@@ -1,25 +1,22 @@
-import {
-  Building,
-  Database,
-  HardDrive,
-  HelpCircle,
-  MapPin,
-  Package,
-  Server,
-  ShieldCheck,
-  Sparkles,
-  Wallet,
-} from "lucide-react";
+import { Activity, Building, Database, FolderKanban, MapPin, Package, Server } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import useAuthRedirect from "@/utils/adminAuthRedirect";
-import { ModernButton, ModernCard, StatusPill, DashboardSkeleton } from "@/shared/components/ui";
-import ModernTable, { Column } from "@/shared/components/ui/ModernTable";
 import {
-  CommandCenterHero,
-  MiniSparklineStatCard,
-  StorageForecastBanner,
-} from "@/shared/components/dashboard";
+  ModernButton,
+  ModernCard,
+  ModernStatsCard,
+  StatusPill,
+  DashboardSkeleton,
+} from "@/shared/components/ui";
+import ModernTable, { Column } from "@/shared/components/ui/ModernTable";
+import { CommandCenterHero } from "@/shared/components/dashboard";
+import { useFetchPurchasedInstances } from "@/shared/hooks/resources/instanceHooks";
+import { useFetchProjects } from "@/shared/hooks/resources/projectHooks";
+import {
+  summarizeInstances,
+  type InstanceLike,
+} from "@/shared/components/instances/instanceStatus";
 import useAuthStore from "@/stores/authStore";
 import AdminPageShell from "../components/AdminPageShell";
 
@@ -39,23 +36,32 @@ interface Client {
   module: string;
 }
 
-const SAMPLE_INSTANCES_TREND = [22, 24, 26, 25, 28, 30, 33, 35, 36, 37, 38];
-const SAMPLE_STORAGE_TREND = [9.1, 9.4, 9.8, 10.3, 10.7, 11.1, 11.5, 11.8, 12.0, 12.2, 12.4];
-const SAMPLE_SPEND_TREND = [320, 312, 305, 298, 295, 292, 289, 287, 286, 285, 284];
-const SAMPLE_TICKETS_TREND = [4, 5, 5, 6, 4, 3, 3, 2, 2, 2, 2];
-
 export default function AdminDashboard() {
   const { isLoading } = useAuthRedirect();
   const navigate = useNavigate();
   const adminUser = useAuthStore((state) => state.user);
 
+  // Real fleet + project counts. The instances endpoint returns the whole
+  // fleet when per_page is 0 (BaseInstanceController only paginates when
+  // per_page > 0); useFetchProjects returns the full { data, meta } envelope.
+  const { data: instancesResponse } = useFetchPurchasedInstances({ per_page: 0 });
+  const fleet = summarizeInstances(
+    (Array.isArray((instancesResponse as { data?: unknown })?.data)
+      ? (instancesResponse as { data?: unknown[] }).data
+      : []) as InstanceLike[]
+  );
+
+  const { data: projectsResponse } = useFetchProjects();
+  const projectResp = projectsResponse as { data?: unknown[]; meta?: { total?: number } } | undefined;
+  const projectCount =
+    projectResp?.meta?.total ??
+    (Array.isArray(projectResp?.data) ? projectResp.data.length : 0);
+
   const recentPartners: Partner[] = [];
   const recentClients: Client[] = [];
 
   const adminFirstName =
-    typeof adminUser?.name === "string"
-      ? adminUser.name.split(" ")[0] || "Admin"
-      : "Admin";
+    typeof adminUser?.name === "string" ? adminUser.name.split(" ")[0] || "Admin" : "Admin";
 
   const encodeId = (id: string | number) => encodeURIComponent(btoa(String(id)));
 
@@ -129,7 +135,7 @@ export default function AdminDashboard() {
   return (
     <AdminPageShell
       title="Dashboard"
-      description="Sovereign · billed in naira · Lagos NG-1"
+      description="Sovereign · billed in naira · deployed in-region across Africa"
       contentClassName="ui-page-stack"
     >
       {/* Command Center Hero */}
@@ -155,71 +161,40 @@ export default function AdminDashboard() {
         ]}
         chips={[
           { label: "Region", value: "Lagos · NG-1", icon: <MapPin size={12} /> },
-          { label: "Naira spend (mo)", value: "₦284,500", icon: <Wallet size={12} /> },
-          { label: "Trial credits", value: "₦12,500", icon: <Sparkles size={12} /> },
-          { label: "Support tier", value: "Premium", icon: <ShieldCheck size={12} /> },
+          { label: "Instances", value: String(fleet.total), icon: <Server size={12} /> },
+          { label: "Projects", value: String(projectCount), icon: <FolderKanban size={12} /> },
         ]}
       />
 
-      {/* Storage forecast banner */}
-      <StorageForecastBanner
-        tone="info"
-        message={
-          <>
-            <strong>Storage forecast:</strong> Silo bucket{" "}
-            <code className="rounded bg-black/5 px-1.5 py-0.5 font-mono text-[12px]">
-              archive-q1
-            </code>{" "}
-            reaches 80% capacity in <strong>~14 days</strong> at current pace.
-          </>
-        }
-        action={{
-          label: "View forecast",
-          onClick: () => navigate("/admin-dashboard/object-storage"),
-        }}
-      />
-
-      {/* Stats grid */}
+      {/* Stats grid — real counts from the instances + projects endpoints */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MiniSparklineStatCard
-          title="Active instances"
-          value="38"
-          delta="+5"
-          trend="up"
-          series={SAMPLE_INSTANCES_TREND}
-          icon={<Server size={16} />}
-          description={`vs ${SAMPLE_INSTANCES_TREND[0]} last month`}
-          onClick={() => navigate("/admin-dashboard/instances")}
+        <ModernStatsCard
+          title="Total instances"
+          value={fleet.total.toLocaleString()}
+          description={`${fleet.running} running`}
+          icon={<Server size={24} />}
+          color="info"
         />
-        <MiniSparklineStatCard
-          title="Storage used"
-          value="12.4 TB"
-          delta="+1.2 TB"
-          trend="up"
-          series={SAMPLE_STORAGE_TREND}
-          icon={<HardDrive size={16} />}
-          description="Across 18 buckets"
-          onClick={() => navigate("/admin-dashboard/object-storage")}
+        <ModernStatsCard
+          title="Active"
+          value={fleet.running.toLocaleString()}
+          description={fleet.provisioning ? `${fleet.provisioning} provisioning` : "All healthy"}
+          icon={<Activity size={24} />}
+          color="success"
         />
-        <MiniSparklineStatCard
-          title="Naira spend (mo)"
-          value="₦284,500"
-          delta="-4%"
-          trend="down"
-          goodWhenUp={false}
-          series={SAMPLE_SPEND_TREND}
-          icon={<Wallet size={16} />}
-          description="Trending down — nice!"
-          onClick={() => navigate("/admin-dashboard/billing")}
+        <ModernStatsCard
+          title="Provisioning"
+          value={fleet.provisioning.toLocaleString()}
+          description={fleet.provisioning ? "Being built now" : "None in progress"}
+          icon={<Database size={24} />}
+          color="warning"
         />
-        <MiniSparklineStatCard
-          title="Open tickets"
-          value="2"
-          trend="flat"
-          series={SAMPLE_TICKETS_TREND}
-          icon={<HelpCircle size={16} />}
-          description="Both responded to within SLA"
-          onClick={() => navigate("/admin-dashboard/tickets")}
+        <ModernStatsCard
+          title="Projects"
+          value={projectCount.toLocaleString()}
+          description="Across all regions"
+          icon={<FolderKanban size={24} />}
+          color="primary"
         />
       </div>
 

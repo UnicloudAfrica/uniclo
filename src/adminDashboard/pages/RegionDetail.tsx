@@ -499,12 +499,12 @@ const RegionDetail = () => {
                           key={az.code}
                           className={`rounded-xl border ${
                             azStatus === "healthy"
-                              ? "border-green-200 bg-green-50"
+                              ? "border-green-200 bg-green-50 dark:border-green-800/40 dark:bg-green-950/30"
                               : azStatus === "degraded"
-                                ? "border-yellow-200 bg-yellow-50"
+                                ? "border-yellow-200 bg-yellow-50 dark:border-yellow-800/40 dark:bg-yellow-950/30"
                                 : azStatus === "maintenance"
-                                  ? "border-blue-200 bg-blue-50"
-                                  : "border-gray-200 bg-gray-50"
+                                  ? "border-blue-200 bg-blue-50 dark:border-blue-800/40 dark:bg-blue-950/30"
+                                  : "border-gray-200 bg-gray-50 dark:border-gray-700/50 dark:bg-gray-800/40"
                           }`}
                         >
                           <button
@@ -514,34 +514,34 @@ const RegionDetail = () => {
                             aria-expanded={isExpanded}
                             aria-controls={`az-credentials-${az.code}`}
                           >
-                            <span className="text-gray-400">
+                            <span className="text-gray-400 dark:text-gray-500">
                               {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                             </span>
                             <div
                               className={`rounded-lg p-1.5 ${
                                 azStatus === "healthy"
-                                  ? "bg-green-100 text-green-600"
+                                  ? "bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-300"
                                   : azStatus === "degraded"
-                                    ? "bg-yellow-100 text-yellow-600"
-                                    : "bg-gray-100 text-gray-500"
+                                    ? "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/40 dark:text-yellow-300"
+                                    : "bg-gray-100 text-gray-500 dark:bg-gray-700/50 dark:text-gray-300"
                               }`}
                             >
                               <Layers size={18} />
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <p className="text-sm font-medium text-gray-900">
+                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                   {az.name || az.code}
                                 </p>
                                 {isVerified && (
-                                  <span className="flex items-center gap-0.5 rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700">
+                                  <span className="flex items-center gap-0.5 rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:bg-green-900/40 dark:text-green-300">
                                     <ShieldCheck size={10} />
                                     Verified
                                   </span>
                                 )}
                               </div>
                               <div className="flex items-center gap-2 mt-0.5">
-                                <span className="font-mono text-xs text-gray-500">{az.code}</span>
+                                <span className="font-mono text-xs text-gray-500 dark:text-gray-400">{az.code}</span>
                                 <ProviderBadge provider={az.provider} size="sm" />
                               </div>
                             </div>
@@ -564,7 +564,7 @@ const RegionDetail = () => {
                           {isExpanded && (
                             <div
                               id={`az-credentials-${az.code}`}
-                              className="border-t border-white/60 bg-white/60 px-4 py-4"
+                              className="border-t border-white/60 bg-white/60 px-4 py-4 dark:border-white/10 dark:bg-white/5"
                             >
                               <AZCredentialPanel
                                 regionCode={String(region.code ?? "")}

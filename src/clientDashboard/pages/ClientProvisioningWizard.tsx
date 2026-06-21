@@ -51,7 +51,9 @@ import {
 // ═══════════════════════════════════════════════════════════════════
 
 const ClientProvisioningWizard: React.FC = () => {
-  const [selectedProtectionPlan, setSelectedProtectionPlan] = useState<ProtectionPlan>("backup_only");
+  // "none" — the client order payload doesn't carry a protection plan, so the
+  // sidebar must not claim coverage (the old "backup_only" default did).
+  const [selectedProtectionPlan, setSelectedProtectionPlan] = useState<ProtectionPlan>("none");
   const [selectedRedundancy, setSelectedRedundancy] = useState<RedundancyPattern>("n_plus_1");
   const navigate = useNavigate();
   const location = useLocation();
@@ -477,6 +479,7 @@ const ClientProvisioningWizard: React.FC = () => {
             summaryDisplayCurrency={summaryDisplayCurrency}
             protectionPlan={selectedProtectionPlan}
             redundancyPattern={selectedRedundancy}
+            isPriceEstimate={Boolean(pricingSummary.isEstimate)}
           />
         }
       />

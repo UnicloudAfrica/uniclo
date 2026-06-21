@@ -73,18 +73,23 @@ export default function VerifyAdminMail() {
     setCode(new Array(6).fill(""));
   }, [twoFactorRequired]);
 
-  // Validation function for OTP and email
-  const validateForm = () => {
+  // Validation function for OTP and email.
+  //
+  // Takes the resolved OTP explicitly rather than reading `code` from
+  // closure — the closure value can lag the actual typed input by one
+  // render when `handleSubmit` is triggered via `onComplete` from the
+  // VerificationCodeInput's last-digit effect. Passing the resolved
+  // value in makes the source of truth unambiguous.
+  const validateForm = (resolvedOtp: string): boolean => {
     const newErrors: VerifyErrors = {};
 
-    const joinedCode = code.join("");
-    if (!joinedCode || joinedCode.length !== 6) {
+    if (!resolvedOtp || resolvedOtp.length !== 6) {
       if (twoFactorRequired) {
         newErrors.twoFactor = "Authenticator code is required";
       } else {
         newErrors.otp = "Please enter a 6-digit code";
       }
-    } else if (!/^\d{6}$/.test(joinedCode)) {
+    } else if (!/^\d{6}$/.test(resolvedOtp)) {
       if (twoFactorRequired) {
         newErrors.twoFactor = "Authenticator code must be 6 digits";
       } else {
@@ -109,21 +114,26 @@ export default function VerifyAdminMail() {
     const resolvedOtp =
       typeof otpValue === "string" && otpValue.trim().length ? otpValue : code.join("");
 
-    if (!validateForm()) return;
+    if (!validateForm(resolvedOtp)) return;
     if (isSubmittingRef.current || isVerifyPending) return;
 
     const email = userEmail;
+    // Defence in depth: send the typed code under EVERY field name
+    // the BE recognises. The BE picks the right one based on whether
+    // the user actually has 2FA enabled (`$twoFactorEnabled` on the
+    // user row) — not based on our FE flag. Submitting under all
+    // names means the very first submit always works, even when the
+    // FE's `twoFactorRequired` flag is out of sync with the user's
+    // actual 2FA enrolment state. Eliminates the "type code → 2FA
+    // required → flag flips → code clears → retype same code →
+    // works" round-trip the customer hit.
     const userData: Record<string, unknown> = {
       email,
+      otp: resolvedOtp,
+      code: resolvedOtp,
+      google2fa_code: resolvedOtp,
+      two_factor_code: resolvedOtp,
     };
-    if (!twoFactorRequired) {
-      userData.otp = resolvedOtp;
-    }
-    if (twoFactorRequired) {
-      userData.google2fa_code = resolvedOtp;
-      userData.two_factor_code = resolvedOtp;
-      userData.code = resolvedOtp;
-    }
 
     isSubmittingRef.current = true;
 
@@ -210,6 +220,15 @@ export default function VerifyAdminMail() {
         if (/2fa|two[-\\s]?factor|authenticator/i.test(message)) {
           setTwoFactorRequired(true);
         }
+        // Always clear the code on error so the user gets a fresh
+        // input. The legacy approach relied on the
+        // `[twoFactorRequired]` useEffect to clear — but that effect
+        // only fires when the flag CHANGES. A wrong-code submission
+        // when 2FA was already required wouldn't trigger it, leaving
+        // the wrong digits in the inputs. The focus reset effect in
+        // VerificationCodeInput watches for the all-empty transition
+        // and puts the cursor back on the first input.
+        setCode(new Array(6).fill(""));
       },
       onSettled: () => {
         isSubmittingRef.current = false;

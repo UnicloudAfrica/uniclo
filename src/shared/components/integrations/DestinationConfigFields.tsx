@@ -21,29 +21,84 @@ interface FieldDef {
 const FIELDS_BY_TYPE: Record<DestinationType, FieldDef[]> = {
   s3: [
     { key: "bucket", label: "Bucket", required: true, placeholder: "unicloud-backups" },
-    { key: "endpoint", label: "Endpoint URL", required: true, placeholder: "https://s3.amazonaws.com" },
-    { key: "access_key", label: "Access Key", required: true, type: "password", placeholder: "AKIA..." },
-    { key: "secret_key", label: "Secret Key", required: true, type: "password", placeholder: "wJalrXUt..." },
+    {
+      key: "endpoint",
+      label: "Endpoint URL",
+      required: true,
+      placeholder: "https://s3.amazonaws.com",
+    },
+    {
+      key: "access_key",
+      label: "Access Key",
+      required: true,
+      type: "password",
+      placeholder: "AKIA...",
+    },
+    {
+      key: "secret_key",
+      label: "Secret Key",
+      required: true,
+      type: "password",
+      placeholder: "wJalrXUt...",
+    },
     { key: "region", label: "Region", placeholder: "us-east-1" },
   ],
   ssh: [
     { key: "host", label: "Host", required: true, placeholder: "192.168.1.100" },
     { key: "port", label: "Port", type: "number", placeholder: "22" },
     { key: "username", label: "Username", required: true, placeholder: "backup-user" },
-    { key: "password", label: "Password", type: "password", placeholder: "Leave blank for key-based auth" },
-    { key: "private_key", label: "Private Key", type: "textarea", placeholder: "-----BEGIN RSA PRIVATE KEY-----" },
+    {
+      key: "password",
+      label: "Password",
+      type: "password",
+      placeholder: "Leave blank for key-based auth",
+    },
+    {
+      key: "private_key",
+      label: "Private Key",
+      type: "textarea",
+      placeholder: "-----BEGIN RSA PRIVATE KEY-----",
+    },
     { key: "path", label: "Remote Path", required: true, placeholder: "/backups/unicloud" },
   ],
   object_storage: [
-    { key: "endpoint", label: "Endpoint URL", required: true, placeholder: "https://objects.example.com" },
-    { key: "access_key", label: "Access Key", required: true, type: "password", placeholder: "Access Key ID" },
-    { key: "secret_key", label: "Secret Key", required: true, type: "password", placeholder: "Secret Access Key" },
+    {
+      key: "endpoint",
+      label: "Endpoint URL",
+      required: true,
+      placeholder: "https://objects.example.com",
+    },
+    {
+      key: "access_key",
+      label: "Access Key",
+      required: true,
+      type: "password",
+      placeholder: "Access Key ID",
+    },
+    {
+      key: "secret_key",
+      label: "Secret Key",
+      required: true,
+      type: "password",
+      placeholder: "Secret Access Key",
+    },
     { key: "bucket", label: "Bucket", required: true, placeholder: "backup-bucket" },
   ],
   swift: [
-    { key: "auth_url", label: "Auth URL", required: true, placeholder: "https://identity.example.com/v3" },
+    {
+      key: "auth_url",
+      label: "Auth URL",
+      required: true,
+      placeholder: "https://identity.example.com/v3",
+    },
     { key: "username", label: "Username", required: true, placeholder: "swift-user" },
-    { key: "password", label: "Password", required: true, type: "password", placeholder: "Swift password" },
+    {
+      key: "password",
+      label: "Password",
+      required: true,
+      type: "password",
+      placeholder: "Swift password",
+    },
     { key: "container", label: "Container", required: true, placeholder: "unicloud-backups" },
     { key: "tenant_name", label: "Tenant / Project Name", placeholder: "my-project" },
     { key: "region", label: "Region", placeholder: "RegionOne" },
@@ -52,17 +107,62 @@ const FIELDS_BY_TYPE: Record<DestinationType, FieldDef[]> = {
   azure_blob: [
     { key: "account_name", label: "Account Name", required: true, placeholder: "mystorageaccount" },
     { key: "container", label: "Container", required: true, placeholder: "backups" },
-    { key: "account_key", label: "Account Key", type: "password", placeholder: "Base64 account key", hint: "Provide one of: Account Key, Connection String, or SAS Token" },
-    { key: "connection_string", label: "Connection String", type: "password", placeholder: "DefaultEndpointsProtocol=https;..." },
-    { key: "sas_token", label: "SAS Token", type: "password", placeholder: "sv=2021-06-08&ss=bfqt..." },
-    { key: "endpoint", label: "Custom Endpoint", placeholder: "https://mystorageaccount.blob.core.windows.net" },
+    {
+      key: "account_key",
+      label: "Account Key",
+      type: "password",
+      placeholder: "Base64 account key",
+      hint: "Provide one of: Account Key, Connection String, or SAS Token",
+    },
+    {
+      key: "connection_string",
+      label: "Connection String",
+      type: "password",
+      placeholder: "DefaultEndpointsProtocol=https;...",
+    },
+    {
+      key: "sas_token",
+      label: "SAS Token",
+      type: "password",
+      placeholder: "sv=2021-06-08&ss=bfqt...",
+    },
+    {
+      key: "endpoint",
+      label: "Custom Endpoint",
+      placeholder: "https://mystorageaccount.blob.core.windows.net",
+    },
   ],
   gcs: [
     { key: "project_id", label: "Project ID", required: true, placeholder: "my-gcp-project-123" },
     { key: "bucket", label: "Bucket", required: true, placeholder: "unicloud-gcs-backups" },
-    { key: "credentials_json", label: "Credentials JSON", type: "textarea", placeholder: '{"type":"service_account",...}', hint: "Provide either Credentials JSON or Key File Path" },
-    { key: "key_file_path", label: "Key File Path", placeholder: "/etc/gcloud/service-account.json" },
+    {
+      key: "credentials_json",
+      label: "Credentials JSON",
+      required: true,
+      type: "textarea",
+      placeholder: '{"type":"service_account",...}',
+    },
     { key: "region", label: "Region", placeholder: "us-central1" },
+  ],
+  airgap: [
+    { key: "host", label: "Host", required: true, placeholder: "10.10.10.20" },
+    { key: "port", label: "Port", type: "number", placeholder: "22" },
+    { key: "username", label: "Username", required: true, placeholder: "backup-user" },
+    {
+      key: "password",
+      label: "Password",
+      type: "password",
+      placeholder: "Leave blank for key-based auth",
+    },
+    {
+      key: "private_key",
+      label: "Private Key",
+      type: "textarea",
+      placeholder: "-----BEGIN PRIVATE KEY-----",
+    },
+    { key: "path", label: "Vault Path", required: true, placeholder: "/vault/unicloud" },
+    { key: "sync_window_start", label: "Sync Window Start", placeholder: "01:00" },
+    { key: "sync_window_end", label: "Sync Window End", placeholder: "03:00" },
   ],
 };
 
@@ -109,9 +209,7 @@ const DestinationConfigFields: React.FC<DestinationConfigFieldsProps> = ({
               className={`${inputClass} ${field.type === "password" ? "font-mono" : ""}`}
             />
           )}
-          {field.hint && (
-            <p className="mt-1 text-[10px] text-gray-400">{field.hint}</p>
-          )}
+          {field.hint && <p className="mt-1 text-[10px] text-gray-400">{field.hint}</p>}
         </div>
       ))}
     </div>

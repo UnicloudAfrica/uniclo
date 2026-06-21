@@ -44,6 +44,9 @@ import { SkeletonCard } from "../ui/Skeleton";
 import EngineIcon, { getEngineLabel } from "./EngineIcon";
 import DatabaseStatusBadge from "./DatabaseStatusBadge";
 import DatabaseProvisioningPipeline from "./DatabaseProvisioningPipeline";
+import OrbitReplicationModeSelector, {
+  type OrbitReplicationMode,
+} from "./OrbitReplicationModeSelector";
 import {
   useFetchManagedDatabaseById,
   useFetchDatabaseCredentials,
@@ -57,6 +60,7 @@ import {
   useFetchAvailableUpgrades,
   useUpgradeDatabaseEngine,
   useFetchDrEligibility,
+  useFetchOrbitEligibility,
   useFetchDrStatus,
   useEnableDr,
   useDrFailover,
@@ -105,13 +109,23 @@ const asMetadata = (value: ManagedDatabase["metadata"]): Record<string, unknown>
 const asString = (value: unknown): string | null =>
   typeof value === "string" && value.trim() !== "" ? value : null;
 
-const formatMoney = (value: number | string | undefined): string => {
+const formatMoney = (value: number | string | undefined, currency = "NGN"): string => {
   const numeric = Number(value ?? 0);
   if (!Number.isFinite(numeric) || numeric <= 0) {
     return "—";
   }
 
-  return `$${numeric.toFixed(2)}`;
+  // Never hardcode a currency symbol — the platform bills in naira. Render the
+  // amount in its own currency (the row carries `currency`).
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: currency || "NGN",
+      maximumFractionDigits: 2,
+    }).format(numeric);
+  } catch {
+    return `${currency || "NGN"} ${numeric.toFixed(2)}`;
+  }
 };
 
 const formatDateLabel = (value: string | undefined): string => {
@@ -224,8 +238,6 @@ const ManagedDatabaseDetail: React.FC<ManagedDatabaseDetailProps> = ({
   const publicIp = asString(metadata.public_ip);
   const endpointHost = db.dns_record_name || publicIp || db.private_ip || "Pending endpoint";
   const progress = getProgressOverview(db.provisioning_progress);
-  const progressPercent =
-    progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : db.status === "active" ? 100 : 0;
   const tlsEnabled = metadata.tls_enabled === true;
   const networkMode = asString(metadata.network_mode) || "managed";
   const currentStepLabel =
@@ -233,9 +245,8 @@ const ManagedDatabaseDetail: React.FC<ManagedDatabaseDetailProps> = ({
 
   return (
     <div className="space-y-6">
-      <section className="db-surface-hero rounded-[32px] p-6">
-        <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-          <div className="space-y-5">
+      <section className="db-surface-hero rounded-[28px] p-5 sm:p-6">
+        <div className="space-y-5">
             <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={() => navigate(resolvedBackPath)}
@@ -286,7 +297,7 @@ const ManagedDatabaseDetail: React.FC<ManagedDatabaseDetailProps> = ({
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <HeroStatCard
                 label="Access Endpoint"
                 value={endpointHost}
@@ -307,7 +318,7 @@ const ManagedDatabaseDetail: React.FC<ManagedDatabaseDetailProps> = ({
               />
               <HeroStatCard
                 label="Monthly Run Rate"
-                value={formatMoney(db.monthly_cost)}
+                value={formatMoney(db.monthly_cost, db.currency)}
                 hint={
                   db.plan_kind === "management_only"
                     ? "Compute + StaqDB management"
@@ -358,59 +369,6 @@ const ManagedDatabaseDetail: React.FC<ManagedDatabaseDetailProps> = ({
               </div>
             )}
           </div>
-
-          <div className="db-signal-panel rounded-[28px] p-5 shadow-[0_18px_50px_-34px_rgb(var(--theme-color-rgb)_/_0.28)]">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                  Runtime Signal
-                </div>
-                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">
-                  {db.status === "active" ? "Connection-ready surface" : "Provisioning orchestra"}
-                </h2>
-              </div>
-              <span className="rounded-full bg-slate-950 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white dark:bg-white dark:text-slate-950">
-                {progressPercent}%
-              </span>
-            </div>
-
-            <div className="mt-5 h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${
-                  db.status === "error"
-                    ? "bg-red-500"
-                    : db.status === "active"
-                      ? "bg-emerald-500"
-                      : "bg-[linear-gradient(90deg,#0f172a_0%,#0ea5e9_50%,#22c55e_100%)]"
-                }`}
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-
-            <div className="mt-5 space-y-3">
-              <RuntimeSignalRow label="Current phase" value={currentStepLabel} />
-              <RuntimeSignalRow label="Hostname" value={db.dns_record_name || "Pending"} />
-              <RuntimeSignalRow label="Private IP" value={db.private_ip || "Pending"} />
-              <RuntimeSignalRow label="Public IP" value={publicIp || "Managed automatically"} />
-            </div>
-
-            {progress.current && (
-              <div className="mt-5 rounded-[22px] border border-slate-200/80 bg-slate-50/80 px-4 py-4 dark:border-slate-800 dark:bg-slate-900/80">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                  Latest step signal
-                </div>
-                <p className="mt-2 text-sm font-medium text-slate-950 dark:text-white">
-                  {progress.current.label}
-                </p>
-                {typeof progress.current.context?.elapsed_seconds === "number" && (
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    {progress.current.context.elapsed_seconds}s tracked on this flow so far
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
       </section>
 
       {/* Provisioning Pipeline — shown when database is still provisioning */}
@@ -474,9 +432,9 @@ const OverviewTab: React.FC<{ db: ManagedDatabase }> = ({ db }) => {
     progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : db.status === "active" ? 100 : 0;
 
   return (
-    <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
       <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <HeroStatCard
             label="Primary Host"
             value={db.dns_record_name || "Pending"}
@@ -497,13 +455,13 @@ const OverviewTab: React.FC<{ db: ManagedDatabase }> = ({ db }) => {
           />
           <HeroStatCard
             label="Spend"
-            value={formatMoney(db.monthly_cost)}
+            value={formatMoney(db.monthly_cost, db.currency)}
             hint="Current monthly run rate"
             icon={<CalendarDays size={18} />}
           />
         </div>
 
-        <div className="grid gap-6 2xl:grid-cols-2">
+        <div className="grid gap-6 xl:grid-cols-2">
           <SurfaceCard
             title="Configuration Matrix"
             subtitle="Core runtime shape and engine footprint."
@@ -536,42 +494,9 @@ const OverviewTab: React.FC<{ db: ManagedDatabase }> = ({ db }) => {
           </SurfaceCard>
         </div>
 
-        {db.provisioning_progress && db.provisioning_progress.length > 0 && (
-          <SurfaceCard
-            title="Operational Timeline"
-            subtitle="The exact provisioning steps recorded for this database."
-          >
-            <div className="grid gap-3 sm:grid-cols-2">
-              {db.provisioning_progress.map((step, index) => (
-                <div
-                  key={step.id}
-                  className={`rounded-[22px] border p-4 ${
-                    step.status === "completed"
-                      ? "border-emerald-200 bg-emerald-50/70 dark:border-emerald-900 dark:bg-emerald-950/20"
-                      : step.status === "failed"
-                        ? "border-red-200 bg-red-50/70 dark:border-red-900 dark:bg-red-950/20"
-                        : "border-slate-200 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-900/70"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                      Step {index + 1}
-                    </span>
-                    <DatabaseStatusBadge status={step.status} />
-                  </div>
-                  <p className="mt-3 text-sm font-semibold text-slate-950 dark:text-white">
-                    {step.label}
-                  </p>
-                  {typeof step.context?.elapsed_seconds === "number" && (
-                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                      {step.context.elapsed_seconds}s elapsed in provider telemetry
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </SurfaceCard>
-        )}
+        {/* Operational Timeline removed: the provisioning steps already live in the
+            collapsible "Pipeline Steps" panel (DatabaseProvisioningPipeline) — this
+            was a duplicate 13-card list that bloated the page. */}
       </div>
 
       <div className="space-y-6">
@@ -654,7 +579,7 @@ const ConnectionTab: React.FC<{ db: ManagedDatabase; identifier: string }> = ({
   const tlsEnabled = metadata.tls_enabled === true;
 
   return (
-    <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
       <div className="space-y-6">
         {db.connection_string && (
           <SurfaceCard
@@ -1146,6 +1071,14 @@ const DrTab: React.FC<{ db: ManagedDatabase; identifier: string }> = ({ db, iden
   const { data: eligibility, isLoading: eligibilityLoading } = useFetchDrEligibility(identifier, {
     enabled: db.status === "active" && !db.dr_region,
   });
+  // Orbit eligibility is fetched in parallel — same gating as DR. The
+  // wizard renders Standard (same-provider AZs from `eligibility`) or
+  // Orbit (cross-provider-aware AZs from `orbitEligibility`) based on
+  // the mode selector below.
+  const { data: orbitEligibility, isLoading: orbitEligibilityLoading } = useFetchOrbitEligibility(
+    identifier,
+    { enabled: db.status === "active" && !db.dr_region },
+  );
   const { data: drStatus, isLoading: statusLoading } = useFetchDrStatus(identifier, {
     enabled: !!db.dr_region || !!db.dr_primary_id,
   });
@@ -1153,6 +1086,17 @@ const DrTab: React.FC<{ db: ManagedDatabase; identifier: string }> = ({ db, iden
   const failoverMutation = useDrFailover();
   const disableDrMutation = useDisableDr();
   const [selectedAz, setSelectedAz] = useState("");
+  const [selectedMode, setSelectedMode] = useState<OrbitReplicationMode>("standard");
+
+  // Switching mode invalidates the AZ pick — the AZ list shape changes
+  // (standard shows same-provider only; Orbit shows cross-provider).
+  // Clearing the selection forces the user to make an explicit choice
+  // for the new mode rather than silently submitting a stale AZ that
+  // doesn't belong to the current mode's list.
+  const handleModeChange = useCallback((mode: OrbitReplicationMode) => {
+    setSelectedMode(mode);
+    setSelectedAz("");
+  }, []);
 
   // This is a DR replica — show replica info
   if (db.dr_primary_id) {
@@ -1280,6 +1224,83 @@ const DrTab: React.FC<{ db: ManagedDatabase; identifier: string }> = ({ db, iden
     );
   }
 
+  // Resolve the AZ list per selected mode. Standard reads from the
+  // Phase-1 same-provider eligibility endpoint; Orbit reads from the
+  // richer Phase-2 endpoint. The two have intentionally different
+  // shapes — Orbit's row carries `available_modes`, `caveats`,
+  // `plan_available`, `data_residency_ok` — so we don't try to
+  // normalise them.
+  type AzRow = {
+    code: string;
+    name: string | null;
+    status?: string;
+    provider?: string;
+    caveats?: string[];
+    disabled?: boolean;
+    disabledReason?: string | null;
+  };
+
+  const orbitTenantBlocked =
+    selectedMode === "orbit_overlay"
+    && orbitEligibility
+    && !orbitEligibility.eligible
+    && orbitEligibility.reason;
+
+  const azRows: AzRow[] =
+    selectedMode === "orbit_overlay"
+      ? (orbitEligibility?.target_azs ?? []).map((az) => {
+          const blockedByPlan = !az.plan_available;
+          const blockedByResidency = !az.data_residency_ok;
+          const blockedReasons: string[] = [];
+          if (blockedByPlan) {
+            blockedReasons.push("No compatible plan on this AZ for your engine + size.");
+          }
+          if (blockedByResidency) {
+            blockedReasons.push("Blocked by your data-residency policy.");
+          }
+          return {
+            code: az.code,
+            name: az.name,
+            provider: az.provider,
+            caveats: az.caveats,
+            disabled: blockedByPlan || blockedByResidency,
+            disabledReason: blockedReasons.length > 0 ? blockedReasons.join(" ") : null,
+          };
+        })
+      : eligibility.available_azs.map((az) => ({
+          code: az.code,
+          name: az.name,
+          status: az.status,
+          provider: az.provider,
+        }));
+
+  const orbitBetaBlocked = Boolean(orbitTenantBlocked);
+  const isOrbitMode = selectedMode === "orbit_overlay";
+
+  const handleEnable = () => {
+    if (!selectedAz) {
+      return;
+    }
+    if (
+      !confirm(
+        isOrbitMode
+          ? "Enable Orbit replication? A cross-provider replica will be provisioned via AnyCloudFlow."
+          : "Enable DR? A standby replica will be provisioned in the selected AZ.",
+      )
+    ) {
+      return;
+    }
+    enableDrMutation.mutate({
+      identifier,
+      targetAz: selectedAz,
+      mode: isOrbitMode ? "orbit_overlay" : "standard",
+      // Topology default — A-A is gated separately and not exposed on
+      // the DR tab yet. When the topology selector lands, this becomes
+      // a real state value.
+      options: isOrbitMode ? { topology: "active_passive" } : undefined,
+    });
+  };
+
   // Eligible — show enable form
   return (
     <div className="space-y-6">
@@ -1294,44 +1315,109 @@ const DrTab: React.FC<{ db: ManagedDatabase; identifier: string }> = ({ db, iden
         </p>
 
         <div className="space-y-4">
+          {/* Mode selector. Orbit is GA — the only reasons it's
+              unavailable are:
+                1. No cross-provider target exists for this primary
+                   (engine.advanced_available is false → hide Orbit
+                   entirely; Standard is the only useful path).
+                2. Tenant has it explicitly disabled by CS (eligibility
+                   returns eligible=false with the disable reason).
+              No "beta access" or "join the cohort" copy paths. */}
+          <OrbitReplicationModeSelector
+            value={selectedMode}
+            onChange={handleModeChange}
+            orbitAvailable={Boolean(orbitEligibility?.engine?.advanced_available)}
+            orbitDisabledReason={orbitBetaBlocked ? orbitEligibility?.reason ?? null : null}
+            caveats={
+              isOrbitMode && orbitEligibility?.engine?.caveats
+                ? orbitEligibility.engine.caveats
+                : []
+            }
+          />
+
+          {/* AZ picker. The list source switches with mode; the row
+              renderer is shared because we want a consistent visual
+              affordance for "select an AZ". */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Target Availability Zone
             </label>
+            {isOrbitMode && orbitEligibilityLoading && (
+              <p className="text-sm text-gray-500" data-testid="orbit-az-loading">
+                Loading cross-cloud availability zones…
+              </p>
+            )}
+            {isOrbitMode && !orbitEligibilityLoading && azRows.length === 0 && !orbitBetaBlocked && (
+              <p className="text-sm text-gray-500" data-testid="orbit-no-targets">
+                No cross-provider targets available right now.
+              </p>
+            )}
             <div className="space-y-2">
-              {eligibility.available_azs.map((az) => (
+              {azRows.map((az) => (
                 <button
                   key={az.code}
-                  onClick={() => setSelectedAz(az.code)}
+                  onClick={() => !az.disabled && setSelectedAz(az.code)}
+                  disabled={az.disabled}
+                  title={az.disabledReason ?? undefined}
                   className={`w-full flex items-center gap-3 rounded-lg border-2 px-4 py-3 text-left text-sm transition-all ${
-                    selectedAz === az.code
+                    selectedAz === az.code && !az.disabled
                       ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
-                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                      : az.disabled
+                        ? "border-gray-200 bg-gray-50 opacity-60 dark:border-gray-800 dark:bg-gray-900 cursor-not-allowed"
+                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                   }`}
                 >
-                  <MapPin size={16} className={selectedAz === az.code ? "text-blue-600" : "text-gray-400"} />
-                  <div>
-                    <div className="font-medium text-gray-900 dark:text-gray-100">{az.name}</div>
-                    <div className="text-xs text-gray-500">{az.code}</div>
+                  <MapPin
+                    size={16}
+                    className={selectedAz === az.code && !az.disabled ? "text-blue-600" : "text-gray-400"}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-gray-900 dark:text-gray-100">
+                      {az.name || az.code}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {az.code}
+                      {isOrbitMode && az.provider ? ` · ${az.provider}` : ""}
+                    </div>
+                    {az.disabledReason && (
+                      <div className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                        {az.disabledReason}
+                      </div>
+                    )}
                   </div>
-                  <span className={`ml-auto rounded-full px-2 py-0.5 text-xs ${
-                    az.status === "healthy"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-yellow-100 text-yellow-700"
-                  }`}>
-                    {az.status}
-                  </span>
+                  {!isOrbitMode && az.status && (
+                    <span
+                      className={`ml-auto rounded-full px-2 py-0.5 text-xs ${
+                        az.status === "healthy"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-yellow-100 text-yellow-700"
+                      }`}
+                    >
+                      {az.status}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
           </div>
 
-          {eligibility.estimated_monthly_cost != null && (
+          {/* Cost preview. Phase-1 surfaces a flat number; the Orbit
+              path will route through the /quote endpoint in a later
+              ticket so the per-pair + per-GB pricing is authoritative.
+              For now we just hide the Phase-1 estimate when Orbit is
+              selected — better no number than a misleading one. */}
+          {!isOrbitMode && eligibility.estimated_monthly_cost != null && (
             <div className="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3 dark:bg-gray-800">
               <span className="text-sm text-gray-600 dark:text-gray-400">Estimated monthly cost</span>
               <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 +${Number(eligibility.estimated_monthly_cost).toFixed(2)}/mo
               </span>
+            </div>
+          )}
+          {isOrbitMode && (
+            <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800 dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-300">
+              Orbit pricing is per-pair plus a per-GB data transfer rate.
+              The exact cost will be quoted before you confirm.
             </div>
           )}
 
@@ -1344,21 +1430,22 @@ const DrTab: React.FC<{ db: ManagedDatabase; identifier: string }> = ({ db, iden
                   <li>Replication is asynchronous — up to ~60 seconds of data loss on failover (RPO)</li>
                   <li>Failover takes approximately 2-5 minutes (RTO)</li>
                   <li>The standby is read-only and cannot serve application traffic until promoted</li>
+                  {isOrbitMode && (
+                    <li>Orbit replication crosses cloud providers — expect additional WAN latency on writes</li>
+                  )}
                 </ul>
               </div>
             </div>
           </div>
 
           <button
-            onClick={() => {
-              if (selectedAz && confirm("Enable DR? A standby replica will be provisioned in the selected AZ.")) {
-                enableDrMutation.mutate({ identifier, targetAz: selectedAz });
-              }
-            }}
-            disabled={!selectedAz || enableDrMutation.isPending}
+            onClick={handleEnable}
+            disabled={!selectedAz || enableDrMutation.isPending || orbitBetaBlocked}
             className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {enableDrMutation.isPending ? "Enabling DR..." : "Enable Disaster Recovery"}
+            {enableDrMutation.isPending
+              ? isOrbitMode ? "Enabling Orbit replication…" : "Enabling DR…"
+              : isOrbitMode ? "Enable Orbit Replication" : "Enable Disaster Recovery"}
           </button>
         </div>
       </div>
@@ -2354,15 +2441,6 @@ const HeroStatCard: React.FC<{
     </div>
     <div className="mt-3 break-words text-base font-semibold text-[var(--theme-heading-color)]">{value}</div>
     <p className="mt-2 text-xs text-[var(--theme-muted-color)]">{hint}</p>
-  </div>
-);
-
-const RuntimeSignalRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="db-surface-soft flex flex-col gap-2 rounded-2xl px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-    <span className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--theme-muted-color)]">{label}</span>
-    <span className="w-full break-all text-left text-sm font-medium text-[var(--theme-heading-color)] sm:max-w-[65%] sm:text-right">
-      {value}
-    </span>
   </div>
 );
 

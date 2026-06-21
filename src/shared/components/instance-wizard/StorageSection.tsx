@@ -1,6 +1,7 @@
 import React from "react";
 import { Configuration, Option } from "@/types/InstanceConfiguration";
 import { SearchableSelect } from "../ui";
+import { getPricingNotice, stripPricingNoticeOptions } from "./ComputeImageSection";
 
 interface StorageSectionProps {
   cfg: Configuration;
@@ -19,6 +20,14 @@ const StorageSection: React.FC<StorageSectionProps> = ({
   templateVolumeSize,
   updateConfigWithFocus,
 }) => {
+  const volumeTypeNotice = getPricingNotice(volumeTypeOptions);
+  const volumeTypeChoices = stripPricingNoticeOptions(volumeTypeOptions);
+  const volumeTypePlaceholder = !selectedRegion
+    ? "Select region first"
+    : volumeTypeNotice?.kind === "loading"
+      ? volumeTypeNotice.label
+      : "Select volume type";
+
   return (
     <div className="grid gap-4 md:grid-cols-3">
       <SearchableSelect
@@ -34,16 +43,18 @@ const StorageSection: React.FC<StorageSectionProps> = ({
         options={[
           {
             value: "",
-            label: selectedRegion ? "Select volume type" : "Select region first",
+            label: volumeTypePlaceholder,
           },
-          ...volumeTypeOptions,
+          ...volumeTypeChoices,
         ]}
         helper={
           templateVolumeLabel
             ? `Template: ${templateVolumeLabel}`
-            : "Choose the primary volume class."
+            : selectedRegion && volumeTypeNotice && volumeTypeNotice.kind !== "loading"
+              ? volumeTypeNotice.label
+              : "Choose the primary volume class."
         }
-        disabled={!selectedRegion}
+        disabled={!selectedRegion || volumeTypeNotice?.kind === "loading"}
       />
       <div>
         <label className="mb-1 block text-sm font-medium text-gray-700">Size (GB) *</label>

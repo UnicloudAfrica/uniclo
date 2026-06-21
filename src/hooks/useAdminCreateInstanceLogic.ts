@@ -50,8 +50,8 @@ const pickString = (value: unknown): string | undefined => {
 
 const asPricingBreakdownEntries = (value: unknown): Record<string, unknown>[] => {
   if (Array.isArray(value)) {
-    return value.filter(
-      (entry): entry is Record<string, unknown> => Boolean(entry && typeof entry === "object")
+    return value.filter((entry): entry is Record<string, unknown> =>
+      Boolean(entry && typeof entry === "object")
     );
   }
 
@@ -66,6 +66,16 @@ interface AdminCreateInstanceLogicOptions {
   protectionPlan?: {
     plan: string;
     redundancyPattern?: string;
+    /**
+     * Monthly cost (₦/mo) of the *currently selected* protection plan.
+     * The wizard step computes this client-side from the catalog +
+     * instance count and we forward it through to the order payload so
+     * the backend can add the line item to the grand total for ANY
+     * plan type (not just DR — see `InitiateMultiInstancesAction` for
+     * the receiving end). Backup-only used to silently drop ₦240K/mo
+     * from the total because the FE only sent `dr_monthly_cost`.
+     */
+    monthlyCost?: number;
     drSpec?: {
       mode: "match" | "custom";
       drTargetAz?: string;
@@ -122,10 +132,39 @@ export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOp
 
   const isFastTrack = mode === "fast-track";
 
+  // Build the steps array + derived indices BEFORE invoking
+  // useInstanceOrderCreation so we can hand it the actual `payment` /
+  // `review` step positions. The order hook used to hardcode these
+  // (paymentStepIndex = 2, reviewStepIndex = 3 in standard mode) which
+  // silently broke once `protection` was inserted at index 2, pushing
+  // payment to 3 and review to 4. Hardcoded values then sent users
+  // backwards to Protection on Continue and rendered Review where
+  // Payment should have been — effectively making payment unreachable
+  // in standard mode.
+  const steps = useMemo(
+    () => buildProvisioningSteps(isFastTrack ? "fast-track" : "standard"),
+    [isFastTrack]
+  );
+
+  const resolvedPaymentStepIndex = useMemo(() => {
+    if (isFastTrack) return null;
+    const idx = steps.findIndex((step) => step.id === "payment");
+    return idx >= 0 ? idx : null;
+  }, [steps, isFastTrack]);
+
+  const resolvedReviewStepIndex = useMemo(() => {
+    const idx = steps.findIndex((step) => step.id === "review");
+    // Defensive fallback only — `review` is always in the array. If
+    // someone removes it, the wizard would still progress to the last
+    // step instead of throwing.
+    return idx >= 0 ? idx : steps.length - 1;
+  }, [steps]);
+
   const {
     isSubmitting,
     submissionResult,
     orderReceipt,
+    priceEstimate,
     selectedPaymentOption,
     setSelectedPaymentOption,
     submissionErrorMessage,
@@ -140,10 +179,15 @@ export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOp
     isFastTrack,
     setActiveStep,
     protectionPlan: options?.protectionPlan,
+    paymentStepIndex: resolvedPaymentStepIndex,
+    reviewStepIndex: resolvedReviewStepIndex,
   });
 
   const isPaymentSuccessful = useMemo(() => {
-    type PayShape = { transaction?: { status?: string }; payment?: { status?: string } } | null | undefined;
+    type PayShape =
+      | { transaction?: { status?: string }; payment?: { status?: string } }
+      | null
+      | undefined;
     const sr = submissionResult as PayShape;
     const or = orderReceipt as PayShape;
     const status =
@@ -154,11 +198,6 @@ export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOp
       "pending";
     return ["paid", "successful", "completed"].includes(String(status).toLowerCase());
   }, [submissionResult, orderReceipt]);
-
-  const steps = useMemo(
-    () => buildProvisioningSteps(isFastTrack ? "fast-track" : "standard"),
-    [isFastTrack]
-  );
 
   useEffect(() => {
     setActiveStep((prev) => Math.min(prev, steps.length - 1));
@@ -230,10 +269,7 @@ export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOp
         const label = name ?? pickString(region.display_name) ?? pickString(region.label) ?? value;
         return {
           value,
-          label:
-            name && name.toLowerCase() !== value.toLowerCase()
-              ? `${name} (${value})`
-              : label,
+          label: name && name.toLowerCase() !== value.toLowerCase() ? `${name} (${value})` : label,
         };
       })
       .filter((item: Option | null): item is Option => Boolean(item));
@@ -424,14 +460,12 @@ export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOp
   };
   const subResult = submissionResult as ResultShape | null;
   const orderRcpt = orderReceipt as ResultShape | null;
-  const selectedPay = selectedPaymentOption as
-    | {
-        charge_breakdown?: { total_fees?: unknown };
-        total_fees?: unknown;
-        fees?: unknown;
-        currency?: unknown;
-      }
-    | null;
+  const selectedPay = selectedPaymentOption as {
+    charge_breakdown?: { total_fees?: unknown };
+    total_fees?: unknown;
+    fees?: unknown;
+    currency?: unknown;
+  } | null;
   const paymentOptionsList =
     subResult?.payment?.payment_gateway_options ||
     orderRcpt?.payment?.payment_gateway_options ||
@@ -439,8 +473,7 @@ export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOp
   const preferredPaymentOption = pickPreferredPaymentOption(
     paymentOptionsList as Array<Record<string, unknown>>
   );
-  const effectivePaymentOption =
-    selectedPay || preferredPaymentOption || null;
+  const effectivePaymentOption = selectedPay || preferredPaymentOption || null;
   const rawPricingBreakdown =
     subResult?.pricing_breakdown ||
     subResult?.transaction?.metadata?.pricing_breakdown ||
@@ -503,12 +536,10 @@ export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOp
       0
   );
   const fallbackGrandTotal = toNumber(
-    subResult?.transaction?.amount ??
-      orderRcpt?.order?.total ??
-      orderRcpt?.transaction?.amount ??
-      0
+    subResult?.transaction?.amount ?? orderRcpt?.order?.total ?? orderRcpt?.transaction?.amount ?? 0
   );
-  const summaryGrandTotalValue: number = Number(backendPricingData?.total) || Number(fallbackGrandTotal) || 0;
+  const summaryGrandTotalValue: number =
+    Number(backendPricingData?.total) || Number(fallbackGrandTotal) || 0;
   const summarySubtotalValue: number =
     Number(backendPricingData?.subtotal) ||
     (summaryGrandTotalValue > 0
@@ -521,6 +552,20 @@ export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOp
     (orderRcpt?.transaction?.currency as string | undefined) ||
     (effectivePaymentOption?.currency as string | undefined) ||
     (billingCountry === "NG" ? "NGN" : "USD");
+
+  // Before an order/receipt exists, fall back to the live preview-pricing
+  // estimate (protection already folded in by useInstanceOrderCreation) so the
+  // summary shows a running price as the operator configures. Flagged as an
+  // estimate so the UI labels it accordingly; the final price is confirmed at
+  // order creation. Mirrors the client/tenant provisioning wizards.
+  const hasReceiptTotals = summaryGrandTotalValue > 0;
+  const isPriceEstimate = !hasReceiptTotals && Boolean(priceEstimate && priceEstimate.total > 0);
+  const displayGrandTotalValue = isPriceEstimate ? priceEstimate!.total : summaryGrandTotalValue;
+  const displaySubtotalValue = isPriceEstimate ? 0 : summarySubtotalValue;
+  const displayTaxValue = isPriceEstimate ? 0 : summaryTaxValue;
+  const displayCurrency = isPriceEstimate
+    ? priceEstimate!.currency || (billingCountry === "NG" ? "NGN" : "USD")
+    : summaryDisplayCurrency;
 
   const summaryPlanLabel = useMemo(() => {
     if (!configurationSummaries.length) return "Instance profile";
@@ -586,11 +631,12 @@ export const useAdminCreateInstanceLogic = (options?: AdminCreateInstanceLogicOp
     hasLockedPaymentStep,
 
     // Pricing Derived
-    summaryGrandTotalValue,
-    summarySubtotalValue,
-    summaryTaxValue,
+    summaryGrandTotalValue: displayGrandTotalValue,
+    summarySubtotalValue: displaySubtotalValue,
+    summaryTaxValue: displayTaxValue,
     summaryGatewayFeesValue,
-    summaryDisplayCurrency,
+    summaryDisplayCurrency: displayCurrency,
+    isPriceEstimate,
     summaryPlanLabel,
     summaryWorkflowLabel,
     backendPricingData,

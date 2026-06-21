@@ -5,7 +5,13 @@ import { designTokens } from "@/styles/designTokens";
 import { useResponsive } from "@/hooks/useResponsive";
 import type { Action, Column, TableRowBase } from "./types";
 import type { TableStyleMap } from "./useTableStyles";
-import { getRowValue, formatCellValue, getActionToneStyles, getColor } from "./utils";
+import {
+  getRowValue,
+  formatCellValue,
+  getActionToneStyles,
+  getColor,
+  computeMenuPosition,
+} from "./utils";
 
 /**
  * Render row-level actions as a single overflow menu (kebab) when there
@@ -30,16 +36,15 @@ function RowActionsMenu<T>({ actions, row }: { actions: Action<T>[]; row: T }) {
   // edge of the screen.
   useLayoutEffect(() => {
     if (!open || !buttonRef.current) return;
-    const MENU_WIDTH = 176; // matches the w-44 utility (44 × 4px)
     const updatePosition = () => {
       if (!buttonRef.current) return;
       const rect = buttonRef.current.getBoundingClientRect();
-      const top = rect.bottom + 4; // 4px gap below the trigger
-      const left = Math.max(
-        8,
-        Math.min(rect.right - MENU_WIDTH, window.innerWidth - MENU_WIDTH - 8)
+      setCoords(
+        computeMenuPosition(rect, actions.length, {
+          width: window.innerWidth,
+          height: window.innerHeight,
+        })
       );
-      setCoords({ top, left });
     };
     updatePosition();
     window.addEventListener("scroll", updatePosition, true);
@@ -48,7 +53,7 @@ function RowActionsMenu<T>({ actions, row }: { actions: Action<T>[]; row: T }) {
       window.removeEventListener("scroll", updatePosition, true);
       window.removeEventListener("resize", updatePosition);
     };
-  }, [open]);
+  }, [open, actions.length]);
 
   useEffect(() => {
     if (!open) return;
@@ -105,7 +110,7 @@ function RowActionsMenu<T>({ actions, row }: { actions: Action<T>[]; row: T }) {
           e.stopPropagation();
           setOpen((v) => !v);
         }}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200"
+        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 dark:hover:text-neutral-100"
       >
         <MoreVertical size={16} />
       </button>

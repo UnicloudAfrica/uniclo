@@ -85,7 +85,7 @@ const AdminNocDashboard: React.FC = () => {
             regionsRed={summary.regions_red}
             loading={isLoading}
           />
-          <div className="mt-6 aspect-[6/5] max-h-[600px] rounded-xl overflow-hidden">
+          <div className="mt-6 h-[600px] w-full rounded-xl overflow-hidden">
             {isLoading ? (
               <div
                 role="status"

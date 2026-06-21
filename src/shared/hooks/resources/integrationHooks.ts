@@ -21,13 +21,20 @@ type Identifier = string | number;
 type QueryOptions = Partial<Omit<UseQueryOptions<any, Error>, "queryKey" | "queryFn">>;
 
 const asEnvelope = <T = AnyRecord>(
-  res: unknown,
+  res: unknown
 ): { success?: boolean; message?: string; data?: T } =>
   (res ?? {}) as { success?: boolean; message?: string; data?: T };
 
 // ─── Types ──────────────────────────────────────────────────────
 
-export type DestinationType = 's3' | 'ssh' | 'object_storage' | 'swift' | 'azure_blob' | 'gcs';
+export type DestinationType =
+  | "s3"
+  | "ssh"
+  | "object_storage"
+  | "swift"
+  | "azure_blob"
+  | "gcs"
+  | "airgap";
 
 export const DESTINATION_TYPE_LABELS: Record<DestinationType, string> = {
   s3: "Amazon S3",
@@ -36,6 +43,7 @@ export const DESTINATION_TYPE_LABELS: Record<DestinationType, string> = {
   swift: "OpenStack Swift",
   azure_blob: "Azure Blob Storage",
   gcs: "Google Cloud Storage",
+  airgap: "Airgap Vault",
 };
 
 export interface DestinationTypeInfo {
@@ -101,10 +109,20 @@ export interface IntegrationDestination {
 
 export interface BackupStatus {
   enabled: boolean;
+  status?: "active" | "paused" | "cancelled" | "disabled" | string;
   subscription?: IntegrationSubscription;
-  last_backup?: IntegrationOperation;
+  policy?: AnyRecord;
+  destinations?: IntegrationDestination[];
+  last_backup?: IntegrationOperation | AnyRecord;
+  last_error?: {
+    operation_identifier?: string;
+    operation_type?: string;
+    message?: string;
+    occurred_at?: string;
+  } | null;
   next_backup_at?: string;
   snapshots_count?: number;
+  recent_operations?: IntegrationOperation[];
 }
 
 export interface ReplicationStatus {
@@ -137,14 +155,14 @@ export const {
 
 export const integrationExtendedKeys = {
   ...createQueryKeys("integrations"),
-  config: (context: string, key: string) =>
-    ["integration-config", context, key] as const,
-  configList: (context: string) =>
-    ["integration-configs", context] as const,
+  config: (context: string, key: string) => ["integration-config", context, key] as const,
+  configList: (context: string) => ["integration-configs", context] as const,
   backupStatus: (context: string, key: string, resourceType: string, resourceId: Identifier) =>
     ["integration-backup", context, key, resourceType, resourceId] as const,
   backupSnapshots: (context: string, key: string, resourceType: string, resourceId: Identifier) =>
     ["integration-snapshots", context, key, resourceType, resourceId] as const,
+  snapshotBrowse: (context: string, key: string, snapshotId: string, path: string) =>
+    ["integration-snapshot-browse", context, key, snapshotId, path] as const,
   replicationStatus: (context: string, key: string, resourceType: string, resourceId: Identifier) =>
     ["integration-replication", context, key, resourceType, resourceId] as const,
   operations: (context: string, key: string, params?: AnyRecord) =>
@@ -155,12 +173,10 @@ export const integrationExtendedKeys = {
     ["integration-destination-types", context, key] as const,
   subscriptions: (context: string, key: string) =>
     ["integration-subscriptions", context, key] as const,
-  drDashboard: (context: string) =>
-    ["dr-dashboard", context] as const,
+  drDashboard: (context: string) => ["dr-dashboard", context] as const,
   drTimeline: (context: string, params?: AnyRecord) =>
     ["dr-timeline", context, params ?? {}] as const,
-  replicationHealth: (context: string) =>
-    ["replication-health", context] as const,
+  replicationHealth: (context: string) => ["replication-health", context] as const,
   // Bidirectional
   bidirectionalStatus: (context: string, pairId: string) =>
     ["bidirectional-status", context, pairId] as const,
@@ -180,8 +196,7 @@ export const integrationExtendedKeys = {
   changeJournalEntries: (context: string, endpointId: string, params?: AnyRecord) =>
     ["change-journal-entries", context, endpointId, params ?? {}] as const,
   // Transfer Tuning & Operations
-  syncPreview: (context: string, pairId: string) =>
-    ["sync-preview", context, pairId] as const,
+  syncPreview: (context: string, pairId: string) => ["sync-preview", context, pairId] as const,
   slaHistory: (context: string, pairId: string, params?: AnyRecord) =>
     ["sla-history", context, pairId, params ?? {}] as const,
   auditLog: (context: string, pairId: string, params?: AnyRecord) =>
@@ -217,6 +232,13 @@ export const integrationExtendedKeys = {
     ["db-replication-groups", context, key, params ?? {}] as const,
   dbReplicationGroup: (context: string, key: string, identifier: string) =>
     ["db-replication-group", context, key, identifier] as const,
+  // Mail Migrations (Move My Email)
+  mailMigrations: (context: string, key: string) =>
+    ["mail-migrations", context, key] as const,
+  mailMigration: (context: string, key: string, identifier: string) =>
+    ["mail-migration", context, key, identifier] as const,
+  mailMigrationPricing: (context: string, key: string) =>
+    ["mail-migration-pricing", context, key] as const,
 };
 
 // ─── Integration Config ─────────────────────────────────────────
@@ -230,9 +252,7 @@ export const useFetchIntegrations = (options: QueryOptions = {}) => {
     queryKey: integrationExtendedKeys.configList(context),
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/integrations`;
-      const envelope = asEnvelope<IntegrationConfig[]>(
-        await entry.silentApi.get<AnyRecord>(uri),
-      );
+      const envelope = asEnvelope<IntegrationConfig[]>(await entry.silentApi.get<AnyRecord>(uri));
       return envelope.data ?? [];
     },
     staleTime: 1000 * 60 * 5,
@@ -241,10 +261,7 @@ export const useFetchIntegrations = (options: QueryOptions = {}) => {
 };
 
 /** Fetch config for a specific integration */
-export const useFetchIntegrationConfig = (
-  integrationKey: string,
-  options: QueryOptions = {},
-) => {
+export const useFetchIntegrationConfig = (integrationKey: string, options: QueryOptions = {}) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
   const { enabled = true, ...rest } = options;
@@ -253,10 +270,11 @@ export const useFetchIntegrationConfig = (
     queryKey: integrationExtendedKeys.config(context, integrationKey),
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}`;
-      const envelope = asEnvelope<IntegrationConfig>(
-        await entry.silentApi.get<AnyRecord>(uri),
+      const envelope = asEnvelope<IntegrationConfig>(await entry.silentApi.get<AnyRecord>(uri));
+      return (
+        envelope.data ??
+        ({ key: integrationKey, label: "", capabilities: [], enabled: false } as IntegrationConfig)
       );
-      return envelope.data ?? ({ key: integrationKey, label: "", capabilities: [], enabled: false } as IntegrationConfig);
     },
     enabled: Boolean(integrationKey) && enabled !== false,
     staleTime: 1000 * 60 * 5,
@@ -275,7 +293,7 @@ export const useEnableIntegration = () => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/enable`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to enable integration");
+        throw new Error((envelope.message as string) || "Failed to enable integration");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -301,7 +319,7 @@ export const useDisableIntegration = () => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/disable`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to disable integration");
+        throw new Error((envelope.message as string) || "Failed to disable integration");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -323,7 +341,7 @@ export const useBackupStatus = (
   integrationKey: string,
   resourceType: string,
   resourceId: Identifier | null | undefined,
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
@@ -334,13 +352,11 @@ export const useBackupStatus = (
       context,
       integrationKey,
       resourceType,
-      resourceId as Identifier,
+      resourceId as Identifier
     ),
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/backup/${resourceType}/${resourceId}`;
-      const envelope = asEnvelope<BackupStatus>(
-        await entry.silentApi.get<AnyRecord>(uri),
-      );
+      const envelope = asEnvelope<BackupStatus>(await entry.silentApi.get<AnyRecord>(uri));
       return envelope.data ?? { enabled: false };
     },
     enabled: Boolean(resourceId) && enabled !== false,
@@ -365,13 +381,18 @@ export const useEnableBackup = () => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/backup/${resourceType}/${resourceId}`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri, config));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to enable backup");
+        throw new Error((envelope.message as string) || "Failed to enable backup");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
     onSuccess: (_data, { integrationKey, resourceType, resourceId }) => {
       queryClient.invalidateQueries({
-        queryKey: integrationExtendedKeys.backupStatus(context, integrationKey, resourceType, resourceId),
+        queryKey: integrationExtendedKeys.backupStatus(
+          context,
+          integrationKey,
+          resourceType,
+          resourceId
+        ),
       });
       queryClient.invalidateQueries({
         queryKey: integrationOperationKeys.all(context),
@@ -395,13 +416,95 @@ export const useDisableBackup = () => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/backup/${resourceType}/${resourceId}`;
       const envelope = asEnvelope(await entry.toastApi.delete<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to disable backup");
+        throw new Error((envelope.message as string) || "Failed to disable backup");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
     onSuccess: (_data, { integrationKey, resourceType, resourceId }) => {
       queryClient.invalidateQueries({
-        queryKey: integrationExtendedKeys.backupStatus(context, integrationKey, resourceType, resourceId),
+        queryKey: integrationExtendedKeys.backupStatus(
+          context,
+          integrationKey,
+          resourceType,
+          resourceId
+        ),
+      });
+    },
+  });
+};
+
+/** Update an existing backup policy */
+export const useUpdateBackup = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    BackupStatus,
+    Error,
+    { integrationKey: string; resourceType: string; resourceId: Identifier; config: AnyRecord }
+  >({
+    mutationFn: async ({ integrationKey, resourceType, resourceId, config }) => {
+      const uri = `${entry.urlPrefix}/integrations/${integrationKey}/backup/${resourceType}/${resourceId}`;
+      const envelope = asEnvelope<BackupStatus>(await entry.toastApi.put<AnyRecord>(uri, config));
+      if (!envelope.success) {
+        throw new Error((envelope.message as string) || "Failed to update backup policy");
+      }
+      return envelope.data ?? { enabled: false };
+    },
+    onSuccess: (_data, { integrationKey, resourceType, resourceId }) => {
+      queryClient.invalidateQueries({
+        queryKey: integrationExtendedKeys.backupStatus(
+          context,
+          integrationKey,
+          resourceType,
+          resourceId
+        ),
+      });
+      queryClient.invalidateQueries({
+        queryKey: integrationExtendedKeys.backupSnapshots(
+          context,
+          integrationKey,
+          resourceType,
+          resourceId
+        ),
+      });
+    },
+  });
+};
+
+/** Pause or resume an existing backup policy */
+export const useSetBackupPolicyState = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    BackupStatus,
+    Error,
+    {
+      integrationKey: string;
+      resourceType: string;
+      resourceId: Identifier;
+      action: "pause" | "resume";
+    }
+  >({
+    mutationFn: async ({ integrationKey, resourceType, resourceId, action }) => {
+      const uri = `${entry.urlPrefix}/integrations/${integrationKey}/backup/${resourceType}/${resourceId}/${action}`;
+      const envelope = asEnvelope<BackupStatus>(await entry.toastApi.post<AnyRecord>(uri));
+      if (!envelope.success) {
+        throw new Error((envelope.message as string) || `Failed to ${action} backup policy`);
+      }
+      return envelope.data ?? { enabled: false };
+    },
+    onSuccess: (_data, { integrationKey, resourceType, resourceId }) => {
+      queryClient.invalidateQueries({
+        queryKey: integrationExtendedKeys.backupStatus(
+          context,
+          integrationKey,
+          resourceType,
+          resourceId
+        ),
       });
     },
   });
@@ -422,16 +525,26 @@ export const useTriggerBackup = () => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/backup/${resourceType}/${resourceId}/trigger`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to trigger backup");
+        throw new Error((envelope.message as string) || "Failed to trigger backup");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
     onSuccess: (_data, { integrationKey, resourceType, resourceId }) => {
       queryClient.invalidateQueries({
-        queryKey: integrationExtendedKeys.backupStatus(context, integrationKey, resourceType, resourceId),
+        queryKey: integrationExtendedKeys.backupStatus(
+          context,
+          integrationKey,
+          resourceType,
+          resourceId
+        ),
       });
       queryClient.invalidateQueries({
-        queryKey: integrationExtendedKeys.backupSnapshots(context, integrationKey, resourceType, resourceId),
+        queryKey: integrationExtendedKeys.backupSnapshots(
+          context,
+          integrationKey,
+          resourceType,
+          resourceId
+        ),
       });
       queryClient.invalidateQueries({
         queryKey: integrationOperationKeys.all(context),
@@ -445,7 +558,7 @@ export const useBackupSnapshots = (
   integrationKey: string,
   resourceType: string,
   resourceId: Identifier | null | undefined,
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
@@ -456,16 +569,43 @@ export const useBackupSnapshots = (
       context,
       integrationKey,
       resourceType,
-      resourceId as Identifier,
+      resourceId as Identifier
     ),
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/backup/${resourceType}/${resourceId}/snapshots`;
-      const envelope = asEnvelope<AnyRecord[]>(
-        await entry.silentApi.get<AnyRecord>(uri),
-      );
+      const envelope = asEnvelope<AnyRecord[]>(await entry.silentApi.get<AnyRecord>(uri));
       return envelope.data ?? [];
     },
     enabled: Boolean(resourceId) && enabled !== false,
+    staleTime: 1000 * 60 * 2,
+    ...rest,
+  });
+};
+
+/** Browse files inside a backup snapshot. */
+export const useBrowseBackupSnapshot = (
+  integrationKey: string,
+  snapshotId: string | null | undefined,
+  path = "/",
+  options: QueryOptions = {}
+) => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const { enabled = true, ...rest } = options;
+
+  return useQuery<AnyRecord[], Error>({
+    queryKey: integrationExtendedKeys.snapshotBrowse(
+      context,
+      integrationKey,
+      snapshotId ?? "",
+      path
+    ),
+    queryFn: async () => {
+      const uri = `${entry.urlPrefix}/integrations/${integrationKey}/backup/snapshots/${snapshotId}/browse?path=${encodeURIComponent(path)}`;
+      const envelope = asEnvelope<AnyRecord[]>(await entry.silentApi.get<AnyRecord>(uri));
+      return envelope.data ?? [];
+    },
+    enabled: Boolean(snapshotId) && enabled !== false,
     staleTime: 1000 * 60 * 2,
     ...rest,
   });
@@ -484,11 +624,9 @@ export const useRestoreBackup = () => {
   >({
     mutationFn: async ({ integrationKey, snapshotId, options: restoreOptions }) => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/backup/restore/${snapshotId}`;
-      const envelope = asEnvelope(
-        await entry.toastApi.post<AnyRecord>(uri, restoreOptions ?? {}),
-      );
+      const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri, restoreOptions ?? {}));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to restore backup");
+        throw new Error((envelope.message as string) || "Failed to restore backup");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -507,7 +645,7 @@ export const useReplicationStatus = (
   integrationKey: string,
   resourceType: string,
   resourceId: Identifier | null | undefined,
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
@@ -518,13 +656,11 @@ export const useReplicationStatus = (
       context,
       integrationKey,
       resourceType,
-      resourceId as Identifier,
+      resourceId as Identifier
     ),
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/replication/${resourceType}/${resourceId}`;
-      const envelope = asEnvelope<ReplicationStatus>(
-        await entry.silentApi.get<AnyRecord>(uri),
-      );
+      const envelope = asEnvelope<ReplicationStatus>(await entry.silentApi.get<AnyRecord>(uri));
       return envelope.data ?? { enabled: false };
     },
     enabled: Boolean(resourceId) && enabled !== false,
@@ -549,13 +685,18 @@ export const useEnableReplication = () => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/replication/${resourceType}/${resourceId}`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri, config));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to enable replication");
+        throw new Error((envelope.message as string) || "Failed to enable replication");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
     onSuccess: (_data, { integrationKey, resourceType, resourceId }) => {
       queryClient.invalidateQueries({
-        queryKey: integrationExtendedKeys.replicationStatus(context, integrationKey, resourceType, resourceId),
+        queryKey: integrationExtendedKeys.replicationStatus(
+          context,
+          integrationKey,
+          resourceType,
+          resourceId
+        ),
       });
     },
   });
@@ -576,13 +717,18 @@ export const useDisableReplication = () => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/replication/${resourceType}/${resourceId}`;
       const envelope = asEnvelope(await entry.toastApi.delete<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to disable replication");
+        throw new Error((envelope.message as string) || "Failed to disable replication");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
     onSuccess: (_data, { integrationKey, resourceType, resourceId }) => {
       queryClient.invalidateQueries({
-        queryKey: integrationExtendedKeys.replicationStatus(context, integrationKey, resourceType, resourceId),
+        queryKey: integrationExtendedKeys.replicationStatus(
+          context,
+          integrationKey,
+          resourceType,
+          resourceId
+        ),
       });
     },
   });
@@ -603,13 +749,18 @@ export const useFailover = () => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/replication/${resourceType}/${resourceId}/failover`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to trigger failover");
+        throw new Error((envelope.message as string) || "Failed to trigger failover");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
     onSuccess: (_data, { integrationKey, resourceType, resourceId }) => {
       queryClient.invalidateQueries({
-        queryKey: integrationExtendedKeys.replicationStatus(context, integrationKey, resourceType, resourceId),
+        queryKey: integrationExtendedKeys.replicationStatus(
+          context,
+          integrationKey,
+          resourceType,
+          resourceId
+        ),
       });
       queryClient.invalidateQueries({
         queryKey: integrationOperationKeys.all(context),
@@ -633,13 +784,18 @@ export const useFailback = () => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/replication/${resourceType}/${resourceId}/failback`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to trigger failback");
+        throw new Error((envelope.message as string) || "Failed to trigger failback");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
     onSuccess: (_data, { integrationKey, resourceType, resourceId }) => {
       queryClient.invalidateQueries({
-        queryKey: integrationExtendedKeys.replicationStatus(context, integrationKey, resourceType, resourceId),
+        queryKey: integrationExtendedKeys.replicationStatus(
+          context,
+          integrationKey,
+          resourceType,
+          resourceId
+        ),
       });
       queryClient.invalidateQueries({
         queryKey: integrationOperationKeys.all(context),
@@ -651,10 +807,7 @@ export const useFailback = () => {
 // ─── Destinations ───────────────────────────────────────────────
 
 /** Fetch destinations for an integration */
-export const useFetchDestinations = (
-  integrationKey: string,
-  options: QueryOptions = {},
-) => {
+export const useFetchDestinations = (integrationKey: string, options: QueryOptions = {}) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
 
@@ -663,7 +816,7 @@ export const useFetchDestinations = (
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/destinations`;
       const envelope = asEnvelope<IntegrationDestination[]>(
-        await entry.silentApi.get<AnyRecord>(uri),
+        await entry.silentApi.get<AnyRecord>(uri)
       );
       return envelope.data ?? [];
     },
@@ -683,7 +836,7 @@ export const useCreateDestination = () => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/destinations`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri, data));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to create destination");
+        throw new Error((envelope.message as string) || "Failed to create destination");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -706,7 +859,7 @@ export const useDeleteDestination = () => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/destinations/${destinationId}`;
       const envelope = asEnvelope(await entry.toastApi.delete<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to delete destination");
+        throw new Error((envelope.message as string) || "Failed to delete destination");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -728,7 +881,7 @@ export const useTestDestination = () => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/destinations/${destinationId}/test`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to test destination");
+        throw new Error((envelope.message as string) || "Failed to test destination");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -741,12 +894,16 @@ export const useUpdateDestination = () => {
   const entry = apiRegistry[context];
   const queryClient = useQueryClient();
 
-  return useMutation<AnyRecord, Error, { integrationKey: string; destinationId: number; data: AnyRecord }>({
+  return useMutation<
+    AnyRecord,
+    Error,
+    { integrationKey: string; destinationId: number; data: AnyRecord }
+  >({
     mutationFn: async ({ integrationKey, destinationId, data }) => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/destinations/${destinationId}`;
       const envelope = asEnvelope(await entry.toastApi.put<AnyRecord>(uri, data));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to update destination");
+        throw new Error((envelope.message as string) || "Failed to update destination");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -759,10 +916,7 @@ export const useUpdateDestination = () => {
 };
 
 /** Check whether active destinations exist for an integration */
-export const useCheckDestinations = (
-  integrationKey: string,
-  options: QueryOptions = {},
-) => {
+export const useCheckDestinations = (integrationKey: string, options: QueryOptions = {}) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
 
@@ -771,7 +925,7 @@ export const useCheckDestinations = (
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/destinations/check`;
       const envelope = asEnvelope<{ has_destinations: boolean; count: number }>(
-        await entry.silentApi.get<AnyRecord>(uri),
+        await entry.silentApi.get<AnyRecord>(uri)
       );
       return envelope.data ?? { has_destinations: false, count: 0 };
     },
@@ -781,10 +935,7 @@ export const useCheckDestinations = (
 };
 
 /** Fetch available destination types with labels and config fields */
-export const useFetchDestinationTypes = (
-  integrationKey: string,
-  options: QueryOptions = {},
-) => {
+export const useFetchDestinationTypes = (integrationKey: string, options: QueryOptions = {}) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
 
@@ -792,9 +943,7 @@ export const useFetchDestinationTypes = (
     queryKey: integrationExtendedKeys.destinationTypes(context, integrationKey),
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/destination-types`;
-      const envelope = asEnvelope<DestinationTypeInfo[]>(
-        await entry.silentApi.get<AnyRecord>(uri),
-      );
+      const envelope = asEnvelope<DestinationTypeInfo[]>(await entry.silentApi.get<AnyRecord>(uri));
       return envelope.data ?? [];
     },
     staleTime: 1000 * 60 * 60,
@@ -833,14 +982,17 @@ export interface DrDashboardData {
     completed_at?: string;
     duration_seconds?: number;
   }>;
-  provider_health: Record<string, {
-    replication_count: number;
-    backup_count: number;
-    healthy: number;
-    degraded: number;
-    critical: number;
-    overall: string;
-  }>;
+  provider_health: Record<
+    string,
+    {
+      replication_count: number;
+      backup_count: number;
+      healthy: number;
+      degraded: number;
+      critical: number;
+      overall: string;
+    }
+  >;
 }
 
 export interface DrTimelineEvent {
@@ -868,16 +1020,20 @@ export const useDrDashboard = (options: QueryOptions = {}) => {
     queryKey: integrationExtendedKeys.drDashboard(context),
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/dr/dashboard`;
-      const envelope = asEnvelope<DrDashboardData>(
-        await entry.silentApi.get<AnyRecord>(uri),
+      const envelope = asEnvelope<DrDashboardData>(await entry.silentApi.get<AnyRecord>(uri));
+      return (
+        envelope.data ?? {
+          replication_summary: { total: 0, healthy: 0, degraded: 0, critical: 0, unknown: 0 },
+          backup_summary: { total: 0, enabled: 0, by_provider: {} },
+          rpo_metrics: {
+            average_lag_seconds: null,
+            worst_lag_seconds: null,
+            replication_coverage: 0,
+          },
+          recent_operations: [],
+          provider_health: {},
+        }
       );
-      return envelope.data ?? {
-        replication_summary: { total: 0, healthy: 0, degraded: 0, critical: 0, unknown: 0 },
-        backup_summary: { total: 0, enabled: 0, by_provider: {} },
-        rpo_metrics: { average_lag_seconds: null, worst_lag_seconds: null, replication_coverage: 0 },
-        recent_operations: [],
-        provider_health: {},
-      };
     },
     staleTime: 1000 * 30,
     refetchInterval: 1000 * 60,
@@ -888,7 +1044,7 @@ export const useDrDashboard = (options: QueryOptions = {}) => {
 /** Fetch DR operations timeline */
 export const useDrTimeline = (
   params?: { limit?: number; operation_type?: string },
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
@@ -901,9 +1057,7 @@ export const useDrTimeline = (
       if (params?.operation_type) queryParams.set("operation_type", params.operation_type);
       const qs = queryParams.toString();
       const uri = `${entry.urlPrefix}/dr/timeline${qs ? `?${qs}` : ""}`;
-      const envelope = asEnvelope<DrTimelineEvent[]>(
-        await entry.silentApi.get<AnyRecord>(uri),
-      );
+      const envelope = asEnvelope<DrTimelineEvent[]>(await entry.silentApi.get<AnyRecord>(uri));
       return envelope.data ?? [];
     },
     staleTime: 1000 * 30,
@@ -942,11 +1096,9 @@ export const useDrDrill = () => {
   >({
     mutationFn: async ({ integrationKey, resourceType, resourceId, options: drillOptions }) => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/replication/${resourceType}/${resourceId}/dr-drill`;
-      const envelope = asEnvelope(
-        await entry.toastApi.post<AnyRecord>(uri, drillOptions ?? {}),
-      );
+      const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri, drillOptions ?? {}));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to trigger DR drill");
+        throw new Error((envelope.message as string) || "Failed to trigger DR drill");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -982,7 +1134,7 @@ import type {
 /** Fetch replication pairs for orchestration UI selection */
 export const useReplicationPairs = (
   params?: { mode?: string; quorum_state?: string; bidirectional_only?: boolean },
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
@@ -998,7 +1150,7 @@ export const useReplicationPairs = (
       const qs = queryParams.toString();
       const uri = `${entry.urlPrefix}/integrations/replication-pairs${qs ? `?${qs}` : ""}`;
       const envelope = asEnvelope<ReplicationPairSummary[]>(
-        await entry.silentApi.get<AnyRecord>(uri),
+        await entry.silentApi.get<AnyRecord>(uri)
       );
       return envelope.data ?? [];
     },
@@ -1011,7 +1163,7 @@ export const useReplicationPairs = (
 /** Fetch full bidirectional status for a replication pair */
 export const useBidirectionalStatus = (
   pairId: string | null | undefined,
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
@@ -1021,9 +1173,7 @@ export const useBidirectionalStatus = (
     queryKey: integrationExtendedKeys.bidirectionalStatus(context, pairId as string),
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/integrations/replication-pairs/${pairId}/bidirectional-status`;
-      const envelope = asEnvelope<BidirectionalStatus>(
-        await entry.silentApi.get<AnyRecord>(uri),
-      );
+      const envelope = asEnvelope<BidirectionalStatus>(await entry.silentApi.get<AnyRecord>(uri));
       return envelope.data as BidirectionalStatus;
     },
     enabled: Boolean(pairId) && enabled !== false,
@@ -1036,7 +1186,7 @@ export const useBidirectionalStatus = (
 /** Fetch current enterprise active-active readiness for a replication pair */
 export const useActiveActiveReadiness = (
   pairId: string | null | undefined,
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
@@ -1047,7 +1197,7 @@ export const useActiveActiveReadiness = (
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/integrations/replication-pairs/${pairId}/active-active-readiness`;
       const envelope = asEnvelope<ActiveActiveReadinessAssessment>(
-        await entry.silentApi.get<AnyRecord>(uri),
+        await entry.silentApi.get<AnyRecord>(uri)
       );
       return envelope.data as ActiveActiveReadinessAssessment;
     },
@@ -1062,7 +1212,7 @@ export const useActiveActiveReadiness = (
 export const useConflicts = (
   pairId: string | null | undefined,
   params?: { status?: string },
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
@@ -1075,9 +1225,7 @@ export const useConflicts = (
       if (params?.status) queryParams.set("status", params.status);
       const qs = queryParams.toString();
       const uri = `${entry.urlPrefix}/integrations/replication-pairs/${pairId}/conflicts${qs ? `?${qs}` : ""}`;
-      const envelope = asEnvelope<ReplicationConflict[]>(
-        await entry.silentApi.get<AnyRecord>(uri),
-      );
+      const envelope = asEnvelope<ReplicationConflict[]>(await entry.silentApi.get<AnyRecord>(uri));
       return envelope.data ?? [];
     },
     enabled: Boolean(pairId) && enabled !== false,
@@ -1087,10 +1235,7 @@ export const useConflicts = (
 };
 
 /** Fetch quorum status */
-export const useQuorumStatus = (
-  pairId: string | null | undefined,
-  options: QueryOptions = {},
-) => {
+export const useQuorumStatus = (pairId: string | null | undefined, options: QueryOptions = {}) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
   const { enabled = true, ...rest } = options;
@@ -1099,9 +1244,7 @@ export const useQuorumStatus = (
     queryKey: integrationExtendedKeys.quorumStatus(context, pairId as string),
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/integrations/replication-pairs/${pairId}/quorum`;
-      const envelope = asEnvelope<QuorumStatus>(
-        await entry.silentApi.get<AnyRecord>(uri),
-      );
+      const envelope = asEnvelope<QuorumStatus>(await entry.silentApi.get<AnyRecord>(uri));
       return envelope.data as QuorumStatus;
     },
     enabled: Boolean(pairId) && enabled !== false,
@@ -1112,10 +1255,7 @@ export const useQuorumStatus = (
 };
 
 /** Fetch traffic pool status */
-export const useTrafficStatus = (
-  pairId: string | null | undefined,
-  options: QueryOptions = {},
-) => {
+export const useTrafficStatus = (pairId: string | null | undefined, options: QueryOptions = {}) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
   const { enabled = true, ...rest } = options;
@@ -1124,9 +1264,7 @@ export const useTrafficStatus = (
     queryKey: integrationExtendedKeys.trafficStatus(context, pairId as string),
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/integrations/replication-pairs/${pairId}/traffic`;
-      const envelope = asEnvelope<TrafficStatus>(
-        await entry.silentApi.get<AnyRecord>(uri),
-      );
+      const envelope = asEnvelope<TrafficStatus>(await entry.silentApi.get<AnyRecord>(uri));
       return envelope.data as TrafficStatus;
     },
     enabled: Boolean(pairId) && enabled !== false,
@@ -1144,9 +1282,11 @@ export const useSwitchMode = () => {
   return useMutation<AnyRecord, Error, { pairId: string; payload: SwitchModePayload }>({
     mutationFn: async ({ pairId, payload }) => {
       const uri = `${entry.urlPrefix}/integrations/replication-pairs/${pairId}/mode`;
-      const envelope = asEnvelope(await entry.toastApi.put<AnyRecord>(uri, payload as unknown as AnyRecord));
+      const envelope = asEnvelope(
+        await entry.toastApi.put<AnyRecord>(uri, payload as unknown as AnyRecord)
+      );
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to switch mode");
+        throw new Error((envelope.message as string) || "Failed to switch mode");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -1169,7 +1309,7 @@ export const useRestoreBidirectional = () => {
       const uri = `${entry.urlPrefix}/integrations/replication-pairs/${pairId}/restore-bidirectional`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to restore bidirectional");
+        throw new Error((envelope.message as string) || "Failed to restore bidirectional");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -1192,7 +1332,9 @@ export const useCertifyActiveActive = () => {
       const uri = `${entry.urlPrefix}/integrations/replication-pairs/${pairId}/active-active-certify`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to certify enterprise active-active");
+        throw new Error(
+          (envelope.message as string) || "Failed to certify enterprise active-active"
+        );
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -1223,9 +1365,11 @@ export const useResolveConflict = () => {
   >({
     mutationFn: async ({ pairId, conflictId, payload }) => {
       const uri = `${entry.urlPrefix}/integrations/replication-pairs/${pairId}/conflicts/${conflictId}/resolve`;
-      const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri, payload as unknown as AnyRecord));
+      const envelope = asEnvelope(
+        await entry.toastApi.post<AnyRecord>(uri, payload as unknown as AnyRecord)
+      );
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to resolve conflict");
+        throw new Error((envelope.message as string) || "Failed to resolve conflict");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -1249,9 +1393,11 @@ export const useConfigureWitness = () => {
   return useMutation<AnyRecord, Error, { pairId: string; payload: ConfigureWitnessPayload }>({
     mutationFn: async ({ pairId, payload }) => {
       const uri = `${entry.urlPrefix}/integrations/replication-pairs/${pairId}/witness`;
-      const envelope = asEnvelope(await entry.toastApi.put<AnyRecord>(uri, payload as unknown as AnyRecord));
+      const envelope = asEnvelope(
+        await entry.toastApi.put<AnyRecord>(uri, payload as unknown as AnyRecord)
+      );
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to configure witness");
+        throw new Error((envelope.message as string) || "Failed to configure witness");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -1272,21 +1418,25 @@ export const useConfigureTrafficControl = () => {
   const entry = apiRegistry[context];
   const queryClient = useQueryClient();
 
-  return useMutation<AnyRecord, Error, { pairId: string; payload: ConfigureTrafficControlPayload }>({
-    mutationFn: async ({ pairId, payload }) => {
-      const uri = `${entry.urlPrefix}/integrations/replication-pairs/${pairId}/traffic-control`;
-      const envelope = asEnvelope(await entry.toastApi.put<AnyRecord>(uri, payload as unknown as AnyRecord));
-      if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to configure traffic control");
-      }
-      return (envelope.data ?? {}) as AnyRecord;
-    },
-    onSuccess: (_data, { pairId }) => {
-      queryClient.invalidateQueries({
-        queryKey: integrationExtendedKeys.trafficStatus(context, pairId),
-      });
-    },
-  });
+  return useMutation<AnyRecord, Error, { pairId: string; payload: ConfigureTrafficControlPayload }>(
+    {
+      mutationFn: async ({ pairId, payload }) => {
+        const uri = `${entry.urlPrefix}/integrations/replication-pairs/${pairId}/traffic-control`;
+        const envelope = asEnvelope(
+          await entry.toastApi.put<AnyRecord>(uri, payload as unknown as AnyRecord)
+        );
+        if (!envelope.success) {
+          throw new Error((envelope.message as string) || "Failed to configure traffic control");
+        }
+        return (envelope.data ?? {}) as AnyRecord;
+      },
+      onSuccess: (_data, { pairId }) => {
+        queryClient.invalidateQueries({
+          queryKey: integrationExtendedKeys.trafficStatus(context, pairId),
+        });
+      },
+    }
+  );
 };
 
 // ─── Change Journal (CDC) ──────────────────────────────────────
@@ -1309,7 +1459,7 @@ export interface ChangeJournalEntry {
 /** Fetch change journal status for an external endpoint. */
 export const useChangeJournalStatus = (
   endpointId: string | null | undefined,
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
@@ -1318,9 +1468,7 @@ export const useChangeJournalStatus = (
     queryKey: integrationExtendedKeys.changeJournalStatus(context, endpointId ?? ""),
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/integrations/external-endpoints/${endpointId}/change-journal`;
-      const envelope = asEnvelope<ChangeJournalStatus>(
-        await entry.silentApi.get<AnyRecord>(uri),
-      );
+      const envelope = asEnvelope<ChangeJournalStatus>(await entry.silentApi.get<AnyRecord>(uri));
       return (envelope.data ?? { status: "not_configured" }) as ChangeJournalStatus;
     },
     enabled: !!endpointId,
@@ -1343,7 +1491,7 @@ export const useEnableChangeJournal = () => {
       if (engine) payload.engine = engine;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri, payload));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to enable change journal");
+        throw new Error((envelope.message as string) || "Failed to enable change journal");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -1366,7 +1514,7 @@ export const useDisableChangeJournal = () => {
       const uri = `${entry.urlPrefix}/integrations/external-endpoints/${endpointId}/change-journal`;
       const envelope = asEnvelope(await entry.toastApi.delete<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to disable change journal");
+        throw new Error((envelope.message as string) || "Failed to disable change journal");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -1382,7 +1530,7 @@ export const useDisableChangeJournal = () => {
 export const useChangeJournalEntries = (
   endpointId: string | null | undefined,
   params?: { since?: string },
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
@@ -1393,9 +1541,7 @@ export const useChangeJournalEntries = (
       const qs = new URLSearchParams();
       if (params?.since) qs.set("since", params.since);
       const uri = `${entry.urlPrefix}/integrations/external-endpoints/${endpointId}/change-journal/entries${qs.toString() ? `?${qs}` : ""}`;
-      const envelope = asEnvelope<ChangeJournalEntry[]>(
-        await entry.silentApi.get<AnyRecord>(uri),
-      );
+      const envelope = asEnvelope<ChangeJournalEntry[]>(await entry.silentApi.get<AnyRecord>(uri));
       return (envelope.data ?? []) as ChangeJournalEntry[];
     },
     enabled: !!endpointId,
@@ -1408,10 +1554,7 @@ export const useChangeJournalEntries = (
 // ─── Transfer Tuning & Operations ──────────────────────────────
 
 /** Fetch sync preview (dry-run) for a replication pair. */
-export const useSyncPreview = (
-  pairId: string | null | undefined,
-  options: QueryOptions = {},
-) => {
+export const useSyncPreview = (pairId: string | null | undefined, options: QueryOptions = {}) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
 
@@ -1432,7 +1575,7 @@ export const useSyncPreview = (
 export const useSlaHistory = (
   pairId: string | null | undefined,
   params?: { days?: number; period_type?: string },
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
@@ -1456,8 +1599,16 @@ export const useSlaHistory = (
 /** Fetch file-level audit log for a replication pair (paginated). */
 export const useAuditLog = (
   pairId: string | null | undefined,
-  params?: { action?: string; file_path?: string; date_from?: string; date_to?: string; direction?: string; page?: number; per_page?: number },
-  options: QueryOptions = {},
+  params?: {
+    action?: string;
+    file_path?: string;
+    date_from?: string;
+    date_to?: string;
+    direction?: string;
+    page?: number;
+    per_page?: number;
+  },
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
@@ -1467,7 +1618,9 @@ export const useAuditLog = (
     queryFn: async () => {
       const qs = new URLSearchParams();
       if (params) {
-        Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null) qs.set(k, String(v)); });
+        Object.entries(params).forEach(([k, v]) => {
+          if (v !== undefined && v !== null) qs.set(k, String(v));
+        });
       }
       const uri = `${entry.urlPrefix}/integrations/replication-pairs/${pairId}/audit${qs.toString() ? `?${qs}` : ""}`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
@@ -1482,7 +1635,7 @@ export const useAuditLog = (
 /** Fetch verification history for a replication pair. */
 export const useVerificationHistory = (
   pairId: string | null | undefined,
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
@@ -1506,15 +1659,24 @@ export const useSetMaintenanceWindows = () => {
   const entry = apiRegistry[context];
   const queryClient = useQueryClient();
 
-  return useMutation<AnyRecord, Error, { pairId: string; windows: Array<{ cron: string; duration_minutes: number; label?: string }> }>({
+  return useMutation<
+    AnyRecord,
+    Error,
+    { pairId: string; windows: Array<{ cron: string; duration_minutes: number; label?: string }> }
+  >({
     mutationFn: async ({ pairId, windows }) => {
       const uri = `${entry.urlPrefix}/integrations/replication-pairs/${pairId}/maintenance-windows`;
-      const envelope = asEnvelope(await entry.toastApi.put<AnyRecord>(uri, { windows } as unknown as AnyRecord));
-      if (!envelope.success) throw new Error(envelope.message as string || "Failed to set maintenance windows");
+      const envelope = asEnvelope(
+        await entry.toastApi.put<AnyRecord>(uri, { windows } as unknown as AnyRecord)
+      );
+      if (!envelope.success)
+        throw new Error((envelope.message as string) || "Failed to set maintenance windows");
       return (envelope.data ?? {}) as AnyRecord;
     },
     onSuccess: (_data, { pairId }) => {
-      queryClient.invalidateQueries({ queryKey: integrationExtendedKeys.bidirectionalStatus(context, pairId) });
+      queryClient.invalidateQueries({
+        queryKey: integrationExtendedKeys.bidirectionalStatus(context, pairId),
+      });
     },
   });
 };
@@ -1529,11 +1691,14 @@ export const useVerifySyncIntegrity = () => {
     mutationFn: async ({ pairId }) => {
       const uri = `${entry.urlPrefix}/integrations/replication-pairs/${pairId}/verify`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri, {}));
-      if (!envelope.success) throw new Error(envelope.message as string || "Failed to trigger verification");
+      if (!envelope.success)
+        throw new Error((envelope.message as string) || "Failed to trigger verification");
       return (envelope.data ?? {}) as AnyRecord;
     },
     onSuccess: (_data, { pairId }) => {
-      queryClient.invalidateQueries({ queryKey: integrationExtendedKeys.verificationHistory(context, pairId) });
+      queryClient.invalidateQueries({
+        queryKey: integrationExtendedKeys.verificationHistory(context, pairId),
+      });
     },
   });
 };
@@ -1544,16 +1709,12 @@ export const useUpdateReplicationSettings = () => {
   const entry = apiRegistry[context];
   const queryClient = useQueryClient();
 
-  return useMutation<
-    AnyRecord,
-    Error,
-    { pairId: string; settings: AnyRecord }
-  >({
+  return useMutation<AnyRecord, Error, { pairId: string; settings: AnyRecord }>({
     mutationFn: async ({ pairId, settings }) => {
       const uri = `${entry.urlPrefix}/integrations/replication-pairs/${pairId}/settings`;
       const envelope = asEnvelope(await entry.toastApi.put<AnyRecord>(uri, settings));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to update replication settings");
+        throw new Error((envelope.message as string) || "Failed to update replication settings");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -1572,20 +1733,12 @@ export const useKernelCompatibilityCheck = () => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
 
-  return useMutation<
-    AnyRecord,
-    Error,
-    { source_endpoint_id: string; target_endpoint_id: string }
-  >({
+  return useMutation<AnyRecord, Error, { source_endpoint_id: string; target_endpoint_id: string }>({
     mutationFn: async (payload) => {
       const uri = `${entry.urlPrefix}/integrations/kernel-compatibility/check`;
-      const envelope = asEnvelope(
-        await entry.silentApi.post<AnyRecord>(uri, payload),
-      );
+      const envelope = asEnvelope(await entry.silentApi.post<AnyRecord>(uri, payload));
       if (!envelope.success) {
-        throw new Error(
-          (envelope.message as string) || "Kernel compatibility check failed",
-        );
+        throw new Error((envelope.message as string) || "Kernel compatibility check failed");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -1595,7 +1748,7 @@ export const useKernelCompatibilityCheck = () => {
 /** Query: get the kernel compatibility matrix (paginated). */
 export const useKernelCompatibilityMatrix = (
   params?: { page?: number; per_page?: number },
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
@@ -1604,8 +1757,12 @@ export const useKernelCompatibilityMatrix = (
     queryKey: ["kernelCompatibility", "matrix", context, params],
     queryFn: async () => {
       const qs = new URLSearchParams();
-      if (params?.page) { qs.set("page", String(params.page)); }
-      if (params?.per_page) { qs.set("per_page", String(params.per_page)); }
+      if (params?.page) {
+        qs.set("page", String(params.page));
+      }
+      if (params?.per_page) {
+        qs.set("per_page", String(params.per_page));
+      }
       const uri = `${entry.urlPrefix}/integrations/kernel-compatibility/matrix${qs.toString() ? `?${qs}` : ""}`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
       return (envelope.data ?? {}) as AnyRecord;
@@ -1617,7 +1774,7 @@ export const useKernelCompatibilityMatrix = (
 /** Query: get preflight results for a migration. */
 export const useMigrationPreflight = (
   migrationId: string | undefined,
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
@@ -1656,12 +1813,10 @@ export const useConfigureDrillSchedule = () => {
     mutationFn: async ({ drillId, ...config }) => {
       const uri = `${entry.urlPrefix}/integrations/anycloudflow/replication/dr-drills/${drillId}/schedule`;
       const envelope = asEnvelope(
-        await entry.toastApi.put<AnyRecord>(uri, config as unknown as AnyRecord),
+        await entry.toastApi.put<AnyRecord>(uri, config as unknown as AnyRecord)
       );
       if (!envelope.success) {
-        throw new Error(
-          (envelope.message as string) || "Failed to configure drill schedule",
-        );
+        throw new Error((envelope.message as string) || "Failed to configure drill schedule");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -1682,13 +1837,9 @@ export const useDisableDrillSchedule = () => {
   return useMutation<AnyRecord, Error, { drillId: string }>({
     mutationFn: async ({ drillId }) => {
       const uri = `${entry.urlPrefix}/integrations/anycloudflow/replication/dr-drills/${drillId}/schedule`;
-      const envelope = asEnvelope(
-        await entry.toastApi.delete<AnyRecord>(uri),
-      );
+      const envelope = asEnvelope(await entry.toastApi.delete<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(
-          (envelope.message as string) || "Failed to disable drill schedule",
-        );
+        throw new Error((envelope.message as string) || "Failed to disable drill schedule");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -1715,8 +1866,10 @@ export const useExportSlaReport = () => {
     mutationFn: async (params) => {
       const qs = new URLSearchParams();
       if (params.period) qs.set("period", params.period);
-      if (params.include_drills !== undefined) qs.set("include_drills", String(params.include_drills));
-      if (params.include_replication !== undefined) qs.set("include_replication", String(params.include_replication));
+      if (params.include_drills !== undefined)
+        qs.set("include_drills", String(params.include_drills));
+      if (params.include_replication !== undefined)
+        qs.set("include_replication", String(params.include_replication));
       const uri = `${entry.urlPrefix}/integrations/reports/sla/export${qs.toString() ? `?${qs}` : ""}`;
 
       // Routed via the unified fileApi (Week-3 cleanup) — the previous
@@ -1754,19 +1907,22 @@ export const usePitrRange = (
   integrationKey: string,
   resourceType: string,
   resourceId: Identifier | null | undefined,
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
   const { enabled = true, ...rest } = options;
 
   return useQuery<PitrRange | null, Error>({
-    queryKey: integrationExtendedKeys.pitrRange(context, integrationKey, resourceType, resourceId ?? ""),
+    queryKey: integrationExtendedKeys.pitrRange(
+      context,
+      integrationKey,
+      resourceType,
+      resourceId ?? ""
+    ),
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/backup/${resourceType}/${resourceId}/pitr-range`;
-      const envelope = asEnvelope<PitrRange>(
-        await entry.silentApi.get<AnyRecord>(uri),
-      );
+      const envelope = asEnvelope<PitrRange>(await entry.silentApi.get<AnyRecord>(uri));
       return envelope.data ?? null;
     },
     enabled: Boolean(resourceId) && enabled !== false,
@@ -1784,21 +1940,38 @@ export const useRestorePitr = () => {
   return useMutation<
     AnyRecord,
     Error,
-    { integrationKey: string; resourceType: string; resourceId: Identifier; targetTime: string; targetEndpointId?: string }
+    {
+      integrationKey: string;
+      resourceType: string;
+      resourceId: Identifier;
+      targetTime: string;
+      targetEndpointId?: string;
+    }
   >({
-    mutationFn: async ({ integrationKey, resourceType, resourceId, targetTime, targetEndpointId }) => {
+    mutationFn: async ({
+      integrationKey,
+      resourceType,
+      resourceId,
+      targetTime,
+      targetEndpointId,
+    }) => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/backup/${resourceType}/${resourceId}/pitr-restore`;
       const body: AnyRecord = { target_time: targetTime };
       if (targetEndpointId) body.target_endpoint_id = targetEndpointId;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri, body));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to initiate point-in-time restore");
+        throw new Error((envelope.message as string) || "Failed to initiate point-in-time restore");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
     onSuccess: (_data, { integrationKey, resourceType, resourceId }) => {
       queryClient.invalidateQueries({
-        queryKey: integrationExtendedKeys.pitrRange(context, integrationKey, resourceType, resourceId),
+        queryKey: integrationExtendedKeys.pitrRange(
+          context,
+          integrationKey,
+          resourceType,
+          resourceId
+        ),
       });
       queryClient.invalidateQueries({
         queryKey: integrationOperationKeys.all(context),
@@ -1832,10 +2005,7 @@ export interface RansomwareScan {
 }
 
 /** Fetch ransomware scan dashboard summary. */
-export const useRansomwareDashboard = (
-  integrationKey: string,
-  options: QueryOptions = {},
-) => {
+export const useRansomwareDashboard = (integrationKey: string, options: QueryOptions = {}) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
 
@@ -1844,7 +2014,7 @@ export const useRansomwareDashboard = (
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/ransomware/dashboard`;
       const envelope = asEnvelope<RansomwareDashboardData>(
-        await entry.silentApi.get<AnyRecord>(uri),
+        await entry.silentApi.get<AnyRecord>(uri)
       );
       return envelope.data ?? null;
     },
@@ -1857,8 +2027,14 @@ export const useRansomwareDashboard = (
 /** Fetch ransomware scans with optional filters. */
 export const useRansomwareScans = (
   integrationKey: string,
-  params?: { threat_level?: string; status?: string; policy_id?: string; per_page?: number; page?: number },
-  options: QueryOptions = {},
+  params?: {
+    threat_level?: string;
+    status?: string;
+    policy_id?: string;
+    per_page?: number;
+    page?: number;
+  },
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
@@ -1875,7 +2051,11 @@ export const useRansomwareScans = (
       const qs = queryParams.toString();
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/ransomware/scans${qs ? `?${qs}` : ""}`;
       const res = await entry.silentApi.get<AnyRecord>(uri);
-      const envelope = (res ?? {}) as { success?: boolean; data?: RansomwareScan[] | { data?: RansomwareScan[]; meta?: AnyRecord }; meta?: AnyRecord };
+      const envelope = (res ?? {}) as {
+        success?: boolean;
+        data?: RansomwareScan[] | { data?: RansomwareScan[]; meta?: AnyRecord };
+        meta?: AnyRecord;
+      };
       // Handle both flat array and paginated { data: [...], meta: {...} } responses
       const rawData = envelope.data;
       if (Array.isArray(rawData)) {
@@ -1896,16 +2076,12 @@ export const useAcknowledgeRansomware = () => {
   const entry = apiRegistry[context];
   const queryClient = useQueryClient();
 
-  return useMutation<
-    AnyRecord,
-    Error,
-    { integrationKey: string; scanId: string }
-  >({
+  return useMutation<AnyRecord, Error, { integrationKey: string; scanId: string }>({
     mutationFn: async ({ integrationKey, scanId }) => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/ransomware/scans/${scanId}/acknowledge`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to acknowledge ransomware scan");
+        throw new Error((envelope.message as string) || "Failed to acknowledge ransomware scan");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -1926,16 +2102,12 @@ export const useRecoverFromRansomware = () => {
   const entry = apiRegistry[context];
   const queryClient = useQueryClient();
 
-  return useMutation<
-    AnyRecord,
-    Error,
-    { integrationKey: string; scanId: string }
-  >({
+  return useMutation<AnyRecord, Error, { integrationKey: string; scanId: string }>({
     mutationFn: async ({ integrationKey, scanId }) => {
       const uri = `${entry.urlPrefix}/integrations/${integrationKey}/ransomware/scans/${scanId}/recover`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to initiate ransomware recovery");
+        throw new Error((envelope.message as string) || "Failed to initiate ransomware recovery");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -1985,19 +2157,21 @@ const HYPERVISOR_KEY = "anycloudflow";
 /** Detect hypervisor type and capabilities on an endpoint */
 export const useDetectHypervisor = (
   endpointId: string | null | undefined,
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
   const { enabled = true, ...rest } = options;
 
   return useQuery<HypervisorDetection, Error>({
-    queryKey: integrationExtendedKeys.hypervisorDetect(context, HYPERVISOR_KEY, endpointId as string),
+    queryKey: integrationExtendedKeys.hypervisorDetect(
+      context,
+      HYPERVISOR_KEY,
+      endpointId as string
+    ),
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/integrations/${HYPERVISOR_KEY}/hypervisor/${endpointId}/detect`;
-      const envelope = asEnvelope<HypervisorDetection>(
-        await entry.silentApi.get<AnyRecord>(uri),
-      );
+      const envelope = asEnvelope<HypervisorDetection>(await entry.silentApi.get<AnyRecord>(uri));
       return envelope.data ?? { hypervisor_type: "unknown", version: "", capabilities: [] };
     },
     enabled: Boolean(endpointId) && enabled !== false,
@@ -2009,7 +2183,7 @@ export const useDetectHypervisor = (
 /** List VMs on a hypervisor endpoint */
 export const useHypervisorVMs = (
   endpointId: string | null | undefined,
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
@@ -2019,9 +2193,7 @@ export const useHypervisorVMs = (
     queryKey: integrationExtendedKeys.hypervisorVMs(context, HYPERVISOR_KEY, endpointId as string),
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/integrations/${HYPERVISOR_KEY}/hypervisor/${endpointId}/vms`;
-      const envelope = asEnvelope<HypervisorVM[]>(
-        await entry.silentApi.get<AnyRecord>(uri),
-      );
+      const envelope = asEnvelope<HypervisorVM[]>(await entry.silentApi.get<AnyRecord>(uri));
       return envelope.data ?? [];
     },
     enabled: Boolean(endpointId) && enabled !== false,
@@ -2035,20 +2207,26 @@ export const useHypervisorVMs = (
 export const useHypervisorVM = (
   endpointId: string | null | undefined,
   vmName: string | null | undefined,
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
   const { enabled = true, ...rest } = options;
 
   return useQuery<HypervisorVM, Error>({
-    queryKey: integrationExtendedKeys.hypervisorVM(context, HYPERVISOR_KEY, endpointId as string, vmName as string),
+    queryKey: integrationExtendedKeys.hypervisorVM(
+      context,
+      HYPERVISOR_KEY,
+      endpointId as string,
+      vmName as string
+    ),
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/integrations/${HYPERVISOR_KEY}/hypervisor/${endpointId}/vms/${vmName}`;
-      const envelope = asEnvelope<HypervisorVM>(
-        await entry.silentApi.get<AnyRecord>(uri),
+      const envelope = asEnvelope<HypervisorVM>(await entry.silentApi.get<AnyRecord>(uri));
+      return (
+        envelope.data ??
+        ({ name: vmName, status: "unknown", memory_mb: 0, cpu_count: 0 } as HypervisorVM)
       );
-      return envelope.data ?? ({ name: vmName, status: "unknown", memory_mb: 0, cpu_count: 0 } as HypervisorVM);
     },
     enabled: Boolean(endpointId) && Boolean(vmName) && enabled !== false,
     staleTime: 1000 * 30,
@@ -2062,18 +2240,12 @@ export const useHypervisorVMAction = () => {
   const entry = apiRegistry[context];
   const queryClient = useQueryClient();
 
-  return useMutation<
-    AnyRecord,
-    Error,
-    { endpointId: string; vmName: string; action: string }
-  >({
+  return useMutation<AnyRecord, Error, { endpointId: string; vmName: string; action: string }>({
     mutationFn: async ({ endpointId, vmName, action }) => {
       const uri = `${entry.urlPrefix}/integrations/${HYPERVISOR_KEY}/hypervisor/${endpointId}/vms/${vmName}/action`;
-      const envelope = asEnvelope(
-        await entry.toastApi.post<AnyRecord>(uri, { action }),
-      );
+      const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri, { action }));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || `Failed to ${action} VM`);
+        throw new Error((envelope.message as string) || `Failed to ${action} VM`);
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -2091,24 +2263,23 @@ export const useEnableHypervisorCBT = () => {
   const entry = apiRegistry[context];
   const queryClient = useQueryClient();
 
-  return useMutation<
-    AnyRecord,
-    Error,
-    { endpointId: string; vmName: string }
-  >({
+  return useMutation<AnyRecord, Error, { endpointId: string; vmName: string }>({
     mutationFn: async ({ endpointId, vmName }) => {
       const uri = `${entry.urlPrefix}/integrations/${HYPERVISOR_KEY}/hypervisor/${endpointId}/vms/${vmName}/cbt/enable`;
-      const envelope = asEnvelope(
-        await entry.toastApi.post<AnyRecord>(uri),
-      );
+      const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to enable CBT");
+        throw new Error((envelope.message as string) || "Failed to enable CBT");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
     onSuccess: (_data, { endpointId, vmName }) => {
       queryClient.invalidateQueries({
-        queryKey: integrationExtendedKeys.hypervisorCBTStatus(context, HYPERVISOR_KEY, endpointId, vmName),
+        queryKey: integrationExtendedKeys.hypervisorCBTStatus(
+          context,
+          HYPERVISOR_KEY,
+          endpointId,
+          vmName
+        ),
       });
       queryClient.invalidateQueries({
         queryKey: integrationExtendedKeys.hypervisorVMs(context, HYPERVISOR_KEY, endpointId),
@@ -2121,19 +2292,22 @@ export const useEnableHypervisorCBT = () => {
 export const useHypervisorCBTStatus = (
   endpointId: string | null | undefined,
   vmName: string | null | undefined,
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
   const { enabled = true, ...rest } = options;
 
   return useQuery<AnyRecord, Error>({
-    queryKey: integrationExtendedKeys.hypervisorCBTStatus(context, HYPERVISOR_KEY, endpointId as string, vmName as string),
+    queryKey: integrationExtendedKeys.hypervisorCBTStatus(
+      context,
+      HYPERVISOR_KEY,
+      endpointId as string,
+      vmName as string
+    ),
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/integrations/${HYPERVISOR_KEY}/hypervisor/${endpointId}/vms/${vmName}/cbt/status`;
-      const envelope = asEnvelope(
-        await entry.silentApi.get<AnyRecord>(uri),
-      );
+      const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
       return (envelope.data ?? {}) as AnyRecord;
     },
     enabled: Boolean(endpointId) && Boolean(vmName) && enabled !== false,
@@ -2151,15 +2325,19 @@ export const useMigrateHypervisorVM = () => {
   return useMutation<
     AnyRecord,
     Error,
-    { endpointId: string; vmName: string; target_endpoint_identifier: string; migration_type: string; bandwidth_mbps?: number }
+    {
+      endpointId: string;
+      vmName: string;
+      target_endpoint_identifier: string;
+      migration_type: string;
+      bandwidth_mbps?: number;
+    }
   >({
     mutationFn: async ({ endpointId, vmName, ...payload }) => {
       const uri = `${entry.urlPrefix}/integrations/${HYPERVISOR_KEY}/hypervisor/${endpointId}/vms/${vmName}/migrate`;
-      const envelope = asEnvelope(
-        await entry.toastApi.post<AnyRecord>(uri, payload),
-      );
+      const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri, payload));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to initiate VM migration");
+        throw new Error((envelope.message as string) || "Failed to initiate VM migration");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -2175,18 +2353,23 @@ export const useMigrateHypervisorVM = () => {
 export const useHypervisorMigrationProgress = (
   endpointId: string | null | undefined,
   vmName: string | null | undefined,
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
   const { enabled = true, ...rest } = options;
 
   return useQuery<HypervisorMigrationProgress, Error>({
-    queryKey: integrationExtendedKeys.hypervisorMigrationProgress(context, HYPERVISOR_KEY, endpointId as string, vmName as string),
+    queryKey: integrationExtendedKeys.hypervisorMigrationProgress(
+      context,
+      HYPERVISOR_KEY,
+      endpointId as string,
+      vmName as string
+    ),
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/integrations/${HYPERVISOR_KEY}/hypervisor/${endpointId}/vms/${vmName}/migrate/progress`;
       const envelope = asEnvelope<HypervisorMigrationProgress>(
-        await entry.silentApi.get<AnyRecord>(uri),
+        await entry.silentApi.get<AnyRecord>(uri)
       );
       return envelope.data ?? { status: "unknown", percent: 0 };
     },
@@ -2204,17 +2387,23 @@ const INTEGRATION_KEY = "anycloudflow";
 /** List batch migrations. */
 export const useBatchMigrations = (
   params?: { page?: number; per_page?: number; status?: string; search?: string },
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
 
   return useQuery<AnyRecord, Error>({
-    queryKey: integrationExtendedKeys.batchMigrations(context, INTEGRATION_KEY, params as AnyRecord),
+    queryKey: integrationExtendedKeys.batchMigrations(
+      context,
+      INTEGRATION_KEY,
+      params as AnyRecord
+    ),
     queryFn: async () => {
       const qs = new URLSearchParams();
       if (params) {
-        Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null) qs.set(k, String(v)); });
+        Object.entries(params).forEach(([k, v]) => {
+          if (v !== undefined && v !== null) qs.set(k, String(v));
+        });
       }
       const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/batch-migrations${qs.toString() ? `?${qs}` : ""}`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
@@ -2250,7 +2439,7 @@ export const useCreateBatchMigration = () => {
       const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/batch-migrations`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri, payload));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to create batch migration");
+        throw new Error((envelope.message as string) || "Failed to create batch migration");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -2273,7 +2462,7 @@ export const useStartBatchMigration = () => {
       const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/batch-migrations/${identifier}/start`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to start batch migration");
+        throw new Error((envelope.message as string) || "Failed to start batch migration");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -2291,14 +2480,18 @@ export const useStartBatchMigration = () => {
 /** Fetch a single batch migration. */
 export const useBatchMigration = (
   identifier: string | null | undefined,
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
   const { enabled = true, ...rest } = options;
 
   return useQuery<AnyRecord, Error>({
-    queryKey: integrationExtendedKeys.batchMigration(context, INTEGRATION_KEY, identifier as string),
+    queryKey: integrationExtendedKeys.batchMigration(
+      context,
+      INTEGRATION_KEY,
+      identifier as string
+    ),
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/batch-migrations/${identifier}`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
@@ -2322,7 +2515,7 @@ export const usePauseBatchMigration = () => {
       const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/batch-migrations/${identifier}/pause`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to pause batch migration");
+        throw new Error((envelope.message as string) || "Failed to pause batch migration");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -2348,7 +2541,7 @@ export const useResumeBatchMigration = () => {
       const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/batch-migrations/${identifier}/resume`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to resume batch migration");
+        throw new Error((envelope.message as string) || "Failed to resume batch migration");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -2374,7 +2567,7 @@ export const useCancelBatchMigration = () => {
       const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/batch-migrations/${identifier}/cancel`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to cancel batch migration");
+        throw new Error((envelope.message as string) || "Failed to cancel batch migration");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -2400,7 +2593,7 @@ export const useRevalidateBatchMigration = () => {
       const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/batch-migrations/${identifier}/revalidate`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to re-validate batch migration");
+        throw new Error((envelope.message as string) || "Failed to re-validate batch migration");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -2409,6 +2602,187 @@ export const useRevalidateBatchMigration = () => {
         queryKey: integrationExtendedKeys.batchMigration(context, INTEGRATION_KEY, identifier),
       });
     },
+  });
+};
+
+// ─── Mail Migrations (Move My Email) ───────────────────────────
+
+export type MailProvider = "imap" | "m365" | "gmail";
+
+export interface MailImapConfig {
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  encryption: "ssl" | "tls" | "none";
+}
+
+export interface MailConnectionConfig {
+  connection_identifier: string;
+}
+
+export type MailConfig = MailImapConfig | MailConnectionConfig;
+
+export interface MailFolder {
+  name: string;
+  path?: string;
+  message_count?: number;
+}
+
+export interface MailMigration {
+  identifier: string;
+  status: string;
+  source_provider?: MailProvider;
+  dest_provider?: MailProvider;
+  total_messages?: number;
+  migrated_messages?: number;
+  skipped_messages?: number;
+  failed_messages?: number;
+  created_at?: string;
+  [key: string]: unknown;
+}
+
+export type CreateMailMigrationPayload = {
+  source_provider: MailProvider;
+  source_config: MailConfig;
+  dest_provider: MailProvider;
+  dest_config: MailConfig;
+  folders_selected?: string[];
+};
+
+export interface MailMigrationPricing {
+  per_mailbox_cents: number;
+  per_mailbox_formatted: string;
+  currency: string;
+}
+
+/** Preview the folders available on a mail provider before starting a move. */
+export const usePreviewMailFolders = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+
+  return useMutation<
+    MailFolder[],
+    Error,
+    { provider: MailProvider; config: MailConfig }
+  >({
+    mutationFn: async ({ provider, config }) => {
+      const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/mail-migrations/preview-folders`;
+      const envelope = asEnvelope<{ folders?: MailFolder[] }>(
+        await entry.silentApi.post<AnyRecord>(uri, { provider, config })
+      );
+      if (envelope.success === false) {
+        throw new Error((envelope.message as string) || "We couldn't connect");
+      }
+      return envelope.data?.folders ?? [];
+    },
+  });
+};
+
+/** Start a mail migration. */
+export const useCreateMailMigration = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation<MailMigration, Error, CreateMailMigrationPayload>({
+    mutationFn: async (payload) => {
+      const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/mail-migrations`;
+      const envelope = asEnvelope<MailMigration>(
+        await entry.toastApi.post<AnyRecord>(uri, payload)
+      );
+      if (!envelope.success) {
+        throw new Error((envelope.message as string) || "Failed to start the move");
+      }
+      return (envelope.data ?? {}) as MailMigration;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: integrationExtendedKeys.mailMigrations(context, INTEGRATION_KEY),
+      });
+    },
+  });
+};
+
+/** List mail migrations (past + running). */
+export const useMailMigrations = (options: QueryOptions = {}) => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+
+  return useQuery<MailMigration[], Error>({
+    queryKey: integrationExtendedKeys.mailMigrations(context, INTEGRATION_KEY),
+    queryFn: async () => {
+      const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/mail-migrations`;
+      const envelope = asEnvelope<MailMigration[]>(await entry.silentApi.get<AnyRecord>(uri));
+      return envelope.data ?? [];
+    },
+    staleTime: 1000 * 15,
+    ...options,
+  });
+};
+
+/** Poll a single mail migration for live progress. */
+export const useMailMigration = (
+  identifier: string | null | undefined,
+  options: QueryOptions = {}
+) => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const { enabled = true, ...rest } = options;
+
+  return useQuery<MailMigration, Error>({
+    queryKey: integrationExtendedKeys.mailMigration(context, INTEGRATION_KEY, identifier as string),
+    queryFn: async () => {
+      const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/mail-migrations/${identifier}`;
+      const envelope = asEnvelope<MailMigration>(await entry.silentApi.get<AnyRecord>(uri));
+      return (envelope.data ?? {}) as MailMigration;
+    },
+    enabled: Boolean(identifier) && enabled !== false,
+    refetchInterval: 3000,
+    ...rest,
+  });
+};
+
+/** Cancel a running mail migration. */
+export const useCancelMailMigration = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation<AnyRecord, Error, { identifier: string }>({
+    mutationFn: async ({ identifier }) => {
+      const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/mail-migrations/${identifier}/cancel`;
+      const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
+      if (!envelope.success) {
+        throw new Error((envelope.message as string) || "Failed to cancel the move");
+      }
+      return (envelope.data ?? {}) as AnyRecord;
+    },
+    onSuccess: (_data, { identifier }) => {
+      queryClient.invalidateQueries({
+        queryKey: integrationExtendedKeys.mailMigration(context, INTEGRATION_KEY, identifier),
+      });
+      queryClient.invalidateQueries({
+        queryKey: integrationExtendedKeys.mailMigrations(context, INTEGRATION_KEY),
+      });
+    },
+  });
+};
+
+/** Fetch per-mailbox pricing for an email move (shown before the customer starts). */
+export const useMailMigrationPricing = (options: QueryOptions = {}) => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+
+  return useQuery<MailMigrationPricing | null, Error>({
+    queryKey: integrationExtendedKeys.mailMigrationPricing(context, INTEGRATION_KEY),
+    queryFn: async () => {
+      const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/mail-migrations/pricing`;
+      const envelope = asEnvelope<MailMigrationPricing>(await entry.silentApi.get<AnyRecord>(uri));
+      return envelope.data ?? null;
+    },
+    staleTime: 1000 * 60 * 5,
+    ...options,
   });
 };
 
@@ -2426,7 +2800,9 @@ export const useDatabaseEngines = (options: QueryOptions = {}) => {
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
       const data = envelope.data;
       // Handle both flat array and nested data shape
-      return (Array.isArray(data) ? data : (data as AnyRecord)?.data ?? data ?? []) as AnyRecord[];
+      return (
+        Array.isArray(data) ? data : ((data as AnyRecord)?.data ?? data ?? [])
+      ) as AnyRecord[];
     },
     staleTime: 1000 * 60 * 10, // 10 minutes — engines rarely change
     ...options,
@@ -2436,17 +2812,23 @@ export const useDatabaseEngines = (options: QueryOptions = {}) => {
 /** List database replication groups. */
 export const useDatabaseReplicationGroups = (
   params?: { page?: number; per_page?: number; status?: string; engine?: string; search?: string },
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
 
   return useQuery<AnyRecord, Error>({
-    queryKey: integrationExtendedKeys.dbReplicationGroups(context, INTEGRATION_KEY, params as AnyRecord),
+    queryKey: integrationExtendedKeys.dbReplicationGroups(
+      context,
+      INTEGRATION_KEY,
+      params as AnyRecord
+    ),
     queryFn: async () => {
       const qs = new URLSearchParams();
       if (params) {
-        Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null) qs.set(k, String(v)); });
+        Object.entries(params).forEach(([k, v]) => {
+          if (v !== undefined && v !== null) qs.set(k, String(v));
+        });
       }
       const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/database-replication-groups${qs.toString() ? `?${qs}` : ""}`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
@@ -2484,7 +2866,9 @@ export const useCreateDatabaseReplicationGroup = () => {
       const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/database-replication-groups`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri, payload));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to create database replication group");
+        throw new Error(
+          (envelope.message as string) || "Failed to create database replication group"
+        );
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -2499,14 +2883,18 @@ export const useCreateDatabaseReplicationGroup = () => {
 /** Fetch a single database replication group. */
 export const useDatabaseReplicationGroup = (
   identifier: string | null | undefined,
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
   const { enabled = true, ...rest } = options;
 
   return useQuery<AnyRecord, Error>({
-    queryKey: integrationExtendedKeys.dbReplicationGroup(context, INTEGRATION_KEY, identifier as string),
+    queryKey: integrationExtendedKeys.dbReplicationGroup(
+      context,
+      INTEGRATION_KEY,
+      identifier as string
+    ),
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/database-replication-groups/${identifier}`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
@@ -2530,7 +2918,9 @@ export const useDeleteDatabaseReplicationGroup = () => {
       const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/database-replication-groups/${identifier}`;
       const envelope = asEnvelope(await entry.toastApi.delete<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to delete database replication group");
+        throw new Error(
+          (envelope.message as string) || "Failed to delete database replication group"
+        );
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -2566,7 +2956,7 @@ export const useAddReplicationTarget = () => {
       const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/database-replication-groups/${identifier}/targets`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri, payload));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to add replication target");
+        throw new Error((envelope.message as string) || "Failed to add replication target");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -2589,7 +2979,7 @@ export const usePauseDatabaseReplication = () => {
       const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/database-replication-groups/${identifier}/pause`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to pause database replication");
+        throw new Error((envelope.message as string) || "Failed to pause database replication");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -2615,7 +3005,7 @@ export const useResumeDatabaseReplication = () => {
       const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/database-replication-groups/${identifier}/resume`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to resume database replication");
+        throw new Error((envelope.message as string) || "Failed to resume database replication");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -2641,7 +3031,9 @@ export const useSyncDatabaseReplication = () => {
       const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/database-replication-groups/${identifier}/sync`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to trigger database replication sync");
+        throw new Error(
+          (envelope.message as string) || "Failed to trigger database replication sync"
+        );
       }
       return (envelope.data ?? {}) as AnyRecord;
     },
@@ -2662,7 +3054,8 @@ export const useListDatabaseTables = () => {
     mutationFn: async ({ identifier }) => {
       const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/database-replication-groups/${identifier}/tables`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
-      if (!envelope.success) throw new Error(envelope.message as string || "Failed to list tables");
+      if (!envelope.success)
+        throw new Error((envelope.message as string) || "Failed to list tables");
       return (envelope.data ?? {}) as AnyRecord;
     },
   });
@@ -2678,12 +3071,17 @@ export const useInitDatabaseCDC = () => {
     mutationFn: async ({ identifier }) => {
       const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/database-replication-groups/${identifier}/init-cdc`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
-      if (!envelope.success) throw new Error(envelope.message as string || "Failed to initialize CDC");
+      if (!envelope.success)
+        throw new Error((envelope.message as string) || "Failed to initialize CDC");
       return (envelope.data ?? {}) as AnyRecord;
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: integrationExtendedKeys.dbReplicationGroup(context, INTEGRATION_KEY, variables.identifier),
+        queryKey: integrationExtendedKeys.dbReplicationGroup(
+          context,
+          INTEGRATION_KEY,
+          variables.identifier
+        ),
       });
     },
   });
@@ -2698,7 +3096,8 @@ export const useValidateDatabaseReplication = () => {
     mutationFn: async ({ identifier, ...payload }) => {
       const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/database-replication-groups/${identifier}/validate`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri, payload));
-      if (!envelope.success) throw new Error(envelope.message as string || "Failed to trigger validation");
+      if (!envelope.success)
+        throw new Error((envelope.message as string) || "Failed to trigger validation");
       return (envelope.data ?? {}) as AnyRecord;
     },
   });
@@ -2713,7 +3112,8 @@ export const usePreflightDatabaseReplication = () => {
     mutationFn: async ({ identifier }) => {
       const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/database-replication-groups/${identifier}/preflight`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
-      if (!envelope.success) throw new Error(envelope.message as string || "Preflight check failed");
+      if (!envelope.success)
+        throw new Error((envelope.message as string) || "Preflight check failed");
       return (envelope.data ?? {}) as AnyRecord;
     },
   });
@@ -2723,17 +3123,23 @@ export const usePreflightDatabaseReplication = () => {
 export const useDatabaseValidations = (
   identifier: string | null | undefined,
   params?: { page?: number; per_page?: number },
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
 
   return useQuery<AnyRecord, Error>({
-    queryKey: [...integrationExtendedKeys.dbReplicationGroup(context, INTEGRATION_KEY, identifier as string), "validations", params],
+    queryKey: [
+      ...integrationExtendedKeys.dbReplicationGroup(context, INTEGRATION_KEY, identifier as string),
+      "validations",
+      params,
+    ],
     queryFn: async () => {
       const qs = new URLSearchParams();
       if (params) {
-        Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null) qs.set(k, String(v)); });
+        Object.entries(params).forEach(([k, v]) => {
+          if (v !== undefined && v !== null) qs.set(k, String(v));
+        });
       }
       const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/database-replication-groups/${identifier}/validations${qs.toString() ? `?${qs}` : ""}`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
@@ -2749,13 +3155,17 @@ export const useDatabaseValidations = (
 export const useDatabaseTargetHistory = (
   identifier: string | null | undefined,
   targetIdentifier: string | null | undefined,
-  options: QueryOptions = {},
+  options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
 
   return useQuery<AnyRecord, Error>({
-    queryKey: [...integrationExtendedKeys.dbReplicationGroup(context, INTEGRATION_KEY, identifier as string), "target-history", targetIdentifier],
+    queryKey: [
+      ...integrationExtendedKeys.dbReplicationGroup(context, INTEGRATION_KEY, identifier as string),
+      "target-history",
+      targetIdentifier,
+    ],
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/database-replication-groups/${identifier}/targets/${targetIdentifier}/history`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
@@ -2775,13 +3185,20 @@ export const useTestDatabaseConnection = () => {
   return useMutation<
     AnyRecord,
     Error,
-    { engine: string; host: string; port: number; database: string; username: string; password: string }
+    {
+      engine: string;
+      host: string;
+      port: number;
+      database: string;
+      username: string;
+      password: string;
+    }
   >({
     mutationFn: async (payload) => {
       const uri = `${entry.urlPrefix}/integrations/${INTEGRATION_KEY}/database-replication-groups/test-connection`;
       const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri, payload));
       if (!envelope.success) {
-        throw new Error(envelope.message as string || "Failed to test database connection");
+        throw new Error((envelope.message as string) || "Failed to test database connection");
       }
       return (envelope.data ?? {}) as AnyRecord;
     },

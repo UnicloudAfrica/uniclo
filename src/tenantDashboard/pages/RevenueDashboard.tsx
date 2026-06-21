@@ -3,6 +3,7 @@ import tenantRegionApi from "@/services/tenantRegionApi";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
 import { Download } from "lucide-react";
 import logger from "@/utils/logger";
+import { PriceLabel } from "@/shared/components/ui/PriceLabel";
 
 interface RevenueSummary {
   total_revenue?: number;
@@ -21,6 +22,7 @@ interface RevenueShare {
   platform_fee_percentage?: number | string;
   platform_fee_amount?: number | string;
   tenant_share_amount?: number | string;
+  currency?: string;
   status?: string;
 }
 
@@ -105,6 +107,13 @@ const RevenueDashboard = () => {
     }
   };
 
+  // Source currency for all money on this page. Revenue shares carry their own
+  // `currency` (App\Models\RevenueShare); the summary aggregates the same rows.
+  // The platform bills in naira, so the previous hardcoded "$" mislabeled
+  // tenant earnings — render every amount via <PriceLabel> instead.
+  const sourceCurrency =
+    shares.find((s) => typeof s.currency === "string" && s.currency)?.currency || "NGN";
+
   const ExportButton = (
     <button
       onClick={handleExport}
@@ -132,7 +141,7 @@ const RevenueDashboard = () => {
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
               <div className="text-gray-500 text-sm font-medium">Total Revenue</div>
               <div className="text-3xl font-bold text-gray-900 mt-2">
-                ${toNumber(stats.total_revenue).toFixed(2)}
+                <PriceLabel amount={toNumber(stats.total_revenue)} sourceCurrency={sourceCurrency} />
               </div>
               <div className="text-sm text-gray-500 mt-1">
                 {toNumber(stats.total_orders)} orders
@@ -141,19 +150,28 @@ const RevenueDashboard = () => {
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
               <div className="text-gray-500 text-sm font-medium">Platform Fee</div>
               <div className="text-3xl font-bold text-orange-600 mt-2">
-                ${toNumber(stats.total_platform_fee).toFixed(2)}
+                <PriceLabel
+                  amount={toNumber(stats.total_platform_fee)}
+                  sourceCurrency={sourceCurrency}
+                />
               </div>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
               <div className="text-gray-500 text-sm font-medium">Your Share</div>
               <div className="text-3xl font-bold text-green-600 mt-2">
-                ${toNumber(stats.total_tenant_share).toFixed(2)}
+                <PriceLabel
+                  amount={toNumber(stats.total_tenant_share)}
+                  sourceCurrency={sourceCurrency}
+                />
               </div>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
               <div className="text-gray-500 text-sm font-medium">Pending Settlement</div>
               <div className="text-3xl font-bold text-yellow-600 mt-2">
-                ${toNumber(stats.pending_settlement).toFixed(2)}
+                <PriceLabel
+                  amount={toNumber(stats.pending_settlement)}
+                  sourceCurrency={sourceCurrency}
+                />
               </div>
             </div>
           </div>
@@ -259,16 +277,25 @@ const RevenueDashboard = () => {
                           {share.order?.identifier || "-"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
-                          ${share.gross_amount}
+                          <PriceLabel
+                            amount={toNumber(share.gross_amount)}
+                            sourceCurrency={String(share.currency || sourceCurrency)}
+                          />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-600">
                           {share.platform_fee_percentage}%
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-orange-600">
-                          ${share.platform_fee_amount}
+                          <PriceLabel
+                            amount={toNumber(share.platform_fee_amount)}
+                            sourceCurrency={String(share.currency || sourceCurrency)}
+                          />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-green-600">
-                          ${share.tenant_share_amount}
+                          <PriceLabel
+                            amount={toNumber(share.tenant_share_amount)}
+                            sourceCurrency={String(share.currency || sourceCurrency)}
+                          />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           <span

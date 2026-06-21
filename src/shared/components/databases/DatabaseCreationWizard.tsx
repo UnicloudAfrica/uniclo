@@ -26,6 +26,7 @@ import PaymentModal from "@/shared/components/ui/payment/PaymentModal";
 import CustomerContextSelector from "@/shared/components/common/CustomerContextSelector";
 import ProjectMembershipSelector from "@/shared/components/instance-wizard/ProjectMembershipSelector";
 import EngineIcon, { getEngineLabel } from "./EngineIcon";
+import ReplicaPickerHeader, { ReplicaPickerFooter } from "./ReplicaPicker";
 import {
   useDatabaseProvisioningLogic,
   ENGINE_METADATA,
@@ -684,9 +685,10 @@ const ConfigureStep: React.FC<{
   availabilityZones: { value: string; label: string }[];
   maxReplicaCount: number;
   replicaAvailableAzs: { value: string; label: string }[];
+  taggedReplicaAzs: ReturnType<typeof useDatabaseProvisioningLogic>["taggedReplicaAzs"];
   toggleReplicaAz: (azCode: string) => void;
   cloudAccounts?: { id: number; name: string; provider: string; provider_label: string; status: string }[];
-}> = ({ form, updateForm, selectedEngineMeta, projects, regions, availabilityZones, maxReplicaCount, replicaAvailableAzs, toggleReplicaAz, cloudAccounts }) => (
+}> = ({ form, updateForm, selectedEngineMeta, projects, regions, availabilityZones, maxReplicaCount, replicaAvailableAzs, taggedReplicaAzs, toggleReplicaAz, cloudAccounts }) => (
   <div className="space-y-6">
     {/* Name */}
     <div>
@@ -868,29 +870,81 @@ const ConfigureStep: React.FC<{
       </div>
     )}
 
-    {/* Read Replicas — select AZs to place replicas in */}
-    {form.region && form.availabilityZone && replicaAvailableAzs.length > 0 && (
+    {/* Replication picker — tier-aware copy. Header + footer are
+        extracted into ReplicaPicker so they can be unit-tested
+        independently of the wizard's full mock graph. The AZ
+        multi-select stays inline because it depends on the wizard's
+        toggle handler + max-count cap.
+
+        Each AZ row carries a `mode` tag computed from primary
+        provider + engine tier:
+
+          - same_provider  → no badge, freely selectable
+          - public_endpoint→ amber "Cross-cloud (TLS)" badge,
+                             selectable when feature flag on
+          - orbit_overlay  → gray "Cross-cloud via Orbit (beta)" badge,
+                             disabled
+          - unavailable    → red "Not supported" badge, disabled
+
+        Consent toggle below the list appears only when at least one
+        cross-provider AZ is selected. */}
+    {form.region && form.availabilityZone && taggedReplicaAzs.length > 0 && (
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Read Replicas
-        </label>
-        <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
-          Select availability zones to place read replicas. Each selected AZ gets one replica for high availability.
-        </p>
+        <ReplicaPickerHeader
+          replication={selectedEngineMeta?.replication ?? null}
+          replicaCount={form.replicaCount}
+        />
+
         <div className="space-y-2">
-          {replicaAvailableAzs.map((az) => {
+          {taggedReplicaAzs.map((az) => {
             const isSelected = form.replicaAzs.includes(az.value);
-            const isDisabled = !isSelected && form.replicaAzs.length >= maxReplicaCount;
+            const atCap = !isSelected && form.replicaAzs.length >= maxReplicaCount;
+            const isDisabled = !az.selectable || atCap;
+
+            const badge = (() => {
+              if (az.mode === "same_provider") return null;
+              if (az.mode === "public_endpoint") {
+                return {
+                  text: "Cross-cloud (TLS)",
+                  className:
+                    "bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300",
+                };
+              }
+              if (az.mode === "orbit_overlay") {
+                return {
+                  text: "Orbit overlay — beta",
+                  className: "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300",
+                };
+              }
+              return {
+                text: "Not supported",
+                className: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300",
+              };
+            })();
+
+            const disabledReason = !az.selectable
+              ? az.mode === "orbit_overlay"
+                ? "Cross-cloud replication via Orbit overlay is in private beta — contact support to join the cohort."
+                : az.mode === "public_endpoint"
+                  ? "Cross-cloud replication is in private beta for this engine — contact support to enable it for your tenant."
+                  : "This engine's replication protocol cannot safely cross provider groups."
+              : atCap
+                ? "Replica cap reached for this engine."
+                : undefined;
+
             return (
               <button
                 key={az.value}
-                onClick={() => toggleReplicaAz(az.value)}
+                onClick={() => az.selectable && !atCap && toggleReplicaAz(az.value)}
                 disabled={isDisabled}
+                title={disabledReason}
+                data-testid={`replica-az-option-${az.value}`}
+                data-mode={az.mode}
                 className={`w-full flex items-center gap-3 rounded-lg border-2 px-4 py-3 text-left text-sm transition-all ${
                   isSelected
                     ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
                     : isDisabled
-                      ? "border-gray-100 dark:border-gray-800 opacity-50 cursor-not-allowed"
+                      ? "border-gray-100 dark:border-gray-800 opacity-60 cursor-not-allowed"
                       : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                 }`}
               >
@@ -899,18 +953,54 @@ const ConfigureStep: React.FC<{
                 }`}>
                   {isSelected && <span className="text-white text-xs">✓</span>}
                 </div>
-                <div>
+                <div className="flex-1 flex items-center justify-between gap-2">
                   <div className="font-medium text-gray-900 dark:text-gray-100">{az.label}</div>
+                  {badge && (
+                    <span
+                      data-testid={`replica-az-badge-${az.value}`}
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${badge.className}`}
+                    >
+                      {badge.text}
+                    </span>
+                  )}
                 </div>
               </button>
             );
           })}
         </div>
-        {form.replicaAzs.length > 0 && (
-          <p className="mt-2 text-xs text-blue-600 dark:text-blue-400">
-            {form.replicaAzs.length} read replica{form.replicaAzs.length !== 1 ? "s" : ""} will be created ({form.replicaCount} total nodes including primary)
-          </p>
+
+        {/* Cross-provider consent toggle — only when a cross-cloud
+            replica is currently selected. Backend rejects with 422 if
+            mode=public_endpoint and consent missing. */}
+        {form.replicationMode === "native_public_endpoint" && (
+          <div
+            className="mt-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 p-3 text-xs text-amber-800 dark:text-amber-300"
+            data-testid="cross-provider-consent"
+          >
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.crossProviderConsent}
+                onChange={(e) => updateForm({ crossProviderConsent: e.target.checked })}
+                className="mt-0.5"
+                data-testid="cross-provider-consent-checkbox"
+              />
+              <span>
+                <strong className="block mb-1">I understand the cross-cloud tradeoffs.</strong>
+                The replica will stream from the primary over a TLS-protected public endpoint.
+                Bandwidth egress between clouds is billed separately, and the database port will
+                be reachable over the public internet (auth + TLS enforced). Latency between
+                clouds is variable and not covered by the same-region SLA.
+              </span>
+            </label>
+          </div>
         )}
+
+        <ReplicaPickerFooter
+          replication={selectedEngineMeta?.replication ?? null}
+          selectedAzCount={form.replicaAzs.length}
+          replicaCount={form.replicaCount}
+        />
       </div>
     )}
 
@@ -1245,20 +1335,34 @@ const ConfigureStep: React.FC<{
         extraNote="This adds a small WireGuard VPN server to your infrastructure. You'll get downloadable client configs for your team. Recommended for compliance-sensitive workloads, remote DBA access, and enterprise environments where 'no public internet exposure' is a requirement."
       />
 
-      {/* ── 7. Disaster Recovery (coming soon) ── */}
+      {/* ── 7. Disaster Recovery (same-provider standby) ── */}
+      <FeatureCard
+        title="Disaster Recovery"
+        tag="Paid Add-on"
+        tagColor="amber"
+        pricingNote="Standby replica charge"
+        icon={<Shield size={18} className="text-amber-500" />}
+        enabled={form.drEnabled}
+        onToggle={() => updateForm({ drEnabled: !form.drEnabled })}
+        explanation="We keep a continuously-updated standby copy of your database in a separate availability group. If your primary location goes down — power outage, hardware failure, natural disaster — the standby is ready to take over so your data isn't lost. Like keeping a spare key to your house at a trusted neighbour's place, in a different building."
+        whyItMatters="Without disaster recovery, a single location failure can mean downtime or data loss until the primary recovers. A standby copy gives you a safety net: your data lives in two places, so one bad day in one location doesn't take your whole database with it."
+        extraNote="This provisions a standby replica in a paired availability group within the same region. The standby streams from your primary and is billed as an additional replica for the period you select."
+      />
+
+      {/* ── 8. Cross-region Disaster Recovery (coming soon) ── */}
       <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden opacity-60">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Shield size={18} className="text-gray-400" />
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Disaster Recovery</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Cross-region Disaster Recovery</span>
                 <span className="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   Coming soon
                 </span>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                A full copy of your database in a different location. If your primary region goes down (power outage, natural disaster), the copy takes over automatically. Like having a spare key to your house stored at a trusted neighbor's place — in a different city.
+                A standby copy in a different region for protection against an entire region going offline. This uses our overlay data plane and isn't available yet — pick the standard Disaster Recovery option above for same-region protection today.
               </p>
             </div>
           </div>
@@ -1340,6 +1444,7 @@ const ReviewContent: React.FC<{
           value={`${form.months} month${form.months > 1 ? "s" : ""}`}
         />
         <SummaryRow label="Backups" value={form.backupEnabled ? "Enabled (10% surcharge)" : "Disabled"} />
+        <SummaryRow label="Disaster Recovery" value={form.drEnabled ? "Enabled (Standby replica)" : "Disabled"} />
         <SummaryRow label="TLS Encryption" value={form.tlsEnabled ? "Enabled (Free)" : "Disabled"} />
         <SummaryRow label="Connection Pooling" value={form.connectionPooling ? "Enabled (Free)" : "Disabled"} />
         <SummaryRow
@@ -1386,14 +1491,58 @@ const ReviewContent: React.FC<{
           </div>
         ) : quoteResult ? (
           <div className="space-y-3">
-            {quoteResult.lines.map((line, i) => (
-              <div key={i} className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">{line.name}</span>
-                <span className="text-gray-900 dark:text-gray-100 font-medium">
-                  {quoteResult.currency} {line.total.toFixed(2)}
-                </span>
-              </div>
-            ))}
+            {/* Render line items from pricingSummary, NOT quoteResult.lines.
+                Two reasons:
+                  1. pricingSummary.lineItems comes from the same source as
+                     pricingSummary.{subtotal,tax,grandTotal} — they cannot
+                     diverge. If we read lines from quoteResult and totals
+                     from pricingSummary, they desync the moment orderReceipt
+                     is populated (after a /store call), producing the
+                     classic "lines sum to ₦16,510 but subtotal says
+                     ₦46,179" bug.
+                  2. After an order is created, pricingSummary flips to the
+                     order's actual breakdown — so the wizard summary
+                     reflects what was billed, not what was quoted. */}
+            {(() => {
+              const rendered = pricingSummary.lineItems && pricingSummary.lineItems.length > 0
+                ? pricingSummary.lineItems
+                : quoteResult.lines.map((l) => ({ name: l.name, total: l.total }));
+              // Sum check — surface mismatched-source bugs immediately.
+              // The line items + tax must reconcile to the grand total
+              // within rounding; if not, lines and totals are coming
+              // from different snapshots (the bug the user caught with
+              // "what type of breakdown is this").
+              const sumLines = rendered.reduce((s, l) => s + Number(l.total ?? 0), 0);
+              const expectedGrand = sumLines + Number(pricingSummary.tax ?? 0)
+                - Number(quoteResult.discount ?? 0);
+              const grandMismatch = Math.abs(expectedGrand - Number(pricingSummary.grandTotal ?? 0)) > 1;
+              return (
+                <>
+                  {grandMismatch && (
+                    <div
+                      role="alert"
+                      data-testid="wizard-pricing-mismatch"
+                      className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20 px-3 py-2 text-xs text-red-700 dark:text-red-400"
+                    >
+                      <strong className="block">Pricing breakdown out of sync.</strong>
+                      The line items shown ({pricingSummary.currency}{" "}
+                      {sumLines.toFixed(2)}) + tax don't reconcile to the total
+                      ({pricingSummary.currency}{" "}
+                      {Number(pricingSummary.grandTotal ?? 0).toFixed(2)}). Please refresh the page
+                      to re-quote before proceeding.
+                    </div>
+                  )}
+                  {rendered.map((line, i) => (
+                    <div key={i} className="flex justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">{line.name}</span>
+                      <span className="text-gray-900 dark:text-gray-100 font-medium">
+                        {pricingSummary.currency} {line.total.toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                </>
+              );
+            })()}
             {quoteResult.discount > 0 && (
               <div className="flex justify-between text-sm text-green-600">
                 <span>
@@ -1725,6 +1874,7 @@ const DatabaseCreationWizard: React.FC<DatabaseCreationWizardProps> = ({
               availabilityZones={logic.availabilityZones}
               maxReplicaCount={logic.maxReplicaCount}
               replicaAvailableAzs={logic.replicaAvailableAzs}
+              taggedReplicaAzs={logic.taggedReplicaAzs}
               toggleReplicaAz={logic.toggleReplicaAz}
               cloudAccounts={cloudAccounts}
             />

@@ -109,6 +109,7 @@ const AdminDestinationNew = lazy(() => import("../adminDashboard/pages/AdminDest
 const AdminServerlessDr = lazy(() => import("../adminDashboard/pages/AdminServerlessDr"));
 const AdminServerlessDrNew = lazy(() => import("../adminDashboard/pages/AdminServerlessDrNew"));
 const AdminAgent = lazy(() => import("../adminDashboard/pages/AdminAgent"));
+const AdminMoveMyEmail = lazy(() => import("../adminDashboard/pages/AdminMoveMyEmail"));
 const AdminPocTrials = lazy(() => import("../adminDashboard/pages/AdminPocTrials"));
 const AdminDrDrills = lazy(() => import("../adminDashboard/pages/AdminDrDrills"));
 const AdminHypervisor = lazy(() => import("../adminDashboard/pages/AdminHypervisor"));
@@ -388,6 +389,7 @@ const AdminRoutes = (): JSX.Element => {
         <Route path="/admin-dashboard/serverless-dr" element={<AdminServerlessDr />} />
         <Route path="/admin-dashboard/serverless-dr/new" element={<AdminServerlessDrNew />} />
         <Route path="/admin-dashboard/agent" element={<AdminAgent />} />
+        <Route path="/admin-dashboard/move-my-email" element={<AdminMoveMyEmail />} />
 
         <Route element={<ObjectStorageRouteProvider />}>
           <Route path="/admin-dashboard/object-storage" element={<AdminObjectStorage />} />

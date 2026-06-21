@@ -35,6 +35,14 @@ interface RegionProjectSectionProps {
   projectModeOptions: Option[];
   azSelectionMode?: "auto" | "user_selectable" | "disabled";
   availabilityZoneOptions?: Option[];
+  /**
+   * True when the selected region spans multiple providers, so pricing
+   * fetches stay gated until an AZ is picked (see `awaitingAzSelection`
+   * in AdminInstanceConfigurationCard). The AZ helper must then steer the
+   * user to pick a zone — recommending "Auto-assign" would leave every
+   * product dropdown blank.
+   */
+  requiresAzForPricing?: boolean;
 }
 
 const RegionProjectSection: React.FC<RegionProjectSectionProps> = ({
@@ -62,6 +70,7 @@ const RegionProjectSection: React.FC<RegionProjectSectionProps> = ({
   projectModeOptions,
   azSelectionMode,
   availabilityZoneOptions,
+  requiresAzForPricing = false,
 }) => {
   return (
     <>
@@ -94,8 +103,15 @@ const RegionProjectSection: React.FC<RegionProjectSectionProps> = ({
                 availability_zone_label: e.target.value ? selectedLabel : "",
               });
             }}
-            options={[{ value: "", label: "Auto-assign" }, ...availabilityZoneOptions]}
-            helper="Select a specific availability zone or let the platform auto-assign."
+            options={[
+              { value: "", label: requiresAzForPricing ? "Select availability zone" : "Auto-assign" },
+              ...availabilityZoneOptions,
+            ]}
+            helper={
+              requiresAzForPricing
+                ? "Pick an availability zone to see available sizes and prices."
+                : "Select a specific availability zone or let the platform auto-assign."
+            }
             disabled={isLoadingResources}
           />
         )}
@@ -136,6 +152,8 @@ const RegionProjectSection: React.FC<RegionProjectSectionProps> = ({
           handleProjectSelection={handleProjectSelection}
           isTemplateLocked={isTemplateLocked}
           selectedRegion={selectedRegion}
+          selectedAz={cfg.availability_zone || ""}
+          selectedAzLabel={cfg.availability_zone_label || ""}
           selectedProjectPreset={selectedProjectPreset}
           selectedProject={selectedProject}
           isSelectedProjectPresetPublic={isSelectedProjectPresetPublic}
@@ -166,6 +184,8 @@ interface ExistingProjectFieldsProps {
   handleProjectSelection: (value: string) => void;
   isTemplateLocked: boolean;
   selectedRegion: string;
+  selectedAz: string;
+  selectedAzLabel: string;
   selectedProjectPreset: NetworkPreset | null;
   selectedProject: ProjectLike | null;
   isSelectedProjectPresetPublic: boolean;
@@ -178,20 +198,38 @@ const ExistingProjectFields: React.FC<ExistingProjectFieldsProps> = ({
   handleProjectSelection,
   isTemplateLocked,
   selectedRegion,
+  selectedAz,
+  selectedAzLabel,
   selectedProjectPreset,
   selectedProject,
   isSelectedProjectPresetPublic,
   hasFloatingIp,
-}) => (
-  <div className="grid gap-4 md:grid-cols-2">
-    <SearchableSelect
-      label="Project *"
-      value={projectSelectValue}
-      onChange={(e) => handleProjectSelection(e.target.value)}
-      options={[{ value: "", label: "Select project" }, ...projectSelectOptions]}
-      helper="Choose an existing project for this configuration."
-      disabled={isTemplateLocked || !selectedRegion}
-    />
+}) => {
+  // The selector helper line shifts depending on what scope the
+  // catalog is filtered by. AZ-scoped is the strictest — surface the
+  // human-readable AZ name so the operator knows _why_ the list might
+  // be short, and signpost the "no matches" case explicitly.
+  const azLabel = selectedAzLabel || selectedAz;
+  const helperText = !selectedRegion
+    ? "Select a region first."
+    : projectSelectOptions.length === 0
+      ? selectedAz
+        ? `No projects in ${azLabel || "the selected AZ"}. Clear the AZ or create a new project.`
+        : "No projects in this region. Create a new project below."
+      : selectedAz
+        ? `Scoped to ${azLabel || "the selected AZ"}. Change the AZ above to widen the list.`
+        : "Choose an existing project for this configuration.";
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <SearchableSelect
+        label="Project *"
+        value={projectSelectValue}
+        onChange={(e) => handleProjectSelection(e.target.value)}
+        options={[{ value: "", label: "Select project" }, ...projectSelectOptions]}
+        helper={helperText}
+        disabled={isTemplateLocked || !selectedRegion}
+      />
     <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
       {selectedProjectPreset ? (
         <>
@@ -220,8 +258,9 @@ const ExistingProjectFields: React.FC<ExistingProjectFieldsProps> = ({
         <p className="text-gray-500">Select a project to view its network preset details.</p>
       )}
     </div>
-  </div>
-);
+    </div>
+  );
+};
 
 /* ---------- New project sub-section ---------- */
 

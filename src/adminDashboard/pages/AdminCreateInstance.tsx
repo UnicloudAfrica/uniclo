@@ -14,17 +14,32 @@ import PaymentStep from "@/shared/components/instance-wizard/PaymentStep";
 import ConfigurationListStep from "@/shared/components/instance-wizard/ConfigurationListStep";
 import OrderSuccessStep from "@/shared/components/instance-wizard/OrderSuccessStep";
 import ProtectionPlanStep from "@/shared/components/instance-wizard/ProtectionPlanStep";
-import type { ProtectionPlan, RedundancyPattern } from "@/shared/components/instance-wizard/ProtectionPlanStep";
+import type {
+  ProtectionPlan,
+  RedundancyPattern,
+} from "@/shared/components/instance-wizard/ProtectionPlanStep";
 import { ProvisioningWizardLayout } from "@/shared/components/instance-wizard";
 import { useAdminCreateInstanceLogic } from "@/hooks/useAdminCreateInstanceLogic";
-import { hasProjectNetworkFromStatus } from "@/utils/instanceCreationUtils";
+import {
+  evaluateConfigurationCompleteness,
+  hasProjectNetworkFromStatus,
+} from "@/utils/instanceCreationUtils";
 import type { DrCustomSpec } from "@/shared/components/instance-wizard/ProtectionPlanStep";
 
 const AdminCreateInstance = () => {
   const navigate = useNavigate();
 
   // Protection plan state — lifted here so it's available to both the wizard step and the order hook
-  const [selectedProtectionPlan, setSelectedProtectionPlan] = useState<ProtectionPlan>("backup_only");
+  const [selectedProtectionPlan, setSelectedProtectionPlan] =
+    useState<ProtectionPlan>("backup_only");
+  // FE-computed monthly cost of the currently-selected protection plan,
+  // bubbled up from ProtectionPlanStep.onMonthlyCostChange. Surfaced in
+  // the right-rail summary card so operators see the protection fee
+  // alongside compute + storage before the order POST returns a backend
+  // breakdown. Without this, the summary names the plan but hides its
+  // cost — a "Backup Only" line at zero ₦ that hides a ₦240K/mo commit.
+  const [selectedProtectionPlanMonthlyCost, setSelectedProtectionPlanMonthlyCost] =
+    useState<number>(0);
   const [selectedRedundancy, setSelectedRedundancy] = useState<RedundancyPattern>("n_plus_1");
   const [drSpec, setDrSpec] = useState<DrCustomSpec>({ mode: "match" });
 
@@ -33,6 +48,14 @@ const AdminCreateInstance = () => {
       plan: selectedProtectionPlan,
       redundancyPattern: selectedRedundancy,
       drSpec,
+      // FE-computed monthly cost for the active plan (₦/mo). Bubbled
+      // up from ProtectionPlanStep so the order payload can carry the
+      // protection fee for *every* plan type — not just DR. Without
+      // this, the backend's grand-total math silently drops the
+      // Backup Only ₦240K/mo line item and the operator sees a
+      // payment total missing the protection fee they just picked.
+      // See InitiateMultiInstancesAction.php (handles `monthly_cost`).
+      monthlyCost: selectedProtectionPlanMonthlyCost,
     },
   });
 
@@ -74,6 +97,7 @@ const AdminCreateInstance = () => {
     summaryTaxValue,
     summaryGatewayFeesValue,
     summaryDisplayCurrency,
+    isPriceEstimate,
     summaryPlanLabel,
     summaryWorkflowLabel,
     backendPricingData,
@@ -102,7 +126,10 @@ const AdminCreateInstance = () => {
   // Protection state is declared above the logic hook
 
   // Derive per-VM compute price from the subtotal
-  const totalInstanceCount = configurations.reduce((sum, c) => sum + (Number(c.instance_count) || 1), 0);
+  const totalInstanceCount = configurations.reduce(
+    (sum, c) => sum + (Number(c.instance_count) || 1),
+    0
+  );
   const computePricePerVm = totalInstanceCount > 0 ? summarySubtotalValue / totalInstanceCount : 0;
 
   const { createTemplate } = useInstanceTemplates();
@@ -113,12 +140,7 @@ const AdminCreateInstance = () => {
         String(region?.code || region?.region || region?.slug || region?.id || "") ===
         String(regionCode)
     ) as Record<string, unknown> | undefined;
-    return String(
-      candidate?.provider ||
-        candidate?.provider_code ||
-        candidate?.provider_id ||
-        ""
-    );
+    return String(candidate?.provider || candidate?.provider_code || candidate?.provider_id || "");
   };
 
   const handleSaveTemplate = (config: Configuration) => {
@@ -258,14 +280,59 @@ const AdminCreateInstance = () => {
   const resolvedServicesStepIndex = Math.max(servicesStepIndex, 1);
   const resolvedPaymentStepIndex = paymentStepIndex >= 0 ? paymentStepIndex : reviewStepIndex - 1;
   const resolvedSuccessStepIndex = successStepIndex >= 0 ? successStepIndex : steps.length - 1;
-  const resolvedProtectionStepIndex = protectionStepIndex >= 0 ? protectionStepIndex : resolvedServicesStepIndex + 1;
+  const resolvedProtectionStepIndex =
+    protectionStepIndex >= 0 ? protectionStepIndex : resolvedServicesStepIndex + 1;
   const resolvedReviewBackIndex = isFastTrack
     ? resolvedProtectionStepIndex
     : resolvedPaymentStepIndex;
 
+  /**
+   * Validate every configuration row before letting the user leave the
+   * "Cube-Instance setup" step. Without this guard the wizard happily
+   * advanced to Protection Plan with a half-filled config, then
+   * `useInstanceOrderCreation.handleCreateOrder` threw
+   * `Complete Configuration #N before pricing.` on the *next* step —
+   * confusing operators who couldn't see why and had to manually
+   * navigate back. Better: surface the exact missing fields right where
+   * they can be fixed.
+   *
+   * Returns `true` if the user can proceed; otherwise toasts the
+   * specific missing fields and returns `false`. Used by both the
+   * Continue button (`onSubmit`) and the wizard's step-strip
+   * (`handleStepChange`), so jumping forward via the stepper also
+   * blocks on incomplete data.
+   */
+  const validateConfigurationsBeforeAdvancing = useCallback((): boolean => {
+    const incompleteIndex = configurations.findIndex(
+      (cfg) => !evaluateConfigurationCompleteness(cfg).isComplete
+    );
+    if (incompleteIndex === -1) return true;
+
+    const incompleteCfg = configurations[incompleteIndex];
+    const status = evaluateConfigurationCompleteness(incompleteCfg);
+    const fields = status.missing.join(", ");
+    ToastUtils.error(`Complete Configuration #${incompleteIndex + 1} before continuing.`, {
+      description: fields ? `Missing: ${fields}.` : undefined,
+    });
+    return false;
+  }, [configurations]);
+
   const handleStepChange = useCallback(
     (targetIndex: number) => {
       if (targetIndex === currentStepIndex) return;
+      // Forward jumps past the services step must still respect
+      // configuration completeness — without this guard the wizard
+      // step-strip would let operators click "Protection Plan" or
+      // beyond from "Cube-Instance setup" with empty fields. The
+      // backward direction is intentionally unconstrained so users
+      // can correct mistakes.
+      if (
+        targetIndex > resolvedServicesStepIndex &&
+        currentStepIndex <= resolvedServicesStepIndex &&
+        !validateConfigurationsBeforeAdvancing()
+      ) {
+        return;
+      }
       if (!isFastTrack && reviewStepIndex >= 0) {
         if (!isPaymentSuccessful && targetIndex >= reviewStepIndex) {
           ToastUtils.error("Please complete payment to continue to review.");
@@ -281,6 +348,8 @@ const AdminCreateInstance = () => {
     },
     [
       currentStepIndex,
+      resolvedServicesStepIndex,
+      validateConfigurationsBeforeAdvancing,
       isFastTrack,
       reviewStepIndex,
       isPaymentSuccessful,
@@ -401,7 +470,18 @@ const AdminCreateInstance = () => {
                 onRemoveVolume={removeAdditionalVolume}
                 onUpdateVolume={updateAdditionalVolume}
                 onBack={() => setActiveStep(resolvedWorkflowStepIndex)}
-                onSubmit={() => setActiveStep(resolvedProtectionStepIndex)}
+                onSubmit={() => {
+                  // Guard the step transition right where the user
+                  // clicks. The previous behaviour silently advanced
+                  // them to Protection Plan; the order POST on the
+                  // *following* step would then throw "Complete
+                  // Configuration #N before pricing." far from where
+                  // the operator could see the input that needed
+                  // fixing. validateConfigurationsBeforeAdvancing
+                  // toasts the exact missing fields right here.
+                  if (!validateConfigurationsBeforeAdvancing()) return;
+                  setActiveStep(resolvedProtectionStepIndex);
+                }}
                 submitErrorMessage={submissionErrorMessage}
                 onSaveTemplate={handleSaveTemplate}
                 formVariant="cube"
@@ -421,8 +501,13 @@ const AdminCreateInstance = () => {
                 onPlanChange={setSelectedProtectionPlan}
                 onBack={() => setActiveStep(resolvedServicesStepIndex)}
                 onContinue={handleCreateOrder}
+                isSubmitting={isSubmitting}
+                onMonthlyCostChange={setSelectedProtectionPlanMonthlyCost}
                 instanceCount={totalInstanceCount}
-                storageGb={configurations.reduce((sum, c) => sum + (Number(c.storage_size_gb) || 50), 0) / Math.max(configurations.length, 1)}
+                storageGb={
+                  configurations.reduce((sum, c) => sum + (Number(c.storage_size_gb) || 50), 0) /
+                  Math.max(configurations.length, 1)
+                }
                 computePricePerVm={computePricePerVm}
                 currency={summaryDisplayCurrency || "NGN"}
                 selectedRedundancy={selectedRedundancy}
@@ -477,7 +562,9 @@ const AdminCreateInstance = () => {
             summaryDisplayCurrency={summaryDisplayCurrency}
             effectivePaymentOption={effectivePaymentOption}
             backendPricingData={backendPricingData}
+            isPriceEstimate={isPriceEstimate}
             protectionPlan={selectedProtectionPlan}
+            protectionPlanMonthlyCost={selectedProtectionPlanMonthlyCost}
             redundancyPattern={selectedRedundancy}
           />
         }

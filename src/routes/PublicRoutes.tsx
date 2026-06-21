@@ -1,4 +1,4 @@
-import { Navigate, Route } from "react-router-dom";
+import { Navigate, Route, useLocation } from "react-router-dom";
 import VerifyMail from "../dashboard/pages/verifyMail";
 import ForgotPassword from "../dashboard/pages/forgotPassword";
 import ResetPassword from "../dashboard/pages/resetPassword";
@@ -10,6 +10,17 @@ import TenantLogin from "../tenantDashboard/pages/tenant-signin";
 import PublicCostExplorer from "../pages/PublicCostExplorer";
 
 import type { JSX } from "react";
+
+/**
+ * Legacy admin SlimDeploy links used the bare /flow-dashboard, but the page
+ * lives at /admin-dashboard/flow-dashboard. Redirect (preserving any ?tab=...
+ * query) so typed URLs and old bookmarks resolve instead of rendering blank.
+ */
+const FlowDashboardRedirect = (): JSX.Element => {
+  const { search } = useLocation();
+
+  return <Navigate to={`/admin-dashboard/flow-dashboard${search}`} replace />;
+};
 
 const PublicRoutes = (): JSX.Element => (
   <>
@@ -23,6 +34,12 @@ const PublicRoutes = (): JSX.Element => (
     <Route path="/tenant-home" element={<TenantHome />} />
     <Route path="/tenant-sign-up" element={<TenantRegister />} />
     <Route path="/tenant-sign-in" element={<TenantLogin />} />
+
+    {/* Legacy bare SlimDeploy URL → its real admin route. */}
+    <Route path="/flow-dashboard" element={<FlowDashboardRedirect />} />
+
+    {/* Catch-all: an unknown URL should never render a blank page. */}
+    <Route path="*" element={<Navigate to="/sign-in" replace />} />
   </>
 );
 

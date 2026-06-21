@@ -152,6 +152,33 @@ describe("AdminTenantMonitoring — rendering", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows the real percentage for a percent-only (Prometheus-sourced) volume with no absolute capacity", () => {
+    // CuberWatch's Prometheus path reports a truthful percentage but no byte
+    // totals — the gauge must reflect `disk_percent` (not collapse to 0%), and
+    // the misleading "0 B of 0 B" capacity caption must be suppressed.
+    diskState.current = {
+      data: [
+        {
+          volume_identifier: "/",
+          total_bytes: 0,
+          used_bytes: 0,
+          free_bytes: 0,
+          disk_percent: 40,
+          recorded_at: "2026-05-25T10:00:00Z",
+        },
+      ],
+      isLoading: false,
+      isError: false,
+      error: null,
+    };
+
+    renderPage();
+
+    // Gauge formats the value as `${value.toFixed(1)}%`.
+    expect(screen.getByText("40.0%")).toBeInTheDocument();
+    expect(screen.queryByText(/0 B of 0 B/)).not.toBeInTheDocument();
+  });
+
   it("renders the loading state while instances are pending", () => {
     tenantInstancesState.current = {
       data: undefined,

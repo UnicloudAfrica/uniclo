@@ -146,7 +146,9 @@ const InstanceHeroBanner: React.FC<InstanceHeaderProps> = ({
   };
 
   const isActionAvailable = (key: string) => {
-    if (key === "console") return true;
+    // The provider only serves a console for a running VM — gate it so we never
+    // fire a request that comes back as a raw 400 toast.
+    if (key === "console") return ["running", "active"].includes(normalizedStatus);
     if (key === "refresh") return true;
     // Platform-level actions always available (don't depend on provider)
     if (key === "attach_elastic_ip" || key === "sync_provisioning" || key === "retry_provisioning") {
@@ -170,7 +172,7 @@ const InstanceHeroBanner: React.FC<InstanceHeaderProps> = ({
   return (
     <div className="relative rounded-xl border border-slate-200 bg-white shadow-sm">
       {/* Action Toolbar */}
-      <div className="flex items-center gap-1 border-b border-slate-200 bg-slate-50 px-4 py-2">
+      <div className="flex flex-wrap items-center gap-1 border-b border-slate-200 bg-slate-50 px-4 py-2">
         <button
           onClick={onGoBack}
           className="mr-2 rounded-md p-1.5 text-slate-400 transition hover:bg-slate-200 hover:text-slate-600"
@@ -179,7 +181,7 @@ const InstanceHeroBanner: React.FC<InstanceHeaderProps> = ({
           <ArrowLeft className="h-4 w-4" />
         </button>
 
-        <div className="flex items-center gap-1 border-r border-slate-300 pr-3">
+        <div className="flex flex-wrap items-center gap-1 border-r border-slate-300 pr-3">
           {ACTION_BUTTONS.map(({ key, label, icon: Icon }) => {
             const available = isActionAvailable(key);
             const isPending = pendingAction === key || (key === "console" && isConsoleLoading);

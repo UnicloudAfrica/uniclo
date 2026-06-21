@@ -9,6 +9,7 @@ import {
   History,
   Users,
   FolderSync,
+  Server,
   Info,
 } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
@@ -20,6 +21,8 @@ import {
   useFetchProviderDiscoveryProjects,
   useImportProviderDiscoveryProjects,
   useSyncProviderDiscoveryProjects,
+  useFetchProviderDiscoveryInstances,
+  useImportProviderDiscoveryInstances,
   useFetchProviderDiscoveryUsers,
   useLinkProviderDiscoveryUser,
   useFetchProviderDiscoveryRuns,
@@ -34,7 +37,7 @@ import type { Client } from "@/shared/types/client";
 
 // ─── Types ───────────────────────────────────────────────────
 
-type TabId = "projects" | "users" | "runs";
+type TabId = "projects" | "instances" | "users" | "runs";
 
 interface DiscoveredProject {
   id: string;
@@ -63,6 +66,24 @@ interface DiscoveredUser {
   username?: string;
   email?: string;
   domain_id?: string;
+  [key: string]: unknown;
+}
+
+interface DiscoveredInstance {
+  id: string;
+  name: string;
+  status?: string;
+  linked?: boolean;
+  project?: {
+    external_id: string;
+    id: number;
+    identifier: string;
+    name: string;
+    tenant_id?: number | null;
+    tenant_name?: string | null;
+  } | null;
+  linked_instance?: { id: number; identifier: string; name: string } | null;
+  raw?: Record<string, unknown>;
   [key: string]: unknown;
 }
 
@@ -95,6 +116,7 @@ interface DriftReport {
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "projects", label: "Projects", icon: FolderSync },
+  { id: "instances", label: "Instances", icon: Server },
   { id: "users", label: "Users", icon: Users },
   { id: "runs", label: "Sync History", icon: History },
 ];
@@ -165,6 +187,7 @@ const AdminProviderDiscovery: React.FC = () => {
   const [selectedRegion, setSelectedRegion] = useState("");
   const [selectedAZ, setSelectedAZ] = useState("");
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
+  const [selectedInstanceIds, setSelectedInstanceIds] = useState<string[]>([]);
 
   // Project-specific
   const [showOnlyUnlinked, setShowOnlyUnlinked] = useState(false);
@@ -316,6 +339,29 @@ const AdminProviderDiscovery: React.FC = () => {
 
   const users = useMemo(() => extractArray<DiscoveredUser>(usersRaw, "users"), [usersRaw]);
 
+  const instanceFilters = useMemo(
+    () => ({
+      provider: selectedProvider,
+      region: selectedRegion,
+      availability_zone: selectedAZ || undefined,
+      only_unlinked: showOnlyUnlinked || undefined,
+    }),
+    [selectedProvider, selectedRegion, selectedAZ, showOnlyUnlinked]
+  );
+
+  const {
+    data: instancesRaw,
+    isFetching: instancesLoading,
+    refetch: refetchInstances,
+  } = useFetchProviderDiscoveryInstances(instanceFilters, {
+    enabled: canDiscover && activeTab === "instances",
+  });
+
+  const instances = useMemo(
+    () => extractArray<DiscoveredInstance>(instancesRaw, "instances"),
+    [instancesRaw]
+  );
+
   const runFilters = useMemo(
     () => ({ per_page: 50 }),
     []
@@ -339,6 +385,7 @@ const AdminProviderDiscovery: React.FC = () => {
 
   // Mutations
   const importMutation = useImportProviderDiscoveryProjects();
+  const instanceImportMutation = useImportProviderDiscoveryInstances();
   const syncMutation = useSyncProviderDiscoveryProjects();
   const linkUserMutation = useLinkProviderDiscoveryUser();
 
@@ -453,6 +500,93 @@ const AdminProviderDiscovery: React.FC = () => {
       }
     );
   }, [linkingProject, selectedAZ, selectedRegion, selectedProvider, linkContext, linkTenantId, linkUserId, importMutation, refetchProjects]);
+
+  const submitInstanceImport = useCallback(
+    (rows: DiscoveredInstance[]) => {
+      const instancesToImport = rows
+        .filter((r) => !r.linked && r.project?.id)
+        .map((r) => ({
+          external_id: r.id,
+          name: r.name,
+          status: r.status,
+          project_id: r.project!.id,
+        }));
+
+      if (!instancesToImport.length) {
+        ToastUtils.error("Select unlinked instances that belong to a linked project.");
+        setConfirmState((prev) => ({ ...prev, open: false }));
+        return;
+      }
+
+      instanceImportMutation.mutate(
+        {
+          provider: selectedProvider,
+          region: selectedRegion,
+          availability_zone: selectedAZ || undefined,
+          instances: instancesToImport,
+        },
+        {
+          onSuccess: (data: unknown) => {
+            const result = data as Record<string, unknown>;
+            const results = (result?.results as unknown[]) || [];
+            const linked = results.filter(
+              (x) => (x as Record<string, unknown>)?.status === "linked"
+            ).length;
+            ToastUtils.success(`Imported ${linked} instance(s) successfully`);
+            setSelectedInstanceIds([]);
+            setConfirmState((prev) => ({ ...prev, open: false }));
+            refetchInstances();
+          },
+          onError: (error: unknown) => {
+            const err = error as Record<string, unknown>;
+            const responseData = (err?.response as Record<string, unknown>)?.data as
+              | Record<string, unknown>
+              | undefined;
+            const message = (responseData?.message as string) || "Failed to import instances";
+            ToastUtils.error(message);
+            setConfirmState((prev) => ({ ...prev, open: false }));
+          },
+        }
+      );
+    },
+    [selectedProvider, selectedRegion, selectedAZ, instanceImportMutation, refetchInstances]
+  );
+
+  const handleImportSelectedInstances = useCallback(() => {
+    if (!selectedInstanceIds.length || !selectedAZ) return;
+    const rows = instances.filter((i) => selectedInstanceIds.includes(i.id));
+    const importable = rows.filter((r) => !r.linked && r.project?.id);
+    setConfirmState({
+      open: true,
+      title: "Import Selected Instances",
+      message: `Adopt ${importable.length} instance(s) as local records linked to their discovered project? They will be marked as unmanaged (imported) instances.`,
+      variant: "warning",
+      onConfirm: () => submitInstanceImport(rows),
+      isLoading: instanceImportMutation.isPending,
+    });
+  }, [selectedInstanceIds, selectedAZ, instances, instanceImportMutation, submitInstanceImport]);
+
+  const handleLinkInstance = useCallback(
+    (row: DiscoveredInstance) => {
+      if (row.linked) {
+        ToastUtils.info("This instance is already linked.");
+        return;
+      }
+      if (!row.project?.id) {
+        ToastUtils.error("This instance has no resolved project to link under.");
+        return;
+      }
+      setConfirmState({
+        open: true,
+        title: "Link to Local Instance",
+        message: `Adopt "${row.name || row.id}" as a local instance under project ${row.project.identifier}? It will be marked as an unmanaged (imported) instance.`,
+        variant: "warning",
+        onConfirm: () => submitInstanceImport([row]),
+        isLoading: instanceImportMutation.isPending,
+      });
+    },
+    [instanceImportMutation, submitInstanceImport]
+  );
 
   const handleSyncAll = useCallback(() => {
     if (!selectedAZ) return;
@@ -598,6 +732,65 @@ const AdminProviderDiscovery: React.FC = () => {
               <p className="text-xs text-gray-500 truncate">{row.linked_project.name}</p>
             </div>
           );
+        },
+      },
+    ],
+    []
+  );
+
+  const instanceColumns = useMemo(
+    () => [
+      {
+        key: "name",
+        header: "Instance",
+        sortable: true,
+        render: (value: unknown, row: DiscoveredInstance) => (
+          <div className="min-w-0">
+            <span className="font-medium text-gray-900 block truncate">{String(value || "Unnamed")}</span>
+            <span className="font-mono text-[10px] text-gray-400 block truncate max-w-[180px]" title={row.id}>
+              {row.id}
+            </span>
+          </div>
+        ),
+      },
+      {
+        key: "project",
+        header: "Project",
+        render: (_value: unknown, row: DiscoveredInstance) => {
+          if (!row.project) {
+            return <span className="text-xs text-gray-400">—</span>;
+          }
+          return (
+            <div className="min-w-0">
+              <span className="text-sm font-medium text-blue-600 block truncate">
+                {row.project.identifier}
+              </span>
+              <p className="text-xs text-gray-500 truncate">{row.project.name}</p>
+            </div>
+          );
+        },
+      },
+      {
+        key: "status",
+        header: "Status",
+        sortable: true,
+        render: (value: unknown) => {
+          const status = String(value || "unknown");
+          return <StatusPill status={status} label={status.replace(/_/g, " ")} />;
+        },
+      },
+      {
+        key: "linked",
+        header: "Linked",
+        render: (_value: unknown, row: DiscoveredInstance) => {
+          if (row.linked && row.linked_instance) {
+            return (
+              <span className="text-sm font-medium text-emerald-600 block truncate">
+                {row.linked_instance.identifier || row.linked_instance.name}
+              </span>
+            );
+          }
+          return <span className="text-xs text-gray-400">Not linked</span>;
         },
       },
     ],
@@ -751,6 +944,7 @@ const AdminProviderDiscovery: React.FC = () => {
             setSelectedRegion(e.target.value);
             setSelectedAZ("");
             setSelectedProjectIds([]);
+            setSelectedInstanceIds([]);
             setDriftReport(null);
           }}
           className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-w-[200px]"
@@ -770,6 +964,7 @@ const AdminProviderDiscovery: React.FC = () => {
           onChange={(e) => {
             setSelectedAZ(e.target.value);
             setSelectedProjectIds([]);
+            setSelectedInstanceIds([]);
             setDriftReport(null);
           }}
           disabled={!selectedRegion || availableAZs.length === 0}
@@ -947,6 +1142,61 @@ const AdminProviderDiscovery: React.FC = () => {
   );
 
   // ─── Users Tab ────────────────────────────────────────────
+
+  const renderInstancesTab = () => (
+    <div className="space-y-4">
+      {renderRegionSelector()}
+
+      {canDiscover && (
+        <div className="flex flex-wrap items-center gap-2">
+          <ModernButton
+            variant="primary"
+            size="sm"
+            onClick={() => refetchInstances()}
+            disabled={instancesLoading}
+          >
+            <Search className="w-4 h-4" />
+            {instancesLoading ? "Discovering..." : "Discover Instances"}
+          </ModernButton>
+
+          {selectedInstanceIds.length > 0 && (
+            <ModernButton variant="success" size="sm" onClick={handleImportSelectedInstances}>
+              <Download className="w-4 h-4" />
+              Import Selected ({selectedInstanceIds.length})
+            </ModernButton>
+          )}
+        </div>
+      )}
+
+      <ModernTable
+        data={instances}
+        columns={instanceColumns}
+        loading={instancesLoading}
+        searchable
+        searchKeys={["name", "id", "status"]}
+        searchPlaceholder="Search by instance name, ID, or status..."
+        sortable
+        paginated
+        pageSize={20}
+        selectable
+        selectedIds={selectedInstanceIds}
+        onSelectionChange={setSelectedInstanceIds}
+        actions={[
+          {
+            label: "Link to local instance",
+            icon: <Link2 className="w-4 h-4" />,
+            onClick: (row: DiscoveredInstance) => handleLinkInstance(row),
+            tone: "primary" as const,
+          },
+        ]}
+        emptyMessage={
+          canDiscover
+            ? "No instances discovered. Link projects first, then click \"Discover Instances\" to fetch their servers — each instance is matched to its owning project by the provider."
+            : "Select a region and availability zone to discover instances."
+        }
+      />
+    </div>
+  );
 
   const renderUsersTab = () => (
     <div className="space-y-4">
@@ -1177,6 +1427,7 @@ const AdminProviderDiscovery: React.FC = () => {
       {/* Tab Content */}
       <div className="mt-1">
         {activeTab === "projects" && renderProjectsTab()}
+        {activeTab === "instances" && renderInstancesTab()}
         {activeTab === "users" && renderUsersTab()}
         {activeTab === "runs" && renderRunsTab()}
       </div>

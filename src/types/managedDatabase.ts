@@ -49,6 +49,34 @@ export type EngineCategory =
 
 export type EngineLicense = "open_source" | "free_edition" | "commercial";
 
+/**
+ * Replication-tier metadata. Mirrors the BE
+ * `App\Services\Pricing\Database\EngineReplicationTier` enum + the
+ * `replication` block in `config/managed_databases.php`. Drives the
+ * wizard's per-tier copy + warnings.
+ */
+export type ReplicationTier =
+  | "disk_backed"
+  | "in_memory"
+  | "native_distributed"
+  | "consensus_kv"
+  | "licensed";
+
+export interface ReplicationConfig {
+  tier: ReplicationTier | null;
+  pricing_dimension?: "storage_gb" | "memory_mb" | "node_count" | "pair_flat";
+  backup_per_node?: boolean;
+  native_mechanism?: string;
+  topology?: Array<"active_passive" | "active_active">;
+  cluster_minimum?: number;
+  wan_sensitive?: boolean;
+  recommended_odd?: boolean;
+  same_region_only?: boolean;
+  license_required?: boolean;
+  caveats?: string[];
+  unavailable_reason?: string;
+}
+
 export interface EngineConfig {
   label: string;
   icon: string;
@@ -62,6 +90,12 @@ export interface EngineConfig {
   min_replicas: number;
   max_replicas: number;
   requires_license_key?: boolean;
+  /**
+   * Per-engine replication metadata. Optional during the rollout —
+   * engines that haven't been migrated to the tier model surface a
+   * null `tier` and the wizard falls back to legacy copy.
+   */
+  replication?: ReplicationConfig;
 }
 
 export interface PlanConfig {
@@ -117,6 +151,8 @@ export interface ManagedDatabase {
   connection_string: string | null;
   firewall_cidrs: string[];
   monthly_cost: number;
+  /** ISO 4217 currency code the `monthly_cost` is quoted in. */
+  currency?: string;
   provisioning_progress: ProvisioningStep[] | null;
   metadata: Record<string, unknown> | null;
   created_at: string;
@@ -451,6 +487,26 @@ export interface DatabaseFormState {
    * = UniCloud provisions the VM separately; StaqDB charges only management.
    */
   planKind: "" | "bundled" | "management_only";
+  /**
+   * Cross-provider replication mode. Defaults to "native_same_provider"
+   * (Phase-1 native streaming inside one provider). Switch to
+   * "native_public_endpoint" when the user picks a replica AZ that
+   * crosses providers AND the engine supports it AND the consent toggle
+   * is on. `orbit_overlay` is reserved for the ACF data-plane path
+   * (currently beta).
+   */
+  replicationMode:
+    | "native_same_provider"
+    | "native_public_endpoint"
+    | "orbit_overlay";
+  /**
+   * Explicit consent that the user accepts the egress costs + security
+   * implications of cross-provider replication over a public TLS
+   * endpoint. Required by the backend when replicationMode is
+   * "native_public_endpoint" AND any replica AZ is on a different
+   * provider than the primary.
+   */
+  crossProviderConsent: boolean;
 }
 
 export const DEFAULT_DATABASE_FORM: DatabaseFormState = {
@@ -490,6 +546,8 @@ export const DEFAULT_DATABASE_FORM: DatabaseFormState = {
   licenseMode: "",
   cloudAccountId: null,
   planKind: "",
+  replicationMode: "native_same_provider",
+  crossProviderConsent: false,
 };
 
 // ─── Database Backups ────────────────────────────────────────

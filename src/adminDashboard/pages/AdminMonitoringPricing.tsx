@@ -47,9 +47,9 @@ const TIER_LABELS: Record<MonitoringTier, string> = {
 
 const toDraft = (row: MonitoringPricingRow): DraftRow => ({
   tier: row.tier,
-  price: row.price_per_host_usd === null || row.price_per_host_usd === undefined
+  price: row.price === null || row.price === undefined
     ? ""
-    : String(row.price_per_host_usd),
+    : String(row.price),
   retention_days: row.retention_days,
   features: row.features,
   dirty: false,
@@ -92,7 +92,7 @@ const AdminMonitoringPricing = () => {
       return;
     }
     try {
-      await updatePricing({ tier: draft.tier, price_per_host_usd: value });
+      await updatePricing({ tier: draft.tier, price: value });
       ToastUtils.success(`Saved ${TIER_LABELS[draft.tier]}.`);
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } }; message?: string };
@@ -234,8 +234,8 @@ const AdminMonitoringPricing = () => {
                           <span className="text-[10px] text-slate-400">
                             currently{" "}
                             <PriceLabel
-                              amount={original.price_per_host_usd}
-                              sourceCurrency="USD"
+                              amount={original.price}
+                              sourceCurrency={original.currency_code}
                             />
                           </span>
                         )}
@@ -298,7 +298,7 @@ const TenantOverridesCard: React.FC = () => {
       enterprise: "",
     };
     overrides.forEach((o) => {
-      next[o.tier] = String(o.price_per_host_usd);
+      next[o.tier] = String(o.price);
     });
     setOverrideDrafts(next);
   }, [overrides, selectedTenantId]);
@@ -314,7 +314,7 @@ const TenantOverridesCard: React.FC = () => {
       return;
     }
     try {
-      await upsertOverride({ tier, price_per_host_usd: value });
+      await upsertOverride({ tier, price: value });
       ToastUtils.success(`Override saved for ${TIER_LABELS[tier]}.`);
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } }; message?: string };
@@ -385,7 +385,7 @@ const TenantOverridesCard: React.FC = () => {
                       )}
                     </td>
                     <td className="py-2 pr-3 text-right text-xs text-slate-500">
-                      <PriceLabel amount={row.price_per_host_usd} sourceCurrency="USD" />
+                      <PriceLabel amount={row.price} sourceCurrency={row.currency_code} />
                     </td>
                     <td className="py-2 pr-3 text-right">
                       <input
@@ -399,7 +399,7 @@ const TenantOverridesCard: React.FC = () => {
                             [row.tier]: e.target.value,
                           }))
                         }
-                        placeholder={String(row.price_per_host_usd)}
+                        placeholder={String(row.price)}
                         aria-label={`Override for ${TIER_LABELS[row.tier]}`}
                         className={`${inputCls} w-32 text-right`}
                       />

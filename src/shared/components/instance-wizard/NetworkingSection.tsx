@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { Configuration, Option } from "@/types/InstanceConfiguration";
 import { SearchableSelect } from "../ui";
+import { getPricingNotice, stripPricingNoticeOptions } from "./ComputeImageSection";
 
 interface NetworkingSectionProps {
   cfg: Configuration;
@@ -29,21 +30,28 @@ const NetworkingSection: React.FC<NetworkingSectionProps> = ({
   updateConfigWithFocus,
   handleSecurityGroupToggle,
 }) => {
+  // Pricing-notice sentinel (see ComputeImageSection): when the bandwidth
+  // list is empty because pricing is loading / awaiting an AZ pick /
+  // unpublished, the options array carries a marker Option. Strip it from
+  // the choices and surface it as placeholder + helper copy.
+  const bandwidthNotice = getPricingNotice(bandwidthOptions);
+  const bandwidthChoices = stripPricingNoticeOptions(bandwidthOptions);
+
   // Product policy: every compute instance ships with the platform's
   // baseline internet bandwidth allocation. When the option list arrives
   // and the user hasn't already picked one, default to the 10 Mbps tier
   // (matched by label) so the field never lands empty in flight.
   useEffect(() => {
-    if (cfg.bandwidth_id || !bandwidthOptions.length) return;
-    const baseline = bandwidthOptions.find((opt) => /\b10\s*mbps/i.test(opt.label));
-    const fallback = baseline ?? bandwidthOptions[0];
+    if (cfg.bandwidth_id || !bandwidthChoices.length) return;
+    const baseline = bandwidthChoices.find((opt) => /\b10\s*mbps/i.test(opt.label));
+    const fallback = baseline ?? bandwidthChoices[0];
     if (fallback?.value) {
       updateConfigWithFocus({ bandwidth_id: fallback.value, bandwidth_count: 1 });
     }
     // Intentionally only react to the option list arriving and to
     // bandwidth_id resetting — `updateConfigWithFocus` is stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bandwidthOptions, cfg.bandwidth_id]);
+  }, [bandwidthChoices, cfg.bandwidth_id]);
 
   return (
     <>
@@ -83,9 +91,22 @@ const NetworkingSection: React.FC<NetworkingSectionProps> = ({
                 bandwidth_count: e.target.value ? 1 : 0,
               })
             }
-            options={[{ value: "", label: "Default (Internet Bandwidth Included)" }, ...bandwidthOptions]}
-            helper="Internet bandwidth is included with every instance. Pick a higher tier to upgrade."
-            disabled={isLoadingResources}
+            options={[
+              {
+                value: "",
+                label:
+                  bandwidthNotice?.kind === "loading"
+                    ? bandwidthNotice.label
+                    : "Default (Internet Bandwidth Included)",
+              },
+              ...bandwidthChoices,
+            ]}
+            helper={
+              bandwidthNotice && bandwidthNotice.kind !== "loading"
+                ? bandwidthNotice.label
+                : "Internet bandwidth is included with every instance. Pick a higher tier to upgrade."
+            }
+            disabled={isLoadingResources || bandwidthNotice?.kind === "loading"}
           />
         </div>
       </div>

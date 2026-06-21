@@ -312,6 +312,11 @@ export const useOrderManagement = (
 
           return {
             region: profile.region,
+            // Object-storage pricing is seeded per-AZ; the backend resolves the
+            // priced product by this AZ code (region stays the geographic code
+            // to satisfy its Rule::exists check). Omitting it makes the re-quote
+            // fall back to the region default provider and fail to find pricing.
+            availability_zone: profile.availability_zone,
             productable_id: parsedProductableId,
             storage_gb: storageGb,
             quantity: Number(profile.quantity) || 1,
@@ -338,6 +343,21 @@ export const useOrderManagement = (
           object_storage_items: objectStorageItems,
           fast_track: fastTrackFlag,
         };
+
+        // Price lock: send the pre-tax subtotal the user just reviewed so the
+        // backend can 409 instead of charging a drifted price. Skipped when an
+        // admin price override is set — the backend re-quotes from the catalog,
+        // so an override would always trip the guard.
+        const hasUnitPriceOverride = resolvedProfiles.some(
+          (profile) => profile.unitPriceOverride !== "" && Number(profile.unitPriceOverride) > 0
+        );
+        const expectedSubtotal = resolvedProfiles.reduce(
+          (sum, profile) => sum + (Number(profile.subtotal) || 0),
+          0
+        );
+        if (!hasUnitPriceOverride && expectedSubtotal > 0) {
+          payload.expected_subtotal = Number(expectedSubtotal.toFixed(2));
+        }
 
         const countryIso = effectiveCountryCode?.toUpperCase();
         if (countryIso) {

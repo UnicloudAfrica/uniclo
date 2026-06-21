@@ -150,6 +150,22 @@ export default function VerificationCodeInput({
     }
   }, [code]);
 
+  // Focus reset: when the code transitions to all-empty (e.g. parent
+  // cleared it after an error response, or the twoFactorRequired
+  // flag flipped), put the cursor back on the FIRST input. Without
+  // this, auto-advance during the first typing leaves focus on the
+  // 6th input — so when the user tries to retype after an error,
+  // they're typing into the last slot first.
+  const previousAllEmptyRef = useRef<boolean>(true);
+  useEffect(() => {
+    const allEmpty = code.every((digit) => digit === "");
+    if (allEmpty && !previousAllEmptyRef.current) {
+      inputRefs.current[0]?.focus();
+      lastCompletedValueRef.current = null;
+    }
+    previousAllEmptyRef.current = allEmpty;
+  }, [code]);
+
   return (
     <div className="flex flex-col items-center space-y-6 p-4 font-Outfit">
       {/* Code Input Fields */}

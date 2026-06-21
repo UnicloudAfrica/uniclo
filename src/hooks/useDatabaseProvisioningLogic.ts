@@ -63,6 +63,34 @@ export interface EngineMetaEntry {
   requiresLicenseKey?: boolean;
   iconUrl?: string | null;
   port?: number;
+  /**
+   * Per-engine replication metadata mirrored from the BE engine
+   * catalog (`config/managed_databases.engines.{engine}.replication`).
+   * Drives the wizard's tier-aware copy + warnings. Optional during
+   * the rollout — engines not yet migrated to the tier model leave
+   * this undefined and the wizard falls back to the legacy
+   * "Read Replicas" UX.
+   */
+  replication?: {
+    tier:
+      | "disk_backed"
+      | "in_memory"
+      | "native_distributed"
+      | "consensus_kv"
+      | "licensed"
+      | null;
+    pricing_dimension?: "storage_gb" | "memory_mb" | "node_count" | "pair_flat";
+    backup_per_node?: boolean;
+    native_mechanism?: string;
+    topology?: Array<"active_passive" | "active_active">;
+    cluster_minimum?: number;
+    wan_sensitive?: boolean;
+    recommended_odd?: boolean;
+    same_region_only?: boolean;
+    license_required?: boolean;
+    caveats?: string[];
+    unavailable_reason?: string;
+  };
 }
 
 /**
@@ -164,6 +192,139 @@ export function getRegionLabel(
 ): string {
   const match = regions.find((r) => r.value === code);
   return match?.label || code;
+}
+
+/** Shape of an AZ option as stored in the wizard's in-memory list. */
+export interface AzOption {
+  value: string;
+  label: string;
+  /** Internal grouping key — NEVER rendered to the user. */
+  provider: string;
+}
+
+/**
+ * Replication mode reachable from the primary to a given replica AZ.
+ *
+ * Mirrors `App\Services\Replication\CrossProviderModeResolver` on the
+ * backend. The FE renders a different badge / consent UX per mode.
+ *
+ *   - "same_provider"        — same availability group as primary.
+ *                              No badge, no consent required.
+ *   - "public_endpoint"      — cross-provider, async streaming over
+ *                              TLS+auth over public internet. Selectable
+ *                              if engine supports it; requires consent.
+ *   - "orbit_overlay"        — cross-provider, AnyCloudFlow overlay.
+ *                              Currently "coming soon" — selectable
+ *                              once execution path ships.
+ *   - "unavailable"          — cross-provider, engine cannot replicate
+ *                              across providers at all (e.g. etcd Raft).
+ *                              Shown disabled with a tooltip.
+ */
+export type ReplicaMode = "same_provider" | "public_endpoint" | "orbit_overlay" | "unavailable";
+
+/** AZ option augmented with the replication mode reachable from the primary. */
+export interface ReplicaAzOption extends AzOption {
+  mode: ReplicaMode;
+  /** True when this AZ can be selected as a replica target right now. */
+  selectable: boolean;
+}
+
+/**
+ * Per-tier mapping from the engine catalog → cross-provider modes
+ * available. Mirrors the backend `CrossProviderModeResolver` tier
+ * defaults so the FE doesn't need a round-trip to know whether to
+ * grey out a button.
+ *
+ * Keep this in sync with `api/app/Services/Replication/CrossProviderModeResolver.php`
+ * — the backend remains the source of truth and will reject a
+ * cross-provider request the FE thinks is fine. The mirror is purely
+ * for UX (badges, disabled states).
+ */
+const TIER_CROSS_PROVIDER_DEFAULTS: Record<
+  string,
+  { public_endpoint: boolean; orbit_overlay: boolean }
+> = {
+  disk_backed: { public_endpoint: true, orbit_overlay: true },
+  in_memory: { public_endpoint: true, orbit_overlay: true },
+  native_distributed: { public_endpoint: false, orbit_overlay: true },
+  consensus_kv: { public_endpoint: false, orbit_overlay: false },
+  licensed: { public_endpoint: true, orbit_overlay: true },
+};
+
+/**
+ * Tag each AZ in the picker with the replication mode reachable from
+ * the primary, and a `selectable` flag for the disabled-state UI.
+ *
+ * Rules:
+ *   1. The primary AZ itself is excluded (replicas only).
+ *   2. Same-provider AZs → mode="same_provider", selectable=true.
+ *   3. Different-provider AZs branch on engine tier:
+ *        - public_endpoint allowed → mode="public_endpoint", selectable=true
+ *          (consent required at submit time, captured in the toggle).
+ *        - orbit_overlay only → mode="orbit_overlay", selectable=false
+ *          for now (flip on once execution path lands).
+ *        - neither → mode="unavailable", selectable=false (tooltip).
+ *   4. Unknown / missing tier falls back to "same_provider only" —
+ *      conservative, mirrors the backend default.
+ *
+ * Exported so `__tests__/filterSameProviderReplicaAzs.test.ts` can pin
+ * the behaviour without spinning up the whole hook.
+ */
+export function tagReplicaAzModes(
+  availabilityZones: AzOption[],
+  primaryAzCode: string,
+  primaryAzProvider: string,
+  engineTier: string | null | undefined,
+  options: { crossProviderProvisioningEnabled?: boolean } = {},
+): ReplicaAzOption[] {
+  const tierDefaults = engineTier ? TIER_CROSS_PROVIDER_DEFAULTS[engineTier] : null;
+  const flagOn = options.crossProviderProvisioningEnabled ?? false;
+
+  const tagged: ReplicaAzOption[] = [];
+  for (const az of availabilityZones) {
+    if (primaryAzCode && az.value === primaryAzCode) continue;
+
+    const sameProvider = !primaryAzProvider || !az.provider || az.provider === primaryAzProvider;
+    if (sameProvider) {
+      tagged.push({ ...az, mode: "same_provider", selectable: true });
+      continue;
+    }
+
+    // Different provider — branch on engine tier
+    if (tierDefaults?.public_endpoint && flagOn) {
+      tagged.push({ ...az, mode: "public_endpoint", selectable: true });
+    } else if (tierDefaults?.public_endpoint && !flagOn) {
+      // Engine supports it, but the global feature flag is off →
+      // shown as "coming soon" to the user.
+      tagged.push({ ...az, mode: "public_endpoint", selectable: false });
+    } else if (tierDefaults?.orbit_overlay) {
+      tagged.push({ ...az, mode: "orbit_overlay", selectable: false });
+    } else {
+      tagged.push({ ...az, mode: "unavailable", selectable: false });
+    }
+  }
+  return tagged;
+}
+
+/**
+ * Legacy filter — returns only the AZs that are immediately selectable
+ * as same-provider replicas. Kept for callers that want the pre-mode-
+ * aware list (older code paths). New code should call `tagReplicaAzModes`
+ * and render badges instead of hiding rows.
+ */
+export function filterSameProviderReplicaAzs(
+  availabilityZones: AzOption[],
+  primaryAzCode: string,
+  primaryAzProvider: string,
+): AzOption[] {
+  if (!primaryAzCode) {
+    return availabilityZones;
+  }
+  return availabilityZones.filter((az) => {
+    if (az.value === primaryAzCode) return false;
+    if (!primaryAzProvider || !az.provider) return true;
+    return az.provider === primaryAzProvider;
+  });
 }
 
 /**
@@ -276,6 +437,11 @@ export const useDatabaseProvisioningLogic = () => {
     // `management_only`). Admin UI may set this explicitly to override
     // for a specific order.
     planKind: "" as "" | "bundled" | "management_only",
+    replicationMode: "native_same_provider" as
+      | "native_same_provider"
+      | "native_public_endpoint"
+      | "orbit_overlay",
+    crossProviderConsent: false,
   });
 
   // Initialize billing country and customer context from profile once loaded
@@ -439,6 +605,14 @@ export const useDatabaseProvisioningLogic = () => {
           requiresLicenseKey: (serverEntry.requires_license_key as boolean) ?? fallback?.requiresLicenseKey,
           iconUrl: (serverEntry.icon_url as string) || null,
           port: (serverEntry.port as number) || fallback?.port,
+          // Replication metadata drives the tier-aware picker (Read
+          // Replicas vs Cluster Size etc.) AND the cross-provider mode
+          // tagger. Until this line existed, the FE silently dropped
+          // the block and the wizard tagged every cross-provider AZ as
+          // "Not supported" because the resolver couldn't find a tier.
+          replication:
+            (serverEntry.replication as EngineMetaEntry["replication"]) ??
+            fallback?.replication,
         };
       }
 
@@ -472,7 +646,14 @@ export const useDatabaseProvisioningLogic = () => {
       .filter((r) => r.value);
   }, [regionsRaw]);
 
-  // Availability zones for the selected region — prefers fetched AZ data, falls back to region-embedded data
+  // Availability zones for the selected region — prefers fetched AZ data, falls back to region-embedded data.
+  //
+  // INVARIANT: The `provider` field is carried internally so the replica
+  // picker can filter to same-provider AZs (cross-provider replication is
+  // not supported and the API rejects it). The provider name is NEVER
+  // rendered in any user-visible label — `sanitizeProviderLabel()` strips
+  // it from the display string. Treat `provider` as an opaque grouping
+  // key, not a brand.
   const availabilityZones = useMemo(() => {
     if (!form.region) return [];
 
@@ -481,6 +662,7 @@ export const useDatabaseProvisioningLogic = () => {
       return fetchedAzsData.map((az) => ({
         value: az.code || "",
         label: sanitizeProviderLabel(az.name || az.code || ""),
+        provider: (az as { provider?: string }).provider ?? "",
       })).filter((az) => az.value);
     }
 
@@ -495,6 +677,7 @@ export const useDatabaseProvisioningLogic = () => {
     return azs.map((az: Record<string, unknown>) => ({
       value: (az.code as string) || "",
       label: sanitizeProviderLabel((az.name as string) || (az.code as string) || ""),
+      provider: (az.provider as string) ?? "",
     })).filter((az: { value: string }) => az.value);
   }, [form.region, regionsRaw, fetchedAzsData]);
 
@@ -510,12 +693,84 @@ export const useDatabaseProvisioningLogic = () => {
 
   // ─── Replica Logic ────────────────────────────────────────────────
 
-  // AZs available for replicas: all AZs in the region except the primary
-  // (Provider filtering is no longer needed — AZ codes no longer embed provider names.)
-  const replicaAvailableAzs = useMemo(() => {
-    if (!form.availabilityZone) return availabilityZones;
-    return availabilityZones.filter((az) => az.value !== form.availabilityZone);
+  // Provider of the currently-selected primary AZ. Used as the grouping
+  // key for replica AZs (cross-provider replication is not supported).
+  // Never surfaced in the UI.
+  const primaryAzProvider = useMemo(() => {
+    if (!form.availabilityZone) return "";
+    return availabilityZones.find((az) => az.value === form.availabilityZone)?.provider ?? "";
   }, [availabilityZones, form.availabilityZone]);
+
+  // Tier of the selected engine — drives which cross-provider modes
+  // appear in the picker. Pulled from the engine catalog as a hint;
+  // the backend resolver is still authoritative at submit time.
+  const selectedEngineTier = useMemo(() => {
+    if (!form.engine) return null;
+    return engines[form.engine as DatabaseEngine]?.replication?.tier ?? null;
+  }, [form.engine, engines]);
+
+  // Tagged AZ list — every AZ is included with a `mode` ("same_provider"
+  // | "public_endpoint" | "orbit_overlay" | "unavailable") and a
+  // `selectable` flag. The wizard renders badges + disabled states off
+  // these tags; cross-provider AZs are visible but only selectable when
+  // the engine + feature flag combination permits it.
+  const taggedReplicaAzs = useMemo(
+    () =>
+      tagReplicaAzModes(availabilityZones, form.availabilityZone, primaryAzProvider, selectedEngineTier, {
+        // FE-side mirror of the backend feature flag. Drives whether
+        // cross-provider AZs are selectable or shown as "coming soon".
+        // The backend still enforces the same gate at submit time.
+        crossProviderProvisioningEnabled:
+          (window as { __MANAGED_DB_CROSS_PROVIDER_ENABLED__?: boolean }).__MANAGED_DB_CROSS_PROVIDER_ENABLED__ ?? false,
+      }),
+    [availabilityZones, form.availabilityZone, primaryAzProvider, selectedEngineTier],
+  );
+
+  // Subset of tagged AZs that are currently SELECTABLE. The picker shows
+  // ALL tagged AZs (with badges) but cap calculations and toggling work
+  // off this narrower list.
+  const replicaAvailableAzs = useMemo(
+    () => taggedReplicaAzs.filter((az) => az.selectable),
+    [taggedReplicaAzs],
+  );
+
+  // When the user picks a replica AZ that crosses providers, auto-set
+  // replicationMode → native_public_endpoint so the backend accepts the
+  // payload. Switch back to native_same_provider when no cross-provider
+  // replica is selected. The consent toggle remains user-controlled —
+  // we never auto-set consent.
+  useEffect(() => {
+    setForm((prev) => {
+      const hasCrossProviderReplica = prev.replicaAzs.some((code) => {
+        const az = taggedReplicaAzs.find((a) => a.value === code);
+        return az?.mode === "public_endpoint" || az?.mode === "orbit_overlay";
+      });
+      const nextMode = hasCrossProviderReplica
+        ? "native_public_endpoint"
+        : "native_same_provider";
+      if (prev.replicationMode === nextMode) return prev;
+      return { ...prev, replicationMode: nextMode };
+    });
+  }, [taggedReplicaAzs]);
+
+  // If the primary AZ changes such that previously-selected replicas
+  // are no longer selectable (e.g. tier no longer supports the cross-
+  // provider mode), drop the stale picks. Prevents resurrecting a
+  // disabled state via stale form state.
+  useEffect(() => {
+    if (!primaryAzProvider) return;
+    const allowed = new Set(replicaAvailableAzs.map((az) => az.value));
+    setForm((prev) => {
+      const filtered = prev.replicaAzs.filter((code) => allowed.has(code));
+      if (filtered.length === prev.replicaAzs.length) return prev;
+      return {
+        ...prev,
+        replicaAzs: filtered,
+        replicaCount: filtered.length + 1,
+        replicaRegions: filtered,
+      };
+    });
+  }, [primaryAzProvider, replicaAvailableAzs]);
 
   /** Max additional replicas the user can select (limited by engine and available AZs). */
   const maxReplicaCount = useMemo(() => {
@@ -624,14 +879,31 @@ export const useDatabaseProvisioningLogic = () => {
   const fetchQuote = useCallback(async () => {
     if (!canProceedToReview) return;
 
-    const params = {
+    // CRITICAL: every input that affects pricing must be in the quote
+    // payload. Previously this omitted `availability_zone` and
+    // `plan_kind`, which routed /quote through the region's default
+    // provider while /store used the AZ's provider — producing wildly
+    // different prices for the same form state (e.g. ₦17k quote vs
+    // ₦49k order in multi-cloud regions). The quote-vs-order parity is
+    // also asserted in `tests/Unit/Services/Pricing/QuoteOrderParityTest.php`.
+    const params: Record<string, unknown> = {
       engine: form.engine,
       plan_size: form.planSize,
       region: form.region,
       months: form.months,
       replica_count: form.replicaCount,
       backup_enabled: form.backupEnabled,
+      dr_enabled: form.drEnabled,
+      network_mode: form.networkMode,
+      connection_pooling: form.connectionPooling,
+      tls_enabled: form.tlsEnabled,
+      dedicated_proxy: form.dedicatedProxy,
+      vpn_gateway: form.vpnGateway,
+      country_iso: form.billingCountry || undefined,
     };
+    if (form.availabilityZone) params.availability_zone = form.availabilityZone;
+    if (form.planKind) params.plan_kind = form.planKind;
+    if (form.replicaAzs.length) params.replica_azs = form.replicaAzs;
 
     try {
       const result = await quoteMutation.mutateAsync(params);
@@ -644,6 +916,14 @@ export const useDatabaseProvisioningLogic = () => {
   // ─── Create Order ────────────────────────────────────────────────
 
   const handleCreateOrder = useCallback(async () => {
+    // Re-entrancy guard. The submit button is `disabled={isSubmitting}`,
+    // but React event batching + rapid clicks can dispatch multiple
+    // handlers within the same render frame (before the disabled
+    // attribute is reflected back to the DOM). Without this check we
+    // ended up firing 2-3 concurrent mutations and stacking 2-3 error
+    // toasts for the same failure.
+    if (createOrderAction.isPending) return;
+
     await createOrderAction.run(
       async () => {
         if (!canProceedToReview) {
@@ -660,6 +940,7 @@ export const useDatabaseProvisioningLogic = () => {
           replica_count: form.replicaCount,
           replica_azs: form.replicaAzs,
           backup_enabled: form.backupEnabled,
+          dr_enabled: form.drEnabled,
           firewall_cidrs: form.firewallCidrs.filter(Boolean),
           months: form.months,
           fast_track: form.fastTrack,
@@ -684,6 +965,34 @@ export const useDatabaseProvisioningLogic = () => {
         // Defaults to platform default (`management_only`) on the backend
         // when the form leaves it unset.
         if (form.planKind) payload.plan_kind = form.planKind;
+        // FR-CROSS-PROV: replication_mode + cross_provider_consent.
+        // Mode auto-promotes to native_public_endpoint when the user picks
+        // a cross-provider replica AZ; consent is opt-in via the toggle.
+        // Backend re-validates both — the FE values are a hint, not a
+        // bypass.
+        payload.replication_mode = form.replicationMode;
+        if (form.crossProviderConsent) payload.cross_provider_consent = true;
+
+        // Price-lock — the backend re-quotes and rejects with 409 if
+        // the resolved total doesn't match what the customer saw at
+        // review time. Source of truth is `quoteResult` from /quote;
+        // never trust the `pricingSummary` aggregate here because the
+        // aggregate flips to orderReceipt.pricing_breakdown after
+        // /store responds (which would be circular).
+        //
+        // `expected_currency` is OPTIONAL and only sent when the
+        // quote carries one — DO NOT fall back to a country code
+        // (NG, US, …). Country codes are not currency codes, and a
+        // fallback like `form.billingCountry` produces nonsense
+        // comparisons on the backend (NG ≠ NGN → 409). When the
+        // currency is unknown, omit the field and let the total-
+        // match guard alone protect the customer.
+        if (quoteResult?.total) {
+          payload.expected_total = quoteResult.total;
+          if (typeof quoteResult.currency === "string" && quoteResult.currency.length === 3) {
+            payload.expected_currency = quoteResult.currency;
+          }
+        }
 
         const response = await orderMutation.mutateAsync(payload);
         const data = response?.data ?? (response as unknown as DatabaseOrderResponse["data"]);
@@ -753,8 +1062,20 @@ export const useDatabaseProvisioningLogic = () => {
   // ─── Pricing Summary ────────────────────────────────────────────
 
   const pricingSummary = useMemo(() => {
-    // Prefer quote result; fall back to order pricing_breakdown
-    const source = quoteResult || (orderReceipt?.pricing_breakdown as DatabaseQuoteResponse | null);
+    // Once an order exists, its `pricing_breakdown` is the source of
+    // truth — that's the snapshot the backend actually billed against.
+    // The wizard's earlier `quoteResult` is a preview that can drift
+    // (e.g. if pricing inputs changed between preview and submit, or
+    // if the quote payload was missing an input that affected the
+    // order's price).
+    //
+    // Previously this was the opposite — quoteResult won — which is
+    // what made the payment page show "estimated total: ₦17,748.25 /
+    // total payable: ₦49,643.17 / gateway adjustment: ₦31,894.92" for
+    // an order that was always going to cost ₦49,643.17. The "gateway
+    // adjustment" was a misleading label for stale wizard state.
+    const source =
+      (orderReceipt?.pricing_breakdown as DatabaseQuoteResponse | null) || quoteResult;
     if (!source) {
       return {
         subtotal: 0,
@@ -765,6 +1086,19 @@ export const useDatabaseProvisioningLogic = () => {
         monthlyCost: 0,
       };
     }
+    // Mirror the backend's per-line breakdown into the FE pricing
+    // summary so the payment page can render the SAME line items the
+    // wizard showed. Without this, the payment page falls back to a
+    // single "Subtotal" line and the customer can't reconcile the
+    // total to what they reviewed at quote time.
+    const sourceLines = Array.isArray(source.lines) ? source.lines : [];
+    const lineItems = sourceLines
+      .filter((line) => Number(line.total) > 0)
+      .map((line) => ({
+        name: String(line.name ?? ""),
+        total: Number(line.total ?? 0),
+      }));
+
     return {
       subtotal: source.subtotal || 0,
       tax: source.tax || 0,
@@ -772,6 +1106,7 @@ export const useDatabaseProvisioningLogic = () => {
       grandTotal: source.total || 0,
       currency: source.currency || "USD",
       monthlyCost: source.monthly_cost || 0,
+      lineItems,
     };
   }, [quoteResult, orderReceipt]);
 
@@ -856,6 +1191,7 @@ export const useDatabaseProvisioningLogic = () => {
     // Replicas
     maxReplicaCount,
     replicaAvailableAzs,
+    taggedReplicaAzs,
     toggleReplicaAz,
 
     // Validation

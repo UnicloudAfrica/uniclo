@@ -79,6 +79,13 @@ export const evaluateConfigurationCompleteness = (cfg: Configuration) => {
   if (!hasValue(cfg.os_image_id)) missing.push("OS image");
   if (!hasValue(cfg.volume_type_id)) missing.push("Boot volume type");
   if (!Number(cfg.storage_size_gb)) missing.push("Boot volume size");
+  // Key pair is required — every cloud VM needs SSH key material at
+  // provision time, and the wizard's keypair section offers both
+  // "use existing" and "create new" modes. An empty `keypair_name`
+  // means the operator clicked through without picking either, so
+  // the instance would either fail at provision or boot without SSH
+  // access. Surface that here instead of at the provider step.
+  if (!hasValue(cfg.keypair_name)) missing.push("Key pair");
   // Validate AZ belongs to selected region (if both are set)
   if (hasValue(cfg.availability_zone) && hasValue(cfg.region)) {
     const az = String(cfg.availability_zone).toLowerCase();

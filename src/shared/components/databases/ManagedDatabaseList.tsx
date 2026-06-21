@@ -26,6 +26,8 @@ import {
   useDatabaseAction,
   useDeleteManagedDatabase,
 } from "@/shared/hooks/resources/managedDatabaseHooks";
+import { useFormatPrice } from "@/hooks/useFormatPrice";
+import MonthlyCostCell from "./MonthlyCostCell";
 import type { ManagedDatabase, ProvisioningStep } from "@/types/managedDatabase";
 
 interface ManagedDatabaseListProps {
@@ -50,14 +52,6 @@ interface SpotlightCardProps {
 const ACTIVE_PROGRESS_STATUSES = new Set(["pending", "processing", "in_progress", "queued", "running"]);
 const COMPLETED_PROGRESS_STATUSES = new Set(["completed"]);
 
-const formatCurrency = (value: number | string | undefined): string => {
-  const numeric = Number(value ?? 0);
-  if (!Number.isFinite(numeric) || numeric <= 0) {
-    return "—";
-  }
-
-  return `$${numeric.toFixed(2)}`;
-};
 
 const getStepCounts = (steps: ProvisioningStep[] | null | undefined) => {
   const list = Array.isArray(steps) ? steps : [];
@@ -78,15 +72,17 @@ const getEngineVersionLabel = (db: ManagedDatabase): string =>
 const FleetMetricCard: React.FC<FleetMetricCardProps> = ({ label, value, hint, tone, icon }) => {
   const toneClasses = {
     slate: "db-surface-card text-[var(--theme-heading-color)]",
-    emerald: "border-emerald-200/80 bg-emerald-50/90 text-emerald-950",
-    amber: "border-amber-200/80 bg-amber-50/90 text-amber-950",
+    emerald:
+      "border-emerald-200/80 bg-emerald-50/90 text-emerald-950 dark:border-emerald-800/40 dark:bg-emerald-950/30 dark:text-emerald-100",
+    amber:
+      "border-amber-200/80 bg-amber-50/90 text-amber-950 dark:border-amber-800/40 dark:bg-amber-950/30 dark:text-amber-100",
     sky: "border-[rgb(var(--theme-color-200))] bg-[var(--theme-color-10)] text-[var(--theme-heading-color)]",
   } as const;
 
   const iconToneClasses = {
     slate: "bg-[var(--theme-color-10)] text-[var(--theme-color)]",
-    emerald: "bg-emerald-100 text-emerald-700",
-    amber: "bg-amber-100 text-amber-700",
+    emerald: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+    amber: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
     sky: "bg-[var(--theme-color-10)] text-[var(--theme-color)]",
   } as const;
 
@@ -103,6 +99,37 @@ const FleetMetricCard: React.FC<FleetMetricCardProps> = ({ label, value, hint, t
       <div className="mt-4 text-3xl font-semibold tracking-tight">{value}</div>
       <p className="mt-2 text-sm text-[var(--theme-text-color)]">{hint}</p>
     </div>
+  );
+};
+
+/**
+ * Fleet-level monthly metric card. Special-cased because the value
+ * depends on the user's display currency + a published FX rate. Hooks
+ * can't run in `useMemo` so we render a dedicated component instead of
+ * computing the formatted string inside `fleetStats`.
+ *
+ * `mixed=true` means the underlying databases are billed in more than
+ * one currency; we render the dominant currency's sum and add a hint
+ * suffix so the user knows it's not a literal total.
+ */
+const FleetMonthlyMetricCard: React.FC<{
+  amount: number;
+  currency: string;
+  mixed: boolean;
+  total: number;
+}> = ({ amount, currency, mixed, total }) => {
+  const { formatted } = useFormatPrice(amount, currency);
+  const hint =
+    `Estimated monthly cost across ${total} database${total !== 1 ? "s" : ""}.` +
+    (mixed ? " Fleet has mixed currencies — showing the dominant bucket." : "");
+  return (
+    <FleetMetricCard
+      label="Monthly"
+      value={amount > 0 ? formatted : "—"}
+      hint={hint}
+      tone="sky"
+      icon={<Activity size={18} />}
+    />
   );
 };
 
@@ -191,7 +218,27 @@ const ManagedDatabaseList: React.FC<ManagedDatabaseListProps> = ({
     const active = dataList.filter((db) => db.status === "active").length;
     const provisioning = dataList.filter((db) => db.status === "provisioning").length;
     const protectedCount = dataList.filter((db) => Boolean(db.dr_region)).length;
-    const monthly = dataList.reduce((sum, db) => sum + Number(db.monthly_cost || 0), 0);
+
+    // Bucket by currency so the aggregate doesn't sum across currencies
+    // (NGN 49,643 + USD 30 ≠ a meaningful number). The picker takes
+    // the most common currency in the fleet as the "fleet currency"
+    // and sums only those rows. Mixed-currency fleets surface a
+    // `mixed=true` flag so the UI can hint at that.
+    const buckets = new Map<string, number>();
+    for (const db of dataList) {
+      const currency = (db.currency || "USD").toUpperCase();
+      const value = Number(db.monthly_cost || 0);
+      if (!Number.isFinite(value) || value <= 0) continue;
+      buckets.set(currency, (buckets.get(currency) ?? 0) + value);
+    }
+    let dominantCurrency = "USD";
+    let monthly = 0;
+    for (const [currency, sum] of buckets) {
+      if (sum > monthly) {
+        monthly = sum;
+        dominantCurrency = currency;
+      }
+    }
 
     return {
       total,
@@ -199,6 +246,8 @@ const ManagedDatabaseList: React.FC<ManagedDatabaseListProps> = ({
       provisioning,
       protectedCount,
       monthly,
+      monthlyCurrency: dominantCurrency,
+      mixed: buckets.size > 1,
     };
   }, [dataList]);
 
@@ -310,7 +359,7 @@ const ManagedDatabaseList: React.FC<ManagedDatabaseListProps> = ({
         render: (_, row) => (
           <div className="text-right">
             <div className="text-sm font-semibold text-[var(--theme-heading-color)]">
-              {formatCurrency(row.monthly_cost)}
+              <MonthlyCostCell amount={row.monthly_cost} currency={row.currency} />
             </div>
             <div className="text-xs text-[var(--theme-muted-color)]">Dedicated VM service</div>
           </div>
@@ -418,12 +467,11 @@ const ManagedDatabaseList: React.FC<ManagedDatabaseListProps> = ({
               tone="amber"
               icon={<Workflow size={18} />}
             />
-            <FleetMetricCard
-              label="Monthly"
-              value={formatCurrency(fleetStats.monthly)}
-              hint={`Estimated monthly cost across ${fleetStats.total} active database${fleetStats.total !== 1 ? "s" : ""}.`}
-              tone="sky"
-              icon={<Activity size={18} />}
+            <FleetMonthlyMetricCard
+              amount={fleetStats.monthly}
+              currency={fleetStats.monthlyCurrency}
+              mixed={fleetStats.mixed}
+              total={fleetStats.total}
             />
           </div>
         </div>

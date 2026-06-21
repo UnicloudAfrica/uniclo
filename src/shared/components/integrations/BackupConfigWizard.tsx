@@ -1,9 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  StoryStep,
-  SuccessMoment,
-  RESILIENCE,
-} from "@/shared/components/orbit";
+import { StoryStep, SuccessMoment, RESILIENCE } from "@/shared/components/orbit";
 import {
   useFetchDestinations,
   DESTINATION_TYPE_LABELS,
@@ -30,11 +26,24 @@ import {
  */
 
 export interface BackupConfig {
+  name?: string;
   schedule_type: string;
   cron_expression?: string;
+  schedule_time?: string;
+  schedule_day_of_week?: number;
+  schedule_day_of_month?: number;
   backup_type: string;
   retention_days: number;
+  immutable_days?: number;
   destination_id?: number;
+  destination_ids?: number[];
+  include_paths?: string[];
+  exclude_paths?: string[];
+  include_databases?: boolean;
+  pre_backup_script?: string;
+  post_backup_script?: string;
+  compression?: boolean;
+  encryption?: boolean;
 }
 
 export interface BackupConfigWizardProps {
@@ -42,26 +51,71 @@ export interface BackupConfigWizardProps {
   resourceRegion?: string;
   integrationKey?: string;
   isSubmitting?: boolean;
+  initialConfig?: Partial<BackupConfig>;
+  mode?: "create" | "edit";
   onSubmit: (config: BackupConfig) => void;
   onCancel: () => void;
 }
 
 interface FormState {
+  name: string;
   scheduleType: string;
   backupType: string;
   retentionDays: number;
-  destinationId: number | undefined;
+  immutableDays: number;
+  destinationIds: number[];
+  includePaths: string;
+  excludePaths: string;
+  includeDatabases: boolean;
+  preBackupScript: string;
+  postBackupScript: string;
+  compression: boolean;
+  encryption: boolean;
 }
 
 const SCHEDULE_OPTIONS = [
-  { value: "daily", label: "Daily", cron: "0 2 * * *", description: "Every day at 2:00 AM", emoji: "🌙" },
-  { value: "weekly", label: "Weekly", cron: "0 2 * * 0", description: "Every Sunday at 2:00 AM", emoji: "📅" },
-  { value: "hourly", label: "Hourly", cron: "0 * * * *", description: "Every hour on the hour", emoji: "⏱️" },
+  {
+    value: "daily",
+    label: "Daily",
+    cron: "0 2 * * *",
+    description: "Every day at 2:00 AM",
+    emoji: "🌙",
+  },
+  {
+    value: "weekly",
+    label: "Weekly",
+    cron: "0 2 * * 0",
+    description: "Every Sunday at 2:00 AM",
+    emoji: "📅",
+  },
+  {
+    value: "hourly",
+    label: "Hourly",
+    cron: "0 * * * *",
+    description: "Every hour on the hour",
+    emoji: "⏱️",
+  },
 ];
 
 const BACKUP_TYPE_OPTIONS = [
-  { value: "full", label: "Full backup", desc: "A complete copy each time. Bigger storage footprint, simplest to restore.", emoji: "📦" },
-  { value: "incremental", label: "Just-the-changes (incremental)", desc: "Only what changed since the last backup. Smaller, faster, restores chain together.", emoji: "🧩" },
+  {
+    value: "full",
+    label: "Full backup",
+    desc: "A complete copy each time. Bigger storage footprint, simplest to restore.",
+    emoji: "📦",
+  },
+  {
+    value: "incremental",
+    label: "Just-the-changes (incremental)",
+    desc: "Only what changed since the last backup. Smaller, faster, restores chain together.",
+    emoji: "🧩",
+  },
+  {
+    value: "differential",
+    label: "Since-last-full (differential)",
+    desc: "Everything changed since the last full backup. Larger than incremental, simpler chain.",
+    emoji: "🧭",
+  },
 ];
 
 const RETENTION_OPTIONS = [
@@ -72,10 +126,19 @@ const RETENTION_OPTIONS = [
 ];
 
 const INITIAL_FORM: FormState = {
+  name: "",
   scheduleType: "daily",
   backupType: "full",
   retentionDays: 30,
-  destinationId: undefined,
+  immutableDays: 0,
+  destinationIds: [],
+  includePaths: "",
+  excludePaths: "",
+  includeDatabases: false,
+  preBackupScript: "",
+  postBackupScript: "",
+  compression: true,
+  encryption: true,
 };
 
 export function BackupConfigWizard({
@@ -83,6 +146,8 @@ export function BackupConfigWizard({
   resourceRegion,
   integrationKey = "anycloudflow",
   isSubmitting = false,
+  initialConfig,
+  mode = "create",
   onSubmit,
   onCancel,
 }: BackupConfigWizardProps): React.JSX.Element {
@@ -90,45 +155,61 @@ export function BackupConfigWizard({
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [submitted, setSubmitted] = useState(false);
 
-  const { data: allDestinations = [], isLoading: loadingDestinations } = useFetchDestinations(
-    integrationKey,
-  );
+  const { data: allDestinations = [], isLoading: loadingDestinations } =
+    useFetchDestinations(integrationKey);
 
   const activeDestinations = (allDestinations as IntegrationDestination[]).filter(
-    (d) => d.is_active,
+    (d) => d.is_active
   );
   const regionDestinations = useMemo(
     () =>
       resourceRegion
         ? activeDestinations.filter((d) => d.source_region === resourceRegion)
         : activeDestinations,
-    [activeDestinations, resourceRegion],
+    [activeDestinations, resourceRegion]
   );
   const otherRegionDestinations = useMemo(
     () =>
-      resourceRegion
-        ? activeDestinations.filter((d) => d.source_region !== resourceRegion)
-        : [],
-    [activeDestinations, resourceRegion],
+      resourceRegion ? activeDestinations.filter((d) => d.source_region !== resourceRegion) : [],
+    [activeDestinations, resourceRegion]
   );
   const defaultDest = regionDestinations.find((d) => d.is_default);
 
+  useEffect(() => {
+    if (!initialConfig) return;
+
+    setForm({
+      name: initialConfig.name ?? "",
+      scheduleType: initialConfig.schedule_type ?? "daily",
+      backupType: initialConfig.backup_type ?? "full",
+      retentionDays: initialConfig.retention_days ?? 30,
+      immutableDays: initialConfig.immutable_days ?? 0,
+      destinationIds: initialConfig.destination_ids ?? [],
+      includePaths: (initialConfig.include_paths ?? []).join("\n"),
+      excludePaths: (initialConfig.exclude_paths ?? []).join("\n"),
+      includeDatabases: Boolean(initialConfig.include_databases),
+      preBackupScript: initialConfig.pre_backup_script ?? "",
+      postBackupScript: initialConfig.post_backup_script ?? "",
+      compression: initialConfig.compression ?? true,
+      encryption: initialConfig.encryption ?? true,
+    });
+  }, [initialConfig]);
+
   // Pre-select the region default once we have data.
   useEffect(() => {
-    if (defaultDest && form.destinationId === undefined) {
-      setForm((f) => ({ ...f, destinationId: defaultDest.id }));
+    if (mode === "create" && defaultDest && form.destinationIds.length === 0) {
+      setForm((f) => ({ ...f, destinationIds: [defaultDest.id] }));
     }
-  }, [defaultDest, form.destinationId]);
+  }, [defaultDest, form.destinationIds.length, mode]);
 
   const noDestinations = !loadingDestinations && regionDestinations.length === 0;
-  const selectedDest =
-    activeDestinations.find((d) => d.id === form.destinationId) ?? null;
+  const selectedDestinations = activeDestinations.filter((d) => form.destinationIds.includes(d.id));
   const selectedSchedule = SCHEDULE_OPTIONS.find((s) => s.value === form.scheduleType);
 
   const stepIsValid = useMemo(() => {
     switch (step) {
       case 1:
-        return form.destinationId !== undefined;
+        return form.destinationIds.length > 0;
       case 2:
         return Boolean(form.scheduleType);
       case 3:
@@ -142,14 +223,38 @@ export function BackupConfigWizard({
 
   const goNext = () => setStep((s) => Math.min(s + 1, 4));
   const goBack = () => setStep((s) => Math.max(s - 1, 1));
+  const toggleDestination = (id: number) => {
+    setForm((current) => ({
+      ...current,
+      destinationIds: current.destinationIds.includes(id)
+        ? current.destinationIds.filter((existing) => existing !== id)
+        : [...current.destinationIds, id],
+    }));
+  };
+  const lines = (value: string) =>
+    value
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
 
   const submit = () => {
     onSubmit({
+      name: form.name.trim() || undefined,
       schedule_type: form.scheduleType,
       cron_expression: selectedSchedule?.cron,
+      schedule_time: "02:00",
       backup_type: form.backupType,
       retention_days: form.retentionDays,
-      destination_id: form.destinationId,
+      immutable_days: form.immutableDays || undefined,
+      destination_id: form.destinationIds[0],
+      destination_ids: form.destinationIds,
+      include_paths: lines(form.includePaths),
+      exclude_paths: lines(form.excludePaths),
+      include_databases: form.includeDatabases,
+      pre_backup_script: form.preBackupScript.trim() || undefined,
+      post_backup_script: form.postBackupScript.trim() || undefined,
+      compression: form.compression,
+      encryption: form.encryption,
     });
     setSubmitted(true);
   };
@@ -159,18 +264,21 @@ export function BackupConfigWizard({
     return (
       <div className="mx-auto max-w-3xl">
         <div className="rounded-2xl border border-warning-200 bg-warning-50 p-8 text-center dark:border-warning-800/40 dark:bg-warning-900/10">
-          <span aria-hidden="true" className="text-5xl">📍</span>
+          <span aria-hidden="true" className="text-5xl">
+            📍
+          </span>
           <h2 className="mt-3 text-lg font-bold text-warning-900 dark:text-warning-100">
             Pick a place for backups first
           </h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-warning-800 dark:text-warning-200">
-            Before {RESILIENCE} can back this up, it needs somewhere to put the bytes —
-            an S3 bucket, an SFTP server, an Azure container, anywhere you trust. Add a
-            destination and come back.
+            Before {RESILIENCE} can back this up, it needs somewhere to put the bytes — an S3
+            bucket, an SFTP server, an Azure container, anywhere you trust. Add a destination and
+            come back.
             {resourceRegion ? (
               <>
-                {" "}You currently have <strong>0</strong> active destinations
-                tagged for region <span className="font-mono">{resourceRegion}</span>.
+                {" "}
+                You currently have <strong>0</strong> active destinations tagged for region{" "}
+                <span className="font-mono">{resourceRegion}</span>.
               </>
             ) : null}
           </p>
@@ -207,14 +315,27 @@ export function BackupConfigWizard({
             <div className="h-10 animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800" />
           ) : (
             <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                  Policy name
+                </label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder={resourceName ? `${resourceName} backup policy` : "Backup policy"}
+                  className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                />
+              </div>
+
               <div className="grid gap-3 sm:grid-cols-2">
                 {regionDestinations.map((d) => {
-                  const isSelected = form.destinationId === d.id;
+                  const isSelected = form.destinationIds.includes(d.id);
                   return (
                     <button
                       key={d.id}
                       type="button"
-                      onClick={() => setForm({ ...form, destinationId: d.id })}
+                      onClick={() => toggleDestination(d.id)}
                       className={`rounded-xl border p-4 text-left transition-all ${
                         isSelected
                           ? "border-primary-500 bg-primary-50 ring-1 ring-primary-500 dark:border-primary-400 dark:bg-primary-900/20"
@@ -245,19 +366,21 @@ export function BackupConfigWizard({
                   </summary>
                   <div className="mt-3 grid gap-2 sm:grid-cols-2">
                     {otherRegionDestinations.map((d) => {
-                      const isSelected = form.destinationId === d.id;
+                      const isSelected = form.destinationIds.includes(d.id);
                       return (
                         <button
                           key={d.id}
                           type="button"
-                          onClick={() => setForm({ ...form, destinationId: d.id })}
+                          onClick={() => toggleDestination(d.id)}
                           className={`rounded-lg border p-3 text-left transition-all ${
                             isSelected
                               ? "border-primary-500 bg-primary-50 ring-1 ring-primary-500"
                               : "border-gray-200 bg-white hover:border-primary-300 dark:border-gray-700 dark:bg-gray-900"
                           }`}
                         >
-                          <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">{d.name}</p>
+                          <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">
+                            {d.name}
+                          </p>
                           <p className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400">
                             <span className="font-mono">{d.source_region}</span> →{" "}
                             <span className="font-mono">{d.target_region}</span>
@@ -319,28 +442,114 @@ export function BackupConfigWizard({
           onNext={goNext}
           nextDisabled={!stepIsValid}
         >
-          <div className="grid gap-3 sm:grid-cols-2">
-            {BACKUP_TYPE_OPTIONS.map((opt) => {
-              const isSelected = form.backupType === opt.value;
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setForm({ ...form, backupType: opt.value })}
-                  className={`rounded-xl border p-4 text-left transition-all ${
-                    isSelected
-                      ? "border-primary-500 bg-primary-50 ring-1 ring-primary-500 dark:border-primary-400 dark:bg-primary-900/20"
-                      : "border-gray-200 bg-white hover:border-primary-300 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-primary-500"
-                  }`}
-                >
-                  <p className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
-                    <span aria-hidden="true">{opt.emoji}</span>
-                    {opt.label}
-                  </p>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{opt.desc}</p>
-                </button>
-              );
-            })}
+          <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-3">
+              {BACKUP_TYPE_OPTIONS.map((opt) => {
+                const isSelected = form.backupType === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setForm({ ...form, backupType: opt.value })}
+                    className={`rounded-xl border p-4 text-left transition-all ${
+                      isSelected
+                        ? "border-primary-500 bg-primary-50 ring-1 ring-primary-500 dark:border-primary-400 dark:bg-primary-900/20"
+                        : "border-gray-200 bg-white hover:border-primary-300 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-primary-500"
+                    }`}
+                  >
+                    <p className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      <span aria-hidden="true">{opt.emoji}</span>
+                      {opt.label}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{opt.desc}</p>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="flex items-start gap-2 rounded-xl border border-gray-200 bg-white p-4 text-sm dark:border-gray-700 dark:bg-gray-900">
+                <input
+                  type="checkbox"
+                  checked={form.includeDatabases}
+                  onChange={(e) => setForm({ ...form, includeDatabases: e.target.checked })}
+                  className="mt-0.5"
+                />
+                <span>
+                  <span className="block font-semibold text-gray-900 dark:text-gray-100">
+                    Include databases
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    Ask AnyCloudFlow to include database-aware dumps when the source supports them.
+                  </span>
+                </span>
+              </label>
+              <label className="flex items-start gap-2 rounded-xl border border-gray-200 bg-white p-4 text-sm dark:border-gray-700 dark:bg-gray-900">
+                <input
+                  type="checkbox"
+                  checked={form.encryption}
+                  onChange={(e) => setForm({ ...form, encryption: e.target.checked })}
+                  className="mt-0.5"
+                />
+                <span>
+                  <span className="block font-semibold text-gray-900 dark:text-gray-100">
+                    Encrypt backups
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    Keep backup data encrypted at rest.
+                  </span>
+                </span>
+              </label>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                  Include paths
+                </label>
+                <textarea
+                  value={form.includePaths}
+                  onChange={(e) => setForm({ ...form, includePaths: e.target.value })}
+                  rows={3}
+                  placeholder="/var/www&#10;/etc/nginx"
+                  className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 font-mono text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                  Exclude paths
+                </label>
+                <textarea
+                  value={form.excludePaths}
+                  onChange={(e) => setForm({ ...form, excludePaths: e.target.value })}
+                  rows={3}
+                  placeholder="/tmp&#10;/var/cache"
+                  className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 font-mono text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                />
+              </div>
+            </div>
+
+            <details className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm dark:border-gray-700 dark:bg-gray-800/50">
+              <summary className="cursor-pointer text-gray-700 dark:text-gray-300">
+                Pre and post backup scripts
+              </summary>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <textarea
+                  value={form.preBackupScript}
+                  onChange={(e) => setForm({ ...form, preBackupScript: e.target.value })}
+                  rows={3}
+                  placeholder="pre-backup script"
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 font-mono text-xs dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                />
+                <textarea
+                  value={form.postBackupScript}
+                  onChange={(e) => setForm({ ...form, postBackupScript: e.target.value })}
+                  rows={3}
+                  placeholder="post-backup script"
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 font-mono text-xs dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                />
+              </div>
+            </details>
           </div>
         </StoryStep>
       )}
@@ -354,7 +563,9 @@ export function BackupConfigWizard({
           onBack={goBack}
           onNext={submit}
           nextDisabled={!stepIsValid || isSubmitting}
-          nextLabel={isSubmitting ? "Setting up backups…" : "Start backing up"}
+          nextLabel={
+            isSubmitting ? "Saving…" : mode === "edit" ? "Save policy" : "Start backing up"
+          }
           isFinalStep
           reassurance="You can change this later — it'll affect new backups, not ones already saved."
         >
@@ -373,11 +584,47 @@ export function BackupConfigWizard({
                         : "border-gray-200 bg-white hover:border-primary-300 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-primary-500"
                     }`}
                   >
-                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{opt.label}</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      {opt.label}
+                    </p>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{opt.helper}</p>
                   </button>
                 );
               })}
+            </div>
+
+            <label className="flex items-start gap-2 rounded-xl border border-gray-200 bg-white p-4 text-sm dark:border-gray-700 dark:bg-gray-900">
+              <input
+                type="checkbox"
+                checked={form.compression}
+                onChange={(e) => setForm({ ...form, compression: e.target.checked })}
+                className="mt-0.5"
+              />
+              <span>
+                <span className="block font-semibold text-gray-900 dark:text-gray-100">
+                  Compress backups
+                </span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  Reduce storage and transfer size before data leaves the source.
+                </span>
+              </span>
+            </label>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                Immutable retention days
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={365}
+                value={form.immutableDays}
+                onChange={(e) => setForm({ ...form, immutableDays: Number(e.target.value) || 0 })}
+                className="mt-1 w-40 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Set to 0 when the destination should control immutability itself.
+              </p>
             </div>
 
             <dl className="space-y-2 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm dark:border-gray-700 dark:bg-gray-800/50">
@@ -388,7 +635,9 @@ export function BackupConfigWizard({
               <div className="flex justify-between">
                 <dt className="font-medium text-gray-600 dark:text-gray-400">Destination</dt>
                 <dd className="text-gray-900 dark:text-gray-100">
-                  {selectedDest?.name ?? "—"}
+                  {selectedDestinations.length > 0
+                    ? selectedDestinations.map((destination) => destination.name).join(", ")
+                    : "—"}
                 </dd>
               </div>
               <div className="flex justify-between">
@@ -414,13 +663,15 @@ export function BackupConfigWizard({
       <SuccessMoment
         open={submitted && !isSubmitting}
         onClose={onCancel}
-        title="Backups turned on!"
+        title={mode === "edit" ? "Backup policy updated!" : "Backups turned on!"}
         body={
-          selectedSchedule?.value === "hourly"
-            ? "Your first backup runs at the top of the next hour."
-            : selectedSchedule?.value === "weekly"
-              ? "Your first backup runs at the next Sunday 2:00 AM."
-              : "Your first backup runs tonight at 2:00 AM."
+          mode === "edit"
+            ? "Your backup policy changes are saved and will apply to the next run."
+            : selectedSchedule?.value === "hourly"
+              ? "Your first backup runs at the top of the next hour."
+              : selectedSchedule?.value === "weekly"
+                ? "Your first backup runs at the next Sunday 2:00 AM."
+                : "Your first backup runs tonight at 2:00 AM."
         }
         primaryCta={{ label: "Got it", onClick: onCancel }}
       />

@@ -11,6 +11,12 @@ import {
   evaluateConfigurationCompleteness,
   normalizePaymentOptions,
 } from "../utils/instanceCreationUtils";
+import {
+  PREVIEW_PRICING_DEBOUNCE_MS,
+  buildPreviewPricingPayload,
+  composeExpectedTotal,
+  extractPreviewPricingEstimate,
+} from "../utils/instancePreviewPricing";
 import { buildProvisioningSteps } from "../shared/components/instance-wizard/provisioningSteps";
 import { resolveCountryCodeFromEntity } from "./objectStorageUtils";
 import { useAsyncAction } from "../shared/hooks/useAsyncAction";
@@ -35,7 +41,14 @@ export const useClientProvisioningLogic = () => {
   // ─────────────────────────────────────────────────────────────────
   // Steps Configuration (Simplified for client)
   // ─────────────────────────────────────────────────────────────────
-  const steps = useMemo(() => buildProvisioningSteps("standard"), []);
+  // The client flow does not support protection plans yet: the order payload
+  // never carries the block and submit jumps services → payment, so keeping
+  // the step would show it in the stepper as "completed" without the user
+  // ever seeing it. Re-add once the client payload sends protection_plan.
+  const steps = useMemo(
+    () => buildProvisioningSteps("standard").filter((step) => step.id !== "protection"),
+    []
+  );
 
   const [activeStep, setActiveStep] = useState(0);
 
@@ -175,6 +188,57 @@ export const useClientProvisioningLogic = () => {
   }, [configurations, updateConfiguration]);
 
   // ─────────────────────────────────────────────────────────────────
+  // Pre-order pricing estimate
+  // ─────────────────────────────────────────────────────────────────
+  // Quote the configured order via POST /instances/preview-pricing (same
+  // engine the create endpoint bills with) so customers see a price while
+  // configuring instead of only after the order exists. Best-effort: any
+  // failure just leaves the estimate blank. Keyed on the serialized
+  // payload so any price-affecting edit invalidates the estimate before
+  // it can be displayed or price-locked.
+  const [pricingEstimate, setPricingEstimate] = useState<{
+    key: string;
+    total: number;
+    currency: string;
+  } | null>(null);
+
+  const previewPayloadKey = useMemo(() => {
+    const payload = buildPreviewPricingPayload(
+      configurations,
+      billingCountry,
+      (profile?.tenant_id as string | number | undefined) || undefined
+    );
+    return payload ? JSON.stringify(payload) : "";
+  }, [configurations, billingCountry, profile]);
+
+  useEffect(() => {
+    if (!previewPayloadKey) {
+      setPricingEstimate(null);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const response = await silentClientApi(
+          "POST",
+          "/business/instances/preview-pricing",
+          JSON.parse(previewPayloadKey) as Record<string, unknown>
+        );
+        const estimate = extractPreviewPricingEstimate(response);
+        if (!cancelled) {
+          setPricingEstimate(estimate ? { key: previewPayloadKey, ...estimate } : null);
+        }
+      } catch {
+        if (!cancelled) setPricingEstimate(null);
+      }
+    }, PREVIEW_PRICING_DEBOUNCE_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [previewPayloadKey]);
+
+  // ─────────────────────────────────────────────────────────────────
   // Order Creation & Submission
   // ─────────────────────────────────────────────────────────────────
   const createOrderAction = useAsyncAction();
@@ -246,6 +310,10 @@ export const useClientProvisioningLogic = () => {
                 : cfg.network_preset || "standard"
               : undefined,
             region: cfg.region || undefined,
+            // Per-AZ pricing + provisioning target: the backend resolves the
+            // provider and the priced products from this AZ. The admin/tenant
+            // builders already send it (useInstanceOrderCreation.buildPayload).
+            availability_zone: cfg.availability_zone || undefined,
             compute_instance_id: cfg.compute_instance_id,
             os_image_id: cfg.os_image_id,
             months: parsedMonths,
@@ -275,11 +343,20 @@ export const useClientProvisioningLogic = () => {
           };
         });
 
-        const payload = {
+        const payload: Record<string, unknown> = {
           country_iso: billingCountry,
           fast_track: false,
           pricing_requests,
         };
+
+        // Price lock (root CLAUDE.md convention): send the estimate the
+        // customer just reviewed in the sidebar as `expected_total` so
+        // InitiateMultiInstancesAction 409s on drift instead of charging
+        // a number they never saw. Only armed while the estimate still
+        // matches the current configuration.
+        if (pricingEstimate && pricingEstimate.key === previewPayloadKey) {
+          payload.expected_total = composeExpectedTotal(pricingEstimate.total);
+        }
 
         const response = (await clientApi(
           "POST",
@@ -356,6 +433,8 @@ export const useClientProvisioningLogic = () => {
     configurations,
     createOrderAction,
     paymentStepIndex,
+    pricingEstimate,
+    previewPayloadKey,
     reviewStepIndex,
     setActiveStep,
   ]);
@@ -388,6 +467,20 @@ export const useClientProvisioningLogic = () => {
     const txn = orderReceipt?.transaction as { amount?: number; currency?: string } | undefined;
     const ord = orderReceipt?.order as { total?: number } | undefined;
     const receiptTotal = Number(txn?.amount || ord?.total || 0) || 0;
+    // Before the order exists there is no receipt — fall back to the
+    // preview-pricing estimate so the customer sees a price while
+    // configuring. Flagged so the UI labels it as an estimate.
+    const hasReceiptTotals = totals.subtotal > 0 || totals.total > 0 || receiptTotal > 0;
+    if (!hasReceiptTotals && pricingEstimate) {
+      return {
+        subtotal: 0,
+        tax: 0,
+        gatewayFees: 0,
+        grandTotal: pricingEstimate.total,
+        currency: pricingEstimate.currency || (billingCountry === "NG" ? "NGN" : "USD"),
+        isEstimate: true,
+      };
+    }
     return {
       subtotal: totals.subtotal || receiptTotal,
       tax: totals.tax || 0,
@@ -397,8 +490,9 @@ export const useClientProvisioningLogic = () => {
         totals.currency ||
         txn?.currency ||
         (billingCountry === "NG" ? "NGN" : "USD"),
+      isEstimate: false,
     };
-  }, [orderReceipt, billingCountry]);
+  }, [orderReceipt, billingCountry, pricingEstimate]);
 
   // ─────────────────────────────────────────────────────────────────
   // Configuration Summaries for Review

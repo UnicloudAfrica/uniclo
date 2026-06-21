@@ -292,11 +292,13 @@ export const useInstanceManagementAction = () => {
       action,
       params = {},
       confirmed = false,
+      async: asyncMode = false,
     }: {
       identifier: Identifier;
       action: string;
       params?: AnyRecord;
       confirmed?: boolean;
+      async?: boolean;
     }) => {
       if (!identifier || !action) {
         throw new Error("Instance identifier and action are required.");
@@ -307,6 +309,7 @@ export const useInstanceManagementAction = () => {
           action,
           params,
           ...(confirmed ? { confirmed: true } : {}),
+          ...(asyncMode ? { async: true } : {}),
         })
       );
       if (!envelope.success) {

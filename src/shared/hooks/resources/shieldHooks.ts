@@ -284,7 +284,7 @@ export function useFetchProtectionStatus(
       const res = await silentApi.get(
         `${urlPrefix}/shield/domains/${domainId}/protection/status`
       );
-      return asEnvelope<ShieldProtectionStatus>(res.data).data;
+      return asEnvelope<ShieldProtectionStatus>(res).data;
     },
     enabled: !!domainId,
     ...options,
@@ -332,7 +332,7 @@ export function useFetchTrafficStats(
       const res = await silentApi.get(
         `${urlPrefix}/shield/domains/${domainId}/protection/stats`
       );
-      return asEnvelope<ShieldTrafficStats>(res.data).data;
+      return asEnvelope<ShieldTrafficStats>(res).data;
     },
     enabled: !!domainId,
     ...options,
@@ -349,7 +349,7 @@ export function useFetchAttacks(domainId: string, options?: QueryOptions) {
       const res = await silentApi.get(
         `${urlPrefix}/shield/domains/${domainId}/protection/attacks`
       );
-      return asEnvelope<ShieldAttack[]>(res.data).data ?? [];
+      return asEnvelope<ShieldAttack[]>(res).data ?? [];
     },
     enabled: !!domainId,
     ...options,
@@ -368,7 +368,7 @@ export function useFetchDnsRecords(domainId: string, options?: QueryOptions) {
       const res = await silentApi.get(
         `${urlPrefix}/shield/domains/${domainId}/dns`
       );
-      return asEnvelope<ShieldDnsRecord[]>(res.data).data ?? [];
+      return asEnvelope<ShieldDnsRecord[]>(res).data ?? [];
     },
     enabled: !!domainId,
     ...options,
@@ -388,6 +388,40 @@ export function useCreateDnsRecord() {
       const res = await toastApi.post(
         `${urlPrefix}/shield/domains/${domainId}/dns`,
         data
+      );
+      return asEnvelope(res.data);
+    },
+    onSuccess: (_, { domainId }) => {
+      queryClient.invalidateQueries({
+        queryKey: shieldKeys.dns(context, domainId),
+      });
+    },
+  });
+}
+
+/**
+ * Update a DNS record. Provider treats record type+name as immutable,
+ * so only content/ttl/priority are sent (matches the backend
+ * UpdateShieldDnsRecordRequest rules).
+ */
+export function useUpdateDnsRecord() {
+  const { context } = useApiContext();
+  const queryClient = useQueryClient();
+  const { toastApi, urlPrefix } = apiRegistry[context];
+
+  return useMutation({
+    mutationFn: async ({
+      domainId,
+      recordId,
+      record,
+    }: {
+      domainId: string;
+      recordId: string;
+      record: { content?: string; ttl?: number; priority?: number };
+    }) => {
+      const res = await toastApi.put(
+        `${urlPrefix}/shield/domains/${domainId}/dns/${recordId}`,
+        record
       );
       return asEnvelope(res.data);
     },
@@ -437,7 +471,7 @@ export function useFetchSslStatus(domainId: string, options?: QueryOptions) {
       const res = await silentApi.get(
         `${urlPrefix}/shield/domains/${domainId}/ssl`
       );
-      return asEnvelope<ShieldSslStatus>(res.data).data;
+      return asEnvelope<ShieldSslStatus>(res).data;
     },
     enabled: !!domainId,
     ...options,
@@ -510,7 +544,7 @@ export function useFetchFirewallRules(
       const res = await silentApi.get(
         `${urlPrefix}/shield/domains/${domainId}/firewall`
       );
-      return asEnvelope<ShieldFirewallRule[]>(res.data).data ?? [];
+      return asEnvelope<ShieldFirewallRule[]>(res).data ?? [];
     },
     enabled: !!domainId,
     ...options,
@@ -530,6 +564,39 @@ export function useCreateFirewallRule() {
       const res = await toastApi.post(
         `${urlPrefix}/shield/domains/${domainId}/firewall`,
         data
+      );
+      return asEnvelope(res.data);
+    },
+    onSuccess: (_, { domainId }) => {
+      queryClient.invalidateQueries({
+        queryKey: shieldKeys.firewall(context, domainId),
+      });
+    },
+  });
+}
+
+/**
+ * Update a firewall rule. All fields are editable (matches the backend
+ * UpdateFirewallRuleRequest rules).
+ */
+export function useUpdateFirewallRule() {
+  const { context } = useApiContext();
+  const queryClient = useQueryClient();
+  const { toastApi, urlPrefix } = apiRegistry[context];
+
+  return useMutation({
+    mutationFn: async ({
+      domainId,
+      ruleId,
+      rule,
+    }: {
+      domainId: string;
+      ruleId: string;
+      rule: { expression?: string; action?: string; description?: string; priority?: number };
+    }) => {
+      const res = await toastApi.put(
+        `${urlPrefix}/shield/domains/${domainId}/firewall/${ruleId}`,
+        rule
       );
       return asEnvelope(res.data);
     },
@@ -583,7 +650,7 @@ export function useFetchIpRules(
       const res = await silentApi.get(
         `${urlPrefix}/shield/domains/${domainId}/ip-rules/${listType}`
       );
-      return asEnvelope<ShieldIpRule[]>(res.data).data ?? [];
+      return asEnvelope<ShieldIpRule[]>(res).data ?? [];
     },
     enabled: !!domainId && !!listType,
     ...options,
@@ -661,7 +728,7 @@ export function useFetchGeoFilter(domainId: string, options?: QueryOptions) {
       const res = await silentApi.get(
         `${urlPrefix}/shield/domains/${domainId}/geo-filter`
       );
-      return asEnvelope<ShieldGeoFilter>(res.data).data;
+      return asEnvelope<ShieldGeoFilter>(res).data;
     },
     enabled: !!domainId,
     ...options,
@@ -707,7 +774,7 @@ export function useFetchShieldOverview(options?: QueryOptions) {
     queryKey: shieldKeys.overview(context),
     queryFn: async () => {
       const res = await silentApi.get(`${urlPrefix}/shield/overview`);
-      return asEnvelope<ShieldOverview>(res.data).data;
+      return asEnvelope<ShieldOverview>(res).data;
     },
     ...options,
   });
@@ -721,7 +788,7 @@ export function useFetchShieldProviders(options?: QueryOptions) {
     queryKey: shieldKeys.providers(context),
     queryFn: async () => {
       const res = await silentApi.get(`${urlPrefix}/shield/providers`);
-      return asEnvelope<ShieldProviderInfo[]>(res.data).data ?? [];
+      return asEnvelope<ShieldProviderInfo[]>(res).data ?? [];
     },
     ...options,
   });
@@ -735,7 +802,7 @@ export function useFetchShieldPlans(options?: QueryOptions) {
     queryKey: shieldKeys.plans(context),
     queryFn: async () => {
       const res = await silentApi.get(`${urlPrefix}/shield/plans`);
-      return asEnvelope<ShieldPlan[]>(res.data).data ?? [];
+      return asEnvelope<ShieldPlan[]>(res).data ?? [];
     },
     ...options,
   });
@@ -762,7 +829,7 @@ export function useFetchAttackMap(
       const res = await silentApi.get(
         `${urlPrefix}/shield/attack-map${q ? `?${q}` : ""}`
       );
-      return asEnvelope<AttackMapData>(res.data).data;
+      return asEnvelope<AttackMapData>(res).data;
     },
     ...options,
   });
@@ -787,7 +854,7 @@ export function useFetchDomainAnalytics(
       const res = await silentApi.get(
         `${urlPrefix}/shield/domains/${domainId}/analytics${q ? `?${q}` : ""}`
       );
-      return asEnvelope<DomainAnalyticsData>(res.data).data;
+      return asEnvelope<DomainAnalyticsData>(res).data;
     },
     enabled: !!domainId,
     ...options,

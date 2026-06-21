@@ -12,6 +12,12 @@ import {
   evaluateConfigurationCompleteness,
   normalizePaymentOptions,
 } from "../utils/instanceCreationUtils";
+import {
+  PREVIEW_PRICING_DEBOUNCE_MS,
+  buildPreviewPricingPayload,
+  composeExpectedTotal,
+  extractPreviewPricingEstimate,
+} from "../utils/instancePreviewPricing";
 import { useTenantCustomerContext } from "./tenantHooks/useTenantCustomerContext";
 import { buildProvisioningSteps } from "../shared/components/instance-wizard/provisioningSteps";
 import { resolveCountryCodeFromEntity } from "./objectStorageUtils";
@@ -21,7 +27,38 @@ import { useAsyncAction } from "../shared/hooks/useAsyncAction";
 // TENANT INSTANCE CREATION LOGIC HOOK
 // ═══════════════════════════════════════════════════════════════════
 
-export const useTenantProvisioningLogic = () => {
+export interface TenantProvisioningProtectionPlan {
+  plan: string;
+  monthlyCost: number;
+  redundancyPattern?: string;
+}
+
+/**
+ * Build the order payload's protection_plan block (admin parity:
+ * useInstanceOrderCreation.buildPayload). Returns null for no/none plan so
+ * the payload omits the key entirely. Exported for unit tests per the
+ * module-scope-helper convention (web/CLAUDE.md).
+ */
+export const buildProtectionPlanPayload = (
+  protectionPlan?: TenantProvisioningProtectionPlan
+): Record<string, unknown> | null => {
+  if (!protectionPlan || !protectionPlan.plan || protectionPlan.plan === "none") {
+    return null;
+  }
+  const isDrPlan = ["dr_standby", "dr_replication"].includes(protectionPlan.plan);
+  return {
+    plan: protectionPlan.plan,
+    monthly_cost: protectionPlan.monthlyCost || 0,
+    ...(isDrPlan && protectionPlan.redundancyPattern
+      ? { redundancy_pattern: protectionPlan.redundancyPattern }
+      : {}),
+  };
+};
+
+export const useTenantProvisioningLogic = (options?: {
+  protectionPlan?: TenantProvisioningProtectionPlan;
+}) => {
+  const protectionPlan = options?.protectionPlan;
   const [searchParams, setSearchParams] = useSearchParams();
 
   // ─────────────────────────────────────────────────────────────────
@@ -112,10 +149,14 @@ export const useTenantProvisioningLogic = () => {
 
     // 1. Resolve based on context selection (if acting as a Partner/Reseller)
     if (contextType === "tenant" && selectedTenantId) {
-      const selected = tenants.find((t: { id?: string | number }) => String(t.id) === String(selectedTenantId));
+      const selected = tenants.find(
+        (t: { id?: string | number }) => String(t.id) === String(selectedTenantId)
+      );
       candidate = resolveCountryCodeFromEntity(selected, countryOptions as never);
     } else if (contextType === "user" && selectedUserId) {
-      const selected = userPool.find((u: { id?: string | number }) => String(u.id) === String(selectedUserId));
+      const selected = userPool.find(
+        (u: { id?: string | number }) => String(u.id) === String(selectedUserId)
+      );
       candidate = resolveCountryCodeFromEntity(selected, countryOptions as never);
     }
 
@@ -191,9 +232,7 @@ export const useTenantProvisioningLogic = () => {
     () =>
       generalRegions
         .filter((region) => region?.can_fast_track === true)
-        .map((region) =>
-          String(region?.code || region?.region || region?.slug || region?.id || "")
-        )
+        .map((region) => String(region?.code || region?.region || region?.slug || region?.id || ""))
         .filter((s): s is string => Boolean(s)),
     [generalRegions]
   );
@@ -300,6 +339,70 @@ export const useTenantProvisioningLogic = () => {
     },
     [configurations, fastTrackRegions, setConfigurations, setSearchParams]
   );
+
+  // ─────────────────────────────────────────────────────────────────
+  // Pre-order pricing estimate
+  // ─────────────────────────────────────────────────────────────────
+  // Quote the configured order via POST /admin/instances/preview-pricing
+  // (same engine the create endpoint bills with) so operators see a price
+  // while configuring instead of only after the order exists. Best-effort
+  // and standard-mode only (fast-track skips payment, so the wizard
+  // intentionally shows no totals there). Keyed on the serialized payload
+  // so any price-affecting edit invalidates the estimate before it can be
+  // displayed or price-locked.
+  const [pricingEstimate, setPricingEstimate] = useState<{
+    key: string;
+    total: number;
+    currency: string;
+  } | null>(null);
+
+  // The order is prepaid upfront for its term, so the protection fee is billed
+  // fee × months. Use the longest config term the plan protects, matching the
+  // backend's per-order resolution.
+  const orderTermMonths = useMemo(
+    () => configurations.reduce((max, cfg) => Math.max(max, Number(cfg.months) || 1), 1),
+    [configurations]
+  );
+
+  const previewPayloadKey = useMemo(() => {
+    if (isFastTrack) return "";
+    // Mirror the create action's tenant resolution: explicit selection
+    // first, otherwise the actor's own tenant — tenant price overrides
+    // would otherwise make the estimate drift from the billed total.
+    const pricingTenantId =
+      (contextType === "tenant" || contextType === "user" ? selectedTenantId : "") ||
+      (selfTenant?.id as string | number | undefined) ||
+      undefined;
+    const payload = buildPreviewPricingPayload(configurations, billingCountry, pricingTenantId);
+    return payload ? JSON.stringify(payload) : "";
+  }, [isFastTrack, contextType, selectedTenantId, selfTenant?.id, configurations, billingCountry]);
+
+  useEffect(() => {
+    if (!previewPayloadKey) {
+      setPricingEstimate(null);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const response = await silentApi(
+          "POST",
+          "/admin/instances/preview-pricing",
+          JSON.parse(previewPayloadKey) as Record<string, unknown>
+        );
+        const estimate = extractPreviewPricingEstimate(response);
+        if (!cancelled) {
+          setPricingEstimate(estimate ? { key: previewPayloadKey, ...estimate } : null);
+        }
+      } catch {
+        if (!cancelled) setPricingEstimate(null);
+      }
+    }, PREVIEW_PRICING_DEBOUNCE_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [previewPayloadKey]);
 
   // ─────────────────────────────────────────────────────────────────
   // Order Creation & Submission
@@ -417,6 +520,26 @@ export const useTenantProvisioningLogic = () => {
           fast_track: isFastTrack,
           pricing_requests,
         };
+        // Forward the protection plan the user selected in the Protection
+        // step — without this block the fee is displayed but never billed.
+        // The backend rejects paid plans with no resolvable price.
+        const protectionPlanPayload = buildProtectionPlanPayload(protectionPlan);
+        if (protectionPlanPayload) {
+          payload.protection_plan = protectionPlanPayload;
+        }
+        // Price lock (root CLAUDE.md convention): send the estimate the
+        // operator just reviewed in the sidebar as `expected_total` so
+        // InitiateMultiInstancesAction 409s on drift instead of charging
+        // a number they never saw. The backend adds the protection fee to
+        // the grand total before the guard runs, so fold it in here. Only
+        // armed while the estimate still matches the configuration.
+        if (!isFastTrack && pricingEstimate && pricingEstimate.key === previewPayloadKey) {
+          payload.expected_total = composeExpectedTotal(
+            pricingEstimate.total,
+            Number(protectionPlanPayload?.monthly_cost) || 0,
+            orderTermMonths
+          );
+        }
         if (contextType === "tenant" && selectedTenantId) {
           payload.tenant_id = selectedTenantId;
         } else if (contextType === "user" && selectedUserId) {
@@ -426,7 +549,11 @@ export const useTenantProvisioningLogic = () => {
           }
         }
 
-        const response = await tenantApi<{ data?: unknown }>("POST", "/admin/instances/create", payload);
+        const response = await tenantApi<{ data?: unknown }>(
+          "POST",
+          "/admin/instances/create",
+          payload
+        );
         const data = ((response?.data || response) as Record<string, unknown>) || {};
         const payment = data.payment as Record<string, unknown> | undefined;
         const transaction = data.transaction as Record<string, unknown> | undefined;
@@ -513,11 +640,14 @@ export const useTenantProvisioningLogic = () => {
     configurations,
     billingCountry,
     isFastTrack,
+    protectionPlan,
     fastTrackRegions,
     contextType,
     selectedTenantId,
     selectedUserId,
     paymentStepIndex,
+    pricingEstimate,
+    previewPayloadKey,
     reviewStepIndex,
     steps.length,
   ]);
@@ -544,6 +674,7 @@ export const useTenantProvisioningLogic = () => {
         gatewayFees: 0,
         grandTotal: 0,
         currency: billingCountry === "NG" ? "NGN" : "USD",
+        isEstimate: false,
       };
     }
     type Totals = { subtotal: number; tax: number; total: number; currency: string };
@@ -564,17 +695,36 @@ export const useTenantProvisioningLogic = () => {
     const txn = orderReceipt?.transaction as { amount?: number; currency?: string } | undefined;
     const ord = orderReceipt?.order as { total?: number } | undefined;
     const receiptTotal = Number(txn?.amount || ord?.total || 0) || 0;
+    // Before the order exists there is no receipt — fall back to the
+    // preview-pricing estimate so the operator sees a price while
+    // configuring. Flagged so the UI labels it as an estimate.
+    const hasReceiptTotals = totals.subtotal > 0 || totals.total > 0 || receiptTotal > 0;
+    if (!hasReceiptTotals && pricingEstimate) {
+      return {
+        subtotal: 0,
+        tax: 0,
+        gatewayFees: 0,
+        // Fold the protection-plan fee (× term) into the displayed estimate —
+        // the backend bills it the same way at submit, matching the
+        // expected_total computation above.
+        grandTotal: composeExpectedTotal(
+          pricingEstimate.total,
+          Number(protectionPlan?.monthlyCost) || 0,
+          orderTermMonths
+        ),
+        currency: pricingEstimate.currency || (billingCountry === "NG" ? "NGN" : "USD"),
+        isEstimate: true,
+      };
+    }
     return {
       subtotal: totals.subtotal || receiptTotal,
       tax: totals.tax || 0,
       gatewayFees: 0,
       grandTotal: totals.total || receiptTotal,
-      currency:
-        totals.currency ||
-        txn?.currency ||
-        (billingCountry === "NG" ? "NGN" : "USD"),
+      currency: totals.currency || txn?.currency || (billingCountry === "NG" ? "NGN" : "USD"),
+      isEstimate: false,
     };
-  }, [orderReceipt, billingCountry, isFastTrack]);
+  }, [orderReceipt, billingCountry, isFastTrack, pricingEstimate, protectionPlan, orderTermMonths]);
 
   // ─────────────────────────────────────────────────────────────────
   // Configuration Summaries for Review

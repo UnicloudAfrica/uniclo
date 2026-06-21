@@ -26,11 +26,11 @@ const RESTORE_METHODS = [
     enabled: true,
   },
   {
-    value: "to_new",
-    label: "Restore to New",
-    description: "Coming soon",
+    value: "to_target",
+    label: "Restore to Target",
+    description: "Restore into another AnyCloudFlow endpoint",
     icon: Server,
-    enabled: false,
+    enabled: true,
   },
 ];
 
@@ -42,6 +42,7 @@ const RestoreSnapshotModal: React.FC<RestoreSnapshotModalProps> = ({
   integrationKey = "anycloudflow",
 }) => {
   const [restoreMethod, setRestoreMethod] = useState("in_place");
+  const [targetEndpointIdentifier, setTargetEndpointIdentifier] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   // Top-rung destructive action — replaces live data and there's no
   // undo. Per the destructive-action ladder we gate it on a typed
@@ -55,6 +56,7 @@ const RestoreSnapshotModal: React.FC<RestoreSnapshotModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setRestoreMethod("in_place");
+      setTargetEndpointIdentifier("");
       setConfirmed(false);
       setConfirmText("");
     }
@@ -62,19 +64,29 @@ const RestoreSnapshotModal: React.FC<RestoreSnapshotModalProps> = ({
 
   if (!isOpen || !snapshot) return null;
 
-  const snapshotId = (snapshot.identifier ?? snapshot.external_operation_id ?? snapshot.id) as string;
+  const snapshotId = (snapshot.identifier ??
+    snapshot.external_operation_id ??
+    snapshot.id) as string;
   const completedAt = snapshot.completed_at as string | undefined;
   const config = (snapshot.config ?? {}) as Record<string, unknown>;
   const backupType = (config.backup_type as string) ?? "full";
 
   const handleRestore = () => {
+    const options: Record<string, unknown> = {
+      restore_method: restoreMethod,
+      restore_type: "full",
+    };
+    if (restoreMethod === "to_target") {
+      options.target_endpoint_identifier = targetEndpointIdentifier.trim();
+    }
+
     restoreBackup.mutate(
       {
         integrationKey,
         snapshotId,
-        options: { restore_method: restoreMethod },
+        options,
       },
-      { onSuccess: () => onClose() },
+      { onSuccess: () => onClose() }
     );
   };
 
@@ -84,7 +96,9 @@ const RestoreSnapshotModal: React.FC<RestoreSnapshotModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-gray-800 sm:px-6">
           <div className="flex items-center gap-3">
-            <span aria-hidden="true" className="text-2xl">⏮️</span>
+            <span aria-hidden="true" className="text-2xl">
+              ⏮️
+            </span>
             <div>
               <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
                 Roll back to this snapshot
@@ -92,10 +106,13 @@ const RestoreSnapshotModal: React.FC<RestoreSnapshotModalProps> = ({
               {resourceName ? (
                 <p className="text-xs text-gray-500 dark:text-gray-400">For {resourceName}</p>
               ) : (
-                <p className="text-xs text-gray-500 dark:text-gray-400">Brings everything back to how it was at the snapshot.</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Brings everything back to how it was at the snapshot.
+                </p>
               )}
             </div>
           </div>
+
           <button
             onClick={onClose}
             className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
@@ -115,9 +132,7 @@ const RestoreSnapshotModal: React.FC<RestoreSnapshotModalProps> = ({
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Date</p>
                 <p className="mt-0.5 text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {completedAt
-                    ? new Date(completedAt).toLocaleString()
-                    : "Unknown"}
+                  {completedAt ? new Date(completedAt).toLocaleString() : "Unknown"}
                 </p>
               </div>
               <div>
@@ -172,12 +187,31 @@ const RestoreSnapshotModal: React.FC<RestoreSnapshotModalProps> = ({
             </div>
           </div>
 
+          {restoreMethod === "to_target" && (
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Target endpoint identifier
+              </label>
+              <input
+                type="text"
+                value={targetEndpointIdentifier}
+                onChange={(e) => setTargetEndpointIdentifier(e.target.value)}
+                placeholder="vm_xxx"
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 font-mono text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+              />
+            </div>
+          )}
+
           {/* Warning */}
           <div className="flex items-start gap-2 rounded-lg bg-warning-50 px-4 py-3 dark:bg-warning-900/20">
-            <AlertTriangle size={16} className="mt-0.5 shrink-0 text-warning-600 dark:text-warning-400" />
+            <AlertTriangle
+              size={16}
+              className="mt-0.5 shrink-0 text-warning-600 dark:text-warning-400"
+            />
             <p className="text-xs text-warning-700 dark:text-warning-300">
-              <strong>Heads up:</strong> this replaces what's there now with what was in the snapshot.
-              Anything written since the snapshot was taken will be gone — and we can't undo this once it starts.
+              <strong>Heads up:</strong> this replaces what's there now with what was in the
+              snapshot. Anything written since the snapshot was taken will be gone — and we can't
+              undo this once it starts.
             </p>
           </div>
 
@@ -201,9 +235,8 @@ const RestoreSnapshotModal: React.FC<RestoreSnapshotModalProps> = ({
                 htmlFor="restore-confirm-input"
                 className="block text-xs font-medium text-warning-800 dark:text-warning-200"
               >
-                One last step — type{" "}
-                <span className="font-mono font-bold">{REQUIRED_CONFIRM}</span> to unlock the
-                button.
+                One last step — type <span className="font-mono font-bold">{REQUIRED_CONFIRM}</span>{" "}
+                to unlock the button.
               </label>
               <input
                 id="restore-confirm-input"
@@ -232,7 +265,12 @@ const RestoreSnapshotModal: React.FC<RestoreSnapshotModalProps> = ({
           <ModernButton
             variant="primary"
             onClick={handleRestore}
-            disabled={!confirmed || confirmText !== REQUIRED_CONFIRM || restoreBackup.isPending}
+            disabled={
+              !confirmed ||
+              confirmText !== REQUIRED_CONFIRM ||
+              restoreBackup.isPending ||
+              (restoreMethod === "to_target" && targetEndpointIdentifier.trim().length === 0)
+            }
           >
             {restoreBackup.isPending ? "Rolling back…" : "Yes, roll back now"}
           </ModernButton>

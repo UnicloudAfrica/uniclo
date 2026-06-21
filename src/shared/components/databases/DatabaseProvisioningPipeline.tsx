@@ -6,6 +6,8 @@ import React, { useState, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
+  ChevronDown,
+  ChevronUp,
   AlertTriangle,
   Check,
   CheckCircle2,
@@ -385,7 +387,7 @@ const CredentialsPanel: React.FC<{
       </div>
 
       {showCredentials && creds ? (
-        <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
           <div className="space-y-4">
             {connStr && <CopyableCodeField label="Connection String" value={connStr} />}
             <div className="grid gap-4 xl:grid-cols-2">
@@ -483,6 +485,7 @@ const DatabaseProvisioningPipeline: React.FC<DatabaseProvisioningPipelineProps> 
   const totalCount = mergedSteps.length;
   const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   const hasFailed = mergedSteps.some((step) => step.status === "failed") || db?.status === "error";
+  const [stepsExpanded, setStepsExpanded] = useState(false);
 
   const currentStep = useMemo(
     () =>
@@ -520,7 +523,7 @@ const DatabaseProvisioningPipeline: React.FC<DatabaseProvisioningPipelineProps> 
   return (
     <div className="space-y-6">
       <section className="db-surface-hero rounded-[32px] p-6">
-        <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
           <div className="space-y-5">
             <div className="db-brand-pill inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] shadow-sm">
               <Sparkles size={14} />
@@ -636,7 +639,7 @@ const DatabaseProvisioningPipeline: React.FC<DatabaseProvisioningPipelineProps> 
         </div>
 
         {stepError && (
-          <div className="mt-6 rounded-[24px] border border-red-200 bg-red-50/90 px-4 py-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+          <div className="mt-6 rounded-[24px] border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
             <div className="flex items-start gap-3">
               <AlertTriangle size={18} className="mt-0.5 shrink-0" />
               <div>
@@ -653,16 +656,45 @@ const DatabaseProvisioningPipeline: React.FC<DatabaseProvisioningPipelineProps> 
           <div>
             <h3 className="text-lg font-semibold text-[var(--theme-heading-color)]">Pipeline Steps</h3>
             <p className="text-sm text-[var(--theme-muted-color)]">
-              Every step is backed by the provider progress payload and refreshed in real time.
+              {completedCount}/{totalCount} steps complete · provider-synced in real time.
             </p>
           </div>
-          <div className="db-muted-pill inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium">
-            <Activity size={14} />
-            Provider-synced telemetry
-          </div>
+          <button
+            type="button"
+            onClick={() => setStepsExpanded((v) => !v)}
+            aria-expanded={stepsExpanded}
+            className="db-muted-pill inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium transition hover:opacity-80"
+          >
+            {stepsExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            {stepsExpanded ? "Hide steps" : `Show all ${totalCount} steps`}
+          </button>
         </div>
 
-        <div className="grid gap-4 2xl:grid-cols-2">
+        {!stepsExpanded && (
+          <button
+            type="button"
+            onClick={() => setStepsExpanded(true)}
+            className="db-surface-inset flex w-full items-center gap-4 rounded-[22px] px-5 py-4 text-left transition hover:opacity-90"
+          >
+            <div className="flex-1">
+              <div className="mb-2 flex items-center justify-between text-sm">
+                <span className="font-medium text-[var(--theme-heading-color)]">
+                  {currentStep ? `Current: ${currentStep.label}` : "All steps complete"}
+                </span>
+                <span className="text-[var(--theme-muted-color)]">{progressPct}%</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+                <div
+                  className="h-full rounded-full bg-[var(--theme-color)] transition-all"
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+            </div>
+            <ChevronDown size={18} className="shrink-0 text-[var(--theme-muted-color)]" />
+          </button>
+        )}
+        {stepsExpanded && (
+        <div className="grid gap-4 xl:grid-cols-2">
           {mergedSteps.map((step, index) => {
             const context = asRecord(step.context);
             const readinessContext = asRecord(context.readiness);
@@ -672,17 +704,19 @@ const DatabaseProvisioningPipeline: React.FC<DatabaseProvisioningPipelineProps> 
               formatDateTime(context.checked_at),
             ].filter(Boolean) as string[];
 
+            // NOTE: base backgrounds must be plain (no /opacity) so dark mode
+            // converts them — neutral `bg-slate-50` is remapped by the global
+            // [data-theme="dark"] rules, and colored tints rely on their
+            // explicit `dark:` variant. Opacity-modified light classes
+            // (`bg-emerald-50/60`) are caught by neither and stay light.
             const toneClasses = {
               completed:
-                "border-emerald-200/80 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/20",
+                "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30",
               in_progress:
-                "border-sky-200/80 bg-sky-50/60 shadow-[0_18px_50px_-36px_rgba(14,165,233,0.45)] dark:border-sky-900 dark:bg-sky-950/20",
-              failed:
-                "border-red-200/80 bg-red-50/60 dark:border-red-900 dark:bg-red-950/20",
-              warning:
-                "border-amber-200/80 bg-amber-50/60 dark:border-amber-900 dark:bg-amber-950/20",
-              pending:
-                "border-slate-200/80 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/60",
+                "border-sky-200 bg-sky-50 shadow-[0_18px_50px_-36px_rgba(14,165,233,0.45)] dark:border-sky-900 dark:bg-sky-950/30",
+              failed: "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30",
+              warning: "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30",
+              pending: "border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/60",
             } as const;
 
             return (
@@ -749,6 +783,7 @@ const DatabaseProvisioningPipeline: React.FC<DatabaseProvisioningPipelineProps> 
             );
           })}
         </div>
+        )}
       </section>
 
       {db?.status === "active" && (

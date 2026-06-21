@@ -92,6 +92,7 @@ const TenantPayoutsPage = lazy(() => import("../tenantDashboard/pages/TenantPayo
 const TenantBillingSettings = lazy(() => import("../tenantDashboard/pages/TenantBillingSettings"));
 const TenantCoupons = lazy(() => import("../tenantDashboard/pages/TenantCoupons"));
 const TenantDunningSettings = lazy(() => import("../tenantDashboard/pages/TenantDunningSettings"));
+const TenantMoveMyEmail = lazy(() => import("../tenantDashboard/pages/TenantMoveMyEmail"));
 const TenantPocTrials = lazy(() => import("../tenantDashboard/pages/TenantPocTrials"));
 import TenantProtection from "../dashboard/pages/TenantProtection";
 import TenantMigrations from "../dashboard/pages/TenantMigrations";
@@ -466,6 +467,7 @@ const TenantRoutes = (): JSX.Element => (
         <Route path="/dashboard/discounts" element={<TenantDiscountManager />} />
         <Route path="/dashboard/coupons" element={<TenantCoupons />} />
         <Route path="/dashboard/dunning" element={<TenantDunningSettings />} />
+        <Route path="/dashboard/move-my-email" element={<TenantMoveMyEmail />} />
         <Route path="/dashboard/payouts" element={<TenantPayoutsPage />} />
         <Route path="/dashboard/billing" element={<TenantBillingSettings />} />
         <Route path="/dashboard/poc-trials" element={<TenantPocTrials />} />

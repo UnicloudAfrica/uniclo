@@ -41,6 +41,10 @@ export const useElasticIps = (
     },
     enabled:
       isAuthenticated && !!projectId && (isAdmin || !!resolvedRegion) && options?.enabled !== false,
+    // The project EIP list rarely changes between views and feeds the always-visible
+    // instance hero; treat it as fresh for a minute so revisits/refocus don't refetch.
+    // Mutations (allocate/associate/disassociate) call refetch() explicitly, bypassing this.
+    staleTime: 60_000,
   });
 };
 

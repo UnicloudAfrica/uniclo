@@ -1,5 +1,10 @@
-import { useState, useMemo, useCallback } from "react";
-import { ServiceProfile, resolveTierQuota, GLOBAL_TIER_KEY } from "../objectStorageUtils";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import {
+  ServiceProfile,
+  resolveTierQuota,
+  resolveAutoSelectTierKey,
+  GLOBAL_TIER_KEY,
+} from "../objectStorageUtils";
 import { useObjectStorageFormState } from "../useObjectStorageFormState";
 import {
   useObjectStoragePricing,
@@ -139,6 +144,18 @@ export const useObjectStorageLogic = (
     },
     [serviceProfiles, tierCatalog, updateProfile]
   );
+
+  // When the catalog offers exactly one tier (the per-GiB contract for object
+  // storage), pre-select it so users never face a one-item dropdown. Runs
+  // again whenever a region/AZ change resets tierKey or the catalog reloads.
+  useEffect(() => {
+    serviceProfiles.forEach((profile) => {
+      const autoTierKey = resolveAutoSelectTierKey(profile, tierCatalog);
+      if (autoTierKey) {
+        handleTierChange(profile.id, autoTierKey);
+      }
+    });
+  }, [serviceProfiles, tierCatalog, handleTierChange]);
 
   // ---- Order / Payment State (lifted up to break circular dependency) ----
   const [lastOrderSummary, setLastOrderSummary] = useState<ObjectStorageOrderSummary | null>(null);

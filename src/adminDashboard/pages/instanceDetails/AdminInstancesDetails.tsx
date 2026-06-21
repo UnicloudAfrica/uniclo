@@ -64,9 +64,9 @@ import {
   useCloseAlarm,
 } from "@/shared/hooks/resources/instanceHooks";
 import {
-  useAdminFetchInstanceConsoleById,
   useAdminFetchInstanceLifecycleById,
 } from "@/hooks/sharedResourceHooks";
+import EmbeddedConsole, { useConsoleManager } from "@/components/Console/EmbeddedConsole";
 import InstanceResizeModal from "@/shared/components/instances/InstanceResizeModal";
 
 import type {
@@ -168,7 +168,6 @@ const AdminInstancesDetails = () => {
     tags: "",
   });
   const [pendingAction, setPendingAction] = useState<string | null>(null);
-  const [isConsoleLoading, setIsConsoleLoading] = useState(false);
   const [_isAutoSyncing, setIsAutoSyncing] = useState(false);
   const [showAttachEipModal, setShowAttachEipModal] = useState(false);
   const [showResizeModal, setShowResizeModal] = useState(false);
@@ -228,10 +227,9 @@ const AdminInstancesDetails = () => {
   } = useAdminFetchInstanceLifecycleById(instanceIdentifier);
   const lifecycleData = lifecycleDataRaw as LifecycleData | LifecycleData[] | null;
 
-  const { refetch: fetchConsoleUrl, isFetching: isConsoleFetching } =
-    useAdminFetchInstanceConsoleById(consoleResourceId, {
-      enabled: false,
-    });
+  // Connect opens the shared multi-tab console (VNC / SPICE / RDP / serial / SSH),
+  // the same widget used on the instances list — no separate VNC-only window.
+  const { consoles, openConsole, closeConsole } = useConsoleManager();
 
   const { mutateAsync: executeActionMutation, isPending: isActionMutating } =
     useInstanceManagementAction();
@@ -252,7 +250,8 @@ const AdminInstancesDetails = () => {
   } = useInstanceLogs(
     instanceIdentifier ?? "",
     { lines: logLines },
-    { enabled: !!instanceIdentifier }
+    // Console logs only render inside the Events tab — don't fetch on initial load.
+    { enabled: !!instanceIdentifier && activeTab === "events" }
   );
   const logsData = (logsDataRaw as GenericRecord | null) ?? null;
 
@@ -260,14 +259,16 @@ const AdminInstancesDetails = () => {
   const { data: providerEventsRaw } = useInstanceEvents(
     instanceIdentifier ?? "",
     { limit: 100 },
-    { enabled: !!instanceIdentifier }
+    // Provider events only render inside the Events tab.
+    { enabled: !!instanceIdentifier && activeTab === "events" }
   );
   const providerEvents = (providerEventsRaw as GenericRecord | null) ?? null;
 
   const { data: providerAlarmsRaw } = useInstanceAlarms(
     instanceIdentifier ?? "",
     {},
-    { enabled: !!instanceIdentifier }
+    // Alarms render in the Events tab (summary) and the Alarms tab.
+    { enabled: !!instanceIdentifier && (activeTab === "events" || activeTab === "alarms") }
   );
   const providerAlarms = (providerAlarmsRaw as GenericRecord | null) ?? null;
 
@@ -376,8 +377,10 @@ const AdminInstancesDetails = () => {
 
       try {
         await refreshStatusMutation(instanceIdentifier);
-        const refreshed = await refetchManagement();
-        await refetchLifecycle();
+        // Refresh first (provider updates status), then read management + lifecycle
+        // concurrently — they're independent GETs; awaiting in series doubled the
+        // per-poll latency for no reason.
+        const [refreshed] = await Promise.all([refetchManagement(), refetchLifecycle()]);
         const refreshedData = (refreshed as unknown as GenericRecord | undefined)?.["data"] as
           | GenericRecord
           | undefined;
@@ -879,6 +882,14 @@ const AdminInstancesDetails = () => {
       }
       setPendingAction(actionKey);
       try {
+        // Power actions run synchronously: the provider accepts a start/stop/reboot
+        // command in ~1-2s (it's the resulting state change that takes time), so this
+        // isn't slow — and unlike the queued path it executes reliably even when no
+        // queue worker is draining the async queue. The poll converges the status.
+        const isPowerAction = [
+          "start", "stop", "force_stop", "reboot",
+          "guest_reboot", "suspend", "hibernate", "resume",
+        ].includes(actionKey);
         await executeActionMutation({
           identifier: instanceIdentifier,
           action: actionKey,
@@ -886,7 +897,7 @@ const AdminInstancesDetails = () => {
           confirmed,
         } as { identifier: typeof instanceIdentifier });
         ToastUtils.success(`${formatStatusText(actionKey)} initiated.`);
-        if (actionKey === "retry_provisioning") {
+        if (actionKey === "retry_provisioning" || isPowerAction) {
           startProvisioningPoll();
         }
         await Promise.all([refetchManagement(), refetchLifecycle()]);
@@ -912,33 +923,15 @@ const AdminInstancesDetails = () => {
     ]
   );
 
-  const handleOpenConsole = useCallback(async () => {
+  const handleOpenConsole = useCallback(() => {
     if (!consoleResourceId) {
       ToastUtils.error("Instance reference not available for console access.");
       return;
     }
-    try {
-      setIsConsoleLoading(true);
-      const fetchResult = await fetchConsoleUrl();
-      const result = (fetchResult.data as unknown as GenericRecord | undefined) || {};
-      if (fetchResult.isError) throw fetchResult.error;
-      const resultData = (result["data"] as GenericRecord | undefined) || result;
-      const consoleUrl =
-        (resultData?.["url"] as string | undefined) ||
-        (resultData?.["console_url"] as string | undefined) ||
-        (result?.["console_url"] as string | undefined);
-      if (!consoleUrl) throw new Error("Console URL unavailable.");
-      const win = globalThis.open(consoleUrl, "_blank", "noopener,noreferrer");
-      if (!win) {
-        ToastUtils.error("Popup blocked by your browser. Please allow popups for this site.");
-        return;
-      }
-    } catch (error) {
-      ToastUtils.error(getErrorMessage(error, "Unable to open console for this instance."));
-    } finally {
-      setIsConsoleLoading(false);
-    }
-  }, [consoleResourceId, fetchConsoleUrl]);
+    // Opens the shared draggable console; the user picks VNC / SPICE / RDP / serial
+    // / SSH inside it. SSH uses the existing ssh-sessions proxy + xterm terminal.
+    openConsole(consoleResourceId);
+  }, [consoleResourceId, openConsole]);
 
   const handleMetadataSubmit = useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
@@ -2359,7 +2352,7 @@ const AdminInstancesDetails = () => {
         availableActions={availableActions}
         supportsInstanceActions={supportsInstanceActions}
         pendingAction={pendingAction}
-        isConsoleLoading={isConsoleLoading || isConsoleFetching}
+        isConsoleLoading={false}
         onGoBack={handleGoBack}
         onAction={handleInstanceAction}
         onOpenConsole={handleOpenConsole}
@@ -2390,7 +2383,7 @@ const AdminInstancesDetails = () => {
       </div>
 
       {/* Tab content */}
-      <div className="border border-t-0 border-slate-200 bg-white p-6">
+      <div className="border border-t-0 border-slate-200 bg-white p-4 sm:p-6">
         {tabContent[activeTab]?.() ?? null}
       </div>
 
@@ -2406,6 +2399,17 @@ const AdminInstancesDetails = () => {
           refetchLifecycle();
         }}
       />
+
+      {consoles.map((consoleSession) => (
+        <EmbeddedConsole
+          key={consoleSession.id || consoleSession.instanceId}
+          instanceId={consoleSession.instanceId}
+          isVisible={true}
+          initialPosition={consoleSession.position}
+          initialSize={consoleSession.size}
+          onClose={() => closeConsole(consoleSession.instanceId)}
+        />
+      ))}
     </AdminPageShell>
   );
 };

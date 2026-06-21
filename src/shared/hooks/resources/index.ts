@@ -250,6 +250,26 @@ export {
   useRevalidateBatchMigration,
 } from "./integrationHooks";
 
+// Mail Migrations (Move My Email)
+export {
+  usePreviewMailFolders,
+  useCreateMailMigration,
+  useMailMigrations,
+  useMailMigration,
+  useCancelMailMigration,
+  useMailMigrationPricing,
+} from "./integrationHooks";
+export type {
+  MailProvider,
+  MailImapConfig,
+  MailConnectionConfig,
+  MailConfig,
+  MailFolder,
+  MailMigration,
+  CreateMailMigrationPayload,
+  MailMigrationPricing,
+} from "./integrationHooks";
+
 // Database Replication Groups
 export {
   useDatabaseReplicationGroups,

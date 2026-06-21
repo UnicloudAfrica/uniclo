@@ -66,20 +66,50 @@ const resolveErrorDescription = (
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
+ * Maximum time we believe a single action can legitimately take before
+ * we assume something has gone wrong (a hung upstream, a broken promise
+ * chain, a worker that crashed mid-request, etc.). After this, we
+ * release the `pending` lock so the user can retry. The HTTP server's
+ * own timeouts are tighter than this — any request that genuinely runs
+ * longer is a bug, not a happy path.
+ *
+ * Symptom this guards against: `useAsyncAction.isPending` getting stuck
+ * `true` forever when the action's promise never resolves (e.g. the
+ * single-threaded `php artisan serve` was hung when the user clicked
+ * once, the request was abandoned, but the FE state was never reset).
+ * Without this watchdog, every subsequent click on the consuming button
+ * hits the `if (action.isPending) return;` guard and silently no-ops —
+ * surfacing as "Continue is broken" with zero user-visible feedback.
+ */
+const PENDING_WATCHDOG_MS = 90_000;
+
+/**
  * Async UX contract primitive:
  * - consistent pending/success/error status
  * - normalized error message
  * - optional toast ownership per action
+ * - watchdog auto-recovery — a stuck `pending` state self-releases after
+ *   PENDING_WATCHDOG_MS so a hung upstream can't permanently freeze the
+ *   UI button that owns this action's status.
  */
 export const useAsyncAction = () => {
   const [status, setStatus] = useState<AsyncStatus>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const runIdRef = useRef(0);
+  const watchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearWatchdog = useCallback(() => {
+    if (watchdogRef.current !== null) {
+      clearTimeout(watchdogRef.current);
+      watchdogRef.current = null;
+    }
+  }, []);
 
   const reset = useCallback(() => {
+    clearWatchdog();
     setStatus("idle");
     setErrorMessage(null);
-  }, []);
+  }, [clearWatchdog]);
 
   const run = useCallback(
     async <TResult>(
@@ -93,6 +123,22 @@ export const useAsyncAction = () => {
       setStatus("pending");
       setErrorMessage(null);
 
+      // Arm the watchdog. If this action's promise NEVER resolves
+      // (hung upstream, abandoned navigation, etc.) the timeout below
+      // forcibly demotes status back to `idle` so the consuming button
+      // becomes clickable again. We compare runIds so a watchdog from
+      // run #N can't clobber the in-flight status of run #N+1.
+      clearWatchdog();
+      watchdogRef.current = setTimeout(() => {
+        if (runId === runIdRef.current) {
+          setStatus("idle");
+          setErrorMessage(
+            "Request appears to have hung. Resetting so you can retry. " +
+              "If this keeps happening check the dev server / network panel."
+          );
+        }
+      }, PENDING_WATCHDOG_MS);
+
       try {
         const result = await action();
         const elapsed = Date.now() - startedAt;
@@ -101,6 +147,7 @@ export const useAsyncAction = () => {
         }
 
         if (runId === runIdRef.current) {
+          clearWatchdog();
           setStatus("success");
           const successMessage = resolveSuccessToast(options.successToast, result);
           if (successMessage) {
@@ -119,6 +166,7 @@ export const useAsyncAction = () => {
         const message = getAsyncErrorMessage(error, options.fallbackErrorMessage);
 
         if (runId === runIdRef.current) {
+          clearWatchdog();
           setStatus("error");
           setErrorMessage(message);
 
@@ -141,7 +189,7 @@ export const useAsyncAction = () => {
         return undefined;
       }
     },
-    []
+    [clearWatchdog]
   );
 
   return {

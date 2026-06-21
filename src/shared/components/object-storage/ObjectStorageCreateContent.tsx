@@ -371,7 +371,7 @@ export const ObjectStorageCreateContent: React.FC<ObjectStorageCreateContentProp
               isLoading={isGeneratingPayment}
               isDisabled={isSubmitting || isGeneratingPayment}
             >
-              {isFastTrack ? "Continue to review" : "Generate payment options"}
+              {isFastTrack ? "Continue to review" : "Continue to payment"}
             </ModernButton>
           </div>
         </div>

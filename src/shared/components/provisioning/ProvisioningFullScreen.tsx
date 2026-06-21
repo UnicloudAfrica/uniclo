@@ -235,11 +235,21 @@ const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
           )}
         </div>
 
-        {/* The heavy lifter */}
+        {/* The heavy lifter.
+            pipelineActive tells the child to render mid-retry steps
+            as "Retrying…" (yellow spinner) instead of red FAILED X.
+            The pipeline is "active" when it hasn't terminally failed
+            AND it's not finished — i.e. while the worker is still
+            trying. This is the same logic the page-level title uses
+            to decide between "Provisioning…" and "Provisioning Failed". */}
         <div
           className={`overflow-hidden rounded-3xl border ${isComplete ? "border-green-100 shadow-green-100/30" : "border-gray-100 shadow-gray-200/50"} bg-white shadow-2xl`}
         >
-          <SetupProgressCard steps={setupSteps as never} isLoading={false} />
+          <SetupProgressCard
+            steps={setupSteps as never}
+            isLoading={false}
+            pipelineActive={!hasFailed && !isComplete}
+          />
         </div>
 
         {/* Action Buttons */}

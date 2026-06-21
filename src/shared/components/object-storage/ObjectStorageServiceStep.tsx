@@ -50,8 +50,8 @@ export const ObjectStorageServiceStep: React.FC<ObjectStorageServiceStepProps> =
   return (
     <ModernCard title="Service Profiles">
       <p className="text-sm text-gray-500 -mt-2 mb-4">
-        Configure your Silo Storage profiles. Select regions, tiers, storage size, and contract
-        length.
+        Pick where your storage lives, how much space you need, and for how long. Pricing updates
+        as you go.
       </p>
 
       <div className="space-y-4">

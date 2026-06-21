@@ -90,19 +90,22 @@ const renderPage = () => {
 const mkPricingRows = () => [
   {
     tier: "standard" as const,
-    price_per_host_usd: 10,
+    price: 10,
+    currency_code: "USD",
     retention_days: 7,
     features: ["cpu", "memory"],
   },
   {
     tier: "professional" as const,
-    price_per_host_usd: 25,
+    price: 25,
+    currency_code: "USD",
     retention_days: 30,
     features: ["cpu", "memory", "alerts"],
   },
   {
     tier: "enterprise" as const,
-    price_per_host_usd: 60,
+    price: 60,
+    currency_code: "USD",
     retention_days: 90,
     features: ["cpu", "memory", "alerts", "log-shipping"],
   },
@@ -181,7 +184,7 @@ describe("AdminMonitoringPricing — inline edit", () => {
     await waitFor(() => {
       expect(
         (updatePricingState.current as { mutateAsync: ReturnType<typeof vi.fn> }).mutateAsync,
-      ).toHaveBeenCalledWith({ tier: "standard", price_per_host_usd: 15 });
+      ).toHaveBeenCalledWith({ tier: "standard", price: 15 });
     });
 
     await waitFor(() =>
@@ -234,7 +237,7 @@ describe("AdminMonitoringPricing — tenant overrides", () => {
     await waitFor(() => {
       expect(
         (upsertTenantState.current as { mutateAsync: ReturnType<typeof vi.fn> }).mutateAsync,
-      ).toHaveBeenCalledWith({ tier: "standard", price_per_host_usd: 20 });
+      ).toHaveBeenCalledWith({ tier: "standard", price: 20 });
     });
     await waitFor(() =>
       expect(toastSuccess).toHaveBeenCalledWith(expect.stringMatching(/Override saved/i)),
@@ -243,7 +246,7 @@ describe("AdminMonitoringPricing — tenant overrides", () => {
 
   it("marks the row as 'Override active' when the tenant has an existing override", async () => {
     tenantPricingState.current = {
-      data: [{ tier: "professional" as const, price_per_host_usd: 30, is_override: true }],
+      data: [{ tier: "professional" as const, price: 30, is_override: true }],
       isFetching: false,
     };
 

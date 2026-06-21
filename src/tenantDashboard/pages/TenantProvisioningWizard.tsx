@@ -50,9 +50,18 @@ import {
 // ═══════════════════════════════════════════════════════════════════
 
 const TenantProvisioningWizard: React.FC = () => {
-  const [selectedProtectionPlan, setSelectedProtectionPlan] = useState<ProtectionPlan>("backup_only");
+  // "none" by default — protection is now actually billed when selected, so
+  // opting in must be a deliberate choice, not a preselected dropdown.
+  const [selectedProtectionPlan, setSelectedProtectionPlan] = useState<ProtectionPlan>("none");
   const [selectedRedundancy, setSelectedRedundancy] = useState<RedundancyPattern>("n_plus_1");
-  const logic = useTenantProvisioningLogic();
+  const [protectionMonthlyCost, setProtectionMonthlyCost] = useState(0);
+  const logic = useTenantProvisioningLogic({
+    protectionPlan: {
+      plan: selectedProtectionPlan,
+      monthlyCost: protectionMonthlyCost,
+      redundancyPattern: selectedRedundancy,
+    },
+  });
 
   const {
     // Mode
@@ -440,6 +449,7 @@ const TenantProvisioningWizard: React.FC = () => {
               <ProtectionPlanStep
                 selectedPlan={selectedProtectionPlan}
                 onPlanChange={setSelectedProtectionPlan}
+                onMonthlyCostChange={setProtectionMonthlyCost}
                 onBack={() => setActiveStep(servicesStepIndex)}
                 onContinue={handleCreateOrder}
                 instanceCount={configurations.reduce((sum: number, c) => sum + (Number(c.instance_count) || 1), 0)}
@@ -496,6 +506,7 @@ const TenantProvisioningWizard: React.FC = () => {
               summaryDisplayCurrency={summaryDisplayCurrency}
               protectionPlan={selectedProtectionPlan}
               redundancyPattern={selectedRedundancy}
+              isPriceEstimate={Boolean(pricingSummary.isEstimate)}
             />
 
             {hasFastTrackAccess && configurations.length > 0 && (

@@ -502,6 +502,80 @@ body {
   background-color: rgb(30 41 59) !important;
 }
 
+/* Colored -50 background tints (status cards/badges) → dark tints in dark mode
+   so they don't glare. Catches BOTH the exact class (`bg-emerald-50`) and the
+   opacity-modified one (`bg-emerald-50/60`), which the neutral remaps above miss
+   — the recurring "flashy in dark mode" footgun. The paired colored text is
+   lightened so it stays readable on the dimmed tint. */
+[data-theme="dark"] [class~="bg-emerald-50"],
+[data-theme="dark"] [class*="bg-emerald-50/"],
+[data-theme="dark"] [class~="bg-green-50"],
+[data-theme="dark"] [class*="bg-green-50/"],
+[data-theme="dark"] [class~="bg-teal-50"],
+[data-theme="dark"] [class*="bg-teal-50/"] {
+  background-color: rgba(6, 78, 59, 0.32) !important;
+}
+[data-theme="dark"] [class~="bg-sky-50"],
+[data-theme="dark"] [class*="bg-sky-50/"],
+[data-theme="dark"] [class~="bg-blue-50"],
+[data-theme="dark"] [class*="bg-blue-50/"],
+[data-theme="dark"] [class~="bg-cyan-50"],
+[data-theme="dark"] [class*="bg-cyan-50/"] {
+  background-color: rgba(8, 47, 73, 0.4) !important;
+}
+[data-theme="dark"] [class~="bg-amber-50"],
+[data-theme="dark"] [class*="bg-amber-50/"],
+[data-theme="dark"] [class~="bg-yellow-50"],
+[data-theme="dark"] [class*="bg-yellow-50/"],
+[data-theme="dark"] [class~="bg-orange-50"],
+[data-theme="dark"] [class*="bg-orange-50/"] {
+  background-color: rgba(120, 53, 15, 0.32) !important;
+}
+[data-theme="dark"] [class~="bg-red-50"],
+[data-theme="dark"] [class*="bg-red-50/"],
+[data-theme="dark"] [class~="bg-rose-50"],
+[data-theme="dark"] [class*="bg-rose-50/"] {
+  background-color: rgba(127, 29, 29, 0.32) !important;
+}
+[data-theme="dark"] [class~="bg-purple-50"],
+[data-theme="dark"] [class*="bg-purple-50/"],
+[data-theme="dark"] [class~="bg-violet-50"],
+[data-theme="dark"] [class*="bg-violet-50/"],
+[data-theme="dark"] [class~="bg-indigo-50"],
+[data-theme="dark"] [class*="bg-indigo-50/"] {
+  background-color: rgba(46, 16, 101, 0.4) !important;
+}
+[data-theme="dark"] .text-emerald-700,
+[data-theme="dark"] .text-emerald-800,
+[data-theme="dark"] .text-emerald-900,
+[data-theme="dark"] .text-green-700,
+[data-theme="dark"] .text-green-800,
+[data-theme="dark"] .text-teal-700 {
+  color: #6ee7b7 !important;
+}
+[data-theme="dark"] .text-sky-700,
+[data-theme="dark"] .text-blue-700,
+[data-theme="dark"] .text-blue-800,
+[data-theme="dark"] .text-cyan-700 {
+  color: #7dd3fc !important;
+}
+[data-theme="dark"] .text-amber-700,
+[data-theme="dark"] .text-amber-800,
+[data-theme="dark"] .text-yellow-700,
+[data-theme="dark"] .text-orange-700 {
+  color: #fcd34d !important;
+}
+[data-theme="dark"] .text-red-700,
+[data-theme="dark"] .text-red-800,
+[data-theme="dark"] .text-rose-700 {
+  color: #fca5a5 !important;
+}
+[data-theme="dark"] .text-purple-700,
+[data-theme="dark"] .text-violet-700,
+[data-theme="dark"] .text-indigo-700 {
+  color: #c4b5fd !important;
+}
+
 [data-theme="dark"] .text-gray-900,
 [data-theme="dark"] .text-slate-900 {
   color: var(--theme-heading-color) !important;
@@ -1007,6 +1081,14 @@ body {
   border: 1px solid rgb(var(--theme-color-200, 229 231 235));
   background: var(--theme-color-10);
   color: var(--theme-color);
+}
+
+/* Dark mode: brand-coloured text on a faint brand tint is too low-contrast
+   (the "Lattice Database Control" eyebrow was nearly invisible); brighten it. */
+.dark .db-brand-pill {
+  border-color: rgba(125, 211, 252, 0.28);
+  background: rgba(56, 163, 235, 0.16);
+  color: #7dd3fc;
 }
 
 .db-muted-pill {

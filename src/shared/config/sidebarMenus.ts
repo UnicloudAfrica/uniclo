@@ -294,7 +294,7 @@ const RESILIENCE_ITEMS: RoleAwareItem[] = [
     label: "Move My Email",
     icon: Mail,
     path: "/move-my-email",
-    roles: ["client"],
+    roles: ["admin", "tenant", "client"],
     requiredPermission: "migrations.view",
   },
   // ── Bucket sync (was "Object Storage" top-level) ──────────────────────────
@@ -916,10 +916,9 @@ const buildDeployGroup = (basePath: string, role: InfraRole): MenuEntry => {
   const normalizedBase = basePath.replace(/\/+$/, "");
   const children = DEPLOY_ITEMS.filter((item) => item.roles.includes(role)).map((item) => {
     const rawPath = item.pathByRole?.[role] ?? item.path;
-    // Admin SlimDeploy paths are already absolute (/flow-dashboard...).
-    const path = rawPath.startsWith("/flow-dashboard")
-      ? rawPath
-      : `${normalizedBase}${rawPath.startsWith("/") ? rawPath : `/${rawPath}`}`;
+    // Prefix the dashboard base for every role — admin SlimDeploy lives at
+    // /admin-dashboard/flow-dashboard (matching AdminRoutes), not top-level.
+    const path = `${normalizedBase}${rawPath.startsWith("/") ? rawPath : `/${rawPath}`}`;
     return {
       name: item.label,
       icon: item.icon,

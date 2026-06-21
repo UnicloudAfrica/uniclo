@@ -101,6 +101,25 @@ export const createServiceProfile = (): ServiceProfile => ({
 });
 
 /**
+ * When a profile's catalog exposes exactly one tier, return its key so the
+ * wizard can pre-select it instead of making the user open a one-item
+ * dropdown. Returns null when the profile already has a tier, has no region,
+ * or the catalog offers zero / multiple choices.
+ */
+export const resolveAutoSelectTierKey = (
+  profile: Pick<ServiceProfile, "region" | "tierKey">,
+  tierCatalog: Map<string, { options: Option[]; map: Map<string, unknown> }>
+): string | null => {
+  const regionKey = profile.region.trim().toLowerCase();
+  if (!regionKey || profile.tierKey) return null;
+  const entry = tierCatalog.get(regionKey) || tierCatalog.get(GLOBAL_TIER_KEY);
+  if (entry && entry.options.length === 1 && entry.options[0]) {
+    return entry.options[0].value;
+  }
+  return null;
+};
+
+/**
  * Get region code from pricing object
  */
 export const getPricingRegionCode = (pricing?: PricingLike | null): string =>

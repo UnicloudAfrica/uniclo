@@ -1,8 +1,5 @@
 import React, { useMemo, useState } from "react";
-import {
-  StoryStep,
-  SuccessMoment,
-} from "@/shared/components/orbit";
+import { StoryStep, SuccessMoment } from "@/shared/components/orbit";
 import DestinationConfigFields from "./DestinationConfigFields";
 import {
   DESTINATION_TYPE_LABELS,
@@ -54,11 +51,15 @@ const INITIAL_FORM: FormState = {
 // reads like a value menu, not a protocol cheat-sheet.
 const TYPE_DESCRIPTIONS: Record<DestinationType, { emoji: string; tagline: string }> = {
   s3: { emoji: "🪣", tagline: "AWS S3 or any S3-compatible bucket. Most common pick." },
-  object_storage: { emoji: "🗄", tagline: "S3-compatible object storage (MinIO, Wasabi, Backblaze B2, etc.)." },
+  object_storage: {
+    emoji: "🗄",
+    tagline: "S3-compatible object storage (MinIO, Wasabi, Backblaze B2, etc.).",
+  },
   ssh: { emoji: "🖥️", tagline: "Another server you own. We rsync over SSH." },
   swift: { emoji: "☁️", tagline: "OpenStack Swift containers." },
   azure_blob: { emoji: "🔷", tagline: "Azure Blob Storage." },
   gcs: { emoji: "🟢", tagline: "Google Cloud Storage." },
+  airgap: { emoji: "🔒", tagline: "Offline or restricted-window vault over SSH." },
 };
 
 export function DestinationWizard({
@@ -85,7 +86,8 @@ export function DestinationWizard({
       ssh: ["host", "username", "path"],
       swift: ["auth_url", "username", "password", "container"],
       azure_blob: ["account_name", "container"],
-      gcs: ["project_id", "bucket"],
+      gcs: ["project_id", "bucket", "credentials_json"],
+      airgap: ["host", "username", "path"],
     };
     return required[form.destinationType] ?? [];
   }, [form.destinationType]);
@@ -138,7 +140,7 @@ export function DestinationWizard({
   };
 
   const TYPES = (Object.entries(DESTINATION_TYPE_LABELS) as [DestinationType, string][]).map(
-    ([value, label]) => ({ value, label, ...TYPE_DESCRIPTIONS[value] }),
+    ([value, label]) => ({ value, label, ...TYPE_DESCRIPTIONS[value] })
   );
 
   return (
@@ -161,9 +163,7 @@ export function DestinationWizard({
                 <button
                   key={t.value}
                   type="button"
-                  onClick={() =>
-                    setForm({ ...form, destinationType: t.value, config: {} })
-                  }
+                  onClick={() => setForm({ ...form, destinationType: t.value, config: {} })}
                   className={`rounded-xl border p-4 text-left transition-all ${
                     isSelected
                       ? "border-primary-500 bg-primary-50 ring-1 ring-primary-500 dark:border-primary-400 dark:bg-primary-900/20"

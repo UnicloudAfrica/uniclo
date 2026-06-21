@@ -63,7 +63,17 @@ export const useDataFetching = (options: UseDataFetchingOptions): UseDataFetchin
     [sharedCountriesData]
   );
 
-  const primaryRegion = useMemo(() => (serviceProfiles[0]?.region || "").trim(), [serviceProfiles]);
+  // Object-storage ProductPricing rows are seeded per-AZ with the AZ code in
+  // their `region` column (ObjectStorageInventorySeeder / ObjectStoragePricingSeeder
+  // store region='uni-ng-lag-az1', availability_zone=NULL — per-AZ pricing for
+  // Zadara AZ1 vs Nobus AZ2/AZ3). The /product-pricing endpoint matches `region`
+  // exactly, so we must fetch with the selected AZ code, not the region code, or
+  // it returns zero rows and the tier catalog comes back empty. Fall back to the
+  // region code until an AZ is chosen.
+  const primaryRegion = useMemo(
+    () => (serviceProfiles[0]?.availability_zone || serviceProfiles[0]?.region || "").trim(),
+    [serviceProfiles]
+  );
 
   const pricingHook = usePricingHook || useFetchProductPricing;
   const { data: tierPricingPayloadData = [], isFetching: isPricingLoading } = pricingHook(

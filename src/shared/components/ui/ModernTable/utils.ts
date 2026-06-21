@@ -73,6 +73,40 @@ export const getActionToneStyles = (
   return tones[tone] || tones.neutral;
 };
 
+/**
+ * Position the row-actions dropdown relative to its trigger. Opens downward by
+ * default, but flips ABOVE the trigger when there isn't enough room below —
+ * otherwise rows near the bottom of the viewport push items like "Delete"
+ * off-screen (the menu is position:fixed and can't be scrolled into view).
+ * The result is clamped to stay within the viewport.
+ */
+export const computeMenuPosition = (
+  triggerRect: { top: number; bottom: number; right: number },
+  actionCount: number,
+  viewport: { width: number; height: number },
+  menuWidth = 176
+): { top: number; left: number } => {
+  const GAP = 4;
+  const MARGIN = 8;
+  const ROW_HEIGHT = 40;
+  const estimatedHeight = actionCount * ROW_HEIGHT + 8;
+  const spaceBelow = viewport.height - triggerRect.bottom;
+
+  let top =
+    spaceBelow < estimatedHeight + GAP + MARGIN
+      ? triggerRect.top - estimatedHeight - GAP // not enough room below → flip above
+      : triggerRect.bottom + GAP; // default → below the trigger
+
+  top = Math.max(MARGIN, Math.min(top, viewport.height - estimatedHeight - MARGIN));
+
+  const left = Math.max(
+    MARGIN,
+    Math.min(triggerRect.right - menuWidth, viewport.width - menuWidth - MARGIN)
+  );
+
+  return { top, left };
+};
+
 /** Trigger a CSV download of the table data. */
 export const exportToCsv = <T extends TableRowBase>(
   title: string,

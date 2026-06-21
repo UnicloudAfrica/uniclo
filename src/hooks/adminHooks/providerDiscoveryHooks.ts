@@ -31,6 +31,16 @@ export interface UserFilters {
   [key: string]: unknown;
 }
 
+export interface InstanceFilters {
+  provider?: string;
+  region?: string;
+  availability_zone?: string;
+  project_id?: string;
+  search?: string;
+  only_unlinked?: boolean;
+  [key: string]: unknown;
+}
+
 export interface RunFilters {
   provider?: string;
   region?: string;
@@ -81,6 +91,22 @@ const fetchProviderDiscoveryProjectsDrift = async (filters: ProjectFilters = {})
   const res = await silentAdminApi<ApiResponse>(
     "GET",
     `/provider-discovery/projects/drift${qs}`
+  );
+  return res;
+};
+
+// Instances
+const fetchProviderDiscoveryInstances = async (filters: InstanceFilters = {}) => {
+  const qs = buildQueryString(filters);
+  const res = await silentAdminApi<ApiResponse>("GET", `/provider-discovery/instances${qs}`);
+  return res;
+};
+
+const importProviderDiscoveryInstances = async (importData: ApiPayload) => {
+  const res = await adminApi<ApiResponse>(
+    "POST",
+    "/provider-discovery/instances/import",
+    importData
   );
   return res;
 };
@@ -175,6 +201,34 @@ export const useFetchProviderDiscoveryDrift = (
   });
 };
 
+export const useFetchProviderDiscoveryInstances = (
+  filters: InstanceFilters = {},
+  options: QueryOptions = {}
+) => {
+  return useQuery({
+    queryKey: ["provider-discovery-instances", filters],
+    queryFn: () => fetchProviderDiscoveryInstances(filters),
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    enabled: Boolean(filters.region),
+    ...options,
+  });
+};
+
+export const useImportProviderDiscoveryInstances = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: importProviderDiscoveryInstances,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["provider-discovery-instances"] });
+      queryClient.invalidateQueries({ queryKey: ["provider-discovery-runs"] });
+    },
+    onError: (error: unknown) => {
+      logger.error("Error importing provider discovery instances:", error);
+    },
+  });
+};
+
 export const useFetchProviderDiscoveryUsers = (
   filters: UserFilters = {},
   options: QueryOptions = {}
@@ -230,6 +284,8 @@ export const useFetchProviderDiscoveryRunById = (id: Id, options: QueryOptions =
 export {
   fetchProviderDiscoveryProjects,
   fetchProviderDiscoveryProjectsDrift,
+  fetchProviderDiscoveryInstances,
+  importProviderDiscoveryInstances,
   importProviderDiscoveryProjects,
   syncProviderDiscoveryProjects,
   fetchProviderDiscoveryUsers,

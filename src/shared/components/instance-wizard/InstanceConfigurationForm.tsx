@@ -12,7 +12,10 @@ import NetworkingSection from "./NetworkingSection";
 import AccessKeysSection from "./AccessKeysSection";
 import ActionRow from "./ActionRow";
 import StorageSection from "./StorageSection";
-import ComputeImageSection from "./ComputeImageSection";
+import ComputeImageSection, {
+  getPricingNotice,
+  stripPricingNoticeOptions,
+} from "./ComputeImageSection";
 import FinalizeDetailsSection from "./FinalizeDetailsSection";
 import { useApiContext } from "@/hooks/useApiContext";
 import { useNetworkPresets } from "@/hooks/networkPresetHooks";
@@ -82,6 +85,8 @@ interface Props {
   };
   azSelectionMode?: "auto" | "user_selectable" | "disabled";
   availabilityZoneOptions?: Option[];
+  /** True when the region prices per AZ — see RegionProjectSection. */
+  requiresAzForPricing?: boolean;
 }
 
 const InstanceConfigurationForm: React.FC<Props> = ({
@@ -124,6 +129,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
   useProjectMembershipSuggestionsHook,
   azSelectionMode,
   availabilityZoneOptions,
+  requiresAzForPricing = false,
 }) => {
   const { context } = useApiContext();
   const { data: networkPresets = DEFAULT_PRESETS } = useNetworkPresets();
@@ -755,8 +761,11 @@ const InstanceConfigurationForm: React.FC<Props> = ({
   const accessKeysStep = storageStep + (effectiveProjectMode === "existing" ? 2 : 1);
 
   const addConfigurationLabel = isCube ? "Add cube-instance configuration" : "Add configuration";
-  const submitLabel = isCube ? "Create cube-instance and price" : "Create and price";
-  const submittingLabel = isCube ? "Creating cube-instance..." : "Creating...";
+  // Plain language over billing jargon ("Create and price"): submitting
+  // creates the order and moves the user to the payment step (or straight
+  // to review when no payment is required).
+  const submitLabel = "Continue to payment";
+  const submittingLabel = "Creating your order...";
 
   /* ---------- Shared prop bundles ---------- */
   const headerProps = {
@@ -797,6 +806,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
     projectModeOptions: PROJECT_MODE_OPTIONS,
     azSelectionMode,
     availabilityZoneOptions,
+    requiresAzForPricing,
   };
 
   const accessKeysProps = {
@@ -857,13 +867,94 @@ const InstanceConfigurationForm: React.FC<Props> = ({
 
   /* ========== Cube variant ========== */
   if (isCube) {
+    // Pricing-notice sentinels (see ComputeImageSection): the option
+    // arrays carry a marker Option when the list is empty because pricing
+    // is loading / awaiting an AZ pick / unpublished. Strip it from the
+    // choices and surface it as placeholder + helper copy instead of
+    // rendering it as a selectable row.
+    const computeNotice = getPricingNotice(computeOptions);
+    const osImageNotice = getPricingNotice(osImageOptions);
+    const computeChoices = stripPricingNoticeOptions(computeOptions);
+    const osImageChoices = stripPricingNoticeOptions(osImageOptions);
+    const computePlaceholder = !selectedRegion
+      ? "Select region first"
+      : computeNotice?.kind === "loading"
+        ? computeNotice.label
+        : "Select instance type";
+    const osImagePlaceholder = !selectedRegion
+      ? "Select region first"
+      : osImageNotice?.kind === "loading"
+        ? osImageNotice.label
+        : "Select OS image";
+    /*
+     * Per-section completeness + summary for the collapsible accordion.
+     *
+     * Each section auto-collapses once its required inputs are filled,
+     * with the `summary` line shown in the collapsed header so operators
+     * can see what they picked without expanding. This replaces the
+     * always-on seven-section scroll the wizard used to require.
+     *
+     * The booleans here are LOCAL to the section (e.g. "did the user
+     * pick an instance type"), independent of the wizard-wide validator
+     * `evaluateConfigurationCompleteness`. The wizard-wide validator
+     * still gates step transitions; this is only about the UI affordance.
+     */
+    const isRegionSectionComplete = Boolean(
+      cfg.region &&
+        cfg.months &&
+        (effectiveProjectMode === "existing" ? cfg.project_id : cfg.project_name)
+    );
+    const isSizeSectionComplete = Boolean(cfg.compute_instance_id);
+    const isImageSectionComplete = Boolean(cfg.os_image_id);
+    const isStorageSectionComplete = Boolean(cfg.volume_type_id && cfg.storage_size_gb);
+    const isAccessKeysSectionComplete = Boolean(cfg.keypair_name);
+    const isFinalizeSectionComplete = Boolean(cfg.name);
+
+    const projectModeSummary =
+      effectiveProjectMode === "existing"
+        ? cfg.project_name || cfg.project_id || "Project"
+        : `New: ${cfg.project_name || "—"}`;
+    const regionSummary = [
+      cfg.region_label || cfg.region,
+      cfg.availability_zone_label || cfg.availability_zone,
+      projectModeSummary,
+      cfg.months ? `${cfg.months} mo` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    const sizeSummary =
+      cfg.compute_label?.split("•")[0]?.trim() || cfg.compute_instance_id || undefined;
+    const imageSummary =
+      cfg.os_image_label?.split("•")[0]?.trim() || cfg.os_image_id || undefined;
+    const storageSummary = [
+      cfg.volume_type_label,
+      cfg.storage_size_gb ? `${cfg.storage_size_gb} GB` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    const networkingSummary = [
+      cfg.bandwidth_id ? "Custom bandwidth" : "Default bandwidth",
+      hasFloatingIp ? "EIP attached" : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    const accessKeysSummary = cfg.keypair_label || cfg.keypair_name || undefined;
+    const finalizeSummary = [
+      cfg.name,
+      cfg.instance_count ? `${cfg.instance_count}x` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
     return (
       <ModernCard variant="outlined" padding="lg" className="space-y-6" onClick={undefined}>
         <ConfigurationHeader {...headerProps} />
-        <div className="space-y-5">
+        <div className="space-y-3">
           <SectionWrapper
             title="1. Region & project"
             description="Select the region and decide whether to use an existing project or create a new one."
+            isComplete={isRegionSectionComplete}
+            summary={regionSummary || undefined}
           >
             <RegionProjectSection {...regionProjectProps} />
           </SectionWrapper>
@@ -872,6 +963,12 @@ const InstanceConfigurationForm: React.FC<Props> = ({
             <SectionWrapper
               title={`${membershipStep}. Project membership`}
               description="Choose who should be granted access on this new project."
+              isComplete={selectedMemberIds.size > 0}
+              summary={
+                selectedMemberIds.size > 0
+                  ? `${selectedMemberIds.size} member${selectedMemberIds.size === 1 ? "" : "s"}`
+                  : undefined
+              }
             >
               <ProjectMembershipSelector
                 assignmentScope={assignmentScope}
@@ -892,6 +989,8 @@ const InstanceConfigurationForm: React.FC<Props> = ({
           <SectionWrapper
             title={`${sizeStep}. Choose size`}
             description="Pick the compute profile for this cube-instance."
+            isComplete={isSizeSectionComplete}
+            summary={sizeSummary}
           >
             <SearchableSelect
               label="Instance Type *"
@@ -906,22 +1005,26 @@ const InstanceConfigurationForm: React.FC<Props> = ({
               options={[
                 {
                   value: "",
-                  label: selectedRegion ? "Select instance type" : "Select region first",
+                  label: computePlaceholder,
                 },
-                ...computeOptions,
+                ...computeChoices,
               ]}
               helper={
                 templateComputeLabel
                   ? `Template: ${templateComputeLabel}`
-                  : "Select the compute flavor."
+                  : selectedRegion && computeNotice && computeNotice.kind !== "loading"
+                    ? computeNotice.label
+                    : "Select the compute flavor."
               }
-              disabled={!selectedRegion}
+              disabled={!selectedRegion || computeNotice?.kind === "loading"}
             />
           </SectionWrapper>
 
           <SectionWrapper
             title={`${imageStep}. Choose image`}
             description="Select the operating system image to boot from."
+            isComplete={isImageSectionComplete}
+            summary={imageSummary}
           >
             <SearchableSelect
               label="OS Image *"
@@ -933,20 +1036,23 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                   os_image_label: e.target.value ? l : "",
                 });
               }}
-              options={[
-                { value: "", label: selectedRegion ? "Select OS image" : "Select region first" },
-                ...osImageOptions,
-              ]}
+              options={[{ value: "", label: osImagePlaceholder }, ...osImageChoices]}
               helper={
-                templateImageLabel ? `Template: ${templateImageLabel}` : "Choose the base image."
+                templateImageLabel
+                  ? `Template: ${templateImageLabel}`
+                  : selectedRegion && osImageNotice && osImageNotice.kind !== "loading"
+                    ? osImageNotice.label
+                    : "Choose the base image."
               }
-              disabled={!selectedRegion}
+              disabled={!selectedRegion || osImageNotice?.kind === "loading"}
             />
           </SectionWrapper>
 
           <SectionWrapper
             title={`${storageStep}. Storage`}
             description="Configure the boot volume and attach any extra data disks."
+            isComplete={isStorageSectionComplete}
+            summary={storageSummary || undefined}
           >
             <StorageSection {...storageProps} />
             <VolumesSection
@@ -964,6 +1070,13 @@ const InstanceConfigurationForm: React.FC<Props> = ({
             <SectionWrapper
               title={`${networkingStep}. Networking`}
               description="Attach networks, bandwidth, and security groups."
+              // Networking is all-optional in the existing-project flow.
+              // Mark as "complete" once the user touches it OR the
+              // project preset's defaults are accepted (the section
+              // always renders something useful), so we don't keep
+              // nagging operators about a section that's already valid.
+              isComplete
+              summary={networkingSummary || undefined}
             >
               <NetworkingSection
                 cfg={cfg}
@@ -984,6 +1097,8 @@ const InstanceConfigurationForm: React.FC<Props> = ({
           <SectionWrapper
             title={`${accessKeysStep}. Access keys`}
             description="Choose an existing SSH key pair or create a new one."
+            isComplete={isAccessKeysSectionComplete}
+            summary={accessKeysSummary}
           >
             <AccessKeysSection {...accessKeysProps} />
           </SectionWrapper>
@@ -991,6 +1106,8 @@ const InstanceConfigurationForm: React.FC<Props> = ({
           <SectionWrapper
             title={`${effectiveProjectMode === "existing" ? 7 : 6}. Finalize details`}
             description="Name, quantity, and optional tags for this cube-instance."
+            isComplete={isFinalizeSectionComplete}
+            summary={finalizeSummary || undefined}
           >
             <FinalizeDetailsSection
               cfg={cfg}

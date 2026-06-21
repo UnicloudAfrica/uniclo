@@ -829,6 +829,50 @@ const PaymentModal = ({
     Math.abs(amountDetails.adjustment) > 0.01 &&
     Math.abs(amountDetails.adjustment - amountDetails.resolvedGatewayFees) > 0.01;
 
+  // Derive a labelled gateway fee from the active option's
+  // charge_breakdown when one exists. Falls back to a generic
+  // "Gateway processing fee" label if the gateway name isn't known.
+  // The amount comes from `total_fees` (already net of cap) so that
+  // the figure rendered matches what the gateway will actually deduct.
+  const gatewayFeeDetail = useMemo(() => {
+    const total = toNumber(
+      activeOptionForAmounts?.charge_breakdown?.total_fees ??
+        activeOptionForAmounts?.fees ??
+        0,
+    );
+    if (total <= 0) return undefined;
+
+    const gatewayName = activeOptionForAmounts?.name || "Gateway";
+    const breakdown = activeOptionForAmounts?.charge_breakdown as
+      | { percentage_fee?: number; flat_fee?: number; base_amount?: number; fee_cap?: number | null }
+      | undefined;
+    const base = toNumber(breakdown?.base_amount ?? 0);
+    const flat = toNumber(breakdown?.flat_fee ?? 0);
+    // Reverse-derive the percent rate from the (percentage_fee /
+    // base_amount) so we don't have to plumb the gateway's `*_charge`
+    // columns to the FE. Falls back to omitting the rate string when
+    // we can't compute it cleanly.
+    const pct =
+      base > 0 && breakdown?.percentage_fee !== undefined
+        ? Math.round((toNumber(breakdown.percentage_fee) / base) * 10000) / 100
+        : null;
+    const rateParts: string[] = [];
+    if (pct !== null && pct > 0) rateParts.push(`${pct}%`);
+    if (flat > 0) {
+      const currency = amountDetails.displayCurrency;
+      rateParts.push(`+ ${currency} ${flat.toFixed(2)}`);
+    }
+    const cap = breakdown?.fee_cap;
+    if (cap && cap > 0) {
+      rateParts.push(`capped at ${amountDetails.displayCurrency} ${Number(cap).toFixed(2)}`);
+    }
+    return {
+      amount: total,
+      label: `${gatewayName} processing fee`,
+      rate: rateParts.length > 0 ? rateParts.join(" ") : undefined,
+    };
+  }, [activeOptionForAmounts, amountDetails.displayCurrency]);
+
   const paystackAmount = useMemo(() => {
     const total = Number(displayPayableTotal ?? 0);
     return Math.max(0, Math.round(total * 100));
@@ -899,6 +943,8 @@ const PaymentModal = ({
           isPaystackCardOption={isPaystackCardOption}
           shouldSaveCard={shouldSaveCard}
           onShouldSaveCardChange={setShouldSaveCard}
+          lineItems={pricingSummary.lineItems}
+          gatewayFee={gatewayFeeDetail}
         />
       </div>
 

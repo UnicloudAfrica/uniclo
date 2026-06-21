@@ -27,17 +27,17 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     label: "UCA zCompute",
     shortLabel: "UCA zCompute",
     dotColor: "bg-blue-500",
-    bgColor: "bg-blue-50",
-    textColor: "text-blue-700",
-    borderColor: "border-blue-200",
+    bgColor: "bg-blue-50 dark:bg-blue-950/40",
+    textColor: "text-blue-700 dark:text-blue-300",
+    borderColor: "border-blue-200 dark:border-blue-800/40",
   },
   nobus: {
     label: "UCA Sovereign",
     shortLabel: "UCA Sovereign",
     dotColor: "bg-emerald-500",
-    bgColor: "bg-emerald-50",
-    textColor: "text-emerald-700",
-    borderColor: "border-emerald-200",
+    bgColor: "bg-emerald-50 dark:bg-emerald-950/40",
+    textColor: "text-emerald-700 dark:text-emerald-300",
+    borderColor: "border-emerald-200 dark:border-emerald-800/40",
   },
 };
 
@@ -45,9 +45,9 @@ const DEFAULT_CONFIG: ProviderConfig = {
   label: "Platform",
   shortLabel: "Platform",
   dotColor: "bg-slate-400",
-  bgColor: "bg-slate-50",
-  textColor: "text-slate-600",
-  borderColor: "border-slate-200",
+  bgColor: "bg-slate-50 dark:bg-slate-800/50",
+  textColor: "text-slate-600 dark:text-slate-300",
+  borderColor: "border-slate-200 dark:border-slate-700/50",
 };
 
 interface ProviderBadgeProps {

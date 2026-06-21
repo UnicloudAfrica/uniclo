@@ -737,16 +737,132 @@ export const useEnableDr = () => {
   const entry = apiRegistry[context];
   const queryClient = useQueryClient();
 
+  /**
+   * Phase 2 — extended to accept an optional `mode` + `options` payload
+   * matching the backend contract on `DatabaseDrController::enable`.
+   *
+   * - `mode` omitted ⇒ standard mode (Phase-1 same-provider behaviour).
+   *   All existing callers continue working unchanged.
+   * - `mode: 'orbit_overlay'` ⇒ backend returns 501 today (handled by
+   *   the DR tab's catch path which renders the "coming soon" panel).
+   *   Once the orchestrator ships, the response shape stays identical
+   *   and the FE doesn't need a payload change.
+   */
   return useMutation({
-    mutationFn: async (params: { identifier: string; targetAz: string }) => {
+    mutationFn: async (params: {
+      identifier: string;
+      targetAz: string;
+      mode?: "standard" | "orbit_overlay";
+      options?: {
+        topology?: "active_passive" | "active_active";
+        transport?: string;
+        conflict_resolution?: "last_write_wins" | "source_priority" | "manual";
+      };
+    }) => {
       const uri = `${entry.urlPrefix}/managed-databases/${params.identifier}/dr/enable`;
-      return entry.toastApi.post<AnyRecord>(uri, { target_az: params.targetAz });
+      const body: Record<string, unknown> = { target_az: params.targetAz };
+      if (params.mode) {
+        body.mode = params.mode;
+      }
+      if (params.options) {
+        body.options = params.options;
+      }
+      return entry.toastApi.post<AnyRecord>(uri, body);
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["database-dr-eligibility", context, variables.identifier] });
+      queryClient.invalidateQueries({ queryKey: ["database-orbit-eligibility", context, variables.identifier] });
       queryClient.invalidateQueries({ queryKey: ["database-dr-status", context, variables.identifier] });
       queryClient.invalidateQueries({ queryKey: ["managed-database", context, variables.identifier] });
     },
+  });
+};
+
+// ─── Orbit eligibility (Phase 2) ─────────────────────────────────
+
+/**
+ * Per-target-AZ availability record returned by the Orbit eligibility
+ * endpoint. The wizard renders one row per entry — disabled when
+ * `plan_available: false` OR `data_residency_ok: false`, with the
+ * specific caveat shown as a tooltip.
+ */
+export interface OrbitTargetAz {
+  code: string;
+  name: string | null;
+  provider: string;
+  region: string;
+  country_code: string | null;
+  available_modes: Array<"standard" | "orbit_overlay">;
+  available_modes_per_topology: Record<string, Array<"standard" | "orbit_overlay">>;
+  supported_topologies: string[];
+  plan_available: boolean;
+  data_residency_ok: boolean;
+  caveats: string[];
+}
+
+/**
+ * Full eligibility payload from
+ * `GET /managed-databases/{id}/orbit/eligibility`. Mirrors the backend
+ * response documented in `OrbitEligibilityService::evaluate`.
+ *
+ * The wizard hydrates everything from this single response so it can
+ * render the mode selector + AZ picker + caveat banner without further
+ * round-trips. Don't add fields here without coordinating with the
+ * backend response — the test
+ * `OrbitEligibilityEndpointTest::it_includes_the_contract_keys_the_wizard_depends_on`
+ * pins the shape.
+ */
+export interface OrbitEligibility {
+  eligible: boolean;
+  reason: string | null;
+  engine: {
+    code: string;
+    supported: boolean;
+    supports_cdc: boolean;
+    supported_topologies: string[];
+    catalog_topologies: string[];
+    bidirectional_support: "native" | "via_acf" | "none";
+    pricing_dimension: "storage_gb" | "memory_mb" | "pair_flat";
+    launch_tier: string | null;
+    caveats: string[];
+    /**
+     * True iff at least one reachable target AZ actually offers
+     * `orbit_overlay` as an available mode. When false, the wizard
+     * hides the Advanced card — showing a button that has nowhere to
+     * route is worse than not showing it.
+     */
+    advanced_available: boolean;
+  };
+  primary: {
+    provider: string;
+    region: string;
+    availability_zone: string;
+  };
+  target_azs: OrbitTargetAz[];
+}
+
+export const useFetchOrbitEligibility = (
+  identifier: string,
+  options?: { enabled?: boolean },
+) => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+
+  return useQuery<OrbitEligibility>({
+    queryKey: ["database-orbit-eligibility", context, identifier],
+    queryFn: async () => {
+      const uri = `${entry.urlPrefix}/managed-databases/${identifier}/orbit/eligibility`;
+      const envelope = asEnvelope<OrbitEligibility>(
+        await entry.silentApi.get<AnyRecord>(uri),
+      );
+      return envelope.data!;
+    },
+    enabled: options?.enabled !== false && !!identifier,
+    // Same staleTime as DR eligibility — both surfaces are checked
+    // when the user opens the DR tab; keeping them in sync avoids
+    // confusing UI states ("DR available but Orbit not" or vice versa
+    // for a couple of seconds while one cache is fresher than the other).
+    staleTime: 1000 * 60 * 2,
   });
 };
 

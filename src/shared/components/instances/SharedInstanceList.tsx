@@ -14,6 +14,7 @@ import {
 import { ModernButton, ModernTable } from "../ui";
 import { StatusBadge } from "./StatusBadge";
 import InstanceStats from "./InstanceStats";
+import { isProvisioning } from "./instanceStatus";
 import EmbeddedConsole, { useConsoleManager } from "@/components/Console/EmbeddedConsole";
 import ToastUtils from "@/utils/toastUtil";
 
@@ -62,7 +63,10 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
     }
   }, [context]);
 
-  const { isFetching, data: instancesResponse, refetch } = useInstances();
+  // per_page: 0 → the endpoint returns the whole fleet (BaseInstanceController
+  // only paginates when per_page > 0), so the summary tiles below count every
+  // instance, not just the first page.
+  const { isFetching, data: instancesResponse, refetch } = useInstances({ per_page: 0 });
   const instances = ((instancesResponse as Record<string, unknown>)?.data || []) as Array<Record<string, unknown>>;
 
   const { consoles, openConsole, closeConsole } = useConsoleManager();
@@ -259,9 +263,7 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
     return cols;
   }, [context, navigateToDetails, handleConsoleAccess]);
 
-  const provisioningCount = instances.filter((i: InstanceRow) =>
-    ["provisioning", "building", "reboot", "hard_reboot"].includes((i.status || "").toLowerCase())
-  ).length;
+  const provisioningCount = instances.filter((i: InstanceRow) => isProvisioning(i.status)).length;
 
   return (
     <div className="space-y-6 lg:space-y-8">

@@ -21,25 +21,26 @@ export type MonitoringTier = "standard" | "professional" | "enterprise";
 
 export interface MonitoringPricingRow {
   tier: MonitoringTier;
-  price_per_host_usd: number;
+  price: number;
+  currency_code: string;
   retention_days: number;
   features: string[];
 }
 
 export interface TenantMonitoringPricingRow {
   tier: MonitoringTier;
-  price_per_host_usd: number;
+  price: number;
   is_override: true;
 }
 
 export interface UpdateMonitoringPricingPayload {
   tier: MonitoringTier;
-  price_per_host_usd: number;
+  price: number;
 }
 
 export interface UpsertTenantMonitoringPricingPayload {
   tier: MonitoringTier;
-  price_per_host_usd: number;
+  price: number;
 }
 
 // ─── Query key factory ────────────────────────────────────────────────
@@ -80,11 +81,11 @@ export function useMonitoringPricing() {
 export function useUpdateMonitoringPricing() {
   const queryClient = useQueryClient();
   return useMutation<MonitoringPricingRow, Error, UpdateMonitoringPricingPayload>({
-    mutationFn: async ({ tier, price_per_host_usd }) => {
+    mutationFn: async ({ tier, price }) => {
       const r = await silentApi<{ data: MonitoringPricingRow }>(
         "PATCH",
         `/monitoring/pricing/${tier}`,
-        { price_per_host_usd },
+        { price },
       );
       if (!r?.data) throw new Error("Failed to update tier price.");
       return r.data;
@@ -128,12 +129,12 @@ export function useUpsertTenantMonitoringPricing(tenantId: string | undefined) {
     Error,
     UpsertTenantMonitoringPricingPayload
   >({
-    mutationFn: async ({ tier, price_per_host_usd }) => {
+    mutationFn: async ({ tier, price }) => {
       if (!tenantId) throw new Error("Missing tenant id.");
       const r = await silentApi<{ data: TenantMonitoringPricingRow }>(
         "PUT",
         `/monitoring/pricing/tenants/${tenantId}/${tier}`,
-        { price_per_host_usd },
+        { price },
       );
       if (!r?.data) throw new Error("Failed to save tenant override.");
       return r.data;

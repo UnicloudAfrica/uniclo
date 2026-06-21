@@ -8,6 +8,7 @@ import {
   RefreshCw,
   CheckCircle2,
   Layers,
+  Loader2,
   Server,
   Globe,
   Info,
@@ -60,6 +61,25 @@ interface ProtectionPlanStepProps {
   onDrSpecChange?: (spec: DrCustomSpec) => void;
   onBack: () => void;
   onContinue: () => void;
+  /**
+   * Pending state of the upstream order-creation request, owned by the
+   * parent wizard via `useInstanceOrderCreation.isSubmitting`. When this
+   * is true the Continue button MUST visually communicate it: an idle-
+   * looking button next to a stuck-pending hook silently swallows every
+   * click (see `useInstanceOrderCreation.handleCreateOrder` early-return
+   * guard), and operators report it as "Continue is broken."
+   */
+  isSubmitting?: boolean;
+  /**
+   * Bubble up the FE-computed monthly cost of the selected protection
+   * plan so the wizard summary can include it BEFORE the order POST
+   * returns a backend-priced breakdown. Without this, operators see a
+   * "Backup Only" line in the summary but no ₦/mo figure — they pick a
+   * plan that costs more than the compute and the summary stays at zero
+   * until they click Continue. Fires whenever the selected plan or its
+   * computed monthly cost changes.
+   */
+  onMonthlyCostChange?: (monthlyCost: number) => void;
   instanceCount?: number;
   storageGb?: number;
   computePricePerVm?: number;
@@ -185,6 +205,17 @@ const REDUNDANCY_PATTERNS: {
 /* ── Helpers ──────────────────────────────────────────────────────── */
 const DR_DISCOUNT = 0.80; // 80% off — DR VM costs 20% of production VM
 
+// A protection rate only counts as published when the ACF services
+// catalog carries a positive numeric unit_price. Anything else (no
+// row, null, 0) means the plan cannot be priced — the backend rejects
+// paid plans whose monthly_cost is missing/zero, so we must never
+// fabricate a rate on the FE.
+const toPublishedRate = (value: unknown): number | null => {
+  if (value === null || value === undefined || value === "") return null;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : null;
+};
+
 const formatPrice = (amount: number, currency: string) => {
   const symbol =
     currency === "USD" ? "$" : currency === "NGN" ? "₦" : currency;
@@ -259,6 +290,8 @@ const ProtectionPlanStep: React.FC<ProtectionPlanStepProps> = ({
   onDrSpecChange,
   onBack,
   onContinue,
+  isSubmitting = false,
+  onMonthlyCostChange,
   instanceCount = 1,
   storageGb = 50,
   computePricePerVm = 0,
@@ -283,7 +316,7 @@ const ProtectionPlanStep: React.FC<ProtectionPlanStepProps> = ({
   // DR targets for 1+N (default 2 regions)
   const [drTargets, setDrTargets] = useState(2);
 
-  const { data: acfServices } = useFetchAcfPublicServices();
+  const { data: acfServices, isFetching: isAcfServicesFetching } = useFetchAcfPublicServices();
 
   const isDrPlan =
     selectedPlan === "dr_standby" || selectedPlan === "dr_replication";
@@ -459,67 +492,84 @@ const ProtectionPlanStep: React.FC<ProtectionPlanStepProps> = ({
         s.service_type === "dr_replication"
     );
 
-    const backupPerGb = backupSvc?.unit_price ?? 16;
-    const replicationPerVm = replicationSvc?.unit_price ?? 12000;
+    // Never invent a rate. When the catalog has no published row the
+    // dependent plans are marked unavailable (monthly: null) instead
+    // of being priced with a fabricated constant.
+    const backupPerGb = toPublishedRate(backupSvc?.unit_price);
+    const replicationPerVm = toPublishedRate(replicationSvc?.unit_price);
 
     // DR standby VM = 20% of VM price (80% discount)
     // Uses custom DR spec price if user chose a different instance type
     const drVmPrice = effectiveDrVmPrice * (1 - DR_DISCOUNT);
     const drVmCount = getDrVmCount(redundancy, instanceCount, drTargets);
 
-    const backupCost = backupPerGb * storageGb * instanceCount;
+    const backupCost = backupPerGb === null ? null : backupPerGb * storageGb * instanceCount;
     const drStandbyCost = drVmPrice * drVmCount;
-    const replicationCost = replicationPerVm * drVmCount;
+    const replicationCost = replicationPerVm === null ? null : replicationPerVm * drVmCount;
+
+    type BreakdownItem = { label: string; detail: string; cost: number | null };
+
+    const backupLine: BreakdownItem = {
+      label: "Backup",
+      detail: `${instanceCount} × ${storageGb} GB × ${formatPrice(backupPerGb ?? 0, currency)}/GB`,
+      cost: backupCost,
+    };
+    // When the production VM price hasn't resolved yet the DR copy
+    // cannot be priced — say so instead of rendering a ₦0.00 line.
+    const drStandbyLine: BreakdownItem =
+      drVmPrice > 0
+        ? {
+            label: drSpec.mode === "custom" ? "DR Standby VM (Custom)" : "DR Standby VM",
+            detail: `${drVmCount} VM × ${formatPrice(drVmPrice, currency)} (80% off ${formatPrice(effectiveDrVmPrice, currency)})`,
+            cost: drStandbyCost,
+          }
+        : {
+            label: drSpec.mode === "custom" ? "DR Standby VM (Custom)" : "DR Standby VM",
+            detail: `${drVmCount} VM`,
+            cost: null,
+          };
+
+    const backupUnavailable = backupCost === null;
+    const replicationUnavailable = replicationCost === null;
 
     return {
-      none: { monthly: 0, breakdown: [], drVmCount: 0 },
+      none: {
+        monthly: 0 as number | null,
+        drVmCount: 0,
+        unavailable: false,
+        breakdown: [] as BreakdownItem[],
+      },
       backup_only: {
         monthly: backupCost,
         drVmCount: 0,
-        breakdown: [
-          {
-            label: "Backup",
-            detail: `${instanceCount} × ${storageGb} GB × ${formatPrice(backupPerGb, currency)}/GB`,
-            cost: backupCost,
-          },
-        ],
+        unavailable: backupUnavailable,
+        breakdown: backupUnavailable ? [] : [backupLine],
       },
       dr_standby: {
-        monthly: backupCost + drStandbyCost,
+        monthly: backupCost === null ? null : backupCost + drStandbyCost,
         drVmCount,
-        breakdown: [
-          {
-            label: "Backup",
-            detail: `${instanceCount} × ${storageGb} GB × ${formatPrice(backupPerGb, currency)}/GB`,
-            cost: backupCost,
-          },
-          {
-            label: drSpec.mode === "custom" ? "DR Standby VM (Custom)" : "DR Standby VM",
-            detail: `${drVmCount} VM × ${formatPrice(drVmPrice, currency)} (80% off ${formatPrice(effectiveDrVmPrice, currency)})`,
-            cost: drStandbyCost,
-          },
-        ],
+        unavailable: backupUnavailable,
+        breakdown: backupUnavailable ? [] : [backupLine, drStandbyLine],
       },
       dr_replication: {
-        monthly: backupCost + drStandbyCost + replicationCost,
+        monthly:
+          backupCost === null || replicationCost === null
+            ? null
+            : backupCost + drStandbyCost + replicationCost,
         drVmCount,
-        breakdown: [
-          {
-            label: "Backup",
-            detail: `${instanceCount} × ${storageGb} GB × ${formatPrice(backupPerGb, currency)}/GB`,
-            cost: backupCost,
-          },
-          {
-            label: drSpec.mode === "custom" ? "DR Standby VM (Custom)" : "DR Standby VM",
-            detail: `${drVmCount} VM × ${formatPrice(drVmPrice, currency)} (80% off ${formatPrice(effectiveDrVmPrice, currency)})`,
-            cost: drStandbyCost,
-          },
-          {
-            label: `${RESILIENCE} Replication`,
-            detail: `${drVmCount} VM × ${formatPrice(replicationPerVm, currency)}/VM`,
-            cost: replicationCost,
-          },
-        ],
+        unavailable: backupUnavailable || replicationUnavailable,
+        breakdown:
+          backupUnavailable || replicationUnavailable
+            ? []
+            : [
+                backupLine,
+                drStandbyLine,
+                {
+                  label: `${RESILIENCE} Replication`,
+                  detail: `${drVmCount} VM × ${formatPrice(replicationPerVm ?? 0, currency)}/VM`,
+                  cost: replicationCost,
+                },
+              ],
       },
     };
   }, [
@@ -530,6 +580,7 @@ const ProtectionPlanStep: React.FC<ProtectionPlanStepProps> = ({
     currency,
     redundancy,
     drTargets,
+    drSpec.mode,
   ]);
 
   // Sync computed DR pricing back to parent via drSpec
@@ -553,6 +604,27 @@ const ProtectionPlanStep: React.FC<ProtectionPlanStepProps> = ({
     }
   }, [isDrPlan, pricing, selectedPlan, effectiveDrVmPrice]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Bubble the selected plan's monthly cost up to the wizard so the
+  // summary card can show "Protection: ₦240,000/mo" alongside the
+  // compute + storage lines. Fires for ALL plan kinds (including
+  // backup_only, which the DR-only sync above intentionally skips).
+  useEffect(() => {
+    if (!onMonthlyCostChange) return;
+    const monthly = pricing[selectedPlan]?.monthly ?? 0;
+    onMonthlyCostChange(monthly);
+  }, [pricing, selectedPlan, onMonthlyCostChange]);
+
+  // A paid plan whose rates aren't published must never stay selected
+  // — the backend rejects paid protection plans with a missing/zero
+  // monthly_cost, and we refuse to fabricate one. Wait for the catalog
+  // fetch to settle so a preselected plan isn't cleared mid-load.
+  useEffect(() => {
+    if (selectedPlan === "none" || isAcfServicesFetching) return;
+    if (pricing[selectedPlan]?.unavailable) {
+      onPlanChange("none");
+    }
+  }, [selectedPlan, isAcfServicesFetching, pricing, onPlanChange]);
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       {/* Header */}
@@ -567,21 +639,54 @@ const ProtectionPlanStep: React.FC<ProtectionPlanStepProps> = ({
         </p>
       </div>
 
-      {/* Plan cards */}
-      <div className="space-y-3">
+      {/*
+       * Plan cards.
+       *
+       * Each card was originally a `<button>` whose body included nested
+       * `<button>` controls (the DR "Match production / Custom size"
+       * toggle, the AZ selector, etc.). HTML forbids that nesting and
+       * React 19 hydrates such trees to a console error: "<button>
+       * cannot be a descendant of <button>". Switching the card to a
+       * `role="radio"` div inside a `role="radiogroup"` is the correct
+       * semantic anyway — selecting a plan IS picking one of N
+       * mutually-exclusive options — and lets the inner controls stay
+       * as real buttons (with `stopPropagation` so they don't double-
+       * fire the card's onClick).
+       */}
+      <div className="space-y-3" role="radiogroup" aria-label="Protection plan">
         {PLANS.map((plan) => {
           const isSelected = selectedPlan === plan.id;
           const Icon = plan.icon;
           const planPricing = pricing[plan.id];
           return (
-            <button
+            <div
               key={plan.id}
-              type="button"
-              onClick={() => onPlanChange(plan.id)}
-              className={`relative flex w-full items-start gap-4 rounded-xl border-2 p-5 text-left transition-all ${
+              role="radio"
+              aria-checked={isSelected}
+              aria-disabled={planPricing.unavailable || undefined}
+              tabIndex={isSelected ? 0 : -1}
+              onClick={() => {
+                if (planPricing.unavailable) return;
+                onPlanChange(plan.id);
+              }}
+              onKeyDown={(event) => {
+                // Space and Enter are the WAI-ARIA keystrokes for
+                // selecting a radio. Arrow-key navigation between
+                // radios in the group is left to default focus order
+                // for now — most users click; keyboard parity with
+                // native <input type="radio"> is a future iteration.
+                if (event.key === " " || event.key === "Enter") {
+                  event.preventDefault();
+                  if (planPricing.unavailable) return;
+                  onPlanChange(plan.id);
+                }
+              }}
+              className={`relative flex w-full items-start gap-4 rounded-xl border-2 p-5 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 ${
                 isSelected
-                  ? `${plan.accentBorder} ${plan.accentBg} shadow-sm`
-                  : "border-gray-200 hover:border-gray-300 hover:bg-gray-50/50"
+                  ? `${plan.accentBorder} ${plan.accentBg} shadow-sm cursor-pointer`
+                  : planPricing.unavailable
+                    ? "border-gray-200 opacity-60 cursor-not-allowed"
+                    : "border-gray-200 hover:border-gray-300 hover:bg-gray-50/50 cursor-pointer"
               }`}
             >
               {/* Radio indicator */}
@@ -631,7 +736,11 @@ const ProtectionPlanStep: React.FC<ProtectionPlanStepProps> = ({
                   </div>
                   {/* Price tag */}
                   <div className="text-right shrink-0">
-                    {planPricing.monthly === 0 ? (
+                    {planPricing.unavailable ? (
+                      <span className="text-xs font-medium text-gray-400">
+                        {isAcfServicesFetching ? "Loading rates…" : "Rates not published yet"}
+                      </span>
+                    ) : planPricing.monthly === 0 ? (
                       <span className="text-sm font-semibold text-gray-400">
                         {plan.id === "none" ? "Free" : formatPrice(0, currency)}
                       </span>
@@ -642,7 +751,7 @@ const ProtectionPlanStep: React.FC<ProtectionPlanStepProps> = ({
                             isSelected ? "text-blue-700" : "text-gray-700"
                           }`}
                         >
-                          {formatPrice(planPricing.monthly, currency)}
+                          {formatPrice(planPricing.monthly ?? 0, currency)}
                         </span>
                         <span className="text-[10px] text-gray-400">/mo</span>
                       </div>
@@ -669,7 +778,8 @@ const ProtectionPlanStep: React.FC<ProtectionPlanStepProps> = ({
                 {/* DR discount badge */}
                 {isSelected &&
                   (plan.id === "dr_standby" || plan.id === "dr_replication") &&
-                  computePricePerVm > 0 && (
+                  computePricePerVm > 0 &&
+                  effectiveDrVmPrice > 0 && (
                     <div className="mt-3 flex items-center gap-2 rounded-lg bg-blue-50 border border-blue-200 px-3 py-2">
                       <Info className="h-3.5 w-3.5 text-blue-600 shrink-0" />
                       <span className="text-[11px] text-blue-700">
@@ -705,9 +815,15 @@ const ProtectionPlanStep: React.FC<ProtectionPlanStepProps> = ({
                             {item.detail}
                           </span>
                         </div>
-                        <span className="font-semibold text-gray-700">
-                          {formatPrice(item.cost, currency)}
-                        </span>
+                        {item.cost === null ? (
+                          <span className="text-[10px] font-medium text-gray-400">
+                            Price available after sizing
+                          </span>
+                        ) : (
+                          <span className="font-semibold text-gray-700">
+                            {formatPrice(item.cost, currency)}
+                          </span>
+                        )}
                       </div>
                     ))}
                     <div className="flex items-center justify-between border-t border-gray-200 pt-1.5 text-xs">
@@ -715,7 +831,7 @@ const ProtectionPlanStep: React.FC<ProtectionPlanStepProps> = ({
                         Total monthly
                       </span>
                       <span className="font-bold text-blue-700">
-                        {formatPrice(planPricing.monthly, currency)}/mo
+                        {formatPrice(planPricing.monthly ?? 0, currency)}/mo
                       </span>
                     </div>
                   </div>
@@ -951,7 +1067,9 @@ const ProtectionPlanStep: React.FC<ProtectionPlanStepProps> = ({
                                       <span className="font-medium">{drSpec.drTargetAzLabel || selectedDrAz}</span>
                                     </div>
                                     <div className="text-[10px] text-blue-600 font-medium mt-1">
-                                      DR cost = {formatPrice(effectiveDrVmPrice * (1 - DR_DISCOUNT), currency)}/VM (80% off {formatPrice(effectiveDrVmPrice, currency)})
+                                      {effectiveDrVmPrice > 0
+                                        ? `DR cost = ${formatPrice(effectiveDrVmPrice * (1 - DR_DISCOUNT), currency)}/VM (80% off ${formatPrice(effectiveDrVmPrice, currency)})`
+                                        : "DR cost: price available after sizing"}
                                     </div>
                                   </div>
                                 </div>
@@ -968,7 +1086,7 @@ const ProtectionPlanStep: React.FC<ProtectionPlanStepProps> = ({
                     </div>
                   )}
               </div>
-            </button>
+            </div>
           );
         })}
       </div>
@@ -1146,7 +1264,7 @@ const ProtectionPlanStep: React.FC<ProtectionPlanStepProps> = ({
               </div>
               <div className="text-right">
                 <div className="text-sm font-bold text-blue-800">
-                  {formatPrice(pricing[selectedPlan].monthly, currency)}
+                  {formatPrice(pricing[selectedPlan].monthly ?? 0, currency)}
                   <span className="text-[10px] font-normal text-blue-500">
                     /mo
                   </span>
@@ -1162,13 +1280,22 @@ const ProtectionPlanStep: React.FC<ProtectionPlanStepProps> = ({
 
       {/* Navigation */}
       <div className="flex items-center justify-between border-t border-gray-200 pt-5">
-        <ModernButton variant="outline" onClick={onBack}>
+        <ModernButton variant="outline" onClick={onBack} disabled={isSubmitting}>
           <ArrowLeft className="mr-1.5 h-4 w-4" />
           Back
         </ModernButton>
-        <ModernButton variant="primary" onClick={onContinue}>
-          Continue
-          <ArrowRight className="ml-1.5 h-4 w-4" />
+        <ModernButton variant="primary" onClick={onContinue} disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+              Submitting…
+            </>
+          ) : (
+            <>
+              Continue
+              <ArrowRight className="ml-1.5 h-4 w-4" />
+            </>
+          )}
         </ModernButton>
       </div>
     </div>

@@ -78,9 +78,14 @@ export const ObjectStorageProfileCard: React.FC<ObjectStorageProfileCardProps> =
 
   const tierHelper = useMemo(() => {
     if (isLoadingPricing) return "Loading tiers...";
-    if (profile.region) return "";
-    return "Select a region first.";
-  }, [isLoadingPricing, profile.region]);
+    if (!profile.region) return "Select a region first.";
+    if (profile.tierOptions.length === 0) {
+      return "No storage rates are published for this zone yet — try another availability zone.";
+    }
+    return "";
+  }, [isLoadingPricing, profile.region, profile.tierOptions.length]);
+
+  const QUICK_SIZES_GB = [100, 250, 500, 1000];
 
   const storageHelper = profile.tierQuotaGb
     ? `Default tier size: ${profile.tierQuotaGb} GB`
@@ -150,18 +155,39 @@ export const ObjectStorageProfileCard: React.FC<ObjectStorageProfileCardProps> =
           error={errors ? errors["tierKey"] : undefined}
         />
 
-        <ModernInput
-          label="Storage Size (GB)"
-          type="number"
-          min="1"
-          max="100000"
-          step="1"
-          value={profile.storageGb ? String(profile.storageGb) : ""}
-          onChange={(event) => onStorageGbChange(event.target.value)}
-          placeholder={profile.tierQuotaGb ? String(profile.tierQuotaGb) : "100"}
-          helper={storageHelper}
-          error={errors ? errors["storageGb"] : undefined}
-        />
+        <div className="space-y-2">
+          <ModernInput
+            label="Storage Size (GB)"
+            type="number"
+            min="1"
+            max="100000"
+            step="1"
+            value={profile.storageGb ? String(profile.storageGb) : ""}
+            onChange={(event) => onStorageGbChange(event.target.value)}
+            placeholder={profile.tierQuotaGb ? String(profile.tierQuotaGb) : "100"}
+            helper={storageHelper}
+            error={errors ? errors["storageGb"] : undefined}
+          />
+          <div className="flex flex-wrap gap-2">
+            {QUICK_SIZES_GB.map((size) => {
+              const isSelected = Number(profile.storageGb) === size;
+              return (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => onStorageGbChange(String(size))}
+                  className={`cursor-pointer rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                    isSelected
+                      ? "border-primary-500 bg-primary-50 text-primary-700"
+                      : "border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-800"
+                  }`}
+                >
+                  {size >= 1000 ? `${size / 1000} TB` : `${size} GB`}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         <ModernSelect
           label="Contract Length"
@@ -212,7 +238,7 @@ export const ObjectStorageProfileCard: React.FC<ObjectStorageProfileCardProps> =
             </div>
             <div>
               <p className="text-xs uppercase tracking-wide text-gray-500">Subtotal</p>
-              <p className="font-semibold text-gray-900">
+              <p className="font-semibold text-primary-600">
                 {formatCurrency(profile.subtotal, profile.currency)}
               </p>
             </div>

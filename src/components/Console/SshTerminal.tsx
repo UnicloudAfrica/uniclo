@@ -77,8 +77,10 @@ const SshTerminal = ({
     updateStatus("requesting");
 
     const encodedId = encodeURIComponent(String(instanceId));
+    // admin apiBaseUrl already ends in /admin/v1, so the path needs no extra prefix
+    // (an "/admin" here produced the double "admin/v1/admin/..." 404).
     const prefix =
-      context === "admin" ? "/admin" : context === "tenant" ? "/tenant" : "/business";
+      context === "admin" ? "" : context === "tenant" ? "/tenant" : "/business";
     const path = `${prefix}/instances/${encodedId}/ssh-sessions`;
 
     const term = termRef.current;

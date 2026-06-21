@@ -63,7 +63,9 @@ const EmbeddedConsole = ({
   const [, setIsResizing] = useState(false);
   const [dragOffset, setDragOffset] = useState<Position>({ x: 0, y: 0 });
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
-  const [consoleType, setConsoleType] = useState<ConsoleType>("novnc");
+  // Default to SSH: the console is opened from a terminal affordance, SSH runs
+  // inline (xterm), and the graphical consoles can't be embedded here anyway.
+  const [consoleType, setConsoleType] = useState<ConsoleType>("ssh");
   const [isMuted, setIsMuted] = useState(false);
   const [consoleUrl, setConsoleUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -188,7 +190,10 @@ const EmbeddedConsole = ({
   const handleConsoleTypeChange = (newType: ConsoleType) => {
     setConsoleType(newType);
     setConsoleUrl(null);
-    fetchConsoleUrl(newType);
+    setError(null);
+    // SSH runs inline (xterm); graphical consoles are fetched, then opened in a new
+    // browser tab from the panel below (they can't be embedded in an iframe).
+    if (newType !== "ssh") fetchConsoleUrl(newType);
   };
 
   // Console actions
@@ -381,18 +386,24 @@ const EmbeddedConsole = ({
           )}
 
           {consoleType !== "ssh" && consoleUrl && !isLoading && !error && (
-            <iframe
-              ref={iframeRef}
-              src={consoleUrl}
-              className="w-full h-full border-none"
-              title={`Console for ${instanceId}`}
-              style={{ height: "calc(100% - 40px)" }}
-              onLoad={() => setConnectionStatus("connected")}
-              onError={() => {
-                setConnectionStatus("error");
-                setError("Failed to load console");
-              }}
-            />
+            <div className="absolute inset-0 bottom-[28px] flex items-center justify-center bg-gray-900">
+              <div className="max-w-sm p-6 text-center">
+                <p className="mb-1 text-sm text-gray-300">Graphical console is ready.</p>
+                <p className="mb-4 text-xs text-gray-500">
+                  It opens in a new browser tab — provider consoles can&apos;t be embedded
+                  here. (SSH runs inline in this window.)
+                </p>
+                <button
+                  onClick={() => {
+                    globalThis.open(consoleUrl, "_blank", "noopener,noreferrer");
+                    setConnectionStatus("connected");
+                  }}
+                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+                >
+                  Open console in new tab
+                </button>
+              </div>
+            </div>
           )}
 
           {/* Status Bar */}

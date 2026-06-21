@@ -18,6 +18,7 @@ import {
 import objectStorageApi from "@/services/objectStorageApi";
 import ObjectStorageSidebar from "./ObjectStorageSidebar";
 import ObjectStorageFileBrowser from "./ObjectStorageFileBrowser";
+import { resolveObjectStorageReadiness } from "./objectStorageStatus";
 import ObjectStorageAnalytics from "./ObjectStorageAnalytics";
 import ObjectStorageSubscription from "./ObjectStorageSubscription";
 import ObjectStorageTransactions from "./ObjectStorageTransactions";
@@ -201,13 +202,10 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
       ?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
-  // Mirror the backend's gate: bucket creation is blocked until S3 access keys
-  // exist, so the account is "ready" once at least one key is present.
-  const accountReady = Boolean(
-    (Array.isArray(account?.accessKeys) && account.accessKeys.length) ||
-      (Array.isArray(account?.access_keys) && account.access_keys.length),
-  );
-  const provisioningFailed = account?.status === "provision_failed";
+  // Mirror the backend's bucket-creation gate using the real resource shape
+  // (default_access_key / status).
+  const { ready: accountReady, failed: provisioningFailed } =
+    resolveObjectStorageReadiness(account);
 
   const handleDeleteBucket = async (bucket: Bucket) => {
     if (

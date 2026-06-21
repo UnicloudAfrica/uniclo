@@ -91,7 +91,20 @@ const DropzoneUploader: React.FC<DropzoneUploaderProps> = ({
               );
               resolve();
             } else {
-              reject(new Error(`Upload failed: ${xhr.statusText}`));
+              // Surface the server's actual message (Laravel {message}/{errors})
+              // instead of an opaque status text.
+              let msg = `Upload failed (${xhr.status})`;
+              try {
+                const body = JSON.parse(xhr.responseText);
+                msg =
+                  body.error ||
+                  body.message ||
+                  (body.errors && Object.values(body.errors).flat().join(" ")) ||
+                  msg;
+              } catch {
+                /* keep the status fallback */
+              }
+              reject(new Error(msg));
             }
           };
 

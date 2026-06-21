@@ -381,12 +381,12 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
           {primaryAccountId ? (
             <ModernButton
               onClick={() => navigate(storagePaths.detail(primaryAccountId))}
-              isDisabled={!canNavigateAway}
+              isDisabled={!credentialsReady}
             >
               View storage account
             </ModernButton>
           ) : (
-            <ModernButton onClick={() => navigate(storagePaths.list)} isDisabled={!canNavigateAway}>
+            <ModernButton onClick={() => navigate(storagePaths.list)} isDisabled={!credentialsReady}>
               Back to storage list
             </ModernButton>
           )}

@@ -46,6 +46,7 @@ interface ObjectStorageAccount {
   endpoint?: string;
   created_at?: string;
   access_keys?: AccessKey[];
+  default_access_key?: AccessKey;
 }
 
 interface ObjectStorageSidebarProps {
@@ -98,7 +99,9 @@ const ObjectStorageSidebar: React.FC<ObjectStorageSidebarProps> = ({
   const [secretViewed, setSecretViewed] = useState(false);
 
   const endpoint = account?.endpoint;
-  const accessKey = account?.access_keys?.[0];
+  // The account resource exposes a singular `default_access_key`; keep the
+  // legacy array as a fallback so older shapes don't regress.
+  const accessKey = account?.default_access_key ?? account?.access_keys?.[0];
   const accessKeyId = accessKey?.key_id;
   const canRevealSecret = accessKey?.can_reveal_secret;
 
@@ -482,7 +485,13 @@ SECRET_ACCESS_KEY=${secretKey || ""}
                   disabled={isRotating || Boolean(newAccessKey)}
                   className="text-xs rounded-lg border border-primary-200 px-3 py-1.5 text-primary-600 hover:bg-primary-50 disabled:opacity-50"
                 >
-                  {isRotating ? "Creating..." : "Rotate key"}
+                  {isRotating ? (
+                    <span className="flex items-center gap-1.5">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" /> Creating&hellip;
+                    </span>
+                  ) : (
+                    "Rotate key"
+                  )}
                 </button>
               </div>
 

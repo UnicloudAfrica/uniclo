@@ -9,6 +9,7 @@ const TenantTwoFactorSettings = lazy(() => import("../dashboard/pages/TenantTwoF
 const TenantTwoFactorManage = lazy(() => import("../dashboard/pages/TenantTwoFactorManage"));
 const TenantRequirements = lazy(() => import("../dashboard/pages/TenantRequirements"));
 const TenantRequirementBuilder = lazy(() => import("../dashboard/pages/TenantRequirementBuilder"));
+const TenantRequirementSubmissions = lazy(() => import("../dashboard/pages/TenantRequirementSubmissions"));
 
 import PurchasedModules from "../dashboard/pages/purchasedModules";
 import PaymentHistory from "../dashboard/pages/paymentHistory";
@@ -445,6 +446,7 @@ const TenantRoutes = (): JSX.Element => (
         <Route path="/dashboard/requirements" element={<TenantRequirements />} />
         <Route path="/dashboard/requirements/new" element={<TenantRequirementBuilder />} />
         <Route path="/dashboard/requirements/:id/edit" element={<TenantRequirementBuilder />} />
+        <Route path="/dashboard/requirements/:id/submissions" element={<TenantRequirementSubmissions />} />
 
         {/* Billing & Revenue */}
         <Route path="/dashboard/revenue" element={<RevenueDashboard />} />

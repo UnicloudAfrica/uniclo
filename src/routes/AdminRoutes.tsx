@@ -31,6 +31,7 @@ const AdminProjectDetails = lazy(() => import("../adminDashboard/pages/AdminProj
 const AdminOnboardingSettings = lazy(() => import("../adminDashboard/pages/adminOnboardingSettings"));
 const AdminRequirements = lazy(() => import("../adminDashboard/pages/AdminRequirements"));
 const AdminRequirementBuilder = lazy(() => import("../adminDashboard/pages/AdminRequirementBuilder"));
+const AdminRequirementSubmissions = lazy(() => import("../adminDashboard/pages/AdminRequirementSubmissions"));
 const AdminLeads = lazy(() => import("../adminDashboard/pages/adminLeads"));
 const AdminLeadCreate = lazy(() => import("../adminDashboard/pages/adminLeadCreate"));
 const AdminLeadDetails = lazy(() => import("../adminDashboard/pages/adminLeadDetails"));
@@ -257,6 +258,7 @@ const AdminRoutes = (): JSX.Element => {
         <Route path="/admin-dashboard/requirements" element={<AdminRequirements />} />
         <Route path="/admin-dashboard/requirements/new" element={<AdminRequirementBuilder />} />
         <Route path="/admin-dashboard/requirements/:id/edit" element={<AdminRequirementBuilder />} />
+        <Route path="/admin-dashboard/requirements/:id/submissions" element={<AdminRequirementSubmissions />} />
         <Route path="/admin-dashboard/region-approvals/create" element={<RegionApprovalCreate />} />
         <Route path="/admin-dashboard/region-approvals/:id" element={<RegionApprovalDetail />} />
         <Route path="/admin-dashboard/region-approvals/:id/edit" element={<RegionApprovalEdit />} />

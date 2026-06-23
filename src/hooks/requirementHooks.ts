@@ -7,7 +7,7 @@ import {
 } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { type ApiResponse } from "@/shared/types/resource";
-import { type RequirementRecord } from "@/shared/types/requirement";
+import { type RequirementRecord, type RequirementSubmissionRecord } from "@/shared/types/requirement";
 import logger from "@/utils/logger";
 
 /**
@@ -57,6 +57,30 @@ export const useFetchRequirements = (
     queryKey: ["requirements"],
     queryFn: fetchRequirements,
     staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    retry: false,
+    ...options,
+  });
+
+const fetchRequirementSubmissions = async (
+  id: string | number
+): Promise<RequirementSubmissionRecord[]> => {
+  const res = await api.get<ApiResponse<RequirementSubmissionRecord[]>>(
+    `/requirements/${id}/submissions`,
+    { silent: true }
+  );
+  return res.data ?? [];
+};
+
+export const useFetchRequirementSubmissions = (
+  id?: string | number,
+  options: Omit<UseQueryOptions<RequirementSubmissionRecord[]>, "queryKey" | "queryFn"> = {}
+) =>
+  useQuery({
+    queryKey: ["requirement-submissions", String(id)],
+    queryFn: () => fetchRequirementSubmissions(id as string | number),
+    enabled: !!id,
+    staleTime: 1000 * 60,
     refetchOnWindowFocus: false,
     retry: false,
     ...options,

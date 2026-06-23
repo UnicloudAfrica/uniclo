@@ -37,3 +37,14 @@ export interface RequirementRecord {
   created_at?: string;
   updated_at?: string;
 }
+
+/** An immutable audit record of one subject's submission against a requirement. */
+export interface RequirementSubmissionRecord {
+  id: number;
+  status: string;
+  submitted_at: string | null;
+  requirement_version: number;
+  subject: { type: string; id: string; name: string; email: string | null };
+  snapshot: { title?: string; fields?: RequirementField[] };
+  values: Record<string, unknown>;
+}

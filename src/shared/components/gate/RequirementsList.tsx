@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { FileText, Edit, Power } from "lucide-react";
+import { FileText, Edit, Power, ListChecks } from "lucide-react";
 import ModernTable, { Column } from "@/shared/components/ui/ModernTable";
 import { ModernCard } from "@/shared/components/ui";
 import ToastUtils from "@/utils/toastUtil";
@@ -72,6 +72,11 @@ const RequirementsList = ({ basePath }: { basePath: string }) => {
   ];
 
   const actions = [
+    {
+      icon: <ListChecks size={16} />,
+      label: "",
+      onClick: (r: RequirementRecord) => navigate(`${basePath}/${r.id}/submissions`),
+    },
     {
       icon: <Edit size={16} />,
       label: "",

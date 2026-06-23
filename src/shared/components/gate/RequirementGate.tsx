@@ -16,6 +16,13 @@ interface GateField {
   label: string;
   consent_text?: string;
   required?: boolean;
+  capability?: {
+    label?: string;
+    id_type?: string;
+    provider?: string | null;
+    auto_verifiable?: boolean;
+    country_code?: string | null;
+  };
 }
 interface GateRequirement {
   id: number;
@@ -166,6 +173,26 @@ const RequirementGate: React.FC<{ placement?: string; children?: React.ReactNode
                       className="block w-full text-sm text-gray-700"
                     />
                     {files[f.key] && <p className="mt-1 text-xs text-gray-500">{files[f.key]}</p>}
+                  </div>
+                ) : f.type === "verification" ? (
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                      {f.capability?.label || f.label}
+                      {f.required ? " *" : ""}
+                    </label>
+                    <input
+                      type="text"
+                      data-field={f.key}
+                      value={(values[f.key] as string) || ""}
+                      onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
+                      placeholder={`Enter your ${f.capability?.label || "ID"}`}
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      {f.capability?.auto_verifiable
+                        ? "We'll verify this automatically where available."
+                        : "We'll review this for verification."}
+                    </p>
                   </div>
                 ) : (
                   <div>

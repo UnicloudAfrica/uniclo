@@ -10,6 +10,7 @@ const TenantTwoFactorManage = lazy(() => import("../dashboard/pages/TenantTwoFac
 const TenantRequirements = lazy(() => import("../dashboard/pages/TenantRequirements"));
 const TenantRequirementBuilder = lazy(() => import("../dashboard/pages/TenantRequirementBuilder"));
 const TenantRequirementSubmissions = lazy(() => import("../dashboard/pages/TenantRequirementSubmissions"));
+const GateOnboarding = lazy(() => import("../dashboard/pages/GateOnboarding"));
 
 import PurchasedModules from "../dashboard/pages/purchasedModules";
 import PaymentHistory from "../dashboard/pages/paymentHistory";
@@ -447,6 +448,10 @@ const TenantRoutes = (): JSX.Element => (
         <Route path="/dashboard/requirements/new" element={<TenantRequirementBuilder />} />
         <Route path="/dashboard/requirements/:id/edit" element={<TenantRequirementBuilder />} />
         <Route path="/dashboard/requirements/:id/submissions" element={<TenantRequirementSubmissions />} />
+        {/* Part B2 — gate-driven onboarding (dual-run; legacy /dashboard/onboarding stays).
+            Path deliberately avoids the "/dashboard/onboarding" prefix: TenantRoute's guard
+            redirects completed tenants away from any /dashboard/onboarding* path. */}
+        <Route path="/dashboard/gate-onboarding" element={<GateOnboarding />} />
 
         {/* Billing & Revenue */}
         <Route path="/dashboard/revenue" element={<RevenueDashboard />} />

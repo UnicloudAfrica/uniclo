@@ -23,22 +23,20 @@ test("admin builds a consent requirement end-to-end", async ({ page }) => {
   await page.waitForURL(/requirements\/new/, { timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(1000);
 
-  // Details — title auto-fills the key. Use a test-specific placement so this
-  // doesn't add a live gate to the shared `onboarding` placement.
-  await page.getByPlaceholder("e.g. Terms & Conditions").fill(title);
-  await page.getByPlaceholder("onboarding").fill("e2e-builder-test");
-
-  // First field → a required consent checkbox.
-  await page.locator("select").filter({ hasText: "Consent checkbox" }).selectOption("checkbox");
-  await page.getByPlaceholder("field_key").first().fill("agree_terms");
-  await page.getByPlaceholder("Field label").first().fill("I accept the Terms");
+  // Name the form. The first question is already an "Agreement" tick box.
+  await page.getByPlaceholder("e.g. New Hire Agreement").fill(title);
+  await page.getByPlaceholder("e.g. I accept the Terms & Conditions").fill("I accept the Terms");
   await page.getByPlaceholder("I agree to the Terms & Conditions.").fill("I accept the Terms & Conditions.");
+
+  // Advanced → test-specific placement so this doesn't gate the shared `onboarding`.
+  await page.getByRole("button", { name: /advanced settings/i }).click();
+  await page.getByPlaceholder("onboarding").fill("e2e-builder-test");
   await shot(page, "02-builder");
 
   const createResp = page
     .waitForResponse((r) => r.url().includes("/requirements") && r.request().method() === "POST", { timeout: 20000 })
     .catch(() => null);
-  await page.getByRole("button", { name: /create requirement/i }).click();
+  await page.getByRole("button", { name: /create form/i }).click();
   const cr = await createResp;
   if (cr) console.log("ADMIN_REQUIREMENT_CREATE_STATUS", cr.status());
   expect(cr?.status()).toBe(201);

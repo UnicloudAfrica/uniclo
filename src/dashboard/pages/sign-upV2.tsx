@@ -94,6 +94,9 @@ export default function DashboardSignUpV2() {
   const [activeRole, setActiveRole] = useState<RoleTabId>("tenant");
   const [formData, setFormData] = useState<SignUpFormData>(INITIAL_FORM);
   const [errors, setErrors] = useState<Record<string, string | null>>({});
+  // Tenants are always a business; clients choose. Company Name only applies to a business.
+  const [accountType, setAccountType] = useState<"business" | "individual">("business");
+  const isBusiness = activeRole === "tenant" || accountType === "business";
 
   const updateField = (field: keyof SignUpFormData, value: string) => {
     setFormData((prev) => {
@@ -139,7 +142,7 @@ export default function DashboardSignUpV2() {
     } else if (formData.password !== formData.confirmPassword) {
       validationErrors.confirmPassword = "Passwords do not match";
     }
-    if (!formData.companyName.trim()) {
+    if (isBusiness && !formData.companyName.trim()) {
       validationErrors.companyName = "Company name is required";
     }
     if (!formData.countryId) {
@@ -163,13 +166,7 @@ export default function DashboardSignUpV2() {
       selectedCountry?.iso3?.toUpperCase() ||
       "";
 
-    const accountType = "business";
-    const businessPayload = {
-      name: formData.companyName.trim(),
-      country_id: normalizedCountryId,
-      country: normalizedCountryName,
-      country_code: normalizedCountryCode,
-    };
+    const resolvedAccountType = activeRole === "tenant" ? "business" : accountType;
 
     const payload = {
       first_name: formData.firstName.trim(),
@@ -178,12 +175,22 @@ export default function DashboardSignUpV2() {
       password: formData.password,
       password_confirmation: formData.confirmPassword,
       role: activeRole === "tenant" ? "tenant" : "client",
-      account_type: accountType,
-      company_name: formData.companyName.trim(),
+      account_type: resolvedAccountType,
+      company_name: isBusiness ? formData.companyName.trim() : "",
       country_id: normalizedCountryId,
       country: normalizedCountryName,
       country_code: normalizedCountryCode,
-      business: businessPayload,
+      // Individuals have no company — omit the business block entirely.
+      ...(isBusiness
+        ? {
+            business: {
+              name: formData.companyName.trim(),
+              country_id: normalizedCountryId,
+              country: normalizedCountryName,
+              country_code: normalizedCountryCode,
+            },
+          }
+        : {}),
     };
 
     mutate(payload, {
@@ -238,6 +245,29 @@ export default function DashboardSignUpV2() {
           ))}
         </div>
         <form onSubmit={handleSubmit} className="space-y-5">
+          {activeRole === "client" && (
+            <div>
+              <p className="mb-2 text-sm font-medium text-[var(--theme-heading-color)]">
+                I&apos;m signing up as
+              </p>
+              <div className="flex bg-[var(--theme-surface-alt)] rounded-[12px] p-1">
+                {(["individual", "business"] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setAccountType(t)}
+                    className={`flex-1 rounded-[10px] px-4 py-2.5 text-sm font-medium capitalize transition-all ${
+                      accountType === t
+                        ? "bg-white shadow text-[var(--theme-heading-color)]"
+                        : "text-[var(--theme-text-color)]"
+                    }`}
+                  >
+                    {t === "individual" ? "Individual" : "Business"}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field
               label="First Name"
@@ -253,12 +283,14 @@ export default function DashboardSignUpV2() {
             />
           </div>
 
-          <Field
-            label="Company Name"
-            value={formData.companyName}
-            error={errors.companyName}
-            onChange={(value) => updateField("companyName", value)}
-          />
+          {isBusiness && (
+            <Field
+              label="Company Name"
+              value={formData.companyName}
+              error={errors.companyName}
+              onChange={(value) => updateField("companyName", value)}
+            />
+          )}
 
           <Field
             label="Email"

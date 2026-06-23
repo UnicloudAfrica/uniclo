@@ -44,6 +44,7 @@ const RequirementGate: React.FC<{ placement?: string; children?: React.ReactNode
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [files, setFiles] = useState<Record<string, string>>({}); // field key -> uploaded filename (display)
 
   const load = useCallback(async () => {
     if (!isAuthenticated) {
@@ -100,6 +101,29 @@ const RequirementGate: React.FC<{ placement?: string; children?: React.ReactNode
     }
   };
 
+  // Upload a file field's file to private storage; store the returned path as the field value.
+  const handleFileUpload = (key: string) => async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFiles((s) => ({ ...s, [key]: `Uploading ${file.name}…` }));
+    const token = useAuthStore.getState().token;
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch(`${config.baseURL}/requirements/upload`, {
+      method: "POST",
+      headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      credentials: "include",
+      body: fd,
+    });
+    const json = (await res.json().catch(() => ({}))) as { data?: { path?: string } };
+    if (res.status === 201 && json?.data?.path) {
+      setValues((v) => ({ ...v, [key]: json.data!.path }));
+      setFiles((s) => ({ ...s, [key]: file.name }));
+    } else {
+      setFiles((s) => ({ ...s, [key]: "" }));
+    }
+  };
+
   return (
     <>
       <div
@@ -129,6 +153,20 @@ const RequirementGate: React.FC<{ placement?: string; children?: React.ReactNode
                       {f.required ? " *" : ""}
                     </span>
                   </label>
+                ) : f.type === "file" ? (
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                      {f.label}
+                      {f.required ? " *" : ""}
+                    </label>
+                    <input
+                      type="file"
+                      data-field={f.key}
+                      onChange={handleFileUpload(f.key)}
+                      className="block w-full text-sm text-gray-700"
+                    />
+                    {files[f.key] && <p className="mt-1 text-xs text-gray-500">{files[f.key]}</p>}
+                  </div>
                 ) : (
                   <div>
                     <label className="mb-1 block text-sm font-medium text-gray-700">

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Headbar from "./clientHeadbar";
 import Sidebar from "./clientSidebar";
+import RequirementGate from "@/shared/components/gate/RequirementGate";
 import useClientTheme from "@/hooks/clientHooks/useClientTheme";
 import { useApplyBrandingTheme } from "@/hooks/useBrandingTheme";
 import usePermissionRefresh from "@/hooks/usePermissionRefresh";
@@ -27,11 +28,11 @@ const ClientDashboardLayout = () => {
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   return (
-    <>
+    <RequirementGate placement="onboarding">
       <Headbar onMenuClick={toggleMobileMenu} />
       <Sidebar isMobileMenuOpen={isMobileMenuOpen} onCloseMobileMenu={closeMobileMenu} />
       <Outlet />
-    </>
+    </RequirementGate>
   );
 };
 

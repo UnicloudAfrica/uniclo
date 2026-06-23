@@ -46,5 +46,11 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"], storageState: "e2e/.auth/client.json" },
       dependencies: ["setup"],
     },
+    {
+      // Public/unauthenticated pages — no storageState, no setup dependency.
+      name: "public",
+      testMatch: /public\/.*\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
   ],
 });

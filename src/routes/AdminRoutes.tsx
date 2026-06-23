@@ -20,6 +20,8 @@ const AdminPurchasedModules = lazy(() => import("../adminDashboard/pages/adminPu
 const AdminInventory = lazy(() => import("../adminDashboard/pages/adminInventory"));
 const AdminTax = lazy(() => import("../adminDashboard/pages/adminTax"));
 const AdminUsers = lazy(() => import("../adminDashboard/pages/AdminUsers"));
+const AdminRolesPermissions = lazy(() => import("../adminDashboard/pages/AdminRolesPermissions"));
+const AdminAccountTypes = lazy(() => import("../adminDashboard/pages/AdminAccountTypes"));
 const AdminUserCreate = lazy(() => import("../adminDashboard/pages/adminUserCreate"));
 const AdminUserDetails = lazy(() => import("../adminDashboard/pages/adminUserDetails"));
 const AdminUserEdit = lazy(() => import("../adminDashboard/pages/adminUserEdit"));
@@ -213,6 +215,8 @@ const AdminRoutes = (): JSX.Element => {
         <Route path="/admin-dashboard/admin-users/:adminId" element={<AdminUserDetails />} />
         <Route path="/admin-dashboard/admin-users/:adminId/edit" element={<AdminUserEdit />} />
         <Route path="/admin-dashboard/admins" element={<AdminUsers />} />
+        <Route path="/admin-dashboard/roles" element={<AdminRolesPermissions />} />
+        <Route path="/admin-dashboard/account-types" element={<AdminAccountTypes />} />
         <Route path="/admin-dashboard/partners" element={<AdminPartners />} />
         <Route path="/admin-dashboard/partners/create" element={<AdminPartnerCreate />} />
         <Route path="/admin-dashboard/partners/details" element={<AdminPartnerDetails />} />

@@ -63,6 +63,7 @@ import {
   GitBranch,
   Ticket,
   Bell,
+  BadgeCheck,
   Orbit as OrbitIcon,
 } from "lucide-react";
 
@@ -464,6 +465,20 @@ const CUSTOMERS_ITEMS_ADMIN: RoleAwareItem[] = [
     path: "/admin-dashboard/partners",
     roles: ["admin"],
     requiredPermission: "tenants.view",
+  },
+  {
+    label: "Roles & Permissions",
+    icon: ShieldCheck,
+    path: "/admin-dashboard/roles",
+    roles: ["admin"],
+    requiredPermission: "team.manage",
+  },
+  {
+    label: "Account Types",
+    icon: BadgeCheck,
+    path: "/admin-dashboard/account-types",
+    roles: ["admin"],
+    requiredPermission: "tenants.edit",
   },
   {
     label: "Clients",
@@ -1010,20 +1025,13 @@ export const adminMenuItems: MenuEntry[] = [
 ];
 
 export const tenantMenuItems: MenuEntry[] = [
-  // 1. Overview
+  // 1. Home (top-level — was a redundant "Overview" group that wrapped a single "Home")
   {
-    name: "Overview",
+    name: "Home",
     icon: Home,
     isLucide: true,
-    children: [
-      {
-        name: "Home",
-        icon: Home,
-        isLucide: true,
-        requiredPermission: "dashboard.view",
-        path: "/dashboard",
-      },
-    ],
+    requiredPermission: "dashboard.view",
+    path: "/dashboard",
   },
   // 2. Compute & Storage
   buildGroup("Compute & Storage", Server, COMPUTE_STORAGE_ITEMS, "/dashboard", "tenant"),
@@ -1056,6 +1064,14 @@ export const tenantMenuItems: MenuEntry[] = [
     requiredPermission: "products.view",
     path: "/dashboard/products",
   },
+  // Team & Roles (tenant-only standalone — manage tenant-defined custom roles).
+  {
+    name: "Roles",
+    icon: ShieldCheck,
+    isLucide: true,
+    requiredPermission: "team.manage",
+    path: "/dashboard/roles",
+  },
   // ─── Bottom-pinned ───
   { name: "Documentation", icon: BookOpen, isLucide: true, path: "/dashboard/docs" },
   {
@@ -1070,20 +1086,13 @@ export const tenantMenuItems: MenuEntry[] = [
 
 export const buildClientMenuItems = (_hasProjects: boolean): MenuEntry[] => {
   return [
-    // 1. Overview
+    // 1. Home (top-level — was a redundant "Overview" group that wrapped a single "Home")
     {
-      name: "Overview",
+      name: "Home",
       icon: LayoutDashboard,
       isLucide: true,
-      children: [
-        {
-          name: "Home",
-          icon: LayoutDashboard,
-          isLucide: true,
-          requiredPermission: "dashboard.view",
-          path: "/client-dashboard",
-        },
-      ],
+      requiredPermission: "dashboard.view",
+      path: "/client-dashboard",
     },
     // 2. Compute & Storage
     buildGroup("Compute & Storage", Server, COMPUTE_STORAGE_ITEMS, "/client-dashboard", "client"),

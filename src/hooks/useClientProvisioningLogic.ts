@@ -84,6 +84,9 @@ export const useClientProvisioningLogic = () => {
       (countriesData as unknown as Array<Record<string, unknown>>).map((c) => ({
         value: String(c.iso2 || c.code || c.id),
         label: typeof c.name === "string" ? c.name : String(c.name ?? ""),
+        // Carry the country's currency so pricing/summary shows the customer's local
+        // currency (multi-country ready) instead of a hardcoded NGN/USD fallback.
+        currency: String(c.currency_code || c.currency || c.currencyCode || "") || undefined,
       })),
     [countriesData]
   );
@@ -259,7 +262,12 @@ export const useClientProvisioningLogic = () => {
           (cfg) => !evaluateConfigurationCompleteness(cfg).isComplete
         );
         if (incompleteIndex !== -1) {
-          throw new Error(`Complete Configuration #${incompleteIndex + 1} before pricing.`);
+          const missing = evaluateConfigurationCompleteness(configurations[incompleteIndex]).missing;
+          throw new Error(
+            `Complete Configuration #${incompleteIndex + 1} before pricing${
+              missing.length ? ` — missing: ${missing.join(", ")}` : ""
+            }.`
+          );
         }
 
         const pricing_requests = configurations.map((cfg) => {

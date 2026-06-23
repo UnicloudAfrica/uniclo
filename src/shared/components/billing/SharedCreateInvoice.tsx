@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import { useCreateMultiQuotes } from "@/hooks/adminHooks/calculatorOptionHooks";
 import { useSharedFetchRegions } from "@/hooks/sharedCalculatorHooks";
 import { useFetchProductPricing } from "@/hooks/resource";
+import { useFetchIntegrationProducts } from "@/shared/hooks/resources/integrationProductHooks";
 import { useCustomerContext } from "@/hooks/adminHooks/useCustomerContext";
 import { ModernButton } from "../ui";
 import InvoiceWizardStepper from "./invoice/InvoiceWizardStepper";
@@ -16,6 +17,7 @@ import {
   InvoiceFormData,
   PricingRequest,
   ObjectStorageRequest,
+  IntegrationLineRequest,
   ProductPricing,
   BillingRegion,
   InvoiceResponse,
@@ -86,6 +88,7 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
 
   const [pricingRequests, setPricingRequests] = useState<PricingRequest[]>([]);
   const [objectStorageRequests, setObjectStorageRequests] = useState<ObjectStorageRequest[]>([]);
+  const [integrationRequests, setIntegrationRequests] = useState<IntegrationLineRequest[]>([]);
   const [errors, setErrors] = useState<InvoiceErrors>({});
   const [apiResponse, setApiResponse] = useState<InvoiceResponse | null>(null);
 
@@ -107,6 +110,8 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
     data: BillingRegion[] | undefined;
     isFetching: boolean;
   };
+  const { data: integrationProducts, isFetching: isIntegrationProductsFetching } =
+    useFetchIntegrationProducts();
   const { mutate: createMultiQuotes, isPending: isSubmissionPending } = useCreateMultiQuotes();
 
   const invoiceAz = formData.availability_zone || "";
@@ -358,6 +363,15 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
     setObjectStorageRequests(objectStorageRequests.filter((_, i) => i !== index));
   };
 
+  const addIntegrationRequest = (item: IntegrationLineRequest) => {
+    setIntegrationRequests((prev) => [...prev, item]);
+    ToastUtils.success("Integration product added to invoice.");
+  };
+
+  const removeIntegrationRequest = (index: number) => {
+    setIntegrationRequests(integrationRequests.filter((_, i) => i !== index));
+  };
+
   const removePricingRequest = (index: number) => {
     setPricingRequests(pricingRequests.filter((_, i) => i !== index));
   };
@@ -400,6 +414,10 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
         return rest;
       }),
       object_storage_items: objectStorageRequests.map((req) => {
+        const { _display, ...rest } = req;
+        return rest;
+      }),
+      integration_items: integrationRequests.map((req) => {
         const { _display, ...rest } = req;
         return rest;
       }),
@@ -525,6 +543,11 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
             onAddObjectStorageRequest={addObjectStorageRequest}
             objectStorageRequests={objectStorageRequests}
             onRemoveObjectStorageRequest={removeObjectStorageRequest}
+            integrationProducts={integrationProducts}
+            isIntegrationProductsFetching={isIntegrationProductsFetching}
+            integrationRequests={integrationRequests}
+            onAddIntegrationRequest={addIntegrationRequest}
+            onRemoveIntegrationRequest={removeIntegrationRequest}
           />
         );
       case 2:
@@ -535,6 +558,7 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
             updateFormData={updateFormData}
             pricingRequests={pricingRequests}
             objectStorageRequests={objectStorageRequests}
+            integrationRequests={integrationRequests}
             tenants={tenants}
             assignmentDetails={assignmentDetails}
             mode={mode}

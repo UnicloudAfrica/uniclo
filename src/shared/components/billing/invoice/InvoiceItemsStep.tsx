@@ -1,16 +1,20 @@
 import React, { useMemo, useState } from "react";
-import { Cpu, Database, ShoppingCart } from "lucide-react";
+import { Cpu, Database, Puzzle, ShoppingCart } from "lucide-react";
 import ResourceItemBuilder from "./ResourceItemBuilder";
 import StorageItemBuilder from "./StorageItemBuilder";
+import IntegrationItemBuilder from "./IntegrationItemBuilder";
 import InvoiceItemQueue from "./InvoiceItemQueue";
+import IntegrationItemQueue from "./IntegrationItemQueue";
 import {
   InvoiceFormData,
   PricingRequest,
   ObjectStorageRequest,
+  IntegrationLineRequest,
   ProductPricing,
   BillingRegion,
   UpdateInvoiceFormData,
 } from "../types";
+import type { IntegrationProductRow } from "@/shared/hooks/resources/integrationProductHooks";
 
 interface InvoiceItemsStepProps {
   formData: InvoiceFormData;
@@ -38,9 +42,14 @@ interface InvoiceItemsStepProps {
   onAddObjectStorageRequest: () => void;
   objectStorageRequests: ObjectStorageRequest[];
   onRemoveObjectStorageRequest: (index: number) => void;
+  integrationProducts: IntegrationProductRow[] | undefined;
+  isIntegrationProductsFetching: boolean;
+  integrationRequests: IntegrationLineRequest[];
+  onAddIntegrationRequest: (item: IntegrationLineRequest) => void;
+  onRemoveIntegrationRequest: (index: number) => void;
 }
 
-type ItemTab = "compute" | "storage";
+type ItemTab = "compute" | "storage" | "integration";
 
 const InvoiceItemsStep: React.FC<InvoiceItemsStepProps> = ({
   formData,
@@ -68,18 +77,25 @@ const InvoiceItemsStep: React.FC<InvoiceItemsStepProps> = ({
   onAddObjectStorageRequest,
   objectStorageRequests,
   onRemoveObjectStorageRequest,
+  integrationProducts,
+  isIntegrationProductsFetching,
+  integrationRequests,
+  onAddIntegrationRequest,
+  onRemoveIntegrationRequest,
 }) => {
   const [activeTab, setActiveTab] = useState<ItemTab>("compute");
 
-  const totalItems = pricingRequests.length + objectStorageRequests.length;
+  const totalItems =
+    pricingRequests.length + objectStorageRequests.length + integrationRequests.length;
 
   const tabs: Array<{ id: ItemTab; label: string; icon: React.ComponentType<{ className?: string }>; count: number }> =
     useMemo(
       () => [
         { id: "compute", label: "Compute", icon: Cpu, count: pricingRequests.length },
         { id: "storage", label: "Object Storage", icon: Database, count: objectStorageRequests.length },
+        { id: "integration", label: "Integrations", icon: Puzzle, count: integrationRequests.length },
       ],
-      [pricingRequests.length, objectStorageRequests.length],
+      [pricingRequests.length, objectStorageRequests.length, integrationRequests.length],
     );
 
   return (
@@ -128,7 +144,7 @@ const InvoiceItemsStep: React.FC<InvoiceItemsStepProps> = ({
           </div>
 
           {/* Active builder */}
-          {activeTab === "compute" ? (
+          {activeTab === "compute" && (
             <ResourceItemBuilder
               formData={formData}
               errors={errors}
@@ -149,7 +165,8 @@ const InvoiceItemsStep: React.FC<InvoiceItemsStepProps> = ({
               isCrossConnectsFetching={isCrossConnectsFetching}
               onAddRequest={onAddRequest}
             />
-          ) : (
+          )}
+          {activeTab === "storage" && (
             <StorageItemBuilder
               formData={formData}
               errors={errors}
@@ -159,6 +176,13 @@ const InvoiceItemsStep: React.FC<InvoiceItemsStepProps> = ({
               objectStorageProducts={objectStorageProducts}
               isObjectStorageProductsFetching={isObjectStorageProductsFetching}
               onAddObjectStorageRequest={onAddObjectStorageRequest}
+            />
+          )}
+          {activeTab === "integration" && (
+            <IntegrationItemBuilder
+              products={integrationProducts ?? []}
+              isFetching={isIntegrationProductsFetching}
+              onAdd={onAddIntegrationRequest}
             />
           )}
         </div>
@@ -176,7 +200,8 @@ const InvoiceItemsStep: React.FC<InvoiceItemsStepProps> = ({
 
             {totalItems === 0 ? (
               <p className="rounded-xl bg-slate-50 px-3 py-6 text-center text-xs text-slate-500">
-                Nothing added yet. Use the builder on the left to add compute or object storage items.
+                Nothing added yet. Use the builder on the left to add compute, object storage, or
+                integration items.
               </p>
             ) : (
               <div className="space-y-3">
@@ -192,6 +217,12 @@ const InvoiceItemsStep: React.FC<InvoiceItemsStepProps> = ({
                     items={objectStorageRequests}
                     onRemove={onRemoveObjectStorageRequest}
                     type="storage"
+                  />
+                )}
+                {integrationRequests.length > 0 && (
+                  <IntegrationItemQueue
+                    items={integrationRequests}
+                    onRemove={onRemoveIntegrationRequest}
                   />
                 )}
               </div>

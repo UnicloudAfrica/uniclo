@@ -311,7 +311,13 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
     const azs = (selectedRegionData as RegionResource)?.availability_zones;
     if (!Array.isArray(azs)) return [];
     return azs
-      .filter((az: AvailabilityZoneResource) => az?.status === "active" || !az?.status)
+      .filter((az: AvailabilityZoneResource) => {
+        // Accept usable zones. /business/cloud-regions reports health ("healthy"),
+        // while admin /regions reports operational state ("active"); allow both,
+        // plus no status. Only explicitly down/disabled zones are excluded.
+        const s = String(az?.status ?? "").toLowerCase();
+        return s === "" || s === "active" || s === "healthy" || s === "available";
+      })
       .map((az: AvailabilityZoneResource) => ({
         value: String(az.code || az.id || ""),
         label: az.name || az.code || "",
@@ -775,6 +781,21 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
     }
     prevProjectRef.current = projectIdentifier;
   }, [projectIdentifier, cfg.id, updateConfiguration]);
+
+  // Inherit the selected project's availability zone — runs on the FIRST selection
+  // too (the reset effect above only fires when switching between projects). Without
+  // this the AZ stays blank and a multi-provider region resolves the catalog +
+  // provisioning to the wrong provider. Idempotent: only patches on a real change.
+  useEffect(() => {
+    if (!projectIdentifier) return;
+    const projectAz = String(
+      (projectOptions.find((opt) => String(opt.value) === String(projectIdentifier))
+        ?.raw as ProjectResource | undefined)?.availability_zone || ""
+    );
+    if (projectAz && projectAz !== (cfg.availability_zone || "")) {
+      updateConfiguration(cfg.id, { availability_zone: projectAz });
+    }
+  }, [projectIdentifier, projectOptions, cfg.availability_zone, cfg.id, updateConfiguration]);
 
   const isProjectScoped = Boolean(projectIdentifier && selectedRegion);
 

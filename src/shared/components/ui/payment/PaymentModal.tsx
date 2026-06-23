@@ -123,6 +123,7 @@ const PaymentModal = ({
   const [walletBalance, setWalletBalance] = useState<number | null>(propWalletBalance ?? null);
   const [isLoadingWalletBalance, setIsLoadingWalletBalance] = useState(false);
   const [isWalletProcessing, setIsWalletProcessing] = useState(false);
+  const [walletError, setWalletError] = useState<string | null>(null);
 
   const transactionContext = transactionData?.data;
   const transaction = transactionContext?.transaction;
@@ -413,28 +414,41 @@ const PaymentModal = ({
     }
   }, [propWalletBalance]);
 
-  const handleWalletPayment = useCallback(async () => {
+  const handleWalletPayment = useCallback(async (pin: string) => {
     if (!statusLookupIdentifier) return;
     setIsWalletProcessing(true);
+    setWalletError(null);
     try {
       const confirmUrl = `${apiRoot}/transactions/${statusLookupIdentifier}`;
       const response = await fetch(confirmUrl, {
         method: "PUT",
         headers: authHeaders,
         credentials: "include",
-        body: JSON.stringify({ payment_gateway: "Wallet" }),
+        body: JSON.stringify({ payment_gateway: "Wallet", pin }),
       });
       const payload = (await response.json().catch(() => ({}))) as ApiResponse;
       if (response.ok && (payload.success !== false)) {
         setPaymentStatus("completed");
         onPaymentComplete?.(payload);
       } else {
+        const p = payload as {
+          error?: string;
+          message?: string;
+          payment_gateway_message?: string;
+        };
+        const message =
+          p.error ||
+          p.payment_gateway_message ||
+          p.message ||
+          "Payment could not be completed. Please check your PIN and try again.";
         logger.error("Wallet payment failed", payload);
-        setPaymentStatus("failed");
+        // Keep the transaction pending so the user can correct the PIN and retry,
+        // rather than failing the whole order on a recoverable input error.
+        setWalletError(message);
       }
     } catch (error) {
       logger.error("Wallet payment error", error);
-      setPaymentStatus("failed");
+      setWalletError("Something went wrong. Please try again.");
     } finally {
       setIsWalletProcessing(false);
     }
@@ -965,6 +979,7 @@ const PaymentModal = ({
           currency={amountDetails.displayCurrency}
           hasSufficientFunds={(walletBalance ?? 0) >= displayPayableTotal}
           isProcessing={isWalletProcessing}
+          errorMessage={walletError}
           onPayWithWallet={handleWalletPayment}
         />
       )}

@@ -11,12 +11,15 @@ import {
   Key,
   Loader2,
 } from "lucide-react";
+import { ModernButton, ModernInput, ModernSelect } from "@/shared/components/ui";
 import {
   useAdminTenantBillingConfig,
   useAdminTenantBillingSummary,
   useUpdateTenantBillingConfig,
   useAddTenantCredit,
 } from "@/hooks/useAdminTenantBilling";
+
+const accent = "var(--theme-color)";
 
 const BILLING_MODELS = [
   { value: "direct", label: "Direct Payment", icon: CreditCard },
@@ -29,6 +32,39 @@ const BILLING_MODELS = [
 interface Props {
   tenantId: string;
 }
+
+const SectionCard = ({
+  icon,
+  title,
+  subtitle,
+  action,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle?: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) => (
+  <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    <div className="mb-4 flex items-start gap-3">
+      <span
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+        style={{ background: "var(--theme-color-10)", color: accent }}
+      >
+        {icon}
+      </span>
+      <div className="min-w-0 flex-1">
+        <h3 className="truncate text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
+        {subtitle && (
+          <p className="mt-0.5 break-words text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
+        )}
+      </div>
+      {action && <div className="shrink-0">{action}</div>}
+    </div>
+    {children}
+  </div>
+);
 
 export default function TenantBillingTab({ tenantId }: Props) {
   const [isEditing, setIsEditing] = useState(false);
@@ -113,332 +149,391 @@ export default function TenantBillingTab({ tenantId }: Props) {
   if (isLoadingConfig) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-        <span className="ml-2 text-gray-600">Loading billing configuration...</span>
+        <Loader2 className="h-6 w-6 animate-spin" style={{ color: accent }} />
+        <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
+          Loading billing configuration...
+        </span>
       </div>
     );
   }
 
+  const summaryTiles = [
+    {
+      label: "Wallet Balance",
+      value: formatCurrency(summary?.wallet_balance_cents || 0),
+      icon: <Wallet className="h-5 w-5 text-green-600 dark:text-green-400" />,
+      iconBg: "bg-green-100 dark:bg-green-900/30",
+      valueClass: "text-green-600 dark:text-green-400",
+    },
+    {
+      label: "Credit Limit",
+      value: formatCurrency(summary?.credit_limit_cents || 0),
+      icon: <Shield className="h-5 w-5 text-purple-600 dark:text-purple-400" />,
+      iconBg: "bg-purple-100 dark:bg-purple-900/30",
+      valueClass: "text-purple-600 dark:text-purple-400",
+    },
+    {
+      label: "Outstanding",
+      value: formatCurrency(summary?.total_outstanding_cents || 0),
+      icon: (
+        <AlertTriangle
+          className={`h-5 w-5 ${
+            summary?.is_overdue
+              ? "text-red-600 dark:text-red-400"
+              : "text-yellow-600 dark:text-yellow-400"
+          }`}
+        />
+      ),
+      iconBg: summary?.is_overdue
+        ? "bg-red-100 dark:bg-red-900/30"
+        : "bg-yellow-100 dark:bg-yellow-900/30",
+      valueClass: summary?.is_overdue
+        ? "text-red-600 dark:text-red-400"
+        : "text-yellow-600 dark:text-yellow-400",
+    },
+    {
+      label: "Billing Model",
+      value: (config?.billing_model || "direct").replace(/_/g, " "),
+      icon: <Settings className="h-5 w-5" style={{ color: accent }} />,
+      iconBg: "",
+      iconBgStyle: { background: "var(--theme-color-10)" },
+      valueClass: "capitalize",
+      valueStyle: { color: accent },
+    },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-gray-50 rounded-2xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-              <Wallet className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Wallet Balance</p>
-              <p className="text-lg font-semibold text-green-600">
-                {formatCurrency(summary?.wallet_balance_cents || 0)}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gray-50 rounded-2xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-              <Shield className="w-5 h-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Credit Limit</p>
-              <p className="text-lg font-semibold text-purple-600">
-                {formatCurrency(summary?.credit_limit_cents || 0)}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gray-50 rounded-2xl p-4">
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                summary?.is_overdue ? "bg-red-100" : "bg-yellow-100"
-              }`}
-            >
-              <AlertTriangle
-                className={`w-5 h-5 ${summary?.is_overdue ? "text-red-600" : "text-yellow-600"}`}
-              />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Outstanding</p>
-              <p
-                className={`text-lg font-semibold ${
-                  summary?.is_overdue ? "text-red-600" : "text-yellow-600"
-                }`}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {summaryTiles.map((tile) => (
+          <div
+            key={tile.label}
+            className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tile.iconBg}`}
+                style={tile.iconBgStyle}
               >
-                {formatCurrency(summary?.total_outstanding_cents || 0)}
-              </p>
+                {tile.icon}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  {tile.label}
+                </p>
+                <p
+                  className={`break-words text-lg font-semibold ${tile.valueClass}`}
+                  style={tile.valueStyle}
+                >
+                  {tile.value}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-
-        <div className="bg-gray-50 rounded-2xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-              <Settings className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Billing Model</p>
-              <p className="text-lg font-semibold text-blue-600 capitalize">
-                {(config?.billing_model || "direct").replace(/_/g, " ")}
-              </p>
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-3">
-        <button
+      <div className="flex flex-wrap gap-2">
+        <ModernButton
+          variant="outline"
+          size="sm"
+          className="gap-2"
           onClick={() => setShowAddCredit(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-xl hover:bg-green-100 transition-colors"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="h-4 w-4" />
           Add Credit
-        </button>
-        <button
+        </ModernButton>
+        <ModernButton
+          variant="outline"
+          size="sm"
+          className="gap-2"
           onClick={() => setIsEditing(!isEditing)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-xl hover:bg-blue-100 transition-colors"
         >
-          <Settings className="w-4 h-4" />
+          <Settings className="h-4 w-4" />
           {isEditing ? "Cancel Editing" : "Edit Configuration"}
-        </button>
+        </ModernButton>
       </div>
 
       {/* Add Credit Modal */}
       {showAddCredit && (
-        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
-          <h4 className="font-medium text-blue-900 mb-3">Add Prepaid Credit</h4>
-          <div className="flex gap-3 items-end">
-            <div className="flex-1">
-              <label className="text-sm text-gray-600 mb-1 block">Amount (NGN)</label>
-              <input
+        <SectionCard icon={<Plus size={16} />} title="Add Prepaid Credit">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="min-w-0">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Amount (NGN)
+              </label>
+              <ModernInput
                 type="number"
                 value={creditAmount}
                 onChange={(e) => setCreditAmount(e.target.value)}
                 placeholder="1000.00"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full max-w-full"
               />
             </div>
-            <div className="flex-1">
-              <label className="text-sm text-gray-600 mb-1 block">Description (optional)</label>
-              <input
+            <div className="min-w-0">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Description (optional)
+              </label>
+              <ModernInput
                 type="text"
                 value={creditDescription}
                 onChange={(e) => setCreditDescription(e.target.value)}
                 placeholder="Manual top-up"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full max-w-full"
               />
             </div>
-            <button
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <ModernButton
+              variant="primary"
+              size="sm"
               onClick={handleAddCredit}
               disabled={addCreditMutation.isPending}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
             >
               {addCreditMutation.isPending ? "Adding..." : "Add Credit"}
-            </button>
-            <button
-              onClick={() => setShowAddCredit(false)}
-              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
+            </ModernButton>
+            <ModernButton variant="outline" size="sm" onClick={() => setShowAddCredit(false)}>
               Cancel
-            </button>
+            </ModernButton>
           </div>
-        </div>
+        </SectionCard>
       )}
 
       {/* Configuration Form */}
       {isEditing ? (
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-6">
-          {/* Allowed Billing Models */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              Allowed Billing Models
-            </label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {BILLING_MODELS.map(({ value, label, icon: Icon }: { value: string; label: string; icon: React.ComponentType<{ size?: number }> }) => (
-                <button
-                  key={value}
-                  onClick={() => toggleAllowedModel(value)}
-                  className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
-                    formData.allowed_billing_models?.includes(value)
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <Icon className="w-5 h-5 text-gray-600" />
-                  <span className="text-sm font-medium">{label}</span>
-                  {formData.allowed_billing_models?.includes(value) && (
-                    <CheckCircle className="w-4 h-4 text-blue-500 ml-auto" />
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Current Billing Model */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Current Billing Model
-            </label>
-            <select
-              value={formData.billing_model}
-              onChange={(e) => setFormData({ ...formData, billing_model: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            >
-              {BILLING_MODELS.filter((m: unknown) =>
-                formData.allowed_billing_models?.includes(m.value)
-              ).map(({ value, label }) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Credit Limit */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <SectionCard icon={<Settings size={16} />} title="Billing Configuration">
+          <div className="space-y-6">
+            {/* Allowed Billing Models */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Credit Limit (NGN)
+              <label className="mb-3 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Allowed Billing Models
               </label>
-              <input
-                type="number"
-                value={formData.credit_limit_cents / 100}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    credit_limit_cents: Math.round(parseFloat(e.target.value || "0") * 100),
-                  })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {BILLING_MODELS.map(
+                  ({
+                    value,
+                    label,
+                    icon: Icon,
+                  }: {
+                    value: string;
+                    label: string;
+                    icon: React.ComponentType<{ size?: number; className?: string }>;
+                  }) => {
+                    const selected = formData.allowed_billing_models?.includes(value);
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => toggleAllowedModel(value)}
+                        className={`flex min-w-0 items-center gap-3 rounded-xl border-2 p-3 text-left transition-all ${
+                          selected
+                            ? "bg-white dark:bg-gray-800"
+                            : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
+                        }`}
+                        style={
+                          selected
+                            ? { borderColor: accent, background: "var(--theme-color-10)" }
+                            : undefined
+                        }
+                      >
+                        <Icon className="h-5 w-5 shrink-0 text-gray-600 dark:text-gray-300" />
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-900 dark:text-white">
+                          {label}
+                        </span>
+                        {selected && (
+                          <CheckCircle className="ml-auto h-4 w-4 shrink-0" style={{ color: accent }} />
+                        )}
+                      </button>
+                    );
+                  }
+                )}
+              </div>
+            </div>
+
+            {/* Current Billing Model */}
+            <div className="min-w-0">
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Current Billing Model
+              </label>
+              <ModernSelect
+                value={formData.billing_model}
+                onChange={(e) => setFormData({ ...formData, billing_model: e.target.value })}
+                className="w-full max-w-full"
+                options={BILLING_MODELS.filter((m) =>
+                  formData.allowed_billing_models?.includes(m.value)
+                ).map(({ value, label }) => ({ value, label }))}
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Margin Percent (%)
+            {/* Credit Limit + Margin */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="min-w-0">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  Credit Limit (NGN)
+                </label>
+                <ModernInput
+                  type="number"
+                  value={formData.credit_limit_cents / 100}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      credit_limit_cents: Math.round(parseFloat(e.target.value || "0") * 100),
+                    })
+                  }
+                  className="w-full max-w-full"
+                />
+              </div>
+
+              <div className="min-w-0">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  Margin Percent (%)
+                </label>
+                <ModernInput
+                  type="number"
+                  value={formData.margin_percent}
+                  onChange={(e) =>
+                    setFormData({ ...formData, margin_percent: parseFloat(e.target.value || "0") })
+                  }
+                  className="w-full max-w-full"
+                />
+              </div>
+            </div>
+
+            {/* Payment Terms */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="min-w-0">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  Payment Terms (days)
+                </label>
+                <ModernInput
+                  type="number"
+                  value={formData.payment_terms_days}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      payment_terms_days: parseInt(e.target.value || "30"),
+                    })
+                  }
+                  className="w-full max-w-full"
+                />
+              </div>
+            </div>
+
+            {/* Toggles */}
+            <div className="space-y-3">
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-3 dark:border-gray-700">
+                <input
+                  type="checkbox"
+                  checked={formData.auto_suspend_on_overdue}
+                  onChange={(e) =>
+                    setFormData({ ...formData, auto_suspend_on_overdue: e.target.checked })
+                  }
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 dark:border-gray-600"
+                  style={{ accentColor: accent }}
+                />
+                <span className="min-w-0 flex-1 break-words text-sm text-gray-900 dark:text-white">
+                  Auto-suspend services when overdue
+                </span>
               </label>
-              <input
-                type="number"
-                value={formData.margin_percent}
-                onChange={(e) =>
-                  setFormData({ ...formData, margin_percent: parseFloat(e.target.value || "0") })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
+
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-3 dark:border-gray-700">
+                <input
+                  type="checkbox"
+                  checked={formData.allow_client_gateway}
+                  onChange={(e) =>
+                    setFormData({ ...formData, allow_client_gateway: e.target.checked })
+                  }
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 dark:border-gray-600"
+                  style={{ accentColor: accent }}
+                />
+                <span className="min-w-0 flex-1 break-words text-sm text-gray-900 dark:text-white">
+                  Allow tenant to configure their own payment gateway
+                </span>
+              </label>
+            </div>
+
+            {/* Save Button */}
+            <div className="flex flex-wrap justify-end gap-2 border-t border-gray-200 pt-4 dark:border-gray-700">
+              <ModernButton variant="outline" size="sm" onClick={() => setIsEditing(false)}>
+                Cancel
+              </ModernButton>
+              <ModernButton
+                variant="primary"
+                size="sm"
+                onClick={handleSave}
+                disabled={updateConfigMutation.isPending}
+              >
+                {updateConfigMutation.isPending ? "Saving..." : "Save Configuration"}
+              </ModernButton>
             </div>
           </div>
-
-          {/* Payment Terms */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Payment Terms (days)
-              </label>
-              <input
-                type="number"
-                value={formData.payment_terms_days}
-                onChange={(e) =>
-                  setFormData({ ...formData, payment_terms_days: parseInt(e.target.value || "30") })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-
-          {/* Toggles */}
-          <div className="space-y-3">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.auto_suspend_on_overdue}
-                onChange={(e) =>
-                  setFormData({ ...formData, auto_suspend_on_overdue: e.target.checked })
-                }
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700">Auto-suspend services when overdue</span>
-            </label>
-
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.allow_client_gateway}
-                onChange={(e) =>
-                  setFormData({ ...formData, allow_client_gateway: e.target.checked })
-                }
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700">
-                Allow tenant to configure their own payment gateway
-              </span>
-            </label>
-          </div>
-
-          {/* Save Button */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <button
-              onClick={() => setIsEditing(false)}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={updateConfigMutation.isPending}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            >
-              {updateConfigMutation.isPending ? "Saving..." : "Save Configuration"}
-            </button>
-          </div>
-        </div>
+        </SectionCard>
       ) : (
         /* Read-only Config Display */
-        <div className="bg-white border border-gray-200 rounded-2xl p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Current Configuration</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-            <div>
-              <p className="text-gray-500">Billing Model</p>
-              <p className="font-medium capitalize">
+        <SectionCard icon={<Settings size={16} />} title="Current Configuration">
+          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="min-w-0">
+              <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Billing Model
+              </dt>
+              <dd className="mt-0.5 break-words text-sm capitalize text-gray-900 dark:text-white">
                 {(config?.billing_model || "direct").replace(/_/g, " ")}
-              </p>
+              </dd>
             </div>
-            <div>
-              <p className="text-gray-500">Credit Limit</p>
-              <p className="font-medium">{formatCurrency(config?.credit_limit_cents || 0)}</p>
+            <div className="min-w-0">
+              <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Credit Limit
+              </dt>
+              <dd className="mt-0.5 break-all text-sm text-gray-900 dark:text-white">
+                {formatCurrency(config?.credit_limit_cents || 0)}
+              </dd>
             </div>
-            <div>
-              <p className="text-gray-500">Margin</p>
-              <p className="font-medium">{config?.margin_percent || 0}%</p>
+            <div className="min-w-0">
+              <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Margin
+              </dt>
+              <dd className="mt-0.5 break-all text-sm text-gray-900 dark:text-white">
+                {config?.margin_percent || 0}%
+              </dd>
             </div>
-            <div>
-              <p className="text-gray-500">Payment Terms</p>
-              <p className="font-medium">{config?.payment_terms_days || 30} days</p>
+            <div className="min-w-0">
+              <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Payment Terms
+              </dt>
+              <dd className="mt-0.5 break-all text-sm text-gray-900 dark:text-white">
+                {config?.payment_terms_days || 30} days
+              </dd>
             </div>
-            <div>
-              <p className="text-gray-500">Auto-Suspend</p>
-              <p className="font-medium">{config?.auto_suspend_on_overdue ? "Yes" : "No"}</p>
+            <div className="min-w-0">
+              <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Auto-Suspend
+              </dt>
+              <dd className="mt-0.5 break-words text-sm text-gray-900 dark:text-white">
+                {config?.auto_suspend_on_overdue ? "Yes" : "No"}
+              </dd>
             </div>
-            <div>
-              <p className="text-gray-500">Client Gateway</p>
-              <p className="font-medium">
+            <div className="min-w-0">
+              <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Client Gateway
+              </dt>
+              <dd className="mt-0.5 break-words text-sm text-gray-900 dark:text-white">
                 {config?.allow_client_gateway ? "Allowed" : "Not Allowed"}
-              </p>
+              </dd>
             </div>
-          </div>
+          </dl>
 
           {config?.allowed_billing_models?.length > 0 && (
-            <div className="mt-4 pt-4 border-t">
-              <p className="text-gray-500 text-sm mb-2">Allowed Models</p>
+            <div className="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Allowed Models
+              </p>
               <div className="flex flex-wrap gap-2">
-                {config?.allowed_billing_models.map((model: unknown) => (
+                {config?.allowed_billing_models.map((model) => (
                   <span
                     key={model}
-                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm capitalize"
+                    className="shrink-0 break-all rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold capitalize text-gray-700 dark:bg-gray-700 dark:text-gray-200"
                   >
                     {model.replace(/_/g, " ")}
                   </span>
@@ -448,17 +543,21 @@ export default function TenantBillingTab({ tenantId }: Props) {
           )}
 
           {config?.payment_gateways?.length > 0 && (
-            <div className="mt-4 pt-4 border-t">
-              <p className="text-gray-500 text-sm mb-2">Configured Gateways</p>
+            <div className="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Configured Gateways
+              </p>
               <div className="flex flex-wrap gap-2">
-                {config?.payment_gateways.map((gw: unknown) => (
+                {config?.payment_gateways.map((gw) => (
                   <span
                     key={gw.id}
-                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm ${
-                      gw.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
+                    className={`inline-flex shrink-0 items-center gap-1 break-all rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                      gw.is_active
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                        : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
                     }`}
                   >
-                    <Key className="w-3 h-3" />
+                    <Key className="h-3 w-3 shrink-0" />
                     {gw.provider}
                     {gw.is_test_mode && " (test)"}
                   </span>
@@ -466,7 +565,7 @@ export default function TenantBillingTab({ tenantId }: Props) {
               </div>
             </div>
           )}
-        </div>
+        </SectionCard>
       )}
     </div>
   );

@@ -365,6 +365,13 @@ const ClientCreateForm: React.FC<ClientCreateFormProps> = ({
     const payload: Record<string, unknown> = {
       ...formData,
       ...(isAdminContext ? {} : { role: "client" }),
+      // Server (StoreSubjectFormRequest / StoreClientFormRequest) expects the
+      // verified business details nested under `business`; the form holds them flat.
+      business: {
+        name: formData.business_name,
+        registration_number: formData.registration_number,
+        company_type: formData.company_type,
+      },
     };
 
     const tenantIdValue = payload["tenant_id"];

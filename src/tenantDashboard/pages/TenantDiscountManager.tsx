@@ -20,10 +20,12 @@ type ApiEnvelope<T> = { data?: T };
 interface SettlementSummary {
   as_payer?: {
     outstanding?: number;
-    total_paid?: number;
   };
-  as_receiver?: {
-    outstanding?: number;
+  // Backend (TenantSettlementController@summary) reports the tenant's
+  // receivable side under `as_payee`, not `as_receiver`.
+  as_payee?: {
+    total_received?: number;
+    outstanding_receivable?: number;
   };
 }
 
@@ -78,11 +80,13 @@ const useTenantSettlementSummary = () => {
   return useQuery({
     queryKey: ["tenant-settlements", "summary"],
     queryFn: async () => {
-      const response = await tenantApi<ApiEnvelope<ApiEnvelope<SettlementSummary>>>(
+      // Backend (TenantSettlementController@summary) returns a single
+      // envelope: { data: SettlementSummary }. Unwrap once.
+      const response = await tenantApi<ApiEnvelope<SettlementSummary>>(
         "GET",
         "/admin/settlements/summary"
       );
-      return response.data?.data ?? null;
+      return response.data ?? null;
     },
   });
 };
@@ -91,11 +95,15 @@ const useOwnDiscount = () => {
   return useQuery({
     queryKey: ["tenant-own-discount"],
     queryFn: async () => {
-      const response = await tenantApi<ApiEnvelope<OwnDiscount>>(
+      // Backend (TenantSettlementController@getOwnDiscount) returns the
+      // discount under `data` AND a sibling `has_discount` flag at the top
+      // level — the whole body IS the OwnDiscount shape the UI reads, so do
+      // not unwrap (unwrapping dropped `has_discount` and the box never showed).
+      const response = await tenantApi<OwnDiscount>(
         "GET",
         "/admin/settlements/own-discount"
       );
-      return response.data ?? null;
+      return response;
     },
   });
 };
@@ -104,11 +112,13 @@ const useClientDiscounts = () => {
   return useQuery({
     queryKey: ["tenant-client-discounts"],
     queryFn: async () => {
-      const response = await tenantApi<ApiEnvelope<ApiEnvelope<ClientDiscount[]>>>(
+      // Backend (TenantSettlementController@getClientDiscounts) returns a
+      // single envelope: { data: ClientDiscount[] }. Unwrap once.
+      const response = await tenantApi<ApiEnvelope<ClientDiscount[]>>(
         "GET",
         "/admin/client-discounts"
       );
-      return response.data?.data ?? [];
+      return response.data ?? [];
     },
   });
 };
@@ -120,14 +130,17 @@ const useMarginPreview = () => {
         base_amount: String(data.baseAmount),
         discount_percent: String(data.discountPercent),
       }).toString();
-      const response = await tenantApi<ApiEnvelope<ApiEnvelope<MarginPreview>>>(
+      const response = await tenantApi<ApiEnvelope<MarginPreview>>(
         "GET",
         `/admin/settlements/margin-preview?${query}`
       );
-      if (!response.data?.data) {
+      // Backend (TenantSettlementController@marginPreview) returns a single
+      // envelope: { data: MarginPreview }. Unwrap once — double-unwrapping
+      // (response.data.data) always yielded undefined and threw.
+      if (!response.data) {
         throw new Error("Failed to fetch margin preview");
       }
-      return response.data.data;
+      return response.data;
     },
   });
 };
@@ -393,7 +406,7 @@ const TenantDiscountManager = () => {
               <div>
                 <p className="text-sm text-gray-500">Total Received</p>
                 <p className="text-xl font-bold text-gray-900">
-                  {formatCurrency(summary.as_payer?.total_paid || 0)}
+                  {formatCurrency(summary.as_payee?.total_received || 0)}
                 </p>
               </div>
             </div>
@@ -406,7 +419,7 @@ const TenantDiscountManager = () => {
               <div>
                 <p className="text-sm text-gray-500">Outstanding from Clients</p>
                 <p className="text-xl font-bold text-gray-900">
-                  {formatCurrency(summary.as_receiver?.outstanding || 0)}
+                  {formatCurrency(summary.as_payee?.outstanding_receivable || 0)}
                 </p>
               </div>
             </div>

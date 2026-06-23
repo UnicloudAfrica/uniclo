@@ -54,26 +54,26 @@ const RejectRequestModal: React.FC<RejectRequestModalProps> = ({ isOpen, onClose
       <div className="space-y-4">
         <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
           <dl className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <dt className="text-gray-500 dark:text-gray-400">Tenant</dt>
-              <dd className="font-medium text-gray-900 dark:text-white">
+            <div className="flex justify-between gap-3">
+              <dt className="shrink-0 text-gray-500 dark:text-gray-400">Tenant</dt>
+              <dd className="min-w-0 break-words text-right font-medium text-gray-900 dark:text-white">
                 {request.tenant_name || "—"}
               </dd>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-gray-500 dark:text-gray-400">Product Type</dt>
-              <dd className="font-medium text-gray-900 dark:text-white">
+            <div className="flex justify-between gap-3">
+              <dt className="shrink-0 text-gray-500 dark:text-gray-400">Product Type</dt>
+              <dd className="min-w-0 break-words text-right font-medium text-gray-900 dark:text-white">
                 {request.product_type_label}
               </dd>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-gray-500 dark:text-gray-400">Days Requested</dt>
-              <dd className="font-medium text-gray-900 dark:text-white">{request.trial_days}</dd>
+            <div className="flex justify-between gap-3">
+              <dt className="shrink-0 text-gray-500 dark:text-gray-400">Days Requested</dt>
+              <dd className="min-w-0 break-words text-right font-medium text-gray-900 dark:text-white">{request.trial_days}</dd>
             </div>
             {request.reason && (
               <div>
                 <dt className="text-gray-500 dark:text-gray-400">Reason</dt>
-                <dd className="mt-1 text-gray-900 dark:text-white">{request.reason}</dd>
+                <dd className="mt-1 break-words text-gray-900 dark:text-white">{request.reason}</dd>
               </div>
             )}
           </dl>

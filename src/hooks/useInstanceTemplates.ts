@@ -121,8 +121,14 @@ export const useInstanceTemplates = () => {
         : clientSilentApi;
   }, [context]);
 
-  // Tenant routes are nested under /admin prefix
-  const basePath = context === "tenant" ? "/admin/instance-templates" : "/instance-templates";
+  // Path differs per context: tenant routes nest under /admin, admin resolves to
+  // the /admin/v1 base, and client routes live under the /business segment.
+  const basePath =
+    context === "tenant"
+      ? "/admin/instance-templates"
+      : context === "admin"
+        ? "/instance-templates"
+        : "/business/instance-templates";
   const queryKey = ["instance-templates", context];
 
   // 1. LIST Templates

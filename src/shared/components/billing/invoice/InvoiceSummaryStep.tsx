@@ -1,17 +1,25 @@
 import React from "react";
 import InvoiceStatsCard from "./InvoiceStatsCard";
 import InvoiceItemQueue from "./InvoiceItemQueue";
-import { InvoiceFormData, PricingRequest, ObjectStorageRequest } from "../types";
+import IntegrationItemQueue from "./IntegrationItemQueue";
+import {
+  InvoiceFormData,
+  PricingRequest,
+  ObjectStorageRequest,
+  IntegrationLineRequest,
+} from "../types";
 
 interface InvoiceSummaryStepProps {
   pricingRequests: PricingRequest[];
   objectStorageRequests: ObjectStorageRequest[];
+  integrationRequests?: IntegrationLineRequest[];
   formData: InvoiceFormData;
 }
 
 const InvoiceSummaryStep: React.FC<InvoiceSummaryStepProps> = ({
   pricingRequests,
   objectStorageRequests,
+  integrationRequests = [],
   formData,
 }) => {
   const allItems = [...pricingRequests, ...objectStorageRequests];
@@ -55,6 +63,12 @@ const InvoiceSummaryStep: React.FC<InvoiceSummaryStepProps> = ({
             readOnly
             type="storage"
           />
+        </section>
+      )}
+
+      {integrationRequests.length > 0 && (
+        <section>
+          <IntegrationItemQueue items={integrationRequests} readOnly />
         </section>
       )}
 

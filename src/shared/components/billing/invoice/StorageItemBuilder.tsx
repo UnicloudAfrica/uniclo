@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo } from "react";
 import { Plus } from "lucide-react";
 import { ModernInput, ModernButton } from "../../ui";
-import { useFetchAvailabilityZones } from "@/hooks/adminHooks/regionHooks";
+import { useFetchAvailabilityZones } from "@/shared/hooks/resources/regionHooks";
 import { BillingRegion, InvoiceFormData, ProductPricing, UpdateInvoiceFormData } from "../types";
 
 interface StorageItemBuilderProps {
@@ -30,7 +30,7 @@ const StorageItemBuilder: React.FC<StorageItemBuilderProps> = ({
   // The geographic region selector narrows the AZ list; the AZ selection
   // is what actually drives the storage-tier query upstream.
   const { data: availabilityZones = [], isFetching: isAzFetching } = useFetchAvailabilityZones(
-    formData.object_storage_region || null,
+    formData.object_storage_region || null
   );
 
   const azOptions = useMemo(() => {
@@ -69,7 +69,11 @@ const StorageItemBuilder: React.FC<StorageItemBuilderProps> = ({
   }, [objectStorageProducts, formData.object_storage_availability_zone]);
 
   const unitPriceLabel = useMemo(() => {
-    const pricing = (selectedProduct as unknown as { pricing?: { effective?: { price_local?: number; currency?: string } } } | undefined)?.pricing?.effective;
+    const pricing = (
+      selectedProduct as unknown as
+        | { pricing?: { effective?: { price_local?: number; currency?: string } } }
+        | undefined
+    )?.pricing?.effective;
     if (!pricing) return null;
     const amount = Number(pricing.price_local ?? 0);
     if (!amount) return null;
@@ -153,9 +157,7 @@ const StorageItemBuilder: React.FC<StorageItemBuilderProps> = ({
               ))}
             </select>
             {errors.object_storage_availability_zone && (
-              <p className="mt-1 text-xs text-red-600">
-                {errors.object_storage_availability_zone}
-              </p>
+              <p className="mt-1 text-xs text-red-600">{errors.object_storage_availability_zone}</p>
             )}
           </div>
         </div>
@@ -168,12 +170,15 @@ const StorageItemBuilder: React.FC<StorageItemBuilderProps> = ({
             ) : selectedProduct ? (
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium text-slate-900">{selectedProduct.product.name}</p>
+                  <p className="text-sm font-medium text-slate-900">
+                    {selectedProduct.product.name}
+                  </p>
                   <p className="text-xs text-slate-500">Billed per GiB · monthly</p>
                 </div>
                 {unitPriceLabel && (
                   <span className="rounded-full bg-white px-3 py-1 text-sm font-semibold text-slate-900 shadow-sm">
-                    {unitPriceLabel} <span className="text-xs font-normal text-slate-500">/ GiB</span>
+                    {unitPriceLabel}{" "}
+                    <span className="text-xs font-normal text-slate-500">/ GiB</span>
                   </span>
                 )}
               </div>

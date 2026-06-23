@@ -1,4 +1,5 @@
-import { Wallet, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { Wallet, AlertCircle, CheckCircle2, Loader2, KeyRound } from "lucide-react";
 import { designTokens } from "@/styles/designTokens";
 import { formatCurrencyValue } from "@/utils/instanceCreationUtils";
 import { PriceLabel } from "@/shared/components/ui/PriceLabel";
@@ -10,7 +11,8 @@ interface WalletPaymentSectionProps {
   currency: string;
   hasSufficientFunds: boolean;
   isProcessing: boolean;
-  onPayWithWallet: () => void;
+  errorMessage?: string | null;
+  onPayWithWallet: (pin: string) => void;
 }
 
 const WalletPaymentSection = ({
@@ -20,9 +22,12 @@ const WalletPaymentSection = ({
   currency,
   hasSufficientFunds,
   isProcessing,
+  errorMessage,
   onPayWithWallet,
 }: WalletPaymentSectionProps) => {
   const shortfall = Math.max(0, payableAmount - (walletBalance ?? 0));
+  const [pin, setPin] = useState("");
+  const pinReady = pin.trim().length >= 4;
 
   // Nothing to charge — downgrade credit or zero amount
   if (payableAmount <= 0) {
@@ -242,10 +247,51 @@ const WalletPaymentSection = ({
         </div>
       )}
 
+      {/* Transaction PIN */}
+      {hasSufficientFunds && !isLoadingBalance && (
+        <div className="space-y-1.5">
+          <label
+            className="flex items-center gap-1.5 text-xs font-medium"
+            style={{ color: designTokens.colors.neutral[600] }}
+          >
+            <KeyRound className="h-3.5 w-3.5" />
+            Transaction PIN
+          </label>
+          <input
+            type="password"
+            inputMode="numeric"
+            autoComplete="off"
+            maxLength={6}
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+            placeholder="••••"
+            className="w-full rounded-lg border px-4 py-2.5 text-center text-lg tracking-[0.5em] focus:outline-none focus:ring-2"
+            style={{
+              borderColor: errorMessage
+                ? designTokens.colors.error[300]
+                : designTokens.colors.neutral[200],
+            }}
+          />
+          {errorMessage ? (
+            <p
+              className="flex items-center gap-1.5 text-xs"
+              style={{ color: designTokens.colors.error[600] }}
+            >
+              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+              {errorMessage}
+            </p>
+          ) : (
+            <p className="text-xs" style={{ color: designTokens.colors.neutral[400] }}>
+              Enter your transaction PIN to authorize this payment.
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Pay Button */}
       <button
-        onClick={onPayWithWallet}
-        disabled={!hasSufficientFunds || isProcessing || isLoadingBalance}
+        onClick={() => onPayWithWallet(pin)}
+        disabled={!hasSufficientFunds || isProcessing || isLoadingBalance || !pinReady}
         className="flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-50"
         style={{
           backgroundColor: hasSufficientFunds

@@ -1,4 +1,5 @@
 import React from "react";
+import { AlertTriangle } from "lucide-react";
 import { Configuration, Option } from "@/types/InstanceConfiguration";
 import { ModernSelect, SearchableSelect } from "../ui";
 import type { NetworkPreset } from "../network/NetworkPresetSelector";
@@ -233,10 +234,24 @@ const ExistingProjectFields: React.FC<ExistingProjectFieldsProps> = ({
     <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
       {selectedProjectPreset ? (
         <>
-          <p className="font-semibold text-gray-700">
-            Network preset: {selectedProjectPreset.name}
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-semibold text-gray-700">
+              Network preset: {selectedProjectPreset.name}
+            </p>
+            <span
+              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                isSelectedProjectPresetPublic ? "bg-sky-100 text-sky-700" : "bg-gray-200 text-gray-600"
+              }`}
+            >
+              {isSelectedProjectPresetPublic ? "Internet-facing" : "Internal only"}
+            </span>
+          </div>
           <p className="mt-1">{selectedProjectPreset.description}</p>
+          <p className="mt-1 font-medium text-gray-600">
+            {isSelectedProjectPresetPublic
+              ? "Instances can reach the internet; attach an Elastic IP for inbound access."
+              : "No internet access — instances are reachable only within the project network."}
+          </p>
           {Array.isArray(selectedProjectPreset.features) &&
             selectedProjectPreset.features.length > 0 && (
               <p className="mt-1 text-gray-500">
@@ -244,10 +259,14 @@ const ExistingProjectFields: React.FC<ExistingProjectFieldsProps> = ({
               </p>
             )}
           {hasFloatingIp && !isSelectedProjectPresetPublic && (
-            <p className="mt-2 text-xs text-amber-600">
-              Elastic IPs require a public preset. This project is private and will be upgraded
-              during provisioning.
-            </p>
+            <div className="mt-2 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+              <p className="text-xs text-amber-800">
+                <span className="font-semibold">This will make the entire project internet-facing.</span>{" "}
+                Attaching an Elastic IP requires a public network, so this private project will be
+                permanently upgraded to public during provisioning.
+              </p>
+            </div>
           )}
         </>
       ) : selectedProject ? (
@@ -314,8 +333,22 @@ const NewProjectFields: React.FC<NewProjectFieldsProps> = ({
     </div>
     {selectedPreset ? (
       <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
-        <p className="font-semibold text-gray-700">{selectedPreset.name}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="font-semibold text-gray-700">{selectedPreset.name}</p>
+          <span
+            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+              selectedPreset.isPublic ? "bg-sky-100 text-sky-700" : "bg-gray-200 text-gray-600"
+            }`}
+          >
+            {selectedPreset.isPublic ? "Internet-facing" : "Internal only"}
+          </span>
+        </div>
         <p className="mt-1">{selectedPreset.description}</p>
+        <p className="mt-1 font-medium text-gray-600">
+          {selectedPreset.isPublic
+            ? "Instances can reach the internet; attach an Elastic IP for inbound access."
+            : "No internet access — instances are reachable only within the project network."}
+        </p>
         {Array.isArray(selectedPreset.features) && selectedPreset.features.length > 0 && (
           <p className="mt-1 text-gray-500">Includes: {selectedPreset.features.join(", ")}</p>
         )}

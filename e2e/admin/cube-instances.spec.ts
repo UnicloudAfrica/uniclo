@@ -1,6 +1,13 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("admin · cube-instances", () => {
+// Stable identifiers seeded by E2eSeeder (active + suspended cube instances).
+const ACTIVE = "E2EACT";
+const SUSPENDED = "E2ESUS";
+
+const connectButton = (page: import("@playwright/test").Page) =>
+  page.getByRole("button", { name: /connect/i });
+
+test.describe("admin · cube-instances journey", () => {
   test("instances list renders for an authenticated admin", async ({ page }) => {
     await page.goto("/admin-dashboard/cube-instances");
 
@@ -13,17 +20,24 @@ test.describe("admin · cube-instances", () => {
     await expect(page.getByRole("button", { name: "Instances", exact: true })).toBeVisible();
   });
 
-  test("opening an instance shows the details page", async ({ page }) => {
-    await page.goto("/admin-dashboard/cube-instances");
+  test("active instance: details open and Connect (SSH) is enabled", async ({ page }) => {
+    await page.goto(`/admin-dashboard/cube-instances/details?identifier=${ACTIVE}`);
 
-    const manage = page.getByRole("button", { name: /^manage$/i }).first();
-    if ((await manage.count()) === 0) {
-      test.skip(true, "No instances seeded to open — list-only assertion covered above");
-    }
-
-    await manage.click();
     await expect(page).toHaveURL(/cube-instances\/details/);
-    // The details shell renders its tabs (Overview is the default).
-    await expect(page.getByRole("button", { name: /overview/i }).first()).toBeVisible();
+    // Hero action toolbar rendered → details loaded from seeded data.
+    await expect(connectButton(page)).toBeVisible();
+    // Active instance → Connect/SSH is allowed.
+    await expect(connectButton(page)).toBeEnabled();
+  });
+
+  test("suspended instance: status shown and Connect is disabled", async ({ page }) => {
+    await page.goto(`/admin-dashboard/cube-instances/details?identifier=${SUSPENDED}`);
+
+    await expect(page).toHaveURL(/cube-instances\/details/);
+    await expect(connectButton(page)).toBeVisible();
+    // Not active → console is gated off (the fix).
+    await expect(connectButton(page)).toBeDisabled();
+    // Status mapped correctly to "Suspended" (not trapped in "error").
+    await expect(page.getByText(/suspended/i).first()).toBeVisible();
   });
 });

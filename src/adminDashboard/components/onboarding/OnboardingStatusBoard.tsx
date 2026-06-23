@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle, ArrowUpRight, ClipboardList, Loader2, RefreshCw } from "lucide-react";
 import { ModernButton } from "@/shared/components/ui";
-import StatusPill from "@/shared/components/ui/StatusPill";
 import { getStepsForTarget } from "../../../dashboard/onboarding/stepConfig";
 import { fetchAdminOnboardingSubmission } from "@/hooks/adminHooks/onboardingReviewHooks";
 import logger from "@/utils/logger";
@@ -17,15 +16,33 @@ const STATUS_LABELS: Record<string, string> = {
   rejected: "Rejected",
 };
 
-const STATUS_TONES: Record<string, unknown> = {
+type Tone = "success" | "warning" | "danger" | "neutral";
+
+const STATUS_TONES: Record<string, Tone> = {
   not_started: "neutral",
-  draft: "info",
-  submitted: "info",
-  in_review: "info",
+  draft: "neutral",
+  submitted: "neutral",
+  in_review: "warning",
   changes_requested: "warning",
   approved: "success",
   rejected: "danger",
 };
+
+const TONE_PILL: Record<Tone, string> = {
+  success:
+    "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+  warning: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+  danger: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+  neutral: "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300",
+};
+
+const StatusPill = ({ label, tone }: { label: string; tone: Tone }) => (
+  <span
+    className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${TONE_PILL[tone]}`}
+  >
+    {label}
+  </span>
+);
 
 const formatDateTime = (value: string | null) =>
   value
@@ -195,17 +212,19 @@ const OnboardingStatusBoard: React.FC<OnboardingStatusBoardProps> = ({
   return (
     <div className={`space-y-6 ${className}`}>
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
             Onboarding Journey
           </p>
-          <h3 className="text-lg font-semibold text-slate-900">
+          <h3 className="break-words text-lg font-semibold text-gray-900 dark:text-white">
             {entityName || "Record"}{" "}
-            <span className="text-sm font-medium text-slate-500">
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
               {contextName ? `• ${contextName}` : ""}
             </span>
           </h3>
-          <p className="mt-1 text-sm text-slate-500">{headerDescription}</p>
+          <p className="mt-1 break-words text-sm text-gray-500 dark:text-gray-400">
+            {headerDescription}
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <ModernButton
@@ -230,9 +249,9 @@ const OnboardingStatusBoard: React.FC<OnboardingStatusBoardProps> = ({
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <OnboardingSummaryCard label="Approved" value={progressBuckets.completed} tone="success" />
-        <OnboardingSummaryCard label="In Review" value={progressBuckets.inProgress} tone="info" />
+        <OnboardingSummaryCard label="In Review" value={progressBuckets.inProgress} tone="warning" />
         <OnboardingSummaryCard label="Pending" value={progressBuckets.pending} tone="neutral" />
         <OnboardingSummaryCard
           label="Escalated"
@@ -242,21 +261,23 @@ const OnboardingStatusBoard: React.FC<OnboardingStatusBoardProps> = ({
       </div>
 
       {!hasValidSubject ? (
-        <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/70 p-6 text-sm text-slate-600">
+        <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-6 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-400">
           Provide a valid record to load onboarding submissions.
         </div>
       ) : error ? (
-        <div className="flex items-center gap-3 rounded-3xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-700">
-          <AlertTriangle className="h-5 w-5" />
-          <span>{error}</span>
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+          <AlertTriangle className="h-5 w-5 shrink-0" />
+          <span className="min-w-0 flex-1 break-words">{error}</span>
         </div>
       ) : isLoading ? (
-        <div className="flex h-48 flex-col items-center justify-center gap-3 rounded-3xl border border-[var(--theme-surface-alt)] bg-white">
-          <Loader2 className="h-6 w-6 animate-spin text-[var(--theme-color)]" />
-          <p className="text-sm text-slate-600">Pulling the latest onboarding submissions…</p>
+        <div className="flex h-48 flex-col items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+          <Loader2 className="h-6 w-6 animate-spin" style={{ color: "var(--theme-color)" }} />
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Pulling the latest onboarding submissions…
+          </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {(steps as Array<OnboardingStep & { description?: string }>).map((step) => {
             const snapshot = statuses[step.id] ?? {
               status: "not_started",
@@ -264,49 +285,64 @@ const OnboardingStatusBoard: React.FC<OnboardingStatusBoardProps> = ({
               reviewed_at: null,
             };
             const statusLabel = STATUS_LABELS[snapshot.status] ?? snapshot.status ?? "Unknown";
-            const statusTone = STATUS_TONES[snapshot.status] ?? STATUS_TONES["not_started"];
+            const statusTone = STATUS_TONES[snapshot.status] ?? "neutral";
 
             return (
               <div
                 key={step.id}
-                className="rounded-3xl border border-[var(--theme-surface-alt)] bg-gradient-to-br from-white via-[var(--theme-surface-alt)] to-white p-5 shadow-sm transition hover:border-primary/40"
+                className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600"
               >
-                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">{step.label}</p>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="break-words text-sm font-semibold text-gray-900 dark:text-white">
+                      {step.label}
+                    </p>
                     {step.description && (
-                      <p className="mt-1 text-sm text-slate-500">{step.description}</p>
+                      <p className="mt-1 break-words text-xs text-gray-500 dark:text-gray-400">
+                        {step.description}
+                      </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <StatusPill label={statusLabel} tone={statusTone} />
-                    <ModernButton
-                      variant="ghost"
-                      size="sm"
-                      className="gap-1 text-xs"
-                      onClick={() => navigate("/admin-dashboard/onboarding-review")}
-                    >
-                      Review Step
-                      <ArrowUpRight className="h-3.5 w-3.5" />
-                    </ModernButton>
-                  </div>
+                  <StatusPill label={statusLabel} tone={statusTone} />
                 </div>
 
-                <div className="mt-4 grid gap-3 text-xs text-slate-500 sm:grid-cols-2 lg:grid-cols-3">
-                  <div>
-                    <span className="font-semibold text-slate-600">Submitted</span>
-                    <p className="mt-1 text-slate-700">{formatDateTime(snapshot.submitted_at)}</p>
+                <dl className="mt-4 space-y-3">
+                  <div className="min-w-0">
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Submitted
+                    </dt>
+                    <dd className="mt-0.5 break-words text-sm font-medium text-gray-900 dark:text-white">
+                      {formatDateTime(snapshot.submitted_at)}
+                    </dd>
                   </div>
-                  <div>
-                    <span className="font-semibold text-slate-600">Last reviewed</span>
-                    <p className="mt-1 text-slate-700">{formatDateTime(snapshot.reviewed_at)}</p>
+                  <div className="min-w-0">
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Last reviewed
+                    </dt>
+                    <dd className="mt-0.5 break-words text-sm font-medium text-gray-900 dark:text-white">
+                      {formatDateTime(snapshot.reviewed_at)}
+                    </dd>
                   </div>
-                  <div>
-                    <span className="font-semibold text-slate-600">Status code</span>
-                    <p className="mt-1 text-slate-700 uppercase tracking-wide">
+                  <div className="min-w-0">
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Status code
+                    </dt>
+                    <dd className="mt-0.5 break-all text-sm font-medium uppercase tracking-wide text-gray-900 dark:text-white">
                       {snapshot.status || "—"}
-                    </p>
+                    </dd>
                   </div>
+                </dl>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <ModernButton
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1 text-xs"
+                    onClick={() => navigate("/admin-dashboard/onboarding-review")}
+                  >
+                    Review Step
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </ModernButton>
                 </div>
               </div>
             );
@@ -324,43 +360,21 @@ const OnboardingSummaryCard = ({
 }: {
   label: string;
   value: number;
-  tone: string;
+  tone: Tone;
 }) => {
-  const palette =
-    {
-      success: {
-        bg: "bg-emerald-50",
-        text: "text-emerald-600",
-        ring: "ring-emerald-100",
-      },
-      info: {
-        bg: "bg-sky-50",
-        text: "text-sky-600",
-        ring: "ring-sky-100",
-      },
-      danger: {
-        bg: "bg-rose-50",
-        text: "text-rose-600",
-        ring: "ring-rose-100",
-      },
-      neutral: {
-        bg: "bg-slate-50",
-        text: "text-slate-600",
-        ring: "ring-slate-100",
-      },
-    }[tone] ??
-    {
-      bg: "bg-slate-50",
-      text: "text-slate-600",
-      ring: "ring-slate-100",
-    };
+  const valueTone: Record<Tone, string> = {
+    success: "text-emerald-600 dark:text-emerald-400",
+    warning: "text-amber-600 dark:text-amber-400",
+    danger: "text-red-600 dark:text-red-400",
+    neutral: "text-gray-900 dark:text-white",
+  };
 
   return (
-    <div
-      className={`rounded-3xl border border-[var(--theme-surface-alt)] ${palette.bg} p-4 shadow-sm`}
-    >
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
-      <p className={`mt-2 text-2xl font-semibold ${palette.text}`}>{value}</p>
+    <div className="min-w-0 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+      <p className="truncate text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        {label}
+      </p>
+      <p className={`mt-2 text-2xl font-semibold ${valueTone[tone]}`}>{value}</p>
     </div>
   );
 };

@@ -473,9 +473,19 @@ const InstanceConfigurationForm: React.FC<Props> = ({
         keypair_name: resolvedName as string,
         keypair_label: resolvedName as string,
       });
-      if ((data as Record<string, unknown>)?.material)
-        setKeypairMaterial((data as Record<string, unknown>).material as string);
-      ToastUtils.success("Key pair created successfully.");
+      const material = (data as Record<string, unknown>)?.material as string | undefined;
+      if (material) {
+        setKeypairMaterial(material);
+        // Auto-download the .pem immediately: the private key is returned only once
+        // and the access-keys section can collapse after create, so a manual button is
+        // easy to miss — and a lost private key means the user can never SSH in.
+        downloadPrivateKey(material, (resolvedName as string) || trimmedName);
+      }
+      ToastUtils.success(
+        material
+          ? `Key pair created. Private key downloaded as "${resolvedName}.pem" — store it securely.`
+          : "Key pair created successfully."
+      );
     } catch (error) {
       ToastUtils.error((error as Error)?.message || "Failed to create key pair.");
     } finally {
@@ -486,6 +496,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
     canCreateKeypairNow,
     cfg.id,
     cfg.project_id,
+    downloadPrivateKey,
     keyPairEndpoint,
     keypairNameInput,
     keypairPublicKey,

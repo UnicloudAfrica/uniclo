@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { CalendarClock, SquarePen, Trash2 } from "lucide-react";
+import { Building2, CalendarClock, FileText, Mail, SquarePen, Trash2 } from "lucide-react";
 import EditPartnerModal from "../../pages/tenantComps/EditTenant";
 import DeletePartnerModal from "../../pages/tenantComps/DeleteTenant";
 import { ModernButton } from "@/shared/components/ui";
 import StatusPill from "@/shared/components/ui/StatusPill";
-import IconBadge from "../IconBadge";
 import SetupProgressCard from "@/shared/components/projects/details/SetupProgressCard";
 import logger from "@/utils/logger";
+
+const accent = "var(--theme-color)";
 
 interface PartnerDetails {
   id?: string | number;
@@ -114,27 +115,19 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails, openE
         label: "Primary email",
         value: partnerDetails?.email || business?.email || "Not provided",
         type: "mailto",
-        iconKey: "contact.email",
-        tone: "primary",
       },
       {
         label: "Phone number",
         value: partnerDetails?.phone || business?.phone || "Not provided",
-        iconKey: "contact.phone",
-        tone: "indigo",
       },
       {
         label: "Domain",
         value: domain || "Not configured",
         type: domain ? "url" : undefined,
-        iconKey: "contact.domain",
-        tone: "primary",
       },
       {
         label: "Account ID",
         value: partnerDetails?.identifier || "—",
-        iconKey: "contact.accountId",
-        tone: "slate",
       },
     ],
     [partnerDetails, business, domain]
@@ -151,27 +144,19 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails, openE
     {
       label: "Company type",
       value: business?.company_type || "—",
-      iconKey: "business.companyType",
-      tone: "indigo",
     },
     {
       label: "Industry",
       value: business?.industry || "—",
-      iconKey: "business.industry",
-      tone: "indigo",
     },
     {
       label: "Website",
       value: business?.website || partnerDetails?.website || "—",
       type: "url",
-      iconKey: "business.website",
-      tone: "primary",
     },
     {
       label: "Registered address",
       value: addressLine,
-      iconKey: "business.registeredAddress",
-      tone: "slate",
     },
   ];
 
@@ -202,7 +187,7 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails, openE
 
   if (!partnerDetails) {
     return (
-      <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/70 p-10 text-center text-sm text-slate-500">
+      <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-400">
         No partner details available.
       </div>
     );
@@ -212,7 +197,7 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails, openE
     <>
       <div className="space-y-6">
         {showProvisioning && (
-          <div className="grid grid-cols-1 gap-6 mb-6">
+          <div className="grid grid-cols-1 gap-6">
             <SetupProgressCard
               steps={provisioningSteps as never}
               isLoading={partnerDetails?.onboarding_status === "processing"}
@@ -220,13 +205,14 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails, openE
           </div>
         )}
 
-        <div className="rounded-3xl border border-[var(--theme-surface-alt)] bg-gradient-to-br from-white via-[var(--theme-surface-alt)] to-white p-6 shadow-sm">
+        {/* Header */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
                 Partner Profile
               </p>
-              <h2 className="mt-1 text-2xl font-semibold text-slate-900">
+              <h2 className="mt-1 truncate text-2xl font-semibold text-gray-900 dark:text-white">
                 {partnerDetails.name || "Unnamed partner"}
               </h2>
               <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -258,72 +244,54 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails, openE
               </ModernButton>
             </div>
           </div>
-
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <InfoStat label="Identifier" value={partnerDetails.identifier || "—"} />
-            <InfoStat label="Status" value={verificationLabel} />
-            <InfoStat label="Last activity" value={formatDate(partnerDetails.updated_at)} />
-            <InfoStat
-              label="Dependants"
-              value={
-                Array.isArray((business as Record<string, unknown> | undefined)?.dependant_tenant)
-                  ? ((business as Record<string, unknown>).dependant_tenant as unknown[]).length
-                  : "—"
-              }
-            />
-          </div>
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[320px,1fr]">
           <div className="space-y-6">
-            <div className="rounded-3xl border border-[var(--theme-surface-alt)] bg-white p-5 shadow-sm">
-              <h3 className="text-sm font-semibold text-slate-900">Key Contacts</h3>
-              <ul className="mt-4 space-y-3">
-                {contactItems.map(({ iconKey, tone, label, value, type }) => (
-                  <li key={label} className="flex items-start gap-3 text-sm">
-                    <IconBadge
-                      iconKey={iconKey as never}
-                      tone={tone as never}
-                      size="sm"
-                      className="mt-0.5"
-                    />
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        {label}
+            {/* Key contacts */}
+            <SectionCard icon={<Mail size={16} />} title="Key Contacts">
+              <ul className="space-y-3">
+                {contactItems.map(({ label, value, type }) => (
+                  <li key={label} className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                      {label}
+                    </p>
+                    {type === "mailto" && value && value !== "Not provided" ? (
+                      <a
+                        href={`mailto:${value}`}
+                        className="block break-all text-sm font-medium hover:underline"
+                        style={{ color: accent }}
+                      >
+                        {value}
+                      </a>
+                    ) : type === "url" && value && value !== "Not configured" ? (
+                      <a
+                        href={value.startsWith("http") ? value : `https://${value}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block break-all text-sm font-medium hover:underline"
+                        style={{ color: accent }}
+                      >
+                        {value}
+                      </a>
+                    ) : (
+                      <p className="break-all text-sm font-medium text-gray-900 dark:text-white">
+                        {value}
                       </p>
-                      {type === "mailto" && value && value !== "Not provided" ? (
-                        <a
-                          href={`mailto:${value}`}
-                          className="text-sm font-semibold text-[var(--theme-color)] hover:underline"
-                        >
-                          {value}
-                        </a>
-                      ) : type === "url" && value && value !== "Not configured" ? (
-                        <a
-                          href={value.startsWith("http") ? value : `https://${value}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm font-semibold text-[var(--theme-color)] hover:underline"
-                        >
-                          {value}
-                        </a>
-                      ) : (
-                        <p className="text-sm font-semibold text-slate-800">{value}</p>
-                      )}
-                    </div>
+                    )}
                   </li>
                 ))}
               </ul>
-            </div>
+            </SectionCard>
 
-            <div className="rounded-3xl border border-dashed border-[rgb(var(--theme-neutral-300))] bg-white p-5 shadow-sm">
-              <h3 className="text-sm font-semibold text-slate-900">Compliance Library</h3>
+            {/* Compliance library */}
+            <SectionCard icon={<FileText size={16} />} title="Compliance Library">
               {documents.length > 0 ? (
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-2">
                   {documents.map((doc, index) => (
                     <div
                       key={`${doc.title}-${index}`}
-                      className="rounded-2xl border border-[var(--theme-surface-alt)] bg-[var(--theme-surface-alt)] p-4 text-center"
+                      className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-center dark:border-gray-700 dark:bg-gray-900/40"
                     >
                       <img
                         src={doc.path}
@@ -335,74 +303,64 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails, openE
                           target.src = "https://placehold.co/200x120/E0E0E0/676767?text=Preview";
                         }}
                       />
-                      <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      <p className="mt-3 break-words text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
                         {doc.title}
                       </p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-400">
                   No compliance documents uploaded yet.
                 </div>
               )}
-            </div>
+            </SectionCard>
           </div>
 
           <div className="space-y-6">
-            <div className="rounded-3xl border border-[var(--theme-surface-alt)] bg-white p-5 shadow-sm">
-              <div className="flex items-center gap-2">
-                <IconBadge iconKey="business.companyType" tone="primary" size="sm" />
-                <h3 className="text-sm font-semibold text-slate-900">Business Profile</h3>
-              </div>
-              <dl className="mt-4 space-y-4">
-                {businessItems.map(({ iconKey, tone, label, value, type }) => (
-                  <div
-                    key={label}
-                    className="flex items-start gap-3 rounded-2xl border border-[var(--theme-surface-alt)] bg-[var(--theme-surface-alt)] p-3"
-                  >
-                    <IconBadge iconKey={iconKey as never} tone={tone as never} />
-                    <div>
-                      <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        {label}
-                      </dt>
-                      {type === "url" && value && value !== "—" ? (
-                        <a
-                          href={value.startsWith("http") ? value : `https://${value}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm font-semibold text-[var(--theme-color)] hover:underline"
-                        >
-                          {value}
-                        </a>
-                      ) : (
-                        <dd className="text-sm font-semibold text-slate-800">{value}</dd>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </dl>
-            </div>
-
-            <div className="rounded-3xl border border-[var(--theme-surface-alt)] bg-white p-5 shadow-sm">
-              <div className="flex items-center gap-2">
-                <IconBadge icon={CalendarClock as never} tone="indigo" size="sm" />
-                <h3 className="text-sm font-semibold text-slate-900">Compliance & Lifecycle</h3>
-              </div>
-              <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-                {complianceItems.map(({ label, value }: { label: string; value: string }) => (
-                  <div
-                    key={label}
-                    className="rounded-2xl border border-[var(--theme-surface-alt)] bg-[var(--theme-surface-alt)] p-3"
-                  >
-                    <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            {/* Business profile */}
+            <SectionCard icon={<Building2 size={16} />} title="Business Profile">
+              <dl className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                {businessItems.map(({ label, value, type }) => (
+                  <div key={label} className="min-w-0">
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
                       {label}
                     </dt>
-                    <dd className="mt-1 text-sm font-semibold text-slate-800">{value || "—"}</dd>
+                    {type === "url" && value && value !== "—" ? (
+                      <a
+                        href={value.startsWith("http") ? value : `https://${value}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-0.5 block break-all text-sm font-medium hover:underline"
+                        style={{ color: accent }}
+                      >
+                        {value}
+                      </a>
+                    ) : (
+                      <dd className="mt-0.5 break-words text-sm font-medium text-gray-900 dark:text-white">
+                        {value}
+                      </dd>
+                    )}
                   </div>
                 ))}
               </dl>
-            </div>
+            </SectionCard>
+
+            {/* Compliance & lifecycle */}
+            <SectionCard icon={<CalendarClock size={16} />} title="Compliance & Lifecycle">
+              <dl className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                {complianceItems.map(({ label, value }: { label: string; value: string }) => (
+                  <div key={label} className="min-w-0">
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                      {label}
+                    </dt>
+                    <dd className="mt-0.5 break-all text-sm font-medium text-gray-900 dark:text-white">
+                      {value || "—"}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </SectionCard>
           </div>
         </div>
       </div>
@@ -421,10 +379,26 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails, openE
   );
 };
 
-const InfoStat = ({ label, value }: { label: string; value: React.ReactNode }) => (
-  <div className="rounded-2xl border border-[var(--theme-surface-alt)] bg-white p-4 shadow-sm">
-    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
-    <p className="mt-1 text-sm font-semibold text-slate-900">{value}</p>
+const SectionCard = ({
+  icon,
+  title,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  children: React.ReactNode;
+}) => (
+  <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    <div className="mb-4 flex items-center gap-2">
+      <span
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+        style={{ background: "var(--theme-color-10)", color: accent }}
+      >
+        {icon}
+      </span>
+      <h3 className="truncate text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
+    </div>
+    {children}
   </div>
 );
 

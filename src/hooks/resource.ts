@@ -67,10 +67,15 @@ const fetchWorkspace = async (): Promise<Workspace[]> => {
   const res: ApiResponse<Workspace[]> = await silentTenantApi("GET", "/admin/workspaces");
   return res.data ?? [];
 };
-// **GET**: fetch industry
+// **GET**: fetch industry — uses public /api/v1 (not role-based URL), like countries.
+// Previously hit the role-based base (404 under /tenant/v1, /admin/v1) and read the
+// wrong key (`message`), so the Industry dropdown was empty outside the client context.
 const fetchIndustries = async (): Promise<Industry[]> => {
-  const res: { message: Industry[] } = await silentApi("GET", "/industries");
-  return res.message;
+  const res = await api.get<ApiResponse<Industry[]>>("/industries", {
+    silent: true,
+    baseUrl: config.baseURL,
+  });
+  return res.data ?? (Array.isArray(res) ? res : []);
 };
 
 // **GET**: fetch product pricing by ID

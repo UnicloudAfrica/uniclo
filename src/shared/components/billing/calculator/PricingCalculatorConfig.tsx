@@ -19,7 +19,7 @@ import {
 } from "../../../../shared/utils/countryUtils";
 import { ModernButton, ModernCard, ModernInput, SelectableInput } from "../../ui";
 import { useFetchCountries, useFetchProductPricing } from "@/hooks/resource";
-import { useFetchAvailabilityZones } from "@/hooks/adminHooks/regionHooks";
+import { useFetchAvailabilityZones } from "@/shared/hooks/resources/regionHooks";
 import { useSharedFetchRegions } from "@/hooks/sharedCalculatorHooks";
 import { useFormattedRegions, type RegionLike } from "@/utils/regionUtils";
 import { getCurrencySymbol } from "@/utils/resource";
@@ -226,7 +226,7 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
   // narrow the AZ dropdown.
   const storageAzCode = String(
     (storageItem as Partial<ObjectStorageRequest> & { availability_zone?: string })
-      .availability_zone ?? "",
+      .availability_zone ?? ""
   );
   const { data: objectStorageTiers, isFetching: isObjectStorageFetching } = useFetchProductPricing(
     storageAzCode,
@@ -235,7 +235,7 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
       enabled: !!storageItem.region && !!storageAzCode,
       countryCode: calculatorData.country_code,
       availabilityZone: storageAzCode,
-    },
+    }
   );
 
   // Single per-GiB tier per AZ — auto-select the (one) product so the
@@ -469,7 +469,7 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
                   onClick={() =>
                     updateCalculatorData(
                       "apply_total_discount",
-                      !calculatorData.apply_total_discount,
+                      !calculatorData.apply_total_discount
                     )
                   }
                   className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition ${
@@ -534,7 +534,7 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
                     <div className="flex h-[42px] items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700">
                       <span>
                         {(countries as CountryRecord[]).find(
-                          (c) => (c.iso2 || c.code || "").toUpperCase() === selectedCountryCode,
+                          (c) => (c.iso2 || c.code || "").toUpperCase() === selectedCountryCode
                         )?.name || selectedCountryCode}
                       </span>
                       <span className="inline-flex items-center gap-1 rounded-md bg-slate-200 px-2 py-0.5 text-xs text-slate-600">
@@ -580,31 +580,29 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
               the four tracks lives behind a single top-level tab. */}
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-1">
-              {(
-                [
-                  {
-                    id: "compute" as const,
-                    label: "Compute workloads",
-                    icon: Cpu,
-                    count: calculatorData.pricing_requests?.length || 0,
-                  },
-                  {
-                    id: "storage" as const,
-                    label: "Object storage",
-                    icon: Database,
-                    count: storageItems.length,
-                  },
-                  {
-                    id: "addons" as const,
-                    label: "Add-on services",
-                    icon: Activity,
-                    count:
-                      (calculatorData.flow_plan_items?.length || 0) +
-                      (calculatorData.shield_items?.length || 0) +
-                      (calculatorData.metered_items?.length || 0),
-                  },
-                ]
-              ).map((tab) => {
+              {[
+                {
+                  id: "compute" as const,
+                  label: "Compute workloads",
+                  icon: Cpu,
+                  count: calculatorData.pricing_requests?.length || 0,
+                },
+                {
+                  id: "storage" as const,
+                  label: "Object storage",
+                  icon: Database,
+                  count: storageItems.length,
+                },
+                {
+                  id: "addons" as const,
+                  label: "Add-on services",
+                  icon: Activity,
+                  count:
+                    (calculatorData.flow_plan_items?.length || 0) +
+                    (calculatorData.shield_items?.length || 0) +
+                    (calculatorData.metered_items?.length || 0),
+                },
+              ].map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
                 return (
@@ -622,9 +620,7 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
                     <span>{tab.label}</span>
                     <span
                       className={`ml-1 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-xs font-semibold ${
-                        isActive
-                          ? "bg-primary-100 text-primary-700"
-                          : "bg-slate-200 text-slate-700"
+                        isActive ? "bg-primary-100 text-primary-700" : "bg-slate-200 text-slate-700"
                       }`}
                     >
                       {tab.count}
@@ -708,9 +704,7 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
                         ).availability_zone ?? ""
                       }
                       searchValue={searchTerms.az}
-                      onSearchChange={(value) =>
-                        setSearchTerms((prev) => ({ ...prev, az: value }))
-                      }
+                      onSearchChange={(value) => setSearchTerms((prev) => ({ ...prev, az: value }))}
                       onSelect={handleStorageAzSelect}
                       placeholder={
                         !storageItem.region ? "Select a region first" : "Select availability zone"
@@ -723,9 +717,8 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
                 </div>
 
                 {/* Per-GiB price preview — no tier picker, single seeded SKU per AZ */}
-                {(
-                  storageItem as Partial<ObjectStorageRequest> & { availability_zone?: string }
-                ).availability_zone && (
+                {(storageItem as Partial<ObjectStorageRequest> & { availability_zone?: string })
+                  .availability_zone && (
                   <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                     {isObjectStorageFetching ? (
                       <p className="text-sm text-slate-500">Loading pricing for this zone…</p>
@@ -761,9 +754,7 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
                     type="number"
                     min="1"
                     value={storageItem.quantity}
-                    onChange={(e) =>
-                      updateStorageItem("quantity", parseInt(e.target.value) || 0)
-                    }
+                    onChange={(e) => updateStorageItem("quantity", parseInt(e.target.value) || 0)}
                     error={storageErrors.quantity}
                   />
                   <ModernInput
@@ -836,7 +827,10 @@ const PricingCalculatorConfig: React.FC<PricingCalculatorConfigProps> = ({
               <CalculatorAddOnsCard
                 calculatorData={calculatorData}
                 updateCalculatorData={
-                  updateCalculatorData as (field: keyof typeof calculatorData, value: unknown) => void
+                  updateCalculatorData as (
+                    field: keyof typeof calculatorData,
+                    value: unknown
+                  ) => void
                 }
               />
             ) : null}

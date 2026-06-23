@@ -444,16 +444,21 @@ const CatalogPane: React.FC<CatalogPaneProps> = ({
                       {/*
                        * Region-qualified products (compute, OS, volumes,
                        * etc.) carry per-(region, AZ, country) tenant
-                       * overrides on `tenant_product_pricings`. Editing
-                       * these inline would require region/AZ/country
-                       * context the catalog table doesn't surface yet,
-                       * so we route operators to the dedicated
-                       * tenant-pricing workflow instead of pretending
-                       * the override is "same as list".
+                       * overrides on `tenant_product_pricings`. Setting
+                       * one needs a region/AZ/country scope picker this
+                       * flat, read-only catalog can't surface — and this
+                       * view never loads the tenant's overrides, so it
+                       * can't claim "no override" truthfully. Link
+                       * operators to the dedicated Price Settings page
+                       * (the override workflow) instead.
                        */}
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-500">
-                        {row.priceUsd === null ? "—" : "no override"}
-                      </span>
+                      <a
+                        href="/dashboard/pricing-overrides"
+                        className="text-primary-600 underline hover:text-primary-700"
+                        title="Set a per-SKU price in Price Settings"
+                      >
+                        Set in Price Settings →
+                      </a>
                     </td>
                   )}
                   <td className="py-2">

@@ -1,5 +1,5 @@
 import React from "react";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, AlertTriangle } from "lucide-react";
 import { ModernButton } from "../../ui";
 import SetupProgressCard from "../../projects/details/SetupProgressCard";
 import type { ConfigurationPipeline } from "./useProvisioningProgress";
@@ -93,6 +93,18 @@ const ProvisioningPipelineSection: React.FC<ProvisioningPipelineSectionProps> = 
                     )}
                   </div>
                   <SetupProgressCard steps={group.steps} isLoading={false} />
+                  {group.steps.some(
+                    (step) => step.id === "allocate_elastic_ip" && step.status === "failed"
+                  ) && (
+                    <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                      <p className="text-xs text-amber-800">
+                        <span className="font-semibold">Public IP not allocated.</span> The instance is
+                        running but is not reachable from the internet. Retry the failed steps below, or
+                        contact support.
+                      </p>
+                    </div>
+                  )}
                   {group.steps.some(
                     (step) =>
                       (step.id === "wait_for_active") &&

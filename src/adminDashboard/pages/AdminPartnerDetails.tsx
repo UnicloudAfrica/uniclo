@@ -19,6 +19,7 @@ import {
   ClipboardList,
   Wallet,
   FlaskConical,
+  KeyRound,
 } from "lucide-react";
 import { useFetchTenantById } from "@/hooks/adminHooks/tenantHooks";
 import PartnerClients from "../components/partnersComponent/PartnerClients";
@@ -27,8 +28,12 @@ import OnboardingStatusBoard from "../components/onboarding/OnboardingStatusBoar
 import TenantBillingTab from "./tenantComps/TenantBillingTab";
 import TenantNetworkPolicyTab from "./tenantComps/TenantNetworkPolicyTab";
 import TenantPocTrialTab from "../components/tenantComponents/TenantPocTrialTab";
+import AccessEntitlementsPanel from "@/shared/components/entitlements/AccessEntitlementsPanel";
 import { useTenantBroadcasting } from "@/hooks/useTenantBroadcasting";
+import InfoTile from "@/shared/components/ui/InfoTile";
 import logger from "@/utils/logger";
+
+const accent = "var(--theme-color)";
 
 type PartnerBusiness = {
   name?: string;
@@ -121,6 +126,8 @@ export default function AdminPartnerDetails() {
     }
   };
 
+  const isVerified = partnerDetails?.verified === 1;
+
   const summaryCards = [
     {
       label: "Partner Account",
@@ -129,16 +136,12 @@ export default function AdminPartnerDetails() {
         ? `Industry • ${partnerDetails.business.industry}`
         : "Industry not captured",
       icon: Building2,
-      accentBg: "bg-primary/10",
-      accentText: "text-[var(--theme-color)]",
     },
     {
       label: "Primary Contact",
       value: partnerDetails?.email || "No email provided",
       hint: partnerDetails?.phone ? `Phone • ${partnerDetails.phone}` : "Phone number unavailable",
       icon: Mail,
-      accentBg: "bg-emerald-50",
-      accentText: "text-emerald-600",
     },
     {
       label: "Location",
@@ -148,18 +151,24 @@ export default function AdminPartnerDetails() {
           ? `City • ${partnerDetails.business?.city || partnerDetails.city || "—"}`
           : "City not provided",
       icon: Globe2,
-      accentBg: "bg-slate-100",
-      accentText: "text-slate-700",
     },
     {
       label: "Verification",
-      value: partnerDetails?.verified === 1 ? "Verified" : "Unverified",
+      value: (
+        <span
+          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-semibold ${
+            isVerified
+              ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
+              : "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
+          }`}
+        >
+          {isVerified ? "Verified" : "Unverified"}
+        </span>
+      ),
       hint: partnerDetails?.updated_at
         ? `Updated ${formatDate(partnerDetails.updated_at)}`
         : "Awaiting latest review",
       icon: ShieldCheck,
-      accentBg: partnerDetails?.verified === 1 ? "bg-emerald-50" : "bg-amber-50",
-      accentText: partnerDetails?.verified === 1 ? "text-emerald-600" : "text-amber-600",
     },
   ];
 
@@ -167,7 +176,6 @@ export default function AdminPartnerDetails() {
     {
       label: "Overview",
       value: "overview",
-      description: "Compliance, documents, and account metadata",
       icon: LayoutDashboard,
       component: (
         <OverviewPartner
@@ -180,21 +188,18 @@ export default function AdminPartnerDetails() {
     {
       label: "Clients",
       value: "clients",
-      description: "Linked customers managed by this partner",
       icon: Users2,
       component: <PartnerClients tenantId={tenantId!} />,
     },
     {
       label: "Modules",
       value: "purchased",
-      description: "Purchased history and provisioning trail",
       icon: Boxes,
       component: <PartnerModules tenantId={tenantId!} />,
     },
     {
       label: "Onboarding",
       value: "onboarding",
-      description: "Track review steps and outstanding approvals",
       icon: ClipboardList,
       component: (
         <OnboardingStatusBoard
@@ -208,23 +213,26 @@ export default function AdminPartnerDetails() {
     {
       label: "Billing",
       value: "billing",
-      description: "Billing model, credit limits, and payment settings",
       icon: Wallet,
       component: <TenantBillingTab tenantId={tenantId!} />,
     },
     {
       label: "Network Policy",
       value: "network-policy",
-      description: "Elastic IP enforcement and preset safeguards",
       icon: Cloud,
       component: <TenantNetworkPolicyTab tenantId={tenantId!} />,
     },
     {
       label: "POC Trials",
       value: "poc-trials",
-      description: "Manage proof-of-concept trial periods",
       icon: FlaskConical,
       component: <TenantPocTrialTab tenantId={tenantId!} />,
+    },
+    {
+      label: "Access & Entitlements",
+      value: "entitlements",
+      icon: KeyRound,
+      component: <AccessEntitlementsPanel scope="tenant" accountId={tenantId!} />,
     },
   ];
 
@@ -235,7 +243,7 @@ export default function AdminPartnerDetails() {
         <AdminActiveTab />
         <AdminPageShell contentClassName="p-6 md:p-8 flex items-center justify-center flex-col">
           <Loader2 className="w-8 h-8 animate-spin text-[var(--theme-color)]" />
-          <p className="ml-2 text-gray-700 mt-2">Loading partner details...</p>
+          <p className="ml-2 text-gray-700 dark:text-gray-300 mt-2">Loading partner details...</p>
         </AdminPageShell>
       </>
     );
@@ -248,9 +256,11 @@ export default function AdminPartnerDetails() {
         <AdminActiveTab />
         <AdminPageShell contentClassName="p-6 md:p-8 flex flex-col items-center justify-center text-center">
           <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
-          <p className="text-lg font-semibold text-gray-700 mb-2">Partner details not found.</p>
+          <p className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">
+            Partner details not found.
+          </p>
           {partnerError?.message && (
-            <p className="text-sm text-gray-500 mb-4">{partnerError.message}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{partnerError.message}</p>
           )}
           <button
             onClick={() => navigate("/admin-dashboard/partners")}
@@ -291,73 +301,37 @@ export default function AdminPartnerDetails() {
             </button>
           </div>
         }
-        contentClassName="space-y-8"
+        contentClassName="space-y-6"
       >
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {summaryCards.map(({ label, value, hint, icon: Icon, accentBg, accentText }: { label: React.ReactNode; value: React.ReactNode; hint?: React.ReactNode; icon: React.ComponentType<{ size?: number }>; accentBg?: string; accentText?: string }) => (
-            <div
-              key={label}
-              className="rounded-3xl border border-[var(--theme-surface-alt)] bg-white p-5 shadow-sm transition hover:border-primary/50 hover:shadow-md"
-            >
-              <div className="flex items-start gap-3">
-                <span
-                  className={`flex h-10 w-10 items-center justify-center rounded-2xl ${accentBg} ${accentText}`}
-                >
-                  <Icon className="h-5 w-5" />
-                </span>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    {label}
-                  </p>
-                  <p className="mt-1 text-base font-semibold text-slate-900">{value}</p>
-                  {hint && <p className="mt-2 text-xs font-medium text-slate-500">{hint}</p>}
-                </div>
-              </div>
-            </div>
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {summaryCards.map(({ label, value, hint, icon: Icon }) => (
+            <InfoTile key={label} label={label} value={value} hint={hint} icon={<Icon size={18} />} />
           ))}
         </section>
 
-        <section>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {tabs.map(({ value, label, description, icon: Icon }: { value: string; label: string; description?: string; icon: React.ComponentType<{ size?: number }> }) => {
-              const isActive = activeButton === value;
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setActiveButton(value)}
-                  className={`group flex items-start gap-3 rounded-3xl border px-5 py-4 text-left shadow-sm transition ${
-                    isActive
-                      ? "border-[var(--theme-color)] bg-[var(--theme-surface-alt)] shadow-md"
-                      : "border-transparent bg-white hover:border-primary/40 hover:shadow-md"
-                  }`}
-                >
-                  <span
-                    className={`mt-1 flex h-10 w-10 items-center justify-center rounded-2xl ${
-                      isActive
-                        ? "bg-primary/15 text-[var(--theme-color)]"
-                        : "bg-slate-100 text-slate-500"
-                    }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <p
-                      className={`text-sm font-semibold ${
-                        isActive ? "text-[var(--theme-heading-color)]" : "text-slate-700"
-                      }`}
-                    >
-                      {label}
-                    </p>
-                    <p className="mt-1 text-xs font-medium text-slate-500">{description}</p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </section>
+        <div className="flex gap-1 overflow-x-auto border-b border-gray-200 dark:border-gray-700">
+          {tabs.map(({ value, label, icon: Icon }) => {
+            const isActive = activeButton === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setActiveButton(value)}
+                className={`-mb-px flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
+                  isActive
+                    ? "text-gray-900 dark:text-white"
+                    : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                }`}
+                style={isActive ? { borderColor: accent } : undefined}
+              >
+                <Icon size={15} />
+                {label}
+              </button>
+            );
+          })}
+        </div>
 
-        <section className="rounded-3xl border border-[var(--theme-surface-alt)] bg-white p-6 shadow-sm">
+        <section className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
           {(tabs.find((tab) => tab.value === activeButton) ?? tabs[0])?.component ?? null}
         </section>
       </AdminPageShell>

@@ -5,7 +5,7 @@ import type {
   TenantPricingCreatePayload,
   TenantPricingOverride,
 } from "@/hooks/tenantHooks/tenantPricingHooks";
-import { useFetchAvailabilityZones } from "@/hooks/adminHooks/regionHooks";
+import { useFetchAvailabilityZones } from "@/shared/hooks/resources/regionHooks";
 import ToastUtils from "@/utils/toastUtil";
 import type {
   OverrideScope,

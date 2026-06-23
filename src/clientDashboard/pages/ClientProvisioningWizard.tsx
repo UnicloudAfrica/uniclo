@@ -216,8 +216,14 @@ const ClientProvisioningWizard: React.FC = () => {
   const summaryTaxValue = pricingSummary.tax || 0;
   const summaryGatewayFeesValue = pricingSummary.gatewayFees || 0;
   const summaryGrandTotalValue = pricingSummary.grandTotal || 0;
+  // Prefer the actual pricing currency; otherwise the selected country's own
+  // currency (data-driven, multi-country ready); USD only as a last resort.
   const summaryDisplayCurrency =
-    pricingSummary.currency || (billingCountry === "NG" ? "NGN" : "USD");
+    pricingSummary.currency ||
+    (countryOptions.find((o) => String(o.value) === String(billingCountry)) as
+      | { currency?: string }
+      | undefined)?.currency ||
+    "USD";
   const taxLabelSuffix =
     summaryTaxValue > 0 && summarySubtotalValue > 0
       ? ` (${((summaryTaxValue / summarySubtotalValue) * 100).toFixed(2)}%)`

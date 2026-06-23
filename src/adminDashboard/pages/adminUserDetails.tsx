@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   CircleUserRound,
   Loader2,
+  KeyRound,
   Mail,
   MapPin,
   Shield,
@@ -18,6 +19,7 @@ import { ModernButton, ModernCard, SkeletonCard } from "@/shared/components/ui";
 import { useFetchAdminById } from "@/hooks/adminHooks/adminHooks";
 import { PermissionChecklist } from "@/shared/components/PermissionChecklist";
 import { useFetchUserPermissions, useUpdateUserPermissions } from "@/hooks/adminHooks/permissionHooks";
+import AccessEntitlementsPanel from "@/shared/components/entitlements/AccessEntitlementsPanel";
 import logger from "@/utils/logger";
 
 interface AdminRecord {
@@ -265,6 +267,20 @@ const AdminUserDetails = () => {
                 <Shield className="h-4 w-4" />
                 Permissions
               </button>
+              {adminRecord.role === "client" && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("entitlements")}
+                  className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition ${
+                    activeTab === "entitlements"
+                      ? "bg-[var(--theme-color)] text-white shadow-sm"
+                      : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                  }`}
+                >
+                  <KeyRound className="h-4 w-4" />
+                  Access & Entitlements
+                </button>
+              )}
             </div>
 
             {/* Tab Content */}
@@ -352,6 +368,13 @@ const AdminUserDetails = () => {
                   </dl>
                 </ModernCard>
               </>
+            ) : activeTab === "entitlements" && adminRecord.role === "client" ? (
+              <ModernCard title="Access & Entitlements">
+                <AccessEntitlementsPanel
+                  scope="client"
+                  accountId={String(adminRecord.identifier ?? adminRecord.id ?? "")}
+                />
+              </ModernCard>
             ) : (
               adminRecord.id !== undefined ? (
                 <PermissionsTab userId={adminRecord.id} />

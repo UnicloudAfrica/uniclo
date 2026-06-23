@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { ModernInput, ModernButton } from "../../ui";
-import { useFetchAvailabilityZones } from "@/hooks/adminHooks/regionHooks";
+import { useFetchAvailabilityZones } from "@/shared/hooks/resources/regionHooks";
 import { BillingRegion, InvoiceFormData, ProductPricing, UpdateInvoiceFormData } from "../types";
 
 /**
@@ -159,16 +159,20 @@ const ResourceItemBuilder: React.FC<ResourceItemBuilderProps> = ({
 
         {/* Availability Zone */}
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">
-            Availability Zone
-          </label>
+          <label className="mb-2 block text-sm font-medium text-slate-700">Availability Zone</label>
           <select
-            value={(formData as unknown as Record<string, unknown>).availability_zone as string || ""}
-            onChange={(e) => updateFormData("availability_zone" as keyof typeof formData, e.target.value)}
+            value={
+              ((formData as unknown as Record<string, unknown>).availability_zone as string) || ""
+            }
+            onChange={(e) =>
+              updateFormData("availability_zone" as keyof typeof formData, e.target.value)
+            }
             className={selectClass}
             disabled={!formData.region || isAzFetching}
           >
-            <option value="">{!formData.region ? "Select a region first" : "Select availability zone"}</option>
+            <option value="">
+              {!formData.region ? "Select a region first" : "Select availability zone"}
+            </option>
             {azOptions.map((az) => (
               <option key={az.code} value={az.code}>
                 {az.name} ({az.code})
@@ -310,7 +314,10 @@ const ResourceItemBuilder: React.FC<ResourceItemBuilderProps> = ({
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Bandwidth <span className="text-xs font-normal text-slate-500">(Internet Bandwidth Included)</span>
+                    Bandwidth{" "}
+                    <span className="text-xs font-normal text-slate-500">
+                      (Internet Bandwidth Included)
+                    </span>
                   </label>
                   <select
                     value={formData.bandwidth_id || ""}
@@ -326,7 +333,8 @@ const ResourceItemBuilder: React.FC<ResourceItemBuilderProps> = ({
                     ))}
                   </select>
                   <p className="mt-1 text-xs text-slate-500">
-                    Internet bandwidth is included with every compute instance. Pick a higher tier to upgrade.
+                    Internet bandwidth is included with every compute instance. Pick a higher tier
+                    to upgrade.
                   </p>
                 </div>
                 <ModernInput

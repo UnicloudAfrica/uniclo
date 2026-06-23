@@ -158,8 +158,8 @@ const AccessKeysSection: React.FC<AccessKeysSectionProps> = ({
               keypair_label: e.target.value ? selectedLabel : "",
             });
           }}
-          options={[{ value: "", label: "Select key pair (optional)" }, ...resolvedKeyPairOptions]}
-          helper="Select SSH key pair to authorize access."
+          options={[{ value: "", label: "Select a key pair" }, ...resolvedKeyPairOptions]}
+          helper="Select an SSH key pair to authorize access (required), or create a new one."
           disabled={!canSelectExistingKeypairs}
         />
       ) : (
@@ -219,6 +219,11 @@ const CreateKeypairForm: React.FC<CreateKeypairFormProps> = ({
           onChange={(e) => setKeypairNameInput(e.target.value)}
           placeholder="e.g. cube-instance-key"
         />
+        <p className="mt-1 text-xs text-gray-500">
+          A project ID prefix is added automatically (e.g.{" "}
+          <span className="font-mono">A1B2C3-{keypairNameInput.trim() || "name"}</span>) so key names stay
+          unique per project.
+        </p>
       </div>
       <div>
         <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -243,6 +248,11 @@ const CreateKeypairForm: React.FC<CreateKeypairFormProps> = ({
       >
         {isCreatingKeypair ? "Creating..." : "Create key pair"}
       </ModernButton>
+      {isCreatingKeypair && (
+        <span className="text-xs text-gray-500">
+          Generating your key pair securely — this can take up to ~30 seconds.
+        </span>
+      )}
       {keypairMaterial && (
         <ModernButton
           variant="ghost"

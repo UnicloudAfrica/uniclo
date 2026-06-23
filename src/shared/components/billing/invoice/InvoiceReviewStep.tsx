@@ -18,6 +18,7 @@ import InvoiceFinalReviewStep from "./InvoiceFinalReviewStep";
 import {
   AssignmentDetails,
   InvoiceFormData,
+  IntegrationLineRequest,
   ObjectStorageRequest,
   PricingRequest,
   QuoteInvoiceIntent,
@@ -30,6 +31,7 @@ interface InvoiceReviewStepProps {
   updateFormData: UpdateInvoiceFormData;
   pricingRequests: PricingRequest[];
   objectStorageRequests: ObjectStorageRequest[];
+  integrationRequests: IntegrationLineRequest[];
   tenants: unknown;
   assignmentDetails: AssignmentDetails;
   mode?: "admin" | "tenant" | "client";
@@ -41,6 +43,7 @@ const InvoiceReviewStep: React.FC<InvoiceReviewStepProps> = ({
   updateFormData,
   pricingRequests,
   objectStorageRequests,
+  integrationRequests,
   tenants,
   assignmentDetails,
   mode = "admin",
@@ -121,6 +124,7 @@ const InvoiceReviewStep: React.FC<InvoiceReviewStepProps> = ({
       <InvoiceSummaryStep
         pricingRequests={pricingRequests}
         objectStorageRequests={objectStorageRequests}
+        integrationRequests={integrationRequests}
         formData={formData}
       />
 

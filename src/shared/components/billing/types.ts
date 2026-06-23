@@ -116,6 +116,23 @@ export interface TotalDiscount {
  */
 export type QuoteInvoiceIntent = "quote" | "invoice";
 
+/**
+ * A staged integration-product line item (Shield, AnyCloudFlow, …) for the
+ * quote/invoice wizard. `_display` is UI-only and stripped before submit;
+ * the payload sends `integration_product_id` + quantity/months and the
+ * backend prices it authoritatively.
+ */
+export interface IntegrationLineRequest {
+  integration_product_id: number;
+  quantity: number;
+  months: number;
+  bucket_size_gb?: number;
+  _display: {
+    name: string;
+    unit_summary?: string;
+  };
+}
+
 export interface InvoiceFormData {
   // Step 1: Info
   subject: string;

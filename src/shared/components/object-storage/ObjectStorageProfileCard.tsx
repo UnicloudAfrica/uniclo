@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { Package, X } from "lucide-react";
 import { Option } from "@/hooks/objectStorageUtils";
 import { ResolvedProfile } from "@/hooks/useObjectStoragePricing";
-import { useFetchAvailabilityZones } from "@/hooks/adminHooks/regionHooks";
+import { useFetchAvailabilityZones } from "@/shared/hooks/resources/regionHooks";
 import { ModernInput, ModernSelect } from "../ui";
 
 export interface ObjectStorageProfileCardProps {
@@ -136,10 +136,18 @@ export const ObjectStorageProfileCard: React.FC<ObjectStorageProfileCardProps> =
 
         <ModernSelect
           label="Availability Zone"
-          value={(profile as unknown as Record<string, unknown>).availability_zone as string || ""}
+          value={
+            ((profile as unknown as Record<string, unknown>).availability_zone as string) || ""
+          }
           onChange={(event) => onAvailabilityZoneChange?.(event.target.value)}
           options={azOptions}
-          placeholder={!profile.region ? "Select a region first" : isAzFetching ? "Loading..." : "Select availability zone"}
+          placeholder={
+            !profile.region
+              ? "Select a region first"
+              : isAzFetching
+                ? "Loading..."
+                : "Select availability zone"
+          }
           disabled={!profile.region || isAzFetching}
           helper={!profile.region ? "Select a region first." : ""}
         />

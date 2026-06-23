@@ -64,7 +64,13 @@ export function useRehydrateFromServer(): void {
         const data =
           (payload.data as Record<string, unknown> | undefined) ?? payload;
 
-        useAuthStore.getState().login(data as never);
+        // `/business/auth/user` returns the user object directly (no nested
+        // `user` key), but `login()` reads `response.user`. Wrap so the full
+        // profile — including the country the provisioning wizard locks billing
+        // onto — lands in `state.user` instead of being dropped to null.
+        useAuthStore
+          .getState()
+          .login({ ...(data as Record<string, unknown>), user: data } as never);
       } catch (err) {
         logger.warn("[auth] rehydrate from server failed:", err);
       }

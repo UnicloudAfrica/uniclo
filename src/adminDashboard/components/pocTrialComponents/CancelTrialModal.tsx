@@ -72,21 +72,21 @@ const CancelTrialModal: React.FC<CancelTrialModalProps> = ({ isOpen, onClose, tr
       <div className="space-y-4">
         <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
           <dl className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <dt className="text-gray-500 dark:text-gray-400">Resource</dt>
-              <dd className="font-medium text-gray-900 dark:text-white">
+            <div className="flex justify-between gap-3">
+              <dt className="shrink-0 text-gray-500 dark:text-gray-400">Resource</dt>
+              <dd className="min-w-0 break-words text-right font-medium text-gray-900 dark:text-white">
                 {trial.resource_name || "—"}
               </dd>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-gray-500 dark:text-gray-400">Product Type</dt>
-              <dd className="font-medium text-gray-900 dark:text-white">
+            <div className="flex justify-between gap-3">
+              <dt className="shrink-0 text-gray-500 dark:text-gray-400">Product Type</dt>
+              <dd className="min-w-0 break-words text-right font-medium text-gray-900 dark:text-white">
                 {trial.product_type_label}
               </dd>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-gray-500 dark:text-gray-400">Days Remaining</dt>
-              <dd className="font-medium text-gray-900 dark:text-white">
+            <div className="flex justify-between gap-3">
+              <dt className="shrink-0 text-gray-500 dark:text-gray-400">Days Remaining</dt>
+              <dd className="min-w-0 break-words text-right font-medium text-gray-900 dark:text-white">
                 {trial.days_remaining}
               </dd>
             </div>

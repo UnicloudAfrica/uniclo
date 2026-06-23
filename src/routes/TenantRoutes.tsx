@@ -23,9 +23,17 @@ const TenantDeveloperPortal = lazy(() => import("../tenantDashboard/pages/Develo
 const TenantPricingCalculator = lazy(
   () => import("../tenantDashboard/pages/TenantPricingCalculator")
 );
-// `TenantPricingOverrides` + `TenantPricingEditList` retired — the
-// unified PricingShell at /dashboard/pricing replaces both. Legacy
-// routes redirect to the new home (see Routes block below).
+// Dedicated tenant price-settings workflow. The unified PricingShell
+// (mounted at /dashboard/pricing) handles third-party + pay-as-you-go
+// overrides inline, but per-SKU catalog overrides (compute, volumes,
+// OS images, …) need the region / AZ / country scope picker this page
+// provides, so it remains the home for catalog markups.
+const TenantPricingOverrides = lazy(
+  () => import("../tenantDashboard/pages/pricingOverrides")
+);
+const TenantPricingEditList = lazy(
+  () => import("../tenantDashboard/pages/TenantPricingEditList")
+);
 // Unified tenant pricing shell — same single-page layout the admin
 // uses, with role="tenant" so each pane shows the override column.
 import PricingShell from "../adminDashboard/pages/pricing/PricingShell";
@@ -176,6 +184,8 @@ const LaunchConfigurationWizard = lazy(
 const AutoScalingGroupWizard = lazy(
   () => import("../tenantDashboard/pages/infrastructure/AutoScalingGroupWizard")
 );
+
+const TeamRolesPage = lazy(() => import("../dashboard/pages/roles/TeamRolesPage"));
 
 import TenantDocsLayout from "../tenantDashboard/pages/docs/TenantDocsLayout";
 const TenantDocPage = lazy(() => import("../tenantDashboard/pages/docs/TenantDocPage"));
@@ -440,19 +450,16 @@ const TenantRoutes = (): JSX.Element => (
         */}
         <Route path="/dashboard/pricing" element={<PricingShell role="tenant" />} />
         {/*
-         * Legacy /dashboard/pricing-overrides UI is superseded by the
-         * unified pricing shell above. Redirect any deep links so old
-         * bookmarks/email-CTAs land on the new home instead of 404'ing.
-         * The legacy lazy imports are intentionally removed to keep the
-         * initial bundle lean.
+         * Per-SKU catalog price settings (compute, volumes, OS images,
+         * …). Lives here rather than in the unified shell because the
+         * override needs a region / AZ / country scope picker the
+         * shell's flat, server-paginated catalog table can't surface.
+         * "Price Settings" in the tenant sidebar points here.
          */}
-        <Route
-          path="/dashboard/pricing-overrides"
-          element={<Navigate to="/dashboard/pricing" replace />}
-        />
+        <Route path="/dashboard/pricing-overrides" element={<TenantPricingOverrides />} />
         <Route
           path="/dashboard/pricing-overrides/edit-list"
-          element={<Navigate to="/dashboard/pricing" replace />}
+          element={<TenantPricingEditList />}
         />
         <Route path="/dashboard/pricing-calculator" element={<TenantPricingCalculator />} />
         <Route path="/dashboard/create-invoice" element={<TenantCreateInvoice />} />
@@ -474,6 +481,14 @@ const TenantRoutes = (): JSX.Element => (
 
         {/* Standalone */}
         <Route path="/dashboard/products" element={<Products />} />
+        <Route
+          path="/dashboard/roles"
+          element={
+            <Suspense fallback={null}>
+              <TeamRolesPage />
+            </Suspense>
+          }
+        />
         <Route path="/dashboard/developer/*" element={<TenantDeveloperPortal />} />
         <Route path="/dashboard/support" element={<SupportTicket />} />
         <Route path="/dashboard/support/:id" element={<TenantTicketDetail />} />

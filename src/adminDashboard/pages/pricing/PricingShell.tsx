@@ -70,20 +70,22 @@ const MENU: MenuGroup[] = [
       { id: "bandwidth", label: "Bandwidth", caption: "Throughput tiers", icon: Wifi },
       { id: "floating_ip", label: "Floating IPs", caption: "Public connectivity", icon: Network },
       { id: "cross_connect", label: "Cross Connect", caption: "Partner links", icon: Boxes },
+      // Metered billing model for our own resources, not a third-party
+      // platform — stays with Products.
+      { id: "pay_as_you_go", label: "Pay-as-you-go", caption: "Per-VM, per-GB rates", icon: Activity },
     ],
   },
   {
-    label: "Third-party",
+    // Integration products: third-party platforms we resell by leveraging
+    // their external APIs (AnyCloudFlow, Shield via StormWall/Cloudflare,
+    // SlimDeploy, StaqDB/Lattice). Grouped together regardless of which
+    // pane renders each one.
+    label: "Integration products",
     items: [
-      // Lattice / StaqDB is a managed-database product the platform
-      // resells from a partner, not infrastructure we operate, so it
-      // sits with SlimDeploy / AnyCloudFlow / Shield rather than
-      // with the Products group.
-      { id: "lattice", label: "Lattice / StaqDB", caption: "Managed databases", icon: Database },
-      { id: "simpledeploy", label: "SlimDeploy", caption: "Deploy plans", icon: Server },
       { id: "anycloudflow", label: "AnyCloudFlow", caption: "Migration & DR", icon: Inbox },
       { id: "shield", label: "Shield", caption: "DDoS / WAF / SSL", icon: ShieldIcon },
-      { id: "pay_as_you_go", label: "Pay-as-you-go", caption: "Per-VM, per-GB rates", icon: Activity },
+      { id: "simpledeploy", label: "SlimDeploy", caption: "Deploy plans", icon: Server },
+      { id: "lattice", label: "Lattice / StaqDB", caption: "Managed databases", icon: Database },
     ],
   },
   {

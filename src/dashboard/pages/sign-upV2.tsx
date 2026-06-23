@@ -1,10 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCreateAccount } from "@/hooks/authHooks";
-import { useVerifyBusiness } from "@/hooks/businessHooks";
 import useAuthStore from "@/stores/authStore";
 import Header from "./signup/header";
-import { Loader2, ShieldCheck, AlertCircle } from "lucide-react";
 import { useSharedFetchCountries } from "@/hooks/sharedResourceHooks";
 import {
   resolveBrandLogo,
@@ -31,29 +29,9 @@ interface SignUpFormData {
   password: string;
   confirmPassword: string;
   companyName: string;
-  companyType: string;
-  registrationNumber: string;
-  verificationToken: string;
   countryId: string;
   countryName: string;
   countryCode: string;
-}
-
-interface VerificationNormalized {
-  rc_number?: string;
-  registration_number?: string;
-  company_name?: string;
-  company_type?: string;
-  address?: string;
-  status?: string;
-  registration_date?: string;
-  [key: string]: unknown;
-}
-
-interface VerificationResult {
-  verification_token?: string;
-  normalized?: VerificationNormalized;
-  [key: string]: unknown;
 }
 
 const getErrorMessage = (error: unknown, fallback: string): string => {
@@ -83,9 +61,6 @@ const INITIAL_FORM: SignUpFormData = {
   password: "",
   confirmPassword: "",
   companyName: "",
-  companyType: "",
-  registrationNumber: "",
-  verificationToken: "",
   countryId: "",
   countryName: "",
   countryCode: "",
@@ -95,7 +70,6 @@ export default function DashboardSignUpV2() {
   const navigate = useNavigate();
   const setUserEmail = useAuthStore((state) => state.setUserEmail);
   const { mutate, isPending } = useCreateAccount();
-  const { mutate: verifyBusiness, isPending: isVerifying } = useVerifyBusiness();
   const { data: countries = [], isFetching: isCountriesFetching } = useSharedFetchCountries();
   const countriesList = useMemo<Country[]>(
     () => (Array.isArray(countries) ? (countries as unknown as Country[]) : []),
@@ -120,15 +94,8 @@ export default function DashboardSignUpV2() {
   const [activeRole, setActiveRole] = useState<RoleTabId>("tenant");
   const [formData, setFormData] = useState<SignUpFormData>(INITIAL_FORM);
   const [errors, setErrors] = useState<Record<string, string | null>>({});
-  const [isBusinessVerified, setIsBusinessVerified] = useState(false);
-  const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
-  const [verificationError, setVerificationError] = useState<string | null>(null);
 
   const updateField = (field: keyof SignUpFormData, value: string) => {
-    const requiresReverification = ["companyName", "companyType", "registrationNumber"].includes(
-      field
-    );
-
     setFormData((prev) => {
       const next = { ...prev, [field]: value };
 
@@ -139,24 +106,13 @@ export default function DashboardSignUpV2() {
           selectedCountry?.iso2?.toUpperCase() || selectedCountry?.iso3?.toUpperCase() || "";
       }
 
-      if (requiresReverification) {
-        next.verificationToken = "";
-      }
-
       return next;
     });
-
-    if (requiresReverification) {
-      setIsBusinessVerified(false);
-      setVerificationResult(null);
-      setVerificationError(null);
-    }
 
     setErrors((prev) => ({
       ...prev,
       [field]: null,
       general: null,
-      verificationToken: requiresReverification ? null : (prev.verificationToken ?? null),
     }));
   };
 
@@ -186,15 +142,6 @@ export default function DashboardSignUpV2() {
     if (!formData.companyName.trim()) {
       validationErrors.companyName = "Company name is required";
     }
-    if (!formData.companyType) {
-      validationErrors.companyType = "Business type is required";
-    }
-    if (!formData.registrationNumber.trim()) {
-      validationErrors.registrationNumber = "Incorporation number is required";
-    }
-    if (!formData.verificationToken) {
-      validationErrors.verificationToken = "Verify your business before signing up.";
-    }
     if (!formData.countryId) {
       validationErrors.countryId = "Select a country";
     }
@@ -219,8 +166,6 @@ export default function DashboardSignUpV2() {
     const accountType = "business";
     const businessPayload = {
       name: formData.companyName.trim(),
-      company_type: formData.companyType,
-      registration_number: formData.registrationNumber.trim(),
       country_id: normalizedCountryId,
       country: normalizedCountryName,
       country_code: normalizedCountryCode,
@@ -235,7 +180,6 @@ export default function DashboardSignUpV2() {
       role: activeRole === "tenant" ? "tenant" : "client",
       account_type: accountType,
       company_name: formData.companyName.trim(),
-      verification_token: formData.verificationToken,
       country_id: normalizedCountryId,
       country: normalizedCountryName,
       country_code: normalizedCountryCode,
@@ -254,111 +198,8 @@ export default function DashboardSignUpV2() {
     });
   };
 
-  const handleVerifyBusiness = () => {
-    setVerificationError(null);
-
-    if (
-      !formData.companyName.trim() ||
-      !formData.companyType ||
-      !formData.registrationNumber.trim()
-    ) {
-      setErrors((prev) => ({
-        ...prev,
-        companyName: !formData.companyName.trim()
-          ? "Business name is required"
-          : (prev.companyName ?? null),
-        companyType: !formData.companyType
-          ? "Business type is required"
-          : (prev.companyType ?? null),
-        registrationNumber: !formData.registrationNumber.trim()
-          ? "Incorporation number is required"
-          : (prev.registrationNumber ?? null),
-      }));
-      return;
-    }
-
-    verifyBusiness(
-      {
-        target: activeRole === "tenant" ? "tenant" : "client",
-        business_name: formData.companyName.trim(),
-        company_type: formData.companyType,
-        registration_number: formData.registrationNumber.trim(),
-      },
-      {
-        onSuccess: (data: VerificationResult) => {
-          const token = data?.verification_token ?? "";
-
-          if (!token) {
-            setIsBusinessVerified(false);
-            setErrors((prev) => ({
-              ...prev,
-              verificationToken: "Unable to verify business. Please try again.",
-            }));
-          } else {
-            setFormData((prev) => ({
-              ...prev,
-              verificationToken: token,
-            }));
-            setIsBusinessVerified(true);
-            setErrors((prev) => ({ ...prev, verificationToken: null }));
-          }
-
-          setVerificationResult(data);
-          setVerificationError(token ? null : "Verification succeeded but no token was returned.");
-        },
-        onError: (error) => {
-          setIsBusinessVerified(false);
-          setVerificationResult(null);
-          setFormData((prev) => ({ ...prev, verificationToken: "" }));
-          setVerificationError(getErrorMessage(error, "Unable to verify business."));
-        },
-      }
-    );
-  };
-
-  const businessTypes = useMemo(
-    () => [
-      { value: "", label: "Select business type" },
-      { value: "RC", label: "Limited Liability Company (RC)" },
-      { value: "BN", label: "Business Name (BN)" },
-      { value: "IT", label: "Incorporated Trustees (IT)" },
-      { value: "LL", label: "Limited Liability" },
-      { value: "LLP", label: "Limited Liability Partnership (LLP)" },
-      { value: "Other", label: "Other" },
-    ],
-    []
-  );
-
-  const normalizedPreview = useMemo(() => {
-    if (!verificationResult?.normalized) {
-      return null;
-    }
-
-    const normalized = verificationResult.normalized;
-
-    return {
-      registrationNumber: normalized.rc_number ?? normalized.registration_number,
-      companyName: normalized.company_name,
-      companyType: normalized.company_type,
-      address: normalized.address,
-      status: normalized.status,
-      registrationDate: normalized.registration_date,
-    };
-  }, [verificationResult]);
-
   const handleRoleChange = (role: RoleTabId) => {
     setActiveRole(role);
-    setIsBusinessVerified(false);
-    setVerificationResult(null);
-    setVerificationError(null);
-    setFormData((prev) => ({
-      ...prev,
-      verificationToken: "",
-    }));
-    setErrors((prev) => ({
-      ...prev,
-      verificationToken: null,
-    }));
   };
 
   const countryOptions = useMemo(() => {
@@ -419,99 +260,6 @@ export default function DashboardSignUpV2() {
             onChange={(value) => updateField("companyName", value)}
           />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <SelectField
-              label="Business Type"
-              value={formData.companyType}
-              error={errors.companyType}
-              options={businessTypes}
-              onChange={(value) => updateField("companyType", value)}
-              disabled={isBusinessVerified || isVerifying}
-            />
-            <Field
-              label="Incorporation Number"
-              value={formData.registrationNumber}
-              error={errors.registrationNumber}
-              onChange={(value) => updateField("registrationNumber", value)}
-              disabled={isBusinessVerified || isVerifying}
-              placeholder="e.g., RC123456"
-            />
-          </div>
-
-          <div className="space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold text-gray-800">Verify your business</p>
-                <p className="text-xs text-gray-500">
-                  Confirm your CAC record before creating the account.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleVerifyBusiness}
-                disabled={isVerifying || isBusinessVerified}
-                className="inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-white hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
-                style={{ backgroundColor: accentColor, transition: "opacity 0.3s" }}
-              >
-                {isVerifying ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Verifying…
-                  </>
-                ) : isBusinessVerified ? (
-                  <>
-                    <ShieldCheck className="mr-2 h-4 w-4" />
-                    Verified
-                  </>
-                ) : (
-                  "Verify Business"
-                )}
-              </button>
-            </div>
-            {verificationError && (
-              <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                <AlertCircle className="mt-0.5 h-4 w-4" />
-                <span>{verificationError}</span>
-              </div>
-            )}
-            {isBusinessVerified && (
-              <div className="space-y-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-                <div className="flex items-center gap-2 font-semibold">
-                  <ShieldCheck className="h-4 w-4" />
-                  Business verified successfully.
-                </div>
-                {normalizedPreview && (
-                  <dl className="grid gap-1 text-xs text-emerald-800 sm:grid-cols-2">
-                    {normalizedPreview.companyName && (
-                      <div>
-                        <dt className="font-semibold">Company</dt>
-                        <dd>{normalizedPreview.companyName}</dd>
-                      </div>
-                    )}
-                    {normalizedPreview.registrationNumber && (
-                      <div>
-                        <dt className="font-semibold">RC Number</dt>
-                        <dd>{normalizedPreview.registrationNumber}</dd>
-                      </div>
-                    )}
-                    {normalizedPreview.registrationDate && (
-                      <div>
-                        <dt className="font-semibold">Registered</dt>
-                        <dd>{normalizedPreview.registrationDate}</dd>
-                      </div>
-                    )}
-                    {normalizedPreview.address && (
-                      <div className="sm:col-span-2">
-                        <dt className="font-semibold">Address</dt>
-                        <dd>{normalizedPreview.address}</dd>
-                      </div>
-                    )}
-                  </dl>
-                )}
-              </div>
-            )}
-          </div>
-
           <Field
             label="Email"
             type="email"
@@ -542,14 +290,11 @@ export default function DashboardSignUpV2() {
             onChange={(value) => updateField("confirmPassword", value)}
           />
 
-          {errors.verificationToken && (
-            <p className="text-red-500 text-sm">{errors.verificationToken}</p>
-          )}
           {errors.general && <p className="text-red-500 text-sm">{errors.general}</p>}
 
           <button
             type="submit"
-            disabled={isPending || isVerifying || !formData.verificationToken}
+            disabled={isPending}
             className="w-full hover:opacity-80 text-white font-semibold py-3 px-4 rounded-lg transition-opacity focus:outline-none focus:ring-1 focus:ring-offset-2 disabled:opacity-70 disabled:cursor-not-allowed"
             style={{ backgroundColor: accentColor, transition: "opacity 0.3s" }}
           >

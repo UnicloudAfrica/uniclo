@@ -522,6 +522,12 @@ const CUSTOMERS_ITEMS_ADMIN: RoleAwareItem[] = [
     roles: ["admin"],
     requiredPermission: "onboarding.manage",
   },
+  {
+    label: "Requirements",
+    icon: ClipboardList,
+    path: "/admin-dashboard/requirements",
+    roles: ["admin"],
+  },
 ];
 
 const CUSTOMERS_ITEMS_TENANT: RoleAwareItem[] = [

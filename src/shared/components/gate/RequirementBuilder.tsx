@@ -13,10 +13,12 @@ import {
 } from "lucide-react";
 import { ModernButton, ModernCard, DashboardSkeleton } from "@/shared/components/ui";
 import ToastUtils from "@/utils/toastUtil";
+import SearchableSelect from "@/shared/components/ui/SearchableSelect";
 import {
   useFetchRequirements,
   useCreateRequirement,
   useUpdateRequirement,
+  useRequirementTargets,
 } from "@/hooks/requirementHooks";
 import { type RequirementField, type RequirementRecord } from "@/shared/types/requirement";
 
@@ -149,6 +151,12 @@ const RequirementBuilder = ({
   const [graceDays, setGraceDays] = useState("0");
   const [isActive, setIsActive] = useState(true);
   const [fields, setFields] = useState<FieldDraft[]>([newField("checkbox")]);
+  const [targetKind, setTargetKind] = useState<"none" | "client" | "tenant">("none");
+  const [targetId, setTargetId] = useState("");
+  const { data: targetOptions } = useRequirementTargets(
+    targetKind === "none" ? "client" : targetKind,
+    targetKind !== "none"
+  );
 
   useEffect(() => {
     if (!isEdit || seeded || !existing) return;
@@ -165,6 +173,8 @@ const RequirementBuilder = ({
     setEnforcement((existing.enforcement as typeof enforcement) || "required");
     setGraceDays(String(existing.grace_period_days ?? 0));
     setIsActive(existing.is_active !== false);
+    setTargetKind((existing.target_type as "client" | "tenant") || "none");
+    setTargetId(existing.target_id || "");
     setFields(
       (existing.fields || []).map((f) => ({
         ...f,
@@ -236,6 +246,7 @@ const RequirementBuilder = ({
       }
     }
     if (scope === "tenant" && !tenantId.trim()) return "Choose a tenant in Advanced settings.";
+    if (targetKind !== "none" && !targetId) return `Pick the specific ${targetKind} this form is for.`;
     return null;
   };
 
@@ -252,6 +263,8 @@ const RequirementBuilder = ({
       persona,
       account_type: accountType,
       country_code: countryCode.trim() ? countryCode.trim().toUpperCase().slice(0, 2) : null,
+      target_type: targetKind === "none" ? null : targetKind,
+      target_id: targetKind === "none" ? null : targetId,
       enforcement,
       grace_period_days: Number(graceDays) || 0,
       is_active: isActive,
@@ -428,6 +441,12 @@ const RequirementBuilder = ({
         ? "People are asked, but can skip it."
         : "Hidden — nobody is asked.";
 
+  const targetOpts: { value: "none" | "client" | "tenant"; label: string }[] = [
+    { value: "none", label: "No — use the above" },
+    ...(context === "admin" ? [{ value: "tenant" as const, label: "A specific tenant" }] : []),
+    { value: "client", label: "A specific client" },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -520,6 +539,30 @@ const RequirementBuilder = ({
                   { value: "business", label: "Businesses" },
                 ]}
               />
+            </div>
+            <div>
+              <label className={labelCls}>Assign to one specific person? (optional)</label>
+              <Segmented
+                value={targetKind}
+                onChange={(v) => {
+                  setTargetKind(v);
+                  setTargetId("");
+                }}
+                options={targetOpts}
+              />
+              {targetKind !== "none" && (
+                <div className="mt-2">
+                  <SearchableSelect
+                    value={targetId}
+                    onChange={(e) => setTargetId(e.target.value)}
+                    options={(targetOptions || []).map((o) => ({ value: o.id, label: o.label }))}
+                    placeholder={`Select a ${targetKind}…`}
+                    searchPlaceholder={`Search ${targetKind}s…`}
+                    emptyMessage={`No ${targetKind}s found.`}
+                  />
+                  <p className="mt-1 text-xs text-slate-500">Only the chosen {targetKind} will get this form.</p>
+                </div>
+              )}
             </div>
             <div>
               <label className={labelCls}>Do they have to complete it?</label>

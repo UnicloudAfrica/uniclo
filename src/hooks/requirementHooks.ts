@@ -86,6 +86,23 @@ export const useFetchRequirementSubmissions = (
     ...options,
   });
 
+/** Audience picker options — clients (or, for admins, tenants) that a form can be assigned to. */
+export const useRequirementTargets = (type: "client" | "tenant", enabled: boolean) =>
+  useQuery({
+    queryKey: ["requirement-targets", type],
+    queryFn: async () => {
+      const res = await api.get<ApiResponse<{ id: string; label: string }[]>>(
+        `/requirements-targets?type=${type}`,
+        { silent: true }
+      );
+      return res.data ?? [];
+    },
+    enabled,
+    staleTime: 1000 * 60,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+
 export const useCreateRequirement = (
   options: Omit<
     UseMutationOptions<RequirementRecord | undefined, Error, Partial<RequirementRecord>>,

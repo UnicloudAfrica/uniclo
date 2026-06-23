@@ -29,6 +29,8 @@ export interface RequirementRecord {
   persona?: "any" | "tenant" | "client" | null;
   account_type?: "any" | "individual" | "business" | null;
   country_code?: string | null;
+  target_type?: "client" | "tenant" | null;
+  target_id?: string | null;
   fields: RequirementField[];
   enforcement: "required" | "optional" | "off";
   grace_period_days?: number | null;

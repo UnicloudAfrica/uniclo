@@ -1,17 +1,17 @@
 import { useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { ModernButton } from "@/shared/components/ui";
-import AdminPageShell from "../components/AdminPageShell";
+import TenantPageShell from "../components/TenantPageShell";
 import RequirementsList from "@/shared/components/gate/RequirementsList";
 
-const BASE = "/admin-dashboard/requirements";
+const BASE = "/dashboard/requirements";
 
-const AdminRequirements = () => {
+const TenantRequirements = () => {
   const navigate = useNavigate();
   return (
-    <AdminPageShell
-      title="Requirements"
-      description="Define the onboarding forms and consent gates collected from tenants and clients — without code."
+    <TenantPageShell
+      title="Onboarding Forms"
+      description="Build the forms your clients fill in — agreements, documents, ID checks and more. No code needed."
       actions={
         <ModernButton variant="primary" className="flex items-center gap-2" onClick={() => navigate(`${BASE}/new`)}>
           <Plus size={18} />
@@ -21,8 +21,8 @@ const AdminRequirements = () => {
       contentClassName="space-y-6"
     >
       <RequirementsList basePath={BASE} />
-    </AdminPageShell>
+    </TenantPageShell>
   );
 };
 
-export default AdminRequirements;
+export default TenantRequirements;

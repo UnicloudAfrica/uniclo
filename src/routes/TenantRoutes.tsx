@@ -7,6 +7,8 @@ import Dashboard from "../dashboard/pages/dashboard";
 import TenantTwoFactorEnroll from "../dashboard/pages/TenantTwoFactorEnroll";
 const TenantTwoFactorSettings = lazy(() => import("../dashboard/pages/TenantTwoFactorSettings"));
 const TenantTwoFactorManage = lazy(() => import("../dashboard/pages/TenantTwoFactorManage"));
+const TenantRequirements = lazy(() => import("../dashboard/pages/TenantRequirements"));
+const TenantRequirementBuilder = lazy(() => import("../dashboard/pages/TenantRequirementBuilder"));
 
 import PurchasedModules from "../dashboard/pages/purchasedModules";
 import PaymentHistory from "../dashboard/pages/paymentHistory";
@@ -439,6 +441,10 @@ const TenantRoutes = (): JSX.Element => (
         <Route path="/dashboard/region-requests/new" element={<NewRegionRequest />} />
         <Route path="/dashboard/region-requests/:id" element={<RegionRequestDetail />} />
         <Route path="/dashboard/onboarding" element={<TenantOnboardingOverview />} />
+        {/* Dynamic Input Gate — tenant builds its OWN onboarding forms */}
+        <Route path="/dashboard/requirements" element={<TenantRequirements />} />
+        <Route path="/dashboard/requirements/new" element={<TenantRequirementBuilder />} />
+        <Route path="/dashboard/requirements/:id/edit" element={<TenantRequirementBuilder />} />
 
         {/* Billing & Revenue */}
         <Route path="/dashboard/revenue" element={<RevenueDashboard />} />

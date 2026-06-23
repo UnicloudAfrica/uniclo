@@ -559,6 +559,12 @@ const CUSTOMERS_ITEMS_TENANT: RoleAwareItem[] = [
     roles: ["tenant"],
     requiredPermission: "onboarding.view",
   },
+  {
+    label: "Forms",
+    icon: ClipboardList,
+    path: "/dashboard/requirements",
+    roles: ["tenant"],
+  },
 ];
 
 // ─── Group 7: Billing ────────────────────────────────────────────────────────

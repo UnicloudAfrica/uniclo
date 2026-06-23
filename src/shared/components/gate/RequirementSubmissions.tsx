@@ -40,6 +40,24 @@ const renderValue = (field: RequirementField, value: unknown): ReactNode => {
   return value === undefined || value === null || value === "" ? "—" : String(value);
 };
 
+const VERIF_TONE: Record<string, string> = {
+  verified: "bg-green-50 text-green-700",
+  failed: "bg-red-50 text-red-700",
+  pending_manual: "bg-amber-50 text-amber-700",
+  skipped: "bg-gray-100 text-gray-500",
+};
+const VERIF_LABEL: Record<string, string> = {
+  verified: "Verified",
+  failed: "Failed",
+  pending_manual: "Pending review",
+  skipped: "—",
+};
+const VerifBadge = ({ status }: { status: string }) => (
+  <span className={`ml-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${VERIF_TONE[status] || VERIF_TONE.skipped}`}>
+    {VERIF_LABEL[status] || status}
+  </span>
+);
+
 const SubmissionDetail = ({ s }: { s: RequirementSubmissionRecord }) => {
   const fields = s.snapshot?.fields || [];
   return (
@@ -47,7 +65,12 @@ const SubmissionDetail = ({ s }: { s: RequirementSubmissionRecord }) => {
       {fields.map((f) => (
         <div key={f.key} className="grid grid-cols-1 gap-1 sm:grid-cols-[200px_1fr] sm:gap-3">
           <span className="text-sm text-gray-500">{f.label}</span>
-          <span className="text-sm text-gray-800">{renderValue(f, s.values?.[f.key])}</span>
+          <span className="text-sm text-gray-800">
+            {renderValue(f, s.values?.[f.key])}
+            {f.type === "verification" && s.verifications?.[f.key]?.status && (
+              <VerifBadge status={String(s.verifications?.[f.key]?.status ?? "")} />
+            )}
+          </span>
         </div>
       ))}
     </div>

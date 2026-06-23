@@ -49,4 +49,6 @@ export interface RequirementSubmissionRecord {
   subject: { type: string; id: string; name: string; email: string | null };
   snapshot: { title?: string; fields?: RequirementField[] };
   values: Record<string, unknown>;
+  /** Per-field auto-verification outcome (e.g. NG business CAC via Mono), keyed by field key. */
+  verifications?: Record<string, { status?: string; provider?: string | null; reason?: string | null }>;
 }

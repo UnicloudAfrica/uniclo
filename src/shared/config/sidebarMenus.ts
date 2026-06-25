@@ -553,9 +553,9 @@ const CUSTOMERS_ITEMS_TENANT: RoleAwareItem[] = [
     requiredPermission: "regions.view",
   },
   {
-    label: "Onboarding",
+    label: "Onboarding Review",
     icon: ClipboardList,
-    path: "/dashboard/onboarding",
+    path: "/dashboard/customer-onboarding",
     roles: ["tenant"],
     requiredPermission: "onboarding.view",
   },

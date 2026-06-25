@@ -53,7 +53,7 @@ const ROUTES: Array<[id: string, path: string]> = [
   ["TEN-CUST-01", "/dashboard/clients"],
   ["TEN-CUST-04", "/dashboard/leads"],
   ["TEN-CUST-05", "/dashboard/region-requests"],
-  ["TEN-CUST-06", "/dashboard/onboarding"],
+  ["TEN-CUST-06", "/dashboard/customer-onboarding"],
   ["TEN-BILL-01", "/dashboard/revenue"],
   ["TEN-BILL-02", "/dashboard/pricing"],
   ["TEN-BILL-03", "/dashboard/pricing-calculator"],

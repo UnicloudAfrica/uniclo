@@ -69,6 +69,8 @@ import EditTenantUserPage from "../dashboard/pages/tenantUsers/EditTenantUser";
 const TenantOnboardingOverview = lazy(
   () => import("../tenantDashboard/pages/TenantOnboardingOverview")
 );
+// The tenant's OWN self-onboarding step forms (Business Profile, Compliance, …).
+const OnboardingDashboard = lazy(() => import("../dashboard/onboarding"));
 const RegionRequests = lazy(() => import("../tenantDashboard/pages/RegionRequests"));
 const RegionRequestDetail = lazy(() => import("../tenantDashboard/pages/RegionRequestDetail"));
 const NewRegionRequest = lazy(() => import("../tenantDashboard/pages/NewRegionRequest"));
@@ -208,6 +210,10 @@ const TenantRoutes = (): JSX.Element => (
         users here when their tenant has force_2fa enabled. */}
     <Route path="/tenant-2fa-enroll" element={<TenantTwoFactorEnroll />} />
     <Route element={<TenantRoute />}>
+      {/* Standalone full-page self-onboarding (no dashboard chrome). It's a min-h-screen
+          component; nesting it under the fixed dashboard header clips it. The guard still
+          locks incomplete tenants here until onboarding completes. */}
+      <Route path="/dashboard/onboarding" element={<OnboardingDashboard />} />
       <Route element={<TenantDashboardLayout />}>
         {/* Home */}
         <Route path="/dashboard" element={<Dashboard />} />
@@ -442,7 +448,9 @@ const TenantRoutes = (): JSX.Element => (
         <Route path="/dashboard/region-requests" element={<RegionRequests />} />
         <Route path="/dashboard/region-requests/new" element={<NewRegionRequest />} />
         <Route path="/dashboard/region-requests/:id" element={<RegionRequestDetail />} />
-        <Route path="/dashboard/onboarding" element={<TenantOnboardingOverview />} />
+        {/* Review queue for a tenant's own sub-tenants/clients (non-onboarding path so COMPLETED
+            tenants can reach it; the guard redirects completed tenants away from onboarding paths). */}
+        <Route path="/dashboard/customer-onboarding" element={<TenantOnboardingOverview />} />
         {/* Dynamic Input Gate — tenant builds its OWN onboarding forms */}
         <Route path="/dashboard/requirements" element={<TenantRequirements />} />
         <Route path="/dashboard/requirements/new" element={<TenantRequirementBuilder />} />

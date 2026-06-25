@@ -1,7 +1,8 @@
 import React, { useMemo, type ChangeEvent, type Dispatch, type SetStateAction } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import api from "../../index/api";
+import { api } from "@/lib/api";
+import config from "@/config";
 import type { LookupItem, OnboardingOption } from "@/types/onboarding";
 
 const COMPANY_TYPE_OPTIONS: OnboardingOption[] = [
@@ -179,7 +180,9 @@ const BusinessProfileForm = ({ value, onChange }: BusinessProfileFormProps) => {
   const { data: industries = [], isLoading: industriesLoading } = useQuery<LookupItem[]>({
     queryKey: ["industries"],
     queryFn: async () => {
-      const response = await api("GET", "/industries");
+      // Countries/industries/states are shared lookups served only at /api/v1 (not the tenant base).
+      // silent: these are background fetches — no "retrieved successfully" toast.
+      const response = await api.get("/industries", { baseUrl: config.baseURL, silent: true });
       return extractArray(response);
     },
   });
@@ -187,7 +190,7 @@ const BusinessProfileForm = ({ value, onChange }: BusinessProfileFormProps) => {
   const { data: countries = [], isLoading: countriesLoading } = useQuery<LookupItem[]>({
     queryKey: ["countries"],
     queryFn: async () => {
-      const response = await api("GET", "/countries");
+      const response = await api.get("/countries", { baseUrl: config.baseURL, silent: true });
       return extractArray(response);
     },
   });
@@ -199,7 +202,7 @@ const BusinessProfileForm = ({ value, onChange }: BusinessProfileFormProps) => {
         return [];
       }
 
-      const response = await api("GET", `/countries/${payload.country_id}`);
+      const response = await api.get(`/countries/${payload.country_id}`, { baseUrl: config.baseURL, silent: true });
       return extractArray(response);
     },
     enabled: Boolean(payload.country_id),
@@ -212,7 +215,10 @@ const BusinessProfileForm = ({ value, onChange }: BusinessProfileFormProps) => {
         return [];
       }
 
-      const response = await api<{ data?: unknown }>("GET", `/states/${payload.state_id}`);
+      const response = await api.get<{ data?: unknown }>(`/states/${payload.state_id}`, {
+        baseUrl: config.baseURL,
+        silent: true,
+      });
 
       const responseData = isRecord(response?.data) ? response.data : null;
       const nestedData = responseData && isRecord((responseData as Record<string, unknown>).data) ? (responseData as Record<string, unknown>).data : null;

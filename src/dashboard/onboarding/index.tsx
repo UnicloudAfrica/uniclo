@@ -30,6 +30,7 @@ import { useTenantBrandingTheme } from "@/hooks/useBrandingTheme";
 import type {
   OnboardingDocument,
   OnboardingStateData,
+  OnboardingStepDefinition,
   OnboardingSubmissionData,
   OnboardingThread,
 } from "@/types/onboarding";
@@ -55,6 +56,28 @@ const OnboardingDashboard = () => {
   );
 
   const definitions = useMemo(() => {
+    // When the backend catalog is gate-sourced (ONBOARDING_SOURCE=gate), each state
+    // step carries its own field schema (fields/custom/description, already reverse-
+    // mapped to the FE shape by GateStepCatalogResolver). Drive the renderer from
+    // those server schemas. The config path omits them, so we fall back to
+    // stepConfig.ts exactly as before.
+    const stateSteps = Array.isArray(stateData.steps) ? stateData.steps : [];
+    const isGateSourced = stateSteps.some(
+      (step) => Array.isArray(step.fields) || typeof step.custom === "string"
+    );
+
+    if (isGateSourced) {
+      return stateSteps.map(
+        (step): OnboardingStepDefinition => ({
+          id: step.id,
+          label: typeof step.label === "string" ? step.label : step.id,
+          description: typeof step.description === "string" ? step.description : "",
+          custom: typeof step.custom === "string" ? step.custom : undefined,
+          fields: Array.isArray(step.fields) ? step.fields : undefined,
+        })
+      );
+    }
+
     const baseDefinitions = getStepsForTarget(persona);
 
     if (!hasTenantAssociation && ["client", "crm", "internal_client_business"].includes(persona)) {
@@ -63,7 +86,7 @@ const OnboardingDashboard = () => {
     }
 
     return baseDefinitions;
-  }, [persona, hasTenantAssociation]);
+  }, [persona, hasTenantAssociation, stateData.steps]);
 
   const initialStep = useMemo(() => {
     if (!definitions?.length) {

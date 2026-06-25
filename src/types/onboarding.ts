@@ -75,6 +75,12 @@ interface TenantScopedReference {
 export interface OnboardingStepState {
   id: string;
   status?: OnboardingStatus;
+  // Gate-sourced steps (source='gate') carry their field schema inline; the
+  // config path omits these and the FE falls back to stepConfig.ts.
+  label?: string;
+  description?: string;
+  custom?: string;
+  fields?: OnboardingFieldDefinition[];
   [key: string]: unknown;
 }
 

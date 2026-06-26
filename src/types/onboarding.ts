@@ -23,7 +23,8 @@ export type OnboardingFieldType =
   | "email"
   | "url"
   | "password"
-  | "collection";
+  | "collection"
+  | "verification";
 
 export interface OnboardingFieldDefinition {
   id: string;

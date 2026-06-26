@@ -1,4 +1,4 @@
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, ShieldCheck, Trash2 } from "lucide-react";
 import FileDropInput from "./FileDropInput";
 import ToastUtils from "@/utils/toastUtil";
 import type { OnboardingFieldDefinition, OnboardingFileValue } from "@/types/onboarding";
@@ -128,6 +128,31 @@ const FieldInput = ({ field, value, onChange, onFileChange }: FieldInputProps) =
         value={Array.isArray(value) ? value : []}
         onChange={(nextValue) => onChange(nextValue)}
       />
+    );
+  }
+
+  if (field.type === "verification") {
+    return (
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {field.label}
+          {field.required && <span className="text-red-500"> *</span>}
+        </label>
+        <div className="relative">
+          <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[--theme-color]" />
+          <input
+            type="text"
+            value={typeof value === "string" || typeof value === "number" ? value : ""}
+            onChange={(event) => onChange(event.target.value)}
+            className={`${baseClass} h-11 pl-9 pr-3`}
+            placeholder={field.placeholder ?? "Enter your registration number"}
+          />
+        </div>
+        <p className="text-xs text-gray-500 mt-1">
+          {field.helperText ??
+            "We'll verify this against the official registry — approved automatically where supported, otherwise sent for review."}
+        </p>
+      </div>
     );
   }
 

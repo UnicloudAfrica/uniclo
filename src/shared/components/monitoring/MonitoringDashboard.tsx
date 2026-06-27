@@ -134,8 +134,11 @@ const MonitoringDashboard = ({ context: _context }: MonitoringDashboardProps) =>
     return <LoadingState message="Loading monitoring status…" />;
   }
 
+  // Admin/staff-only surface (rendered by AdminMonitoring, context="admin").
+  // Staff may hold a CuberWatch login, so these deep-links are kept — pointed at
+  // the live deployment, not the old app.cuberwatch.com placeholder.
   const cuberwatchBase =
-    (import.meta.env.VITE_CUBERWATCH_URL as string | undefined) ?? "https://app.cuberwatch.com";
+    (import.meta.env.VITE_CUBERWATCH_URL as string | undefined) ?? "https://cuberwatch-web.on-forge.com";
 
   return (
     <div className="space-y-6">

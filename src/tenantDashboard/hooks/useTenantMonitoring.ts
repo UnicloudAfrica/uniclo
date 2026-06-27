@@ -74,6 +74,15 @@ export interface TenantMonitoringHost {
    * install — undefined otherwise.
    */
   install_command: string | null;
+  /**
+   * CuberWatch's numeric host id — matches its `/hosts/:id` dashboard route.
+   * Present once the host is registered on CuberWatch; null before that.
+   * Written by `CuberWatchHostRegistrar`, surfaced by
+   * `MonitoringSubscriptionController@hosts`. Drives the "Open dashboard" link.
+   */
+  cuberwatch_host_id: string | number | null;
+  /** CuberWatch dashboard URL fallback (built from CuberWatch's own app.url). */
+  monitoring_dashboard_url: string | null;
 }
 
 export interface TenantMonitoringSubscription {
@@ -290,6 +299,10 @@ export const useTenantMonitoring = (): UseTenantMonitoringResult => {
           null,
         requires_operator_install: requiresOperatorInstall,
         install_command: pickInstallCommand(host),
+        cuberwatch_host_id:
+          (host.cuberwatch_host_id as string | number | undefined) ?? null,
+        monitoring_dashboard_url:
+          (host.monitoring_dashboard_url as string | undefined) ?? null,
       };
     });
 

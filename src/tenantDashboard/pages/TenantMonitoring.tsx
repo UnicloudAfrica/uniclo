@@ -32,6 +32,7 @@ import {
 } from "@/shared/components/ui";
 import { PriceLabel } from "@/shared/components/ui/PriceLabel";
 import InstanceLiveMetricsPanel from "@/shared/components/monitoring/InstanceLiveMetricsPanel";
+import InstanceMetricsHistory from "@/shared/components/monitoring/InstanceMetricsHistory";
 import ToastUtils from "@/utils/toastUtil";
 
 import {
@@ -360,11 +361,19 @@ const TenantMonitoring = () => {
                 sortable
                 expandable
                 renderExpandedRow={(row) => (
-                  <div className="px-4 py-4">
-                    <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 font-outfit">
-                      Live metrics
-                    </p>
-                    <InstanceLiveMetricsPanel instanceId={row.id} />
+                  <div className="px-4 py-4 space-y-5">
+                    <div>
+                      <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 font-outfit">
+                        Live metrics
+                      </p>
+                      <InstanceLiveMetricsPanel instanceId={row.id} />
+                    </div>
+                    <div>
+                      <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 font-outfit">
+                        History
+                      </p>
+                      <InstanceMetricsHistory instanceId={row.id} />
+                    </div>
                   </div>
                 )}
               />

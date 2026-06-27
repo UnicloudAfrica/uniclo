@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import {
   Play,
   Square,
@@ -30,19 +30,10 @@ import {
   ChevronRight,
   Lock,
   ShieldCheck,
-  ExternalLink,
-  BarChart3,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-} from "recharts";
+import InstanceLiveMetricsPanel from "@/shared/components/monitoring/InstanceLiveMetricsPanel";
+import InstanceMetricsHistory from "@/shared/components/monitoring/InstanceMetricsHistory";
 import {
   ModernCard,
   ModernButton,
@@ -273,15 +264,6 @@ const UnifiedInstanceDetails: React.FC<{ identifier: string }> = ({ identifier }
     navigator.clipboard.writeText(text);
     ToastUtils.success("Copied to clipboard");
   };
-
-  const chartData = useMemo(() => {
-    return Array.from({ length: 12 }, (_, i) => ({
-      time: `${i * 5}m`,
-      cpu: Math.floor(Math.random() * 30) + 10,
-      ram: Math.floor(Math.random() * 20) + 40,
-      disk: Math.floor(Math.random() * 20) + 5,
-    }));
-  }, []);
 
   if (isLoading) {
     return <DashboardSkeleton />;
@@ -516,51 +498,9 @@ const UnifiedInstanceDetails: React.FC<{ identifier: string }> = ({ identifier }
                   />
                 </div>
 
-                <ModernCard title="Real-time Performance (CPU %)">
-                  <div className="h-[240px] w-full mt-4">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={chartData}>
-                        <defs>
-                          <linearGradient id="colorCpu" x1="0" y1="0" x2="0" y2="1">
-                            <stop
-                              offset="5%"
-                              stopColor="rgb(var(--theme-color-500))"
-                              stopOpacity={0.1}
-                            />
-                            <stop
-                              offset="95%"
-                              stopColor="rgb(var(--theme-color-500))"
-                              stopOpacity={0}
-                            />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          vertical={false}
-                          stroke="var(--theme-surface-alt)"
-                        />
-                        <XAxis dataKey="time" hide />
-                        <YAxis
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{ fontSize: 10, fill: "var(--theme-muted-color)" }}
-                        />
-                        <Tooltip
-                          contentStyle={{
-                            borderRadius: "12px",
-                            border: "none",
-                            boxShadow: "0 10px 15px -3px rgb(var(--theme-neutral-900) / 0.1)",
-                          }}
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="cpu"
-                          stroke="rgb(var(--theme-color-500))"
-                          strokeWidth={2}
-                          fill="url(#colorCpu)"
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
+                <ModernCard title="Performance">
+                  <div className="mt-4">
+                    <InstanceLiveMetricsPanel instanceId={instance?.id} />
                   </div>
                 </ModernCard>
               </motion.div>
@@ -571,61 +511,18 @@ const UnifiedInstanceDetails: React.FC<{ identifier: string }> = ({ identifier }
                 key="monitoring"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                className="space-y-6"
               >
-                <MonitoringChart
-                  title="CPU Load"
-                  data={chartData}
-                  dataKey="cpu"
-                  color="rgb(var(--theme-color-500))"
-                />
-                <MonitoringChart
-                  title="Memory Usage"
-                  data={chartData}
-                  dataKey="ram"
-                  color="rgb(var(--theme-color-500))"
-                />
-                <MonitoringChart
-                  title="Disk Activity"
-                  data={chartData}
-                  dataKey="disk"
-                  color="rgb(var(--theme-warning-500))"
-                />
-                <MonitoringChart
-                  title="Network Delay"
-                  data={chartData}
-                  dataKey="cpu"
-                  color="rgb(var(--theme-success-500))"
-                />
-                {/* CuberWatch External Links */}
-                <div className="col-span-full">
-                  <div className="rounded-xl border border-gray-200 bg-white p-4">
-                    <h4 className="mb-3 text-sm font-semibold text-gray-700">Advanced Monitoring</h4>
-                    <div className="flex flex-wrap gap-3">
-                      <a
-                        href={`${(import.meta as unknown).env?.VITE_CUBERWATCH_URL || "https://app.cuberwatch.com"}/hosts/${instance?.id || ""}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 rounded-lg border border-teal-300 bg-teal-50 px-4 py-2 text-sm font-medium text-teal-700 transition-colors hover:bg-teal-100"
-                      >
-                        <Activity className="h-4 w-4" />
-                        Open Full Dashboard
-                        <ExternalLink className="h-3 w-3 text-teal-400" />
-                      </a>
-                      <a
-                        href={`${(import.meta as unknown).env?.VITE_CUBERWATCH_URL || "https://app.cuberwatch.com"}/grafana/d/host-detail?var-instance=${(instance as unknown as { ip_address?: string })?.ip_address || ""}:9100`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-100"
-                      >
-                        <BarChart3 className="h-4 w-4" />
-                        View in Grafana
-                        <ExternalLink className="h-3 w-3 text-amber-400" />
-                      </a>
-                    </div>
-                    <p className="mt-2 text-[11px] text-gray-400">Powered by CuberWatch. Detailed metrics, custom dashboards, and alerting.</p>
+                <ModernCard title="Live metrics">
+                  <div className="mt-4">
+                    <InstanceLiveMetricsPanel instanceId={instance?.id} />
                   </div>
-                </div>
+                </ModernCard>
+                <ModernCard title="History">
+                  <div className="mt-4">
+                    <InstanceMetricsHistory instanceId={instance?.id} />
+                  </div>
+                </ModernCard>
               </motion.div>
             )}
 
@@ -898,44 +795,6 @@ const InfoBox: React.FC<{ label: string; value: string | number }> = ({ label, v
     </div>
     <div className="text-xs font-bold text-slate-800 truncate">{value}</div>
   </div>
-);
-
-const MonitoringChart: React.FC<{
-  title: string;
-  data: Array<{ time: string; [key: string]: string | number }>;
-  dataKey: string;
-  color: string;
-}> = ({ title, data, dataKey, color }) => (
-  <ModernCard title={title}>
-    <div className="h-[180px] w-full mt-4">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data}>
-          <defs>
-            <linearGradient id={`grad-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={color} stopOpacity={0.1} />
-              <stop offset="95%" stopColor={color} stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--theme-surface-alt)" />
-          <XAxis dataKey="time" hide />
-          <Tooltip
-            contentStyle={{
-              borderRadius: "10px",
-              border: "none",
-              boxShadow: "0 4px 6px -1px rgb(var(--theme-neutral-900) / 0.1)",
-            }}
-          />
-          <Area
-            type="monotone"
-            dataKey={dataKey}
-            stroke={color}
-            strokeWidth={2}
-            fill={`url(#grad-${dataKey})`}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  </ModernCard>
 );
 
 export default UnifiedInstanceDetails;

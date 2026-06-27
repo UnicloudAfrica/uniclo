@@ -60,6 +60,8 @@ type HookResult = {
       last_seen_at: string | null;
       requires_operator_install: boolean;
       install_command: string | null;
+      cuberwatch_host_id: string | number | null;
+      monitoring_dashboard_url: string | null;
     }>;
   } | null;
   isLoading: boolean;
@@ -142,6 +144,8 @@ const mkData = (overrides: Partial<HookResult["data"]> = {}) => ({
       last_seen_at: "2026-05-27T10:00:00Z",
       requires_operator_install: false,
       install_command: null,
+      cuberwatch_host_id: 11,
+      monitoring_dashboard_url: null,
     },
     {
       id: 2,
@@ -153,6 +157,8 @@ const mkData = (overrides: Partial<HookResult["data"]> = {}) => ({
       requires_operator_install: true,
       install_command:
         "curl -fsSL https://cuberwatch.example/install.sh | sudo bash -s -- --token=abc",
+      cuberwatch_host_id: null,
+      monitoring_dashboard_url: null,
     },
   ],
   ...overrides,

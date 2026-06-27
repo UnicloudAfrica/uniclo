@@ -20,6 +20,7 @@ import { Cpu, MemoryStick, HardDrive, Network } from "lucide-react";
 
 import { Gauge } from "@/shared/components/ui";
 import { useInstanceLiveMetrics } from "@/shared/hooks/useInstanceLiveMetrics";
+import InstanceMetricsTrend from "@/shared/components/monitoring/InstanceMetricsTrend";
 
 interface InstanceLiveMetricsPanelProps {
   instanceId: string | number | null | undefined;
@@ -113,6 +114,7 @@ const InstanceLiveMetricsPanel = ({ instanceId, size = "sm" }: InstanceLiveMetri
           Network · {inMbps.toFixed(1)} Mbps in / {outMbps.toFixed(1)} Mbps out
         </p>
       )}
+      <InstanceMetricsTrend metrics={metrics} />
     </div>
   );
 };

@@ -21,6 +21,7 @@ import {
   InfoCallout,
 } from "@/shared/components/ui";
 import InstanceLiveMetricsPanel from "@/shared/components/monitoring/InstanceLiveMetricsPanel";
+import InstanceMetricsHistory from "@/shared/components/monitoring/InstanceMetricsHistory";
 import {
   useClientMonitoring,
   type ClientMonitoringInstance,
@@ -138,7 +139,12 @@ const ClientMonitoring = () => {
                 statuses={statuses}
                 metadata={metadata}
                 actions={actions}
-                footer={<InstanceLiveMetricsPanel instanceId={instance.id} size="sm" />}
+                footer={
+                  <div className="space-y-4">
+                    <InstanceLiveMetricsPanel instanceId={instance.id} size="sm" />
+                    <InstanceMetricsHistory instanceId={instance.id} />
+                  </div>
+                }
               />
             );
           })}

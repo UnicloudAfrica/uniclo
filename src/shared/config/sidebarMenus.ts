@@ -1024,6 +1024,13 @@ export const adminMenuItems: MenuEntry[] = [
   buildGroup("Billing", DollarSign, BILLING_ITEMS_ADMIN, "", "admin"),
   // 8. Developer
   buildGroup("Developer", Code2, DEVELOPER_ITEMS, "/admin-dashboard", "admin"),
+  // Website Content (admin-only CMS for the public marketing site)
+  {
+    name: "Website Content",
+    icon: LayoutTemplate,
+    isLucide: true,
+    path: "/admin-dashboard/website-content",
+  },
   // ─── Bottom-pinned ───
   { name: "Documentation", icon: BookOpen, isLucide: true, path: "/admin-dashboard/docs" },
   {

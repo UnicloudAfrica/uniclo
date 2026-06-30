@@ -73,6 +73,7 @@ import AdminDocsLayout from "../adminDashboard/pages/docs/AdminDocsLayout";
 const AdminDocPage = lazy(() => import("../adminDashboard/pages/docs/AdminDocPage"));
 import DocEditor from "../docs/renderer/DocEditor";
 const AdminSubscriptionPlans = lazy(() => import("../adminDashboard/pages/AdminSubscriptionPlans"));
+const AdminWebsiteContent = lazy(() => import("../adminDashboard/pages/websiteContent/AdminWebsiteContent"));
 const WalletDashboard = lazy(() => import("../adminDashboard/pages/WalletDashboard"));
 const SettlementsDashboard = lazy(() => import("../adminDashboard/pages/SettlementsDashboard"));
 const PayoutsDashboard = lazy(() => import("../adminDashboard/pages/PayoutsDashboard"));
@@ -420,6 +421,7 @@ const AdminRoutes = (): JSX.Element => {
         </Route>
         <Route path="/admin-dashboard/tax-configuration" element={<AdminTax />} />
         <Route path="/admin-dashboard/subscription-plans" element={<AdminSubscriptionPlans />} />
+        <Route path="/admin-dashboard/website-content" element={<AdminWebsiteContent />} />
         <Route path="/admin-dashboard/wallet" element={<WalletDashboard />} />
         <Route path="/admin-dashboard/payment-splits" element={<AdminPaymentSplits />} />
         <Route path="/admin-dashboard/settlements" element={<SettlementsDashboard />} />

@@ -5,18 +5,18 @@ prev: { label: Wallet & Settlements, href: /admin-dashboard/docs/wallet }
 next: { label: Onboarding Settings, href: /admin-dashboard/docs/onboarding-settings }
 ---
 
-:::step{number=1 icon=MapPin title="View Region Requests" navigation="Sidebar > Regional > Region Approvals"}
+:::step{number=1 icon=MapPin title="View Region Requests" navigation="Sidebar > Customers > Region Approvals"}
 The region approvals page shows all pending requests from tenants who want access to new regions. Each request shows the tenant name, the requested region, and when it was submitted. You can approve or reject each request from this view.
 :::
 
 :::screenshot{caption="Your Region Approvals queue"}
 :::
 
-:::step{number=2 icon=CheckCircle title="Approve a Request" navigation="Sidebar > Regional > Region Approvals > Select request"}
+:::step{number=2 icon=CheckCircle title="Approve a Request" navigation="Sidebar > Customers > Region Approvals > Select request"}
 Click on a pending request to review it. If everything looks good, approve it and the tenant will immediately gain access to deploy resources in that region. The tenant is notified of the approval.
 :::
 
-:::step{number=3 icon=XCircle title="Reject a Request" navigation="Sidebar > Regional > Region Approvals > Select request"}
+:::step{number=3 icon=XCircle title="Reject a Request" navigation="Sidebar > Customers > Region Approvals > Select request"}
 If a request does not meet your criteria, reject it with a reason. The tenant will see the rejection and your explanation, and they can resubmit with updated information if needed.
 :::
 

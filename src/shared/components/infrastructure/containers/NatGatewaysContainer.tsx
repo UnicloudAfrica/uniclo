@@ -47,6 +47,8 @@ interface NatGatewaysContainerProps {
     headerActions: React.ReactNode;
     children: React.ReactNode;
   }) => React.ReactElement;
+  /** Whether the AZ's provider supports NAT gateways. Defaults to true. */
+  providerSupported?: boolean;
   // Hooks to fetch dependencies for passing to Overview if needed?
   // Overview needs 'availableSubnetsCount'. We can pass that from the list data or fetch it here if needed.
   // Actually, Overview takes 'availableSubnetsCount'.
@@ -61,6 +63,7 @@ const NatGatewaysContainer: React.FC<NatGatewaysContainerProps> = ({
   region,
   hooks,
   wrapper: Wrapper,
+  providerSupported = true,
 }) => {
   const permissions = getNatGatewayPermissions(hierarchy);
 
@@ -135,7 +138,7 @@ const NatGatewaysContainer: React.FC<NatGatewaysContainerProps> = ({
         <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
         {isFetching ? "Refreshing..." : "Refresh"}
       </ModernButton>
-      {permissions.canCreate && (
+      {permissions.canCreate && providerSupported && (
         <ModernButton variant="primary" size="sm" onClick={() => setCreateModal(true)}>
           <Plus className="w-4 h-4" />
           Create NAT Gateway

@@ -139,11 +139,16 @@ describe("useTopUpWallet", () => {
       });
     });
 
-    expect(mockApi).toHaveBeenCalledWith("POST", "/business/wallet/topup", {
-      amount: 1000,
-      currency: "NGN",
-      payment_method: "card",
-    });
+    expect(mockApi).toHaveBeenCalledWith(
+      "POST",
+      "/business/wallet/topup",
+      expect.objectContaining({
+        amount: 1000,
+        currency: "NGN",
+        payment_method: "card",
+        idempotency_key: expect.any(String),
+      }),
+    );
 
     const invalidatedKeys = invalidateSpy.mock.calls.map(
       ([arg]) => (arg as { queryKey: unknown[] }).queryKey[0],

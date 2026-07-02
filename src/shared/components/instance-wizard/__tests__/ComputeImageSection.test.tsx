@@ -52,14 +52,15 @@ const renderSection = ({
   );
 
 describe("ComputeImageSection", () => {
-  it("shows a loading placeholder and disables the dropdowns while pricing is fetching", () => {
+  it("disables the size select and shows OS loading copy while pricing is fetching", () => {
     renderSection({
       computeOptions: [makePricingNoticeOption("loading", "Loading sizes…")],
       osImageOptions: [makePricingNoticeOption("loading", "Loading OS images…")],
     });
 
     expect(screen.getByText("Loading sizes…").closest("button")).toBeDisabled();
-    expect(screen.getByText("Loading OS images…").closest("button")).toBeDisabled();
+    // The OS image picker shows its loading copy in place of family tiles.
+    expect(screen.getByText("Loading OS images…")).toBeInTheDocument();
   });
 
   it("explains a settled-empty zone in the helper without rendering the notice as an option", () => {
@@ -108,9 +109,12 @@ describe("ComputeImageSection", () => {
     expect(screen.getByText("Select the compute flavor.")).toBeInTheDocument();
   });
 
-  it("keeps the region-first placeholder when no region is selected", () => {
+  it("prompts to pick a region on both controls when no region is selected", () => {
     renderSection({ selectedRegion: "" });
 
-    expect(screen.getAllByText("Select region first")).toHaveLength(2);
+    // Size select keeps its placeholder; the OS image picker shows its own
+    // region-first empty message.
+    expect(screen.getByText("Select region first")).toBeInTheDocument();
+    expect(screen.getByText("Select a region first to see OS images.")).toBeInTheDocument();
   });
 });

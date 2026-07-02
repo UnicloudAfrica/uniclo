@@ -16,7 +16,7 @@ E -->|No| G[Sent Back for Changes]
 G --> B
 :::
 
-:::step{number=1 icon=ListChecks title="Onboarding Review" navigation="Sidebar > Onboarding > Onboarding Review"}
+:::step{number=1 icon=ListChecks title="Onboarding Review" navigation="Sidebar > Customers > Onboarding Review"}
 This is your review queue. When a new tenant completes their onboarding steps, their submission appears here for your approval. You can see what they have filled in, verify their business details, and either approve them or send them back to make changes.
 :::
 
@@ -27,7 +27,7 @@ This is your review queue. When a new tenant completes their onboarding steps, t
 Review submissions carefully — once approved, the tenant gets full access to create clients and provision infrastructure under their account.
 :::
 
-:::step{number=2 icon=Settings title="Onboarding Settings" navigation="Sidebar > Onboarding > Onboarding Settings"}
+:::step{number=2 icon=Settings title="Onboarding Settings" navigation="Sidebar > Customers > Onboarding Settings"}
 Configure what the onboarding process looks like. You can customize which steps tenants need to complete, what information they need to provide, and what verification is required. It is like designing the checklist for new employees.
 :::
 

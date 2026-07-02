@@ -26,7 +26,8 @@ import ToastUtils from "@/utils/toastUtil";
 
 // Conditionally-used hooks (admin/tenant specific)
 import { useFetchTenants } from "@/hooks/adminHooks/tenantHooks";
-import { useFetchClients } from "@/hooks/clientHooks";
+import { useFetchClients as useAdminFetchClients } from "@/hooks/adminHooks/clientHooks";
+import { useFetchClients as useTenantFetchClients } from "@/hooks/clientHooks";
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -114,7 +115,16 @@ const CreateProjectForm: React.FC<CreateProjectFormProps> = ({
   const { data: tenants, isFetching: isTenantsFetching } = useFetchTenants({
     enabled: isAdmin,
   } as Parameters<typeof useFetchTenants>[0]);
-  const { data: clients, isFetching: isClientsFetching } = useFetchClients();
+  // Clients live at /clients for admin but /admin/clients for tenant. A single
+  // tenant-hook call sent /admin/clients under the admin base → 404 at
+  // /admin/v1/admin/clients. Pick the audience-correct hook (mirrors
+  // ClientsManagement); client context has no sub-clients, so neither fetches.
+  const adminClientsQuery = useAdminFetchClients({ enabled: isAdmin });
+  const tenantClientsQuery = useTenantFetchClients(null, { enabled: isTenant });
+  const clients = isAdmin ? adminClientsQuery.data : tenantClientsQuery.data;
+  const isClientsFetching = isAdmin
+    ? adminClientsQuery.isFetching
+    : tenantClientsQuery.isFetching;
 
   // ── Form State ───────────────────────────────────────────────
   const [formData, setFormData] = useState<FormState>(INITIAL_FORM_STATE);

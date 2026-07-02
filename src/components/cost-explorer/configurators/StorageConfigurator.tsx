@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Plus, HardDrive } from "lucide-react";
 import useCartStore from "@/stores/cartStore";
 import { useFetchCalculatorOptions, useFetchPublicRegions } from "@/hooks/useCostExplorer";
+import { formatMoney } from "../formatMoney";
 
 interface VolumeType {
   id: number;
@@ -27,7 +28,7 @@ export default function StorageConfigurator() {
   const pricePerGb = volType?.unit_local ?? volType?.price_per_gb ?? 0;
   const totalMonthly = pricePerGb * sizeGb * quantity;
   const currency = volType?.currency ?? "NGN";
-  const fmt = (v: number) => `₦${v.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+  const fmt = (v: number) => formatMoney(v, currency);
 
   return (
     <div className="space-y-5">

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Plus, Server } from "lucide-react";
 import useCartStore from "@/stores/cartStore";
 import { useFetchCalculatorOptions, useFetchPublicRegions } from "@/hooks/useCostExplorer";
+import { formatMoney } from "../formatMoney";
 
 interface Flavor {
   id: number;
@@ -90,8 +91,7 @@ export default function ComputeConfigurator() {
   const totalForPeriod = totalMonthly * months;
 
   const currency = flavor?.currency ?? "NGN";
-  const sym = currency === "NGN" ? "₦" : "$";
-  const fmt = (v: number) => `${sym}${v.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+  const fmt = (v: number) => formatMoney(v, currency);
 
   const handleAdd = () => {
     if (!flavor) return;

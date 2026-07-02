@@ -688,7 +688,8 @@ const ConfigureStep: React.FC<{
   taggedReplicaAzs: ReturnType<typeof useDatabaseProvisioningLogic>["taggedReplicaAzs"];
   toggleReplicaAz: (azCode: string) => void;
   cloudAccounts?: { id: number; name: string; provider: string; provider_label: string; status: string }[];
-}> = ({ form, updateForm, selectedEngineMeta, projects, regions, availabilityZones, maxReplicaCount, replicaAvailableAzs, taggedReplicaAzs, toggleReplicaAz, cloudAccounts }) => (
+  drOrderingEnabled: boolean;
+}> = ({ form, updateForm, selectedEngineMeta, projects, regions, availabilityZones, maxReplicaCount, replicaAvailableAzs, taggedReplicaAzs, toggleReplicaAz, cloudAccounts, drOrderingEnabled }) => (
   <div className="space-y-6">
     {/* Name */}
     <div>
@@ -1335,19 +1336,49 @@ const ConfigureStep: React.FC<{
         extraNote="This adds a small WireGuard VPN server to your infrastructure. You'll get downloadable client configs for your team. Recommended for compliance-sensitive workloads, remote DBA access, and enterprise environments where 'no public internet exposure' is a requirement."
       />
 
-      {/* ── 7. Disaster Recovery (same-provider standby) ── */}
-      <FeatureCard
-        title="Disaster Recovery"
-        tag="Paid Add-on"
-        tagColor="amber"
-        pricingNote="Standby replica charge"
-        icon={<Shield size={18} className="text-amber-500" />}
-        enabled={form.drEnabled}
-        onToggle={() => updateForm({ drEnabled: !form.drEnabled })}
-        explanation="We keep a continuously-updated standby copy of your database in a separate availability group. If your primary location goes down — power outage, hardware failure, natural disaster — the standby is ready to take over so your data isn't lost. Like keeping a spare key to your house at a trusted neighbour's place, in a different building."
-        whyItMatters="Without disaster recovery, a single location failure can mean downtime or data loss until the primary recovers. A standby copy gives you a safety net: your data lives in two places, so one bad day in one location doesn't take your whole database with it."
-        extraNote="This provisions a standby replica in a paired availability group within the same region. The standby streams from your primary and is billed as an additional replica for the period you select."
-      />
+      {/* ── 7. Disaster Recovery (same-provider standby) ──
+          Gated on the backend `managed_database_dr_ordering` flag: the
+          order-time guard 422s a `dr_enabled` payload when it's off, so we
+          only render the interactive toggle when ordering is available. */}
+      {drOrderingEnabled ? (
+        <FeatureCard
+          title="Disaster Recovery"
+          tag="Paid Add-on"
+          tagColor="amber"
+          pricingNote="Standby replica charge"
+          icon={<Shield size={18} className="text-amber-500" />}
+          enabled={form.drEnabled}
+          onToggle={() => updateForm({ drEnabled: !form.drEnabled })}
+          explanation="We keep a continuously-updated standby copy of your database in a separate availability group. If your primary location goes down — power outage, hardware failure, natural disaster — the standby is ready to take over so your data isn't lost. Like keeping a spare key to your house at a trusted neighbour's place, in a different building."
+          whyItMatters="Without disaster recovery, a single location failure can mean downtime or data loss until the primary recovers. A standby copy gives you a safety net: your data lives in two places, so one bad day in one location doesn't take your whole database with it."
+          extraNote="This provisions a standby replica in a paired availability group within the same region. The standby streams from your primary and is billed as an additional replica for the period you select."
+        />
+      ) : (
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden opacity-60">
+          <div className="px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Shield size={18} className="text-gray-400" />
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Disaster Recovery</span>
+                  <span className="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                    Coming soon
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  A continuously-updated standby copy of your database in a separate availability group for protection against a location failure. This isn't available for self-service ordering yet — contact support for a manual DR work order.
+                </p>
+              </div>
+            </div>
+            <button
+              disabled
+              className="shrink-0 relative inline-flex h-6 w-11 items-center rounded-full bg-gray-300 dark:bg-gray-600 cursor-not-allowed"
+            >
+              <span className="inline-block h-4 w-4 rounded-full bg-white translate-x-1" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── 8. Cross-region Disaster Recovery (coming soon) ── */}
       <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden opacity-60">
@@ -1877,6 +1908,7 @@ const DatabaseCreationWizard: React.FC<DatabaseCreationWizardProps> = ({
               taggedReplicaAzs={logic.taggedReplicaAzs}
               toggleReplicaAz={logic.toggleReplicaAz}
               cloudAccounts={cloudAccounts}
+              drOrderingEnabled={logic.drOrderingEnabled}
             />
             <div className="flex items-center justify-between">
               <button

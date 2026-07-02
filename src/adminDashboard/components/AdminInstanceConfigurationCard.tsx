@@ -10,6 +10,7 @@ import { useFetchProductPricing } from "@/hooks/resource";
 import { useFetchSecurityGroups as _useFetchSG } from "@/shared/hooks/resources/securityGroupHooks";
 import { useFetchKeyPairs } from "@/shared/hooks/keyPairsHooks";
 import { useFetchSubnets as _useFetchSN } from "@/shared/hooks/resources/subnetHooks";
+import { osImageFamilyLabel, compareOsImageOptions } from "@/utils/osImageGrouping";
 
 
 interface RegionResource {
@@ -517,13 +518,20 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
           const product = item?.product || item;
           const value = product?.productable_id || product?.id || item?.product_id || item?.id;
           if (!value) return null;
-          const labelParts = [product?.name || item?.name || `OS Image ${idx + 1}`];
+          const osDistro = product?.os_distro ?? null;
+          const osVersion = product?.os_version ?? null;
+          const fallbackName = product?.name || item?.name || `OS Image ${idx + 1}`;
+          const labelParts = [osImageFamilyLabel(osDistro, osVersion, fallbackName)];
           const priceSuffix = formatPriceSuffix(item);
           if (priceSuffix) labelParts.push(priceSuffix);
-          const label = labelParts.join(" • ");
-          return { value: String(value), label: String(label) };
+          return {
+            value: String(value),
+            label: labelParts.join(" • "),
+            raw: { os_distro: osDistro, os_version: osVersion },
+          };
         })
-        .filter((item: Option | null): item is Option => Boolean(item));
+        .filter((item: Option | null): item is Option => Boolean(item))
+        .sort(compareOsImageOptions);
     }
     return pricingNoticeFallback(
       isFetchingOsImagePricing,

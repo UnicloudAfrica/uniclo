@@ -5,14 +5,14 @@ prev: { label: Instance Templates, href: /dashboard/docs/templates }
 next: { label: Security Groups, href: /dashboard/docs/security-groups }
 ---
 
-:::step{number=1 icon=Key title="View Your Key Pairs" navigation="Sidebar > Infrastructure > Key Pairs"}
+:::step{number=1 icon=Key title="View Your Key Pairs" navigation="Sidebar > Compute & Storage > Key Pairs"}
 The key pairs page lists all SSH keys associated with your account. Each entry shows the key name, fingerprint, and when it was created. These keys are used to securely connect to your servers.
 :::
 
 :::screenshot{caption="Your Key Pairs list page"}
 :::
 
-:::step{number=2 icon=Plus title="Create a New Key Pair" navigation="Sidebar > Infrastructure > Key Pairs > New"}
+:::step{number=2 icon=Plus title="Create a New Key Pair" navigation="Sidebar > Compute & Storage > Key Pairs > New"}
 Click "New" to generate a fresh key pair. Give it a descriptive name (like "my-laptop" or "deploy-server") and click create. The platform generates a public key and a private key. The private key file downloads to your computer automatically -- save it somewhere safe because you cannot download it again.
 :::
 

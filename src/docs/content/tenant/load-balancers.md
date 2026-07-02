@@ -13,14 +13,14 @@ LB --> S2[Server 2]
 LB --> S3[Server 3]
 :::
 
-:::step{number=1 icon=Scale title="View Your Load Balancers" navigation="Sidebar > Networking > Load Balancers"}
+:::step{number=1 icon=Scale title="View Your Load Balancers" navigation="Sidebar > Networking & Edge > Load Balancers"}
 The load balancers page lists all the load balancers you have created. Each one shows its name, status, the number of servers behind it, and its public IP address.
 :::
 
 :::screenshot{caption="Your Load Balancers list page"}
 :::
 
-:::step{number=2 icon=Plus title="Create a Load Balancer" navigation="Sidebar > Networking > Load Balancers > New"}
+:::step{number=2 icon=Plus title="Create a Load Balancer" navigation="Sidebar > Networking & Edge > Load Balancers > New"}
 Click "New" to create a load balancer. Give it a name, choose the protocol (HTTP, HTTPS, or TCP), and set the port it should listen on. Then add the servers you want traffic sent to.
 :::
 

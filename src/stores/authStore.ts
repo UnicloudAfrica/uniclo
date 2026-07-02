@@ -223,27 +223,6 @@ export const inferTenantContext = (): TenantContext => {
 
 const INITIAL_CONTEXT = inferTenantContext();
 
-const _resolveAccessToken = (payload: Record<string, unknown> | null | undefined): string | null => {
-  if (!payload) return null;
-
-  const directToken = payload.token;
-  if (typeof directToken === "string" && directToken.trim() !== "") {
-    return directToken;
-  }
-
-  const accessToken = payload.access_token;
-  if (typeof accessToken === "string" && accessToken.trim() !== "") {
-    return accessToken;
-  }
-
-  const data = payload.data;
-  if (data && typeof data === "object") {
-    return _resolveAccessToken(data as Record<string, unknown>);
-  }
-
-  return null;
-};
-
 const createInitialState = () => ({
   user: null as User | null,
   userEmail: null as string | null,
@@ -313,23 +292,20 @@ const useAuthStore = create<UnifiedAuthState>()(
             });
           }
 
-          // Capture the Sanctum access_token from the login payload.
-          // CRITICAL: rehydrate-from-server hits `/business/auth/user`
-          // which returns ONLY the user object — no access_token. If we
-          // unconditionally set `token: <resolved or null>`, the rehydrate
-          // path clobbers the token captured at sign-in and the next API
-          // call 401s. Preserve the existing token when the new payload
-          // doesn't carry one.
-          const resolvedToken = _resolveAccessToken(response as Record<string, unknown>);
-          const existingToken = get().token;
-
+          // SEC-027: auth is cookie-based (Sanctum SPA). The login payload
+          // may carry a Bearer access_token for stateless (non-browser)
+          // consumers, but the SPA MUST NOT store it — the httpOnly session
+          // cookie set by the server is the sole credential this app uses,
+          // and every fetch in the app sends `credentials: "include"`.
+          // Storing/persisting the PAT reopens the XSS token-theft window
+          // SEC-027 closed, so `token` stays null.
           set({
             user: response.user || null,
             userEmail: response.email || response.user?.email || null,
             isAuthenticated: true,
             twoFactorRequired: false,
             role,
-            token: resolvedToken ?? existingToken,
+            token: null,
             abilities: abilitiesArr,
             cloudRoles: cloudRolesArr,
             cloudAbilities: cloudAbilitiesArr,
@@ -626,30 +602,22 @@ const useAuthStore = create<UnifiedAuthState>()(
           });
         },
 
-        /** @deprecated No-op — auth is cookie-based */
-        setToken: (token: string | null) => set({ token }),
+        /** @deprecated No-op — auth is cookie-based (SEC-027: tokens are never written into auth state) */
+        setToken: () => {
+          /* no-op */
+        },
 
         // ── Computed helpers ──
-        // The platform supports two auth transports:
-        //   1. Sanctum SPA cookie (when fetch sets credentials:"include")
-        //   2. Sanctum personal-access-token via Authorization: Bearer
-        // Plenty of fetches across the codebase don't opt into cookie
-        // forwarding, so we ALSO emit the Bearer header whenever an
-        // access_token is available. With both present the backend's
-        // Sanctum guard tries cookie first, falls back to bearer; either
-        // way the request authenticates. Without this, every Flow API
-        // call (which uses fetch without credentials) was 401-ing right
-        // after login because cookie wasn't forwarded.
+        // SEC-027: auth is cookie-based (Sanctum SPA). Every fetch in the
+        // app sends `credentials: "include"`, so the httpOnly session
+        // cookie authenticates the request — no Authorization: Bearer
+        // header is emitted (and no PAT is held in state to emit).
         getAuthHeaders: () => {
-          const { currentTenant, session, token } = get();
+          const { currentTenant, session } = get();
           const headers: Record<string, string> = {
             "Content-Type": "application/json",
             Accept: "application/json",
           };
-
-          if (token) {
-            headers.Authorization = `Bearer ${token}`;
-          }
 
           // Include tenant slug for non-central domains
           const isCentral = session?.isCentralDomain ?? true;
@@ -691,36 +659,26 @@ const useAuthStore = create<UnifiedAuthState>()(
       // H-05: Reduce localStorage footprint. We keep:
       //   - userEmail        : for login-form prefill
       //   - lastActiveRole   : for initial routing decision
-      //   - session.access_token + session.role : so the auth store can
-      //     rehydrate without forcing a re-login on every refresh.
-      //     Without this, the in-memory token vanished on reload, the
-      //     next API request went out without a Bearer header, the
-      //     server returned 401, and the user got bounced to /sign-in.
-      //     The XSS-mitigation tradeoff is acceptable: Sanctum
-      //     personal-access-tokens are scoped + rotatable on the server
-      //     side, and the alternative ("log out on every refresh") was
-      //     itself a UX-driven security regression because users started
-      //     ticking "remember me" elsewhere.
+      //   - isAuthenticated + session.role shell : so route guards don't
+      //     flash the login page on refresh before the server-side
+      //     rehydrate round-trip completes.
+      // SEC-027: the Bearer token is NEVER persisted — the httpOnly
+      // Sanctum session cookie is the sole credential. On reload the
+      // cookie authenticates `useRehydrateFromServer()`'s
+      // /business/auth/user fetch (credentials: "include"); if the cookie
+      // is invalid that fetch fails and the rehydrate hook clears state +
+      // navigates to /sign-in.
       partialize: (state) =>
         ({
           userEmail: state.userEmail,
           lastActiveRole: state.session?.role ?? null,
-          // Persist `isAuthenticated` alongside the token + session shell so
-          // route guards don't briefly observe `false` between rehydration
-          // and the server-side `useRehydrateFromServer()` round-trip. The
-          // token (httpOnly Sanctum cookie) is still the actual auth
-          // credential; this flag just tells the guard "the user was
-          // logged in last time we saw them" so we don't flash the login
-          // page on refresh. If the persisted token is invalid the
-          // /business/auth/user fetch fails and the rehydrate hook
-          // properly clears state + navigates to /sign-in.
+          // Persist `isAuthenticated` alongside the session shell so route
+          // guards don't briefly observe `false` between rehydration and
+          // the server-side `useRehydrateFromServer()` round-trip. The
+          // httpOnly Sanctum cookie is the actual auth credential; this
+          // flag just tells the guard "the user was logged in last time we
+          // saw them" so we don't flash the login page on refresh.
           isAuthenticated: state.isAuthenticated,
-          // Persist the Bearer token + role-bearing session shell so the
-          // API client has a usable session immediately on reload. The
-          // full user object / tenant context / permissions are still
-          // re-fetched from the server via useRehydrateFromServer() on
-          // mount — this is just enough to authenticate that fetch.
-          token: state.token,
           session: state.session
             ? ({
                 role: state.session.role,

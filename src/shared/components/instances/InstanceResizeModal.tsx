@@ -2,6 +2,8 @@ import React, { useState, useMemo } from "react";
 import {
   ArrowUpCircle,
   ArrowDownCircle,
+  ArrowRightLeft,
+  Search,
   Server,
   Loader2,
   AlertTriangle,
@@ -41,6 +43,7 @@ const InstanceResizeModal: React.FC<InstanceResizeModalProps> = ({
   const [selectedOption, setSelectedOption] = useState<ResizeOption | null>(null);
   const [skipBilling, setSkipBilling] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [search, setSearch] = useState("");
 
   const {
     data: resizeData,
@@ -57,13 +60,24 @@ const InstanceResizeModal: React.FC<InstanceResizeModalProps> = ({
   const walletBalance = walletData?.balance ?? selectedOption?.wallet_balance ?? 0;
   const symbol = getCurrencySymbol(currency);
 
-  const { upgrades, downgrades } = useMemo(() => {
-    const opts = resizeData?.options ?? [];
+  const totalOptions = resizeData?.options?.length ?? 0;
+
+  const { upgrades, downgrades, sameTier } = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    const opts = (resizeData?.options ?? []).filter((o) =>
+      term === "" ? true : (o.new_product_name ?? "").toLowerCase().includes(term),
+    );
     return {
       upgrades: opts.filter((o) => o.adjustment_type === "upgrade"),
       downgrades: opts.filter((o) => o.adjustment_type === "downgrade"),
+      // Same-price family members (adjustment_type "none"): a valid instance-type
+      // switch even though the price doesn't change — still offered so the user
+      // isn't stranded with "No resize options" when equivalents are priced alike.
+      sameTier: opts.filter(
+        (o) => o.adjustment_type !== "upgrade" && o.adjustment_type !== "downgrade",
+      ),
     };
-  }, [resizeData]);
+  }, [resizeData, search]);
 
   const handleConfirm = async () => {
     if (!selectedOption) return;
@@ -106,16 +120,16 @@ const InstanceResizeModal: React.FC<InstanceResizeModalProps> = ({
       loading={optionsLoading}
     >
       <div className="space-y-6">
-        {/* Status guard */}
-        {!isActive && (
+        {/* Status guard — a running VM cannot change instance type */}
+        {isActive && (
           <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
             <div>
               <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
-                Instance must be active to resize
+                Stop the instance to resize
               </p>
               <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-                Current status: {currentStatus || "unknown"}
+                A running instance can&apos;t change type. Stop it first, then resize.
               </p>
             </div>
           </div>
@@ -174,6 +188,20 @@ const InstanceResizeModal: React.FC<InstanceResizeModalProps> = ({
           </label>
         )}
 
+        {/* Search */}
+        {!optionsLoading && !optionsError && totalOptions > 0 && (
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={`Search ${totalOptions} instance types…`}
+              className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            />
+          </div>
+        )}
+
         {/* Upgrade Options */}
         {upgrades.length > 0 && !optionsLoading && (
           <div>
@@ -184,7 +212,7 @@ const InstanceResizeModal: React.FC<InstanceResizeModalProps> = ({
               </span>
             </div>
             <div className="space-y-2">
-              {upgrades.map((opt) => (
+              {upgrades.slice(0, 50).map((opt) => (
                 <PlanOption
                   key={opt.new_product_id}
                   option={opt}
@@ -195,6 +223,11 @@ const InstanceResizeModal: React.FC<InstanceResizeModalProps> = ({
                 />
               ))}
             </div>
+            {upgrades.length > 50 && (
+              <p className="mt-2 text-xs text-gray-500">
+                Showing 50 of {upgrades.length} — refine your search to narrow.
+              </p>
+            )}
           </div>
         )}
 
@@ -222,13 +255,40 @@ const InstanceResizeModal: React.FC<InstanceResizeModalProps> = ({
           </div>
         )}
 
+        {/* Same-price switch options */}
+        {sameTier.length > 0 && !optionsLoading && (
+          <div>
+            <div className="mb-3 flex items-center gap-2">
+              <ArrowRightLeft className="h-4 w-4 text-blue-500" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Switch instance type
+              </span>
+            </div>
+            <div className="space-y-2">
+              {sameTier.map((opt) => (
+                <PlanOption
+                  key={opt.new_product_id}
+                  option={opt}
+                  selected={selectedOption?.new_product_id === opt.new_product_id}
+                  onSelect={() => setSelectedOption(opt)}
+                  symbol={symbol}
+                  skipBilling={skipBilling}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* No options */}
         {!optionsLoading &&
           !optionsError &&
           upgrades.length === 0 &&
-          downgrades.length === 0 && (
+          downgrades.length === 0 &&
+          sameTier.length === 0 && (
             <p className="py-8 text-center text-sm text-gray-500">
-              No resize options available for this instance.
+              {search.trim()
+                ? `No instance types match “${search.trim()}”.`
+                : "No resize options available for this instance."}
             </p>
           )}
 
@@ -242,10 +302,16 @@ const InstanceResizeModal: React.FC<InstanceResizeModalProps> = ({
                   className={`font-medium ${
                     selectedOption.adjustment_type === "upgrade"
                       ? "text-emerald-600"
-                      : "text-amber-600"
+                      : selectedOption.adjustment_type === "downgrade"
+                        ? "text-amber-600"
+                        : "text-gray-600 dark:text-gray-300"
                   }`}
                 >
-                  {selectedOption.adjustment_type === "upgrade" ? "Upgrade" : "Downgrade"}
+                  {selectedOption.adjustment_type === "upgrade"
+                    ? "Upgrade"
+                    : selectedOption.adjustment_type === "downgrade"
+                      ? "Downgrade"
+                      : "Switch (no price change)"}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
@@ -255,16 +321,26 @@ const InstanceResizeModal: React.FC<InstanceResizeModalProps> = ({
                   {formatCurrencyValue(selectedOption.new_price)}/mo
                 </span>
               </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">
-                  Prorated {selectedOption.adjustment_type === "upgrade" ? "charge" : "credit"}
-                </span>
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  {selectedOption.adjustment_type === "upgrade" ? "" : "-"}
-                  {symbol}
-                  {formatCurrencyValue(Math.abs(selectedOption.prorated_amount))}
-                </span>
-              </div>
+              {selectedOption.adjustment_type === "upgrade" ||
+              selectedOption.adjustment_type === "downgrade" ? (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Prorated {selectedOption.adjustment_type === "upgrade" ? "charge" : "credit"}
+                  </span>
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    {selectedOption.adjustment_type === "upgrade" ? "" : "-"}
+                    {symbol}
+                    {formatCurrencyValue(Math.abs(selectedOption.prorated_amount))}
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">Prorated</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    No price change
+                  </span>
+                </div>
+              )}
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600 dark:text-gray-400">Days remaining</span>
                 <span className="text-gray-700 dark:text-gray-300">
@@ -312,7 +388,7 @@ const InstanceResizeModal: React.FC<InstanceResizeModalProps> = ({
               (!skipBilling &&
                 selectedOption?.adjustment_type === "upgrade" &&
                 !selectedOption?.sufficient_funds) ||
-              (!isActive && !isAdmin)
+              isActive
             }
             loading={confirming}
           >
@@ -322,7 +398,11 @@ const InstanceResizeModal: React.FC<InstanceResizeModalProps> = ({
               <>
                 <CheckCircle2 className="mr-1.5 h-4 w-4" />
                 Confirm{" "}
-                {selectedOption.adjustment_type === "upgrade" ? "Upgrade" : "Downgrade"}
+                {selectedOption.adjustment_type === "upgrade"
+                  ? "Upgrade"
+                  : selectedOption.adjustment_type === "downgrade"
+                    ? "Downgrade"
+                    : "Switch"}
               </>
             ) : (
               "Select a plan"
@@ -352,6 +432,8 @@ const PlanOption: React.FC<PlanOptionProps> = ({
   skipBilling,
 }) => {
   const isUpgrade = option.adjustment_type === "upgrade";
+  const isSameTier =
+    option.adjustment_type !== "upgrade" && option.adjustment_type !== "downgrade";
 
   return (
     <button
@@ -375,15 +457,21 @@ const PlanOption: React.FC<PlanOptionProps> = ({
         </div>
         {!skipBilling && (
           <div className="text-right">
-            <p
-              className={`text-sm font-semibold ${
-                isUpgrade ? "text-emerald-600" : "text-amber-600"
-              }`}
-            >
-              {isUpgrade ? "+" : "-"}
-              {symbol}
-              {formatCurrencyValue(Math.abs(option.prorated_amount))}
-            </p>
+            {isSameTier ? (
+              <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">
+                No price change
+              </p>
+            ) : (
+              <p
+                className={`text-sm font-semibold ${
+                  isUpgrade ? "text-emerald-600" : "text-amber-600"
+                }`}
+              >
+                {isUpgrade ? "+" : "-"}
+                {symbol}
+                {formatCurrencyValue(Math.abs(option.prorated_amount))}
+              </p>
+            )}
             <p className="text-xs text-gray-400">
               {option.days_remaining}d remaining
             </p>

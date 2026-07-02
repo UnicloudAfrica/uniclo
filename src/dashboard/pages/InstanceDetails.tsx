@@ -1,15 +1,19 @@
 import React from "react";
 import { useLocation } from "react-router-dom";
-import UnifiedInstanceDetails from "@/shared/components/instances/UnifiedInstanceDetails";
-import { useInstanceHierarchy } from "@/shared/hooks/useInstanceDetails";
-import TenantPageShell from "@/shared/layouts/TenantPageShell";
-import ClientPageShell from "../../clientDashboard/components/ClientPageShell";
+import AdminInstancesDetails from "../../adminDashboard/pages/instanceDetails";
 
+/**
+ * Tenant + client instance details.
+ *
+ * Renders the same full-featured page the admin dashboard uses; that component
+ * is audience-aware (it resolves the API context + page shell from the route),
+ * so tenant and client get the real volumes/networks/actions experience instead
+ * of the old hardcoded mock. The page reads `identifier` from the URL itself and
+ * provides its own page shell, so no extra wrapper is needed here.
+ */
 const InstanceDetails: React.FC = () => {
   const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const identifier = queryParams.get("identifier");
-  const hierarchy = useInstanceHierarchy();
+  const identifier = new URLSearchParams(location.search).get("identifier");
 
   if (!identifier) {
     return (
@@ -22,16 +26,7 @@ const InstanceDetails: React.FC = () => {
     );
   }
 
-  const Shell = hierarchy === "client" ? ClientPageShell : TenantPageShell;
-
-  return (
-    <Shell
-      title="Instance Details"
-      description="View and manage your instance resources and status."
-    >
-      <UnifiedInstanceDetails identifier={identifier} />
-    </Shell>
-  );
+  return <AdminInstancesDetails />;
 };
 
 export default InstanceDetails;

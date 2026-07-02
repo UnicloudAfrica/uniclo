@@ -75,6 +75,20 @@ export interface TopUpPayload {
   amount: number;
   currency: string;
   payment_method: string;
+  idempotency_key?: string;
+}
+
+export interface TopUpResult {
+  transaction_id?: number | string;
+  transaction_identifier?: string;
+  authorization_url?: string | null;
+  access_code?: string | null;
+  reference?: string | null;
+  amount?: number;
+  currency?: string;
+  new_balance?: number;
+  formatted_balance?: string;
+  status?: string;
 }
 
 export interface AutoTopUpConfig {
@@ -115,6 +129,13 @@ const unwrapData = <T>(res: Envelope<T>): T | undefined => {
     return (first as { data?: T }).data;
   }
   return first as T | undefined;
+};
+
+const createIdempotencyKey = (): string => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `idem-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 11)}`;
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -164,13 +185,14 @@ export const useFetchWalletTransactions = (
 export const useTopUpWallet = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ amount, currency, payment_method }: TopUpPayload) => {
-      const res = await api<{ data?: unknown }>("POST", `/business/wallet/topup`, {
+    mutationFn: async ({ amount, currency, payment_method, idempotency_key }: TopUpPayload) => {
+      const res = await api<Envelope<TopUpResult>>("POST", `/business/wallet/topup`, {
         amount,
         currency,
         payment_method,
+        idempotency_key: idempotency_key ?? createIdempotencyKey(),
       });
-      return res.data;
+      return unwrapData<TopUpResult>(res);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["walletBalance"] });

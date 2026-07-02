@@ -9,7 +9,7 @@ next: { label: Clients, href: /admin-dashboard/docs/clients }
 Think of tenants as **franchise owners**. You own the big brand (the platform), and each tenant runs their own branch of it. They sign up, get approved, and then start selling cloud services to their own clients using your infrastructure. You can see all of them, control who gets in, and help them when they need it.
 :::
 
-:::step{number=1 icon=Building2 title="View the partners list" navigation="Sidebar > Customer Management > Partners"}
+:::step{number=1 icon=Building2 title="View the partners list" navigation="Sidebar > Customers > Tenants & Users"}
 The partners list shows every organisation that has signed up (or been created by you) on the platform. You will see their name, status, and when they joined.
 
 - Click **Customer Management** in the sidebar.
@@ -20,7 +20,7 @@ The partners list shows every organisation that has signed up (or been created b
 :::
 :::
 
-:::step{number=2 icon=PlusCircle title="Create a new tenant" navigation="Sidebar > Customer Management > Partners > Create"}
+:::step{number=2 icon=PlusCircle title="Create a new tenant" navigation="Sidebar > Customers > Tenants & Users > Create"}
 Sometimes you need to create a tenant on their behalf -- for example, during a sales demo or when onboarding a large enterprise manually.
 
 1. On the partners list page, click the **Create** button.
@@ -36,7 +36,7 @@ The new tenant will receive a welcome email with instructions on how to set up t
 :::
 :::
 
-:::step{number=3 icon=Eye title="Review tenant details" navigation="Sidebar > Customer Management > Partners > Click a tenant"}
+:::step{number=3 icon=Eye title="Review tenant details" navigation="Sidebar > Customers > Tenants & Users > Click a tenant"}
 Click on any tenant row to open their detail page. Here you can see everything about them -- their profile, subscription, clients, usage stats, and more.
 
 - **Overview tab** -- Basic info, status, and contact details.
@@ -48,7 +48,7 @@ Click on any tenant row to open their detail page. Here you can see everything a
 :::
 :::
 
-:::step{number=4 icon=ClipboardCheck title="Onboarding review process" navigation="Sidebar > Customer Management > Onboarding"}
+:::step{number=4 icon=ClipboardCheck title="Onboarding review process" navigation="Sidebar > Customers > Onboarding Review"}
 When a new tenant signs up on their own, they go through an onboarding process. As an admin, you review their application before they can start using the platform. Think of it like reviewing a job application.
 
 1. Go to **Customer Management > Onboarding**.

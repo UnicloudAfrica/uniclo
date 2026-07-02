@@ -313,7 +313,9 @@ export const formatAccountingCurrency = (
     try {
       return NGN_FORMATTER.format(n);
     } catch {
-      return `₦${n.toFixed(2)}`;
+      // NGN_FORMATTER practically never throws; if it does, render from the
+      // ISO code rather than a hardcoded symbol (platform money rule).
+      return `${currency} ${n.toFixed(2)}`;
     }
   }
   try {

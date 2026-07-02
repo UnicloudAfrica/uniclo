@@ -1,13 +1,25 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { AlertTriangle, ArrowRight, CheckCircle, Loader2, RefreshCw } from "lucide-react";
 import SetupProgressCard from "../projects/details/SetupProgressCard";
 
 interface SetupStep {
   status?: string;
   label?: string;
-  context?: { error?: string } & Record<string, unknown>;
+  context?: {
+    error?: string;
+    attempt?: number;
+    max_tries?: number;
+    retry_at?: string;
+    failed_at?: string;
+  } & Record<string, unknown>;
   [key: string]: unknown;
 }
+
+// How long the pipeline may sit at zero forward progress (no completed
+// steps, nothing actively running) before we stop reassuring the user and
+// call it stuck. Comfortably longer than a normal queue pickup + first
+// stage, so a freshly-dispatched job never trips it.
+const STUCK_AFTER_MS = 90_000;
 
 interface ProvisioningFullScreenProps {
   project: { name?: string; status?: string } | null;
@@ -67,6 +79,63 @@ const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
 
   // Find current active step
   const currentStep = setupSteps.find((s) => s.status === "pending" || s.status === "in_progress");
+
+  // --- Stuck / timed-out detection -------------------------------------
+  // Distinct from `hasFailed` (terminal, backend gave up) and from a
+  // healthy in-flight pipeline. Two honest signals:
+  //
+  //  1. Retries exhausted: the queue pushed a `retrying` step whose
+  //     attempt count has reached max_tries. The job is about to flip to
+  //     `failed` but the project may still read `provisioning` for a beat;
+  //     either way nothing more will happen automatically.
+  //  2. No forward progress: status is provisioning/pending, steps exist,
+  //     but none have completed and none are actively running — every step
+  //     is `not_started` (job never picked up) or only a stale retry/failed
+  //     remains. We gate this on a dwell timer so a just-dispatched job
+  //     never trips it.
+  const retryingStep = setupSteps.find((s) => s.status === "retrying");
+  const retriesExhausted = Boolean(
+    retryingStep?.context &&
+      typeof retryingStep.context.attempt === "number" &&
+      typeof retryingStep.context.max_tries === "number" &&
+      retryingStep.context.attempt >= retryingStep.context.max_tries
+  );
+
+  const isProvisioningStatus =
+    project?.status === "provisioning" || project?.status === "pending";
+  const hasAnyCompleted = completedSteps > 0;
+  const hasLiveWork = setupSteps.some(
+    (s) => s.status === "in_progress" || s.status === "pending"
+  );
+  // Zero forward motion: provisioning, but nothing done and nothing
+  // genuinely advancing — either every step is `not_started` or the
+  // payload shipped no steps at all. (A `retrying` step alone is not
+  // "live work".)
+  const noForwardProgress =
+    isProvisioningStatus && !hasAnyCompleted && !hasLiveWork;
+
+  // Dwell timer for the no-forward-progress case. Reset whenever the
+  // pipeline shows life again, so a recovering job clears the warning.
+  const [dwellElapsed, setDwellElapsed] = useState(false);
+  useEffect(() => {
+    if (!noForwardProgress || hasFailed) {
+      setDwellElapsed(false);
+      return;
+    }
+    const t = setTimeout(() => setDwellElapsed(true), STUCK_AFTER_MS);
+    return () => clearTimeout(t);
+  }, [noForwardProgress, hasFailed]);
+
+  // Stuck = the pipeline has stalled but the backend hasn't (yet) marked it
+  // terminally failed. Never overrides the genuine failed state.
+  const isStuck = !hasFailed && (retriesExhausted || (noForwardProgress && dwellElapsed));
+
+  // The error/timeout reason to surface. Prefer the failed step's real
+  // message; fall back to the retrying step's underlying error, then a
+  // generic timeout line. Never a raw provider object, never silence.
+  const failureReason =
+    failedStep?.context?.error ??
+    (isStuck ? retryingStep?.context?.error : undefined);
 
   // Keep polling while provisioning is active, then do one final refresh after 100%.
   // Stop polling on terminal failure — nothing more is going to happen until
@@ -134,10 +203,12 @@ const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
               <CheckCircle className="w-12 h-12 text-green-500" />
             ) : hasFailed ? (
               <AlertTriangle className="w-12 h-12 text-red-500" />
+            ) : isStuck ? (
+              <AlertTriangle className="w-12 h-12 text-amber-500" />
             ) : (
               <Loader2 className="w-12 h-12 text-[--theme-color] animate-spin" />
             )}
-            {!isComplete && !hasFailed && (
+            {!isComplete && !hasFailed && !isStuck && (
               <div className="absolute -inset-1 rounded-full border-2 border-[--theme-color-20] animate-pulse" />
             )}
             {isComplete && (
@@ -146,51 +217,93 @@ const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
             {hasFailed && (
               <div className="absolute -inset-2 rounded-full border-2 border-red-200" />
             )}
+            {isStuck && (
+              <div className="absolute -inset-2 rounded-full border-2 border-amber-200" />
+            )}
           </div>
 
           <h1
             className={`text-5xl font-black mb-4 tracking-tighter ${
-              isComplete ? "text-green-600" : hasFailed ? "text-red-600" : "text-gray-900"
+              isComplete
+                ? "text-green-600"
+                : hasFailed
+                  ? "text-red-600"
+                  : isStuck
+                    ? "text-amber-600"
+                    : "text-gray-900"
             }`}
           >
             {isComplete
               ? "Setup Complete!"
               : hasFailed
                 ? "Provisioning Failed"
-                : `Provisioning ${project?.name || "Project"}`}
+                : isStuck
+                  ? "Provisioning Stalled"
+                  : `Provisioning ${project?.name || "Project"}`}
           </h1>
           <p
             className={`text-xl max-w-lg mx-auto leading-relaxed font-medium ${
-              isComplete ? "text-green-700/60" : hasFailed ? "text-red-700/70" : "text-gray-500"
+              isComplete
+                ? "text-green-700/60"
+                : hasFailed
+                  ? "text-red-700/70"
+                  : isStuck
+                    ? "text-amber-700/80"
+                    : "text-gray-500"
             }`}
           >
             {isComplete
               ? "Your infrastructure is ready. You can now start deploying resources."
               : hasFailed
                 ? `Stopped at: ${failedStep?.label || "an unknown step"}.`
-                : "Please wait while we set up your dedicated infrastructure."}
+                : isStuck
+                  ? "Setup hasn't made progress in a while and may be stuck. You can retry it below."
+                  : "Please wait while we set up your dedicated infrastructure."}
           </p>
 
-          {/* Failure detail panel — surfaces the real error message + retry CTA */}
-          {hasFailed && (
-            <div className="mt-6 mx-auto max-w-2xl rounded-2xl border border-red-200 bg-red-50/80 px-6 py-5 text-left">
+          {/* Failure / stalled detail panel — surfaces the real error or
+              timeout reason + retry CTA. Red for a terminal failure, amber
+              for a stall the backend hasn't given up on yet. */}
+          {(hasFailed || isStuck) && (
+            <div
+              className={`mt-6 mx-auto max-w-2xl rounded-2xl border px-6 py-5 text-left ${
+                hasFailed ? "border-red-200 bg-red-50/80" : "border-amber-200 bg-amber-50/80"
+              }`}
+            >
               <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
+                <AlertTriangle
+                  className={`w-5 h-5 mt-0.5 shrink-0 ${hasFailed ? "text-red-500" : "text-amber-500"}`}
+                />
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-red-900">
-                    {failedStep?.label || "A provisioning step failed"}
+                  <p className={`text-sm font-semibold ${hasFailed ? "text-red-900" : "text-amber-900"}`}>
+                    {hasFailed
+                      ? failedStep?.label || "A provisioning step failed"
+                      : retriesExhausted
+                        ? `Automatic retries exhausted${retryingStep?.context?.max_tries ? ` (${retryingStep.context.max_tries} attempts)` : ""}.`
+                        : "Setup hasn't progressed and looks stuck."}
                   </p>
-                  {failedStep?.context?.error && (
-                    <p className="mt-1 text-sm text-red-700">
-                      {String(failedStep.context.error)}
+                  {failureReason ? (
+                    <p className={`mt-1 text-sm ${hasFailed ? "text-red-700" : "text-amber-700"}`}>
+                      {String(failureReason)}
                     </p>
+                  ) : (
+                    isStuck && (
+                      <p className="mt-1 text-sm text-amber-700">
+                        No error was reported. The provisioning worker may not have picked the job
+                        up. Retrying re-dispatches it.
+                      </p>
+                    )
                   )}
                   {onRetry && (
                     <button
                       type="button"
                       onClick={onRetry}
                       disabled={isRetrying}
-                      className="mt-4 inline-flex items-center gap-2 rounded-full bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white text-sm font-semibold px-5 py-2 transition"
+                      className={`mt-4 inline-flex items-center gap-2 rounded-full disabled:cursor-not-allowed text-white text-sm font-semibold px-5 py-2 transition ${
+                        hasFailed
+                          ? "bg-red-600 hover:bg-red-700 disabled:bg-red-400"
+                          : "bg-amber-600 hover:bg-amber-700 disabled:bg-amber-400"
+                      }`}
                     >
                       <RefreshCw
                         className={`w-4 h-4 ${isRetrying ? "animate-spin" : ""}`}
@@ -248,7 +361,7 @@ const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
           <SetupProgressCard
             steps={setupSteps as never}
             isLoading={false}
-            pipelineActive={!hasFailed && !isComplete}
+            pipelineActive={!hasFailed && !isStuck && !isComplete}
           />
         </div>
 

@@ -40,8 +40,15 @@ interface QuoteResponse {
   };
 }
 
+// Domain registrar prices are quoted in NGN minor units (kobo). Format from
+// the explicit ISO code rather than a hardcoded symbol (platform money rule).
 const formatNaira = (kobo: number): string =>
-  `₦${(kobo / 100).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(kobo / 100);
 
 const ClientDomainPurchase: React.FC = () => {
   const [domain, setDomain] = useState("");

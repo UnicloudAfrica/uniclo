@@ -5,14 +5,14 @@ prev: { label: Networking, href: /admin-dashboard/docs/networking }
 next: { label: Onboarding, href: /admin-dashboard/docs/onboarding }
 ---
 
-:::step{number=1 icon=HardDrive title="Object Storage" navigation="Sidebar > Infrastructure > Silo Storage"}
+:::step{number=1 icon=HardDrive title="Object Storage" navigation="Sidebar > Compute & Storage > Object Buckets"}
 Object storage is like an infinitely expandable filing cabinet in the cloud. Users create "buckets" (like drawers) and store files in them. You can see all storage accounts across all tenants, check usage, and manage configurations.
 :::
 
 :::screenshot{caption="Your Object Storage accounts list"}
 :::
 
-:::step{number=2 icon=Database title="Managed Databases" navigation="Sidebar > Infrastructure > Lattice Databases"}
+:::step{number=2 icon=Database title="Managed Databases" navigation="Sidebar > Compute & Storage > Databases"}
 Managed databases are databases where someone else handles all the maintenance — backups, updates, and keeping things running smoothly. You just use the database without worrying about the plumbing. View all databases across tenants, create new ones, and monitor their health.
 :::
 
@@ -48,10 +48,10 @@ Every managed database now tracks its operations -- credential rotations, resize
 Managed database resize is not yet end-to-end. The preview and billing logic exists, but the actual runtime resize executor is still being implemented. The platform intentionally blocks resize confirmation until this is complete -- so you cannot accidentally charge for a resize that does not execute.
 :::
 
-:::step{number=5 icon=Camera title="Snapshots" navigation="Sidebar > Networking > Snapshots"}
+:::step{number=5 icon=Camera title="Snapshots" navigation="Project > Storage"}
 Snapshots are photographs of a server's disk at a specific moment in time. If something goes wrong, you can restore from a snapshot — like using a time machine. View and manage all snapshots across the platform.
 :::
 
-:::step{number=6 icon=Image title="Images" navigation="Sidebar > Networking > Images"}
+:::step{number=6 icon=Image title="Images" navigation="Project > Images"}
 Images are complete blueprints of a server — the operating system, installed software, and configuration. They are used as starting points when creating new instances. Manage the available images and their replication across regions.
 :::

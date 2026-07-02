@@ -5,6 +5,8 @@ import TenantPageShell from "../../components/TenantPageShell";
 import ModernCard from "@/shared/components/ui/ModernCard";
 import ModernButton from "@/shared/components/ui/ModernButton";
 import { useLoadBalancers, useDeleteLoadBalancer } from "@/hooks/adminHooks/loadBalancerHooks";
+import { useFetchProjectById } from "@/shared/hooks/resources/projectHooks";
+import { UnsupportedFeature } from "@/shared/components/UnsupportedFeature";
 import type { LoadBalancer } from "@/shared/components/infrastructure/types";
 
 const TenantLoadBalancers: React.FC = () => {
@@ -14,6 +16,23 @@ const TenantLoadBalancers: React.FC = () => {
 
   const { data: loadBalancers = [], isLoading, refetch } = useLoadBalancers(projectId);
   const deleteMutation = useDeleteLoadBalancer();
+
+  // Load balancers are provider-gated (Zadara only). On a provider that does not
+  // support them the backend rejects creation, so hide the surface entirely —
+  // same pattern as the sibling NAT / ACL / VPC-peering pages.
+  const { data: projectData } = useFetchProjectById(projectId);
+  const project =
+    projectData && typeof projectData === "object" ? (projectData as Record<string, unknown>) : null;
+  const providerFeatures = project?.provider_features as Record<string, boolean> | undefined;
+  const supportsLoadBalancers = providerFeatures?.load_balancers ?? true;
+
+  if (!supportsLoadBalancers) {
+    return (
+      <TenantPageShell title="Load Balancers" description="">
+        <UnsupportedFeature feature="Load Balancers" />
+      </TenantPageShell>
+    );
+  }
 
   const handleDelete = async (lbId: string) => {
     if (

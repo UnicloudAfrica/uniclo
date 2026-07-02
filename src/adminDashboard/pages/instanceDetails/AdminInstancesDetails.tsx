@@ -9,7 +9,6 @@ import {
   BellOff,
   Camera,
   Trash2,
-  Plus,
   RotateCcw,
   XCircle,
   Globe2,
@@ -29,19 +28,20 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import AdminPageShell from "../../components/AdminPageShell";
+import TenantPageShell from "@/shared/layouts/TenantPageShell";
+import ClientPageShell from "../../../clientDashboard/components/ClientPageShell";
 import { ModernButton, ModernCard } from "@/shared/components/ui";
 import ToastUtils from "@/utils/toastUtil";
 import {
-  useBackupStatus,
   useReplicationStatus,
-  useEnableBackup,
-  useDisableBackup,
-  useTriggerBackup,
   useEnableReplication,
   useDisableReplication,
   useFailover,
 } from "@/shared/hooks/resources/integrationHooks";
-import type { BackupStatus, ReplicationStatus } from "@/shared/hooks/resources/integrationHooks";
+import type { ReplicationStatus } from "@/shared/hooks/resources/integrationHooks";
+import { useQuery } from "@tanstack/react-query";
+import { useApiContext } from "@/hooks/useApiContext";
+import { apiRegistry } from "@/shared/api/apiRegistry";
 import {
   useFetchInstanceManagementDetails,
   useInstanceManagementAction,
@@ -52,22 +52,25 @@ import {
   useInstanceEvents,
   useInstanceMetrics,
   useInstanceAlarms,
-  useInstanceBackupGroups,
-  useCreateBackupGroup,
-  useDeleteBackupGroup,
-  useInstanceSnapshots,
-  useTriggerSnapshot,
-  useDeleteSnapshot,
+  useInstanceBackupStatus,
+  useEnableInstanceBackup,
+  useTriggerInstanceBackup,
+  useInstanceBackupSnapshots,
+  useUpdateInstanceBackup,
+  useDisableInstanceBackup,
+  useBackupPurchasePreview,
+  useBackupPurchaseConfirm,
   useInstanceRestoreGroups,
   useCreateRestoreGroup,
   useDeleteRestoreGroup,
   useCloseAlarm,
 } from "@/shared/hooks/resources/instanceHooks";
-import {
-  useAdminFetchInstanceLifecycleById,
-} from "@/hooks/sharedResourceHooks";
+import type { InstanceBackupStatus, BackupPurchasePreview } from "@/shared/hooks/resources/instanceHooks";
+import { PriceLabel } from "@/shared/components/ui/PriceLabel";
+import { isApiError } from "@/utils/apiError";
 import EmbeddedConsole, { useConsoleManager } from "@/components/Console/EmbeddedConsole";
 import InstanceResizeModal from "@/shared/components/instances/InstanceResizeModal";
+import InstanceRestoreBackupModal from "@/shared/components/instances/InstanceRestoreBackupModal";
 
 import type {
   ActionConfig,
@@ -87,6 +90,8 @@ import {
   formatMoney,
   formatStatusText,
   getErrorMessage,
+  mapNetworkInterfaceRow,
+  normalizeTags,
   PROVISIONING_POLL_INTERVAL_MS,
   PROVISIONING_POLL_MAX_ATTEMPTS,
   safeParseJson,
@@ -152,11 +157,71 @@ const InfoRow: React.FC<{ label: string; value: React.ReactNode; copyable?: stri
   </tr>
 );
 
+// Render a raw byte count as a human-readable size. Backup snapshot sizes
+// arrive as `size_bytes` (raw bytes) and must not be rendered verbatim.
+const formatBytes = (bytes: unknown): string => {
+  const n = typeof bytes === "number" ? bytes : Number(bytes);
+  if (!Number.isFinite(n) || n <= 0) return "—";
+  const units = ["B", "KB", "MB", "GB", "TB", "PB"];
+  const i = Math.min(Math.floor(Math.log(n) / Math.log(1024)), units.length - 1);
+  return `${(n / 1024 ** i).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+};
+
+// Render an RPO window (in hours) as a friendly duration.
+const formatRpo = (hours: number): string => {
+  if (hours < 1) return "under an hour";
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"}`;
+  const days = Math.round(hours / 24);
+  if (days % 30 === 0) {
+    const m = days / 30;
+    return `${m} month${m === 1 ? "" : "s"}`;
+  }
+  if (days % 7 === 0) {
+    const w = days / 7;
+    return `${w} week${w === 1 ? "" : "s"}`;
+  }
+  return `${days} day${days === 1 ? "" : "s"}`;
+};
+
+// Relative "x ago" label for a timestamp.
+const timeAgo = (value: string | number | Date): string => {
+  const then = new Date(value).getTime();
+  if (!Number.isFinite(then)) return "—";
+  const secs = Math.max(0, Math.floor((Date.now() - then) / 1000));
+  if (secs < 60) return "just now";
+  const mins = Math.floor(secs / 60);
+  if (mins < 60) return `${mins} minute${mins === 1 ? "" : "s"} ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} hour${hrs === 1 ? "" : "s"} ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+};
+
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
 const AdminInstancesDetails = () => {
+  // Audience-aware: the page is reused by tenant/client dashboards. The API
+  // context drives both the lifecycle fetch client and the back-link base path.
+  const { context: apiContext } = useApiContext();
+  const dashboardBasePath =
+    apiContext === "admin"
+      ? "/admin-dashboard"
+      : apiContext === "client"
+        ? "/client-dashboard"
+        : "/dashboard";
+
+  // Page chrome follows the audience: admin keeps AdminPageShell unchanged;
+  // tenant/client get their own shells so the reused page doesn't leak admin
+  // breadcrumbs or double-wrap inside the dashboard route's own shell.
+  const PageShell =
+    apiContext === "admin"
+      ? AdminPageShell
+      : apiContext === "client"
+        ? ClientPageShell
+        : TenantPageShell;
+
   const [instanceId, setInstanceId] = useState<string | null>(null);
   const [identifierError, setIdentifierError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>("overview");
@@ -171,6 +236,7 @@ const AdminInstancesDetails = () => {
   const [_isAutoSyncing, setIsAutoSyncing] = useState(false);
   const [showAttachEipModal, setShowAttachEipModal] = useState(false);
   const [showResizeModal, setShowResizeModal] = useState(false);
+  const [restoreBackupSnapshotId, setRestoreBackupSnapshotId] = useState<string | null>(null);
   const provisioningPollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const provisioningPollAttemptsRef = useRef(0);
   const provisioningPollTokenRef = useRef(0);
@@ -220,11 +286,34 @@ const AdminInstancesDetails = () => {
     instanceIdentifier ||
     (managedInstance?.["id"] as string | undefined);
 
+  // Lifecycle history — context-aware so tenant/client hit their own API base.
+  // Mirrors the legacy admin-only useAdminFetchInstanceLifecycleById: GET the
+  // instance and surface its status_history under an { events } envelope.
   const {
     data: lifecycleDataRaw,
     isLoading: _isLifecycleLoading,
     refetch: refetchLifecycle,
-  } = useAdminFetchInstanceLifecycleById(instanceIdentifier);
+  } = useQuery({
+    queryKey: ["instance-lifecycle", apiContext, instanceIdentifier],
+    queryFn: async () => {
+      const entry = apiRegistry[apiContext];
+      const res = await entry.silentApi.get<Record<string, unknown>>(
+        `${entry.urlPrefix}/instances/${instanceIdentifier}`
+      );
+      const envelope = (res ?? {}) as Record<string, unknown>;
+      const instance = ((envelope["data"] ?? envelope) || {}) as Record<string, unknown>;
+      const history =
+        instance["status_history"] ||
+        instance["lifecycle_history"] ||
+        instance["lifecycle_events"] ||
+        instance["history"] ||
+        [];
+      return { events: Array.isArray(history) ? history : [] };
+    },
+    enabled: !!instanceIdentifier,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  });
   const lifecycleData = lifecycleDataRaw as LifecycleData | LifecycleData[] | null;
 
   // Connect opens the shared multi-tab console (VNC / SPICE / RDP / serial / SSH),
@@ -296,40 +385,71 @@ const AdminInstancesDetails = () => {
     { enabled: !!instanceIdentifier && activeTab === "monitoring" }
   );
 
-  // Protection hooks
-  const { data: backupGroupsRaw, isFetching: isBackupGroupsFetching, refetch: refetchBackupGroups } =
-    useInstanceBackupGroups(instanceIdentifier ?? "", { enabled: !!instanceIdentifier && activeTab === "protection" });
-  const { data: snapshotsRaw, isFetching: isSnapshotsFetching, refetch: refetchSnapshots } =
-    useInstanceSnapshots(instanceIdentifier ?? "", {}, { enabled: !!instanceIdentifier && activeTab === "protection" });
-  const { data: restoreGroupsRaw, isFetching: isRestoreGroupsFetching, refetch: refetchRestoreGroups } =
-    useInstanceRestoreGroups(instanceIdentifier ?? "", { enabled: !!instanceIdentifier && activeTab === "protection" });
+  // Protection hooks — per-instance backup (stateful protection subsystem)
+  const protectionTabActive = activeTab === "protection";
+  const { data: instanceBackupStatusRaw, isFetching: isBackupStatusFetching } =
+    useInstanceBackupStatus(instanceIdentifier ?? "", {
+      enabled: !!instanceIdentifier && protectionTabActive,
+    });
+  const instanceBackupStatus = instanceBackupStatusRaw as InstanceBackupStatus | undefined;
+  const backupConfigured = Boolean(instanceBackupStatus?.configured);
+  const { data: backupSnapshotsRaw, isFetching: isSnapshotsFetching } = useInstanceBackupSnapshots(
+    instanceIdentifier ?? "",
+    {
+      enabled: !!instanceIdentifier && protectionTabActive && backupConfigured,
+      // Poll while any snapshot is still settling (not ready/error).
+      refetchInterval: (query) => {
+        const page = (query.state.data as GenericRecord | undefined)?.["data"];
+        const rows = Array.isArray(page) ? (page as GenericRecord[]) : [];
+        const settling = rows.some((row) => {
+          const state = String(row["state"] ?? "").toLowerCase();
+          return state !== "" && state !== "ready" && state !== "error";
+        });
+        return settling ? 5000 : false;
+      },
+    }
+  );
 
-  const { mutateAsync: createBackupGroupMutation } = useCreateBackupGroup();
-  const { mutateAsync: deleteBackupGroupMutation } = useDeleteBackupGroup();
-  const { mutateAsync: triggerSnapshotMutation } = useTriggerSnapshot();
-  const { mutateAsync: deleteSnapshotMutation } = useDeleteSnapshot();
+  const enableInstanceBackupMutation = useEnableInstanceBackup();
+  const triggerInstanceBackupMutation = useTriggerInstanceBackup();
+  const updateInstanceBackupMutation = useUpdateInstanceBackup();
+  const disableInstanceBackupMutation = useDisableInstanceBackup();
+
+  // Self-service backup purchase (non-entitled clients buy backup as a paid
+  // add-on). The quote loads only while the purchase wizard is open.
+  const [showPurchaseWizard, setShowPurchaseWizard] = useState(false);
+  const backupPurchaseConfirmMutation = useBackupPurchaseConfirm();
+  const {
+    data: purchasePreviewRaw,
+    isFetching: isPurchasePreviewFetching,
+    refetch: refetchPurchasePreview,
+  } = useBackupPurchasePreview(instanceIdentifier ?? "", {
+    enabled: !!instanceIdentifier && protectionTabActive && showPurchaseWizard,
+  });
+  const purchasePreview = purchasePreviewRaw as BackupPurchasePreview | undefined;
+
+  // Restore groups (separate future remote-restore feature — left intact)
+  const { data: restoreGroupsRaw, isFetching: isRestoreGroupsFetching, refetch: refetchRestoreGroups } =
+    useInstanceRestoreGroups(instanceIdentifier ?? "", { enabled: !!instanceIdentifier && protectionTabActive });
   const { mutateAsync: _createRestoreGroupMutation } = useCreateRestoreGroup();
   const { mutateAsync: deleteRestoreGroupMutation } = useDeleteRestoreGroup();
   const { mutateAsync: closeAlarmMutation } = useCloseAlarm();
 
-  const [showCreateBackupForm, setShowCreateBackupForm] = useState(false);
-  const [backupFormName, setBackupFormName] = useState("");
+  // Inline backup enable wizard + edit form state
+  const [showBackupWizard, setShowBackupWizard] = useState(false);
+  const [backupWizardMode, setBackupWizardMode] = useState<"enable" | "edit">("enable");
+  const [backupCustomize, setBackupCustomize] = useState(false);
+  const [backupFrequency, setBackupFrequency] = useState<"daily" | "weekly" | "monthly">("daily");
+  const [backupRetentionDays, setBackupRetentionDays] = useState(7);
+  const [backupStartTime, setBackupStartTime] = useState("02:00");
 
   // Integration protection hooks (AnyCloudFlow backup & replication)
   const instanceDbId = (displayInstance?.id ?? managedInstance?.["id"]) as string | number | undefined;
-  const { data: acfBackupStatusRaw } = useBackupStatus(
-    "anycloudflow", "instance", instanceDbId,
-    { enabled: !!instanceDbId && activeTab === "protection" },
-  );
   const { data: acfReplicationStatusRaw } = useReplicationStatus(
-    "anycloudflow", "instance", instanceDbId,
+    "anycloudflow", "instances", instanceDbId,
     { enabled: !!instanceDbId && activeTab === "protection" },
   );
-  const acfBackupStatus = acfBackupStatusRaw as BackupStatus | undefined;
   const acfReplicationStatus = acfReplicationStatusRaw as ReplicationStatus | undefined;
-  const enableBackupMutation = useEnableBackup();
-  const disableBackupMutation = useDisableBackup();
-  const triggerBackupMutation = useTriggerBackup();
   const enableReplicationMutation = useEnableReplication();
   const disableReplicationMutation = useDisableReplication();
   const failoverMutation = useFailover();
@@ -789,14 +909,9 @@ const AdminInstancesDetails = () => {
     };
   }, [telemetrySummary]);
 
-  // Tags
-  const tags = useMemo(() => {
-    if (Array.isArray(displayInstance?.tags)) return displayInstance.tags;
-    if (typeof displayInstance?.tags === "string" && displayInstance.tags) {
-      return displayInstance.tags.split(",").map((t: string) => t.trim()).filter(Boolean);
-    }
-    return [];
-  }, [displayInstance?.tags]);
+  // Tags — normalize to display strings so object-shaped tags
+  // ({key,value} etc.) never render as "[object Object]".
+  const tags = useMemo(() => normalizeTags(displayInstance?.tags), [displayInstance?.tags]);
 
   // ---------------------------------------------------------------------------
   // Handlers
@@ -806,7 +921,7 @@ const AdminInstancesDetails = () => {
     if (globalThis.history.length > 1) {
       globalThis.history.back();
     } else {
-      globalThis.window.location.href = "/admin-dashboard/cube-instances";
+      globalThis.window.location.href = `${dashboardBasePath}/cube-instances`;
     }
   };
 
@@ -873,7 +988,23 @@ const AdminInstancesDetails = () => {
         return;
       }
       let confirmed = false;
-      if (actionConfig?.requires_confirmation) {
+      // Extend prompts the operator for a number of months; the value is passed
+      // through as params.months (the controller accepts it optionally).
+      let extraParams: Record<string, unknown> = {};
+      if (actionKey === "extend") {
+        const input = globalThis.window.prompt(
+          "Extend this instance by how many months?",
+          "1"
+        );
+        if (input === null) return;
+        const months = Number(input);
+        if (!Number.isInteger(months) || months <= 0) {
+          ToastUtils.error("Enter a whole number of months greater than zero.");
+          return;
+        }
+        extraParams = { months };
+        confirmed = true;
+      } else if (actionConfig?.requires_confirmation) {
         const confirmationMessage =
           actionConfig?.confirmation_message ||
           `Are you sure you want to ${actionKey} this instance?`;
@@ -893,7 +1024,7 @@ const AdminInstancesDetails = () => {
         await executeActionMutation({
           identifier: instanceIdentifier,
           action: actionKey,
-          params: actionConfig?.default_params || {},
+          params: { ...(actionConfig?.default_params || {}), ...extraParams },
           confirmed,
         } as { identifier: typeof instanceIdentifier });
         ToastUtils.success(`${formatStatusText(actionKey)} initiated.`);
@@ -967,30 +1098,30 @@ const AdminInstancesDetails = () => {
 
   if (identifierError) {
     return (
-      <AdminPageShell title="Instance Details" contentClassName="flex min-h-[60vh] items-center justify-center">
+      <PageShell title="Instance Details" contentClassName="flex min-h-[60vh] items-center justify-center">
         <ModernCard padding="lg" className="max-w-md space-y-4 text-center">
           <AlertTriangle className="mx-auto h-12 w-12 text-red-500" />
           <p className="text-sm text-gray-600">{identifierError}</p>
           <ModernButton variant="primary" onClick={handleGoBack}>Back to instances</ModernButton>
         </ModernCard>
-      </AdminPageShell>
+      </PageShell>
     );
   }
 
   if (isLoadingDetails) {
     return (
-      <AdminPageShell title="Instance Details" contentClassName="flex min-h-[60vh] items-center justify-center">
+      <PageShell title="Instance Details" contentClassName="flex min-h-[60vh] items-center justify-center">
         <ModernCard padding="lg" className="flex items-center gap-3">
           <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
           <span className="text-sm text-gray-600">Loading instance details...</span>
         </ModernCard>
-      </AdminPageShell>
+      </PageShell>
     );
   }
 
   if (combinedIsError) {
     return (
-      <AdminPageShell title="Instance Details" contentClassName="flex min-h-[60vh] items-center justify-center">
+      <PageShell title="Instance Details" contentClassName="flex min-h-[60vh] items-center justify-center">
         <ModernCard padding="lg" className="max-w-md space-y-4 text-center">
           <AlertTriangle className="mx-auto h-12 w-12 text-red-500" />
           <p className="text-sm text-gray-600">
@@ -998,7 +1129,7 @@ const AdminInstancesDetails = () => {
           </p>
           <ModernButton variant="primary" onClick={handleGoBack}>Back to instances</ModernButton>
         </ModernCard>
-      </AdminPageShell>
+      </PageShell>
     );
   }
 
@@ -1018,6 +1149,8 @@ const AdminInstancesDetails = () => {
     const profile = (effectiveMetadata?.["profile"] || providerVm?.["profile"]) as string | undefined;
     const highAvailability = providerVm?.["high_availability"] as boolean | undefined;
     const vncAccess = providerVm?.["vnc_admin_access"] as boolean | undefined;
+    const vpcId = (providerVm?.["vpc_id"] || effectiveMetadata?.["vpc_id"]) as string | undefined;
+    const availabilityZone = (displayInstance as GenericRecord)?.["availability_zone"] as string | undefined;
 
     return (
       <div className="overflow-x-auto">
@@ -1048,6 +1181,13 @@ const AdminInstancesDetails = () => {
             {providerVm?.["host"] && <InfoRow label="Node" value={<span className="text-blue-600">{providerVm["host"] as string}</span>} />}
             {account && <InfoRow label="Account" value={account} />}
             {displayInstance.project?.name && <InfoRow label="Project" value={displayInstance.project.name} />}
+            {vpcId && (
+              <InfoRow
+                label="VPC"
+                value={<span className="font-mono text-xs">{vpcId}</span>}
+                copyable={vpcId}
+              />
+            )}
             {protection !== undefined && <InfoRow label="Protection" value={protection || "Unprotected"} />}
             {highAvailability !== undefined && (
               <InfoRow
@@ -1082,6 +1222,7 @@ const AdminInstancesDetails = () => {
               />
             )}
             <InfoRow label="Region" value={displayInstance.region} />
+            {availabilityZone && <InfoRow label="Availability Zone" value={availabilityZone} />}
             {displayInstance.created_at && <InfoRow label="Created" value={formatDateTime(displayInstance.created_at)} />}
             {displayInstance.status && <InfoRow label="Status" value={formatStatusText(displayInstance.status)} />}
             {displayInstance.billing_status && <InfoRow label="Billing Status" value={formatStatusText(displayInstance.billing_status)} />}
@@ -1223,29 +1364,39 @@ const AdminInstancesDetails = () => {
               <thead>
                 <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                   <th className="pb-2 pr-4">Name</th>
-                  <th className="pb-2 pr-4">Size</th>
-                  <th className="pb-2 pr-4">Disk Type</th>
                   <th className="pb-2 pr-4">Volume Type</th>
+                  <th className="pb-2 pr-4">Size</th>
+                  <th className="pb-2 pr-4">Boot</th>
                   <th className="pb-2 pr-4">Status</th>
+                  <th className="pb-2 pr-4">Device</th>
                 </tr>
               </thead>
               <tbody>
                 {allVolumes.map((vol: GenericRecord, idx: number) => {
                   const volName = (vol["name"] || vol["volume_label"] || vol["id"] || `Volume ${idx + 1}`) as string;
                   const volSize = (vol["size_gb"] || vol["size"] || vol["volume_size_gb"] || vol["capacity_gb"]) as string | number | undefined;
-                  const diskType = (vol["disk_type"] || vol["type"] || "Disk") as string;
-                  const volType = (vol["volume_type"] || vol["bus_type"] || "—") as string;
+                  const volType = (vol["volume_type"] || vol["disk_type"] || vol["type"] || vol["bus_type"] || "—") as string;
                   const volStatus = (vol["status"] || vol["state"]) as string | undefined;
+                  const isBoot = Boolean(vol["is_boot"] ?? vol["boot"]);
+                  const device = (vol["device"] || vol["device_name"]) as string | undefined;
                   return (
                     <tr key={`${volName}-${idx}`} className="border-b border-slate-50 hover:bg-slate-50">
                       <td className="py-2.5 pr-4">
                         <span className="text-blue-600">{volName}</span>
                       </td>
+                      <td className="py-2.5 pr-4 text-slate-700">{volType}</td>
                       <td className="py-2.5 pr-4 text-slate-700">
                         {volSize ? `${volSize} GiB` : "—"}
                       </td>
-                      <td className="py-2.5 pr-4 text-slate-700">{diskType}</td>
-                      <td className="py-2.5 pr-4 text-slate-700">{volType}</td>
+                      <td className="py-2.5 pr-4">
+                        {isBoot ? (
+                          <span className="inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+                            Boot
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
                       <td className="py-2.5 pr-4">
                         {volStatus ? (
                           <span className="text-green-600">{formatStatusText(volStatus)}</span>
@@ -1253,6 +1404,7 @@ const AdminInstancesDetails = () => {
                           "—"
                         )}
                       </td>
+                      <td className="py-2.5 pr-4 font-mono text-xs text-slate-600">{device || "—"}</td>
                     </tr>
                   );
                 })}
@@ -1343,13 +1495,8 @@ const AdminInstancesDetails = () => {
               </thead>
               <tbody>
                 {networkRows.map((row, idx) => {
-                  const ip = (row["addr"] || row["ip_address"] || row["ip"]) as string | undefined;
-                  const mac = (row["OS-EXT-IPS-MAC:mac_addr"] || row["mac_addr"] || row["mac_address"]) as string | undefined;
-                  const subnet = (row["subnet_name"] || row["subnet"] || row["network_name"]) as string | undefined;
-                  const cidr = row["cidr"] as string | undefined;
-                  const dnsName = row["dns_name"] as string | undefined;
-                  const deviceIndex = row["device_index"] as number | string | undefined;
-                  const portId = (row["port_id"] || row["network_id"]) as string | undefined;
+                  const { ip, mac, subnet, cidr, dnsName, deviceIndex, portId } =
+                    mapNetworkInterfaceRow(row);
                   const rowSecGroups = Array.isArray(row["security_groups"]) ? (row["security_groups"] as unknown[]) : secGroups;
 
                   // Find elastic IP for this NIC
@@ -1527,19 +1674,23 @@ const AdminInstancesDetails = () => {
     );
   };
 
-  /** Protection tab — protection plan, backup groups, snapshots, restore groups */
+  /** Protection tab — protection plan, per-instance backup, DR replication, restore groups */
   const renderProtectionTab = () => {
-    const backupGroups = Array.isArray((backupGroupsRaw as GenericRecord)?.["backup_groups"])
-      ? ((backupGroupsRaw as GenericRecord)["backup_groups"] as GenericRecord[])
-      : [];
-    const snapshots = Array.isArray((snapshotsRaw as GenericRecord)?.["snapshots"])
-      ? ((snapshotsRaw as GenericRecord)["snapshots"] as GenericRecord[])
+    const backupSnapshots = Array.isArray((backupSnapshotsRaw as GenericRecord)?.["data"])
+      ? ((backupSnapshotsRaw as GenericRecord)["data"] as GenericRecord[])
       : [];
     const restoreGroups = Array.isArray((restoreGroupsRaw as GenericRecord)?.["restore_groups"])
       ? ((restoreGroupsRaw as GenericRecord)["restore_groups"] as GenericRecord[])
       : [];
 
-    const backupEnabled = acfBackupStatus?.enabled ?? false;
+    const backupEnabled = instanceBackupStatus?.configured ?? false;
+    // On track when the freshest restorable point is no older than the RPO
+    // window (+1h grace) — i.e. the schedule is actually keeping up.
+    const rpoOnTrack =
+      instanceBackupStatus?.last_recovery_point_at != null && instanceBackupStatus?.rpo_hours != null
+        ? (Date.now() - new Date(instanceBackupStatus.last_recovery_point_at).getTime()) / 3_600_000 <=
+          instanceBackupStatus.rpo_hours + 1
+        : false;
     const replicationEnabled = acfReplicationStatus?.enabled ?? false;
     const replicationHealth = acfReplicationStatus?.health ?? "unknown";
     const replicationLag = acfReplicationStatus?.lag_seconds;
@@ -1563,56 +1714,12 @@ const AdminInstancesDetails = () => {
       dr_replication: "text-green-600 bg-green-50 border-green-200",
     };
 
-    const handleEnableBackup = async () => {
-      if (!instanceDbId) return;
-      try {
-        await enableBackupMutation.mutateAsync({
-          integrationKey: "anycloudflow",
-          resourceType: "instance",
-          resourceId: instanceDbId,
-          config: { schedule: "daily", retention_days: 7 },
-        });
-        ToastUtils.success("Backup protection enabled");
-      } catch (e) {
-        ToastUtils.error(getErrorMessage(e, "Failed to enable backup"));
-      }
-    };
-
-    const handleDisableBackup = async () => {
-      if (!instanceDbId) return;
-      if (!globalThis.confirm("Disable backup protection? Existing snapshots will be retained.")) return;
-      try {
-        await disableBackupMutation.mutateAsync({
-          integrationKey: "anycloudflow",
-          resourceType: "instance",
-          resourceId: instanceDbId,
-        });
-        ToastUtils.success("Backup protection disabled");
-      } catch (e) {
-        ToastUtils.error(getErrorMessage(e, "Failed to disable backup"));
-      }
-    };
-
-    const handleTriggerManualBackup = async () => {
-      if (!instanceDbId) return;
-      try {
-        await triggerBackupMutation.mutateAsync({
-          integrationKey: "anycloudflow",
-          resourceType: "instance",
-          resourceId: instanceDbId,
-        });
-        ToastUtils.success("Manual backup triggered");
-      } catch (e) {
-        ToastUtils.error(getErrorMessage(e, "Failed to trigger backup"));
-      }
-    };
-
     const handleEnableReplication = async () => {
       if (!instanceDbId) return;
       try {
         await enableReplicationMutation.mutateAsync({
           integrationKey: "anycloudflow",
-          resourceType: "instance",
+          resourceType: "instances",
           resourceId: instanceDbId,
           config: { mode: "continuous" },
         });
@@ -1628,7 +1735,7 @@ const AdminInstancesDetails = () => {
       try {
         await disableReplicationMutation.mutateAsync({
           integrationKey: "anycloudflow",
-          resourceType: "instance",
+          resourceType: "instances",
           resourceId: instanceDbId,
         });
         ToastUtils.success("DR replication disabled");
@@ -1643,7 +1750,7 @@ const AdminInstancesDetails = () => {
       try {
         await failoverMutation.mutateAsync({
           integrationKey: "anycloudflow",
-          resourceType: "instance",
+          resourceType: "instances",
           resourceId: instanceDbId,
         });
         ToastUtils.success("Failover initiated");
@@ -1652,51 +1759,113 @@ const AdminInstancesDetails = () => {
       }
     };
 
-    const handleCreateBackup = async () => {
-      if (!instanceIdentifier || !backupFormName.trim()) return;
+    // ── Per-instance backup actions ──────────────────────────────
+    const openEnableWizard = () => {
+      setBackupWizardMode("enable");
+      setBackupCustomize(false);
+      setBackupFrequency("daily");
+      setBackupRetentionDays(7);
+      setBackupStartTime("02:00");
+      setShowBackupWizard(true);
+    };
+
+    const openPurchaseWizard = () => {
+      setShowBackupWizard(false);
+      setShowPurchaseWizard(true);
+    };
+
+    const handleConfirmPurchase = async () => {
+      if (!instanceIdentifier || backupPurchaseConfirmMutation.isPending) return;
+      const accepted = purchasePreview?.prorated_amount;
+      if (accepted == null) return;
       try {
-        await createBackupGroupMutation({ identifier: instanceIdentifier, params: { name: backupFormName.trim() } });
-        ToastUtils.success("Backup group created");
-        setBackupFormName("");
-        setShowCreateBackupForm(false);
-        refetchBackupGroups();
+        await backupPurchaseConfirmMutation.mutateAsync({
+          identifier: instanceIdentifier,
+          acceptedAmount: accepted,
+        });
+        ToastUtils.success("Backup purchased and enabled");
+        setShowPurchaseWizard(false);
       } catch (e) {
-        ToastUtils.error(getErrorMessage(e, "Failed to create backup group"));
+        // Price-lock 409: the server re-quoted and the figure drifted from what
+        // the customer approved. Re-fetch and make them confirm the new total —
+        // never charge a price they didn't see (root CLAUDE.md).
+        if (isApiError(e) && e.status === 409) {
+          await refetchPurchasePreview();
+          ToastUtils.error(
+            "Backup pricing changed since you last reviewed it — please check the updated total and confirm again."
+          );
+          return;
+        }
+        ToastUtils.error(getErrorMessage(e, "Failed to purchase backup"));
       }
     };
 
-    const handleDeleteBackup = async (groupId: string) => {
+    const openEditWizard = () => {
+      setBackupWizardMode("edit");
+      setBackupCustomize(true);
+      setBackupFrequency(
+        (instanceBackupStatus?.frequency as "daily" | "weekly" | "monthly" | undefined) ?? "daily"
+      );
+      setBackupRetentionDays(Number(instanceBackupStatus?.retention_days ?? 7));
+      setBackupStartTime(instanceBackupStatus?.start_time ?? "02:00");
+      setShowBackupWizard(true);
+    };
+
+    const handleSubmitBackupWizard = async () => {
       if (!instanceIdentifier) return;
-      if (!globalThis.confirm("Delete this backup group? This cannot be undone.")) return;
+      const config = backupCustomize
+        ? {
+            frequency: backupFrequency,
+            retention_days: backupRetentionDays,
+            ...(backupStartTime ? { start_time: backupStartTime } : {}),
+          }
+        : { frequency: "daily" as const, retention_days: 7 };
       try {
-        await deleteBackupGroupMutation({ identifier: instanceIdentifier, groupId });
-        ToastUtils.success("Backup group deleted");
-        refetchBackupGroups();
+        if (backupWizardMode === "edit") {
+          await updateInstanceBackupMutation.mutateAsync({ identifier: instanceIdentifier, config });
+          ToastUtils.success("Backup schedule updated");
+        } else {
+          await enableInstanceBackupMutation.mutateAsync({ identifier: instanceIdentifier, config });
+          ToastUtils.success("Backup enabled");
+        }
+        setShowBackupWizard(false);
       } catch (e) {
-        ToastUtils.error(getErrorMessage(e, "Failed to delete backup group"));
+        ToastUtils.error(getErrorMessage(e, "Failed to save backup schedule"));
       }
     };
 
-    const handleTriggerSnapshot = async (groupId: string) => {
+    const handleTriggerInstanceBackup = async () => {
       if (!instanceIdentifier) return;
       try {
-        await triggerSnapshotMutation({ identifier: instanceIdentifier, groupId });
-        ToastUtils.success("Snapshot triggered");
-        refetchSnapshots();
+        await triggerInstanceBackupMutation.mutateAsync({ identifier: instanceIdentifier });
+        ToastUtils.success("Backup started");
       } catch (e) {
-        ToastUtils.error(getErrorMessage(e, "Failed to trigger snapshot"));
+        ToastUtils.error(getErrorMessage(e, "Failed to start backup"));
       }
     };
 
-    const handleDeleteSnapshot = async (snapshotId: string) => {
+    const handleToggleBackupPause = async () => {
       if (!instanceIdentifier) return;
-      if (!globalThis.confirm("Delete this snapshot?")) return;
+      const resume = !(instanceBackupStatus?.enabled ?? true);
       try {
-        await deleteSnapshotMutation({ identifier: instanceIdentifier, snapshotId });
-        ToastUtils.success("Snapshot deleted");
-        refetchSnapshots();
+        await updateInstanceBackupMutation.mutateAsync({
+          identifier: instanceIdentifier,
+          config: { enabled: resume },
+        });
+        ToastUtils.success(resume ? "Backup resumed" : "Backup paused");
       } catch (e) {
-        ToastUtils.error(getErrorMessage(e, "Failed to delete snapshot"));
+        ToastUtils.error(getErrorMessage(e, "Failed to update backup"));
+      }
+    };
+
+    const handleDisableInstanceBackup = async () => {
+      if (!instanceIdentifier) return;
+      if (!globalThis.confirm("Disable backup for this instance? The schedule will be removed.")) return;
+      try {
+        await disableInstanceBackupMutation.mutateAsync({ identifier: instanceIdentifier });
+        ToastUtils.success("Backup disabled");
+      } catch (e) {
+        ToastUtils.error(getErrorMessage(e, "Failed to disable backup"));
       }
     };
 
@@ -1712,7 +1881,202 @@ const AdminInstancesDetails = () => {
       }
     };
 
-    const _isLoading = isBackupGroupsFetching || isSnapshotsFetching || isRestoreGroupsFetching;
+    const isSavingBackup =
+      enableInstanceBackupMutation.isPending || updateInstanceBackupMutation.isPending;
+
+    const renderBackupWizard = () => (
+      <div className="space-y-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+        <div>
+          <p className="text-sm font-semibold text-slate-700">
+            {backupWizardMode === "edit" ? "Edit backup schedule" : "Enable backup"}
+          </p>
+          <p className="mt-0.5 text-xs text-slate-500">
+            Choose the default daily plan or customize the frequency and retention.
+          </p>
+        </div>
+
+        {backupWizardMode === "enable" && (
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => setBackupCustomize(false)}
+              className={`flex-1 rounded-lg border px-3 py-2 text-left text-xs transition ${
+                !backupCustomize
+                  ? "border-blue-500 bg-white ring-1 ring-blue-500"
+                  : "border-slate-200 bg-white hover:border-slate-300"
+              }`}
+            >
+              <span className="block font-semibold text-slate-700">Default</span>
+              <span className="mt-0.5 block text-slate-500">Daily, keep 7 days</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setBackupCustomize(true)}
+              className={`flex-1 rounded-lg border px-3 py-2 text-left text-xs transition ${
+                backupCustomize
+                  ? "border-blue-500 bg-white ring-1 ring-blue-500"
+                  : "border-slate-200 bg-white hover:border-slate-300"
+              }`}
+            >
+              <span className="block font-semibold text-slate-700">Customize</span>
+              <span className="mt-0.5 block text-slate-500">Pick frequency &amp; retention</span>
+            </button>
+          </div>
+        )}
+
+        {backupCustomize && (
+          <div className="grid gap-3 sm:grid-cols-3">
+            <label className="text-xs font-medium text-slate-600">
+              Frequency
+              <select
+                value={backupFrequency}
+                onChange={(e) =>
+                  setBackupFrequency(e.target.value as "daily" | "weekly" | "monthly")
+                }
+                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </label>
+            <label className="text-xs font-medium text-slate-600">
+              Retention (days)
+              <input
+                type="number"
+                min={1}
+                max={365}
+                value={backupRetentionDays}
+                onChange={(e) => setBackupRetentionDays(Number(e.target.value))}
+                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </label>
+            <label className="text-xs font-medium text-slate-600">
+              Start time
+              <input
+                type="time"
+                value={backupStartTime}
+                onChange={(e) => setBackupStartTime(e.target.value)}
+                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </label>
+          </div>
+        )}
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleSubmitBackupWizard}
+            disabled={isSavingBackup}
+            className="rounded-md bg-blue-600 px-4 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700 disabled:opacity-40"
+          >
+            {isSavingBackup
+              ? "Saving..."
+              : backupWizardMode === "edit"
+                ? "Save changes"
+                : "Enable Backup"}
+          </button>
+          <button
+            onClick={() => setShowBackupWizard(false)}
+            className="text-xs text-slate-500 transition hover:text-slate-700"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+
+    const renderPurchaseWizard = () => {
+      const previewCurrency = purchasePreview?.currency || currency || "NGN";
+      const loadingQuote = isPurchasePreviewFetching && !purchasePreview;
+      const alreadyEntitled = purchasePreview?.already_entitled === true;
+      const sufficient = purchasePreview?.sufficient_funds !== false;
+      const periodEnd = purchasePreview?.period_end;
+
+      return (
+        <div className="space-y-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <div>
+            <p className="text-sm font-semibold text-slate-700">Add backup protection</p>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Daily snapshots kept for 7 days. Review the cost below before you confirm.
+            </p>
+          </div>
+
+          {loadingQuote ? (
+            <div className="flex items-center gap-2 py-2 text-sm text-slate-400">
+              <Loader2 className="h-4 w-4 animate-spin" /> Calculating cost…
+            </div>
+          ) : alreadyEntitled ? (
+            <p className="rounded-md bg-white p-3 text-sm text-slate-600">
+              Backup is already included for this instance — enable it from the card above.
+            </p>
+          ) : (
+            <div className="space-y-2 rounded-md bg-white p-3 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-600">Monthly cost</span>
+                <span className="font-semibold text-slate-800">
+                  <PriceLabel amount={purchasePreview?.monthly_fee ?? 0} sourceCurrency={previewCurrency} />
+                  <span className="text-xs font-normal text-slate-400">/mo</span>
+                </span>
+              </div>
+              <div className="flex items-start justify-between">
+                <span className="text-slate-600">
+                  Due now
+                  {periodEnd ? (
+                    <span className="block text-[11px] text-slate-400">
+                      prorated to {formatDateTime(periodEnd)} ({purchasePreview?.days_remaining ?? 0} days left)
+                    </span>
+                  ) : null}
+                </span>
+                <span className="font-semibold text-slate-800">
+                  <PriceLabel amount={purchasePreview?.prorated_amount ?? 0} sourceCurrency={previewCurrency} />
+                </span>
+              </div>
+              <hr className="border-slate-100" />
+              <div className="flex items-center justify-between">
+                <span className="text-slate-600">Wallet balance</span>
+                <span className="font-medium text-slate-700">
+                  <PriceLabel amount={purchasePreview?.wallet_balance ?? 0} sourceCurrency={previewCurrency} />
+                </span>
+              </div>
+              {!sufficient && (
+                <div className="flex items-start gap-2 rounded-md bg-red-50 p-2">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+                  <p className="text-xs text-red-700">
+                    Insufficient wallet balance. Top up{" "}
+                    <PriceLabel amount={purchasePreview?.shortfall ?? 0} sourceCurrency={previewCurrency} /> more to
+                    continue.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleConfirmPurchase}
+              disabled={
+                loadingQuote ||
+                alreadyEntitled ||
+                backupPurchaseConfirmMutation.isPending ||
+                !sufficient ||
+                purchasePreview?.prorated_amount == null
+              }
+              className="rounded-md bg-blue-600 px-4 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700 disabled:opacity-40"
+            >
+              {backupPurchaseConfirmMutation.isPending ? "Purchasing…" : "Confirm & enable backup"}
+            </button>
+            <button
+              onClick={() => setShowPurchaseWizard(false)}
+              className="text-xs text-slate-500 transition hover:text-slate-700"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      );
+    };
+
+    const _isLoading = isBackupStatusFetching || isSnapshotsFetching || isRestoreGroupsFetching;
 
     return (
       <div className="space-y-8">
@@ -1761,43 +2125,10 @@ const AdminInstancesDetails = () => {
                 <span className={`text-sm font-semibold ${backupEnabled ? "text-green-600" : "text-slate-400"}`}>
                   {backupEnabled ? "Enabled" : "Disabled"}
                 </span>
-                {backupEnabled ? (
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={handleTriggerManualBackup}
-                      disabled={triggerBackupMutation.isPending}
-                      className="rounded p-1 text-slate-400 transition hover:bg-blue-50 hover:text-blue-600"
-                      title="Trigger Manual Backup"
-                    >
-                      <Camera className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={handleDisableBackup}
-                      disabled={disableBackupMutation.isPending}
-                      className="rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
-                      title="Disable Backup"
-                    >
-                      <XCircle className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={handleEnableBackup}
-                    disabled={enableBackupMutation.isPending}
-                    className="rounded-md bg-blue-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-blue-700"
-                  >
-                    Enable
-                  </button>
-                )}
               </div>
-              {backupEnabled && acfBackupStatus?.next_backup_at && (
+              {backupEnabled && (
                 <p className="mt-1 text-[10px] text-slate-400">
-                  Next: {formatDateTime(acfBackupStatus.next_backup_at)}
-                </p>
-              )}
-              {backupEnabled && acfBackupStatus?.snapshots_count != null && (
-                <p className="mt-0.5 text-[10px] text-slate-400">
-                  {acfBackupStatus.snapshots_count} snapshot{acfBackupStatus.snapshots_count !== 1 ? "s" : ""}
+                  {instanceBackupStatus?.schedule_label} · {instanceBackupStatus?.retention_days} days
                 </p>
               )}
             </div>
@@ -1885,171 +2216,265 @@ const AdminInstancesDetails = () => {
           </div>
         </div>
 
-        {/* Backup Groups */}
-        <div>
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-blue-500" />
-              <h3 className="text-base font-semibold text-slate-900">Backup Groups</h3>
-              <span className="text-xs text-slate-400">({backupGroups.length})</span>
-            </div>
-            <button
-              onClick={() => setShowCreateBackupForm(!showCreateBackupForm)}
-              className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700"
-            >
-              <Plus className="h-3.5 w-3.5" /> Create Group
-            </button>
+        {/* Backup — per-instance schedule + on-demand backups */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-blue-500" />
+            <h3 className="text-base font-semibold text-slate-900">Backup</h3>
           </div>
 
-          {showCreateBackupForm && (
-            <div className="mb-4 flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
-              <input
-                type="text"
-                value={backupFormName}
-                onChange={(e) => setBackupFormName(e.target.value)}
-                placeholder="Backup group name"
-                className="flex-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-              <button onClick={handleCreateBackup} className="rounded-md bg-blue-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-blue-700">
-                Create
-              </button>
-              <button onClick={() => setShowCreateBackupForm(false)} className="text-xs text-slate-500 hover:text-slate-700">
-                Cancel
-              </button>
-            </div>
-          )}
+          <div className="rounded-lg border border-slate-200 p-4">
+            {isBackupStatusFetching && !instanceBackupStatus ? (
+              <div className="flex items-center gap-2 py-2 text-sm text-slate-400">
+                <Loader2 className="h-4 w-4 animate-spin" /> Loading backup status...
+              </div>
+            ) : !backupConfigured ? (
+              /* Not protected — enable / purchase entry point + wizard.
+                 A non-entitled CLIENT buys backup as a paid add-on; operators
+                 (admin/tenant) comp it via the normal Enable flow. */
+              <div>
+                {showPurchaseWizard ? (
+                  renderPurchaseWizard()
+                ) : showBackupWizard ? (
+                  renderBackupWizard()
+                ) : instanceBackupStatus?.entitled === false && apiContext === "client" ? (
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-700">Not protected</p>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        Backup is a paid add-on that isn&apos;t included in this instance&apos;s plan. Add it to keep
+                        recoverable copies.
+                      </p>
+                    </div>
+                    <button
+                      onClick={openPurchaseWizard}
+                      className="flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-blue-700"
+                    >
+                      <ShieldCheck className="h-3.5 w-3.5" /> Add Backup
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-700">Not protected</p>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        {instanceBackupStatus?.entitled === false
+                          ? "Backup is a paid add-on that isn't included in this instance's plan."
+                          : "This instance has no scheduled backups. Enable backup to keep recoverable copies."}
+                      </p>
+                    </div>
+                    <button
+                      onClick={openEnableWizard}
+                      className="flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-blue-700"
+                    >
+                      <ShieldCheck className="h-3.5 w-3.5" /> Enable Backup
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Configured — status + actions */
+              <div className="space-y-4">
+                {showBackupWizard && backupWizardMode === "edit" ? (
+                  renderBackupWizard()
+                ) : (
+                  <>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-4">
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Status</p>
+                          <p className="mt-0.5 text-sm font-semibold text-slate-700">
+                            {instanceBackupStatus?.enabled
+                              ? formatStatusText(instanceBackupStatus?.state || "active")
+                              : "Paused"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Schedule</p>
+                          <p className="mt-0.5 text-sm font-semibold text-slate-700">
+                            {instanceBackupStatus?.schedule_label || "—"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Retention</p>
+                          <p className="mt-0.5 text-sm font-semibold text-slate-700">
+                            {instanceBackupStatus?.retention_days != null
+                              ? `${instanceBackupStatus.retention_days} day${instanceBackupStatus.retention_days === 1 ? "" : "s"}`
+                              : "—"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Last Backup</p>
+                          <p className="mt-0.5 text-sm font-semibold text-slate-700">
+                            {instanceBackupStatus?.last_backup_at
+                              ? formatDateTime(instanceBackupStatus.last_backup_at)
+                              : "Never"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
 
-          {isBackupGroupsFetching && !backupGroups.length ? (
-            <div className="flex items-center gap-2 py-6 text-sm text-slate-400">
-              <Loader2 className="h-4 w-4 animate-spin" /> Loading backup groups...
-            </div>
-          ) : backupGroups.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    <th className="pb-2 pr-4">Name</th>
-                    <th className="pb-2 pr-4">Status</th>
-                    <th className="pb-2 pr-4">Resources</th>
-                    <th className="pb-2 pr-4">Schedule</th>
-                    <th className="pb-2 pr-4">Last Snapshot</th>
-                    <th className="pb-2 pr-4">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {backupGroups.map((group, idx) => {
-                    const id = String(group["id"] || group["backup_group_id"] || idx);
-                    return (
-                      <tr key={id} className="border-b border-slate-50 hover:bg-slate-50">
-                        <td className="py-2.5 pr-4 font-medium text-blue-600">
-                          {String(group["name"] || group["display_name"] || `Group ${idx + 1}`)}
-                        </td>
-                        <td className="py-2.5 pr-4">
-                          <span className="inline-flex rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
-                            {formatStatusText(String(group["status"] || "active"))}
-                          </span>
-                        </td>
-                        <td className="py-2.5 pr-4 text-slate-600">
-                          {String(group["resource_count"] || group["resources_count"] || "0")}
-                        </td>
-                        <td className="py-2.5 pr-4 text-slate-600">
-                          {String(group["schedule"] || group["frequency"] || "Manual")}
-                        </td>
-                        <td className="py-2.5 pr-4 font-mono text-xs text-slate-500">
-                          {group["last_snapshot_at"] ? formatDateTime(group["last_snapshot_at"]) : "Never"}
-                        </td>
-                        <td className="py-2.5 pr-4">
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => handleTriggerSnapshot(id)}
-                              className="rounded p-1 text-slate-400 transition hover:bg-blue-50 hover:text-blue-600"
-                              title="Take Snapshot"
+                    {instanceBackupStatus?.rpo_hours != null && (
+                      <div className="mt-3 flex flex-col gap-1.5 rounded-md bg-slate-50 px-3 py-2 text-xs sm:flex-row sm:items-center sm:justify-between">
+                        <span className="text-slate-600">
+                          <span className="font-medium text-slate-700">RPO</span> — up to{" "}
+                          {formatRpo(instanceBackupStatus.rpo_hours)} of data loss between backups
+                        </span>
+                        <span className="flex items-center gap-1.5 text-slate-600">
+                          Last recovery point:
+                          {instanceBackupStatus.last_recovery_point_at ? (
+                            <span
+                              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${rpoOnTrack ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}`}
                             >
-                              <Camera className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteBackup(id)}
-                              className="rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
-                              title="Delete"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="py-6 text-center text-sm text-slate-400">No backup groups configured. Create one to protect your resources.</p>
-          )}
-        </div>
+                              <span className={`h-1.5 w-1.5 rounded-full ${rpoOnTrack ? "bg-green-500" : "bg-amber-500"}`} />
+                              {timeAgo(instanceBackupStatus.last_recovery_point_at)}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400">none yet</span>
+                          )}
+                        </span>
+                      </div>
+                    )}
 
-        {/* Snapshots */}
-        <div>
-          <div className="mb-4 flex items-center gap-2">
-            <Camera className="h-5 w-5 text-indigo-500" />
-            <h3 className="text-base font-semibold text-slate-900">Snapshots</h3>
-            <span className="text-xs text-slate-400">({snapshots.length})</span>
+                    <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-3">
+                      <button
+                        onClick={handleTriggerInstanceBackup}
+                        disabled={triggerInstanceBackupMutation.isPending || !instanceBackupStatus?.enabled}
+                        className="flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <Camera className="h-3.5 w-3.5" />
+                        {triggerInstanceBackupMutation.isPending ? "Starting..." : "Back Up Now"}
+                      </button>
+                      <button
+                        onClick={openEditWizard}
+                        className="flex items-center gap-1.5 rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+                      >
+                        <Shield className="h-3.5 w-3.5" /> Edit schedule
+                      </button>
+                      <button
+                        onClick={handleToggleBackupPause}
+                        disabled={updateInstanceBackupMutation.isPending}
+                        className="flex items-center gap-1.5 rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-40"
+                      >
+                        {instanceBackupStatus?.enabled ? (
+                          <>
+                            <BellOff className="h-3.5 w-3.5" /> Pause
+                          </>
+                        ) : (
+                          <>
+                            <Bell className="h-3.5 w-3.5" /> Resume
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={handleDisableInstanceBackup}
+                        disabled={disableInstanceBackupMutation.isPending}
+                        className="flex items-center gap-1.5 rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-40"
+                      >
+                        <XCircle className="h-3.5 w-3.5" /> Disable
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
-          {isSnapshotsFetching && !snapshots.length ? (
-            <div className="flex items-center gap-2 py-6 text-sm text-slate-400">
-              <Loader2 className="h-4 w-4 animate-spin" /> Loading snapshots...
-            </div>
-          ) : snapshots.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    <th className="pb-2 pr-4">Name</th>
-                    <th className="pb-2 pr-4">Group</th>
-                    <th className="pb-2 pr-4">Status</th>
-                    <th className="pb-2 pr-4">Size</th>
-                    <th className="pb-2 pr-4">Created</th>
-                    <th className="pb-2 pr-4">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {snapshots.map((snap, idx) => {
-                    const snapId = String(snap["id"] || snap["snapshot_id"] || idx);
-                    return (
-                      <tr key={snapId} className="border-b border-slate-50 hover:bg-slate-50">
-                        <td className="py-2.5 pr-4 font-medium text-blue-600">
-                          {String(snap["name"] || snap["display_name"] || `Snapshot ${idx + 1}`)}
-                        </td>
-                        <td className="py-2.5 pr-4 text-slate-600">
-                          {String(snap["backup_group_name"] || snap["group_name"] || "—")}
-                        </td>
-                        <td className="py-2.5 pr-4">
-                          <span className="inline-flex rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
-                            {formatStatusText(String(snap["status"] || "completed"))}
-                          </span>
-                        </td>
-                        <td className="py-2.5 pr-4 text-slate-600">
-                          {snap["size"] ? `${snap["size"]} GB` : "—"}
-                        </td>
-                        <td className="py-2.5 pr-4 font-mono text-xs text-slate-500">
-                          {formatDateTime(snap["created_at"] || snap["timestamp"])}
-                        </td>
-                        <td className="py-2.5 pr-4">
-                          <button
-                            onClick={() => handleDeleteSnapshot(snapId)}
-                            className="rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
-                            title="Delete Snapshot"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </td>
+
+          {/* Backups list */}
+          {backupConfigured && (
+            <div>
+              <div className="mb-3 flex items-center gap-2">
+                <Camera className="h-4 w-4 text-indigo-500" />
+                <h4 className="text-sm font-semibold text-slate-900">Backups</h4>
+                <span className="text-xs text-slate-400">({backupSnapshots.length})</span>
+              </div>
+              {isSnapshotsFetching && !backupSnapshots.length ? (
+                <div className="flex items-center gap-2 py-6 text-sm text-slate-400">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Loading backups...
+                </div>
+              ) : backupSnapshots.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        <th className="pb-2 pr-4">Backup</th>
+                        <th className="pb-2 pr-4">State</th>
+                        <th className="pb-2 pr-4">Health</th>
+                        <th className="pb-2 pr-4">Size</th>
+                        <th className="pb-2 pr-4">Created</th>
+                        <th className="pb-2 pr-4">Actions</th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                    </thead>
+                    <tbody>
+                      {backupSnapshots.map((snap, idx) => {
+                        const snapId = String(snap["id"] ?? idx);
+                        const state = String(snap["state"] ?? "").toLowerCase();
+                        const health = String(snap["health"] ?? "").toLowerCase();
+                        const stateClass =
+                          state === "ready"
+                            ? "bg-green-50 text-green-700"
+                            : state === "error"
+                              ? "bg-red-50 text-red-700"
+                              : "bg-amber-50 text-amber-700";
+                        const healthClass =
+                          health === "healthy"
+                            ? "bg-green-50 text-green-700"
+                            : health === "degraded"
+                              ? "bg-amber-50 text-amber-700"
+                              : health === "critical" || health === "error"
+                                ? "bg-red-50 text-red-700"
+                                : "bg-slate-100 text-slate-500";
+                        return (
+                          <tr key={snapId} className="border-b border-slate-50 hover:bg-slate-50">
+                            <td className="py-2.5 pr-4 font-mono text-xs text-slate-600">
+                              {String(snap["identifier"] ?? snap["id"] ?? `Backup ${idx + 1}`)}
+                            </td>
+                            <td className="py-2.5 pr-4">
+                              <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${stateClass}`}>
+                                {formatStatusText(snap["state"] ?? "pending")}
+                              </span>
+                            </td>
+                            <td className="py-2.5 pr-4">
+                              {snap["health"] ? (
+                                <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${healthClass}`}>
+                                  {formatStatusText(snap["health"])}
+                                </span>
+                              ) : (
+                                <span className="text-slate-400">—</span>
+                              )}
+                            </td>
+                            <td className="py-2.5 pr-4 text-slate-600">
+                              {formatBytes(snap["size_bytes"])}
+                            </td>
+                            <td className="py-2.5 pr-4 font-mono text-xs text-slate-500">
+                              {formatDateTime(snap["created_at"])}
+                            </td>
+                            <td className="py-2.5 pr-4">
+                              <button
+                                onClick={() => setRestoreBackupSnapshotId(snapId)}
+                                disabled={state !== "ready"}
+                                title={
+                                  state === "ready"
+                                    ? "Restore this backup into a new instance"
+                                    : "Backup must be ready before it can be restored"
+                                }
+                                className="flex items-center gap-1.5 rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                              >
+                                <RotateCcw className="h-3.5 w-3.5" /> Restore
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="py-6 text-center text-sm text-slate-400">
+                  No backups yet. Use &ldquo;Back Up Now&rdquo; to create one on demand.
+                </p>
+              )}
             </div>
-          ) : (
-            <p className="py-6 text-center text-sm text-slate-400">No snapshots available.</p>
           )}
         </div>
 
@@ -2319,7 +2744,7 @@ const AdminInstancesDetails = () => {
   // ---------------------------------------------------------------------------
 
   return (
-    <AdminPageShell
+    <PageShell
       title={displayInstance.name || displayInstance.identifier || "Instance"}
       description={
         displayInstance.region
@@ -2400,6 +2825,20 @@ const AdminInstancesDetails = () => {
         }}
       />
 
+      <InstanceRestoreBackupModal
+        isOpen={restoreBackupSnapshotId !== null}
+        onClose={() => setRestoreBackupSnapshotId(null)}
+        instanceIdentifier={String(instanceIdentifier ?? "")}
+        instanceName={displayInstance?.name || instanceIdentifier}
+        snapshotId={restoreBackupSnapshotId}
+        onSuccess={() => {
+          // First cut: no deep-link to the restored instance — the toast + list
+          // invalidation surface it. Deep-linking on the response identifier is a
+          // fast-follow once the restore response shape is confirmed.
+          ToastUtils.success("Restoring into a new instance…");
+        }}
+      />
+
       {consoles.map((consoleSession) => (
         <EmbeddedConsole
           key={consoleSession.id || consoleSession.instanceId}
@@ -2410,7 +2849,7 @@ const AdminInstancesDetails = () => {
           onClose={() => closeConsole(consoleSession.instanceId)}
         />
       ))}
-    </AdminPageShell>
+    </PageShell>
   );
 };
 

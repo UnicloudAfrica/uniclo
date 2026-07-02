@@ -5,7 +5,7 @@ prev: { label: Revenue Dashboard, href: /dashboard/docs/revenue }
 next: { label: Products, href: /dashboard/docs/products }
 ---
 
-:::step{number=1 icon=DollarSign title="View Current Pricing" navigation="Sidebar > Billing & Revenue > Price Settings"}
+:::step{number=1 icon=DollarSign title="View Current Pricing" navigation="Sidebar > Billing > Price Settings"}
 The price settings page shows all services and their current prices. You can see the base cost, your selling price, and the profit margin for each item. Everything is laid out in a clear table.
 :::
 

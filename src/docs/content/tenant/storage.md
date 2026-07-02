@@ -5,7 +5,7 @@ prev: { label: Networking, href: /dashboard/docs/networking }
 next: { label: Databases, href: /dashboard/docs/databases }
 ---
 
-:::step{number=1 icon=HardDrive title="Object Storage Overview" navigation="Sidebar > Infrastructure > Silo Storage"}
+:::step{number=1 icon=HardDrive title="Object Storage Overview" navigation="Sidebar > Compute & Storage > Object Buckets"}
 Object storage lets you store files (documents, images, backups, anything) in the cloud. Files are organized into "buckets" -- think of buckets as drawers in your filing cabinet.
 :::
 
@@ -24,10 +24,10 @@ Inside a bucket, you can upload files, create folders, download files, and delet
 Object storage is great for backups, media files, and static website assets. It is designed to store large amounts of data at a low cost.
 :::
 
-:::step{number=4 icon=Camera title="Snapshots" navigation="Sidebar > Networking > Snapshots"}
+:::step{number=4 icon=Camera title="Snapshots" navigation="Project > Storage"}
 Snapshots are point-in-time copies of a server's disk. If you accidentally delete something or need to go back to an earlier state, you can restore from a snapshot.
 :::
 
-:::step{number=5 icon=Image title="Images" navigation="Sidebar > Networking > Images"}
+:::step{number=5 icon=Image title="Images" navigation="Project > Images"}
 Images are complete server blueprints -- the operating system and all installed software. Use them as templates to create new servers that are identical to existing ones.
 :::

@@ -33,10 +33,10 @@ export const ConsoleLogsViewer: React.FC<ConsoleLogsViewerProps> = ({
         </div>
       );
     }
-    if (Array.isArray(logsData?.["logs"]) && logsData["logs"].length) {
+    if (Array.isArray(logsData?.["lines"]) && logsData["lines"].length) {
       return (
         <pre className="whitespace-pre-wrap break-words text-left">
-          {logsData["logs"].join("\n")}
+          {logsData["lines"].join("\n")}
         </pre>
       );
     }

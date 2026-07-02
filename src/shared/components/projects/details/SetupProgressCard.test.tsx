@@ -92,5 +92,23 @@ describe("SetupProgressCard", () => {
 
       expect(screen.getByText("IN_PROGRESS")).toBeTruthy();
     });
+
+    it("labels a terminally-failed step 'failed' in the live log, never 'executing...'", () => {
+      // REGRESSION: the live activity log only distinguished completed vs
+      // not, so a failed step read "Creating cloud workspace... executing..."
+      // directly under its red FAILED badge — contradictory and alarming.
+      render(
+        <SetupProgressCard
+          steps={[
+            { id: "1", label: "Creating cloud workspace...", status: "failed" },
+            { id: "2", label: "Syncing user access...", status: "not_started" },
+          ]}
+          pipelineActive={false}
+        />
+      );
+
+      expect(screen.queryByText(/executing/)).toBeNull();
+      expect(screen.getByText(/failed/)).toBeTruthy();
+    });
   });
 });

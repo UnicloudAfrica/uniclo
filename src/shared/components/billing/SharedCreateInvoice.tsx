@@ -111,7 +111,7 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
     isFetching: boolean;
   };
   const { data: integrationProducts, isFetching: isIntegrationProductsFetching } =
-    useFetchIntegrationProducts();
+    useFetchIntegrationProducts({ tenantId: selectedTenantId || undefined });
   const { mutate: createMultiQuotes, isPending: isSubmissionPending } = useCreateMultiQuotes();
 
   const invoiceAz = formData.availability_zone || "";
@@ -227,10 +227,15 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
       if (!formData.email) newErrors.email = "Primary email is required.";
       if (!formData.bill_to_name) newErrors.bill_to_name = "Bill to name is required.";
     } else if (step === 1) {
-      // Step 1 — Add Items: at least one item must be on the invoice.
-      if (pricingRequests.length === 0 && objectStorageRequests.length === 0) {
+      // Step 1 — Add Items: at least one line (compute, Silo Storage, or
+      // integration) must be on the invoice. Any single bucket is enough.
+      if (
+        pricingRequests.length === 0 &&
+        objectStorageRequests.length === 0 &&
+        integrationRequests.length === 0
+      ) {
         newErrors.general =
-          "Please add at least one item (compute or Silo Storage) to the invoice.";
+          "Please add at least one item (compute, Silo Storage, or integration) to the invoice.";
       }
     } else if (step === 2) {
       // Step 2 — Review & Submit: lead-capture toggle lives here.
@@ -457,9 +462,7 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
       onSuccess: (data) => {
         const res = data as InvoiceResponse;
         ToastUtils.success(
-          intent === "quote"
-            ? "Quote saved successfully!"
-            : "Invoice created successfully!"
+          intent === "quote" ? "Quote saved successfully!" : "Invoice created successfully!"
         );
         setApiResponse(res);
         setCurrentStep((prev) => prev + 1);
@@ -569,8 +572,8 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
           mode === "tenant"
             ? "/dashboard/invoices"
             : mode === "client"
-            ? "/client-dashboard/invoices"
-            : "/admin-dashboard/invoices";
+              ? "/client-dashboard/invoices"
+              : "/admin-dashboard/invoices";
         return (
           <InvoiceConfirmationStep
             apiResponse={apiResponse}
@@ -586,12 +589,7 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
 
   const intent = formData.intent ?? "invoice";
   const reviewCta = intent === "quote" ? "Save as Quote" : "Generate Invoice";
-  const stepCtas = [
-    "Continue to Add Items",
-    "Continue to Review",
-    reviewCta,
-    "Finish",
-  ];
+  const stepCtas = ["Continue to Add Items", "Continue to Review", reviewCta, "Finish"];
   const isReviewStep = currentStep === steps.length - 2;
   const isFinalStep = currentStep === steps.length - 1;
   const primaryActionLabel = stepCtas[currentStep] || "Continue";
@@ -612,9 +610,16 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }: SharedCreateInvoiceProp
 
   const disablePrimary =
     isSubmissionPending ||
-    // Block Continue from the Add Items step until at least one item is added.
-    (currentStep === 1 && pricingRequests.length === 0 && objectStorageRequests.length === 0) ||
-    (isReviewStep && pricingRequests.length === 0 && objectStorageRequests.length === 0);
+    // Block Continue / submit until at least one line (compute, Silo
+    // Storage, or integration) is staged — any single bucket is enough.
+    (currentStep === 1 &&
+      pricingRequests.length === 0 &&
+      objectStorageRequests.length === 0 &&
+      integrationRequests.length === 0) ||
+    (isReviewStep &&
+      pricingRequests.length === 0 &&
+      objectStorageRequests.length === 0 &&
+      integrationRequests.length === 0);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

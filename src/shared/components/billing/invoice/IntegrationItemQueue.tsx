@@ -18,7 +18,9 @@ const IntegrationItemQueue: React.FC<IntegrationItemQueueProps> = ({
 
   return (
     <div className="space-y-3">
-      <h4 className="text-sm font-semibold text-slate-900">Integration Services ({items.length})</h4>
+      <h4 className="text-sm font-semibold text-slate-900">
+        Integration Services ({items.length})
+      </h4>
       <div className="space-y-2">
         {items.map((item, index) => (
           <div
@@ -31,7 +33,9 @@ const IntegrationItemQueue: React.FC<IntegrationItemQueueProps> = ({
                   <span className="rounded-lg bg-primary-50 p-1 text-primary-600">
                     <Puzzle className="h-3.5 w-3.5" />
                   </span>
-                  <span className="text-sm font-semibold text-slate-900">{item._display?.name}</span>
+                  <span className="text-sm font-semibold text-slate-900">
+                    {item._display?.name}
+                  </span>
                 </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
                   <span>Qty: {item.quantity}</span>

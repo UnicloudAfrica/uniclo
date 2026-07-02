@@ -9,10 +9,25 @@ export const useLoadBalancers = (projectId: string, options?: { enabled?: boolea
   return useQuery<LoadBalancer[], Error>({
     queryKey: ["load-balancers", projectId],
     queryFn: async () => {
-      const result: { data: LoadBalancer[] } = await adminApi.get(
-        `/projects/${projectId}/load-balancers`
-      );
-      return result.data || [];
+      // `silent: true` suppresses the unified client's auto-toast. The list
+      // endpoint returns a benign 200 envelope ({ data: [], message: "Load
+      // balancers are not available for this project." }) on providers/projects
+      // without LBaaS, which otherwise surfaces as a stray toast on every load
+      // (especially on freshly-created projects). An empty list is a normal
+      // empty state, not an error. Genuine failures (network / 4xx / 5xx) throw
+      // here and are re-surfaced as an error toast below so they aren't swallowed.
+      try {
+        const result: { data: LoadBalancer[] } = await adminApi.get(
+          `/projects/${projectId}/load-balancers`,
+          { silent: true }
+        );
+        return result.data || [];
+      } catch (error) {
+        ToastUtils.error(
+          (error instanceof Error ? error.message : undefined) || "Failed to load Load Balancers"
+        );
+        throw error;
+      }
     },
     enabled: (options?.enabled ?? true) && !!projectId,
   });

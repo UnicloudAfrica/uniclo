@@ -5,14 +5,14 @@ prev: { label: Clients & Leads, href: /dashboard/docs/clients }
 next: { label: Instance Templates, href: /dashboard/docs/templates }
 ---
 
-:::step{number=1 icon=Target title="View Your Leads" navigation="Sidebar > Customer Management > Leads"}
+:::step{number=1 icon=Target title="View Your Leads" navigation="Sidebar > Customers > Leads"}
 The leads page shows all of your potential customers in one place. Each lead displays a name, contact info, current pipeline stage, and when they were last updated. This is your sales overview.
 :::
 
 :::screenshot{caption="Your Leads list page"}
 :::
 
-:::step{number=2 icon=Plus title="Create a New Lead" navigation="Sidebar > Customer Management > Leads > New"}
+:::step{number=2 icon=Plus title="Create a New Lead" navigation="Sidebar > Customers > Leads > New"}
 Click "New" to add a lead manually. Fill in the company name, contact person, email, and any notes about what they are looking for. You can also set the initial pipeline stage.
 :::
 

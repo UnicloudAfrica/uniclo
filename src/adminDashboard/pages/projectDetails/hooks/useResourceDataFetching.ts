@@ -64,7 +64,6 @@ export function useResourceDataFetching({
     {
       projectId: project?.identifier,
       region: project?.region,
-      extra: { refresh: true },
     },
     { enabled: Boolean(project?.identifier && project?.region) }
   );
@@ -72,7 +71,6 @@ export function useResourceDataFetching({
     {
       projectId: project?.identifier,
       region: project?.region,
-      extra: { refresh: true },
     },
     { enabled: Boolean(project?.identifier && project?.region) }
   );
@@ -80,7 +78,6 @@ export function useResourceDataFetching({
     {
       projectId: project?.identifier,
       region: project?.region,
-      extra: { refresh: true },
     },
     { enabled: Boolean(project?.identifier && project?.region) }
   );
@@ -88,7 +85,6 @@ export function useResourceDataFetching({
     {
       projectId: project?.identifier,
       region: project?.region,
-      extra: { refresh: true },
     },
     { enabled: Boolean(project?.identifier && project?.region) }
   );
@@ -101,7 +97,6 @@ export function useResourceDataFetching({
     {
       projectId: project?.identifier,
       region: project?.region,
-      extra: { refresh: true },
     },
     { enabled: Boolean(project?.identifier && project?.region) }
   );
@@ -109,7 +104,6 @@ export function useResourceDataFetching({
     {
       projectId: project?.identifier,
       region: project?.region,
-      extra: { refresh: true },
     },
     { enabled: Boolean(project?.identifier && project?.region) }
   );

@@ -156,6 +156,98 @@ describe("ProvisioningFullScreen", () => {
     });
   });
 
+  describe("stalled / stuck state", () => {
+    it("surfaces a 'Provisioning Stalled' panel + Retry when retries are exhausted, even while status is still provisioning", () => {
+      const onRetry = vi.fn();
+      render(
+        <ProvisioningFullScreen
+          project={{ name: "Demo Project", status: "provisioning" }}
+          setupSteps={[
+            { id: "1", label: "Creating cloud workspace...", status: "completed" },
+            {
+              id: "retry_provisioning",
+              label: "Retrying after transient error...",
+              status: "retrying",
+              context: { attempt: 3, max_tries: 3, error: "Cloud provider connection timed out." },
+            },
+          ]}
+          onRetry={onRetry}
+        />
+      );
+
+      expect(screen.getByText("Provisioning Stalled")).toBeTruthy();
+      // The underlying retry error is surfaced, not hidden.
+      expect(screen.getByText("Cloud provider connection timed out.")).toBeTruthy();
+      // Not a terminal failure.
+      expect(screen.queryByText("Provisioning Failed")).toBeNull();
+
+      const button = screen.getByRole("button", { name: /retry provisioning/i });
+      fireEvent.click(button);
+      expect(onRetry).toHaveBeenCalledTimes(1);
+    });
+
+    it("does NOT flag stuck while a retry is still within bounds", () => {
+      render(
+        <ProvisioningFullScreen
+          project={{ name: "Demo Project", status: "provisioning" }}
+          setupSteps={[
+            { id: "1", label: "Creating cloud workspace...", status: "completed" },
+            {
+              id: "retry_provisioning",
+              label: "Retrying after transient error...",
+              status: "retrying",
+              context: { attempt: 1, max_tries: 3 },
+            },
+            { id: "2", label: "Syncing user access...", status: "pending" },
+          ]}
+        />
+      );
+
+      expect(screen.queryByText("Provisioning Stalled")).toBeNull();
+      expect(screen.getByText(/Provisioning Demo Project/)).toBeTruthy();
+    });
+
+    it("flags a zero-forward-progress pipeline as stuck only after the dwell window", () => {
+      vi.useFakeTimers();
+      render(
+        <ProvisioningFullScreen
+          project={{ name: "Demo Project", status: "provisioning" }}
+          setupSteps={[
+            { id: "1", label: "Preparing provisioning environment...", status: "not_started" },
+            { id: "2", label: "Creating cloud workspace...", status: "not_started" },
+          ]}
+        />
+      );
+
+      // Before the dwell elapses, we're still reassuring — not stuck.
+      expect(screen.queryByText("Provisioning Stalled")).toBeNull();
+
+      act(() => {
+        vi.advanceTimersByTime(90_000);
+      });
+
+      expect(screen.getByText("Provisioning Stalled")).toBeTruthy();
+    });
+
+    it("treats an empty pipeline payload that never progresses as stuck after the dwell", () => {
+      vi.useFakeTimers();
+      render(
+        <ProvisioningFullScreen
+          project={{ name: "Demo Project", status: "provisioning" }}
+          setupSteps={[]}
+        />
+      );
+
+      expect(screen.queryByText("Provisioning Stalled")).toBeNull();
+
+      act(() => {
+        vi.advanceTimersByTime(90_000);
+      });
+
+      expect(screen.getByText("Provisioning Stalled")).toBeTruthy();
+    });
+  });
+
   it("does a single delayed refresh after reaching 100%", () => {
     vi.useFakeTimers();
 

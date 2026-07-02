@@ -1,5 +1,6 @@
 import { Trash2, ShoppingCart, ExternalLink } from "lucide-react";
 import useCartStore, { useCartSubtotal, useCartOneTime } from "@/stores/cartStore";
+import { formatMoney } from "./formatMoney";
 
 interface CartPanelProps {
   vatRate?: number;
@@ -13,8 +14,7 @@ export default function CartPanel({ vatRate = 7.5, currency = "NGN" }: CartPanel
   const tax = subtotal * (vatRate / 100);
   const total = subtotal + tax;
 
-  const symbol = currency === "NGN" ? "₦" : currency === "USD" ? "$" : currency;
-  const fmt = (v: number) => `${symbol}${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const fmt = (v: number) => formatMoney(v, currency);
 
   return (
     <div className="flex h-full flex-col">

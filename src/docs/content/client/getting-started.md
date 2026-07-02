@@ -80,7 +80,7 @@ Feel free to click around and explore. Just looking at pages will never cost you
 
 A **project** is like a folder on your computer. It keeps your servers, networks, and storage organized. Before you can launch anything, you need at least one project. Think of it as renting an apartment -- the project is the apartment, and everything you put inside it is your furniture.
 
-:::step{number=1 icon=FolderPlus title="Go to Projects" navigation="Sidebar > Infrastructure > Projects"}
+:::step{number=1 icon=FolderPlus title="Go to Projects" navigation="Sidebar > Compute & Storage > Projects"}
 In the left sidebar, click on **Infrastructure** and then **Projects**. You will see a page listing all your projects (it will be empty right now).
 :::
 
@@ -99,7 +99,7 @@ You can rename your project later, so do not overthink the name. Something simpl
 
 An **instance** (also called a server) is your own personal computer in the cloud. It is just like the computer sitting on your desk, except it lives in a secure data center and you access it over the internet. Launching one is like ordering a brand new computer that is ready to use in seconds!
 
-:::step{number=1 icon=Rocket title="Open the provisioning wizard" navigation="Sidebar > Infrastructure > Instances > Provision Instance"}
+:::step{number=1 icon=Rocket title="Open the provisioning wizard" navigation="Sidebar > Compute & Storage > Instances > Provision Instance"}
 Navigate to **Instances** in the sidebar and click **Provision Instance**. A step-by-step wizard will open to guide you through the process.
 :::
 

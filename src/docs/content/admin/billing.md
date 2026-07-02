@@ -15,33 +15,33 @@ E --> F[Settlement]
 F --> G[Tenant Payout]
 :::
 
-:::step{number=1 icon=CreditCard title="Payment Transactions" navigation="Sidebar > Billing & Pricing > Payment"}
+:::step{number=1 icon=CreditCard title="Payment Transactions" navigation="Sidebar > Billing > Payment"}
 This page shows every payment made on the platform. You can see who paid, how much, when, and the payment status (successful, pending, or failed). Click on any transaction to see the full details. Think of it as your cash register history.
 :::
 
 :::screenshot{caption="Your Payment transactions list"}
 :::
 
-:::step{number=2 icon=Wallet title="Wallet Management" navigation="Sidebar > Billing & Pricing > Wallet"}
+:::step{number=2 icon=Wallet title="Wallet Management" navigation="Sidebar > Billing > Wallet"}
 The wallet system lets users prepay for services — like loading a gift card. You can see wallet balances, top-up history, and manage billing modes (prepaid vs. postpaid).
 :::
 
-:::step{number=3 icon=ArrowRightLeft title="Settlements" navigation="Sidebar > Billing & Pricing > Settlements"}
+:::step{number=3 icon=ArrowRightLeft title="Settlements" navigation="Sidebar > Billing > Settlements"}
 Settlements are the process of reconciling what tenants owe you vs. what they have earned. Think of it like balancing the books at the end of the month.
 :::
 
-:::step{number=4 icon=Receipt title="Payouts" navigation="Sidebar > Billing & Pricing > Payouts"}
+:::step{number=4 icon=Receipt title="Payouts" navigation="Sidebar > Billing > Payouts"}
 Payouts are money going out to your tenants. When tenants earn revenue from their clients, you pay them their share. This page tracks all those outgoing payments.
 :::
 
-:::step{number=5 icon=Percent title="Tax Configuration" navigation="Sidebar > Billing & Pricing > Tax Configuration"}
+:::step{number=5 icon=Percent title="Tax Configuration" navigation="Sidebar > Billing > Tax Configuration"}
 Set up tax rates for different countries. When invoices are generated, the correct tax is automatically applied based on the customer's location. It is like setting up the sales tax rules for your store.
 :::
 
 :::screenshot{caption="Your Tax configuration page"}
 :::
 
-:::step{number=6 icon=FileText title="Generate Invoice" navigation="Sidebar > Billing & Pricing > Generate Invoice"}
+:::step{number=6 icon=FileText title="Generate Invoice" navigation="Sidebar > Billing > New Quote / Invoice"}
 Need to create a manual invoice? This tool lets you build one from scratch — pick the client, add line items, set the amount, and generate a professional invoice.
 :::
 

@@ -264,7 +264,7 @@ describe("AccessGrantManager", () => {
         onRevoke={vi.fn()}
       />,
     );
-    expect(screen.getByText(/No grants issued/i)).toBeInTheDocument();
+    expect(screen.getByText(/Nobody else can see this yet/i)).toBeInTheDocument();
   });
 
   it("renders grants table with revoke button per row", () => {

@@ -1,6 +1,7 @@
 import { handleAuthRedirect } from "./authRedirect";
 import ToastUtils from "./toastUtil";
 import logger from "./logger";
+import { ApiError, isApiError, extractFieldErrors } from "./apiError";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -43,12 +44,33 @@ interface FileApiClientConfig {
 type ApiResponseRecord = Record<string, unknown>;
 
 type ApiClient = {
-  <T = ApiResponseRecord>(method: HttpMethod, uri: string, body?: ApiClientBody): Promise<T>;
+  <T = ApiResponseRecord>(
+    method: HttpMethod,
+    uri: string,
+    body?: ApiClientBody,
+    headers?: Record<string, string>
+  ): Promise<T>;
   get: <T = ApiResponseRecord>(uri: string) => Promise<T>;
-  post: <T = ApiResponseRecord>(uri: string, body?: ApiPayload) => Promise<T>;
-  put: <T = ApiResponseRecord>(uri: string, body?: ApiPayload) => Promise<T>;
-  patch: <T = ApiResponseRecord>(uri: string, body?: ApiPayload) => Promise<T>;
-  delete: <T = ApiResponseRecord>(uri: string, body?: ApiPayload) => Promise<T>;
+  post: <T = ApiResponseRecord>(
+    uri: string,
+    body?: ApiPayload,
+    headers?: Record<string, string>
+  ) => Promise<T>;
+  put: <T = ApiResponseRecord>(
+    uri: string,
+    body?: ApiPayload,
+    headers?: Record<string, string>
+  ) => Promise<T>;
+  patch: <T = ApiResponseRecord>(
+    uri: string,
+    body?: ApiPayload,
+    headers?: Record<string, string>
+  ) => Promise<T>;
+  delete: <T = ApiResponseRecord>(
+    uri: string,
+    body?: ApiPayload,
+    headers?: Record<string, string>
+  ) => Promise<T>;
 };
 
 const toRecord = (value: unknown): ApiResponseRecord =>
@@ -77,11 +99,20 @@ let csrfPrimed = false;
  * Fetch the Sanctum CSRF cookie once per session. Subsequent calls are no-ops.
  * Called lazily before any state-changing request.
  */
+/**
+ * Strip the audience API prefix (/api/v1, /admin/v1, /tenant/v1,
+ * /api/v1/business, …) off a base URL to reach the origin root, where Sanctum
+ * serves /sanctum/csrf-cookie. The old logic only matched /api/v1, so the admin
+ * (/admin/v1) and tenant (/tenant/v1) clients left their prefix intact and hit
+ * /admin/v1/sanctum/csrf-cookie → 404. Exported for tests.
+ */
+export const sanctumRootFor = (baseURL: string): string =>
+  baseURL.replace(/\/(?:api|admin|tenant)\/v\d+(?:\/[^/]+)?\/?$/, "").replace(/\/+$/, "");
+
 const ensureCsrfCookie = async (baseURL: string): Promise<void> => {
   if (csrfPrimed) return;
   try {
-    // The baseURL usually ends with /api/v1 — strip that to reach /sanctum/csrf-cookie
-    const root = baseURL.replace(/\/api\/v\d+\/?$/, "").replace(/\/+$/, "");
+    const root = sanctumRootFor(baseURL);
     await fetch(`${root}/sanctum/csrf-cookie`, {
       method: "GET",
       credentials: "include",
@@ -182,13 +213,17 @@ export const createApiClient = ({
   const requester = (async <T = unknown>(
     method: HttpMethod,
     uri: string,
-    body: ApiClientBody = null
+    body: ApiClientBody = null,
+    extraHeaders: Record<string, string> = {}
   ): Promise<T> => {
     const url = baseURL + uri;
     const authState = authStore?.getState ? authStore.getState() : undefined;
-    const headers = (authState?.getAuthHeaders?.() as Record<string, string>) || {
-      "Content-Type": "application/json",
-      Accept: "application/json",
+    const headers = {
+      ...((authState?.getAuthHeaders?.() as Record<string, string>) || {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      }),
+      ...extraHeaders,
     };
 
     if (body instanceof FormData) {
@@ -278,28 +313,28 @@ export const createApiClient = ({
           ToastUtils.error(resolveDisplayMessage(errorMessage, response.status, effectiveRole));
         }
 
-        throw new Error(errorMessage);
+        throw new ApiError(errorMessage, response.status, res, extractFieldErrors(res));
       }
     } catch (err) {
       const message = getErrorMessage(err, "An error occurred");
       if (showToasts && !message.includes("Unauthorized")) {
         const effectiveRole =
           authStore?.getState?.()?.getEffectiveRole?.() || authStore?.getState?.()?.role;
-        ToastUtils.error(resolveDisplayMessage(message, 0, effectiveRole));
+        ToastUtils.error(resolveDisplayMessage(message, isApiError(err) ? err.status : 0, effectiveRole));
       }
       throw err;
     }
   }) as ApiClient;
 
   requester.get = <T = unknown>(uri: string) => requester<T>("GET", uri);
-  requester.post = <T = unknown>(uri: string, body?: ApiPayload) =>
-    requester<T>("POST", uri, body ?? null);
-  requester.put = <T = unknown>(uri: string, body?: ApiPayload) =>
-    requester<T>("PUT", uri, body ?? null);
-  requester.patch = <T = unknown>(uri: string, body?: ApiPayload) =>
-    requester<T>("PATCH", uri, body ?? null);
-  requester.delete = <T = unknown>(uri: string, body?: ApiPayload) =>
-    requester<T>("DELETE", uri, body ?? null);
+  requester.post = <T = unknown>(uri: string, body?: ApiPayload, headers?: Record<string, string>) =>
+    requester<T>("POST", uri, body ?? null, headers);
+  requester.put = <T = unknown>(uri: string, body?: ApiPayload, headers?: Record<string, string>) =>
+    requester<T>("PUT", uri, body ?? null, headers);
+  requester.patch = <T = unknown>(uri: string, body?: ApiPayload, headers?: Record<string, string>) =>
+    requester<T>("PATCH", uri, body ?? null, headers);
+  requester.delete = <T = unknown>(uri: string, body?: ApiPayload, headers?: Record<string, string>) =>
+    requester<T>("DELETE", uri, body ?? null, headers);
 
   return requester;
 };
@@ -406,14 +441,14 @@ export const createMultipartApiClient = ({
           ToastUtils.error(resolveDisplayMessage(errorMessage, response.status, effectiveRole));
         }
 
-        throw new Error(errorMessage);
+        throw new ApiError(errorMessage, response.status, res, extractFieldErrors(res));
       }
     } catch (err) {
       const message = getErrorMessage(err, "An error occurred");
       if (showToasts && !message.includes("Unauthorized")) {
         const effectiveRole =
           authStore?.getState?.()?.getEffectiveRole?.() || authStore?.getState?.()?.role;
-        ToastUtils.error(resolveDisplayMessage(message, 0, effectiveRole));
+        ToastUtils.error(resolveDisplayMessage(message, isApiError(err) ? err.status : 0, effectiveRole));
       }
       throw err;
     }
@@ -548,7 +583,7 @@ export const createFileApiClient = ({
           toMessage(parsedRecord["message"]) ||
           text ||
           "An error occurred";
-        throw new Error(errorMessage);
+        throw new ApiError(errorMessage, response.status, parsed, extractFieldErrors(parsed));
       }
     } catch (err) {
       logger.error("API error:", err);

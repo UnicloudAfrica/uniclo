@@ -5,18 +5,18 @@ prev: { label: Billing & Revenue, href: /dashboard/docs/billing }
 next: { label: Advanced Services, href: /dashboard/docs/advanced }
 ---
 
-:::step{number=1 icon=Globe title="Understanding Regions" navigation="Sidebar > Regional > Region Requests"}
+:::step{number=1 icon=Globe title="Understanding Regions" navigation="Sidebar > Customers > Region Requests"}
 Each region represents a data center location. You start with access to certain regions and can request access to more as your business grows. Your clients create servers in the regions you have access to.
 :::
 
-:::step{number=2 icon=Plus title="Request a New Region" navigation="Sidebar > Regional > Region Requests > New"}
+:::step{number=2 icon=Plus title="Request a New Region" navigation="Sidebar > Customers > Region Requests > New"}
 Need to serve clients in a new area? Submit a region access request. You will need to provide some information about why you need this region and your expected usage.
 :::
 
 :::screenshot{caption="Your New Region Request form"}
 :::
 
-:::step{number=3 icon=Clock title="Track Your Request" navigation="Sidebar > Regional > Region Requests"}
+:::step{number=3 icon=Clock title="Track Your Request" navigation="Sidebar > Customers > Region Requests"}
 After submitting, you can track the status of your request. The platform admin reviews and approves region access requests.
 :::
 

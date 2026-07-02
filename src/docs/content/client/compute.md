@@ -16,7 +16,7 @@ F --> G[Server Deploying...]
 G --> H[Your Server is Ready!]
 :::
 
-:::step{number=1 icon=FolderKanban title="What are Projects?" navigation="Sidebar > Infrastructure > Projects"}
+:::step{number=1 icon=FolderKanban title="What are Projects?" navigation="Sidebar > Compute & Storage > Projects"}
 Projects are like folders on your computer -- they help you organize your servers into groups. For example, you might have a "Website" project for your web servers and a "Database" project for your database servers. Click "Create" to make your first project.
 :::
 
@@ -27,14 +27,14 @@ Projects are like folders on your computer -- they help you organize your server
 Start with one project. You can always create more later as you grow. Think of a project name that describes what the servers inside it will be used for.
 :::
 
-:::step{number=2 icon=Server title="View Your Instances" navigation="Sidebar > Infrastructure > Cube Instances"}
+:::step{number=2 icon=Server title="View Your Instances" navigation="Sidebar > Compute & Storage > Instances"}
 This page shows all your servers. Each one displays its name, whether it is running or stopped, its IP address (like its phone number on the internet), and how much CPU and memory it is using.
 :::
 
 :::screenshot{caption="Your Instances list"}
 :::
 
-:::step{number=3 icon=Plus title="Create a New Instance" navigation="Sidebar > Infrastructure > Create Instance"}
+:::step{number=3 icon=Plus title="Create a New Instance" navigation="Sidebar > Compute & Storage > Instances > Create Instance"}
 This is the exciting part -- launching your own server! The wizard walks you through each choice:
 
 - **Project** -- Which folder should this server go in?
@@ -50,11 +50,11 @@ This is the exciting part -- launching your own server! The wizard walks you thr
 Not sure what size to pick? Start small -- you can always upgrade later. It is much easier to grow than to shrink.
 :::
 
-:::step{number=4 icon=LayoutTemplate title="Templates" navigation="Sidebar > Infrastructure > Templates"}
+:::step{number=4 icon=LayoutTemplate title="Templates" navigation="Sidebar > Compute & Storage > Templates"}
 Templates are pre-made server setups -- like ordering a combo meal instead of picking every item individually. Pick a template that matches what you need and launch in seconds.
 :::
 
-:::step{number=5 icon=Key title="Key Pairs" navigation="Sidebar > Infrastructure > Key Pairs"}
+:::step{number=5 icon=Key title="Key Pairs" navigation="Sidebar > Compute & Storage > Key Pairs"}
 Key pairs are special security keys for connecting to your server. Think of the private key as your house key -- keep it safe and never share it! You will need it every time you log into your server remotely.
 :::
 

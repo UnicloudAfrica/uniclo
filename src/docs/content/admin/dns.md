@@ -5,14 +5,14 @@ prev: { label: Load Balancers, href: /admin-dashboard/docs/load-balancers }
 next: { label: Replication Policies, href: /admin-dashboard/docs/replication }
 ---
 
-:::step{number=1 icon=Globe2 title="View All DNS Zones" navigation="Sidebar > Networking > DNS Zones"}
+:::step{number=1 icon=Globe2 title="View All DNS Zones" navigation="Sidebar > Networking & Edge > DNS Zones"}
 The DNS zones page lists all managed domains on your platform. Each zone represents a domain (like example.com) and contains records that map names to addresses. You can see the zone name, record count, and status.
 :::
 
 :::screenshot{caption="Your DNS Zones list"}
 :::
 
-:::step{number=2 icon=Plus title="Create a DNS Zone" navigation="Sidebar > Networking > DNS Zones > Create"}
+:::step{number=2 icon=Plus title="Create a DNS Zone" navigation="Sidebar > Networking & Edge > DNS Zones > Create"}
 Click create to add a new DNS zone. Enter the domain name and the platform will set up the zone for you. After creation, you will need to update your domain registrar to point to the provided nameservers.
 :::
 

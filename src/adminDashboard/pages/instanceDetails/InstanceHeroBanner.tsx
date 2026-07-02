@@ -9,7 +9,6 @@ import {
   RotateCw,
   Terminal,
   Pencil,
-  Maximize,
   Camera,
   Trash2,
   RefreshCw,
@@ -17,6 +16,7 @@ import {
   ZapOff,
   Move,
   Globe,
+  CalendarPlus,
 } from "lucide-react";
 import StatusPill from "@/shared/components/ui/StatusPill";
 
@@ -74,7 +74,6 @@ const ACTION_BUTTONS = [
   { key: "reboot", label: "Reboot", icon: RotateCw },
   { key: "console", label: "Connect", icon: Terminal },
   { key: "resize", label: "Modify", icon: Pencil },
-  { key: "extend", label: "Extend", icon: Maximize },
 ];
 
 const MORE_ACTIONS = [
@@ -85,11 +84,37 @@ const MORE_ACTIONS = [
   { key: "resume", label: "Resume", icon: Play },
   { key: "migrate", label: "Live Migration", icon: Move },
   { key: "snapshot", label: "Snapshot", icon: Camera },
+  { key: "extend", label: "Extend", icon: CalendarPlus },
   { key: "attach_elastic_ip", label: "Attach Elastic IP", icon: Globe },
   { key: "sync_provisioning", label: "Sync Provisioning", icon: RefreshCw },
   { key: "retry_provisioning", label: "Retry Provisioning", icon: RotateCw },
   { key: "destroy", label: "Destroy", icon: Trash2 },
 ];
+
+/**
+ * Read a single entry from the backend's capability-gated `available_actions`
+ * map. Each entry is `{ enabled, disabled_reason? }`; legacy responses used a
+ * bare boolean, so both shapes are accepted.
+ */
+const readActionEntry = (
+  availableActions: Record<string, unknown>,
+  key: string
+): { present: boolean; enabled: boolean; disabledReason?: string } => {
+  const raw = availableActions[key];
+  if (raw === undefined || raw === null) return { present: false, enabled: false };
+  if (typeof raw === "boolean") return { present: true, enabled: raw };
+  if (typeof raw === "object") {
+    const entry = raw as Record<string, unknown>;
+    const enabled = Boolean(entry["enabled"]);
+    const reason = entry["disabled_reason"];
+    return {
+      present: true,
+      enabled,
+      ...(typeof reason === "string" ? { disabledReason: reason } : {}),
+    };
+  }
+  return { present: true, enabled: Boolean(raw) };
+};
 
 const InstanceHeroBanner: React.FC<InstanceHeaderProps> = ({
   _name,
@@ -156,7 +181,16 @@ const InstanceHeroBanner: React.FC<InstanceHeaderProps> = ({
     }
     if (!supportsInstanceActions) return false;
     if (isDisabledByStatus(key)) return false;
-    return !!availableActions[key];
+    return readActionEntry(availableActions, key).enabled;
+  };
+
+  // Tooltip: prefer the backend's neutral disabled_reason when an action is
+  // gated off, otherwise show the action label.
+  const getActionTooltip = (key: string, label: string): string => {
+    if (isActionAvailable(key)) return label;
+    const { present, enabled, disabledReason } = readActionEntry(availableActions, key);
+    if (present && !enabled && disabledReason) return disabledReason;
+    return label;
   };
 
   const handleActionClick = (key: string) => {
@@ -195,7 +229,7 @@ const InstanceHeroBanner: React.FC<InstanceHeaderProps> = ({
                     ? "text-slate-600 hover:bg-slate-200 hover:text-slate-900"
                     : "cursor-not-allowed text-slate-300"
                 }`}
-                title={label}
+                title={getActionTooltip(key, label)}
               >
                 <Icon className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
                 <span className="text-[10px] font-medium">{label}</span>
@@ -227,6 +261,7 @@ const InstanceHeroBanner: React.FC<InstanceHeaderProps> = ({
                         setShowMoreMenu(false);
                       }}
                       disabled={!available}
+                      title={getActionTooltip(key, label)}
                       className={`flex w-full items-center gap-3 px-4 py-2 text-left text-sm ${
                         available
                           ? key === "destroy"

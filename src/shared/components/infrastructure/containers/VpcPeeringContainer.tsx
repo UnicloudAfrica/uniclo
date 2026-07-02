@@ -59,6 +59,8 @@ interface VpcPeeringContainerProps {
     headerActions: React.ReactNode;
     children: React.ReactNode;
   }) => React.ReactElement;
+  /** Whether the AZ's provider supports VPC peering. Defaults to true. */
+  providerSupported?: boolean;
 }
 
 
@@ -67,6 +69,7 @@ const VpcPeeringContainer: React.FC<VpcPeeringContainerProps> = ({
   region,
   hooks,
   wrapper: Wrapper,
+  providerSupported = true,
 }) => {
   const {
     data: peeringConnections = [],
@@ -161,7 +164,7 @@ const VpcPeeringContainer: React.FC<VpcPeeringContainerProps> = ({
         <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
         {isFetching ? "Refreshing..." : "Refresh"}
       </ModernButton>
-      {createMutation && (
+      {createMutation && providerSupported && (
         <ModernButton variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
           <Plus className="w-4 h-4" />
           Create Peering

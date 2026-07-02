@@ -5,14 +5,14 @@ prev: { label: Leads, href: /dashboard/docs/leads }
 next: { label: Key Pairs, href: /dashboard/docs/key-pairs }
 ---
 
-:::step{number=1 icon=LayoutTemplate title="Browse Templates" navigation="Sidebar > Infrastructure > Templates"}
+:::step{number=1 icon=LayoutTemplate title="Browse Templates" navigation="Sidebar > Compute & Storage > Templates"}
 The templates page lists all available server blueprints. Each template shows the operating system, CPU, memory, and disk size it includes. Browse through them to find one that matches your needs.
 :::
 
 :::screenshot{caption="Your Templates list page"}
 :::
 
-:::step{number=2 icon=Plus title="Create a Custom Template" navigation="Sidebar > Infrastructure > Templates > New"}
+:::step{number=2 icon=Plus title="Create a Custom Template" navigation="Sidebar > Compute & Storage > Templates > New"}
 Click "New" to build your own template. Choose the operating system, set the CPU and memory, configure the disk size, and save it. Next time you or your clients need the same setup, just pick this template instead of configuring everything again.
 :::
 

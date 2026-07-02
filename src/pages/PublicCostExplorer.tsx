@@ -72,7 +72,7 @@ export default function PublicCostExplorer() {
           </p>
           <div className="mt-4 flex items-center justify-center gap-2">
             <Sparkles className="h-4 w-4 text-amber-400" />
-            <span className="text-xs text-amber-300">All prices in Nigerian Naira (₦) with 7.5% VAT</span>
+            <span className="text-xs text-amber-300">All prices in Nigerian Naira with 7.5% VAT</span>
           </div>
         </div>
       </div>

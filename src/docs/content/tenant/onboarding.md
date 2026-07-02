@@ -5,7 +5,7 @@ prev: { label: Infrastructure Agent, href: /dashboard/docs/agent }
 next: { label: Revenue Dashboard, href: /dashboard/docs/revenue }
 ---
 
-:::step{number=1 icon=Compass title="Start the Onboarding Wizard" navigation="Sidebar > Regional > Onboarding"}
+:::step{number=1 icon=Compass title="Start the Onboarding Wizard" navigation="Sidebar > Customers > Onboarding Review"}
 When you first access your account, the onboarding wizard guides you through the key setup steps. It appears automatically, but you can also return to it at any time from the sidebar.
 :::
 

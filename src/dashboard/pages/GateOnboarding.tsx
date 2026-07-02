@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, Circle } from "lucide-react";
 import config from "@/config";
-import useAuthStore from "@/stores/authStore";
 import TenantPageShell from "../components/TenantPageShell";
 
 /**
@@ -22,10 +21,11 @@ const GateOnboarding = () => {
   const [items, setItems] = useState<ChecklistItem[]>([]);
 
   const load = useCallback(async () => {
-    const token = useAuthStore.getState().token;
     try {
+      // SEC-027: cookie-based auth — credentials: "include" carries the
+      // httpOnly session cookie; no Bearer token is held client-side.
       const res = await fetch(`${config.baseURL}/requirements/checklist?placement=onboarding-steps`, {
-        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: { Accept: "application/json" },
         credentials: "include",
       });
       const json = (await res.json().catch(() => ({}))) as { data?: ChecklistItem[] };

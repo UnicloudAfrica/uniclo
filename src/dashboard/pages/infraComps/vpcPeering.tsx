@@ -33,14 +33,20 @@ const useVpcsAdapter = (projectId: string, region?: string) => {
 interface VpcPeeringProps {
   projectId?: string;
   region?: string;
+  providerSupported?: boolean;
 }
 
-const VpcPeeringPage: React.FC<VpcPeeringProps> = ({ projectId = "", region = "" }) => {
+const VpcPeeringPage: React.FC<VpcPeeringProps> = ({
+  projectId = "",
+  region = "",
+  providerSupported = true,
+}) => {
   return (
     <VpcPeeringContainer
       hierarchy="tenant"
       projectId={projectId}
       region={region}
+      providerSupported={providerSupported}
       hooks={{
         useList: useVpcPeeringAdapter as never,
         useVpcs: useVpcsAdapter as never,

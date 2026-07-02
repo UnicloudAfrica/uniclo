@@ -5,14 +5,14 @@ prev: { label: VPCs, href: /admin-dashboard/docs/vpcs }
 next: { label: Load Balancers, href: /admin-dashboard/docs/load-balancers }
 ---
 
-:::step{number=1 icon=Shield title="View All Security Groups" navigation="Sidebar > Networking > Security Groups"}
+:::step{number=1 icon=Shield title="View All Security Groups" navigation="Sidebar > Networking & Edge > Security Groups"}
 The security groups page lists all firewall rule sets on your platform. Each security group contains inbound rules (who can come in) and outbound rules (who can go out). They are attached to instances to control network access — like assigning a bouncer to each door.
 :::
 
 :::screenshot{caption="Your Security Groups list"}
 :::
 
-:::step{number=2 icon=Plus title="Create a Security Group" navigation="Sidebar > Networking > Security Groups > Create"}
+:::step{number=2 icon=Plus title="Create a Security Group" navigation="Sidebar > Networking & Edge > Security Groups > Create"}
 Click create to set up a new security group. Give it a name, select the VPC it belongs to, and start adding rules. Each rule specifies a protocol (TCP, UDP), a port range, and which IP addresses are allowed.
 :::
 

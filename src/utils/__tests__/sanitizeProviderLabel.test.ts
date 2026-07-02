@@ -27,6 +27,10 @@ describe("sanitizeProviderLabel", () => {
     expect(sanitizeProviderLabel("Lagos (FOO-BAR)")).toBe("Lagos");
   });
 
+  it("removes OpenStack provider name (case-insensitive)", () => {
+    expect(sanitizeProviderLabel("OpenStack Lagos AZ3")).toBe("Lagos AZ3");
+  });
+
   it("passes clean labels through unchanged", () => {
     expect(sanitizeProviderLabel("Lagos AZ1")).toBe("Lagos AZ1");
     expect(sanitizeProviderLabel("Nigeria")).toBe("Nigeria");
@@ -49,7 +53,7 @@ describe("sanitizeProviderLabel", () => {
   });
 
   it("never exposes any provider word to UI output", () => {
-    const out = sanitizeProviderLabel("Zadara Nobus UCA Lagos");
-    expect(out).not.toMatch(/zadara|nobus|uca/i);
+    const out = sanitizeProviderLabel("Zadara Nobus OpenStack UCA Lagos");
+    expect(out).not.toMatch(/zadara|nobus|openstack|uca/i);
   });
 });

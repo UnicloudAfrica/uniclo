@@ -3,29 +3,27 @@
  *
  * Enhanced React Flow diagram showing all 12 cloud resource types arranged in
  * four horizontal bands: connectivity, network, security, and compute.
- * Resources with non-zero counts are connected to their related resources via
- * animated dashed edges.
+ * The structural relationships between resource types are always drawn so the
+ * graph reads as a connected topology even before anything is provisioned;
+ * live connections (both endpoints populated) are emphasised. See
+ * buildLayeredEdges.
  */
 import { useMemo, useCallback } from "react";
 import {
   ReactFlow,
   Background,
   Controls,
-  MarkerType,
   BackgroundVariant,
   useNodesState,
   useEdgesState,
 } from "@xyflow/react";
-import type { Node, Edge } from "@xyflow/react";
+import type { Node } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
 import ResourceNode from "../components/ResourceNode";
+import { buildLayeredEdges } from "./layeredEdges";
 import type { ResourceNodeData } from "../components/ResourceNode";
-import {
-  RESOURCE_EXPLANATIONS,
-  LAYER_ORDER,
-  getResourcesByLayerForProvider,
-} from "../resourceExplanations";
+import { LAYER_ORDER, getResourcesByLayerForProvider } from "../resourceExplanations";
 import type { ResourceTypeId, InfraLayer } from "../resourceExplanations";
 import type { ViewProps } from "../InfrastructureVisualization.types";
 
@@ -97,8 +95,6 @@ export default function LayeredDiagramView({
 
   const { initialNodes, initialEdges } = useMemo(() => {
     const nodes: Node<ResourceNodeData>[] = [];
-    const edges: Edge[] = [];
-    const edgeSet = new Set<string>(); // dedupe edges
 
     // -- Nodes ---------------------------------------------------------------
 
@@ -153,51 +149,15 @@ export default function LayeredDiagramView({
     }
 
     // -- Edges ---------------------------------------------------------------
-
-    // Collect the set of node IDs that were actually rendered
+    // Structural relationships are always drawn (see buildLayeredEdges) so a
+    // new / empty / failed project still reads as a connected topology, with
+    // live connections emphasised.
     const nodeIds = new Set(nodes.map((n) => n.id));
-
-    for (const res of Object.values(RESOURCE_EXPLANATIONS)) {
-      // Skip resources whose nodes weren't rendered (provider-filtered)
-      if (!nodeIds.has(res.id)) continue;
-
-      const sourceCount = getResourceCount(data, res.id);
-      if (sourceCount === 0) continue;
-
-      for (const targetId of res.relatedResources) {
-        // Skip targets whose nodes weren't rendered (provider-filtered)
-        if (!nodeIds.has(targetId)) continue;
-
-        const targetCount = getResourceCount(data, targetId);
-        if (targetCount === 0) continue;
-
-        // Build a canonical key so we don't create duplicate edges A->B and B->A
-        const edgeKey = [res.id, targetId].sort().join("--");
-        if (edgeSet.has(edgeKey)) continue;
-        edgeSet.add(edgeKey);
-
-        const bothHighlighted =
-          highlightedTypes.includes(res.id) && highlightedTypes.includes(targetId);
-
-        edges.push({
-          id: `e-${edgeKey}`,
-          source: res.id,
-          target: targetId,
-          animated: true,
-          style: {
-            stroke: bothHighlighted ? "#60a5fa" : "#d1d5db",
-            strokeDasharray: "5 3",
-            strokeWidth: bothHighlighted ? 2 : 1,
-          },
-          markerEnd: {
-            type: MarkerType.ArrowClosed,
-            width: 12,
-            height: 12,
-            color: bothHighlighted ? "#60a5fa" : "#d1d5db",
-          },
-        });
-      }
-    }
+    const edges = buildLayeredEdges(
+      nodeIds,
+      (typeId) => getResourceCount(data, typeId),
+      highlightedTypes
+    );
 
     return { initialNodes: nodes, initialEdges: edges };
   }, [data, selectedResource, highlightedTypes]);

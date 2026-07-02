@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Eye, Archive, PlayCircle, Trash2 } from "lucide-react";
+import { Eye, Archive, PlayCircle, Trash2, FolderOpen } from "lucide-react";
 import ModernTable, { Column } from "../ui/ModernTable";
 import { getStatusDisplayConfig, formatDate, SortConfig } from "@/utils/projectUtils";
 import { Project } from "@/types/project";
@@ -176,10 +176,26 @@ const ProjectsTableView: React.FC<ProjectsTableViewProps> = ({
     [columns, onViewProject, onActivateProject, onArchiveProject, onDeleteProject]
   );
 
+  // Styled empty state so a 0-project list reads as intentional and fills
+  // the table card instead of collapsing to a bare "No data" stub.
+  const emptyState = (
+    <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
+      <FolderOpen size={40} className="text-gray-300" />
+      <p className="text-sm font-medium text-gray-900">No projects found</p>
+      <p className="text-sm text-gray-500">
+        Try adjusting your filters or create a new project to get started.
+      </p>
+    </div>
+  );
+
   return (
     <ModernTable<Project>
       data={projects}
       columns={tableColumns}
+      emptyMessage={emptyState}
+      searchable={false}
+      filterable={false}
+      exportable={false}
       loading={isLoading || isFetching} // Unified loading state
       // Pagination
       paginated={true}

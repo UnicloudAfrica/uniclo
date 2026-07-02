@@ -14,14 +14,14 @@ D --> E[Cutover]
 E --> F[Running in New Location]
 :::
 
-:::step{number=1 icon=Truck title="View Migrations" navigation="Sidebar > Disaster Recovery > Migrations"}
+:::step{number=1 icon=Truck title="View Migrations" navigation="Sidebar > Resilience > Migrations"}
 The migrations page shows all your migration jobs. Each one displays the source, destination, current status, and progress percentage. You can track every migration from start to finish.
 :::
 
 :::screenshot{caption="Your Migrations list page"}
 :::
 
-:::step{number=2 icon=Plus title="Start a New Migration" navigation="Sidebar > Disaster Recovery > Migrations > New"}
+:::step{number=2 icon=Plus title="Start a New Migration" navigation="Sidebar > Resilience > Migrations > New"}
 Click "New" to begin a migration. Select the source workload you want to move and the target destination. The wizard walks you through configuration, network mapping, and scheduling.
 :::
 

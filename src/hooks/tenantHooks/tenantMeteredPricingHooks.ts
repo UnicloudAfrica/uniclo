@@ -32,7 +32,7 @@ interface ApiEnvelope<T> {
 const fetchRows = async (): Promise<TenantMeteredPricingRow[]> => {
   const res = await tenantSilentApi<ApiEnvelope<TenantMeteredPricingRow[]>>(
     "GET",
-    "/metered-unit-prices",
+    "/admin/metered-unit-prices",
   );
   if (!res?.data) throw new Error("Failed to fetch tenant metered pricing.");
   return res.data;
@@ -49,7 +49,7 @@ const updateRow = async ({
 }) => {
   const res = await tenantApi<ApiEnvelope<unknown>>(
     "PATCH",
-    `/metered-unit-prices/${metricId}`,
+    `/admin/metered-unit-prices/${metricId}`,
     { unit_price, ...(is_active !== undefined ? { is_active } : {}) },
   );
   if (!res) throw new Error("Failed to save metered override.");
@@ -59,7 +59,7 @@ const updateRow = async ({
 const revertRow = async (metricId: number) => {
   const res = await tenantApi<ApiEnvelope<unknown>>(
     "DELETE",
-    `/metered-unit-prices/${metricId}`,
+    `/admin/metered-unit-prices/${metricId}`,
   );
   if (!res) throw new Error("Failed to revert metered override.");
   return res.data;

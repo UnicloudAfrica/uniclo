@@ -39,13 +39,15 @@ function makeHealth(overrides: Partial<BucketReplicationHealth> = {}): BucketRep
 describe("RpoGauge", () => {
   it("renders skeleton with aria-busy when health is null", () => {
     render(<RpoGauge health={null} />);
-    const wrapper = screen.getByLabelText(/RPO loading/i);
+    const wrapper = screen.getByLabelText(/Checking how in-sync we are/i);
     expect(wrapper).toHaveAttribute("aria-busy", "true");
   });
 
   it("renders skeleton when isLoading is true even with health data", () => {
     render(<RpoGauge health={makeHealth()} isLoading />);
-    expect(screen.getByLabelText(/RPO loading/i)).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/Checking how in-sync we are/i),
+    ).toBeInTheDocument();
   });
 
   it("renders error state when error prop is set", () => {

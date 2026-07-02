@@ -21,6 +21,7 @@ import {
   useFetchWalletBalance,
   useFetchWalletTransactions,
   useTopUpWallet,
+  type TopUpResult,
 } from "@/hooks/walletHooks";
 import { type Column } from "@/shared/components/ui/ModernTable";
 
@@ -36,6 +37,17 @@ const toWalletEnvelope = (amount: number, currency: string, symbol: string) => (
   formatted_display: `${symbol}${Number(amount).toLocaleString()}`,
   fx_source: "identity",
 });
+
+const isTrustedPaymentUrl = (url: string): boolean => {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return ["paystack.com", "checkout.paystack.com", "stripe.com", "checkout.stripe.com"].some(
+      (allowed) => host === allowed || host.endsWith(`.${allowed}`),
+    );
+  } catch {
+    return false;
+  }
+};
 
 // ═══════════════════════════════════════════════════════════════════
 // TYPES
@@ -217,7 +229,14 @@ export default function WalletDashboard() {
     topUp(
       { amount, currency, payment_method: "paystack" },
       {
-        onSuccess: () => setShowTopUp(false),
+        onSuccess: (result: TopUpResult | undefined) => {
+          const authorizationUrl = result?.authorization_url;
+          if (authorizationUrl && isTrustedPaymentUrl(authorizationUrl)) {
+            globalThis.window.location.assign(authorizationUrl);
+            return;
+          }
+          setShowTopUp(false);
+        },
       }
     );
   };

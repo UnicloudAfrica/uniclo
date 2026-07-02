@@ -38,14 +38,13 @@ interface GateRequirement {
   fields: GateField[];
 }
 
-const authHeaders = (): Record<string, string> => {
-  const token = useAuthStore.getState().token;
-  return {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-};
+// SEC-027: cookie-based auth — the httpOnly session cookie forwarded by
+// credentials: "include" authenticates these requests; no Bearer token is
+// held client-side.
+const authHeaders = (): Record<string, string> => ({
+  Accept: "application/json",
+  "Content-Type": "application/json",
+});
 
 /** Whether a field (incl. repeatable groups) is satisfied. */
 const isFilled = (field: GateField, value: unknown): boolean => {
@@ -126,12 +125,11 @@ const RequirementGate: React.FC<{ placement?: string; children?: React.ReactNode
 
   /** Upload a file to private storage and return the stored path (or null). */
   const uploadFile = async (file: File): Promise<string | null> => {
-    const token = useAuthStore.getState().token;
     const fd = new FormData();
     fd.append("file", file);
     const res = await fetch(`${config.baseURL}/requirements/upload`, {
       method: "POST",
-      headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      headers: { Accept: "application/json" },
       credentials: "include",
       body: fd,
     });

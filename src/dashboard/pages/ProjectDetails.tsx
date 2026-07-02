@@ -279,13 +279,31 @@ const ProjectDetails: React.FC = () => {
           />
         );
       case "nat":
-        return <NatGateways projectId={projectId} region={project?.region} />;
+        return (
+          <NatGateways
+            projectId={projectId}
+            region={project?.region}
+            providerSupported={project?.provider_features?.nat_gateways ?? true}
+          />
+        );
       case "peering":
-        return <VpcPeering projectId={projectId} region={project?.region} />;
+        return (
+          <VpcPeering
+            projectId={projectId}
+            region={project?.region}
+            providerSupported={project?.provider_features?.vpc_peering ?? true}
+          />
+        );
       case "lbs":
         return <LoadBalancers projectId={projectId} region={project?.region} />;
       case "acls":
-        return <NetworkAcls projectId={projectId} region={project?.region} />;
+        return (
+          <NetworkAcls
+            projectId={projectId}
+            region={project?.region}
+            providerSupported={project?.provider_features?.network_acls ?? true}
+          />
+        );
       default:
         return renderPlaceholder(
           "Networking",

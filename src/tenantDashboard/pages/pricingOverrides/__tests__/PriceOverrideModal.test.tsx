@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import PriceOverrideModal from "../PriceOverrideModal";
 import type { PricingCatalogRow, TenantRegion } from "../pricingOverridesTypes";
@@ -42,20 +44,24 @@ function renderModal(overrides: Partial<React.ComponentProps<typeof PriceOverrid
   const onSaveComplete = vi.fn();
   const onClose = vi.fn();
   render(
-    <PriceOverrideModal
-      isOpen
-      onClose={onClose}
-      row={computeRow}
-      overrideInfo={null}
-      activeRegion={activeRegion}
-      selectedRegion="uni-ng-lag"
-      regions={[activeRegion]}
-      isSaving={false}
-      onUpsert={onUpsert}
-      onUpdate={onUpdate}
-      onSaveComplete={onSaveComplete}
-      {...overrides}
-    />,
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <MemoryRouter>
+      <PriceOverrideModal
+        isOpen
+        onClose={onClose}
+        row={computeRow}
+        overrideInfo={null}
+        activeRegion={activeRegion}
+        selectedRegion="uni-ng-lag"
+        regions={[activeRegion]}
+        isSaving={false}
+        onUpsert={onUpsert}
+        onUpdate={onUpdate}
+        onSaveComplete={onSaveComplete}
+        {...overrides}
+      />
+    </MemoryRouter>
+    </QueryClientProvider>,
   );
   return { onUpsert, onUpdate, onSaveComplete, onClose };
 }

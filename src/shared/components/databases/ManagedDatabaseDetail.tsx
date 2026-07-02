@@ -77,6 +77,7 @@ import type {
   ManagedDatabaseOperationProgressStep,
 } from "@/types/managedDatabase";
 import ResourceProtectionTab from "@/shared/components/integrations/ResourceProtectionTab";
+import { useFeatureFlags } from "@/hooks/featureFlagsHooks";
 
 interface ManagedDatabaseDetailProps {
   identifier: string;
@@ -1068,6 +1069,11 @@ const FirewallTab: React.FC<{ db: ManagedDatabase; identifier: string }> = ({ db
 // ─── Disaster Recovery Tab ───────────────────────────────────────
 
 const DrTab: React.FC<{ db: ManagedDatabase; identifier: string }> = ({ db, identifier }) => {
+  // FE mirror of the backend `managed_database_dr_ordering` flag. Enabling DR
+  // hits the same order-time guard that 422s when the flag is off, so we hide
+  // the enable form (and fail closed to "coming soon") unless ordering is on.
+  const { data: featureFlags } = useFeatureFlags();
+  const drOrderingEnabled = featureFlags?.managed_database_dr_ordering ?? false;
   const { data: eligibility, isLoading: eligibilityLoading } = useFetchDrEligibility(identifier, {
     enabled: db.status === "active" && !db.dr_region,
   });
@@ -1196,6 +1202,22 @@ const DrTab: React.FC<{ db: ManagedDatabase; identifier: string }> = ({ db, iden
           <p className="font-medium text-yellow-800 dark:text-yellow-300">Not Available</p>
           <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-400">
             Disaster Recovery can only be enabled on active databases.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // DR ordering not yet available for self-service — mirror the backend
+  // guard and offer no enable controls that would 422.
+  if (!drOrderingEnabled) {
+    return (
+      <div className="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-6 dark:border-gray-700 dark:bg-gray-800">
+        <AlertTriangle className="mt-0.5 h-5 w-5 text-gray-500 shrink-0" />
+        <div>
+          <p className="font-medium text-gray-800 dark:text-gray-200">Disaster Recovery — Coming Soon</p>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            Self-service disaster recovery ordering isn't available yet. Contact support for a manual DR work order.
           </p>
         </div>
       </div>
@@ -1377,7 +1399,6 @@ const DrTab: React.FC<{ db: ManagedDatabase; identifier: string }> = ({ db, iden
                     </div>
                     <div className="text-xs text-gray-500">
                       {az.code}
-                      {isOrbitMode && az.provider ? ` · ${az.provider}` : ""}
                     </div>
                     {az.disabledReason && (
                       <div className="mt-1 text-xs text-amber-700 dark:text-amber-400">

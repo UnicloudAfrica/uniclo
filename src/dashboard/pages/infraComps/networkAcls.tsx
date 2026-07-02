@@ -31,14 +31,20 @@ const useVpcsAdapter = (projectId: string, region?: string) => {
 interface NetworkAclsProps {
   projectId?: string;
   region?: string;
+  providerSupported?: boolean;
 }
 
-const NetworkAclsPage: React.FC<NetworkAclsProps> = ({ projectId = "", region = "" }) => {
+const NetworkAclsPage: React.FC<NetworkAclsProps> = ({
+  projectId = "",
+  region = "",
+  providerSupported = true,
+}) => {
   return (
     <NetworkAclsContainer
       hierarchy="tenant"
       projectId={projectId}
       region={region}
+      providerSupported={providerSupported}
       hooks={{
         useList: useNetworkAclsAdapter as never,
         useVpcs: useVpcsAdapter as never,

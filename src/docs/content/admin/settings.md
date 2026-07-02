@@ -26,7 +26,7 @@ Customize how the platform looks — upload your logo, set your brand colors, an
 :::screenshot{caption="Your Platform branding settings"}
 :::
 
-:::step{number=4 icon=UserCog title="Admin Users List" navigation="Sidebar > Customer Management > Admin Users"}
+:::step{number=4 icon=UserCog title="Admin Users List" navigation="Sidebar > Customers > Tenants & Users"}
 View and manage all administrator accounts on the platform. See each admin's name, email, role, and last login date.
 :::
 

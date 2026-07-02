@@ -1,5 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ObjectStorageProfileCard } from "../ObjectStorageProfileCard";
 import type { ResolvedProfile } from "@/hooks/useObjectStoragePricing";
 
@@ -37,18 +39,22 @@ const noop = () => undefined;
 
 const renderCard = (profile: ResolvedProfile, onStorageGbChange = noop) =>
   render(
-    <ObjectStorageProfileCard
-      profile={profile}
-      index={0}
-      regionOptions={[{ value: "uni-ng", label: "Nigeria (uni-ng)" }]}
-      canRemove={false}
-      onRemove={noop}
-      onRegionChange={noop}
-      onTierChange={noop}
-      onMonthsChange={noop}
-      onStorageGbChange={onStorageGbChange}
-      onNameChange={noop}
-    />
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <MemoryRouter>
+      <ObjectStorageProfileCard
+        profile={profile}
+        index={0}
+        regionOptions={[{ value: "uni-ng", label: "Nigeria (uni-ng)" }]}
+        canRemove={false}
+        onRemove={noop}
+        onRegionChange={noop}
+        onTierChange={noop}
+        onMonthsChange={noop}
+        onStorageGbChange={onStorageGbChange}
+        onNameChange={noop}
+      />
+    </MemoryRouter>
+    </QueryClientProvider>
   );
 
 describe("ObjectStorageProfileCard", () => {

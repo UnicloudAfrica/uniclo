@@ -215,7 +215,7 @@ const handleAuthError = (
  * we must forward the XSRF-TOKEN cookie value as X-XSRF-TOKEN header
  * because Laravel's CSRF middleware does not read the cookie directly.
  */
-const readCookie = (name: string): string | null => {
+export const readCookie = (name: string): string | null => {
   if (typeof document === "undefined") return null;
   const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
   return match ? decodeURIComponent(match[1]) : null;

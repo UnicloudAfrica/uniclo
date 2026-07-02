@@ -36,10 +36,14 @@ const STATUS_TONE: Record<string, StatusTone> = {
 
 const formatNgn = (kobo?: number): string => {
   if (kobo === undefined || kobo === null) return "—";
-  return `₦${(kobo / 100).toLocaleString(undefined, {
+  // price_monthly_kobo is NGN minor units; format from the ISO code rather
+  // than a hardcoded symbol (platform money rule). SlimDeploy plans are NGN.
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  })}`;
+  }).format(kobo / 100);
 };
 
 const formatDate = (iso?: string | null): string => {

@@ -40,7 +40,7 @@ export const DESTINATION_TYPE_LABELS: Record<DestinationType, string> = {
   s3: "Amazon S3",
   ssh: "SSH/SFTP",
   object_storage: "Object Storage",
-  swift: "OpenStack Swift",
+  swift: "S3-Compatible Storage",
   azure_blob: "Azure Blob Storage",
   gcs: "Google Cloud Storage",
   airgap: "Airgap Vault",

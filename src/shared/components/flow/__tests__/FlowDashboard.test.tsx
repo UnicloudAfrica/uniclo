@@ -3,6 +3,12 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import type { ReactNode } from "react";
 
+// FlowDashboard renders its past-due banner via react-i18next's t() in the
+// "flow" namespace. Import the app i18n bootstrap (self-initializes on import)
+// so t() resolves to the real English copy instead of returning raw keys.
+// No `@/i18n` alias exists (see web/CLAUDE.md) — use the relative path.
+import "../../../../i18n";
+
 /**
  * FlowDashboard smoke tests. Stubs `useFlowApi` so we can assert the
  * dashboard renders the right banners + tabs for each subscription state

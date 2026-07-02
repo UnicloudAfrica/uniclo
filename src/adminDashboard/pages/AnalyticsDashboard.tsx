@@ -76,8 +76,14 @@ const useRecentActivity = () => {
 };
 
 // Helper functions
+// Platform revenue aggregates arrive in NGN minor units (kobo). Format from
+// the explicit ISO code rather than a hardcoded symbol (platform money rule).
 const formatCurrency = (amount: number): string => {
-  return "₦" + (amount / 100).toLocaleString(undefined, { minimumFractionDigits: 0 });
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    minimumFractionDigits: 0,
+  }).format(amount / 100);
 };
 
 const formatNumber = (num: number): string => {

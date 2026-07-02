@@ -40,6 +40,8 @@ interface NetworkAclsContainerProps {
     children: React.ReactNode;
   }) => React.ReactElement;
   onManageRules: (acl: NetworkAcl) => void;
+  /** Whether the AZ's provider supports Network ACLs. Defaults to true. */
+  providerSupported?: boolean;
 }
 
 const NetworkAclsContainer: React.FC<NetworkAclsContainerProps> = ({
@@ -49,6 +51,7 @@ const NetworkAclsContainer: React.FC<NetworkAclsContainerProps> = ({
   hooks,
   wrapper: Wrapper,
   onManageRules,
+  providerSupported = true,
 }) => {
   const permissions = getNetworkAclPermissions(hierarchy);
 
@@ -118,7 +121,7 @@ const NetworkAclsContainer: React.FC<NetworkAclsContainerProps> = ({
         <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
         {isFetching ? "Refreshing..." : "Refresh"}
       </ModernButton>
-      {permissions.canCreate && (
+      {permissions.canCreate && providerSupported && (
         <ModernButton variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
           <Plus className="w-4 h-4 mr-2" />
           Create ACL

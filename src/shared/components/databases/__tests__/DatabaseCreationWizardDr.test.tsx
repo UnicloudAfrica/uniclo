@@ -55,6 +55,14 @@ vi.mock("@/shared/hooks/resources/managedDatabaseHooks", () => ({
   useFetchAvailablePlans: () => ({ data: undefined }),
 }));
 
+// DR ordering is flag-gated (GAP-218): the hook fails closed and forces
+// `drEnabled` back to false unless the /features flag is on. DR submission
+// is only reachable with the flag ON, which is the precondition this suite
+// exercises, so mock it on.
+vi.mock("@/hooks/featureFlagsHooks", () => ({
+  useFeatureFlags: () => ({ data: { managed_database_dr_ordering: true } }),
+}));
+
 // Remaining data-fetching dependencies — neutralised so the hook renders
 // without any network. AZ list is supplied so a primary AZ auto-selects.
 vi.mock("@/shared/hooks/resources", () => ({

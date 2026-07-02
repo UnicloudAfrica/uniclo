@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Plus, ArrowLeftRight } from "lucide-react";
 import useCartStore from "@/stores/cartStore";
 import { useFetchAcfPublicServices, type AcfService } from "@/hooks/useCostExplorer";
+import { formatMoney } from "../formatMoney";
 
 export default function MigrationConfigurator() {
   const { data: services, isLoading } = useFetchAcfPublicServices();
@@ -9,7 +10,7 @@ export default function MigrationConfigurator() {
   const [selected, setSelected] = useState<Record<string, { qty: number; months: number }>>({});
 
   const svcList = Array.isArray(services) ? services : [];
-  const fmt = (v: number) => `₦${v.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+  const fmt = (v: number) => formatMoney(v);
 
   const toggle = (type: string) => {
     if (selected[type]) {

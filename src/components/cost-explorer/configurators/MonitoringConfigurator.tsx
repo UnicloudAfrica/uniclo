@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Plus, Activity, CheckCircle } from "lucide-react";
 import useCartStore from "@/stores/cartStore";
+import { formatMoney } from "../formatMoney";
 
 const TIERS = [
   { id: "basic", label: "Basic", price: 0, retention: "24 hours", features: ["CPU/RAM/Disk/Network metrics", "3 default alert rules", "In-app notifications"], color: "gray" },
@@ -17,7 +18,7 @@ export default function MonitoringConfigurator() {
 
   const selected = TIERS.find((t) => t.id === tier);
   const totalMonthly = (selected?.price ?? 0) * vmCount;
-  const fmt = (v: number) => `₦${v.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+  const fmt = (v: number) => formatMoney(v);
 
   return (
     <div className="space-y-5">

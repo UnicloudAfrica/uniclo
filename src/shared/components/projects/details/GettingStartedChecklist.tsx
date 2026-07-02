@@ -21,7 +21,6 @@ import {
   Users,
 } from "lucide-react";
 import { ModernButton } from "../../ui";
-import { isFeatureSupported } from "@/utils/featureGating";
 
 interface ChecklistStep {
   id: string;
@@ -75,15 +74,15 @@ const GettingStartedChecklist: React.FC<GettingStartedChecklistProps> = ({
   onNavigateToTab,
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
-  // Prefer the backend-supplied capability map; fall back to the legacy
-  // helper (which keys on a never-exposed-to-this-prop provider name) so the
-  // component still works in callers we haven't migrated yet.
-  const supportsVpc = providerFeatures?.vpc ?? isFeatureSupported(undefined, "vpcs");
-  const supportsInternet =
-    providerFeatures?.internet_gateway ?? isFeatureSupported(undefined, "internet_gateways");
-  const supportsDns = providerFeatures?.dns ?? isFeatureSupported(undefined, "dns");
-  const supportsAutoScaling =
-    providerFeatures?.autoscaling ?? isFeatureSupported(undefined, "autoscaling");
+  // Provider capabilities come straight from the backend `provider_features`
+  // map (vendor-neutral keys). Missing keys fail open (?? true) — the same
+  // convention every other provider gate uses. Keys are PLURAL per the
+  // ProjectResource KEY-NAMING CONTRACT (vpcs / internet_gateways); the old
+  // singular lookups silently fell open.
+  const supportsVpc = providerFeatures?.vpcs ?? true;
+  const supportsInternet = providerFeatures?.internet_gateways ?? true;
+  const supportsDns = providerFeatures?.dns ?? true;
+  const supportsAutoScaling = providerFeatures?.autoscaling ?? true;
 
   // Build steps conditionally based on provider capabilities
   const steps: ChecklistStep[] = useMemo(() => {

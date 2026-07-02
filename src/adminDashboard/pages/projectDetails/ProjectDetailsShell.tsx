@@ -25,6 +25,7 @@ import {
 } from "@/shared/components/projects/details/ProjectUnifiedView";
 import { InfraStatusData } from "@/shared/components/projects/details/projectDetailsResourceCounts";
 import { useFetchIpPools, useFetchProjectEdgeConfigAdmin } from "@/hooks/adminHooks/edgeHooks";
+import { useEnableInternetAccess } from "@/hooks/adminHooks/projectHooks";
 import { Project, ProjectUser, CloudPolicy } from "@/types/project";
 
 interface SummaryAction {
@@ -124,6 +125,30 @@ const ProjectDetailsShell: React.FC<ProjectDetailsShellProps> = ({
     enabled: Boolean(projectId && region && edgeNetworkId),
   });
 
+  const { mutateAsync: enableInternet, isPending: isEnablingInternet } = useEnableInternetAccess();
+
+  // Admin previously stubbed this to a toast — the button looked alive but did
+  // nothing. Mirror the tenant/client handler: create the gateway, then refetch
+  // so the card flips to "Active" without a manual reload.
+  const handleEnableInternet = async () => {
+    if (!projectId) return;
+    try {
+      const result = await enableInternet(projectId);
+      const resultRec = (result ?? {}) as Record<string, unknown>;
+      const resultData = (resultRec.data ?? resultRec) as Record<string, unknown>;
+      if (resultData.already_enabled) {
+        ToastUtils.info("Internet access is already enabled for this project.");
+      } else {
+        ToastUtils.success("Internet access enabled successfully!");
+      }
+      await Promise.all([refetchProjectStatus(), refetchProjectDetails()]);
+    } catch (error: unknown) {
+      ToastUtils.error(
+        error instanceof Error ? error.message : "Failed to enable internet access"
+      );
+    }
+  };
+
   const projectDetails = useProjectDetailsAdapter({
     project,
     projectId,
@@ -141,9 +166,8 @@ const ProjectDetailsShell: React.FC<ProjectDetailsShellProps> = ({
     requiredActions: requiredActions || [],
     isStatusFetching: isProjectStatusFetching,
     isSyncing: isSyncingInfrastructure,
-    onEnableInternet: async () => {
-      ToastUtils.info("Internet Gateway management from shell");
-    },
+    isEnablingInternet,
+    onEnableInternet: handleEnableInternet,
     onSyncResources: () => syncInfrastructure({ projectId: project?.identifier }),
     onRequiredAction: onRequiredAction as unknown,
     renderComputeTab: ({

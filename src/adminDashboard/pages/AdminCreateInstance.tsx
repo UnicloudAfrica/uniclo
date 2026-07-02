@@ -390,6 +390,7 @@ const AdminCreateInstance = () => {
               keypairDownloads={keypairDownloads}
               instances={successInstances}
               instancesPageUrl="/admin-dashboard/cube-instances"
+              instanceDetailsUrl="/admin-dashboard/cube-instances/details"
               onCreateAnother={() => globalThis.window.location.reload()}
               resourceLabel="Cube-Instance"
             />

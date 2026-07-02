@@ -23,12 +23,22 @@ const formatCurrency = (amount: number | string | null | undefined, currency = "
   if (amount === null || amount === undefined || Number.isNaN(amount)) {
     return "—";
   }
-  const symbol =
-    currency === "USD" ? "$" : currency === "EUR" ? "€" : currency === "GBP" ? "£" : "₦";
-  return `${symbol}${Number(amount).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+  const code = (currency || "NGN").toUpperCase();
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: code,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Number(amount));
+  } catch {
+    // Unknown ISO code — prefix with the code rather than assume a symbol
+    // (platform money rule: never hardcode ₦/$).
+    return `${code} ${Number(amount).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  }
 };
 
 const formatDateTime = (value: string | number | Date | null | undefined) => {

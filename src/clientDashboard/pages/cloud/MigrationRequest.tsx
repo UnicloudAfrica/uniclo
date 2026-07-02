@@ -21,9 +21,9 @@ export default function MigrationRequestPage() {
   return (
     <div className="space-y-6 p-6">
       <header>
-        <h1 className="text-xl font-semibold text-slate-800">Migrate to OpenStack</h1>
+        <h1 className="text-xl font-semibold text-slate-800">Migrate to UniCloud</h1>
         <p className="text-sm text-slate-500">
-          Request a migration of your existing resources to an OpenStack region. Our team reviews and schedules.
+          Request a migration of your existing resources to a UniCloud availability group. Our team reviews and schedules.
         </p>
       </header>
 

@@ -3,6 +3,7 @@ import { Plus, ShieldCheck, Shield, ArrowUpDown, RefreshCw } from "lucide-react"
 import useCartStore from "@/stores/cartStore";
 import { useFetchAcfPublicServices } from "@/hooks/useCostExplorer";
 import { RESILIENCE } from "@/shared/branding";
+import { formatMoney } from "../formatMoney";
 
 type ProtectionPlan = "none" | "backup_only" | "dr_standby" | "dr_replication";
 
@@ -24,7 +25,7 @@ export default function ProtectionConfigurator() {
   const replicationPerVm = replicationSvc?.unit_price ?? 12000;
   const drStandbyPerVm = drStandbySvc?.unit_price ?? 8000;
 
-  const fmt = (v: number) => `₦${v.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+  const fmt = (v: number) => formatMoney(v);
 
   // Calculate costs based on plan
   const backupCost = plan !== "none" ? backupPerGb * storageGb * instanceCount : 0;

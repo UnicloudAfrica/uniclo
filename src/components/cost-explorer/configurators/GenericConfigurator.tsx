@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import useCartStore from "@/stores/cartStore";
+import { formatMoney } from "../formatMoney";
 
 interface GenericConfiguratorProps {
   title: string;
@@ -41,7 +42,7 @@ export default function GenericConfigurator({ title, category, fields, pricePerU
       <div className="rounded-lg bg-gray-50 p-4">
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-600">{priceLabel}</p>
-          <p className="text-lg font-bold text-primary-700">₦{total.toLocaleString(undefined, { minimumFractionDigits: 2 })}/mo</p>
+          <p className="text-lg font-bold text-primary-700">{formatMoney(total)}/mo</p>
         </div>
         <button
           onClick={() => addItem({ category, name: title, description: `${quantity} units`, config: values, monthly_cost: total, one_time_cost: 0, quantity: 1, currency: "NGN" })}

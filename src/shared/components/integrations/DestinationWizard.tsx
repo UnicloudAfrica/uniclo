@@ -56,7 +56,7 @@ const TYPE_DESCRIPTIONS: Record<DestinationType, { emoji: string; tagline: strin
     tagline: "S3-compatible object storage (MinIO, Wasabi, Backblaze B2, etc.).",
   },
   ssh: { emoji: "🖥️", tagline: "Another server you own. We rsync over SSH." },
-  swift: { emoji: "☁️", tagline: "OpenStack Swift containers." },
+  swift: { emoji: "☁️", tagline: "S3-compatible object storage containers." },
   azure_blob: { emoji: "🔷", tagline: "Azure Blob Storage." },
   gcs: { emoji: "🟢", tagline: "Google Cloud Storage." },
   airgap: { emoji: "🔒", tagline: "Offline or restricted-window vault over SSH." },
@@ -233,7 +233,7 @@ export function DestinationWizard({
                   type="text"
                   value={form.targetRegion}
                   onChange={(e) => setForm({ ...form, targetRegion: e.target.value })}
-                  placeholder="e.g. nobus-region-1"
+                  placeholder="e.g. lagos-region-1"
                   className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                 />
                 <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">

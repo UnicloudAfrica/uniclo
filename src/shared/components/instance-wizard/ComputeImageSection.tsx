@@ -1,6 +1,7 @@
 import React from "react";
 import { Configuration, Option } from "@/types/InstanceConfiguration";
 import { SearchableSelect } from "../ui";
+import OsImageFamilyPicker from "./OsImageFamilyPicker";
 
 /* ── Pricing-notice options ────────────────────────────────────────────
  * The product dropdowns (instance type / OS image / volume type /
@@ -82,11 +83,6 @@ const ComputeImageSection: React.FC<ComputeImageSectionProps> = ({
     : computeNotice?.kind === "loading"
       ? computeNotice.label
       : "Select instance type";
-  const osImagePlaceholder = !selectedRegion
-    ? "Select region first"
-    : osImageNotice?.kind === "loading"
-      ? osImageNotice.label
-      : "Select OS image";
 
   return (
     <>
@@ -122,25 +118,23 @@ const ComputeImageSection: React.FC<ComputeImageSectionProps> = ({
         }
         disabled={!selectedRegion || computeNotice?.kind === "loading"}
       />
-      <SearchableSelect
-        label="OS Image *"
+      <OsImageFamilyPicker
+        options={osImageChoices}
         value={cfg.os_image_id}
-        onChange={(e) => {
-          const selectedLabel = e.target.selectedOptions?.[0]?.text || "";
-          updateConfigWithFocus({
-            os_image_id: e.target.value,
-            os_image_label: e.target.value ? selectedLabel : "",
-          });
-        }}
-        options={[{ value: "", label: osImagePlaceholder }, ...osImageChoices]}
+        onSelect={(id, label) =>
+          updateConfigWithFocus({ os_image_id: id, os_image_label: id ? label : "" })
+        }
+        disabled={!selectedRegion || osImageNotice?.kind === "loading"}
+        emptyMessage={
+          !selectedRegion
+            ? "Select a region first to see OS images."
+            : osImageNotice?.label || "No OS images are published for this zone yet."
+        }
         helper={
           templateImageLabel
             ? `Template: ${templateImageLabel}`
-            : selectedRegion && osImageNotice && osImageNotice.kind !== "loading"
-              ? osImageNotice.label
-              : "Choose the base image."
+            : "Choose a family, then a version."
         }
-        disabled={!selectedRegion || osImageNotice?.kind === "loading"}
       />
     </>
   );

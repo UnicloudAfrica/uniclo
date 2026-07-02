@@ -28,6 +28,10 @@ type Identifier = string | number;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type QueryOptions = Partial<Omit<UseQueryOptions<any, Error>, "queryKey" | "queryFn">>;
 
+const createIdempotencyKey = (): string =>
+  globalThis.crypto?.randomUUID?.() ??
+  `idem-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+
 const asEnvelope = <T = AnyRecord>(
   res: unknown
 ): { success?: boolean; message?: string; data?: T } =>
@@ -627,7 +631,9 @@ export const useCreateDatabaseOrder = () => {
   return useMutation<DatabaseOrderResponse, Error, AnyRecord>({
     mutationFn: async (payload) => {
       const uri = `${entry.urlPrefix}/managed-databases`;
-      const res = await entry.toastApi.post<AnyRecord>(uri, payload);
+      const res = await entry.toastApi.post<AnyRecord>(uri, payload, {
+        "Idempotency-Key": createIdempotencyKey(),
+      });
       if (!res) {
         throw new Error("Failed to create database order");
       }

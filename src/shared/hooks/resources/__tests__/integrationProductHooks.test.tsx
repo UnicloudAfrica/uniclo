@@ -44,7 +44,8 @@ const jsonResponse = (body: unknown, status = 200) => ({
 
 const fetchMock = vi.fn((input: RequestInfo | URL) => {
   const url = String(input);
-  if (url.endsWith(TENANT_URL)) {
+  // Match the path regardless of query string (tenant_id, integration_key).
+  if (url.includes(TENANT_URL)) {
     return Promise.resolve(jsonResponse({ data: rows }));
   }
   return Promise.resolve(jsonResponse({ message: "Not Found" }, 404));
@@ -82,5 +83,21 @@ describe("useFetchIntegrationProducts", () => {
     const urls = fetchMock.mock.calls.map((call) => String(call[0]));
     expect(urls.some((url) => url.endsWith(TENANT_URL))).toBe(true);
     expect(urls.some((url) => url.endsWith(BARE_URL))).toBe(false);
+  });
+
+  it("appends tenant_id for override-accurate preview pricing", async () => {
+    const { result } = renderHook(
+      () => useFetchIntegrationProducts({ tenantId: "tenant-uuid-123" }),
+      {
+        wrapper: tenantWrapper,
+      }
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    const urls = fetchMock.mock.calls.map((call) => String(call[0]));
+    expect(
+      urls.some((url) => url.includes(TENANT_URL) && url.includes("tenant_id=tenant-uuid-123"))
+    ).toBe(true);
   });
 });

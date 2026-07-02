@@ -18,11 +18,11 @@
 export const sanitizeProviderLabel = (raw: string): string => {
   if (!raw || raw === "\u2014") return raw;
   return raw
-    // Remove provider names (Zadara, Nobus, UCA, etc.) — safety net for legacy data
-    .replace(/\b(zadara|nobus|uca)\b\s*/gi, "")
+    // Remove provider names (Zadara, Nobus, OpenStack, UCA, etc.) — safety net for legacy data
+    .replace(/\b(zadara|nobus|openstack|uca)\b\s*/gi, "")
     // Remove parenthesized internal codes like (UCA-LAGOS-N03) or (zadara)
     .replace(/\(\s*[A-Z0-9]+-[A-Z0-9-]+\s*\)/gi, "")
-    .replace(/\(\s*(zadara|nobus|uca)\s*\)/gi, "")
+    .replace(/\(\s*(zadara|nobus|openstack|uca)\s*\)/gi, "")
     .replace(/^[-_\s]+|[-_\s]+$/g, "")
     .replace(/[-_]{2,}/g, "-")
     .replace(/\s{2,}/g, " ")

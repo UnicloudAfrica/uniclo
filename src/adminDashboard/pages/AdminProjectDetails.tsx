@@ -62,6 +62,8 @@ interface ProvisioningStep {
   label?: string;
   status?: string;
   updated_at?: string;
+  description?: string;
+  context?: Record<string, unknown>;
 }
 
 // Types
@@ -432,12 +434,11 @@ export default function AdminProjectDetails() {
     return [];
   }, [projectDetails, project]);
 
-  const areAllSummaryItemsComplete = summary.every(
-    (item: unknown) => item.completed === true || item.complete === true
-  );
-
-  const canCreateInstances =
-    areAllSummaryItemsComplete && infraStatus.hasTenantAdmin && infraStatus.setupConditionsMet;
+  // Gate on core readiness only: tenant admin + the network / accounts / storage
+  // setup conditions (see useInfrastructureStatus). Do NOT require EVERY summary
+  // item complete — that demanded the internet gateway, DNS, auto-scaling, and
+  // even "launch your first server" (circular) before you could launch one.
+  const canCreateInstances = infraStatus.hasTenantAdmin && infraStatus.setupConditionsMet;
 
   const instanceStats = useMemo(() => {
     const base = { total: projectInstances.length, running: 0, provisioning: 0, paymentPending: 0 };
@@ -684,9 +685,12 @@ export default function AdminProjectDetails() {
                   id: step.id || step.label?.toLowerCase()?.replaceAll(/\s+/g, "_") || "step",
                   label: step.label || "Step",
                   status: step.status as "pending" | "in_progress" | "completed" | "failed",
-                  description: step.status === "completed" ? "Completed" : "Action in progress",
+                  description:
+                    step.description ??
+                    (step.status === "completed" ? "Completed" : "Action in progress"),
                   updated_at: step.updated_at,
-                })) as unknown as Array<{ id: string; label: string; status: "completed" | "pending" | "not_started" | "failed"; description?: string; updated_at?: string; }>
+                  context: step.context,
+                })) as unknown as Array<{ id: string; label: string; status: "completed" | "pending" | "not_started" | "failed"; description?: string; updated_at?: string; context?: Record<string, unknown>; }>
               : []
           }
           setupProgressPercent={infraStatus.healthPercent}

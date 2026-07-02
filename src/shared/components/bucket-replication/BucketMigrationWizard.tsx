@@ -9,6 +9,7 @@ import {
 import { acfApi } from "../../../adminDashboard/pages/integrations/anycloudflow/api";
 import { translateBucketError } from "../../../adminDashboard/pages/integrations/anycloudflow/bucketErrorTranslator";
 import ToastUtils from "@/utils/toastUtil";
+import { getProviderShortLabel } from "@/shared/components/ui/ProviderBadge";
 
 /**
  * BucketMigrationWizard — friendly 4-step flow for one-time bucket
@@ -211,7 +212,7 @@ export function BucketMigrationWizard({
                   <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{e.label}</p>
                   <p className="mt-1 font-mono text-xs text-gray-600 dark:text-gray-300">{e.bucket_name}</p>
                   <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
-                    {e.provider ?? "—"} {e.region ? `· ${e.region}` : ""}
+                    {e.provider ? getProviderShortLabel(e.provider) : "—"} {e.region ? `· ${e.region}` : ""}
                   </p>
                 </button>
               );
@@ -249,7 +250,7 @@ export function BucketMigrationWizard({
                     <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{e.label}</p>
                     <p className="mt-1 font-mono text-xs text-gray-600 dark:text-gray-300">{e.bucket_name}</p>
                     <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
-                      {e.provider ?? "—"} {e.region ? `· ${e.region}` : ""}
+                      {e.provider ? getProviderShortLabel(e.provider) : "—"} {e.region ? `· ${e.region}` : ""}
                     </p>
                   </button>
                 );
@@ -259,7 +260,7 @@ export function BucketMigrationWizard({
           {providerMismatch && (
             <div className="mt-4 rounded-lg border border-danger-200 bg-danger-50 p-3 text-xs text-danger-800 dark:border-danger-700/50 dark:bg-danger-900/20 dark:text-danger-200">
               <strong>Heads up:</strong> source and target are on different providers (
-              {source?.provider} → {target?.provider}). Cross-provider migration is a Phase 3 feature
+              {getProviderShortLabel(source?.provider)} → {getProviderShortLabel(target?.provider)}). Cross-provider migration is a Phase 3 feature
               and the API will reject this combination. Pick a target on the same provider as the source
               to continue.
             </div>

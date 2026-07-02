@@ -9,7 +9,7 @@ next: { label: Regions, href: /admin-dashboard/docs/regions }
 If tenants are franchise owners, then **clients are the customers who walk into the shop**. Each client belongs to a specific tenant and uses the cloud services that tenant provides. As a platform admin, you can see every client across every tenant -- like having a bird's-eye view of all the shops at once.
 :::
 
-:::step{number=1 icon=Users title="View all clients" navigation="Sidebar > Customer Management > Clients"}
+:::step{number=1 icon=Users title="View all clients" navigation="Sidebar > Customers > Clients"}
 The clients page gives you a complete list of every end-user on the platform, regardless of which tenant they belong to.
 
 1. Click **Customer Management** in the sidebar.
@@ -24,7 +24,7 @@ You can filter by tenant to see only the clients that belong to a specific organ
 :::
 :::
 
-:::step{number=2 icon=PlusCircle title="Create a client" navigation="Sidebar > Customer Management > Clients > Create"}
+:::step{number=2 icon=PlusCircle title="Create a client" navigation="Sidebar > Customers > Clients > Create"}
 You can create a client directly from the admin dashboard. This is useful when you need to set up an account for someone manually.
 
 1. On the clients page, click **Create**.
@@ -40,7 +40,7 @@ Make sure you select the correct tenant. A client can only belong to one tenant,
 :::
 :::
 
-:::step{number=3 icon=Eye title="View client details" navigation="Sidebar > Customer Management > Clients > Click a client"}
+:::step{number=3 icon=Eye title="View client details" navigation="Sidebar > Customers > Clients > Click a client"}
 Click on any client row to see their full profile. This includes their contact information, the tenant they belong to, their resource usage, and billing history.
 
 - **Profile** -- Name, email, status, and creation date.

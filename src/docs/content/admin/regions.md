@@ -9,7 +9,7 @@ next: { label: Onboarding, href: /admin-dashboard/docs/onboarding }
 Imagine your platform is a company with **offices in different cities**. Each office (region) has its own equipment and staff. Clients choose which office to use based on where they are located -- the closer the office, the faster things run. Regions let you spread your infrastructure across the world so everyone gets a great experience.
 :::
 
-:::step{number=1 icon=Globe title="View the regions list" navigation="Sidebar > Infrastructure > Regions"}
+:::step{number=1 icon=Globe title="View the regions list" navigation="Sidebar > Customers > Regions"}
 The regions page shows every region you have configured on the platform. Each row displays the region name, location, status, and how many availability zones it contains.
 
 1. Click **Infrastructure** in the sidebar.
@@ -20,7 +20,7 @@ The regions page shows every region you have configured on the platform. Each ro
 :::
 :::
 
-:::step{number=2 icon=PlusCircle title="Create a new region" navigation="Sidebar > Infrastructure > Regions > Create"}
+:::step{number=2 icon=PlusCircle title="Create a new region" navigation="Sidebar > Customers > Regions > Create"}
 When you want to expand your platform to a new geographic area, you create a new region. This tells the system where new resources can be deployed.
 
 1. Click the **Create** button on the regions page.
@@ -37,7 +37,7 @@ Use clear, descriptive names for your regions. Your tenants and their clients wi
 :::
 :::
 
-:::step{number=3 icon=CheckCircle2 title="Manage region approvals" navigation="Sidebar > Infrastructure > Regions > Pending"}
+:::step{number=3 icon=CheckCircle2 title="Manage region approvals" navigation="Sidebar > Customers > Regions > Pending"}
 Some regions may require approval before they become active -- especially if they are added by a tenant or partner. You can review and approve pending regions from the same page.
 
 1. Look for regions with a **Pending** status badge.
@@ -52,7 +52,7 @@ Approving a region means tenants can start deploying resources there. Make sure 
 :::
 :::
 
-:::step{number=4 icon=Layers title="Configure availability zones" navigation="Sidebar > Infrastructure > Regions > Click region > Zones tab"}
+:::step{number=4 icon=Layers title="Configure availability zones" navigation="Sidebar > Customers > Regions > Click region > Zones tab"}
 Each region can have one or more **availability zones**. Think of these as separate rooms inside the same office building. If one room has a power outage, the others keep running. This gives your clients better reliability.
 
 1. Open a region's detail page by clicking on it.

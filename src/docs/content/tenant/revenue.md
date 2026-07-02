@@ -5,7 +5,7 @@ prev: { label: Onboarding, href: /dashboard/docs/onboarding }
 next: { label: Price Settings, href: /dashboard/docs/price-settings }
 ---
 
-:::step{number=1 icon=TrendingUp title="View Revenue Overview" navigation="Sidebar > Billing & Revenue > Revenue"}
+:::step{number=1 icon=TrendingUp title="View Revenue Overview" navigation="Sidebar > Billing > Revenue"}
 The main revenue page shows your total earnings, monthly trends, and a breakdown by time period. Charts and graphs make it easy to see whether your business is growing at a glance.
 :::
 

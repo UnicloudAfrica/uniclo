@@ -10,6 +10,11 @@ import logger from "../../utils/logger";
  * caller's optional override row (`tenant_flow_plan_pricing`) so the
  * UI can render both side-by-side. PATCH upserts the override; DELETE
  * reverts the row to the platform default.
+ *
+ * Paths carry the `/admin` segment because the tenant API base
+ * (`config.tenantURL`) stops at `/tenant/v1` while these routes live in
+ * the tenant `admin` route group (`/tenant/v1/admin/flow-plan-pricing`) —
+ * same convention as `tenantPricingHooks` / `tenantIntegrationPricingHooks`.
  */
 
 export interface TenantFlowPlanPricingRow {
@@ -30,7 +35,7 @@ interface ApiEnvelope<T> {
 const fetchRows = async (): Promise<TenantFlowPlanPricingRow[]> => {
   const res = await tenantSilentApi<ApiEnvelope<TenantFlowPlanPricingRow[]>>(
     "GET",
-    "/flow-plan-pricing",
+    "/admin/flow-plan-pricing",
   );
   if (!res?.data) throw new Error("Failed to fetch tenant flow plan pricing.");
   return res.data;
@@ -47,7 +52,7 @@ const updateRow = async ({
 }) => {
   const res = await tenantApi<ApiEnvelope<unknown>>(
     "PATCH",
-    `/flow-plan-pricing/${planId}`,
+    `/admin/flow-plan-pricing/${planId}`,
     { price_monthly_kobo, ...(is_active !== undefined ? { is_active } : {}) },
   );
   if (!res) throw new Error("Failed to save tenant override.");
@@ -57,7 +62,7 @@ const updateRow = async ({
 const revertRow = async (planId: number) => {
   const res = await tenantApi<ApiEnvelope<unknown>>(
     "DELETE",
-    `/flow-plan-pricing/${planId}`,
+    `/admin/flow-plan-pricing/${planId}`,
   );
   if (!res) throw new Error("Failed to revert tenant override.");
   return res.data;

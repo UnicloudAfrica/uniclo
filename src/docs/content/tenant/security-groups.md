@@ -5,14 +5,14 @@ prev: { label: Key Pairs, href: /dashboard/docs/key-pairs }
 next: { label: Load Balancers, href: /dashboard/docs/load-balancers }
 ---
 
-:::step{number=1 icon=Shield title="View Your Security Groups" navigation="Sidebar > Networking > Security Groups"}
+:::step{number=1 icon=Shield title="View Your Security Groups" navigation="Sidebar > Networking & Edge > Security Groups"}
 The security groups page lists all your firewall rule sets. Each group has a name, description, and a count of how many rules it contains. Servers can be assigned to one or more security groups.
 :::
 
 :::screenshot{caption="Your Security Groups list page"}
 :::
 
-:::step{number=2 icon=Plus title="Create a Security Group" navigation="Sidebar > Networking > Security Groups > New"}
+:::step{number=2 icon=Plus title="Create a Security Group" navigation="Sidebar > Networking & Edge > Security Groups > New"}
 Click "New" to create a fresh security group. Give it a clear name (like "web-servers" or "database-access") and a short description so your team knows what it is for.
 :::
 

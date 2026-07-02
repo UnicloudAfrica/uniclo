@@ -5,14 +5,14 @@ prev: { label: Security Groups, href: /admin-dashboard/docs/security-groups }
 next: { label: DNS Zones, href: /admin-dashboard/docs/dns }
 ---
 
-:::step{number=1 icon=Scale title="View All Load Balancers" navigation="Sidebar > Networking > Load Balancers"}
+:::step{number=1 icon=Scale title="View All Load Balancers" navigation="Sidebar > Networking & Edge > Load Balancers"}
 The load balancers page shows all load balancers across your platform. Each one distributes traffic to a group of backend servers. You can see the name, status, type, and how many targets are attached.
 :::
 
 :::screenshot{caption="Your Load Balancers list"}
 :::
 
-:::step{number=2 icon=Plus title="Create a Load Balancer" navigation="Sidebar > Networking > Load Balancers > Create"}
+:::step{number=2 icon=Plus title="Create a Load Balancer" navigation="Sidebar > Networking & Edge > Load Balancers > Create"}
 Click create to set up a new load balancer. Choose the VPC, select the subnets, configure listeners (which ports to listen on), and define the target group (which instances should receive traffic).
 :::
 

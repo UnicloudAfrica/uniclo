@@ -36,21 +36,24 @@ export interface IntegrationProductRow {
 }
 
 export const useFetchIntegrationProducts = (
-  options: { integrationKey?: string; enabled?: boolean } = {}
+  options: { integrationKey?: string; tenantId?: string | number | null; enabled?: boolean } = {}
 ) => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
-  const { integrationKey, enabled = true } = options;
+  const { integrationKey, tenantId, enabled = true } = options;
 
   return useQuery<IntegrationProductRow[]>({
-    queryKey: ["integration-products", context, integrationKey ?? null],
+    queryKey: ["integration-products", context, integrationKey ?? null, tenantId ?? null],
     queryFn: async () => {
-      const qs = integrationKey
-        ? `?integration_key=${encodeURIComponent(integrationKey)}`
-        : "";
+      const params = new URLSearchParams();
+      if (integrationKey) params.set("integration_key", integrationKey);
+      // tenant_id surfaces tenant-specific price overrides in the preview;
+      // the quote is still re-priced authoritatively at submit.
+      if (tenantId != null && tenantId !== "") params.set("tenant_id", String(tenantId));
+      const query = params.toString();
       const res = await entry.silentApi<{ data?: IntegrationProductRow[] }>(
         "GET",
-        `${entry.urlPrefix}/integration-products${qs}`
+        `${entry.urlPrefix}/integration-products${query ? `?${query}` : ""}`
       );
       const data = (res as { data?: unknown })?.data ?? res;
       return Array.isArray(data) ? (data as IntegrationProductRow[]) : [];

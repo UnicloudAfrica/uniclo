@@ -16,25 +16,25 @@ F --> G[Server Deploying...]
 G --> H[Server Ready!]
 :::
 
-:::step{number=1 icon=FolderKanban title="Projects" navigation="Sidebar > Infrastructure > Projects"}
+:::step{number=1 icon=FolderKanban title="Projects" navigation="Sidebar > Compute & Storage > Projects"}
 Projects are like folders that group related servers together. For example, a client might have a "Production" project and a "Testing" project. Each project has its own network and security settings. Click "Create" to make a new project.
 :::
 
 :::screenshot{caption="Your Projects list"}
 :::
 
-:::step{number=2 icon=Server title="View Instances" navigation="Sidebar > Infrastructure > Cube Instances"}
+:::step{number=2 icon=Server title="View Instances" navigation="Sidebar > Compute & Storage > Instances"}
 See all the virtual servers running under your account. Each instance shows its name, status (running, stopped, etc.), IP address, and resource usage. Click on any instance for full details.
 :::
 
-:::step{number=3 icon=Plus title="Create an Instance" navigation="Sidebar > Infrastructure > Create Instance"}
+:::step{number=3 icon=Plus title="Create an Instance" navigation="Sidebar > Compute & Storage > Instances > Create Instance"}
 The creation wizard walks you through every step. First, pick a project. Then choose an operating system (like Ubuntu or Windows). Next, select the server size -- how many CPUs and how much memory. Finally, configure the network settings and confirm your order.
 :::
 
 :::screenshot{caption="Your Instance creation wizard"}
 :::
 
-:::step{number=4 icon=LayoutTemplate title="Templates" navigation="Sidebar > Infrastructure > Templates"}
+:::step{number=4 icon=LayoutTemplate title="Templates" navigation="Sidebar > Compute & Storage > Templates"}
 Templates save time by bundling common configurations together. Instead of choosing every setting each time, just pick a template. It is like having a recipe card instead of figuring out every ingredient from scratch.
 :::
 

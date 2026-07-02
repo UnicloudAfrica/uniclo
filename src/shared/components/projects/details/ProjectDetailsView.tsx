@@ -420,7 +420,9 @@ export const useProjectDetailsAdapter = (
         id: step.id || label.toLowerCase().replace(/\s+/g, "_") || `step_${index + 1}`,
         label,
         status: normalizedStatus,
-        description: normalizedStatus === "completed" ? "Completed" : "Action in progress",
+        description:
+          (step as { description?: string }).description ||
+          (normalizedStatus === "completed" ? "Completed" : "Action in progress"),
       };
       return typeof step.updated_at === "string"
         ? { ...baseStep, updated_at: step.updated_at }

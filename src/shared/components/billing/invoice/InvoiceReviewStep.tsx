@@ -67,8 +67,8 @@ const InvoiceReviewStep: React.FC<InvoiceReviewStepProps> = ({
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <h4 className="text-sm font-semibold text-slate-900">Save as</h4>
         <p className="mt-0.5 text-xs text-slate-500">
-          Quotes can be reviewed by the customer and converted to an invoice
-          later. Invoices are immediately payable.
+          Quotes can be reviewed by the customer and converted to an invoice later. Invoices are
+          immediately payable.
         </p>
         <div
           className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2"
@@ -88,12 +88,8 @@ const InvoiceReviewStep: React.FC<InvoiceReviewStepProps> = ({
           >
             <Receipt className="mt-0.5 h-5 w-5 text-primary-600" />
             <div>
-              <div className="text-sm font-medium text-slate-900">
-                Generate Invoice
-              </div>
-              <div className="text-xs text-slate-500">
-                Issue a payable invoice (default).
-              </div>
+              <div className="text-sm font-medium text-slate-900">Generate Invoice</div>
+              <div className="text-xs text-slate-500">Issue a payable invoice (default).</div>
             </div>
           </button>
           <button
@@ -109,9 +105,7 @@ const InvoiceReviewStep: React.FC<InvoiceReviewStepProps> = ({
           >
             <FileText className="mt-0.5 h-5 w-5 text-primary-600" />
             <div>
-              <div className="text-sm font-medium text-slate-900">
-                Save as Quote
-              </div>
+              <div className="text-sm font-medium text-slate-900">Save as Quote</div>
               <div className="text-xs text-slate-500">
                 Send a quote first; convert to invoice when accepted.
               </div>

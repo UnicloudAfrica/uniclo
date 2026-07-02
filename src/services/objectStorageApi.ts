@@ -21,6 +21,10 @@ type Id = string | number;
 type QueryParams = Record<string, string | number | boolean | null | undefined>;
 type JsonRecord = Record<string, unknown>;
 
+const createIdempotencyKey = (): string =>
+  globalThis.crypto?.randomUUID?.() ??
+  `idem-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+
 const resolveBasePath = (role: string | null | undefined) => {
   const normalizedRole = (role || "").toLowerCase();
   if (normalizedRole === "admin") return roleBasePath.admin;
@@ -180,7 +184,10 @@ const objectStorageApi = {
     const { basePath, headers } = resolveRequestContext();
     const response = await fetch(`${basePath}/orders`, {
       method: "POST",
-      headers,
+      headers: {
+        ...headers,
+        "Idempotency-Key": createIdempotencyKey(),
+      },
       credentials: "include",
       body: JSON.stringify(payload),
     });

@@ -126,7 +126,7 @@ const CreateDestinationModal: React.FC<CreateDestinationModalProps> = ({
                 type="text"
                 value={targetRegion}
                 onChange={(e) => setTargetRegion(e.target.value)}
-                placeholder="e.g. nobus-region-1"
+                placeholder="e.g. lagos-region-1"
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
               />
             </div>

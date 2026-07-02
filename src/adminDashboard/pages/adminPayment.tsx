@@ -93,12 +93,22 @@ const formatCurrency = (value: number | string | null | undefined, currency = "N
   if (value === null || value === undefined || Number.isNaN(value)) {
     return "—";
   }
-  const symbol =
-    currency === "USD" ? "$" : currency === "EUR" ? "€" : currency === "GBP" ? "£" : "₦";
-  return `${symbol}${Number(value).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+  const code = (currency || "NGN").toUpperCase();
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: code,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Number(value));
+  } catch {
+    // Unknown ISO code — prefix with the code rather than assume a symbol
+    // (platform money rule: never hardcode ₦/$).
+    return `${code} ${Number(value).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  }
 };
 
 const formatDate = (value: string | number | Date | null | undefined) => {

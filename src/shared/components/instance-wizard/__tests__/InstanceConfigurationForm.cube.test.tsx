@@ -5,10 +5,11 @@ import { makePricingNoticeOption } from "../ComputeImageSection";
 import type { Configuration, Option } from "@/types/InstanceConfiguration";
 
 /*
- * Cube-variant inline Instance Type / OS Image selects must consume the
- * pricing-notice sentinel Options (see ComputeImageSection) the same way
- * the classic variant does: notice as placeholder/helper copy, never as a
- * selectable row, disabled while pricing loads.
+ * Cube-variant config step: the Instance Type select and the OS Image family
+ * picker must consume the pricing-notice sentinel Options (see
+ * ComputeImageSection) the same way the classic variant does — notice as
+ * placeholder / empty-state copy, never as a selectable row, disabled while
+ * pricing loads.
  */
 
 vi.mock("@/hooks/useApiContext", () => ({
@@ -102,36 +103,43 @@ describe("InstanceConfigurationForm cube variant pricing notices", () => {
       osImageOptions: [makePricingNoticeOption("awaiting_az", AWAITING_AZ)],
     });
 
-    // Helper copy under both the size and the image selects.
+    // Surfaced under both the size select and the image picker (as empty-state copy).
     expect(screen.getAllByText(AWAITING_AZ)).toHaveLength(2);
-    // The trigger still shows the normal placeholder — the sentinel was
-    // stripped from the choices instead of becoming the selected row.
+    // The size trigger keeps its normal placeholder; the OS image section still
+    // renders its label even with no selectable images.
     expect(screen.getByText("Select instance type")).toBeInTheDocument();
-    expect(screen.getByText("Select OS image")).toBeInTheDocument();
+    expect(screen.getByText("OS Image *")).toBeInTheDocument();
   });
 
-  it("disables the selects and shows loading labels while pricing loads", () => {
+  it("disables the size select and shows loading copy while pricing loads", () => {
     renderCubeForm({
       computeOptions: [makePricingNoticeOption("loading", "Loading sizes…")],
       osImageOptions: [makePricingNoticeOption("loading", "Loading OS images…")],
     });
 
     const computeTrigger = screen.getByText("Loading sizes…").closest("button");
-    const osTrigger = screen.getByText("Loading OS images…").closest("button");
     expect(computeTrigger).toBeDisabled();
-    expect(osTrigger).toBeDisabled();
+    // The OS image picker shows its loading copy in place of family tiles.
+    expect(screen.getByText("Loading OS images…")).toBeInTheDocument();
   });
 
-  it("renders real options normally once pricing resolves", () => {
+  it("groups real OS images into family tiles once pricing resolves", () => {
     renderCubeForm({
       computeOptions: [{ value: "42", label: "m1.small • 2 vCPU • NGN 5,000.00" }],
-      osImageOptions: [{ value: "7", label: "Ubuntu 24.04 • NGN 0.00" }],
+      osImageOptions: [
+        {
+          value: "7",
+          label: "Ubuntu 24.04 • NGN 0.00",
+          raw: { os_distro: "ubuntu", os_version: "24.04" },
+        },
+      ],
     });
 
     expect(screen.getByText("Select instance type")).toBeInTheDocument();
-    expect(screen.getByText("Select OS image")).toBeInTheDocument();
     expect(screen.getByText("Select the compute flavor.")).toBeInTheDocument();
-    expect(screen.getByText("Choose the base image.")).toBeInTheDocument();
+    // OS image now renders as a family tile + the family-picker helper.
+    expect(screen.getByRole("button", { name: /Ubuntu/ })).toBeInTheDocument();
+    expect(screen.getByText("Choose a family, then a version.")).toBeInTheDocument();
   });
 
   it("labels the submit button in plain language", () => {

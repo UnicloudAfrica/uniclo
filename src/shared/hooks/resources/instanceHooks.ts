@@ -400,18 +400,23 @@ export const useFetchInstanceLifeCycleById = (
   });
 };
 
-/** Fetch instance usage stats — admin only (stub) */
+/** Fetch instance usage stats — admin only */
 export const useInstanceUsageStats = (
   identifier: Identifier | null | undefined,
   period: string = "24h",
   options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
+  const entry = apiRegistry[context];
   const { enabled = true, ...rest } = options;
 
   return useQuery({
     queryKey: instanceExtendedKeys.usageStats(context, identifier as Identifier, period),
-    queryFn: async () => null,
+    queryFn: async () => {
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/usage-stats?period=${period}`;
+      const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
+      return envelope.data ?? null;
+    },
     enabled: Boolean(identifier) && enabled,
     staleTime: 1000 * 60,
     refetchOnWindowFocus: false,
@@ -419,21 +424,24 @@ export const useInstanceUsageStats = (
   });
 };
 
-/** Fetch instance logs — admin only (stub) */
+/** Fetch instance logs — admin only */
 export const useInstanceLogs = (
   identifier: Identifier | null | undefined,
   params: { lines?: number; since?: string } = {},
   options: QueryOptions = {}
 ) => {
   const { context } = useApiContext();
+  const entry = apiRegistry[context];
   const { enabled = true, ...rest } = options;
 
   return useQuery({
     queryKey: instanceExtendedKeys.logs(context, identifier as Identifier, params),
-    queryFn: async () => ({
-      lines: [],
-      last_updated: null,
-    }),
+    queryFn: async () => {
+      const qs = buildQueryString(params);
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/logs${qs ? `?${qs}` : ""}`;
+      const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
+      return envelope.data ?? { lines: [], last_updated: null };
+    },
     enabled: Boolean(identifier) && enabled,
     staleTime: 0,
     refetchOnWindowFocus: false,
@@ -552,10 +560,61 @@ export const useInstanceAlarms = (
   });
 };
 
-// ─── Protection Hooks (backup groups, snapshots, restore groups) ─
+// ─── Per-Instance Backup Protection Hooks ────────────────────────
+//
+// Backed by the stateful per-instance backup endpoints under
+// /cube-instance/{identifier}/protection/backup (written by
+// InstanceProtectionController on the backend). The response shape is
+// neutral by design — no provider names, no RRULE, no endpoint ids.
+// Status keys (consumer side; must stay character-for-character in sync
+// with InstanceProtectionController::buildStatus): configured, enabled,
+// state, schedule_label, frequency, retention_days, start_time,
+// last_backup_at, snapshots_count.
 
-/** Fetch backup groups */
-export const useInstanceBackupGroups = (
+/** Neutral per-instance backup status (Protection tab). */
+export interface InstanceBackupStatus {
+  configured: boolean;
+  /** Whether the instance's plan includes backup (a paid add-on). */
+  entitled?: boolean;
+  enabled?: boolean;
+  state?: string;
+  schedule_label?: string;
+  frequency?: string;
+  retention_days?: number;
+  start_time?: string;
+  rpo_hours?: number;
+  last_backup_at?: string | null;
+  last_recovery_point_at?: string | null;
+  snapshots_count?: number;
+}
+
+/** Payload for enabling / editing a per-instance backup schedule. */
+export interface InstanceBackupConfig {
+  frequency?: "daily" | "weekly" | "monthly";
+  interval?: number;
+  retention_days?: number;
+  start_time?: string | null;
+  enabled?: boolean;
+}
+
+const instanceBackupKeys = {
+  status: (context: string, identifier: Identifier) =>
+    ["instance-backup-status", context, identifier] as const,
+  snapshots: (context: string, identifier: Identifier) =>
+    ["instance-backup-snapshots", context, identifier] as const,
+};
+
+const invalidateInstanceBackup = (
+  queryClient: ReturnType<typeof useQueryClient>,
+  context: string,
+  identifier: Identifier
+) => {
+  queryClient.invalidateQueries({ queryKey: instanceBackupKeys.status(context, identifier) });
+  queryClient.invalidateQueries({ queryKey: instanceBackupKeys.snapshots(context, identifier) });
+};
+
+/** Fetch this instance's backup protection status. */
+export const useInstanceBackupStatus = (
   identifier: Identifier | null | undefined,
   options: QueryOptions = {}
 ) => {
@@ -564,21 +623,21 @@ export const useInstanceBackupGroups = (
   const { enabled = true, ...rest } = options;
 
   return useQuery({
-    queryKey: ["instance-backup-groups", context, identifier],
-    queryFn: async () => {
-      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/backup-groups`;
-      const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
-      return envelope.data ?? { backup_groups: [], total: 0 };
+    queryKey: instanceBackupKeys.status(context, identifier as Identifier),
+    queryFn: async (): Promise<InstanceBackupStatus> => {
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/protection/backup`;
+      const envelope = asEnvelope<InstanceBackupStatus>(await entry.silentApi.get<AnyRecord>(uri));
+      return envelope.data ?? { configured: false };
     },
     enabled: Boolean(identifier) && enabled,
-    staleTime: 1000 * 60 * 2,
+    staleTime: 1000 * 30,
     refetchOnWindowFocus: false,
     ...rest,
   });
 };
 
-/** Create backup group */
-export const useCreateBackupGroup = () => {
+/** Enable per-instance backup (idempotent on the backend). */
+export const useEnableInstanceBackup = () => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
   const queryClient = useQueryClient();
@@ -586,98 +645,86 @@ export const useCreateBackupGroup = () => {
   return useMutation({
     mutationFn: async ({
       identifier,
-      params,
+      config = {},
     }: {
       identifier: Identifier;
-      params: AnyRecord;
+      config?: InstanceBackupConfig;
     }) => {
-      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/backup-groups`;
-      const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri, params));
-      return envelope.data ?? envelope;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["instance-backup-groups"] });
-    },
-  });
-};
-
-/** Delete backup group */
-export const useDeleteBackupGroup = () => {
-  const { context } = useApiContext();
-  const entry = apiRegistry[context];
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      identifier,
-      groupId,
-    }: {
-      identifier: Identifier;
-      groupId: string;
-    }) => {
-      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/backup-groups/${groupId}`;
-      const envelope = asEnvelope(await entry.toastApi.delete<AnyRecord>(uri));
-      return envelope.data ?? envelope;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["instance-backup-groups"] });
-    },
-  });
-};
-
-/** Fetch protection snapshots */
-export const useInstanceSnapshots = (
-  identifier: Identifier | null | undefined,
-  params: { group_id?: string } = {},
-  options: QueryOptions = {}
-) => {
-  const { context } = useApiContext();
-  const entry = apiRegistry[context];
-  const { enabled = true, ...rest } = options;
-
-  return useQuery({
-    queryKey: ["instance-snapshots", context, identifier, params],
-    queryFn: async () => {
-      const qs = buildQueryString(params);
-      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/snapshots${qs ? `?${qs}` : ""}`;
-      const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
-      return envelope.data ?? { snapshots: [], total: 0 };
-    },
-    enabled: Boolean(identifier) && enabled,
-    staleTime: 1000 * 60 * 2,
-    refetchOnWindowFocus: false,
-    ...rest,
-  });
-};
-
-/** Trigger a snapshot */
-export const useTriggerSnapshot = () => {
-  const { context } = useApiContext();
-  const entry = apiRegistry[context];
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      identifier,
-      groupId,
-    }: {
-      identifier: Identifier;
-      groupId: string;
-    }) => {
-      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/snapshots`;
-      const envelope = asEnvelope(
-        await entry.toastApi.post<AnyRecord>(uri, { group_id: groupId })
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/protection/backup/enable`;
+      const envelope = asEnvelope<InstanceBackupStatus>(
+        await entry.toastApi.post<AnyRecord>(uri, config as AnyRecord)
       );
-      return envelope.data ?? envelope;
+      if (!envelope.success) {
+        throw new Error(envelope.message || "Failed to enable backup");
+      }
+      return envelope.data ?? { configured: true };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["instance-snapshots"] });
+    onSuccess: (_data, variables) => {
+      invalidateInstanceBackup(queryClient, context, variables.identifier);
+    },
+    onError: (error: unknown) => {
+      logger.error("Error enabling instance backup:", error);
     },
   });
 };
 
-/** Delete snapshot */
-export const useDeleteSnapshot = () => {
+/** Trigger an on-demand backup for this instance. */
+export const useTriggerInstanceBackup = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ identifier }: { identifier: Identifier }) => {
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/protection/backup/trigger`;
+      const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri));
+      if (!envelope.success) {
+        throw new Error(envelope.message || "Failed to trigger backup");
+      }
+      return envelope.data ?? {};
+    },
+    onSuccess: (_data, variables) => {
+      invalidateInstanceBackup(queryClient, context, variables.identifier);
+    },
+    onError: (error: unknown) => {
+      logger.error("Error triggering instance backup:", error);
+    },
+  });
+};
+
+/** List this instance's backups (Laravel paginator under .data). */
+export const useInstanceBackupSnapshots = (
+  identifier: Identifier | null | undefined,
+  options: QueryOptions = {}
+) => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const { enabled = true, ...rest } = options;
+
+  return useQuery({
+    queryKey: instanceBackupKeys.snapshots(context, identifier as Identifier),
+    queryFn: async (): Promise<AnyRecord> => {
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/protection/backup/snapshots`;
+      const envelope = asEnvelope<AnyRecord>(await entry.silentApi.get<AnyRecord>(uri));
+      return envelope.data ?? { data: [], total: 0 };
+    },
+    enabled: Boolean(identifier) && enabled,
+    staleTime: 1000 * 30,
+    refetchOnWindowFocus: false,
+    ...rest,
+  });
+};
+
+/**
+ * Restore a ready backup into a NEW, separately-tracked instance.
+ *
+ * This is non-destructive: the source instance is untouched. The backend
+ * creates a fresh PROVISIONING Instance row from the backup and advances it
+ * to active via its normal lifecycle poll. The FE posts the LOCAL snapshot id
+ * (snapshotId); the provider-side snapshot uuid is read server-side and never
+ * leaves the backend.
+ */
+export const useRestoreInstanceFromBackup = () => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
   const queryClient = useQueryClient();
@@ -686,16 +733,183 @@ export const useDeleteSnapshot = () => {
     mutationFn: async ({
       identifier,
       snapshotId,
+      name,
+      powerup,
     }: {
       identifier: Identifier;
-      snapshotId: string;
+      snapshotId: Identifier;
+      name?: string;
+      powerup?: boolean;
     }) => {
-      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/snapshots/${snapshotId}`;
-      const envelope = asEnvelope(await entry.toastApi.delete<AnyRecord>(uri));
-      return envelope.data ?? envelope;
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/protection/backup/snapshots/${snapshotId}/restore`;
+      const payload: AnyRecord = {};
+      if (name) payload.name = name;
+      if (powerup !== undefined) payload.powerup = powerup;
+      const envelope = asEnvelope(await entry.toastApi.post<AnyRecord>(uri, payload));
+      if (!envelope.success) {
+        throw new Error(envelope.message || "Failed to restore from backup");
+      }
+      return envelope.data ?? {};
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["instance-snapshots"] });
+    onSuccess: (_data, variables) => {
+      // The new PROVISIONING instance appears in the instance lists.
+      queryClient.invalidateQueries({ queryKey: ["instanceRequests"] });
+      queryClient.invalidateQueries({ queryKey: instanceExtendedKeys.all(context) });
+      // Refresh the source instance's backup snapshots view.
+      queryClient.invalidateQueries({
+        queryKey: instanceBackupKeys.snapshots(context, variables.identifier),
+      });
+    },
+    onError: (error: unknown) => {
+      logger.error("Error restoring instance from backup:", error);
+    },
+  });
+};
+
+/** Edit this instance's schedule/retention or pause/resume. */
+export const useUpdateInstanceBackup = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      identifier,
+      config,
+    }: {
+      identifier: Identifier;
+      config: InstanceBackupConfig;
+    }) => {
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/protection/backup`;
+      const envelope = asEnvelope<InstanceBackupStatus>(
+        await entry.toastApi.patch<AnyRecord>(uri, config as AnyRecord)
+      );
+      if (!envelope.success) {
+        throw new Error(envelope.message || "Failed to update backup");
+      }
+      return envelope.data ?? { configured: true };
+    },
+    onSuccess: (_data, variables) => {
+      invalidateInstanceBackup(queryClient, context, variables.identifier);
+    },
+    onError: (error: unknown) => {
+      logger.error("Error updating instance backup:", error);
+    },
+  });
+};
+
+/** Disable backup for this instance (detach + teardown if empty). */
+export const useDisableInstanceBackup = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ identifier }: { identifier: Identifier }) => {
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/protection/backup`;
+      const envelope = asEnvelope<InstanceBackupStatus>(
+        await entry.toastApi.delete<AnyRecord>(uri)
+      );
+      if (!envelope.success) {
+        throw new Error(envelope.message || "Failed to disable backup");
+      }
+      return envelope.data ?? { configured: false };
+    },
+    onSuccess: (_data, variables) => {
+      invalidateInstanceBackup(queryClient, context, variables.identifier);
+    },
+    onError: (error: unknown) => {
+      logger.error("Error disabling instance backup:", error);
+    },
+  });
+};
+
+// ─── Self-Service Backup Purchase (paid add-on) ──────────────────
+//
+// Lets a CLIENT buy backup for an existing, non-entitled instance. Backup
+// rides the instance's prepaid term ("match the locker"): one prorated
+// current-period charge now, no separate recurring debit. Mirrors the
+// resize preview→confirm price-lock — the confirm re-derives server-side
+// and 409s on drift, so nobody is charged a figure they didn't approve.
+
+/** Quote returned by the purchase-preview endpoint. */
+export interface BackupPurchasePreview {
+  /** Set when the plan already includes backup → show Enable, not Purchase. */
+  already_entitled?: boolean;
+  plan?: string;
+  /** Recurring monthly backup fee, in `currency`. */
+  monthly_fee?: number;
+  /** One-time charge for the rest of the current prepaid period. */
+  prorated_amount?: number;
+  days_remaining?: number;
+  total_days?: number;
+  billing_cycle?: string;
+  period_start?: string | null;
+  period_end?: string | null;
+  currency?: string;
+  payment_method?: string;
+  wallet_balance?: number | null;
+  wallet_exists?: boolean;
+  sufficient_funds?: boolean;
+  shortfall?: number;
+  resource_label?: string;
+}
+
+/** Quote the cost of buying backup for this instance (monthly + prorated). */
+export const useBackupPurchasePreview = (
+  identifier: Identifier | null | undefined,
+  options: QueryOptions = {}
+) => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const { enabled = true, ...rest } = options;
+
+  return useQuery({
+    queryKey: ["instance-backup-purchase-preview", context, identifier] as const,
+    queryFn: async (): Promise<BackupPurchasePreview> => {
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/protection/backup/purchase-preview`;
+      const envelope = asEnvelope<BackupPurchasePreview>(await entry.silentApi.get<AnyRecord>(uri));
+      return envelope.data ?? {};
+    },
+    enabled: Boolean(identifier) && enabled,
+    staleTime: 1000 * 30,
+    refetchOnWindowFocus: false,
+    ...rest,
+  });
+};
+
+/**
+ * Confirm a backup purchase. Pass the previewed `prorated_amount` as
+ * `acceptedAmount` (price-lock). The api client throws an ApiError with
+ * `status === 409` when the price drifted — the caller re-quotes and asks the
+ * customer to confirm the new figure. Uses the silent client so the caller
+ * owns all messaging (no duplicate toast on the re-quote path).
+ */
+export const useBackupPurchaseConfirm = () => {
+  const { context } = useApiContext();
+  const entry = apiRegistry[context];
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      identifier,
+      acceptedAmount,
+    }: {
+      identifier: Identifier;
+      acceptedAmount: number;
+    }): Promise<InstanceBackupStatus> => {
+      const uri = `${entry.urlPrefix}/cube-instance/${identifier}/protection/backup/purchase`;
+      const envelope = asEnvelope<InstanceBackupStatus>(
+        await entry.silentApi.post<AnyRecord>(uri, { accepted_amount: acceptedAmount })
+      );
+      if (!envelope.success) {
+        throw new Error(envelope.message || "Failed to purchase backup");
+      }
+      return envelope.data ?? { configured: true };
+    },
+    onSuccess: (_data, variables) => {
+      invalidateInstanceBackup(queryClient, context, variables.identifier);
+      queryClient.invalidateQueries({ queryKey: ["walletBalance"] });
     },
   });
 };

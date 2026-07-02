@@ -24,8 +24,8 @@ interface ProviderConfig {
 // colour still distinguishes the underlying fabric without naming it.
 const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
   zadara: {
-    label: "UCA zCompute",
-    shortLabel: "UCA zCompute",
+    label: "UCA Compute",
+    shortLabel: "UCA Compute",
     dotColor: "bg-blue-500",
     bgColor: "bg-blue-50 dark:bg-blue-950/40",
     textColor: "text-blue-700 dark:text-blue-300",

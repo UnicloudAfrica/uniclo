@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Loader2 } from "lucide-react";
+import { buildTenantHierarchyOptions } from "@/utils/tenantHierarchy";
 
 type ContextType = "unassigned" | "tenant" | "user";
 
@@ -7,6 +8,7 @@ interface TenantOption {
   id: string | number;
   name?: string;
   company_name?: string;
+  parent_id?: string | number | null;
 }
 
 interface UserOption {
@@ -29,6 +31,11 @@ interface CustomerContextSelectorProps {
   isUsersFetching?: boolean;
 }
 
+// A normal space is collapsed by native <option> rendering, so per-depth
+// indentation uses a non-breaking space (char 160) that survives.
+const indentFor = (depth: number): string =>
+  depth > 0 ? `${String.fromCharCode(160).repeat(depth * 2)}└ ` : "";
+
 const CustomerContextSelector: React.FC<CustomerContextSelectorProps> = ({
   contextType,
   setContextType,
@@ -41,8 +48,11 @@ const CustomerContextSelector: React.FC<CustomerContextSelectorProps> = ({
   userPool,
   isUsersFetching = false,
 }) => {
-  // Determine available radio options based on props or internal logic if needed
-  // Assuming component should just render what it's given
+  // Tenants arrive as a flat list that already includes sub-tenants (GET
+  // /tenants returns every tenant with its parent_id). Render them nested so an
+  // operator can see which tenant is a sub-tenant of which, and pick one.
+  const tenantOptions = useMemo(() => buildTenantHierarchyOptions(tenants), [tenants]);
+
   return (
     <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div>
@@ -81,9 +91,9 @@ const CustomerContextSelector: React.FC<CustomerContextSelectorProps> = ({
               className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:bg-slate-50 disabled:text-slate-500"
             >
               <option value="">{contextType === "user" ? "All Tenants" : "Select a tenant"}</option>
-              {tenants.map((tenant) => (
+              {tenantOptions.map((tenant) => (
                 <option key={tenant.id} value={tenant.id}>
-                  {tenant.name || tenant.company_name || `Tenant ${tenant.id}`}
+                  {indentFor(tenant.depth) + tenant.label}
                 </option>
               ))}
             </select>

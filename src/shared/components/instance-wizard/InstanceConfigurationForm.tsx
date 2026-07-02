@@ -16,6 +16,7 @@ import ComputeImageSection, {
   getPricingNotice,
   stripPricingNoticeOptions,
 } from "./ComputeImageSection";
+import OsImageFamilyPicker from "./OsImageFamilyPicker";
 import FinalizeDetailsSection from "./FinalizeDetailsSection";
 import { useApiContext } from "@/hooks/useApiContext";
 import { useNetworkPresets } from "@/hooks/networkPresetHooks";
@@ -892,11 +893,6 @@ const InstanceConfigurationForm: React.FC<Props> = ({
       : computeNotice?.kind === "loading"
         ? computeNotice.label
         : "Select instance type";
-    const osImagePlaceholder = !selectedRegion
-      ? "Select region first"
-      : osImageNotice?.kind === "loading"
-        ? osImageNotice.label
-        : "Select OS image";
     /*
      * Per-section completeness + summary for the collapsible accordion.
      *
@@ -1037,25 +1033,23 @@ const InstanceConfigurationForm: React.FC<Props> = ({
             isComplete={isImageSectionComplete}
             summary={imageSummary}
           >
-            <SearchableSelect
-              label="OS Image *"
+            <OsImageFamilyPicker
+              options={osImageChoices}
               value={cfg.os_image_id}
-              onChange={(e) => {
-                const l = e.target.selectedOptions?.[0]?.text || "";
-                updateConfigWithFocus({
-                  os_image_id: e.target.value,
-                  os_image_label: e.target.value ? l : "",
-                });
-              }}
-              options={[{ value: "", label: osImagePlaceholder }, ...osImageChoices]}
+              onSelect={(id, label) =>
+                updateConfigWithFocus({ os_image_id: id, os_image_label: id ? label : "" })
+              }
+              disabled={!selectedRegion || osImageNotice?.kind === "loading"}
+              emptyMessage={
+                !selectedRegion
+                  ? "Select a region first to see OS images."
+                  : osImageNotice?.label || "No OS images are published for this zone yet."
+              }
               helper={
                 templateImageLabel
                   ? `Template: ${templateImageLabel}`
-                  : selectedRegion && osImageNotice && osImageNotice.kind !== "loading"
-                    ? osImageNotice.label
-                    : "Choose the base image."
+                  : "Choose a family, then a version."
               }
-              disabled={!selectedRegion || osImageNotice?.kind === "loading"}
             />
           </SectionWrapper>
 

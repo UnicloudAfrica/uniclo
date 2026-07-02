@@ -5,7 +5,7 @@ prev: { label: Infrastructure Agent, href: /admin-dashboard/docs/agent }
 next: { label: Products & Product Families, href: /admin-dashboard/docs/products }
 ---
 
-:::step{number=1 icon=Search title="Discover Providers" navigation="Sidebar > Provider Discovery"}
+:::step{number=1 icon=Search title="Discover Providers" navigation="Sidebar > Compute & Storage > Provider Discovery"}
 The provider discovery page lets you connect to and explore available cloud infrastructure. Once connected, you can see what resources, regions, and capabilities are available. Think of it as scouting new locations to expand your platform.
 :::
 

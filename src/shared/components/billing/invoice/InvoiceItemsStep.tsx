@@ -88,15 +88,24 @@ const InvoiceItemsStep: React.FC<InvoiceItemsStepProps> = ({
   const totalItems =
     pricingRequests.length + objectStorageRequests.length + integrationRequests.length;
 
-  const tabs: Array<{ id: ItemTab; label: string; icon: React.ComponentType<{ className?: string }>; count: number }> =
-    useMemo(
-      () => [
-        { id: "compute", label: "Compute", icon: Cpu, count: pricingRequests.length },
-        { id: "storage", label: "Object Storage", icon: Database, count: objectStorageRequests.length },
-        { id: "integration", label: "Integrations", icon: Puzzle, count: integrationRequests.length },
-      ],
-      [pricingRequests.length, objectStorageRequests.length, integrationRequests.length],
-    );
+  const tabs: Array<{
+    id: ItemTab;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    count: number;
+  }> = useMemo(
+    () => [
+      { id: "compute", label: "Compute", icon: Cpu, count: pricingRequests.length },
+      {
+        id: "storage",
+        label: "Object Storage",
+        icon: Database,
+        count: objectStorageRequests.length,
+      },
+      { id: "integration", label: "Integrations", icon: Puzzle, count: integrationRequests.length },
+    ],
+    [pricingRequests.length, objectStorageRequests.length, integrationRequests.length]
+  );
 
   return (
     <div className="space-y-4">

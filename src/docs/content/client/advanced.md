@@ -5,14 +5,14 @@ prev: { label: Billing, href: /client-dashboard/docs/billing }
 next: { label: Support, href: /client-dashboard/docs/support }
 ---
 
-:::step{number=1 icon=ShieldCheck title="Disaster Recovery" navigation="Sidebar > Disaster Recovery > Serverless DR"}
+:::step{number=1 icon=ShieldCheck title="Disaster Recovery" navigation="Sidebar > Resilience > Serverless DR"}
 Disaster recovery is your backup plan for when things go wrong. It keeps a copy of your important servers in a separate location, ready to take over if the original has a problem. Like having a spare key hidden outside your house.
 :::
 
 :::screenshot{caption="Your Disaster Recovery page"}
 :::
 
-:::step{number=2 icon=Zap title="Protection" navigation="Sidebar > Disaster Recovery > Protection"}
+:::step{number=2 icon=Zap title="Protection" navigation="Sidebar > Resilience > Replication Policies"}
 Protection services create automatic backups of your servers on a schedule you choose. Set it up once and forget about it -- your data is being backed up regularly in the background.
 :::
 
@@ -20,7 +20,7 @@ Protection services create automatic backups of your servers on a schedule you c
 We strongly recommend enabling protection for any server running important applications or storing valuable data. The cost is small compared to the peace of mind.
 :::
 
-:::step{number=3 icon=ArrowLeftRight title="Migrations" navigation="Sidebar > Disaster Recovery > Migrations"}
+:::step{number=3 icon=ArrowLeftRight title="Migrations" navigation="Sidebar > Resilience > Migrations"}
 Need to move a server from one place to another? The migration wizard guides you through the entire process step by step. It is like hiring a moving company -- they pack everything up and set it up in the new location.
 :::
 

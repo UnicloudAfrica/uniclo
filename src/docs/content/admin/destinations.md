@@ -5,14 +5,14 @@ prev: { label: Migrations, href: /admin-dashboard/docs/migrations }
 next: { label: Infrastructure Agent, href: /admin-dashboard/docs/agent }
 ---
 
-:::step{number=1 icon=MapPin title="View All Destinations" navigation="Sidebar > Disaster Recovery > Destinations"}
+:::step{number=1 icon=MapPin title="View All Destinations" navigation="Sidebar > Resilience > Destinations"}
 The destinations page lists all configured backup and replication targets. Each destination defines a storage location where backup data is sent. You can see the name, type, region, and connection status.
 :::
 
 :::screenshot{caption="Your Destinations list"}
 :::
 
-:::step{number=2 icon=Plus title="Add a Destination" navigation="Sidebar > Disaster Recovery > Destinations > Create"}
+:::step{number=2 icon=Plus title="Add a Destination" navigation="Sidebar > Resilience > Destinations > Create"}
 Click create to add a new destination. Choose the destination type, enter the connection details, and test the connection. Once verified, this destination becomes available for use in replication policies and backup configurations.
 :::
 

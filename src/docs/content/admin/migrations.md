@@ -5,14 +5,14 @@ prev: { label: Serverless DR, href: /admin-dashboard/docs/serverless-dr }
 next: { label: Destinations, href: /admin-dashboard/docs/destinations }
 ---
 
-:::step{number=1 icon=Truck title="View All Migrations" navigation="Sidebar > Disaster Recovery > Migrations"}
+:::step{number=1 icon=Truck title="View All Migrations" navigation="Sidebar > Resilience > Migrations"}
 The migrations page lists all workload migrations on your platform. Each migration shows the source, destination, progress, and current status. You can track everything from a single view.
 :::
 
 :::screenshot{caption="Your Migrations list"}
 :::
 
-:::step{number=2 icon=Plus title="Create a Migration" navigation="Sidebar > Disaster Recovery > Migrations > Create"}
+:::step{number=2 icon=Plus title="Create a Migration" navigation="Sidebar > Resilience > Migrations > Create"}
 Click create to start a new migration. Select the workload to move, choose the target region, and configure any settings. The platform handles the heavy lifting of copying data and recreating resources in the new location.
 :::
 

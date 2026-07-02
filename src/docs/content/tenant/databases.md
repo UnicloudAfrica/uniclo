@@ -5,7 +5,7 @@ prev: { label: Storage, href: /dashboard/docs/storage }
 next: { label: Billing & Revenue, href: /dashboard/docs/billing }
 ---
 
-:::step{number=1 icon=Database title="View Your Databases" navigation="Sidebar > Infrastructure > Lattice Databases"}
+:::step{number=1 icon=Database title="View Your Databases" navigation="Sidebar > Compute & Storage > Databases"}
 See all your managed database instances. Each one shows its name, engine type, status (running, creating, etc.), and size.
 :::
 

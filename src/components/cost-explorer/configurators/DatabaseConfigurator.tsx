@@ -4,6 +4,7 @@ import useCartStore from "@/stores/cartStore";
 import { useFetchPublicRegions } from "@/hooks/useCostExplorer";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import { formatMoney } from "../formatMoney";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
 const publicApi = axios.create({ baseURL: `${API_BASE}/api/v1`, headers: { Accept: "application/json" } });
@@ -91,7 +92,7 @@ export default function DatabaseConfigurator() {
   const backupPrice = backupEnabled ? basePrice * 0.1 : 0;
   const totalMonthly = basePrice + replicaPrice + backupPrice;
 
-  const fmt = (v: number) => `₦${v.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+  const fmt = (v: number) => formatMoney(v);
 
   return (
     <div className="space-y-5">

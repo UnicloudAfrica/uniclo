@@ -21,6 +21,7 @@ import {
   type EnforcementSummary,
 } from "@/hooks/useTenantBilling";
 import logger from "@/utils/logger";
+import { useCurrency } from "@/hooks/useCurrency";
 
 type InvoiceStatus = "paid" | "pending" | "overdue" | "void";
 type PaymentMethod = "wallet" | "bank_transfer" | "card";
@@ -55,6 +56,11 @@ const TenantInvoicesPage: React.FC = () => {
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("bank_transfer");
   const [paymentReference, setPaymentReference] = useState("");
+
+  // The enforcement summary endpoint doesn't carry a currency code (it only
+  // sends cents + a bare number_format string), so source the display
+  // currency from the tenant's resolved preference rather than assuming NGN.
+  const { code: displayCurrency, symbol: currencySymbol } = useCurrency();
 
   const { data: invoiceDataRaw, isLoading: isLoadingInvoices } = useInvoices({
     status: statusFilter !== "all" ? statusFilter : undefined,
@@ -118,7 +124,7 @@ const TenantInvoicesPage: React.FC = () => {
                     className={`text-sm ${enforcementData.is_suspended ? "text-red-600" : "text-yellow-600"}`}
                   >
                     Total Outstanding:{" "}
-                    {formatCurrency(enforcementData.total_outstanding_cents / 100)}
+                    {formatCurrency(enforcementData.total_outstanding_cents / 100, displayCurrency)}
                     {overdueCount > 0 && ` (${overdueCount} overdue)`}
                   </p>
                 </div>
@@ -291,7 +297,7 @@ const TenantInvoicesPage: React.FC = () => {
               <div className="p-3 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-600">Outstanding Balance</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatCurrency((enforcementData?.total_outstanding_cents || 0) / 100)}
+                  {formatCurrency((enforcementData?.total_outstanding_cents || 0) / 100, displayCurrency)}
                 </p>
               </div>
 
@@ -300,7 +306,9 @@ const TenantInvoicesPage: React.FC = () => {
                   Payment Amount
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₦</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                    {currencySymbol}
+                  </span>
                   <input
                     type="number"
                     step="0.01"

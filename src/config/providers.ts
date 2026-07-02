@@ -61,7 +61,7 @@ export interface ProviderConfig {
 
 export const providerRegistry: Record<ProviderKey, ProviderConfig> = {
   zadara: {
-    label: "Zadara (zCompute)",
+    label: "UCA Compute",
     description: "Full-stack IaaS with compute, networking, and storage",
     capabilities: [
       "compute",

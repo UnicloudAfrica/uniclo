@@ -5,14 +5,14 @@ prev: { label: Key Pairs, href: /admin-dashboard/docs/key-pairs }
 next: { label: VPCs, href: /admin-dashboard/docs/vpcs }
 ---
 
-:::step{number=1 icon=Database title="View All Databases" navigation="Sidebar > Infrastructure > Lattice Databases"}
+:::step{number=1 icon=Database title="View All Databases" navigation="Sidebar > Compute & Storage > Databases"}
 The Lattice Databases page lists every managed database on your platform. You can see the database name, engine type (e.g. PostgreSQL), status, size, and which tenant owns it. This is your central view for all database infrastructure.
 :::
 
 :::screenshot{caption="Your Lattice Databases list"}
 :::
 
-:::step{number=2 icon=Plus title="Create a Database" navigation="Sidebar > Infrastructure > Lattice Databases > Create"}
+:::step{number=2 icon=Plus title="Create a Database" navigation="Sidebar > Compute & Storage > Databases > Create"}
 Click create to provision a new managed database. Choose the engine (such as PostgreSQL), pick the instance size, set the storage amount, and assign it to a project. The platform handles installation, patching, and backups automatically.
 :::
 

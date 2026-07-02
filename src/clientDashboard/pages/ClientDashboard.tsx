@@ -27,6 +27,7 @@ import { useFetchClientProfile } from "@/hooks/clientHooks/resources";
 import VerifyAccountPromptModal from "../components/verifyAccountPrompt";
 import ClientActiveTab from "../components/clientActiveTab";
 import ClientPageShell from "../components/ClientPageShell";
+import { PriceLabel } from "@/shared/components/ui/PriceLabel";
 import { useFetchClientProductOffers } from "@/hooks/clientHooks/productsHooks";
 import { useFetchClientProjects } from "@/hooks/clientHooks/projectHooks";
 import { useFetchClientPurchasedInstances } from "@/hooks/clientHooks/instanceHooks";
@@ -228,14 +229,6 @@ const OFFER_SECTIONS: OfferSection[] = [
 
 const DEFAULT_OFFERS: Offers = { trial: [], discount: [] };
 
-const formatAmount = (amount: number | string): string => {
-  const numericValue = Number(amount) || 0;
-  return numericValue.toLocaleString("en-NG", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-};
-
 const formatPercentage = (value: number | string): string =>
   new Intl.NumberFormat("en-NG", {
     maximumFractionDigits: 1,
@@ -327,7 +320,7 @@ const OfferCard: React.FC<OfferCardProps> = ({ offer, type, ctaLabel }) => {
             <span>{spec}</span>
           </div>
           <p className="text-2xl font-semibold text-[--theme-heading-color]">
-            {hasPrice ? `₦${formatAmount(priceValue)}` : "Custom pricing"}
+            {hasPrice ? <PriceLabel amount={priceValue} sourceCurrency="NGN" /> : "Custom pricing"}
             {hasPrice ? (
               <span className="text-sm font-medium text-[--theme-muted-color]">
                 {" "}

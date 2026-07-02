@@ -5,14 +5,14 @@ prev: { label: DNS Zones, href: /admin-dashboard/docs/dns }
 next: { label: Serverless DR, href: /admin-dashboard/docs/serverless-dr }
 ---
 
-:::step{number=1 icon=Copy title="View All Replication Policies" navigation="Sidebar > Disaster Recovery > Replication Policies"}
+:::step{number=1 icon=Copy title="View All Replication Policies" navigation="Sidebar > Resilience > Replication Policies"}
 The replication policies page shows all active data replication rules. Each policy defines what data is being replicated, where it is going, and how often. Think of it as setting up automatic backup copies that are always kept up to date.
 :::
 
 :::screenshot{caption="Your Replication Policies list"}
 :::
 
-:::step{number=2 icon=Plus title="Create a Replication Policy" navigation="Sidebar > Disaster Recovery > Replication Policies > Create"}
+:::step{number=2 icon=Plus title="Create a Replication Policy" navigation="Sidebar > Resilience > Replication Policies > Create"}
 Click create to set up a new replication policy. Choose the source (where the data lives now), the destination (where the copy should go), and the replication schedule (how often to sync). The platform handles the rest automatically.
 :::
 

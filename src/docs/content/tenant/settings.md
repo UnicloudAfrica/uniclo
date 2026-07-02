@@ -30,6 +30,6 @@ Make your portal look like your own brand! Upload your logo, set your brand colo
 Choose colors that match your company's brand guidelines. The primary color is used for buttons and highlights, while the secondary color is used for accents.
 :::
 
-:::step{number=4 icon=Users title="Team Management" navigation="Sidebar > Customer Management > Tenant Users"}
+:::step{number=4 icon=Users title="Team Management" navigation="Sidebar > Customers > Tenants & Users"}
 Invite colleagues to help manage your cloud business. Each team member gets their own login with a role that controls what they can access (owner, admin, member, or billing).
 :::

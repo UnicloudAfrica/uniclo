@@ -23,7 +23,9 @@ function formatMoney(amount: number, currency: string): string {
 function hasSurcharge(product?: IntegrationProductRow): boolean {
   const tiers = product?.pricing_tiers;
   return (
-    !!tiers && typeof tiers === "object" && "surcharge_threshold_gb" in (tiers as Record<string, unknown>)
+    !!tiers &&
+    typeof tiers === "object" &&
+    "surcharge_threshold_gb" in (tiers as Record<string, unknown>)
   );
 }
 

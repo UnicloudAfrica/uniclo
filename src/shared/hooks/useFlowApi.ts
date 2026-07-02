@@ -6,6 +6,7 @@
  */
 import { useCallback, useMemo } from "react";
 import { useApiContext } from "@/hooks/useApiContext";
+import { readCookie } from "@/lib/api";
 
 // ── Types ───────────────────────────────────────────────────────
 
@@ -186,7 +187,7 @@ export function useFlowApi() {
   // render, so depending on it directly destabilises every downstream
   // useCallback / useMemo and tips consumers into render loops. Derive
   // a stable string key from the bits we actually care about (the
-  // Bearer token + tenant slug); the request callback only re-creates
+  // auth + tenant-slug headers); the request callback only re-creates
   // when one of those primitives genuinely changes.
   const headersKey = JSON.stringify({
     auth: authHeaders.Authorization ?? null,
@@ -200,13 +201,25 @@ export function useFlowApi() {
       body?: Record<string, unknown>,
     ): Promise<ApiResponse<T>> => {
       const url = `${apiBaseUrl}/flow${path}`;
+      // SEC-027: cookie-based auth — the httpOnly session cookie forwarded
+      // by credentials: "include" authenticates the request (no Bearer
+      // token is held client-side). Mutations forward the XSRF cookie the
+      // same way lib/api.ts does.
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...authHeaders,
+      };
+      if (method !== "GET" && method !== "HEAD") {
+        const xsrf = readCookie("XSRF-TOKEN");
+        if (xsrf) {
+          headers["X-XSRF-TOKEN"] = xsrf;
+        }
+      }
       const options: RequestInit = {
         method,
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          ...authHeaders,
-        },
+        headers,
+        credentials: "include",
       };
 
       if (body && method !== "GET") {
@@ -386,13 +399,23 @@ export function useAdminFlowApi() {
       body?: Record<string, unknown>,
     ): Promise<{ success: boolean; data: T; message?: string }> => {
       const url = `${apiBaseUrl}/flow${path}`;
+      // SEC-027: cookie-based auth, mirroring lib/api.ts (see the client
+      // request() above for the full rationale).
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...authHeaders,
+      };
+      if (method !== "GET" && method !== "HEAD") {
+        const xsrf = readCookie("XSRF-TOKEN");
+        if (xsrf) {
+          headers["X-XSRF-TOKEN"] = xsrf;
+        }
+      }
       const options: RequestInit = {
         method,
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          ...authHeaders,
-        },
+        headers,
+        credentials: "include",
       };
 
       if (body && method !== "GET") {

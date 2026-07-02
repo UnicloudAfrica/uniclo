@@ -20,14 +20,20 @@ const useNatGatewaysAdapter = (projectId: string, region?: string) => {
 interface NatGatewaysProps {
   projectId?: string;
   region?: string;
+  providerSupported?: boolean;
 }
 
-const NatGateways: React.FC<NatGatewaysProps> = ({ projectId = "", region = "" }) => {
+const NatGateways: React.FC<NatGatewaysProps> = ({
+  projectId = "",
+  region = "",
+  providerSupported = true,
+}) => {
   return (
     <NatGatewaysContainer
       hierarchy="tenant"
       projectId={projectId}
       region={region}
+      providerSupported={providerSupported}
       hooks={{
         useList: useNatGatewaysAdapter as never,
         useCreate: useCreateNatGateway as never,

@@ -273,13 +273,17 @@ const SetupProgressCard: React.FC<SetupProgressCardProps> = ({
                 </span>
                 <span className={idx === 0 ? "text-white" : "text-gray-500"}>
                   {idx === 0 && "> "} {log.label}{" "}
-                  {log.status === "completed"
-                    ? isCleanup
-                      ? "removed"
-                      : "successful"
-                    : isCleanup
-                      ? "deleting..."
-                      : "executing..."}
+                  {(() => {
+                    // Honour the step's real outcome — a failed step must never
+                    // read "executing...". Use effectiveStatus so a transient
+                    // failure mid-pipeline shows "retrying...", matching the
+                    // amber spinner, while a terminal failure shows "failed".
+                    const logStatus = effectiveStatus(log);
+                    if (logStatus === "completed") return isCleanup ? "removed" : "successful";
+                    if (logStatus === "failed") return "failed";
+                    if (logStatus === "retrying") return "retrying...";
+                    return isCleanup ? "deleting..." : "executing...";
+                  })()}
                 </span>
               </div>
             ))}

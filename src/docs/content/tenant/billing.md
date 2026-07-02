@@ -14,14 +14,14 @@ D --> E[Revenue Recorded]
 E --> F[Your Payout]
 :::
 
-:::step{number=1 icon=TrendingUp title="Revenue Dashboard" navigation="Sidebar > Billing & Revenue > Revenue"}
+:::step{number=1 icon=TrendingUp title="Revenue Dashboard" navigation="Sidebar > Billing > Revenue"}
 See how your business is doing at a glance. Total revenue, payment trends, and breakdowns by client. This is your financial overview -- the big picture of your earnings.
 :::
 
 :::screenshot{caption="Your Revenue dashboard"}
 :::
 
-:::step{number=2 icon=DollarSign title="Pricing Overrides" navigation="Sidebar > Billing & Revenue > Price Settings"}
+:::step{number=2 icon=DollarSign title="Pricing Overrides" navigation="Sidebar > Billing > Price Settings"}
 Set your own prices! The platform gives you base prices, but you can override them to set custom pricing for your clients. Want to charge more for premium support or offer discounts? Do it here.
 :::
 
@@ -32,31 +32,31 @@ Set your own prices! The platform gives you base prices, but you can override th
 Your pricing overrides apply to all your clients by default. The difference between your cost and your selling price is your profit margin.
 :::
 
-:::step{number=3 icon=Calculator title="Pricing Calculator" navigation="Sidebar > Billing & Revenue > Pricing Calculator"}
+:::step{number=3 icon=Calculator title="Pricing Calculator" navigation="Sidebar > Billing > Pricing Calculator"}
 Quickly calculate how much a specific setup will cost. Great for quoting clients before they commit.
 :::
 
-:::step{number=4 icon=FileText title="Generate Invoice" navigation="Sidebar > Billing & Revenue > Generate Invoice"}
+:::step{number=4 icon=FileText title="Generate Invoice" navigation="Sidebar > Billing > New Quote / Invoice"}
 Create manual invoices for custom charges or special services.
 :::
 
-:::step{number=5 icon=CreditCard title="Payment History" navigation="Sidebar > Billing & Revenue > Payment History"}
+:::step{number=5 icon=CreditCard title="Payment History" navigation="Sidebar > Billing > Payment History"}
 See every payment your clients have made -- amounts, dates, statuses, and payment methods.
 :::
 
-:::step{number=6 icon=Percent title="Tax Configuration" navigation="Sidebar > Billing & Revenue > Tax Configuration"}
+:::step{number=6 icon=Percent title="Tax Configuration" navigation="Sidebar > Billing > Tax Configuration"}
 Set up tax rates for different countries so invoices automatically include the correct tax.
 :::
 
-:::step{number=7 icon=Receipt title="Discounts" navigation="Sidebar > Billing & Revenue > Discounts"}
+:::step{number=7 icon=Receipt title="Discounts" navigation="Sidebar > Billing > Discounts"}
 Create and manage discount rules for your clients. Offer percentage or fixed-amount discounts.
 :::
 
-:::step{number=8 icon=Banknote title="Payouts" navigation="Sidebar > Billing & Revenue > Payouts"}
+:::step{number=8 icon=Banknote title="Payouts" navigation="Sidebar > Billing > Payouts"}
 Track the money coming to you from the platform. This shows your earnings and payout schedule.
 :::
 
-:::step{number=9 icon=Settings title="Billing Settings" navigation="Sidebar > Billing & Revenue > Billing Settings"}
+:::step{number=9 icon=Settings title="Billing Settings" navigation="Sidebar > Billing > Billing Settings"}
 Configure how billing works for your account -- payment methods, billing cycles, and notification preferences.
 :::
 

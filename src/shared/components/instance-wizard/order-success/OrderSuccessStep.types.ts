@@ -58,6 +58,7 @@ export interface OrderSuccessStepProps {
   keypairDownloads?: KeypairDownload[];
   instances?: unknown;
   instancesPageUrl: string;
+  instanceDetailsUrl?: string;
   onCreateAnother: () => void;
   resourceLabel?: string;
 }

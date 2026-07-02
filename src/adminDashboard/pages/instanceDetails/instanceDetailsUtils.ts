@@ -190,6 +190,119 @@ export const formatStatusText = (value: unknown) => {
     .replaceAll(/\b\w/g, (char) => char.toUpperCase());
 };
 
+/**
+ * Coerce a single tag value into a display string.
+ *
+ * Tags arrive in several shapes depending on the producer:
+ *  - plain strings ("env:prod")
+ *  - key/value objects ({ key, value } or { Key, Value }) → "key: value"
+ *  - bare value objects ({ value } / { Value } / { name }) → the value
+ *  - anything else → JSON, never "[object Object]"
+ *
+ * Returns null for empty/whitespace results so callers can drop them.
+ */
+export const normalizeTag = (tag: unknown): string | null => {
+  if (tag === null || tag === undefined) return null;
+  if (typeof tag === "string") {
+    const trimmed = tag.trim();
+    return trimmed.length ? trimmed : null;
+  }
+  if (typeof tag === "number" || typeof tag === "boolean") {
+    return String(tag);
+  }
+  if (typeof tag === "object") {
+    const record = tag as Record<string, unknown>;
+    const key = record["key"] ?? record["Key"] ?? record["name"] ?? record["Name"];
+    const value =
+      record["value"] ?? record["Value"] ?? record["val"] ?? record["Val"];
+    if (key !== undefined && key !== null && value !== undefined && value !== null) {
+      return `${String(key)}: ${String(value)}`;
+    }
+    if (value !== undefined && value !== null) return String(value);
+    if (key !== undefined && key !== null) return String(key);
+    try {
+      const json = JSON.stringify(tag);
+      return json && json !== "{}" ? json : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
+
+/**
+ * Normalize an arbitrary tags payload (array of strings/objects, a
+ * comma-separated string, or null) into a clean string[] with no
+ * "[object Object]" leaks and no empty entries.
+ */
+/**
+ * Internal provisioning bookkeeping written to the instance `tags` field
+ * (key_name, created_eip_ids, …). These are never surfaced as user-facing tags.
+ */
+const INTERNAL_TAG_KEYS = new Set<string>([
+  "key_name",
+  "created_eip_ids",
+  "created_volume_ids",
+  "created_volume_map",
+  "data_volumes",
+  "volumes_to_attach",
+  "provisioning_warning",
+  "public_ip_unavailable",
+]);
+
+export const normalizeTags = (tags: unknown): string[] => {
+  if (!tags) return [];
+  // A plain object `tags` is a key→value map (or internal bookkeeping). Render
+  // each user entry as "key: value" and DROP internal provisioning keys, so the
+  // Tags chip never leaks internal data (key_name, created_eip_ids, …).
+  if (!Array.isArray(tags) && typeof tags === "object") {
+    return Object.entries(tags as Record<string, unknown>)
+      .filter(
+        ([k, v]) =>
+          !INTERNAL_TAG_KEYS.has(k) && v !== null && v !== undefined && v !== "",
+      )
+      .map(
+        ([k, v]) =>
+          `${k}: ${typeof v === "object" ? JSON.stringify(v) : String(v)}`,
+      );
+  }
+  const list: unknown[] = Array.isArray(tags)
+    ? tags
+    : typeof tags === "string"
+      ? tags.split(",")
+      : [tags];
+  return list
+    .map((t) => normalizeTag(t))
+    .filter((t): t is string => t !== null);
+};
+
+export type NetworkRowFields = {
+  ip: string | undefined;
+  mac: string | undefined;
+  subnet: string | undefined;
+  cidr: string | undefined;
+  dnsName: string | undefined;
+  deviceIndex: number | string | undefined;
+  portId: string | undefined;
+};
+
+/**
+ * Map a single NIC record from `network_info.flat_addresses` to the eight
+ * fields the Networks table renders. Accepts the backend's snake_case keys
+ * plus a few OpenStack-style aliases so older payloads still resolve.
+ */
+export const mapNetworkInterfaceRow = (row: GenericRecord): NetworkRowFields => ({
+  ip: (row["addr"] || row["ip_address"] || row["ip"]) as string | undefined,
+  mac: (row["mac_addr"] || row["OS-EXT-IPS-MAC:mac_addr"] || row["mac_address"]) as
+    | string
+    | undefined,
+  subnet: (row["subnet_name"] || row["subnet"] || row["network_name"]) as string | undefined,
+  cidr: row["cidr"] as string | undefined,
+  dnsName: row["dns_name"] as string | undefined,
+  deviceIndex: row["device_index"] as number | string | undefined,
+  portId: (row["port_id"] || row["network_id"]) as string | undefined,
+});
+
 export const formatDuration = (seconds: unknown) => {
   if (seconds === null || seconds === undefined) return null;
   const totalSeconds = Number(seconds);

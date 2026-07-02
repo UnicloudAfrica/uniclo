@@ -5,7 +5,7 @@ prev: { label: Advanced Services, href: /admin-dashboard/docs/advanced }
 next: { label: Platform Settings, href: /admin-dashboard/docs/settings }
 ---
 
-:::step{number=1 icon=LifeBuoy title="View All Tickets" navigation="Sidebar > Support Tickets"}
+:::step{number=1 icon=LifeBuoy title="View All Tickets" navigation="Sidebar > Support"}
 The tickets page shows all support requests across your platform. Each ticket has a subject, a status (open, in progress, resolved), who submitted it, and when. You can filter and search to find specific tickets quickly.
 :::
 

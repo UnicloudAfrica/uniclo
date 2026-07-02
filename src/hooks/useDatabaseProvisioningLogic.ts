@@ -6,6 +6,7 @@
  */
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useAsyncAction } from "@/shared/hooks/useAsyncAction";
+import { isApiError } from "@/utils/apiError";
 import {
   useDatabaseQuote,
   useCreateDatabaseOrder,
@@ -18,6 +19,7 @@ import { useFetchRegions, useFetchAvailabilityZones } from "@/shared/hooks/resou
 import { useFetchCountries } from "@/hooks/resource";
 import { useCustomerContext } from "@/hooks/adminHooks/useCustomerContext";
 import { useApiContext } from "@/hooks/useApiContext";
+import { useFeatureFlags } from "@/hooks/featureFlagsHooks";
 import useAuthStore from "@/stores/authStore";
 import {
   normalizePaymentOptions,
@@ -349,6 +351,20 @@ export const useDatabaseProvisioningLogic = () => {
   const { context } = useApiContext();
   const user = useAuthStore((s) => s.user);
 
+  // Platform feature flags (public /features endpoint). Drives whether
+  // cross-provider replica AZs are selectable vs shown "coming soon".
+  // Bound to the SAME backend flag the order-time 422 guard enforces
+  // (config('managed_databases.cross_provider_provisioning_enabled')),
+  // exposed as `managed_database_cross_provider` in config('features').
+  const { data: featureFlags } = useFeatureFlags();
+  const crossProviderProvisioningEnabled = featureFlags?.managed_database_cross_provider ?? false;
+
+  // FE mirror of the order-time DR guard. The backend 422s a `dr_enabled`
+  // payload unless `config('features.managed_database_dr_ordering')` is on
+  // (InitiateManagedDatabaseAction + StoreManagedDatabaseRequest). Off by
+  // default so the wizard's DR controls fail closed to "coming soon".
+  const drOrderingEnabled = featureFlags?.managed_database_dr_ordering ?? false;
+
   // Derive billing country from user profile
   const profileCountry = useMemo(() => {
     if (!user) return "";
@@ -564,7 +580,7 @@ export const useDatabaseProvisioningLogic = () => {
 
   // Step indices
   const paymentStepIndex = useMemo(() => steps.findIndex((s) => s.id === "payment"), [steps]);
-  const _reviewStepIndex = useMemo(() => steps.findIndex((s) => s.id === "review"), [steps]);
+  const reviewStepIndex = useMemo(() => steps.findIndex((s) => s.id === "review"), [steps]);
   const successStepIndex = useMemo(() => steps.findIndex((s) => s.id === "success"), [steps]);
 
   // Engine metadata — server data is primary, local ENGINE_METADATA is fallback.
@@ -717,13 +733,19 @@ export const useDatabaseProvisioningLogic = () => {
   const taggedReplicaAzs = useMemo(
     () =>
       tagReplicaAzModes(availabilityZones, form.availabilityZone, primaryAzProvider, selectedEngineTier, {
-        // FE-side mirror of the backend feature flag. Drives whether
-        // cross-provider AZs are selectable or shown as "coming soon".
-        // The backend still enforces the same gate at submit time.
-        crossProviderProvisioningEnabled:
-          (window as { __MANAGED_DB_CROSS_PROVIDER_ENABLED__?: boolean }).__MANAGED_DB_CROSS_PROVIDER_ENABLED__ ?? false,
+        // FE-side mirror of the backend feature flag, sourced from the
+        // public /features endpoint. Drives whether cross-provider AZs are
+        // selectable or shown as "coming soon". The backend still enforces
+        // the same gate at submit time.
+        crossProviderProvisioningEnabled,
       }),
-    [availabilityZones, form.availabilityZone, primaryAzProvider, selectedEngineTier],
+    [
+      availabilityZones,
+      form.availabilityZone,
+      primaryAzProvider,
+      selectedEngineTier,
+      crossProviderProvisioningEnabled,
+    ],
   );
 
   // Subset of tagged AZs that are currently SELECTABLE. The picker shows
@@ -752,6 +774,15 @@ export const useDatabaseProvisioningLogic = () => {
       return { ...prev, replicationMode: nextMode };
     });
   }, [taggedReplicaAzs]);
+
+  // Fail closed on DR: if the DR-ordering flag is off, force `drEnabled`
+  // back to false so a stale toggle can never submit a `dr_enabled`
+  // payload the backend would reject with a 422. Keyed off `form.drEnabled`
+  // too so a later toggle-on is corrected, not just the mount-time value.
+  useEffect(() => {
+    if (drOrderingEnabled) return;
+    setForm((prev) => (prev.drEnabled ? { ...prev, drEnabled: false } : prev));
+  }, [drOrderingEnabled, form.drEnabled]);
 
   // If the primary AZ changes such that previously-selected replicas
   // are no longer selectable (e.g. tier no longer supports the cross-
@@ -994,7 +1025,27 @@ export const useDatabaseProvisioningLogic = () => {
           }
         }
 
-        const response = await orderMutation.mutateAsync(payload);
+        const response = await orderMutation.mutateAsync(payload).catch((err: unknown) => {
+          // Price-lock 409: the backend re-quoted and the total drifted from
+          // what the customer approved. Instead of a dead "Failed to create
+          // order" toast, surface the NEW total and make them re-confirm —
+          // upholding the invariant that no one is charged a price they didn't
+          // see and approve. Any other error propagates to the generic handler.
+          if (isApiError(err) && err.status === 409) {
+            return "__REQUOTE__" as const;
+          }
+          throw err;
+        });
+
+        if (response === "__REQUOTE__") {
+          await fetchQuote();
+          setActiveStep(reviewStepIndex);
+          ToastUtils.error(
+            "Pricing changed since you last reviewed it — please check the updated total and confirm again."
+          );
+          return { isPaymentRequired: false, requote: true };
+        }
+
         const data = response?.data ?? (response as unknown as DatabaseOrderResponse["data"]);
 
         // Normalize payment gateway options
@@ -1035,9 +1086,11 @@ export const useDatabaseProvisioningLogic = () => {
       },
       {
         successToast: (result) =>
-          result?.isPaymentRequired
-            ? "Order created! Please complete payment."
-            : "Database created! Provisioning is starting.",
+          result && "requote" in result && result.requote
+            ? "" // re-quote already surfaced its own message; no success toast
+            : result?.isPaymentRequired
+              ? "Order created! Please complete payment."
+              : "Database created! Provisioning is starting.",
         fallbackErrorMessage: "Failed to create database order.",
         rethrow: false,
       }
@@ -1049,6 +1102,8 @@ export const useDatabaseProvisioningLogic = () => {
     createOrderAction,
     paymentStepIndex,
     successStepIndex,
+    fetchQuote,
+    reviewStepIndex,
   ]);
 
   // ─── Payment Completion ──────────────────────────────────────────
@@ -1193,6 +1248,9 @@ export const useDatabaseProvisioningLogic = () => {
     replicaAvailableAzs,
     taggedReplicaAzs,
     toggleReplicaAz,
+
+    // Feature flags (FE mirror of backend config('features'))
+    drOrderingEnabled,
 
     // Validation
     isEngineStepValid,

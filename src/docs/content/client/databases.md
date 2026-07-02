@@ -5,7 +5,7 @@ prev: { label: Storage, href: /client-dashboard/docs/storage }
 next: { label: Billing, href: /client-dashboard/docs/billing }
 ---
 
-:::step{number=1 icon=Database title="View Your Databases" navigation="Sidebar > Infrastructure > Lattice Databases"}
+:::step{number=1 icon=Database title="View Your Databases" navigation="Sidebar > Compute & Storage > Databases"}
 See all your database instances. Each one shows its name, what type it is, whether it is running, and its size. Green means it is healthy and running.
 :::
 

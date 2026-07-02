@@ -5,7 +5,7 @@ prev: { label: Databases, href: /client-dashboard/docs/databases }
 next: { label: Advanced Services, href: /client-dashboard/docs/advanced }
 ---
 
-:::step{number=1 icon=Calculator title="Pricing Calculator" navigation="Sidebar > Pricing Calculator"}
+:::step{number=1 icon=Calculator title="Pricing Calculator" navigation="Sidebar > Billing > Pricing Calculator"}
 Before you buy anything, use the pricing calculator to estimate costs. Pick the server size, storage amount, and other options -- the calculator shows you the price instantly. No surprises!
 :::
 
@@ -16,7 +16,7 @@ Before you buy anything, use the pricing calculator to estimate costs. Pick the 
 Always check the pricing calculator before creating new resources. It helps you budget and avoid unexpected charges. Think of it as checking the menu before ordering.
 :::
 
-:::step{number=2 icon=Receipt title="Orders & Payment History" navigation="Sidebar > Orders & Payments"}
+:::step{number=2 icon=Receipt title="Orders & Payment History" navigation="Sidebar > Billing > Orders & Payments"}
 See everything you have been billed for -- each invoice, payment date, amount, and status. Successfully paid items show a green checkmark. If a payment failed, you will see a notification to retry.
 :::
 

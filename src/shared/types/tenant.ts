@@ -1,5 +1,6 @@
 export interface Tenant {
   id: string | number;
+  parent_id?: string | number | null;
   name?: string;
   company_name?: string;
   identifier?: string;

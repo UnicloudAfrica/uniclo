@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { createApiClient, resetCsrfPrimed } from "../createApiClient";
+import { createApiClient, resetCsrfPrimed, sanctumRootFor } from "../createApiClient";
+import { isApiError } from "../apiError";
 
 vi.mock("../toastUtil", () => ({
   default: {
@@ -164,6 +165,31 @@ describe("createApiClient", () => {
     await expect(client.get("/fail")).rejects.toThrow("boom");
   });
 
+  it("throws an ApiError carrying the status + parsed field errors on a 422", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        jsonResponse(422, {
+          message: "Validation failed",
+          errors: { name: ["The name field is required."] },
+        })
+      )
+    );
+
+    const client = createApiClient({
+      baseURL: "https://api.test",
+      authStore: makeAuthStore(),
+    });
+
+    const err = await client.post("/things", {}).catch((e: unknown) => e);
+
+    expect(isApiError(err)).toBe(true);
+    if (isApiError(err)) {
+      expect(err.status).toBe(422);
+      expect(err.fieldErrors).toEqual({ name: ["The name field is required."] });
+    }
+  });
+
   it("clears session on 401 when toasts enabled and auth redirect handled", async () => {
     const authStore = makeAuthStore();
     vi.stubGlobal(
@@ -289,5 +315,35 @@ describe("createApiClient", () => {
     });
     await expect(client.get("/fail")).rejects.toThrow();
     expect(ToastUtils.error).toHaveBeenCalledWith("stack trace detail");
+  });
+
+  it("primes the CSRF cookie at the origin root for an /admin/v1 base", async () => {
+    // Regression: the old strip only handled /api/v1, so the admin client hit
+    // /admin/v1/sanctum/csrf-cookie (404) and cookie-auth mutations broke.
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(200, {}));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createApiClient({ baseURL: "/admin/v1", authStore: makeAuthStore() });
+    await client.post("/projects", { name: "x" });
+
+    const csrfCall = fetchMock.mock.calls.find((c) =>
+      String(c[0] ?? "").includes("/sanctum/csrf-cookie")
+    );
+    expect(csrfCall?.[0]).toBe("/sanctum/csrf-cookie");
+  });
+});
+
+describe("sanctumRootFor", () => {
+  it.each([
+    ["https://api.test/api/v1", "https://api.test"],
+    ["https://api.test/admin/v1", "https://api.test"],
+    ["https://api.test/tenant/v1", "https://api.test"],
+    ["https://api.test/api/v1/business", "https://api.test"],
+    ["/admin/v1", ""],
+    ["/tenant/v1", ""],
+    ["/api/v1/business", ""],
+    ["https://api.test/admin/v1/", "https://api.test"],
+  ])("strips the audience prefix off %s", (input, expected) => {
+    expect(sanctumRootFor(input)).toBe(expected);
   });
 });

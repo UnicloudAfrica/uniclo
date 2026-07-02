@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Plus, Cloud } from "lucide-react";
 import useCartStore from "@/stores/cartStore";
 import { useFetchPublicRegions } from "@/hooks/useCostExplorer";
+import { formatMoney } from "../formatMoney";
 
 const TIERS = [
   { id: "standard", label: "Standard", desc: "General purpose, frequent access", pricePerGb: 120 },
@@ -20,7 +21,7 @@ export default function ObjectStorageConfigurator() {
   const regionList = Array.isArray(regions) ? regions : [];
   const selectedTier = TIERS.find((t) => t.id === tier);
   const totalMonthly = (selectedTier?.pricePerGb ?? 120) * storageGb;
-  const fmt = (v: number) => `₦${v.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+  const fmt = (v: number) => formatMoney(v);
 
   return (
     <div className="space-y-5">

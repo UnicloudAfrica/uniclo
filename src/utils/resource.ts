@@ -14,7 +14,10 @@ export const getCurrencySymbol = (currencyCode: string): string => {
     case "EUR":
       return "€";
     case "USD":
-    default:
       return "$";
+    default:
+      // Unknown ISO code — return the code itself rather than assume USD
+      // (platform money rule: never hardcode a currency).
+      return currencyCode ? `${currencyCode} ` : "$";
   }
 };

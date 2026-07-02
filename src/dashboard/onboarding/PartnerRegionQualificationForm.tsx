@@ -13,7 +13,6 @@ const PROVIDER_OPTIONS: OnboardingOption[] = [
   })),
   { value: "aws", label: "AWS (coming soon)" },
   { value: "azure", label: "Azure (coming soon)" },
-  { value: "openstack", label: "OpenStack (coming soon)" },
 ];
 
 /** Providers that support automated provisioning and credential verification */
@@ -249,10 +248,7 @@ const PartnerRegionQualificationForm = ({
     return [
       {
         value: payload.region.provider,
-        label:
-          payload.region.provider === "nobus"
-            ? "Nobus Cloud (legacy)"
-            : `${payload.region.provider.toUpperCase()} (legacy)`,
+        label: "Legacy availability group",
       },
       ...PROVIDER_OPTIONS,
     ];

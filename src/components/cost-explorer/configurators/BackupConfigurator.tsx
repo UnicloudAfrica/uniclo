@@ -3,6 +3,7 @@ import { Plus, Archive, Info } from "lucide-react";
 import useCartStore from "@/stores/cartStore";
 import { useFetchAcfPublicServices } from "@/hooks/useCostExplorer";
 import { RESILIENCE } from "@/shared/branding";
+import { formatMoney } from "../formatMoney";
 
 /**
  * Backup Configurator — flat per-VM/month pricing.
@@ -24,7 +25,7 @@ export default function BackupConfigurator() {
   const monthlyCost = perVmPrice * vmCount;
   const totalCost = monthlyCost * months;
 
-  const fmt = (v: number) => `₦${v.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+  const fmt = (v: number) => formatMoney(v);
 
   return (
     <div className="space-y-5">

@@ -4,6 +4,7 @@ import { ModernButton } from "../ui";
 import KeypairDownloadModal from "./order-success/KeypairDownloadModal";
 import ProvisioningPipelineSection from "./order-success/ProvisioningPipelineSection";
 import { useProvisioningProgress } from "./order-success/useProvisioningProgress";
+import { buildInstanceRefs } from "./order-success/orderSuccessUtils";
 import type { OrderSuccessStepProps } from "./order-success/OrderSuccessStep.types";
 
 // Re-export types so existing imports continue to work
@@ -32,6 +33,7 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
   keypairDownloads,
   instances,
   instancesPageUrl,
+  instanceDetailsUrl,
   onCreateAnother,
   resourceLabel = "Instance",
 }) => {
@@ -47,6 +49,21 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
 
   const { configurationPipelines, isRetryingHealthCheck, handleRetryHealthCheck } =
     useProvisioningProgress(instances);
+
+  // When exactly one instance was created, send the user straight to its
+  // details page rather than the list. The details route resolves by the
+  // `identifier` query param, so we use the ref's lookupId (identifier-first),
+  // matching SharedInstanceList's deep-link behaviour.
+  const instanceRefs = buildInstanceRefs(instances);
+  const singleInstanceLookupId =
+    instanceRefs.length === 1 ? instanceRefs[0]?.lookupId : undefined;
+  const primaryActionUrl =
+    instanceDetailsUrl && singleInstanceLookupId
+      ? `${instanceDetailsUrl}?identifier=${encodeURIComponent(singleInstanceLookupId)}`
+      : instancesPageUrl;
+  const primaryActionLabel = singleInstanceLookupId && instanceDetailsUrl
+    ? "View Instance"
+    : "View My Instances";
 
   return (
     <div className="space-y-6">
@@ -141,10 +158,10 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
         {/* Actions */}
         <div className="flex gap-3 mt-6">
           <ModernButton
-            onClick={() => (globalThis.window.location.href = instancesPageUrl)}
+            onClick={() => (globalThis.window.location.href = primaryActionUrl)}
             className="flex-1"
           >
-            View My Instances
+            {primaryActionLabel}
           </ModernButton>
           <ModernButton variant="outline" onClick={onCreateAnother}>
             Create Another

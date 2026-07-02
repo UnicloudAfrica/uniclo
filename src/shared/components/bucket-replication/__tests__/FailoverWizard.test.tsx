@@ -49,9 +49,9 @@ describe("FailoverWizard", () => {
       />,
     );
 
-    expect(screen.getByText(/Step 1 · Fence the source/i)).toBeInTheDocument();
+    expect(screen.getByText(/Step 1 · Lock the source bucket/i)).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Fence source bucket/i }),
+      screen.getByRole("button", { name: /^Lock the source$/i }),
     ).toBeInTheDocument();
   });
 
@@ -67,7 +67,9 @@ describe("FailoverWizard", () => {
       />,
     );
 
-    expect(screen.getByText(/Step 2 · Wait for drain/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Step 2 · Waiting for the last bytes to land/i),
+    ).toBeInTheDocument();
     expect(screen.getByText("12")).toBeInTheDocument(); // queue depth
   });
 
@@ -82,7 +84,9 @@ describe("FailoverWizard", () => {
         onClose={vi.fn()}
       />,
     );
-    expect(screen.getByText(/Step 2 · Wait for drain/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Step 2 · Waiting for the last bytes to land/i),
+    ).toBeInTheDocument();
   });
 
   it("disables proceed-to-promote when queueDepth > 0", () => {
@@ -97,7 +101,7 @@ describe("FailoverWizard", () => {
       />,
     );
 
-    const button = screen.getByRole("button", { name: /Waiting \(3 pending\)/i });
+    const button = screen.getByRole("button", { name: /Waiting \(3 files left\)/i });
     expect(button).toBeDisabled();
   });
 
@@ -114,11 +118,13 @@ describe("FailoverWizard", () => {
       />,
     );
 
-    const proceed = screen.getByRole("button", { name: /Proceed to promote/i });
+    const proceed = screen.getByRole("button", { name: /Ready to switch over/i });
     expect(proceed).toBeEnabled();
 
     await user.click(proceed);
-    expect(screen.getByText(/Step 3 · Promote target/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Step 3 · Hand over to backup/i),
+    ).toBeInTheDocument();
   });
 
   it("typed-confirm: promote disabled until exact bucket name typed", async () => {
@@ -136,12 +142,12 @@ describe("FailoverWizard", () => {
     );
 
     // Advance to step 3
-    await user.click(screen.getByRole("button", { name: /Proceed to promote/i }));
+    await user.click(screen.getByRole("button", { name: /Ready to switch over/i }));
 
     // ModernInput doesn't use htmlFor association; query by placeholder
     // (which equals the target bucket name).
     const input = screen.getByPlaceholderText(/.+/) as HTMLInputElement;
-    const promote = screen.getByRole("button", { name: /Promote target/i });
+    const promote = screen.getByRole("button", { name: /Yes, hand over to backup/i });
 
     expect(promote).toBeDisabled();
 
@@ -170,13 +176,15 @@ describe("FailoverWizard", () => {
         onClose={vi.fn()}
       />,
     );
-    await user.click(screen.getByRole("button", { name: /Proceed to promote/i }));
+    await user.click(screen.getByRole("button", { name: /Ready to switch over/i }));
 
     // ModernInput doesn't use htmlFor association; query by placeholder
     // (which equals the target bucket name).
     const input = screen.getByPlaceholderText(/.+/) as HTMLInputElement;
     await user.type(input, "prod-target"); // wrong case
-    expect(screen.getByRole("button", { name: /Promote target/i })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /Yes, hand over to backup/i }),
+    ).toBeDisabled();
   });
 
   it("surfaces error when onInitiate rejects and stays on step 1", async () => {
@@ -198,13 +206,13 @@ describe("FailoverWizard", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: /Fence source bucket/i }));
+    await user.click(screen.getByRole("button", { name: /^Lock the source$/i }));
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent(/provider_native_crr_detected/);
     });
     // Still on step 1
-    expect(screen.getByText(/Step 1 · Fence the source/i)).toBeInTheDocument();
+    expect(screen.getByText(/Step 1 · Lock the source bucket/i)).toBeInTheDocument();
   });
 
   it("calls onStepSuccess after successful fence", async () => {
@@ -224,7 +232,7 @@ describe("FailoverWizard", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: /Fence source bucket/i }));
+    await user.click(screen.getByRole("button", { name: /^Lock the source$/i }));
 
     await waitFor(() => {
       expect(onStepSuccess).toHaveBeenCalledWith({
@@ -250,7 +258,9 @@ describe("FailoverWizard", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: /Cancel failover/i }));
+    await user.click(
+      screen.getByRole("button", { name: /Cancel and unlock source/i }),
+    );
 
     await waitFor(() => {
       expect(onCancel).toHaveBeenCalled();
@@ -270,6 +280,8 @@ describe("FailoverWizard", () => {
       />,
     );
 
-    expect(screen.queryByText(/Step 1 · Fence the source/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Step 1 · Lock the source bucket/i),
+    ).not.toBeInTheDocument();
   });
 });

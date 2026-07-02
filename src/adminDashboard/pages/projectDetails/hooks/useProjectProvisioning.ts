@@ -9,6 +9,8 @@ interface ProvisioningStep {
   label?: string;
   status?: string;
   updated_at?: string;
+  description?: string;
+  context?: Record<string, unknown>;
 }
 
 export interface SetupStep {
@@ -71,8 +73,15 @@ export function useProjectProvisioning({
         id: step.id || step.label?.toLowerCase()?.replaceAll(/\s+/g, "_") || "step",
         label: step.label || "Step",
         status: step.status || "pending",
-        description: step.status === "completed" ? "Completed" : "Action in progress",
+        // Prefer the backend's own description; only fall back to the
+        // generic heuristic when the payload doesn't ship one. The error
+        // reason rides in `context.error`, so the context object must be
+        // carried through verbatim — otherwise the failure banner in
+        // ProvisioningFullScreen has nothing to show.
+        description:
+          step.description ?? (step.status === "completed" ? "Completed" : "Action in progress"),
         updated_at: step.updated_at,
+        context: step.context,
       }));
     }
     return [];

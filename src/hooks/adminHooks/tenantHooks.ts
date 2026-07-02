@@ -11,6 +11,15 @@ import { type Tenant } from "@/shared/types/tenant";
 import { type ApiResponse } from "@/shared/types/resource";
 import logger from "@/utils/logger";
 
+// Row shape returned by GET admin/v1/tenant-clients/{tenant_client}
+// (the whole tenant subtree). Rows live at res.data.
+export interface TenantClientRecord {
+  id?: string | number;
+  identifier?: string | number;
+  name?: string;
+  email?: string;
+}
+
 // GET: Fetch all tenants
 const fetchTenants = async (): Promise<Tenant[]> => {
   const res: ApiResponse<Tenant[]> = await silentApi("GET", "/tenants");
@@ -29,17 +38,15 @@ const fetchTenantById = async (id: string | number): Promise<Tenant> => {
   return res.data;
 };
 
-// GET: Fetch tenant's subtenants
-const fetchSubTenantByTenantID = async (id: string | number): Promise<string | undefined> => {
-  const res: ApiResponse<unknown> & { message?: string | { message?: string } } = await silentApi(
-    "GET",
-    `/tenant-clients/${id}`
-  );
+// GET: Fetch tenant's clients (the whole tenant subtree). Rows at res.data.
+const fetchSubTenantByTenantID = async (
+  id: string | number
+): Promise<TenantClientRecord[]> => {
+  const res: ApiResponse<TenantClientRecord[]> = await silentApi("GET", `/tenant-clients/${id}`);
   if (!res) {
     throw new Error(`Failed to fetch tenant with ID ${id}`);
   }
-  if (typeof res.message === "string") return res.message;
-  return (res.message as { message?: string })?.message;
+  return Array.isArray(res.data) ? res.data : [];
 };
 
 // POST: Create a new tenant
@@ -111,7 +118,7 @@ export const useFetchTenantById = (
 // Hook to fetch sub tenant by ID
 export const useFetchSubTenantByTenantID = (
   id: string | number,
-  options: Omit<UseQueryOptions<string | undefined>, "queryKey" | "queryFn"> = {}
+  options: Omit<UseQueryOptions<TenantClientRecord[]>, "queryKey" | "queryFn"> = {}
 ) => {
   return useQuery({
     queryKey: ["sub-tenants", id],

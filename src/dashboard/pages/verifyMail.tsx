@@ -5,6 +5,7 @@ import VerificationCodeInput from "@/utils/VerificationCodeInput";
 import useAuthStore from "@/stores/authStore";
 import { clearAuthSessionsExcept } from "@/stores/sessionUtils";
 import { useVerifyMail } from "@/hooks/authHooks";
+import { consumeTwoFactorReturnTo } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
 import {
   resolveBrandLogo,
@@ -207,6 +208,14 @@ export default function VerifyMail() {
         }
 
         clearAuthSessionsExcept(resolvedRole);
+
+        // A mid-session 2FA-required bounce stashes the exact in-app location
+        // under `twofactor:return_to` — honour it before the role default.
+        const returnTo = consumeTwoFactorReturnTo();
+        if (returnTo) {
+          navigate(returnTo);
+          return;
+        }
 
         switch (resolvedRole) {
           case "tenant":

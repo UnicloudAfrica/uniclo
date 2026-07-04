@@ -9,6 +9,7 @@ import useAuthStore from "@/stores/authStore";
 import { clearAuthSessionsExcept } from "@/stores/sessionUtils";
 import { useVerifyAdminMail } from "@/hooks/adminHooks/authHooks";
 import { popIntendedPath } from "@/utils/intendedPath";
+import { consumeTwoFactorReturnTo } from "@/lib/api";
 import {
   resolveBrandLogo,
   usePlatformBrandingTheme,
@@ -212,7 +213,10 @@ export default function VerifyAdminMail() {
               ? "client"
               : "tenant";
         const intended = popIntendedPath(scope as "admin" | "tenant" | "client");
-        navigate(intended || fallback);
+        // A mid-session 2FA-required bounce stashes the exact in-app location
+        // under `twofactor:return_to` — honour it first, then the deep-link
+        // intended path, then the role default.
+        navigate(consumeTwoFactorReturnTo() ?? intended ?? fallback);
       },
       onError: (err: { message?: string } | undefined) => {
         const message = err?.message || "Failed to verify email";

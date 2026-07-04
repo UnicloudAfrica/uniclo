@@ -481,8 +481,8 @@ export interface DatabaseFormState {
   /** BYOC: Selected cloud account ID for customer-provisioned infrastructure */
   cloudAccountId: number | null;
   /**
-   * FR-031: which wholesale tier StaqDB bills against. Empty string ("")
-   * means "use the platform default" (typically `management_only`).
+   * FR-031: which wholesale tier StaqDB bills against. The wizard sends this
+   * explicitly so quote/order behavior does not depend on a backend default.
    * `bundled` = StaqDB charges all-in (VM + management). `management_only`
    * = UniCloud provisions the VM separately; StaqDB charges only management.
    */
@@ -545,7 +545,7 @@ export const DEFAULT_DATABASE_FORM: DatabaseFormState = {
   licenseKey: "",
   licenseMode: "",
   cloudAccountId: null,
-  planKind: "",
+  planKind: "bundled",
   replicationMode: "native_same_provider",
   crossProviderConsent: false,
 };

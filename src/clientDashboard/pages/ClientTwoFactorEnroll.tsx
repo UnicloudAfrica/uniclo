@@ -4,6 +4,7 @@ import { Loader2, ShieldCheck, Smartphone, Copy, Check } from "lucide-react";
 import silentApi from "../../index/silent";
 import ToastUtils from "@/utils/toastUtil";
 import logger from "@/utils/logger";
+import { consumeTwoFactorReturnTo } from "@/lib/api";
 
 /**
  * ClientTwoFactorEnroll — onboarding screen for clients forced into 2FA
@@ -64,7 +65,7 @@ const ClientTwoFactorEnroll = () => {
       if (codes.length > 0) {
         setRecoveryCodes(codes);
       } else {
-        navigate("/client-dashboard");
+        navigate(consumeTwoFactorReturnTo() ?? "/client-dashboard");
       }
     } catch (err) {
       logger.error("Failed to enable 2FA", err);
@@ -90,7 +91,7 @@ const ClientTwoFactorEnroll = () => {
       ToastUtils.error("Please confirm you've saved the recovery codes.");
       return;
     }
-    navigate("/client-dashboard");
+    navigate(consumeTwoFactorReturnTo() ?? "/client-dashboard");
   };
 
   // Step 2: show recovery codes (one-time display)

@@ -256,6 +256,60 @@ describe("createApiClient", () => {
     expect(assign).toHaveBeenCalledWith("/verify-mail");
   });
 
+  it("routes a two-factor-enrollment-required 403 to the scope enroll page (takes priority over auth-redirect)", async () => {
+    const authStore = makeAuthStore({ getEffectiveRole: () => "admin", role: "admin" });
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        jsonResponse(
+          403,
+          { two_factor_enrollment_required: true, scope: "admin" },
+          // Backend sets prevent-redirect on 2FA responses; enrollment routing
+          // must still win over handleAuthRedirect.
+          { "X-Prevent-Login-Redirect": "true" }
+        )
+      )
+    );
+
+    const assign = vi.fn();
+    Object.defineProperty(window, "location", {
+      writable: true,
+      configurable: true,
+      value: { pathname: "/admin-dashboard", assign },
+    });
+
+    const client = createApiClient({ baseURL: "https://api.test", authStore });
+    await expect(client.get("/secure")).rejects.toThrow();
+    expect(assign).toHaveBeenCalledWith("/admin-2fa-enroll");
+    // Enrollment is not a session-expiry — session stays intact.
+    expect(authStore.getState().clearSession).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the effective role when the enrollment 403 omits scope", async () => {
+    const authStore = makeAuthStore({ getEffectiveRole: () => "tenant", role: "tenant" });
+
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue(
+          jsonResponse(403, {}, { "X-Auth-Status": "two-factor-enrollment-required" })
+        )
+    );
+
+    const assign = vi.fn();
+    Object.defineProperty(window, "location", {
+      writable: true,
+      configurable: true,
+      value: { pathname: "/dashboard", assign },
+    });
+
+    const client = createApiClient({ baseURL: "https://api.test", authStore });
+    await expect(client.get("/secure")).rejects.toThrow();
+    expect(assign).toHaveBeenCalledWith("/tenant-2fa-enroll");
+  });
+
   it("unwraps envelope responses (returns the raw body)", async () => {
     vi.stubGlobal(
       "fetch",

@@ -77,6 +77,46 @@ const toRecord = (value: unknown): ApiResponseRecord =>
   value && typeof value === "object" ? (value as ApiResponseRecord) : {};
 
 /**
+ * Route a 403 that demands 2FA *enrollment* (no secret yet, policy forces it)
+ * to the scope-appropriate enroll page. Mirrors `lib/api.ts`'s enrollment
+ * branch so the axios-style clients here reach parity — without it, an
+ * enrollment-required 403 fell through to `handleAuthRedirect` and dead-ended
+ * on a raw error card. Returns true when it handled (and redirected) the
+ * response so the caller can stop. Takes precedence over any prevent-redirect
+ * bail, exactly like the two-factor-required branch it sits beside.
+ */
+const maybeHandleTwoFactorEnrollment = (
+  response: Response,
+  resRecord: ApiResponseRecord,
+  dataRecord: ApiResponseRecord,
+  effectiveRole: string | null | undefined
+): boolean => {
+  const required =
+    response.status === 403 &&
+    (response.headers.get("X-Auth-Status") === "two-factor-enrollment-required" ||
+      Boolean(resRecord["two_factor_enrollment_required"]) ||
+      Boolean(dataRecord["two_factor_enrollment_required"]));
+  if (!required) return false;
+
+  const scope =
+    (resRecord["scope"] as string | undefined) ||
+    (dataRecord["scope"] as string | undefined) ||
+    effectiveRole;
+  const targetPath =
+    scope === "admin"
+      ? "/admin-2fa-enroll"
+      : scope === "tenant"
+        ? "/tenant-2fa-enroll"
+        : scope === "client"
+          ? "/client-2fa-enroll"
+          : "/2fa-enroll";
+  if (globalThis.window !== undefined && globalThis.window.location.pathname !== targetPath) {
+    globalThis.window.location.assign(targetPath);
+  }
+  return true;
+};
+
+/**
  * Read the Sanctum XSRF-TOKEN cookie (URL-encoded) and return its decoded value.
  * Returns null when not present (e.g., before the first /sanctum/csrf-cookie call).
  */
@@ -266,6 +306,17 @@ export const createApiClient = ({
 
         return res as T;
       } else {
+        const enrollmentEffectiveRole = authState?.getEffectiveRole?.() || authState?.role;
+        if (
+          maybeHandleTwoFactorEnrollment(response, resRecord, dataRecord, enrollmentEffectiveRole)
+        ) {
+          throw new Error(
+            toMessage(resRecord["error"]) ||
+              toMessage(resRecord["message"]) ||
+              "Two-factor enrollment required."
+          );
+        }
+
         const twoFactorRequired =
           response.status === 403 &&
           (response.headers.get("X-Auth-Status") === "two-factor-required" ||
@@ -394,6 +445,17 @@ export const createMultipartApiClient = ({
 
         return res as T;
       } else {
+        const enrollmentEffectiveRole = authState?.getEffectiveRole?.() || authState?.role;
+        if (
+          maybeHandleTwoFactorEnrollment(response, resRecord, dataRecord, enrollmentEffectiveRole)
+        ) {
+          throw new Error(
+            toMessage(resRecord["error"]) ||
+              toMessage(resRecord["message"]) ||
+              "Two-factor enrollment required."
+          );
+        }
+
         const twoFactorRequired =
           response.status === 403 &&
           (response.headers.get("X-Auth-Status") === "two-factor-required" ||
@@ -544,6 +606,17 @@ export const createFileApiClient = ({
         }
         const parsedRecord = toRecord(parsed);
         const parsedData = toRecord(parsedRecord["data"]);
+
+        const enrollmentEffectiveRole = authState?.getEffectiveRole?.() || authState?.role;
+        if (
+          maybeHandleTwoFactorEnrollment(response, parsedRecord, parsedData, enrollmentEffectiveRole)
+        ) {
+          throw new Error(
+            toMessage(parsedRecord["error"]) ||
+              toMessage(parsedRecord["message"]) ||
+              "Two-factor enrollment required."
+          );
+        }
 
         const twoFactorRequired =
           response.status === 403 &&

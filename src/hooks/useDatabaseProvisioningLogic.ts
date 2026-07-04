@@ -449,10 +449,10 @@ export const useDatabaseProvisioningLogic = () => {
     licenseKey: "",
     licenseMode: "",
     cloudAccountId: null,
-    // FR-031: empty string means "use the platform default" (typically
-    // `management_only`). Admin UI may set this explicitly to override
-    // for a specific order.
-    planKind: "" as "" | "bundled" | "management_only",
+    // FR-031: keep the UI explicit so quotes and orders do not depend on
+    // the current backend process' loaded default. Managed infrastructure
+    // uses StaqDB's bundled tier; BYOC switches to management_only.
+    planKind: "bundled" as "" | "bundled" | "management_only",
     replicationMode: "native_same_provider" as
       | "native_same_provider"
       | "native_public_endpoint"
@@ -887,6 +887,11 @@ export const useDatabaseProvisioningLogic = () => {
     return engines[form.engine as string] ?? null;
   }, [form.engine, engines]);
 
+  const resolvedPlanKind = useMemo<"bundled" | "management_only">(
+    () => (form.cloudAccountId ? "management_only" : form.planKind || "bundled"),
+    [form.cloudAccountId, form.planKind],
+  );
+
   // ─── Validation ──────────────────────────────────────────────────
 
   const isEngineStepValid = useMemo(
@@ -933,7 +938,7 @@ export const useDatabaseProvisioningLogic = () => {
       country_iso: form.billingCountry || undefined,
     };
     if (form.availabilityZone) params.availability_zone = form.availabilityZone;
-    if (form.planKind) params.plan_kind = form.planKind;
+    params.plan_kind = resolvedPlanKind;
     if (form.replicaAzs.length) params.replica_azs = form.replicaAzs;
 
     try {
@@ -942,7 +947,7 @@ export const useDatabaseProvisioningLogic = () => {
     } catch {
       // Error handled by mutation
     }
-  }, [canProceedToReview, form, quoteMutation]);
+  }, [canProceedToReview, form, quoteMutation, resolvedPlanKind]);
 
   // ─── Create Order ────────────────────────────────────────────────
 
@@ -993,9 +998,9 @@ export const useDatabaseProvisioningLogic = () => {
         if (form.licenseMode) payload.license_mode = form.licenseMode;
         if (form.cloudAccountId) payload.cloud_account_id = form.cloudAccountId;
         // FR-031: pass plan_kind so the API picks the right wholesale tier.
-        // Defaults to platform default (`management_only`) on the backend
-        // when the form leaves it unset.
-        if (form.planKind) payload.plan_kind = form.planKind;
+        // Keep this explicit because the running backend process may have
+        // loaded a different default than the current environment.
+        payload.plan_kind = resolvedPlanKind;
         // FR-CROSS-PROV: replication_mode + cross_provider_consent.
         // Mode auto-promotes to native_public_endpoint when the user picks
         // a cross-provider replica AZ; consent is opt-in via the toggle.
@@ -1098,6 +1103,7 @@ export const useDatabaseProvisioningLogic = () => {
   }, [
     canProceedToReview,
     form,
+    resolvedPlanKind,
     orderMutation,
     createOrderAction,
     paymentStepIndex,

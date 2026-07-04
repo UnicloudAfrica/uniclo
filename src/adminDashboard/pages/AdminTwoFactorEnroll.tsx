@@ -4,6 +4,7 @@ import { Loader2, ShieldCheck, Smartphone, Copy, Check } from "lucide-react";
 import silentApi from "../../index/admin/silent";
 import ToastUtils from "@/utils/toastUtil";
 import logger from "@/utils/logger";
+import { consumeTwoFactorReturnTo } from "@/lib/api";
 
 /**
  * AdminTwoFactorEnroll — onboarding screen for admins forced into 2FA.
@@ -70,7 +71,7 @@ const AdminTwoFactorEnroll = () => {
         // we navigate them away. Plaintext is shown ONCE.
         setRecoveryCodes(codes);
       } else {
-        navigate("/admin-dashboard");
+        navigate(consumeTwoFactorReturnTo() ?? "/admin-dashboard");
       }
     } catch (err) {
       logger.error("Failed to enable 2FA", err);
@@ -96,7 +97,7 @@ const AdminTwoFactorEnroll = () => {
       ToastUtils.error("Please confirm you've saved the recovery codes.");
       return;
     }
-    navigate("/admin-dashboard");
+    navigate(consumeTwoFactorReturnTo() ?? "/admin-dashboard");
   };
 
   // Step 2: show recovery codes (one-time display)

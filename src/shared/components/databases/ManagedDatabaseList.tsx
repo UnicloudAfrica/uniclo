@@ -344,6 +344,11 @@ const ManagedDatabaseList: React.FC<ManagedDatabaseListProps> = ({
             <div className="break-all font-medium text-[var(--theme-heading-color)]">
               {getAccessEndpoint(row)}
             </div>
+            {row.private_ip && row.dns_record_name && (
+              <div className="break-all text-xs text-[var(--theme-muted-color)]">
+                Private {row.private_ip}
+              </div>
+            )}
             <div className="text-xs text-[var(--theme-muted-color)]">
               {row.region}
               {row.dr_region ? ` · DR ${row.dr_region}` : ""}
@@ -361,7 +366,9 @@ const ManagedDatabaseList: React.FC<ManagedDatabaseListProps> = ({
             <div className="text-sm font-semibold text-[var(--theme-heading-color)]">
               <MonthlyCostCell amount={row.monthly_cost} currency={row.currency} />
             </div>
-            <div className="text-xs text-[var(--theme-muted-color)]">Dedicated VM service</div>
+            <div className="text-xs text-[var(--theme-muted-color)]">
+              {row.plan_kind === "bundled" ? "Bundled StaqDB service" : "Dedicated VM service"}
+            </div>
           </div>
         ),
       },

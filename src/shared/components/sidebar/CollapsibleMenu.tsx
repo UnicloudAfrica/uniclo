@@ -63,12 +63,18 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({
 }) => {
   const Icon = item.icon as LucideIcon;
   const isLucide = item.isLucide !== false && typeof item.icon !== "string";
+  const handleMouseDown = (event: React.MouseEvent<HTMLButtonElement>) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    onClick();
+  };
 
   if (isMobile) {
     return (
       <li>
         <button
           onClick={onClick}
+          onMouseDown={handleMouseDown}
           className={`w-full flex items-center py-2 px-4 space-x-3 text-left transition-all duration-200 rounded-lg ${
             isActive ? "bg-white/15 text-white" : "text-white/80 hover:bg-white/15 hover:text-white"
           }`}
@@ -94,6 +100,7 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({
     <li>
       <button
         onClick={onClick}
+        onMouseDown={handleMouseDown}
         className={`w-full flex items-center py-2 ${isNested ? "px-6" : "px-3.5"} space-x-2 text-left transition-all duration-200 hover:bg-[--theme-color-10] ${
           isActive
             ? "text-[--theme-heading-color]"

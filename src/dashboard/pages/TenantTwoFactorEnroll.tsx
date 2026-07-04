@@ -4,6 +4,7 @@ import { Loader2, ShieldCheck, Smartphone, Copy, Check } from "lucide-react";
 import tenantApi from "../../index/tenant/tenantApi";
 import ToastUtils from "@/utils/toastUtil";
 import logger from "@/utils/logger";
+import { consumeTwoFactorReturnTo } from "@/lib/api";
 
 /**
  * TenantTwoFactorEnroll — onboarding screen for tenant users forced
@@ -63,7 +64,7 @@ const TenantTwoFactorEnroll = () => {
       if (codes.length > 0) {
         setRecoveryCodes(codes);
       } else {
-        navigate("/dashboard");
+        navigate(consumeTwoFactorReturnTo() ?? "/dashboard");
       }
     } catch (err) {
       logger.error("Failed to enable 2FA", err);
@@ -89,7 +90,7 @@ const TenantTwoFactorEnroll = () => {
       ToastUtils.error("Please confirm you've saved the recovery codes.");
       return;
     }
-    navigate("/dashboard");
+    navigate(consumeTwoFactorReturnTo() ?? "/dashboard");
   };
 
   // Step 2: show recovery codes (one-time display)

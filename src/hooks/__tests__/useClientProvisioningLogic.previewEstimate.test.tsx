@@ -157,7 +157,10 @@ describe("useClientProvisioningLogic pre-order pricing estimate", () => {
     expect(createPayload.expected_total).toBe(15750.25);
   });
 
-  it("does not arm the price lock when no estimate was fetched", async () => {
+  it("blocks the submit (never calls create) when no fresh estimate is available", async () => {
+    // `expected_total` is REQUIRED by the create endpoint. Without a fresh
+    // estimate to echo, the hook must block with a clear message instead of
+    // submitting a payload the backend would 422.
     mockSilentClientApi.mockImplementation(async () => {
       throw new Error("pricing offline");
     });
@@ -170,12 +173,8 @@ describe("useClientProvisioningLogic pre-order pricing estimate", () => {
 
     await runWithTimers(() => result.current.handleCreateOrder());
 
-    const [, , createPayload] = mockClientApi.mock.calls[0]! as [
-      string,
-      string,
-      Record<string, unknown>,
-    ];
-    expect(createPayload).not.toHaveProperty("expected_total");
+    expect(mockClientApi).not.toHaveBeenCalled();
     expect(result.current.pricingSummary.isEstimate).toBe(false);
+    expect(result.current.submissionErrorMessage).toMatch(/price changed/i);
   });
 });

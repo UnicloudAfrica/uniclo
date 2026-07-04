@@ -504,13 +504,30 @@ export const useInstanceOrderCreation = ({
         // One-shot: consume the lock so a 409 here re-quotes fresh on the
         // next attempt — the 409 toast already shows the new figures.
         reviewedPriceRef.current = null;
-        if (
+        const reviewedLockArmed =
           reviewed &&
           reviewed.fingerprint === orderStateFingerprint &&
-          reviewed.protectionKey === protectionKey
-        ) {
-          if (reviewed.subtotal > 0) payload.expected_subtotal = reviewed.subtotal;
-          if (reviewed.total > 0) payload.expected_total = reviewed.total;
+          reviewed.protectionKey === protectionKey;
+        if (reviewedLockArmed) {
+          if (reviewed!.subtotal > 0) payload.expected_subtotal = reviewed!.subtotal;
+          if (reviewed!.total > 0) payload.expected_total = reviewed!.total;
+        }
+        // `expected_total` is REQUIRED by the create endpoint (a 422 otherwise).
+        // The post-create breakdown lock above only exists after a first
+        // submit, so on the FIRST submit source it from the displayed sidebar
+        // estimate — `priceEstimate.total` is exactly what the user reviewed
+        // (previewed compute total + protection fee, already tax-inclusive; see
+        // composeExpectedTotal). If neither the reviewed lock nor a fresh
+        // estimate is available, block rather than let the backend 422 with an
+        // opaque message.
+        if (payload.expected_total === undefined) {
+          if (priceEstimate && priceEstimate.total > 0) {
+            payload.expected_total = priceEstimate.total;
+          } else {
+            throw new Error(
+              "We couldn't confirm the order total. Please wait for the price estimate to load, then try again."
+            );
+          }
         }
         const idempotencyKey = crypto.randomUUID();
 
@@ -627,6 +644,7 @@ export const useInstanceOrderCreation = ({
     createOrderAction,
     orderStateFingerprint,
     paymentStepIndex,
+    priceEstimate,
     reviewStepIndex,
     setActiveStep,
   ]);

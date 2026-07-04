@@ -169,4 +169,18 @@ describe("useTenantProvisioningLogic pre-order pricing estimate", () => {
     expect(previewCalls()).toHaveLength(0);
     expect(result.current.pricingSummary.isEstimate).toBe(false);
   });
+
+  it("blocks the standard submit when the estimate is stale (never calls create)", async () => {
+    // `expected_total` is REQUIRED; if a price-affecting edit invalidated the
+    // reviewed estimate, the hook must block rather than 422 at the backend.
+    mockSilentApi.mockImplementation(async () => {
+      throw new Error("pricing offline");
+    });
+    const { result } = await setupHook();
+
+    await runWithTimers(() => result.current.handleCreateOrder());
+
+    expect(mockTenantApi).not.toHaveBeenCalled();
+    expect(result.current.submissionErrorMessage).toMatch(/price changed/i);
+  });
 });

@@ -1,19 +1,21 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import {
   useInstanceOrderCreation,
   summarizePricingBreakdownTotals,
 } from "../useInstanceOrderCreation";
+import { PREVIEW_PRICING_DEBOUNCE_MS } from "../../utils/instancePreviewPricing";
 import type { Configuration } from "../../types/InstanceConfiguration";
 
 /*
  * Producer-side guarantee for the price lock (root CLAUDE.md convention):
- * POST /instances/create is the quote — the payment step renders the
- * returned breakdown. When the exact same order is re-submitted, the hook
- * must send the reviewed figures as `expected_subtotal` / `expected_total`
+ * `expected_total` is REQUIRED by POST /instances/create, so on the FIRST
+ * submit the hook sources it from the displayed preview estimate
+ * (POST /instances/preview-pricing). On an identical re-submit it prefers
+ * the reviewed breakdown returned by the previous create (subtotal + total)
  * so InitiateMultiInstancesAction can 409 on drift. Any price-affecting
- * change (configurations, protection plan) must disarm the lock instead
- * of producing a false 409.
+ * change (configurations, protection plan) must disarm the reviewed lock
+ * (falling back to the fresh estimate) instead of producing a false 409.
  */
 
 vi.mock("../useApiContext", () => ({
@@ -79,92 +81,144 @@ const orderResponse = () => ({
   }),
 });
 
+const previewResponse = () => ({
+  ok: true,
+  status: 200,
+  json: async () => ({ data: { grand_total: 1075, currency: "NGN" } }),
+});
+
+const isPreviewCall = (url: unknown) => String(url).includes("preview-pricing");
+
 const fetchMock = vi.fn();
 vi.stubGlobal("fetch", fetchMock);
 
-const requestBody = (callIndex: number): Record<string, unknown> =>
-  JSON.parse((fetchMock.mock.calls[callIndex][1] as { body: string }).body);
+// Only the create calls carry expected_* — filter out the preview probes.
+const createCalls = () =>
+  fetchMock.mock.calls.filter(([url]) => !isPreviewCall(url));
+
+const requestBody = (createCallIndex: number): Record<string, unknown> =>
+  JSON.parse((createCalls()[createCallIndex][1] as { body: string }).body);
+
+// Drive the debounced preview effect so `priceEstimate` is populated before
+// the first submit (which now requires expected_total).
+const settlePreview = async () => {
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(PREVIEW_PRICING_DEBOUNCE_MS + 50);
+  });
+};
 
 beforeEach(() => {
+  vi.useFakeTimers();
   fetchMock.mockReset();
-  fetchMock.mockImplementation(async () => orderResponse());
+  fetchMock.mockImplementation(async (url: unknown) =>
+    isPreviewCall(url) ? previewResponse() : orderResponse()
+  );
 });
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+const submit = async (result: { current: { handleCreateOrder: () => Promise<unknown> } }) => {
+  await act(async () => {
+    const pending = result.current.handleCreateOrder();
+    await vi.advanceTimersByTimeAsync(1000);
+    await pending;
+  });
+};
+
 describe("useInstanceOrderCreation price lock", () => {
-  it("sends no lock on first submit, then the reviewed figures on an identical re-submit", async () => {
+  it("sends the estimate total on first submit, then the reviewed figures on an identical re-submit", async () => {
     const { result } = renderOrderHook({ configurations: [baseConfig] });
+    await settlePreview();
 
-    await act(async () => {
-      await result.current.handleCreateOrder();
-    });
+    await submit(result);
+    // First submit: no reviewed breakdown yet, so expected_total comes from
+    // the displayed preview estimate (subtotal lock stays absent).
     expect(requestBody(0).expected_subtotal).toBeUndefined();
-    expect(requestBody(0).expected_total).toBeUndefined();
+    expect(requestBody(0).expected_total).toBe(1075);
 
-    await act(async () => {
-      await result.current.handleCreateOrder();
-    });
+    await submit(result);
+    // Re-submit: the reviewed breakdown from the first create supplies both.
     expect(requestBody(1).expected_subtotal).toBe(1000);
     expect(requestBody(1).expected_total).toBe(1075);
   });
 
-  it("disarms the lock when the protection plan changed between submissions", async () => {
+  it("disarms the reviewed subtotal lock when the protection plan changed, still sending the estimate total", async () => {
     const { result, rerender } = renderOrderHook({ configurations: [baseConfig] });
+    await settlePreview();
 
-    await act(async () => {
-      await result.current.handleCreateOrder();
-    });
+    await submit(result);
 
     rerender({
       configurations: [baseConfig],
       protectionPlan: { plan: "backup_only", monthlyCost: 240 },
     });
+    await settlePreview();
 
-    await act(async () => {
-      await result.current.handleCreateOrder();
-    });
+    await submit(result);
+    // The reviewed lock is disarmed (protection changed), but expected_total
+    // is REQUIRED — it falls back to the fresh estimate (compute 1075 + the
+    // protection fee 240 × 1 month = 1315).
     expect(requestBody(1).expected_subtotal).toBeUndefined();
-    expect(requestBody(1).expected_total).toBeUndefined();
+    expect(requestBody(1).expected_total).toBe(1315);
   });
 
-  it("disarms the lock when the configuration changed between submissions", async () => {
+  it("disarms the reviewed subtotal lock when the configuration changed", async () => {
     const { result, rerender } = renderOrderHook({ configurations: [baseConfig] });
+    await settlePreview();
 
-    await act(async () => {
-      await result.current.handleCreateOrder();
-    });
+    await submit(result);
 
     rerender({ configurations: [{ ...baseConfig, storage_size_gb: 100 } as Configuration] });
+    await settlePreview();
 
-    await act(async () => {
-      await result.current.handleCreateOrder();
-    });
+    await submit(result);
     expect(requestBody(1).expected_subtotal).toBeUndefined();
+    expect(requestBody(1).expected_total).toBe(1075);
   });
 
-  it("consumes the lock on a failed re-submit so the next attempt re-quotes fresh", async () => {
+  it("consumes the reviewed lock on a failed re-submit so the next attempt re-quotes from the estimate", async () => {
     const { result } = renderOrderHook({ configurations: [baseConfig] });
+    await settlePreview();
 
-    await act(async () => {
-      await result.current.handleCreateOrder();
-    });
+    await submit(result);
 
     // Re-submit trips the backend guard (price drifted server-side).
-    fetchMock.mockResolvedValueOnce({
-      ok: false,
-      status: 409,
-      json: async () => ({ message: "Price quote has changed since you last reviewed it." }),
-    });
-    await act(async () => {
-      await result.current.handleCreateOrder();
-    });
+    fetchMock.mockImplementationOnce(async (url: unknown) =>
+      isPreviewCall(url)
+        ? previewResponse()
+        : {
+            ok: false,
+            status: 409,
+            json: async () => ({ message: "Price quote has changed since you last reviewed it." }),
+          }
+    );
+    await submit(result);
     expect(requestBody(1).expected_subtotal).toBe(1000);
 
-    // The user was shown the new figures in the 409 toast; the retry must
-    // re-quote fresh instead of looping on the stale lock.
-    await act(async () => {
-      await result.current.handleCreateOrder();
-    });
+    // The reviewed lock is consumed; the retry re-quotes from the displayed
+    // estimate rather than looping on the stale reviewed figures.
+    await submit(result);
     expect(requestBody(2).expected_subtotal).toBeUndefined();
+    expect(requestBody(2).expected_total).toBe(1075);
+  });
+
+  it("blocks the submit when no estimate and no reviewed lock are available", async () => {
+    // Preview offline → no displayed estimate. `expected_total` is REQUIRED,
+    // so the hook must block rather than 422 at the backend.
+    fetchMock.mockImplementation(async (url: unknown) =>
+      isPreviewCall(url)
+        ? { ok: false, status: 500, json: async () => ({ message: "pricing offline" }) }
+        : orderResponse()
+    );
+    const { result } = renderOrderHook({ configurations: [baseConfig] });
+    await settlePreview();
+
+    await submit(result);
+
+    expect(createCalls()).toHaveLength(0);
+    expect(result.current.submissionErrorMessage).toMatch(/couldn't confirm the order total/i);
   });
 });
 

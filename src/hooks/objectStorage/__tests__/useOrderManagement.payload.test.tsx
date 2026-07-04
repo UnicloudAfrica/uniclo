@@ -72,9 +72,12 @@ describe("useOrderManagement payload", () => {
     expect(items[0].region).toBe("uni-ng");
     expect(items[0].productable_id).toBe(9001);
     expect(payload.expected_subtotal).toBe(48720);
+    // `expected_total` is REQUIRED by the backend; the wizard only shows the
+    // pre-tax subtotal, so it echoes that same reviewed figure as the total.
+    expect(payload.expected_total).toBe(48720);
   });
 
-  it("omits the price lock when an admin unit-price override is active", async () => {
+  it("still sends expected_total (required) but skips the subtotal lock on an admin override", async () => {
     const submitOrderFn = vi.fn().mockResolvedValue({});
     const overridden = { ...profile, unitPriceOverride: "55", unitPrice: 55, subtotal: 66000 };
     const { result } = renderOrderHook([overridden], submitOrderFn);
@@ -84,6 +87,9 @@ describe("useOrderManagement payload", () => {
     });
 
     const payload = submitOrderFn.mock.calls[0][0] as Record<string, unknown>;
+    // Subtotal lock stays off (the backend re-quotes overrides from catalog),
+    // but expected_total must always be present or the create 422s.
     expect(payload.expected_subtotal).toBeUndefined();
+    expect(payload.expected_total).toBe(66000);
   });
 });

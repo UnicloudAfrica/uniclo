@@ -531,14 +531,29 @@ export const useTenantProvisioningLogic = (options?: {
         // operator just reviewed in the sidebar as `expected_total` so
         // InitiateMultiInstancesAction 409s on drift instead of charging
         // a number they never saw. The backend adds the protection fee to
-        // the grand total before the guard runs, so fold it in here. Only
-        // armed while the estimate still matches the configuration.
-        if (!isFastTrack && pricingEstimate && pricingEstimate.key === previewPayloadKey) {
-          payload.expected_total = composeExpectedTotal(
-            pricingEstimate.total,
-            Number(protectionPlanPayload?.monthly_cost) || 0,
-            orderTermMonths
-          );
+        // the grand total before the guard runs, so fold it in here.
+        //
+        // `expected_total` is REQUIRED by the create endpoint (a 422 otherwise).
+        // FAST-TRACK GAP: the pre-order preview is gated off in fast-track mode
+        // (see `previewPayloadKey` returning "" when isFastTrack), so
+        // `pricingEstimate` is always null here and no displayed total exists to
+        // echo. Fast-track submits will therefore 422 until the backend exempts
+        // fast-track from the expected_total requirement (it skips payment, so
+        // there is no charge to price-lock). We intentionally do NOT invent a
+        // total on the client. For the standard path, block on a stale/missing
+        // estimate rather than let the backend 422 opaquely.
+        if (!isFastTrack) {
+          if (pricingEstimate && pricingEstimate.key === previewPayloadKey) {
+            payload.expected_total = composeExpectedTotal(
+              pricingEstimate.total,
+              Number(protectionPlanPayload?.monthly_cost) || 0,
+              orderTermMonths
+            );
+          } else {
+            throw new Error(
+              "The price changed since you last reviewed it. Please review the updated total, then try again."
+            );
+          }
         }
         if (contextType === "tenant" && selectedTenantId) {
           payload.tenant_id = selectedTenantId;

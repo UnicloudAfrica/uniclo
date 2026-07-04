@@ -345,9 +345,10 @@ export const useOrderManagement = (
         };
 
         // Price lock: send the pre-tax subtotal the user just reviewed so the
-        // backend can 409 instead of charging a drifted price. Skipped when an
-        // admin price override is set — the backend re-quotes from the catalog,
-        // so an override would always trip the guard.
+        // backend can 409 instead of charging a drifted price. The
+        // `expected_subtotal` lock is skipped when an admin price override is
+        // set — the backend re-quotes from the catalog, so an override would
+        // always trip the subtotal guard.
         const hasUnitPriceOverride = resolvedProfiles.some(
           (profile) => profile.unitPriceOverride !== "" && Number(profile.unitPriceOverride) > 0
         );
@@ -355,8 +356,25 @@ export const useOrderManagement = (
           (sum, profile) => sum + (Number(profile.subtotal) || 0),
           0
         );
+        const roundedSubtotal = Number(expectedSubtotal.toFixed(2));
         if (!hasUnitPriceOverride && expectedSubtotal > 0) {
-          payload.expected_subtotal = Number(expectedSubtotal.toFixed(2));
+          payload.expected_subtotal = roundedSubtotal;
+        }
+        // `expected_total` is REQUIRED by StoreObjectStorageOrderRequest (a 422
+        // otherwise), and InitiateObjectStorageOrderAction locks it against the
+        // tax-INCLUSIVE grand total. This wizard only ever displays the pre-tax
+        // subtotal ("tax calculated at checkout" — useObjectStoragePricing
+        // hardcodes taxRate 0 and the tax-inclusive total is only known AFTER
+        // the order round-trips), so the only figure sourced from the same
+        // snapshot the user reviewed is that subtotal — we echo it here. In
+        // zero-VAT contexts total == subtotal and the lock passes; where VAT
+        // applies (or an admin override diverges from the catalog re-quote) the
+        // backend fails SAFE with a 409 ("price changed, refresh") — never a
+        // silent overcharge. BACKEND GAP (see final report): object storage has
+        // no pre-order tax-inclusive quote, so the total-lock cannot be
+        // satisfied client-side for VAT jurisdictions.
+        if (expectedSubtotal > 0) {
+          payload.expected_total = roundedSubtotal;
         }
 
         const countryIso = effectiveCountryCode?.toUpperCase();

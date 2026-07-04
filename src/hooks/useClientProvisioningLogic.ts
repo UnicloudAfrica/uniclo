@@ -360,10 +360,17 @@ export const useClientProvisioningLogic = () => {
         // Price lock (root CLAUDE.md convention): send the estimate the
         // customer just reviewed in the sidebar as `expected_total` so
         // InitiateMultiInstancesAction 409s on drift instead of charging
-        // a number they never saw. Only armed while the estimate still
-        // matches the current configuration.
+        // a number they never saw. `expected_total` is REQUIRED by the create
+        // endpoint (a 422 otherwise), so when the estimate is stale or missing
+        // we block here with a clear message rather than submit a payload the
+        // backend would reject opaquely — a price-affecting edit invalidated
+        // the reviewed figure, so the customer must review the fresh one.
         if (pricingEstimate && pricingEstimate.key === previewPayloadKey) {
           payload.expected_total = composeExpectedTotal(pricingEstimate.total);
+        } else {
+          throw new Error(
+            "The price changed since you last reviewed it. Please review the updated total, then try again."
+          );
         }
 
         const response = (await clientApi(

@@ -1023,6 +1023,21 @@ export const useDatabaseProvisioningLogic = () => {
         // comparisons on the backend (NG ≠ NGN → 409). When the
         // currency is unknown, omit the field and let the total-
         // match guard alone protect the customer.
+        // The backend REQUIRES expected_total on non-fast-track creates (it
+        // 422s without it). Fast-track legitimately submits quote-less — it
+        // skips payment and the backend exempts it. For everything else, a
+        // missing/zero quote total means the customer never saw a confirmable
+        // price: block the submit with the same re-quote UX as the 409 path
+        // below instead of shipping a payload the backend will reject.
+        if (!form.fastTrack && !quoteResult?.total) {
+          await fetchQuote();
+          setActiveStep(reviewStepIndex);
+          ToastUtils.error(
+            "We couldn't confirm the order total — please review the updated pricing and try again."
+          );
+          return { isPaymentRequired: false, requote: true };
+        }
+
         if (quoteResult?.total) {
           payload.expected_total = quoteResult.total;
           if (typeof quoteResult.currency === "string" && quoteResult.currency.length === 3) {

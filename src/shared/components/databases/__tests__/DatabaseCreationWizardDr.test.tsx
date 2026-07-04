@@ -129,6 +129,12 @@ async function submitWith(drEnabled: boolean) {
 
   await waitFor(() => expect(result.current.canProceedToReview).toBe(true));
 
+  // The wizard always quotes before review — and since 01650474 the submit
+  // guard BLOCKS quote-less non-fast-track submits. Mirror the real flow.
+  await act(async () => {
+    await result.current.fetchQuote();
+  });
+
   await act(async () => {
     await result.current.handleCreateOrder();
   });

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Globe, Search, ShoppingCart, CheckCircle2, XCircle, ExternalLink } from "lucide-react";
 import DashboardPageShell from "@/shared/layouts/DashboardPageShell";
 import { ModernCard, ModernButton } from "@/shared/components/ui";
+import PriceLabel from "@/shared/components/ui/PriceLabel";
 import { api } from "@/lib/api";
 import ToastUtils from "@/utils/toastUtil";
 
@@ -40,15 +41,11 @@ interface QuoteResponse {
   };
 }
 
-// Domain registrar prices are quoted in NGN minor units (kobo). Format from
-// the explicit ISO code rather than a hardcoded symbol (platform money rule).
-const formatNaira = (kobo: number): string =>
-  new Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency: "NGN",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(kobo / 100);
+// Domain registrar prices are quoted in NGN minor units (kobo) with no
+// currency field on the response, so NGN is the genuine source currency.
+// Convert kobo → major units and render via the canonical PriceLabel so the
+// amount respects the user's display-currency preference (platform money rule).
+const koboToNaira = (kobo: number): number => kobo / 100;
 
 const ClientDomainPurchase: React.FC = () => {
   const [domain, setDomain] = useState("");
@@ -202,9 +199,18 @@ const ClientDomainPurchase: React.FC = () => {
                 <div>
                   <p className="text-base font-semibold text-slate-900">{quote.domain}</p>
                   <p className="text-xs text-slate-500">
-                    {quote.available
-                      ? `Available — ${formatNaira(quote.price_kobo ?? 0)} for ${quote.years} year${quote.years === 1 ? "" : "s"}`
-                      : "Not available — try a different name"}
+                    {quote.available ? (
+                      <>
+                        Available —{" "}
+                        <PriceLabel
+                          amount={koboToNaira(quote.price_kobo ?? 0)}
+                          sourceCurrency="NGN"
+                        />{" "}
+                        for {quote.years} year{quote.years === 1 ? "" : "s"}
+                      </>
+                    ) : (
+                      "Not available — try a different name"
+                    )}
                   </p>
                 </div>
               </div>
@@ -281,7 +287,11 @@ const ClientDomainPurchase: React.FC = () => {
                     Cancel
                   </ModernButton>
                   <ModernButton type="submit" loading={purchasing}>
-                    Confirm purchase {formatNaira(quote.price_kobo ?? 0)}
+                    Confirm purchase{" "}
+                    <PriceLabel
+                      amount={koboToNaira(quote.price_kobo ?? 0)}
+                      sourceCurrency="NGN"
+                    />
                   </ModernButton>
                 </div>
               </form>
@@ -315,7 +325,7 @@ const ClientDomainPurchase: React.FC = () => {
                     </a>
                     <p className="mt-0.5 text-xs text-slate-500">
                       {p.registrar} · {p.years} year{p.years === 1 ? "" : "s"} ·{" "}
-                      {formatNaira(p.price_kobo)}
+                      <PriceLabel amount={koboToNaira(p.price_kobo)} sourceCurrency="NGN" />
                       {p.expires_at && ` · expires ${new Date(p.expires_at).toLocaleDateString()}`}
                     </p>
                   </div>

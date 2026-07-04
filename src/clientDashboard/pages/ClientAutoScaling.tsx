@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import ClientPageShell from "../components/ClientPageShell";
 import { AutoScalingManagementContainer } from "@/shared/components/infrastructure/autoscaling";
+import logger from "@/utils/logger";
 
 const ClientAutoScaling: React.FC = () => {
   const location = useLocation();
@@ -13,7 +14,9 @@ const ClientAutoScaling: React.FC = () => {
     if (!rawProjectId) return "";
     try {
       return atob(rawProjectId);
-    } catch (_e) {
+    } catch (e) {
+      // Not base64-encoded — fall back to the raw id (graceful degradation).
+      logger.error("Failed to decode project id", rawProjectId, e);
       return rawProjectId;
     }
   }, [rawProjectId]);

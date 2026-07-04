@@ -3,6 +3,7 @@ import { Check, AlertTriangle, XCircle, Loader2, Globe } from "lucide-react";
 import ModernModal from "./ui/ModernModal";
 import type { ModalAction } from "./ui/ModernModal";
 import ModernButton from "./ui/ModernButton";
+import PriceLabel from "./ui/PriceLabel";
 import type {
   ApplyToRegionsPayload,
   ApplyToRegionsResult,
@@ -166,7 +167,11 @@ const ApplyToRegionsModal: React.FC<ApplyToRegionsModalProps> = ({
               Apply pricing from <strong>{sourceRegion}</strong> to other regions.
               {items.length === 1 && (
                 <span className="ml-1 font-medium text-slate-900">
-                  ${Number(items[0]?.price_usd ?? 0).toFixed(2)}/mo
+                  <PriceLabel
+                    amount={Number(items[0]?.price_usd ?? 0)}
+                    sourceCurrency="USD"
+                  />
+                  /mo
                 </span>
               )}
             </p>

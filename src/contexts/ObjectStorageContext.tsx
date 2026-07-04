@@ -260,9 +260,12 @@ export const ObjectStorageProvider = ({ children }: ObjectStorageProviderProps):
     (async () => {
       try {
         await loadAccounts();
-      } catch {
+      } catch (e) {
+        // loadAccounts handles its own state/toast, so this should never
+        // fire — log defensively so a future refactor that lets it throw
+        // doesn't fail silently.
         if (isMounted) {
-          // loadAccounts already handles state/toast
+          logger.error("Unexpected error loading Silo Storage accounts", e);
         }
       }
     })();

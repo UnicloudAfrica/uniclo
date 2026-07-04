@@ -17,6 +17,14 @@ import config from "../config";
 import useAuthStore, { type AuthRole } from "../stores/authStore";
 import ToastUtils from "../utils/toastUtil";
 import logger from "../utils/logger";
+import {
+  consumeTwoFactorReturnTo,
+  routeTwoFactorRedirect,
+} from "./authErrorHandling";
+
+// Re-export so existing consumers importing consumeTwoFactorReturnTo from
+// "@/lib/api" (the enroll/verify pages) keep working after the extraction.
+export { consumeTwoFactorReturnTo };
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -97,67 +105,6 @@ const parseJsonSafely = async (response: Response): Promise<unknown> => {
   throw new Error("Received unsupported response format from server.");
 };
 
-// Session-storage key holding the in-app path to return the user to after
-// they finish 2FA enrollment / verification. Written here (by handleAuthError
-// before it bounces the user to a 2FA page) and consumed by the enroll/verify
-// pages via consumeTwoFactorReturnTo() on successful completion.
-const TWO_FACTOR_RETURN_TO_KEY = "twofactor:return_to";
-
-// Paths that are themselves 2FA screens — we must never stash one of these as
-// a return target, or the user would be sent back to a 2FA page after finishing.
-const TWO_FACTOR_PATHS = new Set([
-  "/admin-2fa-enroll",
-  "/tenant-2fa-enroll",
-  "/client-2fa-enroll",
-  "/2fa-enroll",
-  "/verify-admin-mail",
-  "/verify-mail",
-]);
-
-/**
- * Stash the current location as the post-2FA return target, unless we're
- * already on a 2FA page (in which case there's nothing worth returning to and
- * we'd clobber a real target). `targetPath` is the 2FA page we're about to
- * send the user to. Wrapped in try/catch for Safari private mode.
- */
-const stashTwoFactorReturnTo = (targetPath: string): void => {
-  if (typeof window === "undefined") return;
-  const current = globalThis.window.location.pathname;
-  if (current === targetPath || TWO_FACTOR_PATHS.has(current)) return;
-  try {
-    globalThis.window.sessionStorage.setItem(
-      TWO_FACTOR_RETURN_TO_KEY,
-      current + globalThis.window.location.search
-    );
-  } catch {
-    // Best-effort — disabled/full storage shouldn't break the redirect.
-  }
-};
-
-/**
- * Read and clear the post-2FA return target. Returns it only when it's a safe
- * in-app path: starts with "/", not protocol-relative ("//"), and carries no
- * scheme/host (no ":" before the first "/"). Otherwise returns null so the
- * caller keeps its default destination. Consumed by the enroll/verify pages.
- */
-export const consumeTwoFactorReturnTo = (): string | null => {
-  if (typeof window === "undefined") return null;
-  let value: string | null = null;
-  try {
-    value = globalThis.window.sessionStorage.getItem(TWO_FACTOR_RETURN_TO_KEY);
-    if (value !== null) {
-      globalThis.window.sessionStorage.removeItem(TWO_FACTOR_RETURN_TO_KEY);
-    }
-  } catch {
-    return null;
-  }
-  if (!value || !value.startsWith("/") || value.startsWith("//")) return null;
-  // Reject any scheme/host: no ":" allowed before the first "/".
-  const colon = value.indexOf(":");
-  if (colon !== -1 && colon < value.indexOf("/")) return null;
-  return value;
-};
-
 const isNotificationAuthFailure = (response: Response): boolean => {
   if (response.status !== 401 && response.status !== 403) return false;
 
@@ -190,53 +137,20 @@ export const handleAuthError = (
   const dataRecord = toRecord(bodyRecord["data"]);
 
   // 2FA routing MUST come before the prevent-redirect bail: the backend sets
-  // X-Prevent-Login-Redirect:true on BOTH of its 2FA 403 responses, so these
-  // blocks would be dead code below that early return. Routing the user into
+  // X-Prevent-Login-Redirect:true on BOTH of its 2FA 403 responses, so this
+  // block would be dead code below that early return. Routing the user into
   // the enroll/verify pages takes priority over the login-redirect suppression.
-
-  // Handle 2FA enrollment requirement (no secret yet, policy forces it).
-  // Backend returns 403 with two_factor_enrollment_required:true and an
-  // optional `scope` ("admin" | "tenant") so we route to the correct page.
-  const twoFactorEnrollmentRequired =
-    status === 403 &&
-    (response.headers.get("X-Auth-Status") === "two-factor-enrollment-required" ||
-      Boolean(bodyRecord["two_factor_enrollment_required"]) ||
-      Boolean(dataRecord["two_factor_enrollment_required"]));
-
-  if (twoFactorEnrollmentRequired) {
-    const scope =
-      (bodyRecord["scope"] as string | undefined) ||
-      (dataRecord["scope"] as string | undefined) ||
-      role;
-    const targetPath =
-      scope === "admin"
-        ? "/admin-2fa-enroll"
-        : scope === "tenant"
-          ? "/tenant-2fa-enroll"
-          : scope === "client"
-            ? "/client-2fa-enroll"
-            : "/2fa-enroll";
-    if (typeof window !== "undefined" && globalThis.window.location.pathname !== targetPath) {
-      stashTwoFactorReturnTo(targetPath);
-      globalThis.window.location.assign(targetPath);
-    }
-    return true;
-  }
-
-  // Handle 2FA token-verification requirement (secret exists, token not yet verified)
-  const twoFactorRequired =
-    status === 403 &&
-    (response.headers.get("X-Auth-Status") === "two-factor-required" ||
-      Boolean(bodyRecord["two_factor_required"]) ||
-      Boolean(dataRecord["two_factor_required"]));
-
-  if (twoFactorRequired) {
-    useAuthStore.getState().setTwoFactorRequired(true);
-    const targetPath = role === "admin" ? "/verify-admin-mail" : "/verify-mail";
-    if (typeof window !== "undefined" && globalThis.window.location.pathname !== targetPath) {
-      stashTwoFactorReturnTo(targetPath);
-      globalThis.window.location.assign(targetPath);
-    }
+  // Shared with createApiClient via lib/authErrorHandling.routeTwoFactorRedirect.
+  if (
+    routeTwoFactorRedirect({
+      response,
+      resRecord: bodyRecord,
+      dataRecord,
+      role,
+      onTwoFactorRequired: (value) =>
+        useAuthStore.getState().setTwoFactorRequired(value),
+    })
+  ) {
     return true;
   }
 

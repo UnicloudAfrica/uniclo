@@ -2,14 +2,18 @@ import { describe, it, expect, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useOrderManagement } from "../useOrderManagement";
 import type { ResolvedProfile } from "@/hooks/useObjectStoragePricing";
+import type { ObjectStoragePreviewSnapshot } from "@/utils/objectStoragePreviewPricing";
 
 /*
  * Producer-side guarantee for the order payload:
  *  - `availability_zone` rides on every item (the backend provisions the
  *    account against the AZ's provider — written by
  *    InitiateObjectStorageOrderAction, consumed by the provider adapters).
- *  - `expected_subtotal` carries the reviewed pre-tax price so the backend
- *    can 409 on drift (price-lock convention, root CLAUDE.md).
+ *  - `expected_subtotal` (pre-tax) + `expected_total` (tax-inclusive) are
+ *    sourced from the SAME preview snapshot the wizard displayed, so the
+ *    backend 409s on drift (price-lock convention, root CLAUDE.md). A stale or
+ *    missing snapshot blocks the submit instead of price-locking on a figure
+ *    the customer never saw.
  */
 
 const profile: ResolvedProfile = {
@@ -37,7 +41,25 @@ const profile: ResolvedProfile = {
   tierName: "Object Storage (per GiB)",
 };
 
-const renderOrderHook = (resolvedProfiles: ResolvedProfile[], submitOrderFn: ReturnType<typeof vi.fn>) =>
+const snapshot: ObjectStoragePreviewSnapshot = {
+  // `key` is opaque to the hook — it only checks it equals previewPayloadKey.
+  key: "fingerprint-A",
+  preDiscountSubtotal: 48720,
+  subtotal: 48720,
+  tax: 3654,
+  total: 52374,
+  taxRate: 7.5,
+  currency: "NGN",
+};
+
+const renderOrderHook = (
+  resolvedProfiles: ResolvedProfile[],
+  submitOrderFn: ReturnType<typeof vi.fn>,
+  overrides: {
+    previewSnapshot?: ObjectStoragePreviewSnapshot | null;
+    previewPayloadKey?: string;
+  } = {}
+) =>
   renderHook(() =>
     useOrderManagement({
       isFastTrack: false,
@@ -47,16 +69,21 @@ const renderOrderHook = (resolvedProfiles: ResolvedProfile[], submitOrderFn: Ret
       context: "admin",
       selectedTenantId: "",
       selectedUserId: "",
-      submitOrderFn,
+      submitOrderFn: submitOrderFn as unknown as (
+        payload: Record<string, unknown>
+      ) => Promise<unknown>,
       lastOrderSummary: null,
       setLastOrderSummary: vi.fn(),
       selectedPaymentOption: null,
       setSelectedPaymentOption: vi.fn(),
+      previewSnapshot: "previewSnapshot" in overrides ? overrides.previewSnapshot : snapshot,
+      previewPayloadKey:
+        "previewPayloadKey" in overrides ? overrides.previewPayloadKey : snapshot.key,
     })
   );
 
 describe("useOrderManagement payload", () => {
-  it("sends availability_zone per item and the reviewed expected_subtotal", async () => {
+  it("sends availability_zone per item and echoes the previewed subtotal + tax-inclusive total", async () => {
     const submitOrderFn = vi.fn().mockResolvedValue({});
     const { result } = renderOrderHook([profile], submitOrderFn);
 
@@ -71,10 +98,9 @@ describe("useOrderManagement payload", () => {
     expect(items[0].availability_zone).toBe("uni-ng-lag-az1");
     expect(items[0].region).toBe("uni-ng");
     expect(items[0].productable_id).toBe(9001);
+    // Both locks come from the SAME preview snapshot the user reviewed.
     expect(payload.expected_subtotal).toBe(48720);
-    // `expected_total` is REQUIRED by the backend; the wizard only shows the
-    // pre-tax subtotal, so it echoes that same reviewed figure as the total.
-    expect(payload.expected_total).toBe(48720);
+    expect(payload.expected_total).toBe(52374);
   });
 
   it("still sends expected_total (required) but skips the subtotal lock on an admin override", async () => {
@@ -90,6 +116,38 @@ describe("useOrderManagement payload", () => {
     // Subtotal lock stays off (the backend re-quotes overrides from catalog),
     // but expected_total must always be present or the create 422s.
     expect(payload.expected_subtotal).toBeUndefined();
-    expect(payload.expected_total).toBe(66000);
+    expect(payload.expected_total).toBe(52374);
+  });
+
+  it("blocks the submit (never calls create) when the preview snapshot is stale", async () => {
+    const submitOrderFn = vi.fn().mockResolvedValue({});
+    // Snapshot key no longer matches the currently priced payload key: a
+    // price-affecting edit happened after the review.
+    const { result } = renderOrderHook([profile], submitOrderFn, {
+      previewPayloadKey: "fingerprint-B",
+    });
+
+    await expect(
+      act(async () => {
+        await result.current.createOrder();
+      })
+    ).rejects.toThrow(/price changed/i);
+
+    expect(submitOrderFn).not.toHaveBeenCalled();
+  });
+
+  it("blocks the submit when no preview snapshot exists (preview failed)", async () => {
+    const submitOrderFn = vi.fn().mockResolvedValue({});
+    const { result } = renderOrderHook([profile], submitOrderFn, {
+      previewSnapshot: null,
+    });
+
+    await expect(
+      act(async () => {
+        await result.current.createOrder();
+      })
+    ).rejects.toThrow(/price changed/i);
+
+    expect(submitOrderFn).not.toHaveBeenCalled();
   });
 });

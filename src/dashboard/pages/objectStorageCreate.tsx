@@ -18,6 +18,7 @@ const ObjectStorageCreate = () => {
           context: "tenant",
           tenantId,
           submitOrderFn: (payload) => objectStorageApi.createOrder(payload),
+          previewOrderFn: (payload) => objectStorageApi.previewOrder(payload),
         }}
         enableFastTrack={false}
         showCustomerContext={false}

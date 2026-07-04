@@ -200,6 +200,29 @@ const objectStorageApi = {
 
     return data;
   },
+  /**
+   * Quote a configured order (pre-tax subtotal + tax-inclusive total) without
+   * creating it. Shares the persona base path with `createOrder`, so the
+   * wizard can show the tax-inclusive total and price-lock the create call
+   * against the same figures the customer reviewed.
+   */
+  async previewOrder(payload: JsonRecord) {
+    const { basePath, headers } = resolveRequestContext();
+    const response = await fetch(`${basePath}/orders/preview`, {
+      method: "POST",
+      headers,
+      credentials: "include",
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json().catch(() => ({}));
+    const record = asRecord(data);
+    if (!response.ok || record.success === false) {
+      throw new Error(getErrorMessage(data, "Failed to preview Silo Storage order."));
+    }
+
+    return data;
+  },
   async fetchBuckets(accountId: Id, params: QueryParams = {}) {
     if (!accountId) {
       throw new Error("Account ID is required to load silos.");

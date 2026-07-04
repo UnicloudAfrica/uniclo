@@ -15,6 +15,7 @@ const AdminObjectStorageCreate: React.FC = () => {
         config={{
           context: "admin",
           submitOrderFn: (payload) => objectStorageApi.createOrder(payload),
+          previewOrderFn: (payload) => objectStorageApi.previewOrder(payload),
         }}
         showCustomerContext
         showPriceOverride

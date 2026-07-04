@@ -111,6 +111,7 @@ export interface ObjectStorageLogicConfig {
     options: PricingHookOptions
   ) => { data: unknown; isFetching: boolean };
   submitOrderFn?: (payload: Record<string, unknown>) => Promise<unknown>;
+  previewOrderFn?: (payload: Record<string, unknown>) => Promise<unknown>;
 }
 
 // ---- Return type of the main hook ----

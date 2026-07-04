@@ -6,6 +6,10 @@ import {
 } from "../useObjectStoragePricing";
 import { normalizePaymentOptions } from "../../utils/instanceCreationUtils";
 import logger from "../../utils/logger";
+import {
+  buildObjectStorageOrderItems,
+  type ObjectStoragePreviewSnapshot,
+} from "../../utils/objectStoragePreviewPricing";
 import type {
   UnknownRecord,
   StorageProfileLike,
@@ -30,6 +34,14 @@ export interface UseOrderManagementOptions {
   /** Shared state: pass in the payment option state pair. */
   selectedPaymentOption: PaymentOptionLike | null;
   setSelectedPaymentOption: (option: PaymentOptionLike | null) => void;
+  /**
+   * Pre-order preview snapshot (written by `useObjectStoragePricing`). The
+   * reviewed `expected_subtotal` + `expected_total` are sourced from it and
+   * only echoed when its `key` matches `previewPayloadKey` — a stale snapshot
+   * blocks the submit rather than price-locking on a figure the user never saw.
+   */
+  previewSnapshot?: ObjectStoragePreviewSnapshot | null;
+  previewPayloadKey?: string;
 }
 
 export interface UseOrderManagementReturn {
@@ -71,6 +83,8 @@ export const useOrderManagement = (
     setLastOrderSummary,
     selectedPaymentOption,
     setSelectedPaymentOption,
+    previewSnapshot,
+    previewPayloadKey,
   } = options;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -288,52 +302,11 @@ export const useOrderManagement = (
       try {
         const fastTrackFlag =
           typeof fastTrackOverride === "boolean" ? fastTrackOverride : isFastTrack;
-        const objectStorageItems = resolvedProfiles.map((profile, index) => {
-          const tierRow = profile.tierRow || profile.tierData;
-          const rawProductableId =
-            tierRow?.productable_id ??
-            tierRow?.product?.productable_id ??
-            tierRow?.product_id ??
-            profile.tierKey?.split("::")[1];
-          // Avoid using tierRow.id as productable_id — it may be the
-          // pricing record id rather than the object_storage_configuration id.
-          const parsedProductableId = Number.parseInt(String(rawProductableId ?? ""), 10);
-          if (!Number.isFinite(parsedProductableId) || parsedProductableId <= 0) {
-            throw new Error(
-              `Unable to resolve the storage tier for line ${index + 1}. ` +
-              "Please re-select the tier and try again."
-            );
-          }
-          const baseName = (profile.name || profile.tierName || "").trim();
-          const name =
-            baseName.length >= 3 ? baseName : `Silo Storage ${profile.region || "region"}`.trim();
-
-          const storageGb = Math.max(1, Math.floor(Number(profile.storageGb) || 0));
-
-          return {
-            region: profile.region,
-            // Object-storage pricing is seeded per-AZ; the backend resolves the
-            // priced product by this AZ code (region stays the geographic code
-            // to satisfy its Rule::exists check). Omitting it makes the re-quote
-            // fall back to the region default provider and fail to find pricing.
-            availability_zone: profile.availability_zone,
-            productable_id: parsedProductableId,
-            storage_gb: storageGb,
-            quantity: Number(profile.quantity) || 1,
-            months: Number(profile.months) || 1,
-            name,
-            metadata: {
-              ui_profile_id: profile.id,
-              tier_key: profile.tierKey,
-              tier_name: profile.tierName,
-              currency: profile.currency,
-              unit_price: profile.unitPrice,
-              subtotal: profile.subtotal,
-              storage_gb: profile.storageGb,
-              line_index: index,
-            },
-          };
-        });
+        const { items: objectStorageItems, error: itemError } =
+          buildObjectStorageOrderItems(resolvedProfiles);
+        if (itemError) {
+          throw new Error(itemError);
+        }
 
         if (!objectStorageItems.length) {
           throw new Error("Add at least one eligible service profile before submitting.");
@@ -344,38 +317,30 @@ export const useOrderManagement = (
           fast_track: fastTrackFlag,
         };
 
-        // Price lock: send the pre-tax subtotal the user just reviewed so the
-        // backend can 409 instead of charging a drifted price. The
-        // `expected_subtotal` lock is skipped when an admin price override is
-        // set — the backend re-quotes from the catalog, so an override would
-        // always trip the subtotal guard.
+        // Price lock (root CLAUDE.md): echo the previewed figures the user just
+        // reviewed so the backend 409s on drift instead of charging a number
+        // they never saw. `expected_subtotal` locks the pre-tax figure,
+        // `expected_total` (REQUIRED by StoreObjectStorageOrderRequest — a 422
+        // otherwise) locks the tax-INCLUSIVE grand total. Both come from the
+        // SAME preview snapshot displayed in the wizard. When no fresh snapshot
+        // exists (preview failed, or a price-affecting edit invalidated the
+        // fingerprint after the review), we block here with a clear message
+        // rather than submit a total the customer never approved.
+        if (!previewSnapshot || previewSnapshot.key !== previewPayloadKey) {
+          throw new Error(
+            "The price changed since you last reviewed it. Please review the updated total, then try again."
+          );
+        }
+        // The subtotal lock is skipped on an admin unit-price override — the
+        // backend re-quotes overrides from the catalog, so the override would
+        // always trip the subtotal guard. The total lock always applies.
         const hasUnitPriceOverride = resolvedProfiles.some(
           (profile) => profile.unitPriceOverride !== "" && Number(profile.unitPriceOverride) > 0
         );
-        const expectedSubtotal = resolvedProfiles.reduce(
-          (sum, profile) => sum + (Number(profile.subtotal) || 0),
-          0
-        );
-        const roundedSubtotal = Number(expectedSubtotal.toFixed(2));
-        if (!hasUnitPriceOverride && expectedSubtotal > 0) {
-          payload.expected_subtotal = roundedSubtotal;
+        if (!hasUnitPriceOverride && previewSnapshot.preDiscountSubtotal > 0) {
+          payload.expected_subtotal = previewSnapshot.preDiscountSubtotal;
         }
-        // `expected_total` is REQUIRED by StoreObjectStorageOrderRequest (a 422
-        // otherwise), and InitiateObjectStorageOrderAction locks it against the
-        // tax-INCLUSIVE grand total. This wizard only ever displays the pre-tax
-        // subtotal ("tax calculated at checkout" — useObjectStoragePricing
-        // hardcodes taxRate 0 and the tax-inclusive total is only known AFTER
-        // the order round-trips), so the only figure sourced from the same
-        // snapshot the user reviewed is that subtotal — we echo it here. In
-        // zero-VAT contexts total == subtotal and the lock passes; where VAT
-        // applies (or an admin override diverges from the catalog re-quote) the
-        // backend fails SAFE with a 409 ("price changed, refresh") — never a
-        // silent overcharge. BACKEND GAP (see final report): object storage has
-        // no pre-order tax-inclusive quote, so the total-lock cannot be
-        // satisfied client-side for VAT jurisdictions.
-        if (expectedSubtotal > 0) {
-          payload.expected_total = roundedSubtotal;
-        }
+        payload.expected_total = previewSnapshot.total;
 
         const countryIso = effectiveCountryCode?.toUpperCase();
         if (countryIso) {
@@ -421,6 +386,8 @@ export const useOrderManagement = (
       submitOrderFn,
       normalizeOrderSummary,
       setLastOrderSummary,
+      previewSnapshot,
+      previewPayloadKey,
     ]
   );
 

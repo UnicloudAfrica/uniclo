@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Option,
   ServiceProfile,
@@ -8,6 +8,13 @@ import {
   getTierDisplayName,
   GLOBAL_TIER_KEY,
 } from "./objectStorageUtils";
+import {
+  OBJECT_STORAGE_PREVIEW_DEBOUNCE_MS,
+  buildObjectStoragePreviewPayload,
+  extractObjectStoragePreviewSnapshot,
+  type ObjectStoragePreviewSnapshot,
+} from "../utils/objectStoragePreviewPricing";
+import logger from "../utils/logger";
 
 type UnknownRecord = Record<string, unknown>;
 type RegionLike = UnknownRecord;
@@ -136,6 +143,20 @@ export interface BackendPricingLine {
   currency: string;
 }
 
+/**
+ * Billing context needed to quote the order via the preview endpoint. The
+ * preview payload must mirror the create payload exactly, so these are the
+ * same values `useOrderManagement` sends on submit.
+ */
+export interface ObjectStoragePreviewOptions {
+  previewOrderFn?: (payload: Record<string, unknown>) => Promise<unknown>;
+  effectiveCountryCode?: string;
+  selectedTenantId?: string;
+  selectedUserId?: string;
+  context?: string;
+  isFastTrack?: boolean;
+}
+
 export interface UseObjectStoragePricingReturn {
   resolvedProfiles: ResolvedProfile[];
   summaryTotals: SummaryTotals;
@@ -145,6 +166,13 @@ export interface UseObjectStoragePricingReturn {
   backendPricingTotals: BackendPricingTotals | null;
   backendPricingLines: BackendPricingLine[] | null;
   displayedTotals: SummaryTotals;
+  /**
+   * Fingerprint of the currently priced payload. `previewSnapshot` is only
+   * valid to display / price-lock when its `key` equals this.
+   */
+  previewPayloadKey: string;
+  /** Latest preview response keyed by the payload that produced it. */
+  previewSnapshot: ObjectStoragePreviewSnapshot | null;
 }
 
 export const useObjectStoragePricing = (
@@ -153,7 +181,8 @@ export const useObjectStoragePricing = (
   tierCatalog: Map<string, { options: Option[]; map: Map<string, TierRow> }>,
   selectedCurrency: string = "USD",
   lastOrderSummary: ObjectStorageOrderSummary | null = null,
-  selectedPaymentOption: PaymentOptionLike | null = null
+  selectedPaymentOption: PaymentOptionLike | null = null,
+  previewOptions: ObjectStoragePreviewOptions = {}
 ): UseObjectStoragePricingReturn => {
   // Resolve profiles with pricing data
   const resolvedProfiles = useMemo((): ResolvedProfile[] => {
@@ -227,6 +256,95 @@ export const useObjectStoragePricing = (
     taxRate: taxRateValue,
   };
 
+  // ─────────────────────────────────────────────────────────────────
+  // Pre-order pricing preview (tax-inclusive total)
+  // ─────────────────────────────────────────────────────────────────
+  // Quote the configured order via POST object-storage/orders/preview — the
+  // same engine the create endpoint bills with — so the wizard shows the
+  // tax-inclusive total while the user configures, instead of hardcoding
+  // tax = 0. Keyed on the serialized order payload so any price-affecting edit
+  // invalidates the snapshot before it can be displayed or price-locked. The
+  // snapshot is echoed on the create payload by `useOrderManagement` as
+  // `expected_subtotal` + `expected_total` (root CLAUDE.md price-lock).
+  const {
+    previewOrderFn,
+    effectiveCountryCode = "",
+    selectedTenantId = "",
+    selectedUserId = "",
+    context = "",
+    isFastTrack = false,
+  } = previewOptions;
+
+  const [previewSnapshot, setPreviewSnapshot] = useState<ObjectStoragePreviewSnapshot | null>(null);
+
+  const previewPayloadKey = useMemo(() => {
+    const payload = buildObjectStoragePreviewPayload(
+      resolvedProfiles,
+      effectiveCountryCode,
+      selectedTenantId,
+      selectedUserId,
+      context,
+      isFastTrack
+    );
+    return payload ? JSON.stringify(payload) : "";
+  }, [
+    resolvedProfiles,
+    effectiveCountryCode,
+    selectedTenantId,
+    selectedUserId,
+    context,
+    isFastTrack,
+  ]);
+
+  useEffect(() => {
+    if (!previewOrderFn || !previewPayloadKey) {
+      setPreviewSnapshot(null);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const response = await previewOrderFn(
+          JSON.parse(previewPayloadKey) as Record<string, unknown>
+        );
+        const snapshot = extractObjectStoragePreviewSnapshot(
+          response,
+          previewPayloadKey,
+          summaryCurrency
+        );
+        if (!cancelled) setPreviewSnapshot(snapshot);
+      } catch (error) {
+        // Best-effort: a failed preview just falls back to the pre-tax subtotal
+        // display ("tax calculated at checkout"); submit then blocks with a
+        // clear message because no fresh snapshot exists.
+        logger.warn("Object storage order preview failed:", error);
+        if (!cancelled) setPreviewSnapshot(null);
+      }
+    }, OBJECT_STORAGE_PREVIEW_DEBOUNCE_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+    // summaryCurrency is only a fallback for a missing response currency;
+    // excluded from deps so a currency shift doesn't re-fire the priced call.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewOrderFn, previewPayloadKey]);
+
+  // Only trust the snapshot when it matches the currently priced payload.
+  const freshPreviewSnapshot =
+    previewSnapshot && previewSnapshot.key === previewPayloadKey ? previewSnapshot : null;
+
+  const previewTotals = useMemo((): SummaryTotals | null => {
+    if (!freshPreviewSnapshot) return null;
+    return {
+      subtotal: freshPreviewSnapshot.preDiscountSubtotal,
+      tax: freshPreviewSnapshot.tax,
+      total: freshPreviewSnapshot.total,
+      currency: freshPreviewSnapshot.currency,
+      taxRate: freshPreviewSnapshot.taxRate,
+    };
+  }, [freshPreviewSnapshot]);
+
   // Backend pricing data from order summary
   const backendPricingTotals = useMemo((): BackendPricingTotals | null => {
     const raw =
@@ -280,10 +398,11 @@ export const useObjectStoragePricing = (
     });
   }, [lastOrderSummary, summaryTotals.currency]);
 
-  // Prefer backend pricing when available so the user sees the
-  // authoritative totals (including tax/discounts).  Mark the frontend
-  // estimate with a zero tax rate so the UI can flag it as "excl. tax".
-  const displayedTotals = backendPricingTotals || summaryTotals;
+  // Prefer the authoritative post-order breakdown, then the pre-order preview
+  // (tax-inclusive), then the local pre-tax estimate. The preview snapshot is
+  // the same one echoed on the create payload, so what the user reviews and
+  // what gets price-locked never desync (root CLAUDE.md).
+  const displayedTotals = backendPricingTotals || previewTotals || summaryTotals;
 
   // Check for currency mismatch
   const hasCurrencyMismatch = resolvedProfiles.some(
@@ -310,5 +429,7 @@ export const useObjectStoragePricing = (
     backendPricingTotals,
     backendPricingLines,
     displayedTotals,
+    previewPayloadKey,
+    previewSnapshot: freshPreviewSnapshot,
   };
 };

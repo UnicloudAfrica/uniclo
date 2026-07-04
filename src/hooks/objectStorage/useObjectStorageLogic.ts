@@ -29,6 +29,7 @@ export const useObjectStorageLogic = (
     useCountriesHook,
     usePricingHook,
     submitOrderFn,
+    previewOrderFn,
   } = config;
 
   // ---- Step Navigation ----
@@ -170,7 +171,15 @@ export const useObjectStorageLogic = (
     tierCatalog,
     selectedCurrency,
     lastOrderSummary,
-    selectedPaymentOption
+    selectedPaymentOption,
+    {
+      previewOrderFn,
+      effectiveCountryCode,
+      selectedTenantId,
+      selectedUserId,
+      context,
+      isFastTrack,
+    }
   );
 
   const {
@@ -180,6 +189,8 @@ export const useObjectStorageLogic = (
     hasCurrencyMismatch,
     grandTotalWithFees,
     displayedTotals,
+    previewSnapshot,
+    previewPayloadKey,
   } = pricing;
 
   // ---- Order Management ----
@@ -196,6 +207,8 @@ export const useObjectStorageLogic = (
     setLastOrderSummary,
     selectedPaymentOption,
     setSelectedPaymentOption,
+    previewSnapshot,
+    previewPayloadKey,
   });
 
   // ---- Validation ----

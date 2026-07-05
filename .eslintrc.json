@@ -1,4 +1,24 @@
 {
+    // ─────────────────────────────────────────────────────────────────────────
+    // BRICK BOUNDARY LAWS (Lego Phase 0b) — FE import-boundary formalization.
+    //
+    // Doctrine mirror of the api-side Pest arch laws in
+    //   api/tests/Architecture/BrickBoundariesTest.php
+    // Every law here MUST pass against the current tree (formalization, not
+    // aspiration). A law that fails means either the law is mis-stated (narrow
+    // it) or there is a real leak (report it for the Phase 4 worklist — do NOT
+    // fix consumers in this phase).
+    //
+    // Enacted below (all green today):
+    //   (c) Platform purity  — src/lib must not import dashboards or src/hooks.
+    //   (d) Legacy client freeze — src/utils/createApiClient is import-frozen to
+    //       src/shared/api/apiRegistry + test files until consolidation phase 2.
+    //
+    // Deliberately NOT enacted (tree violates them — Phase 4 worklist):
+    //   (a) Dashboard isolation — 43 cross-dashboard imports exist today.
+    //   (b) Shared purity — 25 shared/components -> dashboard imports exist today.
+    //   (e) Deprecated src/index/* shims — 289 live importers; freeze deferred.
+    // ─────────────────────────────────────────────────────────────────────────
     "env": {
         "browser": true,
         "es2021": true
@@ -58,6 +78,10 @@
             }
         },
         {
+            // adminDashboard: pre-existing cross-audience freeze (tenant index +
+            // tenant auth store) PLUS brick law (d) createApiClient freeze.
+            // ESLint replaces `no-restricted-imports` on last-match (no merge),
+            // so law (d)'s pattern is re-stated in every override that sets it.
             "files": [
                 "src/adminDashboard/**/*.*"
             ],
@@ -66,15 +90,27 @@
                     "error",
                     {
                         "patterns": [
-                            "src/index/tenant/*",
-                            "src/index/tenant/**",
-                            "src/stores/tenantAuthStore"
+                            {
+                                "group": [
+                                    "src/index/tenant/*",
+                                    "src/index/tenant/**",
+                                    "src/stores/tenantAuthStore"
+                                ]
+                            },
+                            {
+                                "group": [
+                                    "**/utils/createApiClient",
+                                    "**/createApiClient"
+                                ],
+                                "message": "Brick law (d): src/utils/createApiClient is frozen (retires in consolidation phase 2). Only src/shared/api/apiRegistry and its test may import it; everything else must use apiRegistry."
+                            }
                         ]
                     }
                 ]
             }
         },
         {
+            // client/tenant/dashboard: pre-existing admin freeze PLUS law (d).
             "files": [
                 "src/dashboard/**/*.*",
                 "src/clientDashboard/**/*.*",
@@ -85,12 +121,74 @@
                     "error",
                     {
                         "patterns": [
-                            "src/index/admin/*",
-                            "src/index/admin/**",
-                            "src/stores/adminAuthStore"
+                            {
+                                "group": [
+                                    "src/index/admin/*",
+                                    "src/index/admin/**",
+                                    "src/stores/adminAuthStore"
+                                ]
+                            },
+                            {
+                                "group": [
+                                    "**/utils/createApiClient",
+                                    "**/createApiClient"
+                                ],
+                                "message": "Brick law (d): src/utils/createApiClient is frozen (retires in consolidation phase 2). Only src/shared/api/apiRegistry and its test may import it; everything else must use apiRegistry."
+                            }
                         ]
                     }
                 ]
+            }
+        },
+        {
+            // BRICK LAW (c) Platform purity: src/lib is the platform brick core.
+            // It must not depend upward on any dashboard folder or on src/hooks.
+            // Dashboards and hooks are imported via relative paths (no aliases),
+            // so the patterns match path segments, not alias specifiers. Law (d)
+            // is folded in too (this override replaces the base rule for src/lib).
+            "files": [
+                "src/lib/**/*.*"
+            ],
+            "rules": {
+                "no-restricted-imports": [
+                    "error",
+                    {
+                        "patterns": [
+                            {
+                                "group": [
+                                    "**/adminDashboard/**",
+                                    "**/clientDashboard/**",
+                                    "**/tenantDashboard/**",
+                                    "**/dashboard/**",
+                                    "@/hooks",
+                                    "@/hooks/**",
+                                    "**/hooks/**"
+                                ],
+                                "message": "Brick law (c): src/lib (platform core) must not import from dashboards or src/hooks."
+                            },
+                            {
+                                "group": [
+                                    "**/utils/createApiClient",
+                                    "**/createApiClient"
+                                ],
+                                "message": "Brick law (d): src/utils/createApiClient is frozen (retires in consolidation phase 2). Use apiRegistry."
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            // Law (d) re-permit: the single sanctioned wrapper AND its own test
+            // may import createApiClient. apiRegistry is in src/shared (no other
+            // no-restricted-imports override matches it), so clearing the base
+            // rule here is safe. The test lives only in src/utils/__tests__.
+            "files": [
+                "src/shared/api/apiRegistry.ts",
+                "src/utils/__tests__/createApiClient.test.ts"
+            ],
+            "rules": {
+                "no-restricted-imports": "off"
             }
         }
     ],
@@ -98,6 +196,20 @@
         "no-unused-vars": "off",
         "@typescript-eslint/no-unused-vars": "off",
         "unused-imports/no-unused-imports": "error",
+        "no-restricted-imports": [
+            "error",
+            {
+                "patterns": [
+                    {
+                        "group": [
+                            "**/utils/createApiClient",
+                            "**/createApiClient"
+                        ],
+                        "message": "Brick law (d): src/utils/createApiClient is frozen (retires in consolidation phase 2). Only src/shared/api/apiRegistry and its test may import it; everything else must use apiRegistry."
+                    }
+                ]
+            }
+        ],
         "unused-imports/no-unused-vars": [
             "warn",
             {

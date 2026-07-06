@@ -7,10 +7,10 @@
          so each environment (prod, staging, dev) can bind its own account
          without a source-code edit. The script short-circuits when the
          env var is unset — e.g. in local dev where translation is off. -->
-    <script
-        src="https://cdn.conveythis.com/javascript/conveythis-initializer.js"
-        integrity="sha384-REPLACE_WITH_ACTUAL_HASH"
-        crossorigin="anonymous"></script>
+    <!-- No SRI/crossorigin: the initializer is a third-party rolling asset
+         (hash changes on their releases) and their CDN sends no CORS headers,
+         so `integrity` + `crossorigin` made the browser block the load. -->
+    <script src="https://cdn.conveythis.com/javascript/conveythis-initializer.js"></script>
     <script type="text/javascript">
         document.addEventListener("DOMContentLoaded", function () {
             // Vite substitutes the `%VITE_CONVEYTHIS_KEY%` token below at build

@@ -90,12 +90,14 @@ import {
   formatMoney,
   formatStatusText,
   getErrorMessage,
+  managementRefetchInterval,
   mapNetworkInterfaceRow,
   normalizeTags,
   PROVISIONING_POLL_INTERVAL_MS,
-  PROVISIONING_POLL_MAX_ATTEMPTS,
   safeParseJson,
+  shouldContinueInstancePoll,
 } from "./instanceDetailsUtils";
+import { isProvisioning } from "@/shared/components/instances/instanceStatus";
 
 import InstanceTelemetryCard from "./InstanceTelemetryCard";
 import InstancePricingCard, { TransactionsCard } from "./InstancePricingCard";
@@ -239,6 +241,10 @@ const AdminInstancesDetails = () => {
   const [restoreBackupSnapshotId, setRestoreBackupSnapshotId] = useState<string | null>(null);
   const provisioningPollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const provisioningPollAttemptsRef = useRef(0);
+  // The action that started the current poll ("stop", "start", …). Drives the
+  // action-aware continue/stop decision so a stop-poll survives the transient
+  // "active" the provider reports before it begins shutting the VM down.
+  const provisioningPollActionRef = useRef<string | null>(null);
   const provisioningPollTokenRef = useRef(0);
   const provisioningPollErrorsRef = useRef(0);
 
@@ -262,6 +268,10 @@ const AdminInstancesDetails = () => {
     refetch: refetchManagement,
   } = useFetchInstanceManagementDetails(instanceId ?? "", {
     enabled: !!instanceId,
+    // Passive self-heal: while the instance is mid-transition, re-fetch on an
+    // interval so the HeroBanner buttons re-enable on their own once it settles,
+    // independent of the action-driven poll.
+    refetchInterval: (query) => managementRefetchInterval(query.state.data),
   });
   const managementDetails = (managementDetailsRaw as GenericRecord | null) ?? null;
 
@@ -476,11 +486,12 @@ const AdminInstancesDetails = () => {
     setIsAutoSyncing(false);
   }, []);
 
-  const startProvisioningPoll = useCallback(() => {
+  const startProvisioningPoll = useCallback((actionKey: string | null) => {
     if (!instanceIdentifier) return;
     stopProvisioningPoll();
     provisioningPollAttemptsRef.current = 0;
     provisioningPollErrorsRef.current = 0;
+    provisioningPollActionRef.current = actionKey;
     const pollToken = provisioningPollTokenRef.current + 1;
     provisioningPollTokenRef.current = pollToken;
     setIsAutoSyncing(true);
@@ -517,17 +528,13 @@ const AdminInstancesDetails = () => {
 
       if (provisioningPollTokenRef.current !== pollToken) return;
 
-      if (nextStatus && ["failed", "error", "terminated", "deleted", "active"].includes(nextStatus)) {
-        stopProvisioningPoll();
-        return;
-      }
-
-      const shouldContinue =
-        provisioningPollAttemptsRef.current < PROVISIONING_POLL_MAX_ATTEMPTS &&
-        (!nextStatus ||
-          ["provisioning", "pending", "awaiting_manual_provisioning"].includes(nextStatus));
-
-      if (shouldContinue) {
+      if (
+        shouldContinueInstancePoll(
+          provisioningPollActionRef.current,
+          nextStatus,
+          provisioningPollAttemptsRef.current
+        )
+      ) {
         provisioningPollRef.current = setTimeout(poll, PROVISIONING_POLL_INTERVAL_MS);
         return;
       }
@@ -952,13 +959,30 @@ const AdminInstancesDetails = () => {
     setPendingAction("refresh");
     try {
       await refreshStatusMutation(instanceIdentifier);
-      await Promise.all([refetchManagement(), refetchLifecycle()]);
+      const [refreshed] = await Promise.all([refetchManagement(), refetchLifecycle()]);
+      // If the provider is still mid-transition, keep watching instead of
+      // latching — a single-shot refresh would otherwise leave the HeroBanner
+      // buttons disabled until the next manual refresh or a hard reload.
+      const refreshedData = (refreshed as unknown as GenericRecord | undefined)?.["data"] as
+        | GenericRecord
+        | undefined;
+      const status = (refreshedData?.["instance"] as GenericRecord | undefined)?.["status"];
+      if (isProvisioning(status)) {
+        startProvisioningPoll(null);
+      }
     } catch (error) {
       ToastUtils.error(getErrorMessage(error, "Failed to refresh instance status."));
     } finally {
       setPendingAction(null);
     }
-  }, [instanceIdentifier, isRefreshingStatus, refreshStatusMutation, refetchManagement, refetchLifecycle]);
+  }, [
+    instanceIdentifier,
+    isRefreshingStatus,
+    refreshStatusMutation,
+    refetchManagement,
+    refetchLifecycle,
+    startProvisioningPoll,
+  ]);
 
   const handleInstanceAction = useCallback(
     async (actionKey: string) => {
@@ -1029,7 +1053,7 @@ const AdminInstancesDetails = () => {
         } as { identifier: typeof instanceIdentifier });
         ToastUtils.success(`${formatStatusText(actionKey)} initiated.`);
         if (actionKey === "retry_provisioning" || isPowerAction) {
-          startProvisioningPoll();
+          startProvisioningPoll(actionKey);
         }
         await Promise.all([refetchManagement(), refetchLifecycle()]);
       } catch (error) {

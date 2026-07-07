@@ -19,6 +19,7 @@ import type {
   LifecycleData,
   LifecycleDataSource,
 } from "./instanceDetailsTypes";
+import { isProvisioning } from "@/shared/components/instances/instanceStatus";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -34,7 +35,78 @@ export const USAGE_PERIOD_OPTIONS = [
 
 export const LOG_LINE_OPTIONS = [50, 100, 200, 500];
 export const PROVISIONING_POLL_INTERVAL_MS = 5000;
-export const PROVISIONING_POLL_MAX_ATTEMPTS = 6;
+// 24 × 5s = a 2-minute budget. A stop that settles to `suspended` only after
+// the provider reports `stopping` needs more than the previous 30s window.
+export const PROVISIONING_POLL_MAX_ATTEMPTS = 24;
+
+// ---------------------------------------------------------------------------
+// Provisioning poll helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * React Query `refetchInterval` decision for the instance-management query.
+ *
+ * Passive self-heal: while the instance sits in a transitional status the page
+ * quietly re-fetches every {@link PROVISIONING_POLL_INTERVAL_MS} so the
+ * HeroBanner buttons re-enable on their own once the provider settles — even
+ * when the action-driven poll gave up or was never started. Returns `false`
+ * (no polling) for any settled status or a missing / non-object payload.
+ *
+ * Reads the same path the page renders: `data.instance.status`.
+ */
+export const managementRefetchInterval = (data: unknown): number | false => {
+  if (!data || typeof data !== "object") return false;
+  const instance = (data as Record<string, unknown>)["instance"];
+  if (!instance || typeof instance !== "object") return false;
+  const status = (instance as Record<string, unknown>)["status"];
+  return isProvisioning(status) ? PROVISIONING_POLL_INTERVAL_MS : false;
+};
+
+/** Stop-like actions whose settled target is a halted VM, not a running one. */
+const STOP_LIKE_ACTIONS = new Set(["stop", "force_stop", "suspend", "hibernate"]);
+/** Statuses that mean a stop hasn't begun reporting yet — still in-flight. */
+const STOP_IN_FLIGHT_STATUSES = new Set(["active", "running", "spawning"]);
+/** Statuses that are always transitional regardless of the initiating action. */
+const TRANSITIONAL_POLL_STATUSES = new Set([
+  "provisioning",
+  "pending",
+  "awaiting_manual_provisioning",
+]);
+
+/**
+ * Decide whether the action-driven provisioning poll should fire again.
+ *
+ * The backend normalises a just-stopped VM's provider `stopping` → `provisioning`
+ * only once the provider starts reporting the shutdown; until then the record
+ * still reads `active`/`running`. A stop-poll must therefore treat those as
+ * in-flight and keep watching, or it dies on the first tick and every HeroBanner
+ * button latches disabled until a hard reload.
+ *
+ * @param actionKey the action that started the poll (e.g. "stop", "start")
+ * @param status    the latest instance status just read from the refetch
+ * @param attempts  how many polls have already run this cycle
+ */
+export const shouldContinueInstancePoll = (
+  actionKey: string | null,
+  status: string | null | undefined,
+  attempts: number
+): boolean => {
+  if (attempts >= PROVISIONING_POLL_MAX_ATTEMPTS) return false;
+
+  const normalized = String(status ?? "").toLowerCase();
+  // Transitional (or not-yet-known) statuses: keep polling for any action.
+  if (normalized === "" || TRANSITIONAL_POLL_STATUSES.has(normalized)) return true;
+
+  const action = String(actionKey ?? "").toLowerCase();
+  if (STOP_LIKE_ACTIONS.has(action)) {
+    // active/running/spawning → the stop hasn't begun reporting; keep watching.
+    // Anything else (suspended/stopped/failed/…) is terminal → stop.
+    return STOP_IN_FLIGHT_STATUSES.has(normalized);
+  }
+
+  // Start/resume/reboot/etc.: any non-transitional status is the terminal state.
+  return false;
+};
 
 export const ACTION_LIBRARY: Record<string, ActionConfig> = {
   start: {

@@ -42,6 +42,32 @@ interface UseProjectProvisioningParams {
   refetchProjectDetails: () => void;
 }
 
+/**
+ * Query keys reconciled the moment the provisioning pipeline reports done —
+ * beyond the network/vpc/subnet/sg/igw lists the completion effects already
+ * refresh. The panels also read: the server-side infrastructure snapshot (VPC
+ * STATUS + component tiles), the edge (VPC STATUS) config, and the per-resource
+ * lists for route tables / EIPs / keypairs / ENIs. Invalidating these on
+ * completion pulls fresh data immediately instead of waiting out each query's
+ * staleness window.
+ *
+ * The infra snapshot's own adaptive `refetchInterval` (see
+ * `useProjectInfrastructureStatus`) re-arms itself once the refetched payload
+ * carries `refresh_in_progress` from the backend's completion force-refresh, so
+ * no polling changes are needed here.
+ *
+ * Single-element prefix keys prefix-match every API-context / region variant,
+ * which is what we want: this hook has neither an API context nor a region.
+ */
+const COMPLETION_INVALIDATION_KEYS: readonly (readonly string[])[] = [
+  ["project-infrastructure-status"],
+  ["admin-project-edge-config"],
+  ["routeTables"],
+  ["elasticIps"],
+  ["keyPairs"],
+  ["networkInterfaces"],
+];
+
 export function useProjectProvisioning({
   project,
   projectId: _projectId,
@@ -154,6 +180,9 @@ export function useProjectProvisioning({
       queryClient.invalidateQueries({ queryKey: ["securityGroups"] });
       queryClient.invalidateQueries({ queryKey: ["igws"] });
       queryClient.invalidateQueries({ queryKey: ["internet_gateways"] });
+      COMPLETION_INVALIDATION_KEYS.forEach((queryKey) =>
+        queryClient.invalidateQueries({ queryKey })
+      );
     }
 
     prevProjectStatusRef.current = currentStatus;
@@ -184,6 +213,9 @@ export function useProjectProvisioning({
         queryClient.invalidateQueries({ queryKey: ["subnets"] });
         queryClient.invalidateQueries({ queryKey: ["securityGroups"] });
         queryClient.invalidateQueries({ queryKey: ["igws"] });
+        COMPLETION_INVALIDATION_KEYS.forEach((queryKey) =>
+          queryClient.invalidateQueries({ queryKey })
+        );
       }, 500);
     }
 

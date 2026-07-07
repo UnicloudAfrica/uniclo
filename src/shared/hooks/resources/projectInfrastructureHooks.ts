@@ -252,7 +252,7 @@ export const useProjectInfrastructureStatus = (projectId: string | number, optio
     },
     enabled: !!projectId,
     staleTime: 30000,
-    cacheTime: 300000,
+    gcTime: 300000,
     // Adaptive polling driven by the backend cache freshness envelope:
     //   - refresh_in_progress → poll fast (5s) while the queue worker runs
     //   - stale               → poll moderately (15s) until the next refresh lands
@@ -428,6 +428,34 @@ export const useEnableProjectVpc = () => {
   });
 };
 
+/**
+ * Pure decision for `useProjectStatusPolling`'s `refetchInterval` callback.
+ *
+ * `data` is the polling queryFn result — the status endpoint envelope
+ * (`ProjectStatusService::build`): `{ project: { status, ... } }` with no
+ * `data` wrapper — so the project status lives at `project.status`.
+ *
+ * Returns `false` (stop polling) once the polling window is exhausted or the
+ * project reaches a terminal status; otherwise returns the poll interval.
+ */
+export const resolvePollingInterval = (
+  data: unknown,
+  opts: {
+    elapsedMs: number;
+    maxPollingTime: number;
+    stopOnStatus: readonly string[];
+    interval: number;
+  }
+): number | false => {
+  if (opts.elapsedMs > opts.maxPollingTime) return false;
+
+  const project = (data as AnyRecord | undefined)?.project as AnyRecord | undefined;
+  const status = project?.status;
+  if (typeof status === "string" && opts.stopOnStatus.includes(status)) return false;
+
+  return opts.interval;
+};
+
 /** Real-time project status polling — admin only */
 export const useProjectStatusPolling = (projectId: string | number, options: AnyRecord = {}) => {
   const { context } = useApiContext();
@@ -438,7 +466,13 @@ export const useProjectStatusPolling = (projectId: string | number, options: Any
     maxPollingTime = 1800000,
     stopOnStatus = ["active", "failed", "deleted"],
     triggerSync = false,
-  } = options;
+  } = options as {
+    enabled?: boolean;
+    interval?: number;
+    maxPollingTime?: number;
+    stopOnStatus?: string[];
+    triggerSync?: boolean;
+  };
 
   const [pollingStartTime] = React.useState(() => Date.now());
   const [shouldStop, setShouldStop] = React.useState(false);
@@ -458,18 +492,17 @@ export const useProjectStatusPolling = (projectId: string | number, options: Any
       return (response as AnyRecord)?.data ?? response;
     },
     enabled: enabled && !!projectId && !shouldStop,
-    refetchInterval: (data: Record<string, unknown>, _query: unknown) => {
-      if (Date.now() - pollingStartTime > maxPollingTime) {
+    refetchInterval: (query: { state: { data: unknown } }) => {
+      const next = resolvePollingInterval(query.state.data, {
+        elapsedMs: Date.now() - pollingStartTime,
+        maxPollingTime,
+        stopOnStatus,
+        interval,
+      });
+      if (next === false) {
         setShouldStop(true);
-        return false;
       }
-
-      if (data && stopOnStatus.includes(data.status)) {
-        setShouldStop(true);
-        return false;
-      }
-
-      return interval;
+      return next;
     },
     refetchIntervalInBackground: false,
     staleTime: 0,

@@ -149,6 +149,8 @@ export interface ManagedDatabase {
   status: DatabaseStatus;
   provider_resource_id: string | null;
   connection_string: string | null;
+  backup_enabled?: boolean;
+  backup_retention_days?: number;
   firewall_cidrs: string[];
   monthly_cost: number;
   /** ISO 4217 currency code the `monthly_cost` is quoted in. */
@@ -163,6 +165,7 @@ export interface ManagedDatabase {
   vm_volume_id?: string | null;
   vm_security_group_id?: string | null;
   private_ip?: string | null;
+  public_ip?: string | null;
   dns_record_name?: string | null;
   dns_record_id?: string | null;
 
@@ -545,7 +548,7 @@ export const DEFAULT_DATABASE_FORM: DatabaseFormState = {
   licenseKey: "",
   licenseMode: "",
   cloudAccountId: null,
-  planKind: "bundled",
+  planKind: "management_only",
   replicationMode: "native_same_provider",
   crossProviderConsent: false,
 };

@@ -1027,7 +1027,7 @@ const ConfigureStep: React.FC<{
             const cloudAccountId = e.target.value ? Number(e.target.value) : null;
             updateForm({
               cloudAccountId,
-              planKind: cloudAccountId ? "management_only" : "bundled",
+              planKind: "management_only",
             });
           }}
           className="w-full rounded-lg border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
@@ -1466,6 +1466,16 @@ const ReviewContent: React.FC<{
             value={`${PLAN_SPECS[form.planSize as PlanSize]?.vcpu} vCPU · ${Math.round((PLAN_SPECS[form.planSize as PlanSize]?.memoryMb || 0) / 1024)} GB RAM · ${PLAN_SPECS[form.planSize as PlanSize]?.storageGb} GB SSD`}
           />
         )}
+        <SummaryRow
+          label="Provisioning Mode"
+          value={
+            form.planKind === "management_only"
+              ? form.cloudAccountId
+                ? "BYOC - customer infrastructure"
+                : "UniCloud managed VM service"
+              : "Bundled provider-managed infrastructure"
+          }
+        />
         <SummaryRow label="Region" value={getRegionLabel(regions, form.region) || "—"} />
         {form.availabilityZone && (
           <SummaryRow label="Availability Zone" value={sanitizeProviderLabel(form.availabilityZone)} />
@@ -1487,6 +1497,10 @@ const ReviewContent: React.FC<{
         <SummaryRow
           label="Network Access"
           value={form.networkMode === "public" ? "Public IP (Elastic IP)" : "Private IP (VPC only)"}
+        />
+        <SummaryRow
+          label="Firewall CIDRs"
+          value={form.firewallCidrs.filter((cidr) => cidr.trim()).join(", ") || "None"}
         />
         {form.dedicatedProxy && (
           <SummaryRow label="Dedicated Proxy" value="Enabled (Paid add-on)" />

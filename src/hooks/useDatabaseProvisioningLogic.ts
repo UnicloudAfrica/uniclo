@@ -450,9 +450,9 @@ export const useDatabaseProvisioningLogic = () => {
     licenseMode: "",
     cloudAccountId: null,
     // FR-031: keep the UI explicit so quotes and orders do not depend on
-    // the current backend process' loaded default. Managed infrastructure
-    // uses StaqDB's bundled tier; BYOC switches to management_only.
-    planKind: "bundled" as "" | "bundled" | "management_only",
+    // the current backend process' loaded default. UniCloud provisions the
+    // VM, then StaqDB operates the engine through the partner handoff.
+    planKind: "management_only" as "" | "bundled" | "management_only",
     replicationMode: "native_same_provider" as
       | "native_same_provider"
       | "native_public_endpoint"
@@ -888,7 +888,7 @@ export const useDatabaseProvisioningLogic = () => {
   }, [form.engine, engines]);
 
   const resolvedPlanKind = useMemo<"bundled" | "management_only">(
-    () => (form.cloudAccountId ? "management_only" : form.planKind || "bundled"),
+    () => (form.cloudAccountId ? "management_only" : form.planKind || "management_only"),
     [form.cloudAccountId, form.planKind],
   );
 
@@ -983,6 +983,12 @@ export const useDatabaseProvisioningLogic = () => {
           fast_track_ends_at: form.fastTrack && form.fastTrackEndsAt ? form.fastTrackEndsAt : undefined,
           country_iso: form.billingCountry || undefined,
           customer_context: form.customerContext,
+          assignment_scope: form.assignmentScope,
+          member_user_ids: form.memberUserIds,
+          db_name: form.useDefaultCredentials ? undefined : form.dbName.trim() || undefined,
+          db_user: form.useDefaultCredentials ? undefined : form.dbUser.trim() || undefined,
+          db_password: form.useDefaultCredentials ? undefined : form.dbPassword || undefined,
+          use_default_credentials: form.useDefaultCredentials,
           network_mode: form.networkMode,
           connection_pooling: form.connectionPooling,
           tls_enabled: form.tlsEnabled,
@@ -992,8 +998,14 @@ export const useDatabaseProvisioningLogic = () => {
 
         if (form.name.trim()) payload.name = form.name.trim();
         if (form.projectId) payload.project_id = form.projectId;
-        if (form.assignedTenantId) payload.tenant_id = form.assignedTenantId;
-        if (form.assignedClientId) payload.client_id = form.assignedClientId;
+        if (form.assignedTenantId) {
+          payload.tenant_id = form.assignedTenantId;
+          payload.customer_tenant_id = form.assignedTenantId;
+        }
+        if (form.assignedClientId) {
+          payload.user_id = form.assignedClientId;
+          payload.customer_user_id = form.assignedClientId;
+        }
         if (form.licenseKey.trim()) payload.license_key = form.licenseKey.trim();
         if (form.licenseMode) payload.license_mode = form.licenseMode;
         if (form.cloudAccountId) payload.cloud_account_id = form.cloudAccountId;

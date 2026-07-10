@@ -63,8 +63,14 @@ const getStepCounts = (steps: ProvisioningStep[] | null | undefined) => {
   };
 };
 
+const readString = (value: unknown): string | null =>
+  typeof value === "string" && value.trim() ? value : null;
+
+const getPublicIp = (db: ManagedDatabase): string | null =>
+  readString(db.public_ip) || readString((db.metadata as Record<string, unknown> | null | undefined)?.public_ip);
+
 const getAccessEndpoint = (db: ManagedDatabase): string =>
-  db.dns_record_name || db.private_ip || "Endpoint pending";
+  db.dns_record_name || getPublicIp(db) || db.private_ip || "Endpoint pending";
 
 const getEngineVersionLabel = (db: ManagedDatabase): string =>
   `${getEngineLabel(db.engine)} ${db.engine_version ? `v${db.engine_version}` : ""}`.trim();
@@ -339,22 +345,31 @@ const ManagedDatabaseList: React.FC<ManagedDatabaseListProps> = ({
         key: "region",
         header: "Access",
         sortable: true,
-        render: (_, row) => (
-          <div className="min-w-[160px]">
-            <div className="break-all font-medium text-[var(--theme-heading-color)]">
-              {getAccessEndpoint(row)}
-            </div>
-            {row.private_ip && row.dns_record_name && (
-              <div className="break-all text-xs text-[var(--theme-muted-color)]">
-                Private {row.private_ip}
+        render: (_, row) => {
+          const publicIp = getPublicIp(row);
+
+          return (
+            <div className="min-w-[160px]">
+              <div className="break-all font-medium text-[var(--theme-heading-color)]">
+                {getAccessEndpoint(row)}
               </div>
-            )}
-            <div className="text-xs text-[var(--theme-muted-color)]">
-              {row.region}
-              {row.dr_region ? ` · DR ${row.dr_region}` : ""}
+              {publicIp && (
+                <div className="break-all text-xs text-[var(--theme-muted-color)]">
+                  Public {publicIp}
+                </div>
+              )}
+              {row.private_ip && row.dns_record_name && (
+                <div className="break-all text-xs text-[var(--theme-muted-color)]">
+                  Private {row.private_ip}
+                </div>
+              )}
+              <div className="text-xs text-[var(--theme-muted-color)]">
+                {row.region}
+                {row.dr_region ? ` · DR ${row.dr_region}` : ""}
+              </div>
             </div>
-          </div>
-        ),
+          );
+        },
       },
       {
         key: "monthly_cost",
@@ -367,7 +382,7 @@ const ManagedDatabaseList: React.FC<ManagedDatabaseListProps> = ({
               <MonthlyCostCell amount={row.monthly_cost} currency={row.currency} />
             </div>
             <div className="text-xs text-[var(--theme-muted-color)]">
-              {row.plan_kind === "bundled" ? "Bundled StaqDB service" : "Dedicated VM service"}
+              {row.plan_kind === "bundled" ? "Bundled provider-managed service" : "UniCloud VM service"}
             </div>
           </div>
         ),

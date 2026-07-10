@@ -3,7 +3,7 @@
  * replication pricing endpoint.
  *
  * Wraps UniCloud's proxy route
- *   GET /v1/integrations/anycloudflow/pricing/replication?mode={mode}
+ *   GET /integrations/anycloudflow/pricing/replication?mode={mode}
  *
  * which forwards to AnyCloudFlow's canonical pricing endpoint and returns
  * a rate table keyed by billing tier (rsync, zfs_native, zfs_raw).
@@ -55,7 +55,7 @@ export function useReplicationPricing(
     queryKey: PRICING_KEY(mode),
     queryFn: async () => {
       const res = (await api.get<AnyRecord>(
-        `/v1/integrations/anycloudflow/pricing/replication?mode=${encodeURIComponent(mode)}`,
+        `/integrations/anycloudflow/pricing/replication?mode=${encodeURIComponent(mode)}`,
       )) as AnyRecord;
 
       // The proxy controller forwards the upstream payload verbatim. In

@@ -1,12 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { resolvePollingInterval } from "../projectInfrastructureHooks";
+import { resolvePollingInterval, resolveStatusNotification } from "../projectInfrastructureHooks";
 
 /**
- * Pure-function tests for `resolvePollingInterval` — the v5 `refetchInterval`
- * decision extracted from `useProjectStatusPolling`.
+ * Pure-function tests for the decisions extracted from `useProjectStatusPolling`:
+ * `resolvePollingInterval` (the v5 `refetchInterval` callback) and
+ * `resolveStatusNotification` (the v5 replacement for the removed `onSuccess`,
+ * driving the `onStatusChange` option from an effect).
  *
  * The status endpoint envelope is `{ project: { status, ... } }` (no `data`
- * wrapper), so the status is read at `project.status` — see behavior 6 for the
+ * wrapper), so the status is read at `project.status` — both helpers carry a
  * regression guard against the old top-level `.status` read.
  */
 
@@ -67,5 +69,37 @@ describe("resolvePollingInterval", () => {
 
   it("keeps polling when status is not a string", () => {
     expect(resolvePollingInterval({ project: { status: null } }, baseOpts)).toBe(30_000);
+  });
+});
+
+describe("resolveStatusNotification", () => {
+  it("notifies the first observed status", () => {
+    expect(resolveStatusNotification({ project: { status: "provisioning" } }, null)).toBe(
+      "provisioning"
+    );
+  });
+
+  it("does not re-notify an unchanged status", () => {
+    expect(resolveStatusNotification({ project: { status: "provisioning" } }, "provisioning")).toBe(
+      null
+    );
+  });
+
+  it("notifies a status transition", () => {
+    expect(resolveStatusNotification({ project: { status: "active" } }, "provisioning")).toBe(
+      "active"
+    );
+  });
+
+  it("does not notify before any data arrives", () => {
+    expect(resolveStatusNotification(undefined, null)).toBe(null);
+  });
+
+  it("does not notify when status is not a string", () => {
+    expect(resolveStatusNotification({ project: { status: null } }, null)).toBe(null);
+  });
+
+  it("reads status at project.status, not top-level (envelope regression guard)", () => {
+    expect(resolveStatusNotification({ status: "active" }, null)).toBe(null);
   });
 });

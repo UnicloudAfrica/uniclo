@@ -43,6 +43,7 @@ const managedDatabaseHooks = createResourceHooks<ManagedDatabase>({
   resourcePath: "managed-databases",
   queryKeyBase: "managedDatabases",
   dataKey: "data",
+  updateMethod: "put",
 });
 
 export const {
@@ -206,7 +207,7 @@ export const useFetchDatabaseBackups = (
     queryFn: async () => {
       const uri = `${entry.urlPrefix}/managed-databases/${identifier}/backups`;
       const envelope = asEnvelope(await entry.silentApi.get<AnyRecord>(uri));
-      return (envelope.data ?? []) as AnyRecord;
+      return asListPayload<AnyRecord>(envelope.data);
     },
     enabled: Boolean(identifier) && enabled,
     staleTime: 1000 * 60 * 2,
@@ -1243,7 +1244,7 @@ export const useCreateDatabaseReplica = () => {
   const { context } = useApiContext();
   const entry = apiRegistry[context];
   const queryClient = useQueryClient();
-  return useMutation<AnyRecord, Error, { identifier: Identifier; region: string; instance_class?: string }>({
+  return useMutation<AnyRecord, Error, { identifier: Identifier; region: string; availability_zone?: string; instance_class?: string }>({
     mutationFn: async ({ identifier, ...params }) => {
       const uri = `${entry.urlPrefix}/managed-databases/${identifier}/replicas`;
       return entry.toastApi.post<AnyRecord>(uri, params);

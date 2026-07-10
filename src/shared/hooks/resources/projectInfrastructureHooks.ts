@@ -456,6 +456,25 @@ export const resolvePollingInterval = (
   return opts.interval;
 };
 
+/**
+ * Pure decision for `useProjectStatusPolling`'s `onStatusChange` notification.
+ *
+ * v5 removed `useQuery`'s `onSuccess`, so the hook notifies from an effect
+ * watching the query data instead. Reads the same status envelope as
+ * `resolvePollingInterval` (`project.status`). Returns the status to notify
+ * when it differs from the last notified one (including the first status
+ * observed); returns `null` when there is nothing new to report.
+ */
+export const resolveStatusNotification = (
+  data: unknown,
+  lastNotifiedStatus: string | null
+): string | null => {
+  const project = (data as AnyRecord | undefined)?.project as AnyRecord | undefined;
+  const status = project?.status;
+  if (typeof status !== "string" || status === lastNotifiedStatus) return null;
+  return status;
+};
+
 /** Real-time project status polling — admin only */
 export const useProjectStatusPolling = (projectId: string | number, options: AnyRecord = {}) => {
   const { context } = useApiContext();
@@ -466,18 +485,21 @@ export const useProjectStatusPolling = (projectId: string | number, options: Any
     maxPollingTime = 1800000,
     stopOnStatus = ["active", "failed", "deleted"],
     triggerSync = false,
+    onStatusChange,
   } = options as {
     enabled?: boolean;
     interval?: number;
     maxPollingTime?: number;
     stopOnStatus?: string[];
     triggerSync?: boolean;
+    onStatusChange?: (data: AnyRecord) => void;
   };
 
   const [pollingStartTime] = React.useState(() => Date.now());
   const [shouldStop, setShouldStop] = React.useState(false);
+  const lastNotifiedStatusRef = React.useRef<string | null>(null);
 
-  return useQuery({
+  const query = useQuery({
     queryKey: projectInfraKeys.polling(context, projectId),
     queryFn: async () => {
       if (!projectId) {
@@ -509,15 +531,20 @@ export const useProjectStatusPolling = (projectId: string | number, options: Any
     retry: (failureCount: number, _error: unknown) => {
       return failureCount < 3;
     },
-    onSuccess: (data: Record<string, unknown>) => {
-      logger.log(`Project ${projectId} status:`, data.status);
-
-      if (options.onStatusChange) {
-        options.onStatusChange(data);
-      }
-    },
     ...options.queryOptions,
   } as never);
+
+  const queryData: unknown = query.data;
+
+  React.useEffect(() => {
+    const status = resolveStatusNotification(queryData, lastNotifiedStatusRef.current);
+    if (status === null) return;
+    lastNotifiedStatusRef.current = status;
+    logger.log(`Project ${projectId} status:`, status);
+    onStatusChange?.(queryData as AnyRecord);
+  }, [queryData, onStatusChange, projectId]);
+
+  return query;
 };
 
 /** Bulk infrastructure setup — admin only */

@@ -833,6 +833,12 @@ const DEVELOPER_ITEMS: RoleAwareItem[] = [
     path: "/admin-dashboard/bridge-clients",
     roles: ["admin"],
   },
+  {
+    label: "Gateway Health",
+    icon: Activity,
+    path: "/admin-dashboard/gateways",
+    roles: ["admin"],
+  },
 ];
 
 // ─── Account (bottom-pinned, replaces top-level 2FA + 2FA Policy + Settings) ─

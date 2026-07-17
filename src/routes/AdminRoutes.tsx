@@ -84,6 +84,7 @@ const TicketsDashboard = lazy(() => import("../adminDashboard/pages/TicketsDashb
 const AdminTicketDetail = lazy(() => import("../adminDashboard/pages/AdminTicketDetail"));
 const AdminManagedDatabases = lazy(() => import("../adminDashboard/pages/AdminManagedDatabases"));
 const AdminMonitoring = lazy(() => import("../adminDashboard/pages/AdminMonitoring"));
+const AdminGatewayHealth = lazy(() => import("../adminDashboard/pages/AdminGatewayHealth"));
 const AdminTenantMonitoring = lazy(() => import("../adminDashboard/pages/AdminTenantMonitoring"));
 const AdminTenantReportSubscriptions = lazy(() => import("../adminDashboard/pages/AdminTenantReportSubscriptions"));
 const AdminMonitoringPricing = lazy(() => import("../adminDashboard/pages/AdminMonitoringPricing"));
@@ -338,6 +339,7 @@ const AdminRoutes = (): JSX.Element => {
         <Route path="/admin-dashboard/cube-instances/details" element={<AdminInstancesDetails />} />
 
         <Route path="/admin-dashboard/monitoring" element={<AdminMonitoring />} />
+        <Route path="/admin-dashboard/gateways" element={<AdminGatewayHealth />} />
         <Route path="/admin-dashboard/monitoring/pricing" element={<AdminMonitoringPricing />} />
         <Route path="/admin-dashboard/monitoring/subscriptions" element={<AdminMonitoringSubscriptions />} />
         <Route path="/admin-dashboard/monitoring/subscriptions/:id" element={<AdminMonitoringSubscriptionDetail />} />

@@ -216,39 +216,39 @@ const ModernButtonInner = forwardRef<HTMLButtonElement, ModernButtonProps>(
     switch (size) {
       case "xs":
         return {
-          padding: `${designTokens.spacing[1]} ${designTokens.spacing[2]}`,
+          padding: `${designTokens.spacing[0.5]} ${designTokens.spacing[2]}`,
           ...getTypography("xs"),
-          minHeight: "24px",
+          minHeight: "22px",
         };
       case "sm":
         return {
-          padding: `${designTokens.spacing[2]} ${designTokens.spacing[3]}`,
-          ...getTypography("sm"),
-          minHeight: "32px",
+          padding: `${designTokens.spacing[1]} ${designTokens.spacing[2.5]}`,
+          ...getTypography("xs"),
+          minHeight: "26px",
         };
       case "base":
         return {
-          padding: `${designTokens.spacing[2]} ${designTokens.spacing[3]}`,
-          ...getTypography("base"),
-          minHeight: "32px",
+          padding: `${designTokens.spacing[1]} ${designTokens.spacing[3]}`,
+          ...getTypography("sm"),
+          minHeight: "30px",
         };
       case "lg":
         return {
-          padding: `${designTokens.spacing[3]} ${designTokens.spacing[6]}`,
-          ...getTypography("lg"),
-          minHeight: "48px",
+          padding: `${designTokens.spacing[2]} ${designTokens.spacing[4]}`,
+          ...getTypography("base"),
+          minHeight: "38px",
         };
       case "xl":
         return {
-          padding: `${designTokens.spacing[4]} ${designTokens.spacing[8]}`,
-          ...getTypography("xl"),
-          minHeight: "56px",
+          padding: `${designTokens.spacing[3]} ${designTokens.spacing[6]}`,
+          ...getTypography("lg"),
+          minHeight: "44px",
         };
       default:
         return {
-          padding: `${designTokens.spacing[2.5]} ${designTokens.spacing[4]}`,
-          ...getTypography("base"),
-          minHeight: "40px",
+          padding: `${designTokens.spacing[1.5]} ${designTokens.spacing[3]}`,
+          ...getTypography("sm"),
+          minHeight: "30px",
         };
     }
   };

@@ -13,9 +13,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* --- Density pass: shrink 1rem baseline 16 → 14 so every Tailwind rem-based
+   utility (text-*, p-*, gap-*, space-y-*) drops ~12.5% without touching every
+   file. Layered next to focused overrides below for the culprits that need
+   more than a proportional cut. Revert = delete this block. --- */
+html {
+  font-size: 14px;
+}
+
 @layer components {
   .ui-page-stack {
-    @apply space-y-6 md:space-y-8;
+    @apply space-y-3 md:space-y-4;
   }
 
   .ui-action-row {
@@ -23,7 +31,7 @@
   }
 
   .ui-metrics-grid {
-    @apply grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4;
+    @apply grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4;
   }
 
   .ui-table-actions {
@@ -31,7 +39,7 @@
   }
 
   .dashboard-content-shell {
-    @apply absolute top-[74px] min-h-full;
+    @apply absolute top-[48px] min-h-full;
     left: 0;
     width: 100%;
     transition:
@@ -43,8 +51,8 @@
 
   @media (min-width: 768px) {
     .dashboard-content-shell {
-      left: 15rem;
-      width: calc(100% - 15rem);
+      left: 240px;
+      width: calc(100% - 240px);
     }
   }
 
@@ -60,8 +68,8 @@
     }
 
     .sidebar-collapsed .dashboard-content-shell {
-      left: 4rem;
-      width: calc(100% - 4rem);
+      left: 64px;
+      width: calc(100% - 64px);
     }
   }
 
@@ -103,14 +111,6 @@
   [data-density="compact"] .dashboard-content-shell {
     padding-top: 12px;
     padding-bottom: 32px;
-  }
-
-  .dashboard-content-shell.admin-dashboard-shell {
-    top: 74px;
-  }
-
-  .dashboard-content-shell.client-dashboard-shell {
-    top: 74px;
   }
 }
 

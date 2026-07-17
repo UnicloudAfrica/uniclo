@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Server, Plus, Search, Telescope, ScanLine, Trash2 } from "lucide-react";
 import {
   HeroBanner,
@@ -56,6 +57,7 @@ export function VmEndpointsPage({
   subheadline,
 }: VmEndpointsPageProps): React.JSX.Element {
   const list = useFetchVmEndpoints();
+  const navigate = useNavigate();
   const deleteEp = useDeleteVmEndpoint();
   const startScan = useStartVmScan();
 
@@ -86,7 +88,7 @@ export function VmEndpointsPage({
           canEdit
             ? {
                 label: "Add a server",
-                onClick: () => (window.location.href = registerPath),
+                onClick: () => navigate(registerPath),
                 icon: <Plus className="h-4 w-4" aria-hidden="true" />,
               }
             : undefined
@@ -156,7 +158,7 @@ export function VmEndpointsPage({
         emptyIcon={<span aria-hidden="true" className="text-5xl">🔭</span>}
         emptyAction={
           canEdit && !search
-            ? { label: "Connect your first server", onClick: () => (window.location.href = registerPath) }
+            ? { label: "Connect your first server", onClick: () => navigate(registerPath) }
             : undefined
         }
       >

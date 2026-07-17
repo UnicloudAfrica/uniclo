@@ -36,7 +36,7 @@ const SubheaderBlock: React.FC<SubheaderBlockProps> = ({
 
   return (
     <header
-      className={["border-b px-6 md:px-8 py-6 space-y-4", className]
+      className={["border-b px-3 md:px-4 py-2 space-y-2", className]
         .filter(Boolean)
         .join(" ")
         .trim()}
@@ -66,7 +66,7 @@ const SubheaderBlock: React.FC<SubheaderBlockProps> = ({
             <div className="flex items-start gap-3">
               {icon && (
                 <div
-                  className="flex h-10 w-10 items-center justify-center rounded-xl"
+                  className="flex h-7 w-7 items-center justify-center rounded-lg"
                   style={{
                     backgroundColor: "rgb(var(--theme-color-50))",
                     color: "var(--theme-color)",
@@ -77,7 +77,7 @@ const SubheaderBlock: React.FC<SubheaderBlockProps> = ({
               )}
               <div>
                 {title && (
-                  <h1 className="text-2xl font-bold" style={{ color: "var(--theme-heading-color)" }}>
+                  <h1 className="text-lg font-semibold tracking-tight" style={{ color: "var(--theme-heading-color)" }}>
                     {title}
                   </h1>
                 )}

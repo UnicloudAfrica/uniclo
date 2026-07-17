@@ -71,7 +71,7 @@ const NavPalette: React.FC<NavPaletteProps> = ({
 
   return (
     <aside
-      className="hidden md:flex fixed top-[74px] left-0 z-[1000] h-full w-[72px] flex-col items-center border-r"
+      className="hidden md:flex fixed top-[48px] left-0 z-[1000] h-full w-[72px] flex-col items-center border-r"
       style={{
         background: "var(--theme-card-bg)",
         borderColor: "var(--theme-border-color)",

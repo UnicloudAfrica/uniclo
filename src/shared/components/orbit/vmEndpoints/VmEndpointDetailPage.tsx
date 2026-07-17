@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Server,
   Wifi,
@@ -78,6 +79,7 @@ export function VmEndpointDetailPage({
   afterDeletePath,
   canEdit,
 }: VmEndpointDetailPageProps): React.JSX.Element {
+  const navigate = useNavigate();
   const endpoint = useFetchVmEndpoint(identifier);
   const assessment = useFetchVmAssessment(identifier);
   const scan = useFetchVmScanStatus(identifier);
@@ -90,7 +92,7 @@ export function VmEndpointDetailPage({
     <div className="space-y-6">
       <button
         type="button"
-        onClick={() => (window.location.href = backPath)}
+        onClick={() => navigate(backPath)}
         className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:ring-offset-2 dark:text-gray-300 dark:hover:text-gray-100 dark:focus:ring-offset-gray-900"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -126,7 +128,7 @@ export function VmEndpointDetailPage({
         onClose={() => setConfirmDelete(false)}
         onConfirm={async () => {
           await deleteEp.mutateAsync(identifier);
-          window.location.href = afterDeletePath;
+          navigate(afterDeletePath);
         }}
         title={`Forget "${endpoint.data?.name ?? "this server"}"?`}
         description="We'll remove this server from your list. Active migrations or replications using it will block this — finish or cancel those first."

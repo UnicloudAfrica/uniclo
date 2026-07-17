@@ -118,7 +118,11 @@ export function createResourceHooks<T = AnyRecord>(config: ResourceHookConfig) {
             if (extracted && typeof extracted === "object" && !Array.isArray(extracted) && "data" in extracted && Array.isArray((extracted as AnyRecord).data)) {
               return (extracted as AnyRecord).data as T[];
             }
-            return (extracted as T[]) ?? [];
+            // A list hook must always yield an array. If `extracted` is a
+            // non-array object — e.g. an upstream error body that leaked
+            // through as `data` — coerce to [] so the consuming component
+            // never crashes on `.filter`/`.map`.
+            return (Array.isArray(extracted) ? extracted : []) as T[];
           }
           return (Array.isArray(res) ? res : []) as T[];
         } catch (err) {

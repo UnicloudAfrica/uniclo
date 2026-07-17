@@ -223,7 +223,7 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
     <>
       {/* Desktop Layout */}
       <div
-        className="w-full fixed top-0 left-0 h-[74px] px-6 md:px-8 py-3 z-[999] border-b bg-white hidden md:flex justify-between items-center font-Outfit"
+        className="w-full fixed top-0 left-0 h-[48px] px-3 md:px-4 py-1.5 z-[999] border-b bg-white hidden md:flex justify-between items-center font-Outfit"
         style={{
           borderColor: "var(--theme-border-color)",
           boxShadow: "var(--shadow-xs)",
@@ -232,12 +232,12 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
         {/* Left Section - Logo */}
         <div className="flex shrink-0 items-center gap-6">
           {isThemeLoading ? (
-            <div className="w-[110px] h-[48px] bg-gray-200 rounded animate-pulse" />
+            <div className="w-[110px] h-[32px] bg-gray-200 rounded animate-pulse" />
           ) : (
             <Link to={logoConfig.link || "/"} className="inline-flex items-center">
               <img
                 src={logoSrc}
-                className={logoConfig.className || "w-auto h-[54px] max-w-[160px] object-contain"}
+                className={logoConfig.className || "w-auto h-[32px] max-w-[140px] object-contain"}
                 alt={logoConfig.alt}
                 onError={handleLogoError}
               />
@@ -405,7 +405,7 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
 
       {/* Mobile Layout */}
       <div
-        className="w-full fixed top-0 left-0 h-[74px] px-6 py-3 z-[999] border-b bg-white flex md:hidden justify-between items-center font-Outfit"
+        className="w-full fixed top-0 left-0 h-[48px] px-3 py-1.5 z-[999] border-b bg-white flex md:hidden justify-between items-center font-Outfit"
         style={{
           borderColor: "var(--theme-border-color)",
           boxShadow: "var(--shadow-xs)",

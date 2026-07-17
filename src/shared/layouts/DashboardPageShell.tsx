@@ -72,7 +72,7 @@ const DashboardPageShell: React.FC<DashboardPageShellProps> = ({
   homeHref = "/",
   mainClassName = "",
   headerClassName = "",
-  contentClassName = "space-y-6",
+  contentClassName = "space-y-3",
   contentWrapper: ContentWrapper = "section",
   contentStyle = {},
   disableContentPadding = false,
@@ -93,7 +93,7 @@ const DashboardPageShell: React.FC<DashboardPageShellProps> = ({
       ? computedBreadcrumbs?.[computedBreadcrumbs.length - 1].label
       : "Dashboard");
 
-  const sectionClasses = [!disableContentPadding && "p-6 md:p-8", contentClassName]
+  const sectionClasses = [!disableContentPadding && "p-3 md:p-4", contentClassName]
     .filter(Boolean)
     .join(" ")
     .trim();

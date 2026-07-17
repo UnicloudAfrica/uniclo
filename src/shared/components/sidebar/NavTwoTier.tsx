@@ -110,7 +110,7 @@ const NavTwoTier: React.FC<NavTwoTierProps> = ({
 
   return (
     <aside
-      className="hidden md:flex fixed top-[74px] left-0 z-[1000] h-full w-[260px] border-r"
+      className="hidden md:flex fixed top-[48px] left-0 z-[1000] h-full w-[260px] border-r"
       style={{
         background: "var(--theme-card-bg)",
         borderColor: "var(--theme-border-color)",

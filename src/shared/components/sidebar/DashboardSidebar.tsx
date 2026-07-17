@@ -218,13 +218,13 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
     <>
       {/* Desktop Sidebar — pinned variant (default) */}
       <div
-        className={`hidden md:block fixed top-[74px] left-0 z-[1000] h-full border-r border-[--theme-border-color] bg-[--theme-card-bg] font-Outfit transition-all duration-300 ease-in-out ${
+        className={`hidden md:block fixed top-[48px] left-0 z-[1000] h-[calc(100vh-48px)] border-r border-[--theme-border-color] bg-[--theme-card-bg] font-Outfit transition-all duration-300 ease-in-out ${
           isCollapsed ? "w-16" : "w-60 xl:w-[20%] min-w-[240px]"
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Header with collapse toggle */}
-          <div className="px-3 py-4 md:px-0 md:pl-3.5 md:py-6 w-full border-b border-[--theme-border-color] flex justify-between items-center">
+          <div className="px-3 py-2 md:px-0 md:pl-3.5 md:py-2 w-full border-b border-[--theme-border-color] flex justify-between items-center">
             {!isCollapsed && (
               <button className="py-1 px-2 text-[--theme-muted-color] font-normal text-sm lg:text-sm">
                 {sidebarLabel}
@@ -244,7 +244,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 w-full mt-3 px-2 max-h-[calc(100vh-200px)] overflow-y-auto">
+          <nav className="flex-1 min-h-0 w-full mt-3 px-2 overflow-y-auto">
             <CollapsibleMenu
               items={menuItems}
               isCollapsed={isCollapsed}

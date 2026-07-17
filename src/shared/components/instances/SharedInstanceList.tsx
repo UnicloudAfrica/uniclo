@@ -325,7 +325,7 @@ const SharedInstanceList: React.FC<SharedInstanceListProps> = ({ context }) => {
               size="sm"
               onClick={() =>
                 context === "client"
-                  ? (globalThis.window.location.href = `${basePath}/cube-instances/provision`)
+                  ? navigate(`${basePath}/cube-instances/provision`)
                   : navigate(`${basePath}/create-instance`)
               }
               leftIcon={<Plus className="w-4 h-4" />}

@@ -474,7 +474,7 @@ export interface DatabaseFormState {
   /** End of fast-track date — after this date, user must pay to continue */
   fastTrackEndsAt: string;
   /** Member user IDs selected for the internal project */
-  memberUserIds: number[];
+  memberUserIds: string[];
   /** Assignment scope: internal (admins), tenant, or client */
   assignmentScope: "internal" | "tenant" | "client";
   /** License key for commercial BYOL engines */

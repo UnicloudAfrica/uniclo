@@ -523,7 +523,7 @@ export const useDatabaseProvisioningLogic = () => {
       setMemberSignature(sig);
       setForm((prev) => ({
         ...prev,
-        memberUserIds: suggestedMembers.map((m: unknown) => Number(m.id)),
+        memberUserIds: suggestedMembers.map((m: unknown) => String(m.id)),
       }));
     }
   }, [suggestedMembers, memberSignature]);
@@ -531,12 +531,12 @@ export const useDatabaseProvisioningLogic = () => {
   const selectedMemberIds = useMemo(() => new Set(form.memberUserIds), [form.memberUserIds]);
 
   const selectedMembers = useMemo(
-    () => suggestedMembers.filter((m: unknown) => selectedMemberIds.has(Number(m.id))),
+    () => suggestedMembers.filter((m: unknown) => selectedMemberIds.has(String(m.id))),
     [suggestedMembers, selectedMemberIds]
   );
 
   const toggleMember = useCallback((member: unknown) => {
-    const id = Number(member.id);
+    const id = String(member.id);
     setForm((prev) => ({
       ...prev,
       memberUserIds: prev.memberUserIds.includes(id)
@@ -548,12 +548,12 @@ export const useDatabaseProvisioningLogic = () => {
   const restoreDefaultMembers = useCallback(() => {
     setForm((prev) => ({
       ...prev,
-      memberUserIds: suggestedMembers.map((m: unknown) => Number(m.id)),
+      memberUserIds: suggestedMembers.map((m: unknown) => String(m.id)),
     }));
   }, [suggestedMembers]);
 
   const showRestoreMembers = useMemo(() => {
-    const defaultIds = suggestedMembers.map((m: unknown) => Number(m.id)).sort().join(",");
+    const defaultIds = suggestedMembers.map((m: unknown) => String(m.id)).sort().join(",");
     const currentIds = [...form.memberUserIds].sort().join(",");
     return defaultIds !== currentIds;
   }, [suggestedMembers, form.memberUserIds]);

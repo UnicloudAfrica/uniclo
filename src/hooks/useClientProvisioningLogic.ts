@@ -274,7 +274,7 @@ export const useClientProvisioningLogic = () => {
           const isNewProject = cfg.project_mode === "new" || Boolean(cfg.template_locked);
           const assignmentScopePayload = cfg.assignment_scope || undefined;
           const sanitizedMemberIds = Array.isArray(cfg.member_user_ids)
-            ? cfg.member_user_ids.map((id: string | number) => Number(id)).filter(Boolean)
+            ? cfg.member_user_ids.map((id: string | number) => String(id)).filter(Boolean)
             : [];
           const parsedBandwidthCount = cfg.bandwidth_id ? 1 : 0;
           const parsedFloatingIpCount = Number(cfg.floating_ip_count) || 0;

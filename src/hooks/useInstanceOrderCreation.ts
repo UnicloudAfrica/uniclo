@@ -179,9 +179,9 @@ export const useInstanceOrderCreation = ({
           assignment_scope: cfg.assignment_scope || "",
           member_user_ids: Array.isArray(cfg.member_user_ids)
             ? [...cfg.member_user_ids]
-                .map((id) => Number(id))
+                .map((id) => String(id))
                 .filter(Boolean)
-                .sort((a, b) => a - b)
+                .sort()
             : [],
           security_group_ids: Array.isArray(cfg.security_group_ids)
             ? [...cfg.security_group_ids].map((id) => String(id)).sort()
@@ -323,7 +323,7 @@ export const useInstanceOrderCreation = ({
       const isNewProject = cfg.project_mode === "new" || Boolean(cfg.template_locked);
       const assignmentScopePayload = cfg.assignment_scope || undefined;
       const sanitizedMemberIds = Array.isArray(cfg.member_user_ids)
-        ? cfg.member_user_ids.map((id) => Number(id)).filter(Boolean)
+        ? cfg.member_user_ids.map((id) => String(id)).filter(Boolean)
         : [];
       const requiredFields = [
         { key: "name", label: `Instance name (config ${index + 1})` },

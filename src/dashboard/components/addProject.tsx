@@ -290,16 +290,16 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     const newDefaultSignature = (suggestedMembers as ProjectUser[])?.length
       ? JSON.stringify(
           suggestedMembers
-            .map((member: ProjectUser) => Number(member.id))
-            .sort((a: number, b: number) => a - b)
+            .map((member: ProjectUser) => String(member.id))
+            .sort()
         )
       : null;
 
     const currentSignature = selectedMembers.length
       ? JSON.stringify(
           selectedMembers
-            .map((member: ProjectUser) => Number(member.id))
-            .sort((a: number, b: number) => a - b)
+            .map((member: ProjectUser) => String(member.id))
+            .sort()
         )
       : null;
 
@@ -363,7 +363,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
       assignment_scope: formData.assignment_scope,
       client_id: formData.assignment_scope === "client" ? formData.client_id || null : null,
       user_id: formData.assignment_scope === "client" ? formData.client_id || null : null,
-      member_user_ids: selectedMembers.map((member) => Number(member.id)),
+      member_user_ids: selectedMembers.map((member) => String(member.id)),
       user_policies: Object.keys(userPolicies).length > 0 ? userPolicies : undefined,
       metadata: formData.network_preset ? { network_preset: formData.network_preset } : undefined,
     };

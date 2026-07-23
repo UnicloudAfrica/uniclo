@@ -273,15 +273,15 @@ const CreateProjectForm: React.FC<CreateProjectFormProps> = ({
     const newDefaultSignature = (suggestedMembers as ProjectUser[])?.length
       ? JSON.stringify(
           suggestedMembers
-            .map((m: ProjectUser) => Number(m.id))
-            .sort((a: number, b: number) => a - b)
+            .map((m: ProjectUser) => String(m.id))
+            .sort()
         )
       : null;
     const currentSignature = selectedMembers.length
       ? JSON.stringify(
           selectedMembers
-            .map((m) => Number(m.id))
-            .sort((a: number, b: number) => a - b)
+            .map((m) => String(m.id))
+            .sort()
         )
       : null;
 
@@ -445,7 +445,7 @@ const CreateProjectForm: React.FC<CreateProjectFormProps> = ({
       tenant_id: formData.assignment_scope === "internal" ? null : formData.tenant_id || null,
       client_id: formData.client_id || null,
       user_id: formData.client_id || null,
-      member_user_ids: selectedMembers.map((m) => Number(m.id)),
+      member_user_ids: selectedMembers.map((m) => String(m.id)),
       user_policies: Object.keys(userPolicies).length > 0 ? userPolicies : undefined,
       metadata: formData.network_preset ? { network_preset: formData.network_preset } : undefined,
     };

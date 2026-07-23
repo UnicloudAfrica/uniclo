@@ -33,7 +33,7 @@ export interface ProjectMembershipSelectorProps {
   shouldFetchMembers: boolean;
   isMembersFetching: boolean;
   selectedMembers: unknown[];
-  selectedMemberIds: Set<number>;
+  selectedMemberIds: Set<string>;
   suggestedMembers: unknown[];
   showRestoreMembers: boolean;
   onAssignmentScopeChange: (value: string) => void;
@@ -156,7 +156,7 @@ const ProjectMembershipSelector: React.FC<ProjectMembershipSelectorProps> = ({
               ) : suggestedMembers.length > 0 ? (
                 <div className="max-h-48 overflow-y-auto divide-y divide-gray-100">
                   {(suggestedMembers as MembershipMember[]).map((member) => {
-                    const isSelected = selectedMemberIds.has(Number(member.id));
+                    const isSelected = selectedMemberIds.has(String(member.id));
                     return (
                       <label
                         key={member.id}

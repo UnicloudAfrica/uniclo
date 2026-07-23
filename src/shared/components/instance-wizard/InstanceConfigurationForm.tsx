@@ -671,16 +671,14 @@ const InstanceConfigurationForm: React.FC<Props> = ({
     ]);
     const newDefaultSignature = suggestedMembers?.length
       ? JSON.stringify(
-          [...suggestedMembers.map((m: Record<string, unknown>) => Number(m.id))].sort(
-            (a, b) => a - b
-          )
+          [...suggestedMembers.map((m: Record<string, unknown>) => String(m.id))].sort()
         )
       : null;
     const currentMemberIds = Array.isArray(cfg.member_user_ids)
-      ? cfg.member_user_ids.map((id) => Number(id))
+      ? cfg.member_user_ids.map((id) => String(id))
       : [];
     const currentSignature = currentMemberIds.length
-      ? JSON.stringify([...currentMemberIds].sort((a, b) => a - b))
+      ? JSON.stringify([...currentMemberIds].sort())
       : null;
     const lastState = membersFetchKeyRef.current;
     const shouldSync =
@@ -691,7 +689,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
         currentSignature === lastState.defaultSignature);
     if (shouldSync)
       updateConfiguration(cfg.id, {
-        member_user_ids: suggestedMembers.map((m: Record<string, unknown>) => Number(m.id)),
+        member_user_ids: suggestedMembers.map((m: Record<string, unknown>) => String(m.id)),
       });
     membersFetchKeyRef.current = { key: scopeKey, defaultSignature: newDefaultSignature };
   }, [
@@ -708,27 +706,27 @@ const InstanceConfigurationForm: React.FC<Props> = ({
 
   const selectedMemberIds = useMemo(() => {
     const ids = Array.isArray(cfg.member_user_ids) ? cfg.member_user_ids : [];
-    return new Set(ids.map((id) => Number(id)));
+    return new Set(ids.map((id) => String(id)));
   }, [cfg.member_user_ids]);
 
   const selectedMembers = useMemo(() => {
     if (!Array.isArray(cfg.member_user_ids) || cfg.member_user_ids.length === 0) return [];
     const lookup = new Map(
-      (suggestedMembers || []).map((m: Record<string, unknown>) => [Number(m.id), m])
+      (suggestedMembers || []).map((m: Record<string, unknown>) => [String(m.id), m])
     );
-    return cfg.member_user_ids.map((id) => lookup.get(Number(id)) || { id, name: `User #${id}` });
+    return cfg.member_user_ids.map((id) => lookup.get(String(id)) || { id, name: `User #${id}` });
   }, [cfg.member_user_ids, suggestedMembers]);
 
   const defaultSelectionSignature = useMemo(() => {
     if (!suggestedMembers?.length) return null;
     return JSON.stringify(
-      [...suggestedMembers.map((m: Record<string, unknown>) => Number(m.id))].sort((a, b) => a - b)
+      [...suggestedMembers.map((m: Record<string, unknown>) => String(m.id))].sort()
     );
   }, [suggestedMembers]);
 
   const currentSelectionSignature = useMemo(() => {
     if (!Array.isArray(cfg.member_user_ids) || cfg.member_user_ids.length === 0) return null;
-    return JSON.stringify([...cfg.member_user_ids.map((id) => Number(id))].sort((a, b) => a - b));
+    return JSON.stringify([...cfg.member_user_ids.map((id) => String(id))].sort());
   }, [cfg.member_user_ids]);
 
   const showRestoreMembers =
@@ -737,7 +735,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
   const handleRestoreMembers = useCallback(() => {
     if (suggestedMembers?.length)
       updateConfiguration(cfg.id, {
-        member_user_ids: suggestedMembers.map((m: Record<string, unknown>) => Number(m.id)),
+        member_user_ids: suggestedMembers.map((m: Record<string, unknown>) => String(m.id)),
       });
   }, [cfg.id, suggestedMembers, updateConfiguration]);
 
@@ -754,8 +752,8 @@ const InstanceConfigurationForm: React.FC<Props> = ({
   const handleToggleMember = useCallback(
     (member: Record<string, unknown>) => {
       const current = Array.isArray(cfg.member_user_ids) ? cfg.member_user_ids : [];
-      const next = new Set(current.map((id) => Number(id)));
-      const memberId = Number(member.id);
+      const next = new Set(current.map((id) => String(id)));
+      const memberId = String(member.id);
       if (next.has(memberId)) next.delete(memberId);
       else next.add(memberId);
       updateConfiguration(cfg.id, { member_user_ids: Array.from(next) });

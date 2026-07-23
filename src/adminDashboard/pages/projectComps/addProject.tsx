@@ -106,7 +106,7 @@ type ProjectCreatePayload = {
   user_id: string | null;
   region: string;
   assignment_scope: AssignmentScope;
-  member_user_ids: number[];
+  member_user_ids: string[];
   user_policies: Record<string, Array<string | number>>;
   metadata?:
     | {
@@ -329,12 +329,12 @@ const CreateProjectModal = ({ onClose, mode = "modal" }: CreateProjectModalProps
     ]);
 
     const suggestedMemberIds = suggestedMembers
-      .map((member) => Number(member.id))
-      .sort((a, b) => a - b);
+      .map((member) => String(member.id))
+      .sort();
     const newDefaultSignature = suggestedMembers.length ? JSON.stringify(suggestedMemberIds) : null;
     const currentMemberIds = selectedMembers
-      .map((member) => Number(member.id))
-      .sort((a, b) => a - b);
+      .map((member) => String(member.id))
+      .sort();
     const currentSignatureStr = selectedMembers.length ? JSON.stringify(currentMemberIds) : null;
 
     const lastState = membersFetchKeyRef.current;
@@ -456,7 +456,7 @@ const CreateProjectModal = ({ onClose, mode = "modal" }: CreateProjectModalProps
       return null;
     }
     return JSON.stringify(
-      suggestedMembers.map((member) => Number(member.id)).sort((a, b) => a - b)
+      suggestedMembers.map((member) => String(member.id)).sort()
     );
   }, [suggestedMembers]);
 
@@ -464,7 +464,7 @@ const CreateProjectModal = ({ onClose, mode = "modal" }: CreateProjectModalProps
     if (!selectedMembers.length) {
       return null;
     }
-    return JSON.stringify(selectedMembers.map((member) => Number(member.id)).sort((a, b) => a - b));
+    return JSON.stringify(selectedMembers.map((member) => String(member.id)).sort());
   }, [selectedMembers]);
 
   const showRestoreMembers =
@@ -627,7 +627,7 @@ const CreateProjectModal = ({ onClose, mode = "modal" }: CreateProjectModalProps
       user_id: formData.client_id || null,
       region: formData.region,
       assignment_scope: formData.assignment_scope,
-      member_user_ids: selectedMembers.map((member) => Number(member.id)),
+      member_user_ids: selectedMembers.map((member) => String(member.id)),
       user_policies: userPolicies,
       metadata: formData.network_preset ? { network_preset: formData.network_preset } : undefined,
     };

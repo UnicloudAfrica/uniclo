@@ -43,7 +43,7 @@ export interface Configuration {
   subnet_label: string;
   tags: string;
   assignment_scope?: "internal" | "tenant" | "client" | "workspace";
-  member_user_ids?: number[];
+  member_user_ids?: string[];
 }
 
 export interface Option {
